@@ -320,7 +320,11 @@ export default function PlacesMap({ data }: { data: PlacesData }) {
 							data-testid={PLACES_TAB_TESTID.mapList}
 						>
 							{inView.map((r) => {
-								const mine = Object.values(r.node.priorities);
+								// The ratings that count (a left-out person's don't).
+								const mine = data.memberIds.flatMap((m) => {
+									const p = r.node.priorities[m];
+									return p ? [p] : [];
+								});
 								const top = mine.length
 									? ([...mine].sort(
 											(a, b) => PRIORITIES[b].score - PRIORITIES[a].score,
