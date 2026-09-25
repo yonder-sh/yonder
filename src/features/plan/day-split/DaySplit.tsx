@@ -1,29 +1,44 @@
 /**
- * The day split on the Schedule step (`day-split.ts`). Before any trip day
- * has a city: the trip's days shared between the cities with places, from
- * what their shortlists need, with − / + and "Use these days" (each city's
- * nights in turn from the first day). After: "Days: Tokyo 4 · Kyoto 3" with
- * Change (the same − / +, prefilled from the days). Writes go through
- * `day.stay` and `item.move`, so suggest mode, proposals and live sync hold.
+ * "How long in each city?" at the top of the Plan (`day-split.ts`), always
+ * for the whole trip. Before any trip day has a city: the trip's days shared
+ * between the cities with places, from what their shortlists need, with − /
+ * +, the stops to reorder and "Use these days" (each city's nights in turn
+ * from the first day). With no dates yet: about how many days first, and the
+ * first day to use them (the trip's dates, then the nights). After: "Tokyo 4
+ * days · Kyoto 3" with Change (the same panel, prefilled from the days).
+ * While it's open the map shows the stops in order. Writes go through
+ * `trip.dates`, `day.stay` and `item.move`, so suggest mode, proposals and
+ * live sync hold.
  */
+import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "cn";
-import { ChevronRight, Minus, Plus, Star } from "lucide-react";
-import { useCallback, useMemo, useState } from "react";
+import { Star } from "lucide-react";
+import {
+	type ReactNode,
+	useCallback,
+	useEffect,
+	useMemo,
+	useState,
+} from "react";
 import { toast } from "sonner";
-import { CategoryIcon } from "@/components/common/glyphs";
+import { useTripMutation } from "@/components/common/use-trip-mutation";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { DateField } from "@/features/home/date-fields";
+import { cityDayTable } from "@/features/places/lib/days";
 import { raters } from "@/features/places/lib/rate";
 import { useMoveItem, useSetDayStay } from "@/features/places/mutations";
-import {
-	buildRows,
-	type PlaceRow,
-	placesInScope,
-} from "@/features/places/tab/model";
-import { PLACES_TAB_TESTID as T } from "@/features/places/tab/testids";
-import { ScoreChip } from "@/features/places/tab/ui";
-import type { PlacesData } from "@/features/places/tab/use-places";
+import { buildRows, placesInScope } from "@/features/places/tab/model";
+import { useShortlistBar } from "@/features/places/tab/use-bar";
+import { setTripDates } from "@/functions/trips.functions";
+import { indexGraph } from "@/lib/engine/graph-index";
+import { addDays } from "@/lib/engine/time";
 import { humanError } from "@/lib/errors";
-import { formatDayDate, formatDuration } from "@/lib/format";
+import { formatDayDate } from "@/lib/format";
+import { meKeys, tripKeys } from "@/lib/query/keys";
+import { tripGraphQuery } from "@/lib/query/trip-queries";
+import { isProposed } from "@/lib/schemas/proposals";
+import { type SplitStop, useUi } from "@/lib/workspace/ui-store";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import {
 	type ApplyPlan,
@@ -33,6 +48,7 @@ import {
 	layoutDays,
 	leftToRate,
 	leftToRateText,
+	moveAt,
 	overText,
 	runsOf,
 	type SplitEntry,
@@ -42,10 +58,11 @@ import {
 	stepEntry,
 	suggestSplit,
 	unusedText,
+	withOrder,
 	withOverrides,
 } from "./day-split";
-
-const NO_FREE_DAY = "No free days left. Take one from another city first.";
+import { NO_FREE_DAY, SplitRows, type SplitRowView } from "./SplitRows";
+import { SPLIT_TESTID as T } from "./testids";
 
 /** "Sat 2 – Fri 15 Oct", "Thu 30 Sep – Wed 6 Oct". */
 function tripRange(first: string, last: string): string {
@@ -59,12 +76,15 @@ function tripRange(first: string, last: string): string {
 
 const dayWord = (n: number) => `${n} ${n === 1 ? "day" : "days"}`;
 
-/** The split's inputs, trip-wide whatever the scope (the days are the whole trip's). */
-export function useDaySplit(data: PlacesData) {
-	const { ix, graph, scope, counts, access } = useWorkspace();
-	const { rows: scoped, members: scopedRaters, threshold, cityDays } = data;
+/** The split's inputs, always for the whole trip (the days are the whole trip's). */
+export function useDaySplit() {
+	const { ix, graph, counts, access, schedule } = useWorkspace();
+	const threshold = useShortlistBar().bar;
+	const cityDays = useMemo(
+		() => cityDayTable(ix, schedule, null),
+		[ix, schedule],
+	);
 	const trip = useMemo(() => {
-		if (!scope) return { rows: scoped, raters: scopedRaters };
 		const liveIds = new Set(graph.nodes.map((n) => n.id));
 		const nodes = placesInScope(ix, null, liveIds);
 		const members = raters(graph.members, nodes);
@@ -75,7 +95,7 @@ export function useDaySplit(data: PlacesData) {
 			cityDays,
 		});
 		return { rows, raters: members };
-	}, [scope, scoped, scopedRaters, threshold, cityDays, ix, graph, counts]);
+	}, [ix, graph, threshold, counts, cityDays]);
 	const cities = useMemo(
 		() =>
 			splitCities(ix, trip.rows, cityDays, {
@@ -84,255 +104,125 @@ export function useDaySplit(data: PlacesData) {
 			}),
 		[ix, trip, cityDays],
 	);
-	const suggestion = useMemo(
-		() => suggestSplit(ix, cities, ix.days.length),
-		[ix, cities],
-	);
 	const current = useMemo(() => dayCityIds(ix, cityDays), [ix, cityDays]);
 	const left = useMemo(
 		() => leftToRate(trip.rows, trip.raters, access.memberId),
 		[trip, access.memberId],
 	);
-	// No day in a city with places yet: the split is the step's main content.
+	// No day in a city with places yet: the split leads the Plan.
 	const listed = new Set(cities.map((c) => c.id));
 	const hasDays = current.some((c) => c !== null && listed.has(c));
 	const rowById = useMemo(
 		() => new Map(trip.rows.map((r) => [r.id, r])),
 		[trip.rows],
 	);
-	return { cities, suggestion, current, left, hasDays, rowById };
+	return { cities, current, left, hasDays, rowById };
 }
 
 export type DaySplitInfo = ReturnType<typeof useDaySplit>;
 
-/** Applies a split: places first (off their day), then the nights. */
+/**
+ * Applies a split: places first (off their day), then the nights. With no
+ * dates yet, the trip's dates first, then the nights on the new days.
+ */
 export function useApplySplit() {
 	const { graph } = useWorkspace();
-	const move = useMoveItem(graph.trip.id);
-	const stay = useSetDayStay(graph.trip.id);
+	const tripId = graph.trip.id;
+	const qc = useQueryClient();
+	const move = useMoveItem(tripId);
+	const stay = useSetDayStay(tripId);
+	const dates = useTripMutation(
+		(v: { startDate: string; endDate: string }) =>
+			setTripDates({ data: { tripId, ...v } }),
+		{
+			tripId,
+			keys: [
+				tripKeys.graph(tripId),
+				tripKeys.lists(tripId),
+				tripKeys.counts(tripId),
+				meKeys.trips,
+			],
+		},
+	);
 	const [busy, setBusy] = useState(false);
 	const moveAsync = move.mutateAsync;
 	const stayAsync = stay.mutateAsync;
+	const datesAsync = dates.mutateAsync;
+	const run = useCallback(async (fn: () => Promise<boolean>) => {
+		setBusy(true);
+		try {
+			return await fn();
+		} catch (e) {
+			toast.error(humanError(e));
+			return false;
+		} finally {
+			setBusy(false);
+		}
+	}, []);
 	const apply = useCallback(
-		async (plan: ApplyPlan): Promise<boolean> => {
-			setBusy(true);
-			try {
+		(plan: ApplyPlan) =>
+			run(async () => {
 				for (const it of plan.displaced)
 					await moveAsync({ itemId: it.id, dayId: null });
 				for (const s of plan.stays) await stayAsync(s);
 				return true;
-			} catch (e) {
-				toast.error(humanError(e));
-				return false;
-			} finally {
-				setBusy(false);
-			}
-		},
-		[moveAsync, stayAsync],
+			}),
+		[run, moveAsync, stayAsync],
 	);
-	return { apply, busy };
+	const applyWithDates = useCallback(
+		(startDate: string, tripDays: number, entries: readonly SplitEntry[]) =>
+			run(async () => {
+				const endDate = addDays(startDate, tripDays - 1);
+				// A suggestion: the dates wait for an editor, so the nights can't follow.
+				if (isProposed(await datesAsync({ startDate, endDate }))) return false;
+				const g = await qc.fetchQuery({
+					...tripGraphQuery(tripId),
+					staleTime: 0,
+				});
+				const next = indexGraph(g);
+				const plan = applyPlan(
+					next,
+					layoutDays(entries, next.days.length),
+					next.days.map(() => null),
+				);
+				for (const s of plan.stays) await stayAsync(s);
+				return true;
+			}),
+		[run, datesAsync, qc, tripId, stayAsync],
+	);
+	return { apply, applyWithDates, busy };
 }
 
-type Row = {
-	key: string;
-	id: string;
-	name: string;
-	days: number;
-	shortlisted: number;
-	notRated: number;
-};
+type Apply = ReturnType<typeof useApplySplit>;
 
-/** A city's places under its row: the shortlist (what its days are for), then what's left to rate. */
-function CityPlaces({ info, cityId }: { info: DaySplitInfo; cityId: string }) {
-	const { nav } = useWorkspace();
-	const city = info.cities.find((c) => c.id === cityId);
-	if (!city) return null;
-	const rowsOf = (ids: readonly string[]) =>
-		ids.flatMap((id) => info.rowById.get(id) ?? []);
-	const short = rowsOf(city.shortlistIds);
-	const toRate = rowsOf(city.toRateIds);
-	const open = (r: PlaceRow) => nav.select({ kind: "node", id: r.id });
-	return (
-		<div
-			data-testid={T.splitPlaces}
-			className="grid gap-2 pb-3 pl-11 pr-4 text-sm"
-		>
-			{short.length ? (
-				<>
-					<p className="text-xs text-muted-foreground">
-						About {formatDuration(city.minutes, { compact: true })} of sights on
-						the shortlist
-					</p>
-					<ul className="grid gap-0.5">
-						{short.map((r) => (
-							<li key={r.id}>
-								<button
-									type="button"
-									data-testid={T.splitPlace}
-									onClick={() => open(r)}
-									className="flex w-full min-w-0 cursor-pointer items-center gap-2 rounded-md px-1.5 py-1 text-left hover:bg-accent"
-								>
-									{r.node.category ? (
-										<CategoryIcon
-											category={r.node.category}
-											className="size-3.5 text-muted-foreground"
-										/>
-									) : (
-										<span className="size-3.5" />
-									)}
-									<span className="min-w-0 flex-1 truncate">{r.node.name}</span>
-									<span className="shrink-0 font-mono text-xs text-muted-foreground tnum">
-										{r.timeMin
-											? formatDuration(r.timeMin, { compact: true })
-											: ""}
-									</span>
-									<ScoreChip score={r.score} size="sm" />
-								</button>
-							</li>
-						))}
-					</ul>
-				</>
-			) : (
-				<p className="text-xs text-muted-foreground">
-					Nothing shortlisted here yet.
-				</p>
-			)}
-			{toRate.length ? (
-				<p className="text-xs text-muted-foreground">
-					<span className="font-medium text-foreground">Not rated yet:</span>{" "}
-					{toRate.map((r, i) => (
-						<span key={r.id}>
-							{i ? ", " : ""}
-							<button
-								type="button"
-								onClick={() => open(r)}
-								className="cursor-pointer underline-offset-2 hover:text-foreground hover:underline"
-							>
-								{r.node.name}
-							</button>
-						</span>
-					))}
-				</p>
-			) : null}
-			{city.belowShortlist ? (
-				<p className="text-xs text-muted-foreground">
-					{city.belowShortlist}{" "}
-					{city.belowShortlist === 1 ? "other place" : "other places"} didn't
-					make the shortlist.
-				</p>
-			) : null}
-		</div>
-	);
+/** The stops in order on the map while this is shown (the trip map beside the Plan). */
+function useRouteOnMap(rows: readonly SplitRowView[]) {
+	const { ix } = useWorkspace();
+	const setRoute = useUi((s) => s.setSplitRoute);
+	const key = useMemo(() => {
+		const out: SplitStop[] = [];
+		let n = 0;
+		for (const r of rows) {
+			if (r.days < 1) continue;
+			n += 1;
+			const at = ix.coordOf(r.id);
+			if (at)
+				out.push({
+					cityId: r.id,
+					name: r.name,
+					lng: at[0],
+					lat: at[1],
+					stop: n,
+					days: r.days,
+				});
+		}
+		return JSON.stringify(out);
+	}, [ix, rows]);
+	useEffect(() => setRoute(JSON.parse(key)), [key, setRoute]);
+	useEffect(() => () => setRoute(null), [setRoute]);
 }
 
-function SplitRows({
-	info,
-	rows,
-	unused,
-	onStep,
-	busy,
-}: {
-	info: DaySplitInfo;
-	rows: readonly Row[];
-	unused: number;
-	/** Null: read-only (no − / +). */
-	onStep: ((index: number, delta: 1 | -1) => void) | null;
-	busy: boolean;
-}) {
-	const [open, setOpen] = useState<ReadonlySet<string>>(new Set());
-	const toggle = (id: string) =>
-		setOpen((s) => {
-			const n = new Set(s);
-			if (n.has(id)) n.delete(id);
-			else n.add(id);
-			return n;
-		});
-	return (
-		<ul className="@container divide-y rounded-xl border bg-card">
-			{rows.map((r, i) => (
-				<li
-					key={r.key}
-					data-testid={T.splitRow}
-					data-city={r.id}
-					data-days={r.days}
-				>
-					<div className="flex items-center gap-3 px-4 py-2.5 @lg:grid @lg:grid-cols-[1.5rem_minmax(0,10rem)_4.5rem_minmax(0,1fr)_auto]">
-						<button
-							type="button"
-							data-testid={T.splitExpand}
-							aria-expanded={open.has(r.id)}
-							aria-label={`${open.has(r.id) ? "Hide" : "Show"} the places in ${r.name}`}
-							onClick={() => toggle(r.id)}
-							className="-ml-1.5 grid size-6 shrink-0 cursor-pointer place-items-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
-						>
-							<ChevronRight
-								className={cn(
-									"size-4 transition-transform",
-									open.has(r.id) && "rotate-90",
-								)}
-							/>
-						</button>
-						<div className="min-w-0 flex-1 @lg:contents">
-							<div className="flex min-w-0 items-baseline gap-2 @lg:contents">
-								<button
-									type="button"
-									onClick={() => toggle(r.id)}
-									className={cn(
-										"cursor-pointer truncate text-left text-[15px] font-medium hover:underline",
-										!r.days && "text-muted-foreground",
-									)}
-								>
-									{r.name}
-								</button>
-								<span
-									className={cn(
-										"shrink-0 text-sm",
-										!r.days && "text-muted-foreground",
-									)}
-								>
-									<span className="font-mono tnum">{r.days}</span>{" "}
-									{r.days === 1 ? "day" : "days"}
-								</span>
-							</div>
-							<span className="block truncate text-xs text-muted-foreground @lg:text-[13px]">
-								{r.shortlisted} shortlisted
-								{r.notRated ? ` · ${r.notRated} not rated yet` : ""}
-							</span>
-						</div>
-						{onStep ? (
-							<div className="flex shrink-0 gap-1">
-								<Button
-									variant="outline"
-									size="icon-sm"
-									data-testid={T.splitMinus}
-									aria-label={`One day less in ${r.name}`}
-									disabled={busy || r.days < 1}
-									onClick={() => onStep(i, -1)}
-								>
-									<Minus />
-								</Button>
-								<Button
-									variant="outline"
-									size="icon-sm"
-									data-testid={T.splitPlus}
-									aria-label={`One day more in ${r.name}`}
-									title={unused < 1 ? NO_FREE_DAY : undefined}
-									disabled={busy || unused < 1}
-									onClick={() => onStep(i, 1)}
-								>
-									<Plus />
-								</Button>
-							</div>
-						) : null}
-					</div>
-					{open.has(r.id) ? <CityPlaces info={info} cityId={r.id} /> : null}
-				</li>
-			))}
-		</ul>
-	);
-}
-
-/** "4 days not used", or (none left, editors) how to free one. */
+/** "4 days not planned yet", or (none left, editors) how to free one. */
 function UnusedLine({ unused, canEdit }: { unused: number; canEdit: boolean }) {
 	if (!unused && !canEdit) return null;
 	return (
@@ -342,56 +232,140 @@ function UnusedLine({ unused, canEdit }: { unused: number; canEdit: boolean }) {
 	);
 }
 
-/** − / + on the suggestion, per trip: kept while the page is open (the Rate step and back), never saved. */
-export const splitOverrides = new Map<string, Record<string, number>>();
+type SplitDraft = {
+	/** − / + per city. */
+	days?: Record<string, number>;
+	/** The stops in the order you set. */
+	order?: string[];
+	/** No dates yet: about how many days, and the first. */
+	tripDays?: number;
+	start?: string | null;
+};
 
-/** The first split: the suggestion with − / + on top and "Use these days". */
-export function SplitSuggestion({
+/** Your changes to the suggestion, per trip: kept while the page is open, never saved. */
+export const splitDrafts = new Map<string, SplitDraft>();
+
+function useSplitDraft(tripId: string) {
+	const [draft, setDraft] = useState<SplitDraft>(
+		() => splitDrafts.get(tripId) ?? {},
+	);
+	const update = useCallback(
+		(patch: SplitDraft) =>
+			setDraft((d) => {
+				const next = { ...d, ...patch };
+				splitDrafts.set(tripId, next);
+				return next;
+			}),
+		[tripId],
+	);
+	return [draft, update] as const;
+}
+
+const MAX_DAYS = 60;
+
+/** The first split: the suggestion with − / + and your order on top, and "Use these days". */
+function SplitSuggestion({
 	info,
 	canEdit,
-	onRate,
 	apply,
-	busy,
 }: {
 	info: DaySplitInfo;
 	canEdit: boolean;
-	onRate: () => void;
-	apply: (plan: ApplyPlan) => Promise<boolean>;
-	busy: boolean;
+	apply: Apply;
 }) {
-	const { ix, graph } = useWorkspace();
+	const { ix, graph, nav, access } = useWorkspace();
 	const tripId = graph.trip.id;
-	const [overrides, setState] = useState(
-		() => splitOverrides.get(tripId) ?? {},
+	const [draft, update] = useSplitDraft(tripId);
+	const dated = ix.days.length > 0;
+	const [typed, setTyped] = useState(() =>
+		draft.tripDays ? String(draft.tripDays) : "",
 	);
-	const setOverrides = (o: Record<string, number>) => {
-		splitOverrides.set(tripId, o);
-		setState(o);
-	};
+	const tripDays = dated ? ix.days.length : (draft.tripDays ?? 0);
+	const suggestion = useMemo(
+		() => suggestSplit(ix, info.cities, tripDays),
+		[ix, info.cities, tripDays],
+	);
 	const split = useMemo(
-		() => withOverrides(info.suggestion, overrides),
-		[info.suggestion, overrides],
+		() => withOrder(withOverrides(suggestion, draft.days ?? {}), draft.order),
+		[suggestion, draft.days, draft.order],
 	);
+	const rows = useMemo<SplitRowView[]>(
+		() => split.rows.map((r) => ({ ...r, key: r.id })),
+		[split.rows],
+	);
+	const shown = tripDays > 0;
+	useRouteOnMap(shown ? rows : []);
 	const rateLine = leftToRateText(info.left);
-	const first = ix.days[0]?.date ?? "";
-	const last = ix.days.at(-1)?.date ?? first;
 	const entries: SplitEntry[] = split.rows
 		.filter((r) => r.days > 0)
 		.map((r) => ({ cityId: r.id, days: r.days }));
+	const suggesting = access.mode === "suggest";
+	const done = () => splitDrafts.delete(tripId);
 	const use = async () => {
-		const next = layoutDays(entries, ix.days.length);
-		if (await apply(applyPlan(ix, next, info.current)))
-			splitOverrides.delete(tripId);
+		if (dated) {
+			const next = layoutDays(entries, ix.days.length);
+			if (await apply.apply(applyPlan(ix, next, info.current))) done();
+		} else if (draft.start) {
+			if (await apply.applyWithDates(draft.start, tripDays, entries)) done();
+		}
 	};
+	const need = info.cities.reduce((s, c) => s + c.need, 0);
+	const first = ix.days[0]?.date ?? "";
+	const last = ix.days.at(-1)?.date ?? first;
 	return (
 		<section
 			data-testid={T.split}
 			data-unused={split.unused}
 			className="flex flex-col gap-3"
 		>
-			<h2 className="font-display text-lg font-semibold">
-				{dayWord(split.tripDays)}, {tripRange(first, last)}
-			</h2>
+			<header className="flex flex-col gap-1">
+				<div className="flex flex-wrap items-baseline justify-between gap-x-3">
+					<h2 className="font-display text-lg font-semibold">
+						How long in each city?
+					</h2>
+					{dated ? (
+						<span className="text-sm text-muted-foreground">
+							{dayWord(tripDays)}, {tripRange(first, last)}
+						</span>
+					) : null}
+				</div>
+				<p className="max-w-prose text-sm text-muted-foreground">
+					{canEdit
+						? "Based on your shortlist. Change the days, reorder the stops, then use them."
+						: "Based on your shortlist."}
+				</p>
+			</header>
+			{dated ? null : (
+				<div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+					<label
+						htmlFor="split-trip-days"
+						className="text-sm font-medium whitespace-nowrap"
+					>
+						About how many days?
+					</label>
+					<Input
+						id="split-trip-days"
+						type="number"
+						inputMode="numeric"
+						min={1}
+						max={MAX_DAYS}
+						data-testid={T.tripDays}
+						value={typed}
+						onChange={(e) => {
+							setTyped(e.target.value);
+							const n = Number(e.target.value);
+							const ok = Number.isInteger(n) && n >= 1 && n <= MAX_DAYS;
+							update({ tripDays: ok ? n : undefined });
+						}}
+						className="h-8 w-20"
+					/>
+					{need && !shown ? (
+						<span className="text-sm text-muted-foreground">
+							Your shortlist needs about {dayWord(need)}.
+						</span>
+					) : null}
+				</div>
+			)}
 			{rateLine ? (
 				<div
 					data-testid={T.splitRate}
@@ -399,131 +373,179 @@ export function SplitSuggestion({
 				>
 					<p className="min-w-0 flex-1 text-sm">{rateLine}</p>
 					{info.left[0]?.you ? (
-						<Button size="sm" variant="outline" onClick={onRate}>
+						<Button
+							size="sm"
+							variant="outline"
+							onClick={() =>
+								nav.openPlaces({ scopeId: null, patch: { pv: "rate" } })
+							}
+						>
 							<Star />
 							Rate
 						</Button>
 					) : null}
 				</div>
 			) : null}
-			{split.need > split.tripDays ? (
-				<p data-testid={T.splitOver} className="text-sm text-warning">
-					{overText(split.need, split.tripDays)}
-				</p>
-			) : null}
-			<SplitRows
-				info={info}
-				rows={split.rows.map((r) => ({ ...r, key: r.id }))}
-				unused={split.unused}
-				busy={busy}
-				onStep={
-					canEdit
-						? (i, delta) => {
-								const id = split.rows[i]?.id;
-								const o = id ? stepCity(split, overrides, id, delta) : null;
-								if (o) setOverrides(o);
-							}
-						: null
-				}
-			/>
-			<UnusedLine unused={split.unused} canEdit={canEdit} />
-			{canEdit ? (
-				<Button
-					data-testid={T.splitUse}
-					className="self-start"
-					disabled={busy || !entries.length}
-					onClick={() => void use()}
-				>
-					Use these days
-				</Button>
+			{shown ? (
+				<>
+					{split.need > split.tripDays ? (
+						<p data-testid={T.splitOver} className="text-sm text-warning">
+							{overText(split.need, split.tripDays)}
+						</p>
+					) : null}
+					<SplitRows
+						info={info}
+						rows={rows}
+						unused={split.unused}
+						busy={apply.busy}
+						onStep={
+							canEdit
+								? (i, delta) => {
+										const id = split.rows[i]?.id;
+										const o = id
+											? stepCity(split, draft.days ?? {}, id, delta)
+											: null;
+										if (o) update({ days: o });
+									}
+								: null
+						}
+						onMove={
+							canEdit
+								? (from, to) => {
+										const order = moveAt(
+											split.rows.map((r) => r.id),
+											from,
+											to,
+										);
+										if (order) update({ order });
+									}
+								: null
+						}
+					/>
+					<UnusedLine unused={split.unused} canEdit={canEdit} />
+					{canEdit && !dated && suggesting ? (
+						<p
+							data-testid={T.suggestNote}
+							className="max-w-prose text-sm text-muted-foreground"
+						>
+							You're suggesting, so this suggests the dates only. Once they're
+							accepted, come back here to use these days.
+						</p>
+					) : null}
+					{canEdit ? (
+						<div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+							{dated ? null : (
+								<div className="flex items-center gap-2">
+									<span className="text-sm whitespace-nowrap">Starting on</span>
+									<div className="w-44">
+										<DateField
+											value={draft.start ?? null}
+											onChange={(start) => update({ start })}
+											testId={T.start}
+										/>
+									</div>
+								</div>
+							)}
+							<Button
+								data-testid={T.splitUse}
+								disabled={
+									apply.busy || !entries.length || (!dated && !draft.start)
+								}
+								onClick={() => void use()}
+							>
+								{!dated && suggesting
+									? "Suggest these dates"
+									: "Use these days"}
+							</Button>
+						</div>
+					) : null}
+				</>
 			) : null}
 		</section>
 	);
 }
 
-/** "Days: Tokyo 4 · Kyoto 3 · Osaka 2" and Change (the − / + panel). */
-export function DaysLine({
+/** "Tokyo 4 days · Kyoto 3 · Osaka 2" and Change (the same panel, prefilled). */
+function DaysLine({
 	info,
-	canEdit,
-	apply,
-	busy,
+	onChange,
 }: {
 	info: DaySplitInfo;
-	canEdit: boolean;
-	apply: (plan: ApplyPlan) => Promise<boolean>;
-	busy: boolean;
+	/** Null: read-only, or the panel is open. */
+	onChange: (() => void) | null;
 }) {
 	const { ix } = useWorkspace();
-	const [open, setOpen] = useState(false);
 	const { entries, unused } = useMemo(
 		() => runsOf(info.current),
 		[info.current],
 	);
 	const nameOf = (id: string) => ix.node(id)?.name ?? "?";
+	const text = splitText(entries, nameOf);
+	// One quiet line: beside the filter when there's room, else its own row.
 	return (
-		<div className="flex flex-col gap-3">
-			<div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-				<p data-testid={T.splitDays} className="text-sm">
-					<span className="text-muted-foreground">Days:</span>{" "}
-					<span className="font-medium">{splitText(entries, nameOf)}</span>
-					{unused ? (
-						<span className="text-muted-foreground">
-							{" "}
-							· {unusedText(unused)}
-						</span>
-					) : null}
-				</p>
-				{canEdit && !open ? (
-					<Button
-						size="xs"
-						variant="outline"
-						data-testid={T.splitChange}
-						onClick={() => setOpen(true)}
-					>
-						Change
-					</Button>
+		<div className="flex min-w-0 grow basis-full items-center gap-2 @md:ml-1 @md:basis-0">
+			<p
+				data-testid={T.splitDays}
+				title={unused ? `${text} · ${unusedText(unused)}` : text}
+				className="min-w-0 truncate text-sm"
+			>
+				<span className="font-medium">{text}</span>
+				{unused ? (
+					<span className="text-muted-foreground"> · {unusedText(unused)}</span>
 				) : null}
-			</div>
-			{open ? (
-				<ChangePanel
-					info={info}
-					initial={entries}
-					apply={apply}
-					busy={busy}
-					onClose={() => setOpen(false)}
-				/>
+			</p>
+			{onChange ? (
+				<Button
+					size="xs"
+					variant="outline"
+					data-testid={T.splitChange}
+					onClick={onChange}
+					className="shrink-0"
+				>
+					Change
+				</Button>
 			) : null}
 		</div>
 	);
 }
 
+type KeyedEntry = SplitEntry & { key: string };
+
 function ChangePanel({
 	info,
 	initial,
 	apply,
-	busy,
 	onClose,
 }: {
 	info: DaySplitInfo;
 	initial: readonly SplitEntry[];
-	apply: (plan: ApplyPlan) => Promise<boolean>;
-	busy: boolean;
+	apply: Apply;
 	onClose: () => void;
 }) {
 	const { ix } = useWorkspace();
 	const tripDays = ix.days.length;
-	// The runs, then the cities with places and no days yet.
-	const [entries, setEntries] = useState<SplitEntry[]>(() => {
-		const seen = new Set(initial.map((e) => e.cityId));
+	const busy = apply.busy;
+	// The runs, then the cities with places and no days yet (a city can come back: keys stay put as rows move).
+	const [entries, setEntries] = useState<KeyedEntry[]>(() => {
+		const seen = new Map<string, number>();
+		const key = (cityId: string) => {
+			const n = (seen.get(cityId) ?? 0) + 1;
+			seen.set(cityId, n);
+			return `${cityId}:${n}`;
+		};
+		const rest = suggestSplit(ix, info.cities, tripDays).rows.filter(
+			(r) => !initial.some((e) => e.cityId === r.id),
+		);
 		return [
-			...initial,
-			...info.suggestion.rows
-				.filter((r) => !seen.has(r.id))
-				.map((r) => ({ cityId: r.id, days: 0 })),
+			...initial.map((e) => ({ ...e, key: key(e.cityId) })),
+			...rest.map((r) => ({ cityId: r.id, days: 0, key: key(r.id) })),
 		];
 	});
 	const [confirm, setConfirm] = useState(false);
-	const byId = new Map(info.cities.map((c) => [c.id, c]));
+	const byId = useMemo(
+		() => new Map(info.cities.map((c) => [c.id, c])),
+		[info.cities],
+	);
 	const used = entries.reduce((s, e) => s + e.days, 0);
 	const unused = Math.max(0, tripDays - used);
 	const next = useMemo(
@@ -539,16 +561,26 @@ function ChangePanel({
 		[ix, next, info.current],
 	);
 	const changed = next.some((c, i) => c !== (info.current[i] ?? null));
-	const rows: Row[] = entries.map((e, i) => ({
-		key: `${e.cityId}:${i}`,
-		id: e.cityId,
-		name: ix.node(e.cityId)?.name ?? "?",
-		days: e.days,
-		shortlisted: byId.get(e.cityId)?.shortlisted ?? 0,
-		notRated: byId.get(e.cityId)?.notRated ?? 0,
-	}));
+	const rows = useMemo<SplitRowView[]>(
+		() =>
+			entries.map((e) => ({
+				key: e.key,
+				id: e.cityId,
+				name: ix.node(e.cityId)?.name ?? "?",
+				days: e.days,
+				shortlisted: byId.get(e.cityId)?.shortlisted ?? 0,
+				notRated: byId.get(e.cityId)?.notRated ?? 0,
+			})),
+		[entries, ix, byId],
+	);
+	useRouteOnMap(rows);
+	const edit = (n: KeyedEntry[] | null) => {
+		if (!n) return;
+		setEntries(n);
+		setConfirm(false);
+	};
 	const run = async () => {
-		if (await apply(plan)) onClose();
+		if (await apply.apply(plan)) onClose();
 	};
 	return (
 		<div className="flex flex-col gap-3 rounded-xl bg-muted/50 p-3 sm:p-4">
@@ -557,13 +589,8 @@ function ChangePanel({
 				rows={rows}
 				unused={unused}
 				busy={busy}
-				onStep={(i, delta) => {
-					const n = stepEntry(entries, i, delta, tripDays);
-					if (n) {
-						setEntries(n);
-						setConfirm(false);
-					}
-				}}
+				onStep={(i, delta) => edit(stepEntry(entries, i, delta, tripDays))}
+				onMove={(from, to) => edit(moveAt(entries, from, to))}
 			/>
 			<UnusedLine unused={unused} canEdit />
 			{confirm ? (
@@ -616,5 +643,66 @@ function ChangePanel({
 				</div>
 			)}
 		</div>
+	);
+}
+
+/**
+ * The top of the Plan: its `header` row (with the days line once days have
+ * cities, and Change opening the panel under it), then "How long in each
+ * city?" while no day has a city (with no dates too). `fallback` when the
+ * trip has no places in a city yet. Always for the whole trip.
+ */
+export function PlanSplit({
+	header,
+	banner,
+	fallback = null,
+	className,
+}: {
+	header?: ReactNode;
+	/** Between the header row and the panel. */
+	banner?: ReactNode;
+	fallback?: ReactNode;
+	className?: string;
+}) {
+	const info = useDaySplit();
+	const { access } = useWorkspace();
+	const apply = useApplySplit();
+	const [open, setOpen] = useState(false);
+	const cities = info.cities.length > 0;
+	const line = cities && info.hasDays;
+	const current = useMemo(() => runsOf(info.current).entries, [info.current]);
+	return (
+		<>
+			{header || line ? (
+				<div className="flex min-h-10 flex-wrap items-center gap-2 px-4 py-1.5">
+					{header}
+					{line ? (
+						<DaysLine
+							info={info}
+							onChange={access.canEdit && !open ? () => setOpen(true) : null}
+						/>
+					) : null}
+				</div>
+			) : null}
+			{banner}
+			{!cities ? (
+				fallback
+			) : line ? (
+				open ? (
+					<div className={cn("px-4 pb-4", className)}>
+						<ChangePanel
+							info={info}
+							initial={current}
+							apply={apply}
+							onClose={() => setOpen(false)}
+						/>
+					</div>
+				) : null
+			) : (
+				<div className={cn("px-4 pb-4", className)}>
+					<SplitSuggestion info={info} canEdit={access.canEdit} apply={apply} />
+				</div>
+			)}
+		</>
 	);
 }

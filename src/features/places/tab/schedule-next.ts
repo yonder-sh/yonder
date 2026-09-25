@@ -15,6 +15,8 @@
  *   in total ("about 1.5 days of sights").
  * - Can't fit: closed on every day you're in its city, or a Must place in
  *   a city with no days.
+ * - The windows' countries in trip order (a heading where the country
+ *   changes, with its days).
  * - `bestSpot`: where on a day a place goes: the cheapest detour between
  *   the day's stay and stops (never inside a flight, never pushing a pinned
  *   stop late), checked with the Plan's own drop rules (`planDrop`).
@@ -238,13 +240,47 @@ export type CantFit = {
 	detail?: string;
 };
 
+/** A run of windows in one country, in trip order (the route coming back starts another). */
+export type CountryRun = {
+	key: string;
+	countryId: string | null;
+	name: string;
+	days: number;
+	windowKeys: string[];
+};
+
 export type ScheduleNextResult = {
 	windows: WindowPlan[];
+	/** Every window's country run (with days, whether or not it has places waiting). */
+	countries: CountryRun[];
 	noDays: NoDaysCity[];
 	cantFit: CantFit[];
 	/** Shortlisted places not on a day (each counted once). */
 	waiting: number;
 };
+
+export function countryRuns(
+	ix: Pick<GraphIndex, "path">,
+	windows: readonly StayWindow[],
+): CountryRun[] {
+	const out: CountryRun[] = [];
+	for (const w of windows) {
+		const c = ix.path(w.cityId).find((n) => n.type === "country") ?? null;
+		const last = out.at(-1);
+		if (last && last.countryId === (c?.id ?? null)) {
+			last.days += w.dayIds.length;
+			last.windowKeys.push(w.key);
+		} else
+			out.push({
+				key: `${c?.id ?? "none"}:${w.key}`,
+				countryId: c?.id ?? null,
+				name: c?.name ?? "",
+				days: w.dayIds.length,
+				windowKeys: [w.key],
+			});
+	}
+	return out;
+}
 
 /** Sights' time in half days of the day capacity ("about 1.5 days"), at least half a day. */
 export function sightDays(minutes: number, capacityMin: number): number {
@@ -421,7 +457,13 @@ export function scheduleNext(
 	cantFit.sort(
 		(a, b) => b.row.score - a.row.score || a.row.name.localeCompare(b.row.name),
 	);
-	return { windows: windowPlans, noDays: cities, cantFit, waiting };
+	return {
+		windows: windowPlans,
+		countries: countryRuns(ix, windows),
+		noDays: cities,
+		cantFit,
+		waiting,
+	};
 }
 
 // ---------------------------------------------------------------------------

@@ -1,10 +1,12 @@
 /**
- * The day split (the Schedule step while no trip day has a city): how many
- * of the trip's days each city with places gets, from the time its
- * shortlist needs, in the order with the least travel. Afterwards: the split
- * the days hold now (runs of nights in one city), a changed split laid out
- * on the days, and what applying it writes (the nights) and moves off a day
- * (places on a day that changes city). Pure.
+ * How long in each city (the top of the Plan while no trip day has a city):
+ * how many of the trip's days each city with places gets, from the time its
+ * shortlist needs, the spare days shared out, in the order with the least
+ * travel from where you land to where you fly home. The stops read in
+ * travel order under their country (and region) headings, and can be
+ * reordered. Afterwards: the days each city holds now (runs of nights in one
+ * city), a change laid out on the days, and what applying it writes (the
+ * nights) and moves off a day (places on a day that changes city). Pure.
  */
 
 import type { CityDaysTable } from "@/features/places/lib/days";
@@ -20,6 +22,15 @@ import type { GraphItem, GraphMember } from "@/lib/engine/types";
 // ---------------------------------------------------------------------------
 // Cities and what their shortlist needs
 // ---------------------------------------------------------------------------
+
+/** Shortlisted places of a city in one area (the top-level area under the city; null: right under it). */
+export type SplitArea = {
+	id: string | null;
+	name: string;
+	minutes: number;
+	/** Best first. */
+	ids: string[];
+};
 
 export type SplitCity = {
 	id: string;
@@ -37,6 +48,8 @@ export type SplitCity = {
 	shortlistIds: string[];
 	toRateIds: string[];
 	belowShortlist: number;
+	/** The shortlist by area: in order of their best place, the city's own last. */
+	areas: SplitArea[];
 };
 
 type Tree = Pick<GraphIndex, "isWithin" | "path" | "node">;
@@ -51,6 +64,18 @@ export function splitCityOf(
 	if (r) return { id: r.nodeId, name: r.name };
 	if (!row.city || ix.node(row.city.id)?.type === "country") return null;
 	return row.city;
+}
+
+/** The top-level area under `cityId` on a place's path, or null. */
+export function topAreaOf(
+	ix: Pick<GraphIndex, "path">,
+	nodeId: string,
+	cityId: string,
+): { id: string; name: string } | null {
+	const path = ix.path(nodeId).slice(0, -1);
+	const at = path.findIndex((n) => n.id === cityId);
+	if (at < 0) return null;
+	return path.slice(at + 1).find((n) => n.type === "area") ?? null;
 }
 
 /** Days a shortlist needs: the "about 1.5 days of sights" estimate, rounded up. */
@@ -84,6 +109,7 @@ export function splitCities(
 				shortlistIds: [],
 				toRateIds: [],
 				belowShortlist: 0,
+				areas: [],
 			};
 			by.set(city.id, c);
 		}
@@ -102,9 +128,25 @@ export function splitCities(
 	const out = [...by.values()];
 	for (const c of out) {
 		c.need = c.shortlisted ? daysNeeded(c.minutes, opts.capacityMin) : 0;
-		c.shortlistIds = (short.get(c.id) ?? [])
-			.sort(compareByScore)
-			.map((r) => r.id);
+		const best = (short.get(c.id) ?? []).sort(compareByScore);
+		c.shortlistIds = best.map((r) => r.id);
+		const areas = new Map<string, SplitArea>();
+		for (const r of best) {
+			const a = topAreaOf(ix, r.id, c.id);
+			const key = a?.id ?? "";
+			const area = areas.get(key) ?? {
+				id: a?.id ?? null,
+				name: a?.name ?? "",
+				minutes: 0,
+				ids: [],
+			};
+			area.minutes += defaultItemDuration(r.node);
+			area.ids.push(r.id);
+			areas.set(key, area);
+		}
+		c.areas = [...areas.values()].sort(
+			(a, b) => Number(a.id === null) - Number(b.id === null),
+		);
 	}
 	return out;
 }
@@ -149,49 +191,81 @@ export function fitDays(need: readonly number[], budget: number): number[] {
 	return out;
 }
 
+/**
+ * The spare days shared out: one more day each, in turn, to the cities with
+ * days, the most time needed first, until the trip is full.
+ */
+export function shareSpare(
+	days: readonly number[],
+	minutes: readonly number[],
+	budget: number,
+): number[] {
+	const out = [...days];
+	const turn = out
+		.map((d, i) => ({ d, i, m: minutes[i] ?? 0 }))
+		.filter((x) => x.d > 0)
+		.sort((a, b) => b.m - a.m || b.d - a.d || a.i - b.i);
+	let left = budget - out.reduce((s, d) => s + d, 0);
+	while (left > 0 && turn.length)
+		for (const x of turn) {
+			if (left <= 0) break;
+			out[x.i] = (out[x.i] ?? 0) + 1;
+			left -= 1;
+		}
+	return out;
+}
+
 // ---------------------------------------------------------------------------
 // Order: the least travel between cities
 // ---------------------------------------------------------------------------
 
 type Point = { id: string; at: LngLat | null };
+type Located = Point & { at: LngLat };
 
 /**
  * The visiting order with the least travel: nearest neighbour from the
- * start, then 2-opt on the open path (the start stays first). Points without
- * coordinates go last, in the order given.
+ * start, then 2-opt; the start stays first and `endId` last (the end back at
+ * the start: a round trip). Points without coordinates go last, in the order
+ * given.
  */
 export function routeOrder(
 	points: readonly Point[],
 	startId: string | null,
+	endId: string | null = null,
 ): string[] {
-	const located = points.filter((p): p is Point & { at: LngLat } => !!p.at);
+	const located = points.filter((p): p is Located => !!p.at);
 	const rest = points.filter((p) => !p.at).map((p) => p.id);
-	if (!located.length) return rest;
 	const start = located.find((p) => p.id === startId) ?? located[0];
-	const path = [start as Point & { at: LngLat }];
-	const todo = located.filter((p) => p !== start);
+	if (!start) return rest;
+	const round = endId === start.id && located.length > 2;
+	const end =
+		(endId && located.find((p) => p.id === endId && p !== start)) || null;
+	const path: Located[] = [start];
+	const todo = located.filter((p) => p !== start && p !== end);
 	while (todo.length) {
-		const last = path.at(-1)?.at as LngLat;
+		const last = (path.at(-1) as Located).at;
 		let best = 0;
 		for (let i = 1; i < todo.length; i++)
 			if (
-				haversineKm(last, (todo[i] as Point & { at: LngLat }).at) <
-				haversineKm(last, (todo[best] as Point & { at: LngLat }).at)
+				haversineKm(last, (todo[i] as Located).at) <
+				haversineKm(last, (todo[best] as Located).at)
 			)
 				best = i;
-		path.push(todo.splice(best, 1)[0] as Point & { at: LngLat });
+		path.push(todo.splice(best, 1)[0] as Located);
 	}
+	if (end) path.push(end);
+	const at = (i: number) => (path[i] as Located).at;
 	const d = (a: number, b: number) =>
-		b >= path.length
-			? 0
-			: haversineKm(
-					(path[a] as Point & { at: LngLat }).at,
-					(path[b] as Point & { at: LngLat }).at,
-				);
+		b < path.length
+			? haversineKm(at(a), at(b))
+			: round
+				? haversineKm(at(a), start.at)
+				: 0;
+	const lastFree = end ? path.length - 2 : path.length - 1;
 	for (let improved = true, rounds = 0; improved && rounds < 50; rounds++) {
 		improved = false;
-		for (let i = 1; i < path.length - 1; i++)
-			for (let j = i + 1; j < path.length; j++) {
+		for (let i = 1; i < lastFree; i++)
+			for (let j = i + 1; j <= lastFree; j++) {
 				const delta = d(i - 1, j) + d(i, j + 1) - d(i - 1, i) - d(j, j + 1);
 				if (delta < -1e-9) {
 					path.splice(i, j - i + 1, ...path.slice(i, j + 1).reverse());
@@ -202,19 +276,17 @@ export function routeOrder(
 	return [...path.map((p) => p.id), ...rest];
 }
 
-/**
- * Where the trip starts: the city of its first located item (where a first
- * flight lands) when it's one of `cities`, else the one nearest to it. Null
- * when nothing is located.
- */
-export function arrivalCity(
-	ix: Pick<GraphIndex, "located" | "blockOf" | "item" | "isWithin" | "coordOf">,
+type Trip = Pick<
+	GraphIndex,
+	"located" | "blockOf" | "item" | "isWithin" | "coordOf"
+>;
+
+/** The city holding `nodeId`, else the one nearest to it; null when it has no place. */
+function cityAt(
+	ix: Pick<GraphIndex, "isWithin" | "coordOf">,
+	nodeId: string | null | undefined,
 	cities: readonly Point[],
 ): string | null {
-	const first = ix.located[0];
-	if (!first) return null;
-	const landed = ix.blockOf(first.id)?.at(-1) ?? first.id;
-	const nodeId = ix.item(landed)?.nodeId ?? first.nodeId;
 	if (!nodeId) return null;
 	const inside = cities.find((c) => ix.isWithin(nodeId, c.id));
 	if (inside) return inside.id;
@@ -233,8 +305,38 @@ export function arrivalCity(
 	return best;
 }
 
+/**
+ * Where the trip starts: the city of its first located item (where a first
+ * flight lands) when it's one of `cities`, else the one nearest to it. Null
+ * when nothing is located.
+ */
+export function arrivalCity(ix: Trip, cities: readonly Point[]): string | null {
+	const first = ix.located[0];
+	if (!first) return null;
+	const landed = ix.blockOf(first.id)?.at(-1) ?? first.id;
+	return cityAt(ix, ix.item(landed)?.nodeId ?? first.nodeId, cities);
+}
+
+/**
+ * Where the trip ends: the city of its last located item (where the last
+ * flight leaves from), or the one nearest to it. Null when nothing is
+ * located after the way in.
+ */
+export function departureCity(
+	ix: Trip,
+	cities: readonly Point[],
+): string | null {
+	const first = ix.located[0];
+	const last = ix.located.at(-1);
+	if (!first || !last) return null;
+	const block = ix.blockOf(last.id);
+	if (last.id === first.id || block?.includes(first.id)) return null;
+	const from = block?.[0] ?? last.id;
+	return cityAt(ix, ix.item(from)?.nodeId ?? last.nodeId, cities);
+}
+
 // ---------------------------------------------------------------------------
-// The suggestion, and − / + on it
+// The suggestion, and − / + and reordering on it
 // ---------------------------------------------------------------------------
 
 export type SplitRow = SplitCity & { days: number };
@@ -250,11 +352,12 @@ export type DaySplit = {
 
 /**
  * The suggested split: each city's days from its shortlist, fitted to the
- * trip, ordered by the least travel from the arrival city (else from the
- * city with the most days). Cities with no days follow, nearest first.
+ * trip, the spare days shared out, ordered by the least travel from the
+ * arrival city (else the city with the most days) to the departure city.
+ * Cities with no days follow, nearest first.
  */
 export function suggestSplit(
-	ix: Parameters<typeof arrivalCity>[0],
+	ix: Trip,
 	cities: readonly SplitCity[],
 	tripDays: number,
 ): DaySplit {
@@ -264,8 +367,12 @@ export function suggestSplit(
 			b.shortlisted - a.shortlisted ||
 			a.name.localeCompare(b.name),
 	);
-	const fitted = fitDays(
-		base.map((c) => c.need),
+	const fitted = shareSpare(
+		fitDays(
+			base.map((c) => c.need),
+			tripDays,
+		),
+		base.map((c) => c.minutes),
 		tripDays,
 	);
 	const rows: SplitRow[] = base.map((c, i) => ({ ...c, days: fitted[i] ?? 0 }));
@@ -274,7 +381,7 @@ export function suggestSplit(
 		.sort((a, b) => b.days - a.days || rows.indexOf(a) - rows.indexOf(b));
 	const off = rows.filter((r) => r.days === 0);
 	const start = arrivalCity(ix, on) ?? on[0]?.id ?? null;
-	const route = routeOrder(on, start);
+	const route = routeOrder(on, start, departureCity(ix, on));
 	// Cities with no days: a nearest-neighbour chain on from the route's end.
 	const byId = new Map(rows.map((r) => [r.id, r]));
 	const end = byId.get(route.at(-1) ?? "")?.at;
@@ -323,6 +430,43 @@ export function withOverrides(
 	return { ...split, rows, unused: Math.max(0, split.tripDays - used) };
 }
 
+/**
+ * The suggestion in the order you set: the cities you placed keep their
+ * order; a city new to the suggestion goes after the one before it there.
+ */
+export function withOrder(
+	split: DaySplit,
+	order: readonly string[] | null | undefined,
+): DaySplit {
+	if (!order?.length) return split;
+	const byId = new Map(split.rows.map((r) => [r.id, r]));
+	const ids = order.filter((id) => byId.has(id));
+	const seen = new Set(ids);
+	let prev: string | null = null;
+	for (const r of split.rows) {
+		if (!seen.has(r.id)) {
+			ids.splice(prev ? ids.indexOf(prev) + 1 : 0, 0, r.id);
+			seen.add(r.id);
+		}
+		prev = r.id;
+	}
+	return { ...split, rows: ids.map((id) => byId.get(id) as SplitRow) };
+}
+
+/** `list` with the element at `from` moved to `to`; null when either is out of range. */
+export function moveAt<T>(
+	list: readonly T[],
+	from: number,
+	to: number,
+): T[] | null {
+	if (from === to || from < 0 || to < 0) return null;
+	if (from >= list.length || to >= list.length) return null;
+	const out = [...list];
+	const [x] = out.splice(from, 1);
+	out.splice(to, 0, x as T);
+	return out;
+}
+
 /** − / + on a city of the suggestion: the new overrides, or null when it can't (+ with no unused day, − at 0). */
 export function stepCity(
 	split: DaySplit,
@@ -335,6 +479,87 @@ export function stepCity(
 	if (delta > 0 && split.unused < 1) return null;
 	if (delta < 0 && row.days < 1) return null;
 	return { ...overrides, [cityId]: row.days + delta };
+}
+
+// ---------------------------------------------------------------------------
+// Headings: country and region runs in travel order
+// ---------------------------------------------------------------------------
+
+export type SplitLine =
+	| {
+			kind: "country" | "region";
+			key: string;
+			name: string;
+			days: number;
+	  }
+	| {
+			kind: "stop";
+			key: string;
+			/** The row's index. */
+			index: number;
+			/** 1, 2, 3… for the rows with days, in order; null without. */
+			stop: number | null;
+			/** Under a region heading. */
+			inRegion: boolean;
+	  };
+
+/**
+ * The rows with their headings, in travel order: a country heading over each
+ * run of its cities (again when the route comes back), with the run's days;
+ * a region heading over two or more cities in a row that share a region.
+ */
+export function splitLines(
+	ix: Pick<GraphIndex, "path">,
+	rows: readonly { id: string; days: number }[],
+): SplitLine[] {
+	const above = rows.map((r) => {
+		const path = ix.path(r.id).slice(0, -1);
+		const country = path.find((n) => n.type === "country") ?? null;
+		const region = path.findLast((n) => n.type === "region") ?? null;
+		return { country, region };
+	});
+	const sum = (a: number, b: number) =>
+		rows.slice(a, b).reduce((s, r) => s + r.days, 0);
+	const out: SplitLine[] = [];
+	let stop = 0;
+	for (let i = 0; i < rows.length; ) {
+		const country = above[i]?.country ?? null;
+		let j = i + 1;
+		while (j < rows.length && above[j]?.country?.id === country?.id) j++;
+		if (country)
+			out.push({
+				kind: "country",
+				key: `c:${country.id}:${i}`,
+				name: country.name,
+				days: sum(i, j),
+			});
+		for (let k = i; k < j; ) {
+			const region = above[k]?.region ?? null;
+			let m = k + 1;
+			while (region && m < j && above[m]?.region?.id === region.id) m++;
+			const inRegion = !!region && m - k >= 2;
+			if (region && inRegion)
+				out.push({
+					kind: "region",
+					key: `r:${region.id}:${k}`,
+					name: region.name,
+					days: sum(k, m),
+				});
+			for (let x = k; x < m; x++) {
+				const days = rows[x]?.days ?? 0;
+				out.push({
+					kind: "stop",
+					key: `s:${rows[x]?.id}:${x}`,
+					index: x,
+					stop: days > 0 ? ++stop : null,
+					inRegion,
+				});
+			}
+			k = m;
+		}
+		i = j;
+	}
+	return out;
 }
 
 // ---------------------------------------------------------------------------
@@ -410,12 +635,12 @@ export function layoutDays(
  * freed day goes to the end, unused); + takes an unused day. Null when it
  * can't.
  */
-export function stepEntry(
-	entries: readonly SplitEntry[],
+export function stepEntry<E extends SplitEntry>(
+	entries: readonly E[],
 	index: number,
 	delta: 1 | -1,
 	tripDays: number,
-): SplitEntry[] | null {
+): E[] | null {
 	const e = entries[index];
 	if (!e) return null;
 	const used = entries.reduce((s, x) => s + x.days, 0);
@@ -488,15 +713,35 @@ export function applyPlan(
 const plural = (n: number, one: string, many = `${one}s`) =>
 	`${n} ${n === 1 ? one : many}`;
 
-/** "Tokyo 4 · Kyoto 3 · Osaka 2". */
+/** "Tokyo 4 days · Kyoto 3 · Osaka 2". */
 export function splitText(
 	entries: readonly SplitEntry[],
 	nameOf: (id: string) => string,
 ): string {
 	return entries
 		.filter((e) => e.days > 0)
-		.map((e) => `${nameOf(e.cityId)} ${e.days}`)
+		.map((e, i) => `${nameOf(e.cityId)} ${i ? e.days : plural(e.days, "day")}`)
 		.join(" · ");
+}
+
+/** What the shortlist needs per city, in travel order ("Tokyo 4 days · Kyoto 3 · Osaka 1"). */
+export function needText(
+	ix: Trip,
+	cities: readonly SplitCity[],
+): string | null {
+	const total = cities.reduce((s, c) => s + c.need, 0);
+	if (!total) return null;
+	const split = suggestSplit(ix, cities, total);
+	const byId = new Map(split.rows.map((r) => [r.id, r.name]));
+	return splitText(
+		split.rows.map((r) => ({ cityId: r.id, days: r.days })),
+		(id) => byId.get(id) ?? "?",
+	);
+}
+
+/** "Japan · 9 days". */
+export function headingText(name: string, days: number): string {
+	return `${name} · ${plural(days, "day")}`;
 }
 
 export type LeftToRate = {
@@ -545,9 +790,9 @@ export function overText(need: number, tripDays: number): string {
 	return `Your shortlist needs about ${need} days, and you have ${tripDays}. Remove a city or some places.`;
 }
 
-/** "4 days not used". */
+/** "4 days not planned yet". */
 export function unusedText(unused: number): string {
-	return `${plural(unused, "day")} not used`;
+	return `${plural(unused, "day")} not planned yet`;
 }
 
 /** "3 places are on days that move to another city. They'll go back to your list to schedule again." */

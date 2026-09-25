@@ -8,6 +8,9 @@
  *   to its days.
  * - A header row with the person filter ("Everyone · Me · Maya ▾") and, with
  *   a day range, "Showing 5–7 Oct · Show all".
+ * - How long in each city (`day-split/`): the whole panel above the days
+ *   while no day has a city (with no dates too), else one line with Change
+ *   in the header row.
  * - Drag and drop inside the workspace's one `WorkspaceDnd`: cards sort within
  *   a day, move across days and to/from Unscheduled; places dropped from the
  *   Outline or Ideas are scheduled at the drop point. Flight blocks move only
@@ -54,6 +57,7 @@ import { TESTID } from "@/lib/testids";
 import { useUi } from "@/lib/workspace/ui-store";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { DaySection } from "./DaySection";
+import { PlanSplit } from "./day-split/DaySplit";
 import {
 	DragDayContext,
 	type DropIndicator,
@@ -426,26 +430,33 @@ function PlanTabBody() {
 		return () => dnd.setOverlay("item", null);
 	}, [dnd]);
 
-	// ---- empty trip ------------------------------------------------------------
+	// ---- empty trip: how long in each city (places, no dates), else the way in --
 	if (empty) {
 		return (
 			<div data-testid={TESTID.planTab}>
-				<EmptyState
-					lead={<TabPurpose tab="plan" />}
-					line={
-						graph.nodes.length
-							? "Set the trip dates to plan your days."
-							: "Where to first?"
-					}
-					action={
-						<Button
-							size="sm"
-							onClick={() =>
-								openAddPlace({ mode: graph.nodes.length ? "search" : "first" })
+				<PlanSplit
+					className="pt-4"
+					fallback={
+						<EmptyState
+							lead={<TabPurpose tab="plan" />}
+							line={
+								graph.nodes.length
+									? "Set the trip dates to plan your days."
+									: "Where to first?"
 							}
-						>
-							Search places
-						</Button>
+							action={
+								<Button
+									size="sm"
+									onClick={() =>
+										openAddPlace({
+											mode: graph.nodes.length ? "search" : "first",
+										})
+									}
+								>
+									Search places
+								</Button>
+							}
+						/>
 					}
 				/>
 			</div>
@@ -567,48 +578,53 @@ function PlanTabBody() {
 						data-lens={lens}
 						className="plan-root @container pb-24"
 					>
-						<div className="flex min-h-10 flex-wrap items-center gap-2 px-4 py-1.5">
-							<WhoFilter />
-							{days ? (
-								<span
-									data-testid={PLAN_TESTID.rangeBar}
-									className="flex items-center gap-1 text-xs text-muted-foreground"
-								>
-									Showing{" "}
-									<span className="font-mono text-foreground tnum">
-										{formatDateRange(days.from, days.to)}
-									</span>{" "}
-									·
-									<button
-										type="button"
-										className="text-primary hover:underline"
-										onClick={() => nav.setDays(null)}
-									>
-										Show all
-									</button>
-								</span>
-							) : null}
-							{isCoarse(lens) && bandKeys.length > 1 ? (
-								<Button
-									variant="ghost"
-									size="xs"
-									className="ml-auto text-muted-foreground"
-									onClick={() =>
-										setCollapsedBands(
-											allCollapsed ? new Set() : new Set(bandKeys),
-										)
-									}
-								>
-									{allCollapsed ? (
-										<ChevronsUpDown className="size-3.5" />
-									) : (
-										<ChevronsDownUp className="size-3.5" />
-									)}
-									{allCollapsed ? "Expand all" : "Collapse all"}
-								</Button>
-							) : null}
-						</div>
-						<TripProposalBanner />
+						{/* The header row; the days per city join it once days have cities. */}
+						<PlanSplit
+							header={
+								<>
+									<WhoFilter />
+									{days ? (
+										<span
+											data-testid={PLAN_TESTID.rangeBar}
+											className="flex items-center gap-1 text-xs text-muted-foreground"
+										>
+											Showing{" "}
+											<span className="font-mono text-foreground tnum">
+												{formatDateRange(days.from, days.to)}
+											</span>{" "}
+											·
+											<button
+												type="button"
+												className="text-primary hover:underline"
+												onClick={() => nav.setDays(null)}
+											>
+												Show all
+											</button>
+										</span>
+									) : null}
+									{isCoarse(lens) && bandKeys.length > 1 ? (
+										<Button
+											variant="ghost"
+											size="xs"
+											className="order-last ml-auto text-muted-foreground"
+											onClick={() =>
+												setCollapsedBands(
+													allCollapsed ? new Set() : new Set(bandKeys),
+												)
+											}
+										>
+											{allCollapsed ? (
+												<ChevronsUpDown className="size-3.5" />
+											) : (
+												<ChevronsDownUp className="size-3.5" />
+											)}
+											{allCollapsed ? "Expand all" : "Collapse all"}
+										</Button>
+									) : null}
+								</>
+							}
+							banner={<TripProposalBanner />}
+						/>
 						{whoEmpty && who ? (
 							<EmptyState
 								line={

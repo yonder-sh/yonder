@@ -74,12 +74,26 @@ export type AddExpenseRequest = {
 /** E2: the date what-if draft (never persisted; survives navigation). */
 export type DateDraft = { deltaDays: number };
 
+/** A stop of the route while the days per city are being changed (the map numbers it). */
+export type SplitStop = {
+	cityId: string;
+	name: string;
+	lng: number;
+	lat: number;
+	/** 1, 2, 3… in travel order. */
+	stop: number;
+	days: number;
+};
+
 export type UiState = {
 	hover: HoverTarget | null;
 	setHover(h: HoverTarget | null): void;
 	/** WP-Transit sets it (option hover); WP-Map draws it. */
 	previewRoute: Feature<LineString, { color?: string }>[] | null;
 	setPreviewRoute(r: UiState["previewRoute"]): void;
+	/** The Plan sets it while the days per city are being changed; WP-Map draws it. */
+	splitRoute: SplitStop[] | null;
+	setSplitRoute(r: SplitStop[] | null): void;
 	/** WP-Shell sets it (inspector width, sheet height); WP-Map fits with it. */
 	mapPadding: MapPadding;
 	setMapPadding(p: MapPadding): void;
@@ -139,6 +153,7 @@ export const FLASH_MS = 1_200;
 const PER_TRIP = {
 	hover: null,
 	previewRoute: null,
+	splitRoute: null,
 	addPlace: null,
 	addFlight: null,
 	shareOpen: false,
@@ -162,6 +177,7 @@ export const useUi = create<UiState>()((set) => ({
 	sheetSnap: null,
 	setHover: (hover) => set({ hover }),
 	setPreviewRoute: (previewRoute) => set({ previewRoute }),
+	setSplitRoute: (splitRoute) => set({ splitRoute }),
 	setMapPadding: (mapPadding) => set({ mapPadding }),
 	setDayFilterMode: (dayFilterMode) => set({ dayFilterMode }),
 	openAddPlace: (addPlace) => set({ addPlace }),

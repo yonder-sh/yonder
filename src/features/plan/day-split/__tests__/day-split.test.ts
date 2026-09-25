@@ -1,8 +1,10 @@
 /**
- * The day split (Schedule step, before any day has a city): what each city's
- * shortlist needs, fitting the trip's length, the order with the least
- * travel, − / + on the suggestion, the split the days hold now, and what
- * applying a changed split writes and moves off a day.
+ * How long in each city (the Plan, before any day has a city): what each
+ * city's shortlist needs (by area), fitting the trip's length and sharing out
+ * the spare days, the order with the least travel from where you land to
+ * where you fly home, − / + and reordering on the suggestion, the country and
+ * region headings, the days each city holds now, and what applying a change
+ * writes and moves off a day.
  */
 import { describe, expect, it } from "vitest";
 import { cityDayTable } from "@/features/places/lib/days";
@@ -21,21 +23,29 @@ import {
 	type DaySplit,
 	dayCityIds,
 	daysNeeded,
+	departureCity,
 	displacedText,
 	fitDays,
+	headingText,
 	layoutDays,
 	leftToRate,
 	leftToRateText,
+	moveAt,
+	needText,
 	overText,
 	routeOrder,
 	runsOf,
 	type SplitCity,
+	type SplitLine,
+	shareSpare,
 	splitCities,
+	splitLines,
 	splitText,
 	stepCity,
 	stepEntry,
 	suggestSplit,
 	unusedText,
+	withOrder,
 	withOverrides,
 } from "../day-split";
 
@@ -49,7 +59,8 @@ const day = (night?: string, items: DaySpec["items"] = []): DaySpec => ({
 const empty = (n: number) => Array.from({ length: n }, () => day());
 
 /**
- * Tokyo (four 12-hour places shortlisted: 4 days), Kyoto (three: 3 days),
+ * Tokyo (four 12-hour places shortlisted: 4 days; in Shibuya, Harajuku,
+ * Kappabashi inside Asakusa, and right under Tokyo), Kyoto (three: 3 days),
  * Hiroshima (one hour: 1 day), Osaka (three places nobody rated), and a
  * Nara day trip; the demo's own places are unrated ideas.
  */
@@ -73,10 +84,10 @@ function world(days: DaySpec[], legs: LegSpec[] = []) {
 		days,
 		legs,
 		nodes: [
-			place("t1", "tokyo", [35.66, 139.7]),
-			place("t2", "tokyo", [35.67, 139.71]),
+			place("t1", "shibuya", [35.66, 139.7]),
+			place("t2", "harajuku", [35.67, 139.71]),
 			place("t3", "tokyo", [35.68, 139.72]),
-			place("t4", "tokyo", [35.69, 139.73]),
+			place("t4", "kappabashi", [35.69, 139.73]),
 			{
 				key: "hotelT",
 				parent: "tokyo",
@@ -194,6 +205,26 @@ describe("what each city's shortlist needs", () => {
 				c.shortlistIds.length + c.toRateIds.length + c.belowShortlist,
 			).toBeGreaterThanOrEqual(c.shortlisted);
 	});
+
+	it("the shortlist by area: the top-level area under the city, the city's own last", () => {
+		const { cities, rows } = world(empty(14));
+		const by = Object.fromEntries(cities.map((c) => [c.name, c]));
+		const name = (id: string) => rows.find((r) => r.id === id)?.node.name;
+		// Kappabashi sits inside Asakusa: its place counts for Asakusa.
+		expect(
+			by.Tokyo?.areas.map((a) => [a.name, a.minutes, a.ids.map(name)]),
+		).toEqual([
+			["Shibuya", 720, ["t1"]],
+			["Harajuku", 720, ["t2"]],
+			["Asakusa", 720, ["t4"]],
+			["", 720, ["t3"]],
+		]);
+		expect(by.Tokyo?.areas.at(-1)?.id).toBeNull();
+		// Everything right under Kyoto: one group.
+		expect(by.Kyoto?.areas).toHaveLength(1);
+		expect(by.Kyoto?.areas[0]?.id).toBeNull();
+		expect(by.Osaka?.areas).toEqual([]);
+	});
 });
 
 describe("fitting the trip's length", () => {
@@ -211,24 +242,51 @@ describe("fitting the trip's length", () => {
 		expect(fitDays([1, 3, 2, 1], 2)).toEqual([0, 1, 1, 0]);
 		expect(fitDays([2, 2], 0)).toEqual([0, 0]);
 	});
+	it("spare days: one more each in turn, the most time needed first", () => {
+		const min = [2880, 2160, 60, 0];
+		expect(shareSpare([4, 3, 1, 0], min, 14)).toEqual([6, 5, 3, 0]);
+		expect(shareSpare([4, 3, 1, 0], min, 10)).toEqual([5, 4, 1, 0]);
+		expect(shareSpare([4, 3, 1, 0], min, 8)).toEqual([4, 3, 1, 0]);
+		// Nobody needs a day: none to share them with.
+		expect(shareSpare([0, 0], [0, 0], 5)).toEqual([0, 0]);
+	});
 });
 
 describe("the suggestion", () => {
-	it("fits: the rest is unused", () => {
+	it("fits: the spare days shared out, the most time needed first", () => {
 		const { ix, cities } = world(empty(14));
 		const split = suggestSplit(ix, cities, 14);
 		expect(split.need).toBe(8);
-		expect(split.unused).toBe(6);
+		expect(split.unused).toBe(0);
 		// Nothing located: from the city with the most days, the least travel;
 		// Osaka (no days) after the route.
 		expect(names(split)).toEqual([
-			["Tokyo", 4],
-			["Kyoto", 3],
+			["Tokyo", 6],
+			["Kyoto", 5],
+			["Hiroshima", 3],
+			["Osaka", 0],
+		]);
+		expect(unusedText(3)).toBe("3 days not planned yet");
+		expect(unusedText(1)).toBe("1 day not planned yet");
+	});
+
+	it("no dates yet: the same for the number of days you give", () => {
+		const { ix, cities } = world([]);
+		expect(ix.days).toHaveLength(0);
+		expect(names(suggestSplit(ix, cities, 10))).toEqual([
+			["Tokyo", 5],
+			["Kyoto", 4],
 			["Hiroshima", 1],
 			["Osaka", 0],
 		]);
-		expect(unusedText(split.unused)).toBe("6 days not used");
-		expect(unusedText(1)).toBe("1 day not used");
+		// What the shortlist needs, in travel order (the Places tab's line).
+		expect(needText(ix, cities)).toBe("Tokyo 4 days · Kyoto 3 · Hiroshima 1");
+		expect(
+			needText(
+				ix,
+				cities.filter((c) => c.name === "Osaka"),
+			),
+		).toBeNull();
 	});
 
 	it("doesn't fit: scaled down, with the numbers for the message", () => {
@@ -283,6 +341,62 @@ describe("the suggestion", () => {
 		const kix = world([day(undefined, [{ k: "x", node: "kix" }]), ...empty(9)]);
 		const on = kix.cities.filter((c) => c.need > 0);
 		expect(arrivalCity(kix.ix, on)).toBe(kix.s.N.kyoto);
+		// Only the way in is known: no end.
+		expect(departureCity(flight.ix, flight.cities)).toBeNull();
+		expect(departureCity(kyoto.ix, kyoto.cities)).toBeNull();
+	});
+
+	it("ends where you fly home from: the last flight's departure, or the last stop's city", () => {
+		// In to Haneda, home from Kansai (Osaka; with no days there, the
+		// nearest city with days: Kyoto). Hiroshima fits in between.
+		const w = world(
+			[
+				day(undefined, [
+					{ k: "ewr", node: "ewr" },
+					{ k: "hnd", node: "hnd" },
+				]),
+				...empty(8),
+				day(undefined, [
+					{ k: "kix", node: "kix" },
+					{ k: "home", node: "ewr" },
+				]),
+			],
+			[
+				{
+					from: "ewr",
+					to: "hnd",
+					mode: "flight",
+					dep: ["2027-10-02T10:00", "America/New_York"],
+					arr: ["2027-10-03T14:00", "Asia/Tokyo"],
+				},
+				{
+					from: "kix",
+					to: "home",
+					mode: "flight",
+					dep: ["2027-10-11T10:00", "Asia/Tokyo"],
+					arr: ["2027-10-11T09:00", "America/New_York"],
+				},
+			],
+		);
+		expect(departureCity(w.ix, w.cities)).toBe(w.s.N.osaka);
+		const on = w.cities.filter((c) => c.need > 0);
+		expect(departureCity(w.ix, on)).toBe(w.s.N.kyoto);
+		expect(suggestSplit(w.ix, w.cities, 10).rows.map((r) => r.name)).toEqual([
+			"Tokyo",
+			"Hiroshima",
+			"Kyoto",
+			"Osaka",
+		]);
+		// First stop in Hiroshima, the last in Kyoto: Tokyo goes in between
+		// (on its own, the route would end in Tokyo).
+		const stops = world([
+			day(undefined, [{ k: "h", node: "h1" }]),
+			...empty(8),
+			day(undefined, [{ k: "k", node: "k1" }]),
+		]);
+		expect(
+			suggestSplit(stops.ix, stops.cities, 10).rows.map((r) => r.name),
+		).toEqual(["Hiroshima", "Tokyo", "Kyoto", "Osaka"]);
 	});
 });
 
@@ -313,6 +427,34 @@ describe("the order with the least travel", () => {
 		expect(
 			routeOrder([...p, { id: "nowhere", at: null }], "hiroshima"),
 		).toEqual(["hiroshima", "osaka", "kyoto", "tokyo", "nowhere"]);
+	});
+
+	it("a fixed end stays last; a round trip comes back near the start", () => {
+		const p = pts([
+			["osaka", 135.5, 34.69],
+			["tokyo", 139.65, 35.68],
+			["hiroshima", 132.46, 34.39],
+			["kyoto", 135.77, 35.01],
+		]);
+		expect(routeOrder(p, "tokyo", "kyoto")).toEqual([
+			"tokyo",
+			"osaka",
+			"hiroshima",
+			"kyoto",
+		]);
+		// S with A and C next to it and B far away: an open route ends at B,
+		// a round trip goes out to B and back past the other.
+		const q = pts([
+			["S", 0, 0],
+			["A", 0, 1],
+			["B", 0, 10],
+			["C", 1, 1],
+		]);
+		expect(routeOrder(q, "S").at(-1)).toBe("B");
+		const round = routeOrder(q, "S", "S");
+		expect(round[0]).toBe("S");
+		expect(round.at(-1)).not.toBe("B");
+		expect(round[2]).toBe("B");
 	});
 
 	it("2-opt: never longer than nearest neighbour alone, the start kept first", () => {
@@ -354,14 +496,18 @@ describe("− / + on the suggestion", () => {
 	const idOf = (s: DaySplit, name: string) =>
 		s.rows.find((r) => r.name === name)?.id as string;
 
-	it("+ takes an unused day; − gives one back", () => {
+	it("− leaves a day not planned; + takes it", () => {
 		const s = split(14);
-		const plus = stepCity(s, {}, idOf(s, "Osaka"), 1) ?? {};
-		const a = withOverrides(s, plus);
-		expect(names(a).at(-1)).toEqual(["Osaka", 1]);
-		expect(a.unused).toBe(5);
-		const minus = stepCity(a, plus, idOf(s, "Tokyo"), -1) ?? {};
-		expect(withOverrides(s, minus).unused).toBe(6);
+		// Every day is shared out: + needs a free one.
+		expect(stepCity(s, {}, idOf(s, "Osaka"), 1)).toBeNull();
+		const minus = stepCity(s, {}, idOf(s, "Tokyo"), -1) ?? {};
+		const a = withOverrides(s, minus);
+		expect(names(a)[0]).toEqual(["Tokyo", 5]);
+		expect(a.unused).toBe(1);
+		const plus = stepCity(a, minus, idOf(s, "Osaka"), 1) ?? {};
+		const b = withOverrides(s, plus);
+		expect(names(b).at(-1)).toEqual(["Osaka", 1]);
+		expect(b.unused).toBe(0);
 		// Not below 0.
 		expect(stepCity(s, {}, idOf(s, "Osaka"), -1)).toBeNull();
 	});
@@ -397,6 +543,154 @@ describe("− / + on the suggestion", () => {
 	});
 });
 
+describe("reordering the stops", () => {
+	const split = (days: number) => {
+		const { ix, cities } = world(empty(days));
+		return suggestSplit(ix, cities, days);
+	};
+	const order = (s: DaySplit) => s.rows.map((r) => r.name);
+
+	it("moves a row; out of range or in place does nothing", () => {
+		expect(moveAt(["a", "b", "c"], 0, 2)).toEqual(["b", "c", "a"]);
+		expect(moveAt(["a", "b", "c"], 2, 1)).toEqual(["a", "c", "b"]);
+		expect(moveAt(["a", "b", "c"], 1, 1)).toBeNull();
+		expect(moveAt(["a", "b", "c"], 0, 3)).toBeNull();
+	});
+
+	it("your order sticks; the days still follow the suggestion", () => {
+		const s = split(14);
+		expect(order(s)).toEqual(["Tokyo", "Kyoto", "Hiroshima", "Osaka"]);
+		const mine = moveAt(
+			s.rows.map((r) => r.id),
+			2,
+			0,
+		);
+		const a = withOrder(s, mine);
+		expect(names(a)).toEqual([
+			["Hiroshima", 3],
+			["Tokyo", 6],
+			["Kyoto", 5],
+			["Osaka", 0],
+		]);
+		// A new suggestion (fewer days): the same order, new counts.
+		const b = withOrder(split(7), mine);
+		expect(order(b)).toEqual(["Hiroshima", "Tokyo", "Kyoto", "Osaka"]);
+		expect(names(b)[1]).toEqual(["Tokyo", 3]);
+		// No order: the suggestion's.
+		expect(withOrder(s, null)).toBe(s);
+	});
+
+	it("a city new to the suggestion goes after the one before it there", () => {
+		const s = split(14);
+		const [tokyo, kyoto, hiroshima, osaka] = s.rows.map((r) => r.id) as [
+			string,
+			string,
+			string,
+			string,
+		];
+		// Kyoto wasn't there when the order was set.
+		expect(order(withOrder(s, [hiroshima, tokyo, osaka]))).toEqual([
+			"Hiroshima",
+			"Tokyo",
+			"Kyoto",
+			"Osaka",
+		]);
+		// Nor Tokyo, first in the suggestion.
+		expect(order(withOrder(s, [osaka, kyoto, hiroshima]))).toEqual([
+			"Tokyo",
+			"Osaka",
+			"Kyoto",
+			"Hiroshima",
+		]);
+	});
+});
+
+describe("headings in travel order", () => {
+	/** A tree from `child: parent` pairs; types from the names' first letter. */
+	const tree = (parents: Record<string, string | null>) => {
+		const type = (id: string) =>
+			id.startsWith("country")
+				? "country"
+				: id.startsWith("region")
+					? "region"
+					: "city";
+		const node = (id: string) => ({ id, name: id.split(":")[1] ?? id, type });
+		return {
+			path: (id: string) => {
+				const out = [];
+				for (let at: string | null = id; at; at = parents[at] ?? null)
+					out.unshift({ ...node(at), type: type(at) });
+				return out as never;
+			},
+		};
+	};
+	const ix = tree({
+		"country:Japan": null,
+		"country:Korea": null,
+		"region:Kansai": "country:Japan",
+		"region:Kyushu": "country:Japan",
+		Tokyo: "country:Japan",
+		Kyoto: "region:Kansai",
+		Osaka: "region:Kansai",
+		Nara: "region:Kansai",
+		Fukuoka: "region:Kyushu",
+		Seoul: "country:Korea",
+	});
+	const text = (lines: SplitLine[], rows: { id: string }[]) =>
+		lines.map((l) =>
+			l.kind === "stop"
+				? `${l.inRegion ? "  " : ""}${l.stop ?? "-"} ${rows[l.index]?.id}`
+				: `${l.kind === "region" ? "  " : ""}${headingText(l.name, l.days)}`,
+		);
+
+	it("a country over each run with its days, again when the route comes back; a region only over two or more", () => {
+		const rows = [
+			{ id: "Tokyo", days: 4 },
+			{ id: "Kyoto", days: 3 },
+			{ id: "Osaka", days: 2 },
+			{ id: "Seoul", days: 3 },
+			{ id: "Fukuoka", days: 2 },
+			{ id: "Nara", days: 0 },
+		];
+		expect(text(splitLines(ix, rows), rows)).toEqual([
+			"Japan · 9 days",
+			"1 Tokyo",
+			"  Kansai · 5 days",
+			"  2 Kyoto",
+			"  3 Osaka",
+			"Korea · 3 days",
+			"4 Seoul",
+			// Back in Japan; Fukuoka and Nara share no region.
+			"Japan · 2 days",
+			"5 Fukuoka",
+			"- Nara",
+		]);
+		expect(headingText("Nara", 1)).toBe("Nara · 1 day");
+	});
+
+	it("regroups as the order changes", () => {
+		const rows = [
+			{ id: "Kyoto", days: 3 },
+			{ id: "Tokyo", days: 4 },
+			{ id: "Osaka", days: 2 },
+		];
+		expect(text(splitLines(ix, rows), rows)).toEqual([
+			"Japan · 9 days",
+			"1 Kyoto",
+			"2 Tokyo",
+			"3 Osaka",
+		]);
+		const moved = moveAt(rows, 1, 2) ?? [];
+		expect(text(splitLines(ix, moved), moved)).toEqual([
+			"Japan · 9 days",
+			"  Kansai · 5 days",
+			"  1 Kyoto",
+			"  2 Osaka",
+			"3 Tokyo",
+		]);
+	});
+});
+
 describe("the split the days hold", () => {
 	it("runs of nights in one city; a day trip stays a day of where you sleep; the last day follows the night before", () => {
 		const w = world([
@@ -416,7 +710,10 @@ describe("the split the days hold", () => {
 		]);
 		expect(unused).toBe(0);
 		const name = (id: string) => w.ix.node(id)?.name ?? "";
-		expect(splitText(entries, name)).toBe("Tokyo 2 · Kyoto 3");
+		expect(splitText(entries, name)).toBe("Tokyo 2 days · Kyoto 3");
+		expect(splitText([{ cityId: N.kyoto as string, days: 1 }], name)).toBe(
+			"Kyoto 1 day",
+		);
 	});
 
 	it("days with no night and nothing on them are unused; runs split around them", () => {

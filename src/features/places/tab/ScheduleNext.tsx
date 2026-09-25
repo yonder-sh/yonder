@@ -1,32 +1,29 @@
 /**
- * The Schedule step: "Schedule next" (docs/PLACES.md §4). Per stay window
- * (a run of days in one city) the city's shortlisted places not on a day,
- * grouped by area, each with a fit hint per day (closed days struck, its
- * time needed against the day's free time, the distance from that day's
- * stay or stops) and a one-click "Add to Mon 11 Oct" that puts it at the
- * best spot of the best day. Then the cities with shortlisted places but no
- * days, and what can't fit. Before any day has a city, the day split
- * (`DaySplit.tsx`) instead; with no dates, a way to set them. Read-only for
- * people who can't edit.
+ * The Add to days step: "Schedule next" (docs/PLACES.md §4), only the bridge
+ * onto the days the Plan already has. Per stay window (a run of days in one
+ * city, under its country where the country changes) the city's
+ * shortlisted places not on a day, grouped by area, each with a fit hint per
+ * day (closed days struck, its time needed against the day's free time, the
+ * distance from that day's stay or stops) and a one-click "Add to Mon 11
+ * Oct" that puts it at the best spot of the best day. Then the cities with
+ * shortlisted places but no days, and what can't fit. Before any day has a
+ * city (or with no dates): what the shortlist needs per city, and the way to
+ * the Plan to decide it; this step never writes days. Read-only for people
+ * who can't edit.
  */
 import { cn } from "cn";
 import { CalendarPlus, ChevronRight, Star } from "lucide-react";
-import { type ReactNode, useMemo, useState } from "react";
+import { Fragment, type ReactNode, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { DaysPerCityTable } from "@/features/places/DaysPerCityTable";
-import {
-	DaysLine,
-	SplitSuggestion,
-	useApplySplit,
-	useDaySplit,
-} from "@/features/plan/day-split/DaySplit";
+import { useDaySplit } from "@/features/plan/day-split/DaySplit";
+import { headingText, needText } from "@/features/plan/day-split/day-split";
 import {
 	formatDateRange,
 	formatDayDate,
 	formatDistance,
 	formatDuration,
 } from "@/lib/format";
-import { useUi } from "@/lib/workspace/ui-store";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { formatDays } from "../lib/days";
 import type { FlowTally } from "./flow";
@@ -270,7 +267,7 @@ function WindowSection({ w }: { w: WindowPlan }) {
 				<div key={g.key}>
 					{g.label || w.groups.length > 1 ? (
 						<h4 className="pt-3 text-[13px] font-semibold">
-							{g.label || `Around ${w.cityName}`}{" "}
+							{g.label || `Elsewhere in ${w.cityName}`}{" "}
 							<span className="font-normal text-muted-foreground">
 								· {g.items.length}
 							</span>
@@ -311,12 +308,11 @@ export function ScheduleNext({
 }: {
 	data: PlacesData;
 	tally: FlowTally;
-	/** Opens the Rate step (nothing shortlisted, or places left to rate in the day split). */
+	/** Opens the Rate step (nothing shortlisted yet). */
 	onRate: () => void;
 }) {
 	const { ix, schedule, graph, nav } = useWorkspace();
 	const act = usePlaceActions();
-	const setSettingsOpen = useUi((s) => s.setSettingsOpen);
 	const [daysTable, setDaysTable] = useState(false);
 	const holidays = graph.trip.settings.holidays;
 	const plan = useMemo(
@@ -326,8 +322,24 @@ export function ScheduleNext({
 			}),
 		[ix, schedule, data.rows, data.cityDays, holidays],
 	);
-	const split = useDaySplit(data);
-	const { apply, busy } = useApplySplit();
+	const split = useDaySplit();
+	// No day in a city yet: what the shortlist needs, decided in the Plan.
+	const needs = useMemo(
+		() => (split.hasDays ? null : needText(ix, split.cities)),
+		[split.hasDays, split.cities, ix],
+	);
+	// A heading where the country changes (none for a trip in one country).
+	const countryAt = useMemo(() => {
+		const out = new Map<string, { name: string; days: number }>();
+		const runs = plan.countries.filter((r) => r.name);
+		if (runs.length < 2) return out;
+		const shown = new Set(plan.windows.map((w) => w.key));
+		for (const r of runs) {
+			const first = r.windowKeys.find((k) => shown.has(k));
+			if (first) out.set(first, r);
+		}
+		return out;
+	}, [plan]);
 	const shell = (mode: string, children: ReactNode) => (
 		<div
 			data-testid={PLACES_TAB_TESTID.schedule}
@@ -340,44 +352,28 @@ export function ScheduleNext({
 			</div>
 		</div>
 	);
-	if (ix.days.length === 0)
+	if (needs)
 		return shell(
-			"dates",
+			"needs",
 			<div
-				data-testid={PLACES_TAB_TESTID.scheduleNoDates}
+				data-testid={PLACES_TAB_TESTID.scheduleNeeds}
 				className="flex flex-col items-start gap-3 rounded-xl border border-dashed p-5"
 			>
-				<p className="font-display text-lg font-semibold">
-					Pick your trip dates first
+				<p className="max-w-prose text-[15px]">
+					Your shortlist needs about:{" "}
+					<span className="font-medium">{needs}</span>
 				</p>
 				{act.canEdit ? (
-					<Button size="sm" onClick={() => setSettingsOpen(true)}>
-						Set dates
+					<Button size="sm" onClick={() => nav.setTab("plan")}>
+						Decide how long in each city
 					</Button>
 				) : null}
 			</div>,
-		);
-	if (!split.hasDays)
-		return shell(
-			"split",
-			<SplitSuggestion
-				info={split}
-				canEdit={act.canEdit}
-				onRate={onRate}
-				apply={apply}
-				busy={busy}
-			/>,
 		);
 	return shell(
 		"schedule",
 		<>
 			<div className="flex flex-col gap-4">
-				<DaysLine
-					info={split}
-					canEdit={act.canEdit}
-					apply={apply}
-					busy={busy}
-				/>
 				{plan.waiting === 0 ? (
 					<div
 						data-testid={PLACES_TAB_TESTID.scheduleDone}
@@ -417,9 +413,22 @@ export function ScheduleNext({
 				)}
 			</div>
 
-			{plan.windows.map((w) => (
-				<WindowSection key={w.key} w={w} />
-			))}
+			{plan.windows.map((w) => {
+				const country = countryAt.get(w.key);
+				return (
+					<Fragment key={w.key}>
+						{country ? (
+							<h2
+								data-testid={PLACES_TAB_TESTID.scheduleCountry}
+								className="-mb-4 font-display text-[15px] font-semibold text-muted-foreground"
+							>
+								{headingText(country.name, country.days)}
+							</h2>
+						) : null}
+						<WindowSection w={w} />
+					</Fragment>
+				);
+			})}
 
 			{plan.noDays.length ? (
 				<Section
