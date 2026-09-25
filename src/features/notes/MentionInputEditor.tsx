@@ -153,9 +153,17 @@ export default function MentionInputEditor({
 		editor.setEditable(!disabled);
 	}, [editor, disabled]);
 
+	// After the commit: iOS and Android focus at once, and StrictMode's effect
+	// replay then moves the view out and back, which blurs (and closes) it.
 	useEffect(() => {
-		if (autoFocus && editor && !editor.isDestroyed)
-			editor.commands.focus("end");
+		if (!autoFocus || !editor || editor.isDestroyed) return;
+		let live = true;
+		queueMicrotask(() => {
+			if (live && !editor.isDestroyed) editor.commands.focus("end");
+		});
+		return () => {
+			live = false;
+		};
 	}, [autoFocus, editor]);
 
 	return (
