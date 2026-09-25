@@ -30,6 +30,7 @@ import {
 } from "lucide-react";
 import {
 	type ReactNode,
+	useCallback,
 	useEffect,
 	useLayoutEffect,
 	useMemo,
@@ -108,6 +109,7 @@ import {
 } from "./places.functions";
 import { PLACES_TESTID } from "./testids";
 import { MiniMap } from "./ui/mini-map";
+import { type ResultPin, ResultsMap } from "./ui/results-map";
 import {
 	defaultSchedulePick,
 	type SchedulePick,
@@ -410,6 +412,25 @@ function Palette({
 			: "Search places, or type Day 4…";
 
 	const showPreview = selected !== null || pinning;
+	// The results on a map, numbered as in the list, to pick the right one.
+	const pins = useMemo<ResultPin[]>(
+		() =>
+			results.flatMap((r, i) =>
+				r.lat !== undefined && r.lng !== undefined
+					? [{ ref: r.ref, n: i + 1, title: r.title, lat: r.lat, lng: r.lng }]
+					: [],
+			),
+		[results],
+	);
+	const showMap = pins.length > 0 && !showPreview;
+	// Phones: the list or the map, one at a time.
+	const [phoneMap, setPhoneMap] = useState(false);
+	const pickResult = (ref: string) => {
+		const r = results.find((x) => x.ref === ref);
+		if (!r) return;
+		setPinning(false);
+		setSelected({ kind: "result", provider: provider ?? "photon", result: r });
+	};
 
 	// ---- the rate screen (FB-05: ⌘K "rate" finds it) -----------------------
 	const rateScope = scope && scope.type !== "place" ? scope : null;
@@ -459,6 +480,32 @@ function Palette({
 	// take the highlight unless the user already moved it (keys, pointer).
 	const commandRef = useRef<HTMLDivElement>(null);
 	const steered = useRef(false);
+	// The highlighted result (keys or pointer), for its pin on the map. The
+	// dialog's content mounts after the palette, so the list arrives by ref.
+	const [highlight, setHighlight] = useState<string | null>(null);
+	const [cmdRoot, setCmdRoot] = useState<HTMLDivElement | null>(null);
+	const setCommandRef = useCallback((el: HTMLDivElement | null) => {
+		commandRef.current = el;
+		setCmdRoot(el);
+	}, []);
+	useEffect(() => {
+		const root = cmdRoot;
+		if (!root) return;
+		const read = () => {
+			const v = root
+				.querySelector('[cmdk-item][data-selected="true"]')
+				?.getAttribute("data-value");
+			setHighlight(v?.startsWith("place:") ? v.slice(6) : null);
+		};
+		read();
+		const obs = new MutationObserver(read);
+		obs.observe(root, {
+			subtree: true,
+			attributes: true,
+			attributeFilter: ["data-selected"],
+		});
+		return () => obs.disconnect();
+	}, [cmdRoot]);
 	const optionsKey = [
 		tripHits.map((n) => n.id).join(),
 		legHits.map((h) => h.leg.id).join(),
@@ -566,7 +613,7 @@ function Palette({
 			className={cn(
 				"gap-0 overflow-hidden p-0 shadow-float transition-[max-width] duration-200",
 				"max-sm:top-0 max-sm:left-0 max-sm:h-svh max-sm:max-h-none max-sm:max-w-none max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-none max-sm:border-0",
-				showPreview ? "sm:max-w-[920px]" : "sm:max-w-[640px]",
+				showPreview || showMap ? "sm:max-w-[920px]" : "sm:max-w-[640px]",
 			)}
 		>
 			<DialogTitle className="sr-only">{title}</DialogTitle>
@@ -574,7 +621,7 @@ function Palette({
 				Find a place in this trip, search for a new one, or jump to a day.
 			</DialogDescription>
 			<Command
-				ref={commandRef}
+				ref={setCommandRef}
 				shouldFilter={false}
 				loop
 				onKeyDown={(e) => {
@@ -624,6 +671,33 @@ function Palette({
 						Cancel
 					</button>
 				</div>
+				{showMap ? (
+					<div
+						role="group"
+						aria-label="Show results as"
+						className="flex gap-1 border-b px-3 py-1.5 sm:hidden"
+					>
+						{(["List", "Map"] as const).map((v) => {
+							const on = (v === "Map") === phoneMap;
+							return (
+								<button
+									key={v}
+									type="button"
+									aria-pressed={on}
+									onClick={() => setPhoneMap(v === "Map")}
+									className={cn(
+										"h-7 rounded-md px-3 text-xs font-medium",
+										on
+											? "bg-accent text-foreground"
+											: "text-muted-foreground hover:text-foreground",
+									)}
+								>
+									{v}
+								</button>
+							);
+						})}
+					</div>
+				) : null}
 				<div className="flex min-h-0 flex-1">
 					<CommandList
 						onPointerMove={(e) => {
@@ -634,6 +708,8 @@ function Palette({
 						className={cn(
 							"max-h-none min-h-0 flex-1 overflow-y-auto",
 							showPreview && "max-w-[340px] border-r max-sm:hidden",
+							showMap && "sm:max-w-[340px] sm:border-r",
+							showMap && phoneMap && "max-sm:hidden",
 						)}
 					>
 						{noMatches ? (
@@ -718,7 +794,7 @@ function Palette({
 									provider === "google" ? "Places" : "Places · OpenStreetMap"
 								}
 							>
-								{results.map((r) => {
+								{results.map((r, i) => {
 									const kind = resultKind(r.types);
 									const active =
 										selected?.kind === "result" &&
@@ -762,6 +838,12 @@ function Palette({
 													</span>
 												) : null}
 											</span>
+											{/* Its pin's number on the results map. */}
+											{r.lat !== undefined && r.lng !== undefined ? (
+												<span className="ml-auto grid size-5 shrink-0 place-items-center rounded-full bg-muted font-mono text-[11px] text-muted-foreground tnum">
+													{i + 1}
+												</span>
+											) : null}
 										</CommandItem>
 									);
 								})}
@@ -880,6 +962,14 @@ function Palette({
 						</CommandGroup>
 					</CommandList>
 
+					{showMap ? (
+						<ResultsMap
+							pins={pins}
+							active={highlight}
+							onPick={pickResult}
+							className={cn("min-w-0 flex-1", !phoneMap && "max-sm:hidden")}
+						/>
+					) : null}
 					{showPreview ? (
 						<div className="min-w-0 flex-1 overflow-y-auto">
 							<button
@@ -888,7 +978,11 @@ function Palette({
 									setSelected(null);
 									setPinning(false);
 								}}
-								className="flex items-center gap-1 px-4 pt-3 text-xs text-muted-foreground hover:text-foreground sm:hidden"
+								className={cn(
+									"flex items-center gap-1 px-4 pt-3 text-xs text-muted-foreground hover:text-foreground",
+									// With a results map, desktop gets back to it too.
+									!pins.length && "sm:hidden",
+								)}
 							>
 								<ArrowLeft className="size-3.5" /> Back to results
 							</button>
@@ -1227,7 +1321,6 @@ function PreviewPhoto({
 			}
 			type={preview.level ?? "place"}
 			category={(preview.category as PlaceCategory | undefined) ?? null}
-			interactive={false}
 			className="aspect-[2/1] w-full overflow-hidden rounded-xl border"
 			label={`Map of ${preview.name}`}
 		/>
@@ -1562,7 +1655,6 @@ function PreviewBody({
 							zoom={15}
 							type={locating.type}
 							category={locating.category ?? null}
-							interactive={false}
 							className="aspect-[2/1] w-full overflow-hidden rounded-xl border"
 							label={`Map of ${locating.name}`}
 						/>
