@@ -7,7 +7,7 @@
  * reads the same numbers. Pure.
  *
  * The step lives in the URL as the view (`pv`): table / board / map are
- * Review, `rate` is Rate, `schedule` is Add to days, so every old `pv` link
+ * Review, `rate` is Rate, `schedule` is Schedule, so every old `pv` link
  * still lands where it did. Without `pv` the tab picks the most useful
  * step (`pickStep`).
  */
@@ -24,7 +24,7 @@ export type ReviewView = (typeof REVIEW_VIEWS)[number];
 export const STEP_LABEL: Record<FlowStep, string> = {
 	rate: "Rate",
 	review: "Review",
-	schedule: "Add to days",
+	schedule: "Schedule",
 };
 
 /** The step a `pv` names (null: none, the tab picks one). */

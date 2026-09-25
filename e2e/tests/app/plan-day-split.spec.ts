@@ -4,7 +4,7 @@
  * the cities from what the shortlist needs (the spare days shared out) and
  * says who still rates; rating moves it; the stops reorder by drag (the map
  * numbers them in that order); − / + adjust it; Use these days sets each
- * city's nights. Then the Places tab's Add to days list, and Change in the
+ * city's nights. Then the Places tab's Schedule list, and Change in the
  * Plan: − on a city with a place on its last day confirms in the panel and
  * sends the place back to the list. With no dates: about how many days,
  * the first day, then the dates and the nights in one go. The phone gets
@@ -173,8 +173,8 @@ test.describe("desktop", () => {
 		expect([t.place.castle, t.place.dotonbori]).toContain(await card.getAttribute("data-place"));
 		await page.keyboard.press("1");
 		await expect(card).toHaveAttribute("data-rated", /.+/);
-		// Add to days: no city has days yet, so it says what the shortlist needs.
-		await expect(step(page, "schedule")).toContainText("Add to days");
+		// Schedule: no city has days yet, so it says what the shortlist needs.
+		await expect(step(page, "schedule")).toContainText("Schedule");
 		await step(page, "schedule").click();
 		const needs = page.getByTestId(P.scheduleNeeds);
 		await expect(needs).toHaveText(/Your shortlist needs about: Tokyo 2 days · Kyoto 1 · Osaka 1\s*Decide how long in each city/);
@@ -217,7 +217,7 @@ test.describe("desktop", () => {
 		await expect(page.getByTestId(MAP_TESTID.splitStop)).toHaveCount(0);
 		await page.screenshot({ path: shot("desktop-3-plan-line"), animations: "disabled" });
 
-		// 6. Add to days: the per-city list; Senso-ji goes on Sat 2 Oct (Tokyo's last day).
+		// 6. Schedule: the per-city list; Senso-ji goes on Sat 2 Oct (Tokyo's last day).
 		await page.goto(`/t/${t.slug}?tab=places&pv=schedule`);
 		await expect(page.getByTestId(P.schedule)).toHaveAttribute("data-mode", "schedule", { timeout: 30_000 });
 		await expect(page.getByTestId(P.scheduleIntro)).toContainText("Put your shortlist on days");
@@ -289,7 +289,7 @@ test.describe("desktop", () => {
 		expect(dates).toHaveLength(5);
 		expect(Number(dates[0]?.slice(8))).toBe(15);
 		await expect(page.getByTestId(T.splitDays)).toHaveText("Tokyo 3 days · Kyoto 2");
-		// Add to days has the per-city list now.
+		// Schedule has the per-city list now.
 		await page.goto(`/t/${t.slug}?tab=places&pv=schedule`);
 		await expect(page.getByTestId(P.schedule)).toHaveAttribute("data-mode", "schedule", { timeout: 30_000 });
 		await expect(page.locator(`[data-testid=${P.scheduleWindow}][data-city="${t.city.kyoto}"]`)).toBeVisible();
@@ -345,11 +345,11 @@ test("phone: the split at 390 px, Move up, Use these days, then the line", async
 	await expectNoOverflow(page, "plan-tab");
 	await page.waitForTimeout(400);
 	await page.screenshot({ path: shot("phone-2-change"), animations: "disabled" });
-	// Add to days on the phone: its label, and the list.
+	// Schedule on the phone: its label, and the list.
 	await page.goto(`/t/${t.slug}?tab=places&pv=schedule`);
-	await expect(step(page, "schedule")).toContainText("Add to days", { timeout: 30_000 });
+	await expect(step(page, "schedule")).toContainText("Schedule", { timeout: 30_000 });
 	// The whole label fits the phone's step bar.
-	const label = step(page, "schedule").getByText("Add to days", { exact: true });
+	const label = step(page, "schedule").getByText("Schedule", { exact: true });
 	expect(await label.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true);
 	await expect(page.getByTestId(P.schedule)).toHaveAttribute("data-mode", "schedule");
 	await expectNoOverflow(page, P.steps);

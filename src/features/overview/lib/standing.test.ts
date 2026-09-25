@@ -82,7 +82,7 @@ describe("whereThingsStand", () => {
 			"rating",
 			"cities",
 			"days",
-			"hotels",
+			"stays",
 		]);
 	});
 
@@ -156,8 +156,8 @@ describe("whereThingsStand", () => {
 			done: false,
 		});
 		// Every night is only a town: all three need a hotel.
-		expect(line(s, "hotels")).toMatchObject({
-			detail: "3 nights still need one",
+		expect(line(s, "stays")).toMatchObject({
+			detail: "3 nights not set yet",
 			done: false,
 		});
 	});
@@ -170,7 +170,7 @@ describe("whereThingsStand", () => {
 		});
 		const noDays: TripGraph = { ...graph, days: [], items: [] };
 		const s = stand(noDays);
-		for (const key of ["cities", "days", "hotels"])
+		for (const key of ["cities", "days", "stays"])
 			expect(line(s, key)?.detail).toBe("Pick your dates first");
 	});
 

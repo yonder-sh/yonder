@@ -4,8 +4,8 @@
  */
 export const STANDING_TESTID = {
 	card: "standing",
-	/** `data-key` (places · rating · cities · days · hotels), `data-done`, `data-next`. */
+	/** `data-key` (places · rating · cities · days · stays), `data-done`, `data-next`. */
 	line: "standing-line",
-	/** The next line's action ("Rate 12 places", "Add to days"). */
+	/** The next line's action ("Rate 12 places", "Schedule"). */
 	action: "standing-action",
 } as const;

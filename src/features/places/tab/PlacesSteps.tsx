@@ -1,6 +1,6 @@
 /**
  * The Places tab's three steps (owner, 2026-09-25): **1 Rate · 2 Review ·
- * 3 Add to days**, each with its count ("12 to rate", "48 places", "9
+ * 3 Schedule**, each with its count ("12 to rate", "48 places", "9
  * shortlisted · 4 not on a day"). The step with work waiting for you has
  * the apricot "next" dot (DESIGN §1: now / next). The step is the URL's
  * view (`pv`), so it deep-links and follows like the rest of the tab.
@@ -49,7 +49,7 @@ export function PlacesSteps({
 				{FLOW_STEPS.map((s, i) => {
 					const on = s === step;
 					return (
-						// The phone sizes steps by their words, so "Add to days" fits at 390 px.
+						// The phone sizes steps by their words, so each label fits at 390 px.
 						<li
 							key={s}
 							className={cn(

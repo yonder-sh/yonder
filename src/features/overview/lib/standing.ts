@@ -6,7 +6,7 @@
  *   ○ Rating: Dennis and Audrey are done. You and Maya haven't started.
  *   ○ How long in each city: not decided yet
  *   ○ What to do each day: 8 of 12 favourites have a day
- *   ○ Hotels: 3 nights still need one
+ *   ○ Where you're staying: 3 nights not set yet
  *
  * Favourites are the shortlist (on a day or not); people are those whose
  * ratings count. Pure.
@@ -18,7 +18,7 @@ import { nightsWithoutStay } from "@/features/shell/still-to-plan";
 import type { GraphIndex } from "@/lib/engine/graph-index";
 import type { GraphMember, ScheduleResult } from "@/lib/engine/types";
 
-export type StandingKey = "places" | "rating" | "cities" | "days" | "hotels";
+export type StandingKey = "places" | "rating" | "cities" | "days" | "stays";
 
 export type RatingPerson = {
 	member: GraphMember;
@@ -28,7 +28,7 @@ export type RatingPerson = {
 
 export type StandingLine = {
 	key: StandingKey;
-	/** "Rating", "Hotels"; null for the places line ("48 places added"). */
+	/** "Rating", "Where you're staying"; null for the places line ("48 places added"). */
 	label: string | null;
 	/** "Dennis and Audrey are done. Maya has 12 left." */
 	detail: string;
@@ -226,13 +226,13 @@ export function whereThingsStand(input: StandingInput): Standing {
 		done: hasDays && favourites > 0 && onDays === favourites,
 	});
 	lines.push({
-		key: "hotels",
-		label: "Hotels",
+		key: "stays",
+		label: "Where you're staying",
 		detail: !hasDays
 			? "Pick your dates first"
 			: nights
-				? `${plural(nights, "night")} still ${nights === 1 ? "needs" : "need"} one`
-				: "every night has one",
+				? `${plural(nights, "night")} not set yet`
+				: "every night is set",
 		done: hasDays && nights === 0,
 	});
 	return {

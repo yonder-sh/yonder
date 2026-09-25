@@ -2,7 +2,7 @@
  * "Where things stand" (owner, 2026-09-25): the trip's progress in five
  * plain lines, each opening where it gets done. The first open line is
  * what's next: it stands out and, when you can do it, carries the action
- * ("Rate 12 places", "Add to days"). The rating line offers "Remind" for
+ * ("Rate 12 places", "Schedule"). The rating line offers "Remind" for
  * people with places left. Viewers get the lines only. On the Overview's
  * dark hero (`tone="hero"`) and in the welcome (`compact`).
  */
@@ -43,7 +43,7 @@ function useStandingNav(standing: Standing) {
 		rating: () => places("rate"),
 		cities: () => nav.setTab("plan"),
 		days: () => places("schedule"),
-		hotels: () => nav.setTab("plan"),
+		stays: () => nav.setTab("plan"),
 	};
 	const hasDays = ix.days.length > 0;
 	const action = (key: StandingKey): Action | null => {
@@ -72,11 +72,11 @@ function useStandingNav(standing: Standing) {
 					: { label: "Pick dates", run: () => setSettingsOpen(true) };
 			case "days":
 				return canEdit && hasDays && standing.favourites
-					? { label: "Add to days", run: open.days }
+					? { label: "Schedule", run: open.days }
 					: null;
-			case "hotels":
+			case "stays":
 				return canEdit && hasDays
-					? { label: "Open the plan", run: open.hotels }
+					? { label: "Open the plan", run: open.stays }
 					: null;
 		}
 	};

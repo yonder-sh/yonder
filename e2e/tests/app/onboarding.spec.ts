@@ -111,7 +111,7 @@ test.describe("where things stand", () => {
 		await expect(line(page, "rating")).toContainText(/Rating: You, (Audrey and Maya|Maya and Audrey) haven't started\./);
 		await expect(line(page, "cities")).toContainText("How long in each city:");
 		await expect(line(page, "days")).toContainText(/What to do each day: .*favourite/);
-		await expect(line(page, "hotels")).toContainText(/Hotels: \d+ nights? still needs? one/);
+		await expect(line(page, "stays")).toContainText(/Where you're staying: \d+ nights? not set yet/);
 		// Remind Maya (an account); Audrey has none.
 		await expect(line(page, "rating").getByTestId(R.remind)).toHaveText(["Remind Maya"]);
 		await page.screenshot({ path: shot("desktop-checklist"), animations: "disabled" });

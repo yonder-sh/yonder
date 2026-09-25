@@ -57,7 +57,7 @@ describe("WhereThingsStand", () => {
 			"rating",
 			"cities",
 			"days",
-			"hotels",
+			"stays",
 		]);
 		expect(lineOf("places")).toHaveAttribute("data-done", "true");
 		expect(lineOf("rating")).toHaveAttribute("data-next", "true");
@@ -74,7 +74,7 @@ describe("WhereThingsStand", () => {
 		expect(r.ws().search.pv).toBe("rate");
 		// Other lines open where they get done.
 		await user.click(
-			within(lineOf("hotels")).getAllByRole("button")[0] as HTMLElement,
+			within(lineOf("stays")).getAllByRole("button")[0] as HTMLElement,
 		);
 		expect(r.ws().tab).toBe("plan");
 	});

@@ -1,13 +1,13 @@
 /**
  * The Places tab (docs/PLACES.md §1–§4): every place in the scope, led by
  * the planning flow (owner, 2026-09-25) as three steps — **1 Rate · 2
- * Review · 3 Add to days** — each with its count, and "Add a place" at the
+ * Review · 3 Schedule** — each with its count, and "Add a place" at the
  * end of the steps' bar on every step:
  * - Rate: the endless feed, full height;
  * - Review: one filtered set in three views (Table, Board, Map) with
  *   grouping, sort and filters shared by all of them (and kept in the URL,
  *   so they deep-link and follow);
- * - Add to days: "Schedule next" (per stay window, with fit hints); before
+ * - Schedule: "Schedule next" (per stay window, with fit hints); before
  *   any day has a city, what the shortlist needs (decided in the Plan).
  * With no places yet, every step shows the empty state that teaches the flow.
  * The step is the URL's view (`pv`); with none the tab picks the most useful
@@ -95,7 +95,7 @@ function FlowEmpty() {
 	const steps = [
 		["Rate", " them together, Must to Nah."],
 		["Review", " the group's scores. The favourites make the shortlist."],
-		["Add to days", ": put the shortlist on the days you're in each city."],
+		["Schedule", ": put the shortlist on the days you're in each city."],
 	] as const;
 	return (
 		<div

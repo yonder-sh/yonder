@@ -1,5 +1,5 @@
 /**
- * The Add to days step: "Schedule next" (docs/PLACES.md §4), only the bridge
+ * The Schedule step: "Schedule next" (docs/PLACES.md §4), only the bridge
  * onto the days the Plan already has. Per stay window (a run of days in one
  * city, under its country where the country changes) the city's
  * shortlisted places not on a day, grouped by area, each with a fit hint per

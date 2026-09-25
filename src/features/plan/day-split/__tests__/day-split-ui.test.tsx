@@ -5,7 +5,7 @@
  * dates, about how many days and the first one; afterwards "Tokyo 2 days ·
  * Kyoto 2" with Change, which confirms in the panel before places go back
  * to the list. The map gets the stops in order while it's open. And the
- * Places tab's Add to days step: what the shortlist needs until then.
+ * Places tab's Schedule step: what the shortlist needs until then.
  */
 import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
@@ -512,7 +512,7 @@ describe("once days have cities", () => {
 	});
 });
 
-describe("the Places tab's Add to days", () => {
+describe("the Places tab's Schedule", () => {
 	const places = (graph: TripGraph) =>
 		renderWithWorkspace(<PlacesTab />, {
 			graph,

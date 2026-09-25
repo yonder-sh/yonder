@@ -38,7 +38,7 @@ const D = DEMO_MEMBERS.dennis;
 const A = DEMO_MEMBERS.audrey;
 
 describe("the step in the URL", () => {
-	it("table / board / map are Review, rate is Rate, schedule is Add to days, none is picked", () => {
+	it("table / board / map are Review, rate is Rate, schedule is Schedule, none is picked", () => {
 		expect(stepOfView("table")).toBe("review");
 		expect(stepOfView("board")).toBe("review");
 		expect(stepOfView("map")).toBe("review");
@@ -73,7 +73,7 @@ describe("which step Places opens on", () => {
 	it("Rate when you have places to rate", () => {
 		expect(at({ toRate: 4, notOnDay: 2 })).toBe("rate");
 	});
-	it("then Add to days for shortlisted places not on a day (editors, with days)", () => {
+	it("then Schedule for shortlisted places not on a day (editors, with days)", () => {
 		expect(at({ toRate: 0, notOnDay: 2 })).toBe("schedule");
 		expect(at({ notOnDay: 2 }, { canEdit: false })).toBe("review");
 		expect(at({ notOnDay: 2 }, { hasDays: false })).toBe("review");
