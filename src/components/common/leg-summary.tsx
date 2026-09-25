@@ -2,11 +2,57 @@ import { cn } from "cn";
 import { flightTimes } from "@/lib/engine/flights";
 import type { GraphLeg, ScheduledLeg } from "@/lib/engine/types";
 import { formatDistance, formatDuration, formatFlight } from "@/lib/format";
-import { readLegDetails } from "@/lib/schemas/legs";
+import { type LegDetails, readLegDetails } from "@/lib/schemas/legs";
 import { TESTID } from "@/lib/testids";
 import { LineChip, ModeGlyph } from "./glyphs";
 
 export { flightOwnMinutes } from "@/lib/engine/flights";
+
+/**
+ * A leg's line chips (up to `max`), else its label as one neutral chip: a
+ * manual route "Shiraito → Shin-Fuji → Nagoya" or an `other` leg "Bus →
+ * Shiraito Falls". Nothing for flights or legs without either.
+ */
+export function LegChips({
+	details,
+	max = 3,
+}: {
+	details: LegDetails | null;
+	max?: number;
+}) {
+	const lines =
+		details?.kind === "transit"
+			? (details.route?.segments ?? []).filter((s) => s.lineShort ?? s.lineName)
+			: [];
+	const label =
+		lines.length > 0
+			? null
+			: details?.kind === "transit"
+				? (details.route?.label ?? null)
+				: details?.kind === "other"
+					? (details.label ?? null)
+					: null;
+	return (
+		<>
+			{lines.slice(0, max).map((s) => (
+				<LineChip
+					key={`${s.lineShort ?? s.lineName}:${s.from?.name ?? ""}:${s.departAt ?? ""}`}
+					name={s.lineShort ?? s.lineName ?? ""}
+					color={s.color}
+					textColor={s.textColor}
+				/>
+			))}
+			{label ? (
+				<span
+					data-testid={TESTID.legSummaryLabel}
+					className="max-w-[16rem] truncate rounded-sm border border-border px-1 text-[11px] leading-4 text-foreground"
+				>
+					{label}
+				</span>
+			) : null}
+		</>
+	);
+}
 
 /**
  * One leg in one line (SPEC §12.6): mode glyph, minutes ("est." when
@@ -44,20 +90,6 @@ export function LegSummary({
 					(leg.source === "estimate" && !leg.isEdited)
 				: true));
 	const unset = !leg?.mode;
-	const lines =
-		details?.kind === "transit"
-			? (details.route?.segments ?? []).filter((s) => s.lineShort ?? s.lineName)
-			: [];
-	// No line names (a manual route "Shiraito → Shin-Fuji → Nagoya", an `other`
-	// leg "Bus → Shiraito Falls"): show its label as one neutral chip instead.
-	const label =
-		lines.length > 0
-			? null
-			: details?.kind === "transit"
-				? (details.route?.label ?? null)
-				: details?.kind === "other"
-					? (details.label ?? null)
-					: null;
 	return (
 		<span
 			className={cn(
@@ -79,26 +111,7 @@ export function LegSummary({
 			{!unset && details?.kind === "flight" ? (
 				<span className="truncate">{formatFlight(details.flight)}</span>
 			) : null}
-			{!unset && !compact
-				? lines
-						.slice(0, 3)
-						.map((s) => (
-							<LineChip
-								key={`${s.lineShort ?? s.lineName}:${s.from?.name ?? ""}:${s.departAt ?? ""}`}
-								name={s.lineShort ?? s.lineName ?? ""}
-								color={s.color}
-								textColor={s.textColor}
-							/>
-						))
-				: null}
-			{!unset && !compact && label ? (
-				<span
-					data-testid={TESTID.legSummaryLabel}
-					className="max-w-[16rem] truncate rounded-sm border border-border px-1 text-[11px] leading-4 text-foreground"
-				>
-					{label}
-				</span>
-			) : null}
+			{!unset && !compact ? <LegChips details={details} /> : null}
 			{!unset && minutes !== null ? (
 				<span className="font-mono tnum">
 					{flight?.estimate ? "~" : ""}

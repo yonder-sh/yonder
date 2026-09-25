@@ -172,9 +172,9 @@ test("SEED-03/05/TL-10: days, durations, travel legs and the backup list", async
 
 test("SEED-05: Travel rows show their route in the Plan (line or label chip)", async ({ page }, info) => {
 	test.skip(info.project.name !== "chromium", "desktop layout; the 390 px shot is taken below");
-	// At the country lens: a one-country itinerary opens at the city lens, where a
-	// ride between two cities is the link between their bands (no chip there).
-	await page.goto(`/t/${slug}?days=2027-10-07..2027-10-08&lens=country`);
+	// A one-country itinerary opens at the city lens: a ride between two cities
+	// is the link between their bands, with the same chips as a leg row.
+	await page.goto(`/t/${slug}?days=2027-10-07..2027-10-08`);
 	await expectLive(page);
 	// The multi-stop route and the bus keep the sheet's text as one chip (F1i request 1)…
 	const labels = page.getByTestId(TESTID.legSummaryLabel);
@@ -185,7 +185,7 @@ test("SEED-05: Travel rows show their route in the Plan (line or label chip)", a
 	await page.getByText("Shiraito → Shin-Fuji → Nagoya").scrollIntoViewIfNeeded();
 	await page.screenshot({ path: shotPath("seed/import-day6-legs-1440.png"), animations: "disabled" });
 	await page.setViewportSize({ width: 390, height: 844 });
-	await page.goto(`/t/${slug}?days=2027-10-08&lens=country`);
+	await page.goto(`/t/${slug}?days=2027-10-08`);
 	await expectLive(page);
 	await expandSheet(page);
 	await expect(page.getByTestId(TESTID.legSummaryLabel).filter({ hasText: "Bus → Shiraito Falls" })).toBeVisible();

@@ -2,7 +2,7 @@ import { ChevronDown, ChevronRight } from "lucide-react";
 import { useContext, useState } from "react";
 import { useEditGuard } from "@/components/common/edit-guard";
 import { CategoryDot, ModeGlyph, TypeGlyph } from "@/components/common/glyphs";
-import { LegSummary } from "@/components/common/leg-summary";
+import { LegChips, LegSummary } from "@/components/common/leg-summary";
 import { MemberAvatar, presenceColor } from "@/components/common/member";
 import { Button } from "@/components/ui/button";
 import {
@@ -534,7 +534,11 @@ export function BandCard({
 	);
 }
 
-/** Between bands: "✈ KIX → ICN · 2h05 · Sat 18 Apr 14:20", "🚄 2h15", "☾ Overnight". */
+/**
+ * Between bands: "✈ KIX → ICN · 2h05 · Sat 18 Apr 14:20", "🚄 Tokyo →
+ * Kawaguchiko [Fuji Excursion] · 1h52", "☾ Overnight". A ride shows its line
+ * (or route) chips, as in the leg row at the country lens.
+ */
 export function BandLink({ transition }: { transition: Transition }) {
 	const { ix, schedule, nav } = useWorkspace();
 	const key = pairKey(transition.fromItemId, transition.toItemId);
@@ -586,6 +590,9 @@ export function BandLink({ transition }: { transition: Transition }) {
 				mode={transition.via === "leg" ? (leg?.mode ?? null) : "overnight"}
 			/>
 			<span className="truncate">{text}</span>
+			{transition.via === "leg" && d?.kind !== "flight" ? (
+				<LegChips details={d} max={2} />
+			) : null}
 			{minutes > 0 ? (
 				<span className="font-mono tnum">
 					· {formatDuration(minutes, { compact: true })}

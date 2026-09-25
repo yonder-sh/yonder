@@ -75,6 +75,32 @@ describe("PlanTab", () => {
 		);
 	});
 
+	it("a ride between two city bands shows its line, as at the country lens", () => {
+		const graph = structuredClone(demoGraph);
+		const fuji = graph.legs.find(
+			(l) => l.mode === "transit" && l.durationMin === 116,
+		);
+		if (!fuji) throw new Error("the demo's Fuji Excursion leg");
+		fuji.details = {
+			kind: "transit",
+			route: {
+				id: "r1",
+				source: "manual",
+				durationMin: 116,
+				walkMin: 0,
+				transfers: 0,
+				segments: [
+					{ mode: "rail", lineName: "Fuji Excursion", durationMin: 116 },
+				],
+			},
+		};
+		renderWithWorkspace(<PlanTab />, { graph, search: { lens: "city" } });
+		const links = screen.getAllByTestId(PLAN_TESTID.bandLink);
+		expect(links.some((l) => l.textContent?.includes("Fuji Excursion"))).toBe(
+			true,
+		);
+	});
+
 	it("FB-08: a click on a day header never filters; the date selects the day, the filter toggle filters", () => {
 		const { ws } = renderWithWorkspace(<PlanTab />, {
 			search: { lens: "place" },
