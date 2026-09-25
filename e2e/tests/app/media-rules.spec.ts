@@ -339,15 +339,26 @@ test("phone layout: the Media tab and the PDF viewer at 390 × 844", async ({ br
 	const c = await cloneFixtureTrip(page.request);
 	await page.goto(`/t/${c.slug}/japan/tokyo?tab=media`);
 	await expect(page.getByTestId(TESTID.workspace)).toBeVisible({ timeout: 20_000 });
-	// Pull the sheet up from its peek to the top snap.
+	// Pull the sheet up from its peek to the top snap, once it has settled,
+	// by its top right corner: the day chips' 44px hit areas reach up to the
+	// handle, and a chip held through the drag becomes a long press (a range).
 	const sheet = page.getByTestId(TESTID.mobileSheet);
-	const box = await sheet.boundingBox();
+	let box = await sheet.boundingBox();
+	await expect
+		.poll(async () => {
+			const last = box;
+			box = await sheet.boundingBox();
+			return !!last && !!box && Math.abs(box.y - last.y) < 0.5;
+		}, { intervals: [200] })
+		.toBe(true);
 	if (!box) throw new Error("no sheet");
-	await page.mouse.move(195, box.y + 12);
+	const x = box.x + box.width - 24;
+	await page.mouse.move(x, box.y + 8);
 	await page.mouse.down();
-	await page.mouse.move(195, box.y - 250, { steps: 8 });
-	await page.mouse.move(195, 60, { steps: 8 });
+	await page.mouse.move(x, box.y - 250, { steps: 8 });
+	await page.mouse.move(x, 60, { steps: 8 });
 	await page.mouse.up();
+	await expect(page).not.toHaveURL(/days=/);
 	await expect(sheet.getByTestId(TESTID.mediaTab)).toBeVisible();
 	await expect(sheet.getByTestId(TESTID.centerTabs).locator("xpath=..")).not.toHaveAttribute("aria-hidden", "true");
 	await page.getByTestId(MEDIA_TESTID.fileInput).first().setInputFiles({
