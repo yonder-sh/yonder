@@ -86,6 +86,7 @@ import { fitsText } from "./PlaceDetails";
 import { CoverPlaceholder } from "./PlacesBoard";
 import { categoryLabel, ownsKeys } from "./PlacesTable";
 import { RatingButtons } from "./RatingButtons";
+import { RemindButton } from "./RatingPeople";
 import { formatScore } from "./score";
 import { PLACES_TAB_TESTID } from "./testids";
 import { ScoreChip } from "./ui";
@@ -867,7 +868,13 @@ function EndCard({
 										<UserPlus />
 										Invite
 									</Button>
-								) : null}
+								) : (
+									<RemindButton
+										member={p.member}
+										left={p.total - p.rated}
+										className="text-[13px] text-sky-300 disabled:text-neutral-500"
+									/>
+								)}
 							</span>
 						</span>
 					);

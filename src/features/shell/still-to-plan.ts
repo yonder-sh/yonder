@@ -418,7 +418,9 @@ export function stillToPlan(input: StillToPlanInput): StillToPlan {
 		.filter(
 			(m) =>
 				(m.status === "active" || m.status === "placeholder") &&
-				m.role !== "viewer",
+				m.role !== "viewer" &&
+				// Someone whose ratings are left out isn't waited for.
+				m.ratingsCounted !== false,
 		)
 		.map((m) => ({
 			memberId: m.id,
