@@ -52,7 +52,8 @@ export const UserPrefs = z
 		defaultLens: z.enum(LENS_PREF_VALUES).nullable(),
 		/** Expanded node ids per trip (≤ 50 trips × 500 ids). */
 		treeExpanded: z.record(Id, z.array(Id).max(500)),
-		mapStyle: z.enum(["light", "dark", "satellite"]),
+		/** Only "satellite" counts: the map is otherwise the app theme's (null clears it). */
+		mapStyle: z.enum(["light", "dark", "satellite"]).nullable(),
 		compact: z.boolean(),
 		clock: z.enum(["12h", "24h"]),
 		units: z.enum(["km", "mi"]),

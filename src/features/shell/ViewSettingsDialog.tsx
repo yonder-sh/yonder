@@ -6,12 +6,8 @@
  *
  * The display currency is view-only: money math stays in the trip's home
  * currency (WP-Money converts for display). Link guests never see money, so
- * they don't get that row.
- *
- * Map shows the style the map is drawing (WP-Map's `useMapStyle`: the saved
- * one, else the app's light or dark), the same as the map's layer menu, so a
- * dark-theme browser with no saved style marks Dark and Light can be chosen
- * (FB-04).
+ * they don't get that row. The map has no row: it follows the app theme,
+ * and Satellite is a button on the map itself.
  */
 import type { ReactNode } from "react";
 import {
@@ -30,7 +26,6 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { useMapStyle } from "@/features/map/use-map-state";
 import { mustRedact } from "@/lib/auth/roles";
 import { NODE_TYPES } from "@/lib/domain/taxonomy";
 import { resolveSettings } from "@/lib/engine/graph-index";
@@ -144,7 +139,6 @@ function Body() {
 	const home = resolveSettings(graph.trip).currency;
 	const guest = mustRedact(graph.me);
 	const currency = prefs.displayCurrency ?? "home";
-	const [mapStyle, setMapStyle] = useMapStyle();
 	return (
 		<div className="-mt-1">
 			<Row
@@ -173,18 +167,6 @@ function Body() {
 						))}
 					</SelectContent>
 				</Select>
-			</Row>
-			<Row label="Map">
-				<Segments
-					label="Map style"
-					value={mapStyle}
-					onChange={setMapStyle}
-					options={[
-						{ value: "light", label: "Light" },
-						{ value: "dark", label: "Dark" },
-						{ value: "satellite", label: "Satellite" },
-					]}
-				/>
 			</Row>
 			<Row
 				label="Compact plan"

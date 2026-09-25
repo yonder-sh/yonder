@@ -10,9 +10,9 @@
  *   every pin on the visible side of the Earth and clear of the inspector.
  * - PLAN-R3-04: selecting cities with the inspector open on the globe never
  *   throws (MapLibre's globe `cameraForBounds` is never called).
- * - FB-04: Light / Dark / Satellite switch the basemap (View settings and the
- *   layer menu), the choice is saved to the account's view prefs, and the
- *   satellite imagery carries its attribution.
+ * - FB-04: the basemap follows the app theme, and the map's Satellite button
+ *   switches to imagery (saved to the account's view prefs) that carries its
+ *   attribution.
  *
  *   .data/agent-35-e2e.sh tests/app/map-owner-r1.spec.ts --project chromium
  */
@@ -20,7 +20,6 @@ import { expect, type Page, test } from "@playwright/test";
 import { MAP_TESTID } from "../../../src/features/map/testids";
 import { TESTID } from "../../../src/lib/testids";
 import { loginViaApi } from "./_helpers/auth";
-import { SHELL_TESTID } from "../../../src/features/shell/testids";
 
 const QA_TRIP = "asia-2027";
 const REAL_TRIP = process.env.E2E_REAL_TRIP ?? "asia-2027-real";
@@ -249,16 +248,14 @@ async function styleSettled(page: Page, style: string) {
 	await page.waitForTimeout(600);
 }
 
-async function pickInLayerMenu(page: Page, style: "light" | "dark" | "satellite") {
-	await page.getByTestId(MAP_TESTID.layersButton).click();
-	const menu = page.getByTestId(MAP_TESTID.layerMenu);
-	await expect(menu).toBeVisible();
-	await menu.getByTestId(`${MAP_TESTID.mapStyle}-${style}`).click();
-	await expect(menu.getByTestId(`${MAP_TESTID.mapStyle}-${style}`)).toHaveAttribute("data-state", "on");
-	await page.keyboard.press("Escape");
+/** The map's Satellite button, on or off (a no-op when it already is). */
+async function setSatellite(page: Page, on: boolean) {
+	const button = page.getByTestId(MAP_TESTID.satellite);
+	if ((await button.getAttribute("aria-pressed")) !== String(on)) await button.click();
+	await expect(button).toHaveAttribute("aria-pressed", String(on));
 }
 
-test("FB-04: Light, Dark and Satellite switch the basemap from View settings and the layer menu, and stay chosen", async ({
+test("FB-04: the map follows the app theme; its Satellite button shows imagery and stays on", async ({
 	page,
 }) => {
 	const blocked: string[] = [];
@@ -270,26 +267,23 @@ test("FB-04: Light, Dark and Satellite switch the basemap from View settings and
 		if (r.url().startsWith("https://server.arcgisonline.com/")) tiles.push(r.status());
 	});
 	await open(page, `/t/${QA_TRIP}/japan/tokyo`);
-	// Start from Light (the account may remember another style from an earlier run).
-	await pickInLayerMenu(page, "light");
+	// Start from the map (the account may have Satellite on from an earlier run).
+	await setSatellite(page, false);
 	await styleSettled(page, "light");
 	expect((await readStyle(page)).name).toBe("Yonder light");
 
-	// View settings › Map › Dark (the control that did nothing before).
-	await page.getByRole("button", { name: /Asia 2027/ }).first().click();
-	await page.getByTestId(SHELL_TESTID.viewSettingsButton).click();
-	const dialog = page.getByTestId(SHELL_TESTID.viewSettingsDialog);
-	await expect(dialog).toBeVisible();
-	await dialog.locator('[aria-label="Map style"]').getByText("Dark", { exact: true }).click();
-	await page.keyboard.press("Escape");
+	// The app turns dark: so does the map (nothing to choose).
+	await page.emulateMedia({ colorScheme: "dark" });
 	await styleSettled(page, "dark");
 	let s = await readStyle(page);
 	expect(s.name).toBe("Yonder dark");
 	expect(s.dark).toBe(true);
 	await page.screenshot({ path: `${SHOTS}/fb04-dark.png` });
+	await page.emulateMedia({ colorScheme: "light" });
+	await styleSettled(page, "light");
 
-	// Satellite from the map's own layer menu: keyless imagery with its attribution.
-	await pickInLayerMenu(page, "satellite");
+	// Satellite from the map's own button: keyless imagery with its attribution.
+	await setSatellite(page, true);
 	await styleSettled(page, "satellite");
 	s = await readStyle(page);
 	expect(s.name).toBe("Yonder satellite");
@@ -307,16 +301,11 @@ test("FB-04: Light, Dark and Satellite switch the basemap from View settings and
 	expect(await page.evaluate(() => !!(window as unknown as { __tripMap: { getLayer(id: string): unknown } }).__tripMap.getLayer("yonder-edges-walk"))).toBe(true);
 	await page.screenshot({ path: `${SHOTS}/fb04-satellite.png` });
 
-	// Saved to the account: a reload (and the View settings dialog) keeps Satellite.
+	// Saved to the account: a reload keeps Satellite on.
 	await page.reload();
 	await mapReady(page);
 	await styleSettled(page, "satellite");
-	await page.getByRole("button", { name: /Asia 2027/ }).first().click();
-	await page.getByTestId(SHELL_TESTID.viewSettingsButton).click();
-	await expect(
-		page.getByTestId(SHELL_TESTID.viewSettingsDialog).locator('[aria-label="Map style"]').getByText("Satellite", { exact: true }),
-	).toHaveAttribute("data-state", "on");
-	await page.keyboard.press("Escape");
+	await expect(page.getByTestId(MAP_TESTID.satellite)).toHaveAttribute("aria-pressed", "true");
 
 	// Satellite on the whole-trip globe too.
 	await open(page, `/t/${QA_TRIP}?tab=plan`, "country");
@@ -324,8 +313,8 @@ test("FB-04: Light, Dark and Satellite switch the basemap from View settings and
 	expectAllOnGlobe(await readGlobe(page), QA_COUNTRIES);
 	await page.screenshot({ path: `${SHOTS}/fb04-satellite-globe.png` });
 
-	// Back to Light (and the test account as it was).
-	await pickInLayerMenu(page, "light");
+	// Back to the map (and the test account as it was).
+	await setSatellite(page, false);
 	await styleSettled(page, "light");
 	expect((await readStyle(page)).dark).toBe(false);
 });
@@ -333,10 +322,10 @@ test("FB-04: Light, Dark and Satellite switch the basemap from View settings and
 test.describe("dark app", () => {
 	test.use({ colorScheme: "dark" });
 
-	test("FB-04: a Light map in the dark app keeps light pins and labels; Dark follows the app's tokens", async ({ page }) => {
+	test("FB-04: the dark app draws a dark map on the app's own tokens", async ({ page }) => {
 		await open(page, `/t/${QA_TRIP}/japan/tokyo`);
-		await pickInLayerMenu(page, "light");
-		await styleSettled(page, "light");
+		await setSatellite(page, false);
+		await styleSettled(page, "dark");
 		const tokens = () =>
 			page.evaluate(() => {
 				const ground = document.querySelector(".yonder-map-ground") as HTMLElement;
@@ -348,19 +337,10 @@ test.describe("dark app", () => {
 					halo: getComputedStyle(ground).getPropertyValue("--basemap-label-halo").trim(),
 				};
 			});
-		const light = await tokens();
-		expect(light.light).toBe(true);
-		expect(light.ground).not.toBe(light.app);
-		expect(light.halo).toBe("#f0f2f7");
-		await page.screenshot({ path: `${SHOTS}/fb04-dark-app-light-map.png` });
-		await pickInLayerMenu(page, "dark");
-		await styleSettled(page, "dark");
 		const dark = await tokens();
 		expect(dark.light).toBe(false);
 		expect(dark.ground).toBe(dark.app);
 		await page.screenshot({ path: `${SHOTS}/fb04-dark-app-dark-map.png` });
-		await pickInLayerMenu(page, "light");
-		await styleSettled(page, "light");
 	});
 });
 

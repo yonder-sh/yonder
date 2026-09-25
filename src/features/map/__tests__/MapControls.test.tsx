@@ -15,8 +15,8 @@ const props = (variant: MapControlsProps["variant"]): MapControlsProps => ({
 	variant,
 	palette: LINES.light,
 	style: {},
-	mapStyle: "light",
-	setMapStyle: () => {},
+	satellite: false,
+	setSatellite: () => {},
 	onFit: () => {},
 	onZoom: () => {},
 	show: { ideas: true, dropped: false, stays: true },
@@ -105,35 +105,35 @@ describe("Map popovers (VIS2-03: axe aria-dialog-name)", () => {
 	});
 });
 
-describe("Map style in the layer menu (FB-04)", () => {
-	it("shows the current style and saves another one", async () => {
-		const setMapStyle = vi.fn();
-		render(
+describe("Satellite on the map", () => {
+	it("is a button on the map, not in the layer menu, and toggles", async () => {
+		const setSatellite = vi.fn();
+		const { rerender } = render(
+			<TooltipProvider>
+				<MapControls {...props("desktop")} setSatellite={setSatellite} />
+			</TooltipProvider>,
+		);
+		const button = screen.getByTestId(MAP_TESTID.satellite);
+		expect(button).toHaveAttribute("aria-pressed", "false");
+		fireEvent.click(button);
+		expect(setSatellite).toHaveBeenCalledWith(true);
+		rerender(
 			<TooltipProvider>
 				<MapControls
 					{...props("desktop")}
-					mapStyle="dark"
-					setMapStyle={setMapStyle}
+					satellite
+					setSatellite={setSatellite}
 				/>
 			</TooltipProvider>,
 		);
+		expect(button).toHaveAttribute("aria-pressed", "true");
+		fireEvent.click(button);
+		expect(setSatellite).toHaveBeenLastCalledWith(false);
+		// The layer menu no longer picks a map style.
 		fireEvent.click(
 			screen.getByRole("button", { name: "Map layers and legend" }),
 		);
-		const group = await screen.findByTestId(MAP_TESTID.mapStyle);
-		expect(group.getAttribute("aria-label")).toBe("Map style");
-		const dark = screen.getByTestId(`${MAP_TESTID.mapStyle}-dark`);
-		expect(dark.getAttribute("data-state")).toBe("on");
-		expect(
-			screen
-				.getByTestId(`${MAP_TESTID.mapStyle}-light`)
-				.getAttribute("data-state"),
-		).toBe("off");
-		fireEvent.click(screen.getByTestId(`${MAP_TESTID.mapStyle}-satellite`));
-		expect(setMapStyle).toHaveBeenCalledWith("satellite");
-		// Clicking the chosen one again doesn't unset it (a single toggle group).
-		setMapStyle.mockClear();
-		fireEvent.click(dark);
-		expect(setMapStyle).not.toHaveBeenCalled();
+		const menu = await screen.findByTestId(MAP_TESTID.layerMenu);
+		expect(menu).not.toHaveTextContent(/Satellite|Light|Dark/);
 	});
 });

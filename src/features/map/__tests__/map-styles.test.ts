@@ -225,11 +225,13 @@ describe("Satellite (FB-04)", () => {
 				}
 	});
 
-	it("a saved style wins; without one the map follows the app theme; satellite is a dark tone", () => {
+	it("the map follows the app theme unless satellite is on; satellite is a dark tone", () => {
 		expect(effectiveMapStyle(undefined, "dark")).toBe("dark");
 		expect(effectiveMapStyle(undefined, "light")).toBe("light");
 		expect(effectiveMapStyle("satellite", "light")).toBe("satellite");
-		expect(effectiveMapStyle("light", "dark")).toBe("light");
+		// An old saved light or dark no longer overrides the theme.
+		expect(effectiveMapStyle("light", "dark")).toBe("dark");
+		expect(effectiveMapStyle("dark", "light")).toBe("light");
 		expect(mapTone("satellite")).toBe("dark");
 		expect(mapTone("dark")).toBe("dark");
 		expect(mapTone("light")).toBe("light");

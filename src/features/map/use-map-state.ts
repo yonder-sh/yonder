@@ -62,17 +62,19 @@ export function useMapTheme(): MapTheme {
 }
 
 /**
- * FB-04: the map style (Light / Dark / Satellite) from the account's view
- * prefs (`mapStyle`, WP-Shell's `useViewPrefs`), and a setter that saves it
- * the same way View settings does. Signed-out and fixture pages keep it local.
+ * The basemap: the app theme's light or dark, or satellite when it's on (the
+ * map's own button; saved to the account's view prefs, `mapStyle`). The
+ * setter switches satellite on or off. Signed-out and fixture pages keep it
+ * local.
  */
-export function useMapStyle(): [MapStyle, (style: MapStyle) => void] {
+export function useMapStyle(): [MapStyle, (satellite: boolean) => void] {
 	const { mode } = useWorkspace();
 	const { prefs, setPrefs } = useViewPrefs({ enabled: mode === "live" });
 	const theme = useMapTheme();
 	const style = effectiveMapStyle(prefs.mapStyle, theme);
 	const set = useCallback(
-		(mapStyle: MapStyle) => setPrefs({ mapStyle }),
+		(satellite: boolean) =>
+			setPrefs({ mapStyle: satellite ? "satellite" : null }),
 		[setPrefs],
 	);
 	return [style, set];

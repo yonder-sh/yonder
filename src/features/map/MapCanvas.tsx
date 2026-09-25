@@ -534,7 +534,7 @@ export default function MapCanvas({
 	const ws = useWorkspace();
 	const { ix, sel, nav, scope, lens, days, who, access, lensOptions } = ws;
 	const scopeId = scope?.id ?? null;
-	const [mapStyle, setMapStyle] = useMapStyle();
+	const [mapStyle, setSatellite] = useMapStyle();
 	// Pins, lines and labels follow the basemap's tone (satellite is dark).
 	const theme = mapTone(mapStyle);
 	const palette = LINES[theme];
@@ -1810,8 +1810,8 @@ export default function MapCanvas({
 			<MapControls
 				variant={variant}
 				palette={palette}
-				mapStyle={mapStyle}
-				setMapStyle={setMapStyle}
+				satellite={mapStyle === "satellite"}
+				setSatellite={setSatellite}
 				style={controlStyle}
 				onFit={() => {
 					pauseCameraFollow();

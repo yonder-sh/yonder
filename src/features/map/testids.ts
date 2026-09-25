@@ -21,8 +21,8 @@ export const MAP_TESTID = {
 	showDropped: "map-show-dropped",
 	showStays: "map-show-stays",
 	dayMode: "map-day-mode",
-	/** FB-04: Light · Dark · Satellite in the layer menu (`-light`, `-dark`, `-satellite` per option). */
-	mapStyle: "map-style",
+	/** The Satellite toggle in the map's controls (light / dark follow the app theme). */
+	satellite: "map-satellite",
 	filterButton: "map-filter-button",
 	filterMenu: "map-filter-menu",
 	filterChip: "map-filter-chip",

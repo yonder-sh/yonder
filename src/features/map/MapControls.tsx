@@ -14,6 +14,7 @@ import {
 	Maximize2,
 	Minus,
 	Plus,
+	Satellite,
 	Undo2,
 	X,
 } from "lucide-react";
@@ -60,14 +61,8 @@ import { isActiveFilter } from "@/lib/workspace/filter-match";
 import { useUi } from "@/lib/workspace/ui-store";
 import type { MapShow } from "./map-data";
 import { FLIGHT_GAP, FLIGHT_RULE } from "./map-layers";
-import { type LinePalette, MAP_STYLES, type MapStyle } from "./palette";
+import type { LinePalette } from "./palette";
 import { MAP_TESTID } from "./testids";
-
-const STYLE_LABEL: Record<MapStyle, string> = {
-	light: "Light",
-	dark: "Dark",
-	satellite: "Satellite",
-};
 
 function ControlButton({
 	label,
@@ -106,9 +101,9 @@ export type MapControlsProps = {
 	variant: "desktop" | "mobile";
 	palette: LinePalette;
 	style: React.CSSProperties;
-	/** FB-04: the basemap, the same setting as View settings › Map. */
-	mapStyle: MapStyle;
-	setMapStyle(style: MapStyle): void;
+	/** Satellite imagery instead of the map (the map is otherwise the app theme's). */
+	satellite: boolean;
+	setSatellite(on: boolean): void;
 	onFit(): void;
 	onZoom(delta: 1 | -1): void;
 	show: MapShow;
@@ -145,6 +140,15 @@ export function MapControls(p: MapControlsProps) {
 				onClick={p.onFit}
 			>
 				<Maximize2 aria-hidden strokeWidth={1.75} />
+			</ControlButton>
+			<ControlButton
+				label="Satellite"
+				testId={MAP_TESTID.satellite}
+				active={p.satellite}
+				aria-pressed={p.satellite}
+				onClick={() => p.setSatellite(!p.satellite)}
+			>
+				<Satellite aria-hidden strokeWidth={1.75} />
 			</ControlButton>
 			<Popover open={layersOpen} onOpenChange={setLayersOpen}>
 				<PopoverTrigger asChild>
@@ -268,33 +272,6 @@ function ShowRow({
 function LayerMenu(p: MapControlsProps) {
 	return (
 		<div className="max-h-[70vh] overflow-y-auto">
-			<Section title="Map">
-				<ToggleGroup
-					type="single"
-					size="sm"
-					variant="outline"
-					value={p.mapStyle}
-					onValueChange={(v) => {
-						if ((MAP_STYLES as readonly string[]).includes(v))
-							p.setMapStyle(v as MapStyle);
-					}}
-					data-testid={MAP_TESTID.mapStyle}
-					aria-label="Map style"
-					className="w-full"
-				>
-					{MAP_STYLES.map((s) => (
-						<ToggleGroupItem
-							key={s}
-							value={s}
-							className="flex-1 text-[13px]"
-							data-testid={`${MAP_TESTID.mapStyle}-${s}`}
-						>
-							{STYLE_LABEL[s]}
-						</ToggleGroupItem>
-					))}
-				</ToggleGroup>
-			</Section>
-			<Separator />
 			<Section title="Show">
 				<ShowRow
 					id="map-show-ideas"

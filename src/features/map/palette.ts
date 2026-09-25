@@ -5,19 +5,19 @@
  */
 export type MapTheme = "light" | "dark";
 
-/** The basemap (FB-04; `UserPrefs.mapStyle`, View settings › Map). */
+/** The basemap: the app theme's light or dark, or satellite (`UserPrefs.mapStyle`). */
 export type MapStyle = "light" | "dark" | "satellite";
 export const MAP_STYLES: readonly MapStyle[] = ["light", "dark", "satellite"];
 
 /**
- * The basemap drawn for a saved `mapStyle` (synced to the account, ADDENDUM
- * §7.2) and the app theme: the saved one when there is one, else the app's
- * own light or dark, so the dark app never opens on a glaring map.
+ * The basemap drawn: satellite when it's switched on (synced to the account,
+ * ADDENDUM §7.2), else the app theme's light or dark (owner, 2026-09-25: the
+ * map follows the theme; an old saved "light" or "dark" no longer counts).
  */
 export const effectiveMapStyle = (
 	saved: MapStyle | null | undefined,
 	appTheme: MapTheme,
-): MapStyle => saved ?? appTheme;
+): MapStyle => (saved === "satellite" ? "satellite" : appTheme);
 
 /** The tone of pins, lines and labels over a basemap: satellite imagery is dark. */
 export const mapTone = (style: MapStyle): MapTheme =>
