@@ -329,8 +329,11 @@ test("LINK-07/08/09: link scope, signed-in non-member, address shape", async ({ 
 	await eve.page.goto("/dashboard");
 	await expect(eve.page.getByTestId("dashboard")).toBeVisible();
 	const edash = await eve.page.getByTestId("dashboard").innerText();
-	console.log("LINK-08 eve dashboard has Asia 2027:", edash.includes("Asia 2027"));
-	expect.soft(edash, "Asia 2027 must not appear as Eve's trip").not.toMatch(/Asia 2027/);
+	// A trip opened through its link stays on the dashboard (owner, 2026-09-25),
+	// with the link's role and its owner: shared with her, not hers.
+	expect(edash).toMatch(/Asia 2027/);
+	expect(edash).toMatch(/Can view/);
+	expect(edash).toMatch(/by Dennis/);
 	await shot(eve.page, "08-eve-dashboard", true);
 	// LINK-09: reset links → address shape (readable part + an unguessable
 	// tail, all different); one changed character opens nothing.
