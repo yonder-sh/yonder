@@ -98,7 +98,10 @@ export function DesktopWorkspace({ bp }: { bp: Exclude<Breakpoint, "sm"> }) {
 		storage: safeStorage(),
 	});
 	return (
-		<div className="flex h-svh flex-col bg-background">
+		// `relative overflow-hidden`: an absolute element with no positioned
+		// ancestor (an sr-only label in a scrolling list) can't stretch the page,
+		// as on the phone layout.
+		<div className="relative flex h-svh flex-col overflow-hidden bg-background">
 			<TopBar bp={bp} />
 			<FollowBar />
 			<SpotlightBar />
