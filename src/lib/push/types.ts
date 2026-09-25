@@ -18,6 +18,7 @@ export const PUSH_TYPES = [
 	"countdown",
 	"today",
 	"changes",
+	"remind",
 ] as const;
 export type PushType = (typeof PUSH_TYPES)[number];
 
@@ -63,6 +64,10 @@ export const PUSH_TYPE_INFO: Record<PushType, { label: string; hint: string }> =
 		changes: {
 			label: "Changes that affect you",
 			hint: "A flight, booked or pinned plan of yours moves, or the trip's dates shift.",
+		},
+		remind: {
+			label: "Reminders to rate",
+			hint: "Someone on the trip reminds you to rate places.",
 		},
 	};
 

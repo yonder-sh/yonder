@@ -21,7 +21,12 @@ import type { GraphMember, GraphNode } from "@/lib/engine/types";
 import { humanError } from "@/lib/errors";
 import type { Priority } from "@/lib/schemas/enums";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
-import { COMMENT_MAX, commentLength, raters } from "../lib/rate";
+import {
+	COMMENT_MAX,
+	commentLength,
+	ratingMembers,
+	ratingsCount,
+} from "../lib/rate";
 import { useSetPriority } from "../mutations";
 import { PLACES_TESTID } from "../testids";
 import { PriorityBadge, PriorityPicker } from "./priority";
@@ -184,19 +189,34 @@ function MemberRow({
 	);
 	const disabled = guard.disabled || !allowed;
 	const who = member.id === access.memberId ? "your" : `${member.name}'s`;
+	const counted = ratingsCount(member);
 	return (
 		<li
 			className="grid gap-1 py-1"
 			data-testid={PLACES_TESTID.priorityRow}
 			data-member={member.id}
+			data-counted={counted}
 		>
-			<div className="flex min-w-0 items-center gap-2">
+			<div
+				className={cn(
+					"flex min-w-0 items-center gap-2",
+					!counted && "opacity-60",
+				)}
+				title={
+					counted
+						? undefined
+						: `Not counted: ${member.firstName ?? member.name}'s ratings are left out of the score`
+				}
+			>
 				<MemberAvatar memberId={member.id} size={16} />
 				<span className="min-w-0 flex-1 truncate text-[13px]">
 					{member.name}
 					{member.id === access.memberId ? (
 						<span className="text-muted-foreground"> (you)</span>
 					) : null}
+					{counted ? null : (
+						<span className="text-muted-foreground"> · not counted</span>
+					)}
 				</span>
 				{allowed ? (
 					<EditGuard kind={own ? "rate" : "propose-ok"}>
@@ -272,7 +292,8 @@ export function MemberRatings({
 	className?: string;
 }) {
 	const { graph, access } = useWorkspace();
-	const members = raters(graph.members, [node]);
+	// Left-out ratings still show, dimmed ("not counted").
+	const members = ratingMembers(graph.members, [node]);
 	// You first, then the others in member order.
 	members.sort(
 		(a, b) =>

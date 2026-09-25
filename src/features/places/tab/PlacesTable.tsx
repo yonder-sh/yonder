@@ -25,9 +25,10 @@ import { PriorityDot } from "@/components/common/priority-dot";
 import { NODE_TYPES, PLACE_CATEGORIES } from "@/lib/domain/taxonomy";
 import type { GraphMember } from "@/lib/engine/types";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
-import { priorityForKey } from "../lib/rate";
+import { priorityForKey, ratingsCount } from "../lib/rate";
 import { mayRate } from "../ui/member-ratings";
 import { PriorityPicker } from "../ui/priority";
+import { rowReason } from "./bar";
 import type { PlaceGroup } from "./grouping";
 import type { PlaceRow } from "./model";
 import { TimeNeededEditor } from "./TimeNeeded";
@@ -108,7 +109,12 @@ function RatingCell({ row, member }: { row: PlaceRow; member: GraphMember }) {
 	const p = row.node.priorities[member.id] ?? null;
 	const editable = mayRate(access, member) && member.id === act.me;
 	const placeholder = mayRate(access, member) && member.id !== act.me;
-	const label = <PriorityDot priority={p} className="text-[13px]" />;
+	const label = (
+		<PriorityDot
+			priority={p}
+			className={cn("text-[13px]", !ratingsCount(member) && "opacity-50")}
+		/>
+	);
 	if (!editable && !placeholder)
 		return <span data-testid={PLACES_TAB_TESTID.ratingCell}>{label}</span>;
 	return (
@@ -213,7 +219,8 @@ export function PlacesTable({ data }: { data: PlacesData }) {
 	const [focused, setFocused] = useState<string | null>(null);
 	const body = useRef<HTMLTableSectionElement>(null);
 	const selId = sel?.kind === "node" ? sel.id : null;
-	const members = data.members;
+	// Everyone who rates: a left-out person's column stays, dimmed.
+	const members = data.allRaters;
 	const cols = 7 + members.length;
 	const width =
 		W.place +
@@ -337,7 +344,7 @@ export function PlacesTable({ data }: { data: PlacesData }) {
 				</td>
 				<td className="px-2">
 					{r.status === "scheduled" ? (
-						<StatusChip info={r.info} />
+						<StatusChip info={r.info} reason={rowReason(r, data.bar)} />
 					) : (
 						<button
 							type="button"
@@ -357,7 +364,7 @@ export function PlacesTable({ data }: { data: PlacesData }) {
 							}}
 							className="cursor-pointer rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-default"
 						>
-							<StatusChip info={r.info} />
+							<StatusChip info={r.info} reason={rowReason(r, data.bar)} />
 						</button>
 					)}
 				</td>
@@ -412,7 +419,19 @@ export function PlacesTable({ data }: { data: PlacesData }) {
 							Category
 						</th>
 						{members.map((m) => (
-							<th key={m.id} scope="col" className="border-b px-2">
+							<th
+								key={m.id}
+								scope="col"
+								className={cn(
+									"border-b px-2",
+									!ratingsCount(m) && "text-muted-foreground/70",
+								)}
+								title={
+									ratingsCount(m)
+										? undefined
+										: `Not counted: ${m.firstName ?? m.name}'s ratings are left out`
+								}
+							>
 								<span className="inline-flex max-w-full items-center gap-1.5">
 									<MemberAvatar memberId={m.id} size={16} ring={false} />
 									<span className="truncate">

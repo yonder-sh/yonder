@@ -472,8 +472,10 @@ describe("pipeline", () => {
 		return takeEventJobs();
 	}
 
-	const flush = (userId: string, group: "mention" | "review" | "membership") =>
-		handlePushFlush({ tripId: t.tripId, userId, group });
+	const flush = (
+		userId: string,
+		group: "mention" | "review" | "membership" | "remind",
+	) => handlePushFlush({ tripId: t.tripId, userId, group });
 
 	it("a mention: the outbox queues it with its actor; the mentioned person gets one push", async () => {
 		const jobs = await mentionMaya(t.items[0] as string, "can you book this?");
@@ -548,6 +550,38 @@ describe("pipeline", () => {
 				body: "moved stop 3, moved stop 2 and moved stop 1",
 			},
 		});
+	});
+
+	it("Remind: one push to that person, opening the Rate step", async () => {
+		for (const places of [12, 11])
+			await handlePushEvents({
+				tripId: t.tripId,
+				actor: { userId: dennis.id, name: dennis.name },
+				at: Date.now(),
+				events: [{ kind: "remind", memberId: t.mayaMember, places }],
+			});
+		await flush(dennis.id, "remind");
+		await flush(maya.id, "remind");
+		expect(sent).toHaveLength(1);
+		expect(sent[0]?.endpoint).toBe(mayaDevice);
+		expect(sent[0]?.payload.title).toBe(
+			`Dennis reminded you to rate 11 places in ${t.name}`,
+		);
+		expect(sent[0]?.payload.url).toMatch(
+			/^\/t\/[a-z0-9-]+\?tab=places&pv=rate$/,
+		);
+		// Its own switch.
+		sent = [];
+		await setTypeEnabled(db(), maya.id, "remind", false);
+		await handlePushEvents({
+			tripId: t.tripId,
+			actor: { userId: dennis.id, name: dennis.name },
+			at: Date.now(),
+			events: [{ kind: "remind", memberId: t.mayaMember, places: 3 }],
+		});
+		await flush(maya.id, "remind");
+		expect(sent).toEqual([]);
+		await setTypeEnabled(db(), maya.id, "remind", true);
 	});
 
 	it("never tells the actor about their own change", async () => {

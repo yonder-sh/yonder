@@ -152,6 +152,14 @@ export const MUTATION_POLICY = {
 	duplicateTrip: "account",
 	leaveTrip: { direct: "leaveTrip" },
 
+	// ---- the people who rate (Places) ----
+	/** Leave out, or count again, one person's ratings: like the shortlist level. */
+	setRatingsCounted: { direct: "tripSettings" },
+	/** "Remind": members who rate (checked again inside: own member row). */
+	remindToRate: { direct: "rate" },
+	/** Closing your own reminder line. */
+	dismissRateReminder: { direct: "read" },
+
 	// ---- WP-Insights ----
 	setOpeningHours: "proposable",
 	fetchOpeningHours: "edit-only",

@@ -17,6 +17,8 @@ import { PIN_FAMILIES, PLACE_CATEGORIES } from "@/lib/domain/taxonomy";
 import { formatDuration } from "@/lib/format";
 import { mediaUrl } from "@/lib/media-url";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
+import { ratingsCount } from "../lib/rate";
+import { rowReason } from "./bar";
 import type { PlaceRow } from "./model";
 import { categoryLabel, ownsKeys, useRowKeys } from "./PlacesTable";
 import { PLACES_TAB_TESTID } from "./testids";
@@ -91,7 +93,7 @@ function Card({
 }) {
 	const { sel, nav, access } = useWorkspace();
 	const selected = sel?.kind === "node" && sel.id === row.id;
-	const rated = data.members.filter((m) => row.node.priorities[m.id]);
+	const rated = data.allRaters.filter((m) => row.node.priorities[m.id]);
 	return (
 		<button
 			type="button"
@@ -122,7 +124,11 @@ function Card({
 					<CoverPlaceholder row={row} className="absolute inset-0" />
 				)}
 				<span className="absolute bottom-2 left-2">
-					<StatusChip info={row.info} className="shadow-sm" />
+					<StatusChip
+						info={row.info}
+						reason={rowReason(row, data.bar)}
+						className="shadow-sm"
+					/>
 				</span>
 				{row.media ? (
 					<span className="absolute top-2 right-2 inline-flex items-center gap-1 rounded-md bg-background/85 px-1.5 py-0.5 font-mono text-[11px] tnum text-foreground">
@@ -150,8 +156,11 @@ function Card({
 								return p ? (
 									<span
 										key={m.id}
-										className="inline-flex shrink-0 items-center gap-0.5"
-										title={`${m.id === access.memberId ? "You" : m.name}: ${p}`}
+										className={cn(
+											"inline-flex shrink-0 items-center gap-0.5",
+											!ratingsCount(m) && "opacity-50",
+										)}
+										title={`${m.id === access.memberId ? "You" : m.name}: ${p}${ratingsCount(m) ? "" : " (not counted)"}`}
 									>
 										<MemberAvatar memberId={m.id} size={16} ring={false} />
 										<RatingDot priority={p} />

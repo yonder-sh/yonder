@@ -13,6 +13,8 @@
  *   and nearby ideas with distances;
  * - the shared note and your private note (the Notes block).
  */
+
+import { useQuery } from "@tanstack/react-query";
 import { distance } from "@turf/distance";
 import { point } from "@turf/helpers";
 import { cn } from "cn";
@@ -48,10 +50,11 @@ import {
 	formatDuration,
 } from "@/lib/format";
 import { mediaUrl } from "@/lib/media-url";
+import { activityQuery } from "@/lib/query/trip-queries";
 import { useUi } from "@/lib/workspace/ui-store";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { googleMapsLink } from "../lib/providers";
-import { priorityForKey } from "../lib/rate";
+import { priorityForKey, ratingsCount } from "../lib/rate";
 import {
 	AddPhotoOrLink,
 	PdfRow,
@@ -62,9 +65,11 @@ import { PLACES_TESTID } from "../testids";
 import { mayRate, RatingCommentEditor } from "../ui/member-ratings";
 import { PriorityBadge } from "../ui/priority";
 import { SchedulePicker } from "../ui/schedule-picker";
+import { rowReason } from "./bar";
 import { formatDayNumbers, type PlaceRow } from "./model";
 import { categoryLabel, ownsKeys } from "./PlacesTable";
 import { RatingButtons } from "./RatingButtons";
+import { RATING_TESTID } from "./rating-testids";
 import { formatScore, RATING_WEIGHT } from "./score";
 import { TimeNeededEditor, TimeNeededLabel } from "./TimeNeeded";
 import { PLACES_TAB_TESTID } from "./testids";
@@ -300,6 +305,18 @@ function MediaStrip({ row }: { row: PlaceRow }) {
 	);
 }
 
+/** Who pinned the place last, from its activity (null while unknown). */
+function usePinnedBy(nodeId: string, pinned: boolean): string | null {
+	const { graph, mode } = useWorkspace();
+	const q = useQuery({
+		...activityQuery(graph.trip.id, { nodeId }),
+		enabled: pinned && mode === "live",
+	});
+	if (!pinned) return null;
+	const entry = q.data?.find((a) => a.summary.startsWith("pinned "));
+	return entry ? entry.actorName.split(/\s+/)[0] || null : null;
+}
+
 function RatingRow({ row, member }: { row: PlaceRow; member: GraphMember }) {
 	const { access } = useWorkspace();
 	const act = usePlaceActions();
@@ -313,13 +330,25 @@ function RatingRow({ row, member }: { row: PlaceRow; member: GraphMember }) {
 		: mayRate(access, member) && act.canEdit;
 	const noAccount =
 		member.status === "placeholder" || member.status === "invited";
+	const counted = ratingsCount(member);
 	return (
 		<li
 			className="grid gap-1 py-1.5"
 			data-testid={PLACES_TAB_TESTID.ratingRow}
 			data-member={member.id}
+			data-counted={counted}
 		>
-			<div className="flex min-w-0 items-center gap-2">
+			<div
+				className={cn(
+					"flex min-w-0 items-center gap-2",
+					!counted && "opacity-60",
+				)}
+				title={
+					counted
+						? undefined
+						: `Not counted: ${member.firstName ?? member.name}'s ratings are left out of the score`
+				}
+			>
 				<MemberAvatar memberId={member.id} size={20} ring={false} />
 				<span className="min-w-0 truncate text-sm">
 					{mine ? "You" : member.name}
@@ -330,7 +359,14 @@ function RatingRow({ row, member }: { row: PlaceRow; member: GraphMember }) {
 						<span className="font-mono text-xs tnum text-muted-foreground">
 							{formatScore(RATING_WEIGHT[p])}
 						</span>
+						{counted ? null : (
+							<span className="text-xs text-muted-foreground">not counted</span>
+						)}
 					</>
+				) : !counted ? (
+					<span className="text-xs text-muted-foreground">
+						Not rated · not counted
+					</span>
 				) : (
 					<span className="text-xs text-muted-foreground">
 						Not rated yet · counts as Sure
@@ -426,9 +462,12 @@ export function PlaceDetails({
 		googlePlaceId: node.googlePlaceId,
 		googleMapsUri: node.details.googleMapsUri,
 	});
-	const members = [...data.members].sort(
+	// Everyone who rates: a left-out person's rating still shows, dimmed.
+	const members = [...data.allRaters].sort(
 		(a, b) => Number(b.id === act.me) - Number(a.id === act.me),
 	);
+	const pinnedBy = usePinnedBy(node.id, row.info.pinned);
+	const reason = rowReason(row, data.bar, pinnedBy);
 	const pinLabel =
 		row.status === "shortlist"
 			? row.info.pinned
@@ -493,10 +532,18 @@ export function PlaceDetails({
 						) : null}
 					</div>
 					<div className="flex flex-wrap items-center gap-1.5">
-						<StatusChip info={row.info} long />
+						<StatusChip info={row.info} long reason={reason} />
 						<ScoreChip score={row.score} prefix="Score" />
 						{row.split ? <SplitMark /> : null}
 					</div>
+					{reason ? (
+						<p
+							className="text-[13px] text-muted-foreground"
+							data-testid={RATING_TESTID.reason}
+						>
+							{reason}
+						</p>
+					) : null}
 					<div className="flex flex-wrap items-center gap-1.5 pt-1">
 						{row.status !== "scheduled" ? (
 							<EditGuard>

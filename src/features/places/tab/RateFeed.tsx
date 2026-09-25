@@ -839,7 +839,9 @@ function EndCard({
 								<span className="truncate">
 									{p.member.name}
 									{p.member.id === me ? " (you)" : ""}
-									{noAccount ? (
+									{!p.counted ? (
+										<span className="text-neutral-500"> · not counted</span>
+									) : noAccount ? (
 										<span className="text-neutral-500"> · no account yet</span>
 									) : null}
 								</span>

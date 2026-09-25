@@ -28,6 +28,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { cn } from "cn";
 import {
 	Check,
+	CircleOff,
 	Copy,
 	Link2,
 	Mail,
@@ -70,6 +71,12 @@ import {
 	TooltipContent,
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { ratingsCount } from "@/features/places/lib/rate";
+import { RATING_TESTID } from "@/features/places/tab/rating-testids";
+import {
+	useCanCountRatings,
+	useSetRatingsCounted,
+} from "@/features/places/tab/use-rating-people";
 import { can, roleLabel, type ShareRole } from "@/lib/auth/roles";
 import { humanError } from "@/lib/errors";
 import { meKeys, tripKeys } from "@/lib/query/keys";
@@ -424,6 +431,15 @@ function MemberRow({
 	const isMe = m.id === me;
 	const placeholder = m.status === "placeholder";
 	const pending = m.status === "invited";
+	// Owners and editors leave someone's ratings out (or count them again).
+	const { graph } = useWorkspace();
+	const canCount = useCanCountRatings();
+	const setCounted = useSetRatingsCounted();
+	const gm = graph.members.find((x) => x.id === m.id);
+	const counted = gm ? ratingsCount(gm) : true;
+	const countable = canCount && !!gm && (m.role !== "viewer" || !counted);
+	const first = gm?.firstName ?? m.name.split(/\s+/)[0] ?? m.name;
+	const whose = isMe ? "your" : `${first}'s`;
 	const roleControl =
 		m.role === "owner" ? (
 			<span className={MEMBER_ROLE_TEXT}>Owner</span>
@@ -445,7 +461,9 @@ function MemberRow({
 			<span className={MEMBER_ROLE_TEXT}>{roleLabel(m.role)}</span>
 		);
 	const menu =
-		(owner && m.role !== "owner") || (placeholder && (linker || canClaim)) ? (
+		(owner && m.role !== "owner") ||
+		(placeholder && (linker || canClaim)) ||
+		countable ? (
 			<DropdownMenu>
 				<DropdownMenuTrigger
 					aria-label={`More for ${m.name}`}
@@ -485,9 +503,29 @@ function MemberRow({
 							) : null}
 						</>
 					) : null}
+					{countable ? (
+						<>
+							{placeholder && (linker || canClaim) ? (
+								<DropdownMenuSeparator />
+							) : null}
+							<DropdownMenuItem
+								data-testid={
+									counted ? RATING_TESTID.leaveOut : RATING_TESTID.countAgain
+								}
+								onSelect={() =>
+									setCounted.mutate({ memberId: m.id, counted: !counted })
+								}
+							>
+								{counted ? <CircleOff /> : <RotateCcw />}
+								{counted
+									? `Leave out ${whose} ratings`
+									: `Count ${whose} ratings again`}
+							</DropdownMenuItem>
+						</>
+					) : null}
 					{owner && m.role !== "owner" ? (
 						<>
-							{placeholder ? <DropdownMenuSeparator /> : null}
+							{placeholder || countable ? <DropdownMenuSeparator /> : null}
 							<DropdownMenuItem
 								variant="destructive"
 								onSelect={() =>
@@ -541,13 +579,19 @@ function MemberRow({
 								<span className="shrink-0 text-muted-foreground">(you)</span>
 							) : null}
 						</span>
-						{placeholder || pending || m.email ? (
+						{placeholder || pending || m.email || !counted ? (
 							<span className="truncate text-[12px] text-muted-foreground">
 								{pending ? (
 									<span className="text-foreground/80">Pending</span>
 								) : null}
 								{pending && m.email ? " · " : null}
 								{placeholder ? "No account yet" : m.email}
+								{!counted ? (
+									<span data-testid={RATING_TESTID.shareNotCounted}>
+										{placeholder || m.email ? " · " : ""}
+										{isMe ? "Your" : `${first}'s`} ratings aren't counted
+									</span>
+								) : null}
 							</span>
 						) : null}
 					</span>

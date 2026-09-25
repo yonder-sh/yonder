@@ -19,6 +19,11 @@ export function tripUrl(
 	return `/t/${encodeURIComponent(slug)}${qs ? `?${qs}` : ""}`;
 }
 
+/** The trip's Rate step (Places, the rating feed). */
+export function rateUrl(slug: string): string {
+	return `/t/${encodeURIComponent(slug)}?tab=places&pv=rate`;
+}
+
 /** Only same-origin paths ever leave the worker (the service worker checks again). */
 export function isSafePushUrl(url: string): boolean {
 	return /^\/(?!\/)[^\s\\]*$/.test(url);

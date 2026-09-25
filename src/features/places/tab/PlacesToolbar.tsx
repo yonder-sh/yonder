@@ -18,16 +18,18 @@ import {
 	Settings2,
 	Sheet,
 } from "lucide-react";
-import { type ReactNode, useState } from "react";
+import type { ReactNode } from "react";
 import { MemberAvatar } from "@/components/common/member";
 import { useTripMutation } from "@/components/common/use-trip-mutation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
 	Popover,
 	PopoverContent,
 	PopoverTrigger,
 } from "@/components/ui/popover";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
 	Select,
 	SelectContent,
@@ -43,6 +45,13 @@ import type { TripGraph } from "@/lib/engine/types";
 import { tripKeys } from "@/lib/query/keys";
 import { useUi } from "@/lib/workspace/ui-store";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
+import {
+	isShortlistLevel,
+	LEVEL_LABEL,
+	SHORTLIST_LEVELS,
+	type ShortlistBar,
+	type ShortlistLevel,
+} from "./bar";
 import { unratedFilter } from "./entry";
 import type { ReviewView } from "./flow";
 import {
@@ -54,6 +63,8 @@ import {
 	type SortBy,
 } from "./grouping";
 import type { PlaceStatus } from "./lifecycle";
+import { PersonMenu, personName, RemindButton } from "./RatingPeople";
+import { RATING_TESTID } from "./rating-testids";
 import { formatScore } from "./score";
 import { PLACES_TAB_TESTID } from "./testids";
 import type { PlacesData } from "./use-places";
@@ -99,7 +110,11 @@ export function AddPlaceButton({
 	);
 }
 
-/** "Rated: You 12/48 · Audrey 30/48 their unrated" (the Rate and Review steps). */
+/**
+ * "Rated: You 12/48 · Audrey 30/48 their unrated · Remind" (the Rate and
+ * Review steps); someone left out reads "Maya · not counted". Owners and
+ * editors leave someone out, or count them again, from their name.
+ */
 export function RatingProgress({ data }: { data: PlacesData }) {
 	const { nav, access } = useWorkspace();
 	const me = access.memberId;
@@ -113,16 +128,39 @@ export function RatingProgress({ data }: { data: PlacesData }) {
 			{data.progress.map((p) => {
 				const mine = p.member.id === me;
 				const behind = p.rated < p.total;
+				const name = (
+					<span className="text-foreground">{personName(p.member, me)}</span>
+				);
+				if (!p.counted)
+					return (
+						<span
+							key={p.member.id}
+							className="inline-flex items-center gap-1"
+							data-testid={RATING_TESTID.person}
+							data-member={p.member.id}
+							data-counted="false"
+							title={`${mine ? "Your" : `${personName(p.member, me)}'s`} ratings aren't counted`}
+						>
+							<MemberAvatar
+								memberId={p.member.id}
+								size={16}
+								ring={false}
+								className="opacity-60"
+							/>
+							<PersonMenu member={p.member}>{name}</PersonMenu>
+							<span>· not counted</span>
+						</span>
+					);
 				return (
 					<span
 						key={p.member.id}
 						className="inline-flex items-center gap-1"
 						data-member={p.member.id}
+						data-testid={RATING_TESTID.person}
+						data-counted="true"
 					>
 						<MemberAvatar memberId={p.member.id} size={16} ring={false} />
-						<span className="text-foreground">
-							{mine ? "You" : (p.member.firstName ?? p.member.name)}
-						</span>
+						<PersonMenu member={p.member}>{name}</PersonMenu>
 						<span className="font-mono tnum">
 							{p.rated}/{p.total}
 						</span>
@@ -142,6 +180,7 @@ export function RatingProgress({ data }: { data: PlacesData }) {
 								{mine ? "rate yours" : "their unrated"}
 							</button>
 						) : null}
+						<RemindButton member={p.member} left={p.total - p.rated} />
 					</span>
 				);
 			})}
@@ -192,13 +231,16 @@ function Pill({
 	);
 }
 
-/** "Suggest for the shortlist at +3": owners and editors change it. */
-function ThresholdControl({ threshold }: { threshold: number }) {
+/**
+ * "Shortlist a place when the group averages: Want · Between Want and
+ * Really want · Really want" (owners and editors), with what that means
+ * for the group right now ("With 4 people rating, a place needs +6").
+ */
+function LevelControl({ bar }: { bar: ShortlistBar }) {
 	const { graph, access } = useWorkspace();
 	const tripId = graph.trip.id;
-	const [draft, setDraft] = useState<string | null>(null);
 	const save = useTripMutation(
-		(v: { tripId: string; settings: { shortlistMinScore: number } }) =>
+		(v: { tripId: string; settings: { shortlistLevel: ShortlistLevel } }) =>
 			updateTrip({ data: v }),
 		{
 			keys: [tripKeys.graph(tripId)],
@@ -218,12 +260,7 @@ function ThresholdControl({ threshold }: { threshold: number }) {
 	);
 	const allowed =
 		can(access, "tripSettings") && access.mode === "edit" && access.canEdit;
-	const commit = (raw: string) => {
-		setDraft(null);
-		const n = Number.parseInt(raw.replace("−", "-"), 10);
-		if (!Number.isInteger(n) || n === threshold || n < -20 || n > 60) return;
-		save.mutate({ tripId, settings: { shortlistMinScore: n } });
-	};
+	const people = `${bar.people} ${bar.people === 1 ? "person" : "people"}`;
 	return (
 		<Popover>
 			<PopoverTrigger asChild>
@@ -237,33 +274,48 @@ function ThresholdControl({ threshold }: { threshold: number }) {
 					<Settings2 className="size-4" strokeWidth={1.5} />
 				</Button>
 			</PopoverTrigger>
-			<PopoverContent align="end" className="w-72 text-sm">
-				<p className="font-medium">Suggested shortlist</p>
-				<p className="mt-1 text-xs text-muted-foreground">
-					A place is suggested for the shortlist at a group score of{" "}
-					<span className="font-mono tnum">{formatScore(threshold)}</span> or
-					more (Must +3, Really want +2, Want +1, Sure 0, Meh −1, Nah −2).
+			<PopoverContent align="end" className="w-80 text-sm">
+				<p id="shortlist-level-label" className="font-medium">
+					Shortlist a place when the group averages:
 				</p>
-				<div className="mt-3 flex items-center gap-2 text-xs">
-					Suggest at
-					<Input
-						type="number"
-						inputMode="numeric"
-						min={-20}
-						max={60}
-						disabled={!allowed}
-						value={draft ?? String(threshold)}
-						onChange={(e) => setDraft(e.target.value)}
-						onBlur={(e) => commit(e.target.value)}
-						onKeyDown={(e) => {
-							e.stopPropagation();
-							if (e.key === "Enter") commit(e.currentTarget.value);
-						}}
-						className="h-7 w-20 font-mono tnum"
-						aria-label="Shortlist score threshold"
-					/>
-					or more
-				</div>
+				<RadioGroup
+					value={String(bar.level)}
+					onValueChange={(v) => {
+						const level = Number(v);
+						if (!isShortlistLevel(level) || level === bar.level) return;
+						save.mutate({ tripId, settings: { shortlistLevel: level } });
+					}}
+					disabled={!allowed}
+					aria-labelledby="shortlist-level-label"
+					data-testid={RATING_TESTID.level}
+					className="mt-2 gap-1.5"
+				>
+					{SHORTLIST_LEVELS.map((l) => (
+						<Label
+							key={l}
+							className="flex cursor-pointer items-center gap-2 font-normal"
+						>
+							<RadioGroupItem
+								value={String(l)}
+								data-testid={RATING_TESTID.levelOption}
+								data-value={l}
+							/>
+							{LEVEL_LABEL[`${l}`]}
+						</Label>
+					))}
+				</RadioGroup>
+				<p className="mt-3 text-xs text-muted-foreground">
+					With {people} rating, a place needs{" "}
+					<span className="font-mono text-foreground tnum">
+						{formatScore(bar.bar)}
+					</span>
+					. Everyone who has rated at least half the places counts, so the
+					shortlist grows with the group.
+				</p>
+				<p className="mt-1.5 text-xs text-muted-foreground">
+					Ratings add up: Must +3, Really want +2, Want +1, Sure 0, Meh −1, Nah
+					−2.
+				</p>
 				{allowed ? null : (
 					<p className="mt-2 text-xs text-muted-foreground">
 						Owners and editors change this.
@@ -287,7 +339,7 @@ export function PlacesToolbar({
 	compact: boolean;
 }) {
 	const { nav } = useWorkspace();
-	const { state, counts, threshold } = data;
+	const { state, counts, bar } = data;
 	return (
 		<div className="flex shrink-0 flex-col gap-2 border-b px-4 pt-3 pb-2.5">
 			<div className="flex flex-wrap items-center gap-x-3 gap-y-2">
@@ -383,7 +435,7 @@ export function PlacesToolbar({
 						/>
 					</div>
 					<PlaceFilterButton align="end" className="size-8" />
-					<ThresholdControl threshold={threshold} />
+					<LevelControl bar={bar} />
 				</div>
 			</div>
 			<div className="flex items-center gap-x-3 gap-y-2 max-md:flex-col max-md:items-stretch md:flex-wrap">

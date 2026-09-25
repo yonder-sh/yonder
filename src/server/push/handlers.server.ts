@@ -32,7 +32,7 @@ import {
 	takeItems,
 } from "@/lib/push/coalesce";
 import type { PushEventsJob } from "@/lib/push/jobs";
-import { tripUrl } from "@/lib/push/links";
+import { rateUrl, tripUrl } from "@/lib/push/links";
 import { buildPayload, type PayloadTrip } from "@/lib/push/payload";
 import { reviewAudience, selectRecipients, wants } from "@/lib/push/recipients";
 import {
@@ -279,6 +279,28 @@ export async function handlePushEvents(job: PushEventsJob): Promise<void> {
 						headline: `${ev.decision} your suggestion`,
 						url: tripUrl(trip.slug, { sel: `p.${ev.proposalId}` }),
 						meta: { proposalId: ev.proposalId, decision: ev.decision },
+					},
+					[actorId],
+				);
+				break;
+			}
+			case "remind": {
+				const res = await db.execute(sql`
+					select user_id as "userId" from trip_members
+					 where trip_id = ${job.tripId} and id = ${ev.memberId}
+					   and status = 'active' and user_id is not null`);
+				const to = (res.rows[0] as { userId: string } | undefined)?.userId;
+				if (!to) break;
+				await bufferFor(
+					[to],
+					job.tripId,
+					"remind",
+					{
+						key: `remind.${ev.memberId}`,
+						at: job.at,
+						actor,
+						headline: `${actor ?? "Someone"} reminded you to rate ${ev.places} ${ev.places === 1 ? "place" : "places"}`,
+						url: rateUrl(trip.slug),
 					},
 					[actorId],
 				);

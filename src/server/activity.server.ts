@@ -68,6 +68,8 @@ export const ACTIVITY_VERBS = [
 	"person.role",
 	"person.remove",
 	"person.leave",
+	// Leaving out, or counting again, someone's ratings.
+	"person.ratings",
 	// E7 note additions ("added to the notes of Shibuya Sky").
 	"note.append",
 	// WP-Transit: flights and custom routes (member-visible, not money).

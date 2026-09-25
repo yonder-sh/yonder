@@ -224,7 +224,7 @@ test("settings: per-type switches persist; this device turns off", async ({ page
 	const device = dialog.getByTestId(PUSH_TESTID.device);
 	await expect(device).toHaveAttribute("data-state", "checked");
 	// Every type starts on.
-	await expect(dialog.getByTestId(PUSH_TESTID.type)).toHaveCount(9);
+	await expect(dialog.getByTestId(PUSH_TESTID.type)).toHaveCount(10);
 	const countdown = typeSwitch(page, "countdown");
 	await expect(countdown).toHaveAttribute("data-state", "checked");
 	await countdown.click();

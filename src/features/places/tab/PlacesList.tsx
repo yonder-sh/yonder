@@ -8,6 +8,8 @@ import { cn } from "cn";
 import { MemberAvatar } from "@/components/common/member";
 import { PriorityDot } from "@/components/common/priority-dot";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
+import { ratingsCount } from "../lib/rate";
+import { rowReason } from "./bar";
 import type { PlaceRow } from "./model";
 import { PLACES_TAB_TESTID } from "./testids";
 import { ScoreChip, SplitMark, StatusChip } from "./ui";
@@ -16,7 +18,7 @@ import { type PlacesData, useSplitAreas } from "./use-places";
 function Row({ row, data }: { row: PlaceRow; data: PlacesData }) {
 	const { sel, nav } = useWorkspace();
 	const selected = sel?.kind === "node" && sel.id === row.id;
-	const rated = data.members.filter((m) => row.node.priorities[m.id]);
+	const rated = data.allRaters.filter((m) => row.node.priorities[m.id]);
 	return (
 		<li>
 			<button
@@ -39,7 +41,14 @@ function Row({ row, data }: { row: PlaceRow; data: PlacesData }) {
 					<span className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
 						<span className="truncate">{row.where}</span>
 						{rated.map((m) => (
-							<span key={m.id} className="inline-flex items-center gap-1">
+							<span
+								key={m.id}
+								className={cn(
+									"inline-flex items-center gap-1",
+									!ratingsCount(m) && "opacity-50",
+								)}
+								title={ratingsCount(m) ? undefined : "Not counted"}
+							>
 								<MemberAvatar memberId={m.id} size={16} ring={false} />
 								<PriorityDot
 									priority={row.node.priorities[m.id]}
@@ -48,7 +57,11 @@ function Row({ row, data }: { row: PlaceRow; data: PlacesData }) {
 							</span>
 						))}
 						{row.status === "shortlist" || row.status === "dropped" ? (
-							<StatusChip info={row.info} className="h-5 text-[11px]" />
+							<StatusChip
+								info={row.info}
+								reason={rowReason(row, data.bar)}
+								className="h-5 text-[11px]"
+							/>
 						) : null}
 					</span>
 				</span>

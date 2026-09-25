@@ -26,6 +26,12 @@ export const PushEvent = z.discriminatedUnion("kind", [
 		proposalId: Uuid,
 		decision: z.enum(["accepted", "rejected"]),
 	}),
+	/** "Remind": `memberId` has `places` left to rate. */
+	z.object({
+		kind: z.literal("remind"),
+		memberId: Uuid,
+		places: z.number().int().min(1).max(100_000),
+	}),
 	z.object({
 		kind: z.literal("membership"),
 		change: z.enum(["added", "removed", "role"]),

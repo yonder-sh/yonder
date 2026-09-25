@@ -24,6 +24,7 @@ import { MoneyTab } from "@/features/money/MoneyTab";
 import { NotesTab } from "@/features/notes/NotesTab";
 import { OverviewTab } from "@/features/overview/OverviewTab";
 import { PlacesTab } from "@/features/places/tab/PlacesTab";
+import { ReminderLine } from "@/features/places/tab/ReminderLine";
 import { usePlacesToDecide } from "@/features/places/tab/use-places";
 import { PlanTab } from "@/features/plan/PlanTab";
 import { mustRedact } from "@/lib/auth/roles";
@@ -202,6 +203,8 @@ export function CenterTabContent({
 	const rollupChoice = useRollupChoice();
 	return (
 		<div className="flex min-h-0 flex-1 flex-col">
+			{/* "Dennis reminded you to rate 12 places", on every tab. */}
+			{mode === "live" ? <ReminderLine /> : null}
 			{active === "plan" ? <DigestBanner /> : null}
 			{active !== "overview" &&
 			active !== "plan" &&

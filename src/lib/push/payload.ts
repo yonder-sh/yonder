@@ -16,13 +16,19 @@ import {
 export type PayloadTrip = { id: string; name: string; slug: string };
 
 /** Groups where only the newest item matters (a state, not a pile of events). */
-const LATEST_ONLY = new Set<PushGroup>(["membership", "countdown", "today"]);
+const LATEST_ONLY = new Set<PushGroup>([
+	"membership",
+	"countdown",
+	"today",
+	"remind",
+]);
 /** Groups whose notification replaces the trip's previous one of that group. */
 const REPLACING = new Set<PushGroup>([
 	"membership",
 	"countdown",
 	"today",
 	"review",
+	"remind",
 ]);
 
 export function clip(s: string, max: number): string {
@@ -157,11 +163,14 @@ export function buildPayload(
 		? { headline: newest.headline, body: newest.body ?? "" }
 		: summary(group, sorted);
 	const url = lone ? newest.url : summaryUrl(group, sorted, trip);
-	// "Asia 2027 starts in 7 days" reads as one sentence; the rest take a separator.
+	// "Asia 2027 starts in 7 days" and "Dennis reminded you to rate 12 places
+	// in Asia 2027" read as one sentence; the rest take a separator.
 	const title =
 		group === "countdown"
 			? `${trip.name} ${headline}`
-			: `${trip.name} · ${headline}`;
+			: group === "remind"
+				? `${headline} in ${trip.name}`
+				: `${trip.name} · ${headline}`;
 	const tag = REPLACING.has(group)
 		? `${group}:${trip.id}`
 		: lone
