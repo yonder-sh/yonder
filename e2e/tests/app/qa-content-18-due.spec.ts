@@ -120,7 +120,7 @@ test("DUE-03 an ET deadline shows the same instant from a JST browser", async ({
 
 test("DUE-05 dashboard deadlines: overdue first, quick-complete", async ({ browser }) => {
 	const d = await ctxFor(browser, "dennis");
-	await d.page.goto("/");
+	await d.page.goto("/dashboard");
 	const box = d.page.getByTestId(HOME_TESTID.deadlines);
 	await expect(box).toBeVisible({ timeout: 20_000 });
 	const rows = await box.getByTestId(HOME_TESTID.deadlineRow).allInnerTexts();

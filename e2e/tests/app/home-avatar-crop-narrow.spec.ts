@@ -13,6 +13,7 @@ import { HOME_TESTID } from "../../../src/features/home/testids";
 import { TESTID } from "../../../src/lib/testids";
 import { loginViaApi } from "./_helpers/auth";
 import { APP_URL, shotPath } from "./_helpers/env";
+import { hydrated } from "./_helpers/page";
 
 /** A 900×600 PNG drawn in the page: a sky, a hill and a "face" left of centre. */
 async function samplePhoto(page: Page): Promise<Buffer> {
@@ -65,9 +66,10 @@ for (const width of [320, 280]) {
 			last: "Narrow",
 		});
 		const page = await ctx.newPage();
-		await page.goto("/");
+		await page.goto("/dashboard");
 		await expect(page.getByTestId(TESTID.dashboard)).toBeVisible();
-		await page.getByTestId(TESTID.accountMenu).click();
+		// The menu opens once React has taken over the server-rendered page.
+		await (await hydrated(page.getByTestId(TESTID.accountMenu))).click();
 		await page.getByRole("menuitem", { name: "Profile" }).click();
 		const dialog = page.getByTestId(TESTID.profileDialog);
 		await expect(dialog).toBeVisible();

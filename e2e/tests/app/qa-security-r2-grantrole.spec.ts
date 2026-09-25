@@ -45,7 +45,7 @@ test("a member made from an edit-link guest gets the role the owner picked", asy
 	await expect(h.page.getByTestId("workspace")).toBeVisible({ timeout: 30_000 });
 	const inv = await call(o.page, MOD.sharing, "inviteMember", { tripId: c.tripId, email: hEmail, role: "viewer" });
 	out.b_invite = inv.ok ? inv.r : inv.err;
-	await h.page.goto("/");
+	await h.page.goto("/dashboard");
 	await h.page.waitForTimeout(3000);
 	await h.page.goto(`/t/${c.slug}?tab=plan`);
 	await h.page.waitForTimeout(3000);

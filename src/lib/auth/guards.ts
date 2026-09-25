@@ -3,7 +3,12 @@ import { redirect } from "@tanstack/react-router";
 import { sessionKey } from "@/lib/query/keys";
 import { queryPersister } from "@/lib/query/persister";
 import { authClient } from "./auth-client";
-import { JOIN_PATH, LOGIN_PATH, WELCOME_PATH } from "./constants";
+import {
+	DASHBOARD_PATH,
+	JOIN_PATH,
+	LOGIN_PATH,
+	WELCOME_PATH,
+} from "./constants";
 import { forgetGrant, grantFor } from "./grants";
 import { getSessionFn } from "./session.functions";
 import { redeemShareLink } from "./share.functions";
@@ -154,6 +159,27 @@ export async function requireAccountViewer(
 		throw redirect({ href: withNext(LOGIN_PATH, href) });
 	if (!viewer.named) throw redirect({ href: withNext(WELCOME_PATH, href) });
 	return { viewer };
+}
+
+/**
+ * The landing page's guard (`/`): a signed-in account goes straight to the
+ * dashboard, keeping the query (`/?source=pwa` from an older install). On a
+ * first load this runs on the server, so it's a redirect response and the
+ * landing never flashes. Signed-out visitors and link guests stay on the
+ * landing, and so does anyone when the session can't be read (the page
+ * needs no data, so it still renders with the database down).
+ */
+export async function redirectSignedInToDashboard(
+	searchStr = "",
+): Promise<void> {
+	let viewer: Viewer | null;
+	try {
+		viewer = await getSessionFn();
+	} catch {
+		return;
+	}
+	if (viewer && !viewer.isAnonymous)
+		throw redirect({ href: `${DASHBOARD_PATH}${searchStr}` });
 }
 
 /**

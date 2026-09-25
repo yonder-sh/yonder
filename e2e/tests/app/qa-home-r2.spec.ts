@@ -56,7 +56,7 @@ async function userPage(browser: Browser, email: string, first = "QA", last = "T
 test("R2 dashboard hero: a one-day trip says '1 day'", async ({ browser }) => {
 	const { ctx, page } = await userPage(browser, "dennis@asia2027.test");
 	await page.clock.setFixedTime(new Date("2027-11-10T12:00:00Z"));
-	await page.goto("/");
+	await page.goto("/dashboard");
 	await expect(page.getByTestId("dashboard")).toBeVisible({ timeout: 30_000 });
 	const hero = page.getByTestId("home-hero");
 	await expect(hero).toBeVisible();
@@ -240,7 +240,7 @@ test("R2 phone: dashboard, share dialog, settings, login (390x844)", async ({ br
 	await login(ctx.request, "dennis@asia2027.test", "QA", "Tester");
 	const page = await ctx.newPage();
 	const over = () => page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
-	await page.goto("/");
+	await page.goto("/dashboard");
 	await expect(page.getByTestId("dashboard")).toBeVisible({ timeout: 30_000 });
 	await page.waitForTimeout(1500);
 	console.log("R2 PHONE dashboard overflow:", await over());

@@ -68,7 +68,7 @@ test("FB-16: upload a photo with the circular crop, see it round everywhere, rem
 	const page = await ctx.newPage();
 	// The spec itself reads the crop stage's pixels twice (Chrome's hint).
 	const log = collectConsole(page, [/willReadFrequently/]);
-	await page.goto("/");
+	await page.goto("/dashboard");
 	await expect(page.getByTestId(TESTID.dashboard)).toBeVisible();
 	await expect(page.getByRole("heading", { level: 1 })).toContainText(
 		/^Good /,

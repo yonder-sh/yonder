@@ -1,6 +1,6 @@
 /**
- * The dashboard `/` (DESIGN §10.3; EXTENSIONS §1.4, §7, §9): the greeting,
- * the next trip as a hero (cover or RouteSketch, countdown, "Available
+ * The dashboard `/dashboard` (DESIGN §10.3; EXTENSIONS §1.4, §7, §9): the
+ * greeting, the next trip as a hero (cover or RouteSketch, countdown, "Available
  * offline"), Upcoming deadlines, your trips, trips shared with you (role
  * badge "Can view / Can suggest / Can edit"), and past trips.
  *
@@ -659,7 +659,7 @@ export function Dashboard({
 		<div data-testid={TESTID.dashboard} className="min-h-svh bg-background">
 			<header className="mx-auto flex h-16 max-w-[1200px] items-center justify-between px-4 sm:px-8">
 				<Link
-					to="/"
+					to="/dashboard"
 					className="flex items-center gap-2 text-primary"
 					aria-label={BRAND.name}
 				>

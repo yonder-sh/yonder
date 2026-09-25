@@ -29,7 +29,7 @@ test("server functions are limited per user", async ({ browser }) => {
 			fnHeaders = await r.allHeaders();
 		}
 	});
-	await page.goto("/");
+	await page.goto("/dashboard");
 	await page.waitForTimeout(4000);
 	const statuses: Record<string, number> = {};
 	for (let i = 0; i < 320 && fnUrl; i++) {

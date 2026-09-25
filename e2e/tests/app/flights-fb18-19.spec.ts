@@ -47,7 +47,7 @@ type TestTrip = { slug: string; tripId: string; jfk: string; hnd: string; shibuy
  * Haneda ("Haneda Airport", an area) and Shibuya on the 13th.
  */
 async function ownersTestTrip(page: Page): Promise<TestTrip> {
-	await page.goto("/");
+	await page.goto("/dashboard");
 	return page.evaluate(async () => {
 		const trips = await import("/src/functions/trips.functions.ts");
 		const nodes = await import("/src/functions/nodes.functions.ts");

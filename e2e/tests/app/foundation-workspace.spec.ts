@@ -74,7 +74,7 @@ test("a trip that doesn't exist shows the not-found view, quietly", async ({ pag
 
 test("a cross-site POST to a server function is refused (CSRF)", async ({ page }, info) => {
 	test.skip(info.project.name !== "chromium", "one run is enough");
-	await page.goto("/");
+	await page.goto("/dashboard");
 	await expect(page.getByTestId(TESTID.dashboard)).toBeVisible();
 	const url = await page.evaluate(
 		async () => (await import("/src/functions/trips.functions.ts")).updateTrip.url as string,

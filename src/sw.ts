@@ -12,6 +12,9 @@
  *   answers 200 whatever the access (`ssr: false`), so a visit that ends in
  *   "no access" has its entry dropped by the page (TripError →
  *   `removeTripPageOffline`, QA PWA-08 / LINK-04).
+ * - The landing page `/`: network only → `offline.html` (never kept: signed
+ *   in it only redirects to `/dashboard`, the PWA's start URL, so a kept copy
+ *   would be the signed-out page).
  * - Other pages: NetworkFirst (4 s) → `offline.html`.
  * - Lazy assets, media thumbs and PDF pages, map tiles/fonts/styles:
  *   CacheFirst with limits (PDF pages also from WP-Media's `yonder-docs-*`).
@@ -237,6 +240,12 @@ serwist.registerCapture(
 		networkTimeoutSeconds: 4,
 		plugins: [ok, sharePagePlugin],
 	}),
+);
+// The landing page: offline, offline.html forwards to the saved trip.
+serwist.registerCapture(
+	({ request, url }) =>
+		request.mode === "navigate" && isOwn(url) && url.pathname === "/",
+	new NetworkOnly({ plugins: [pageFallbackPlugin] }),
 );
 serwist.registerCapture(
 	({ request, url }) =>

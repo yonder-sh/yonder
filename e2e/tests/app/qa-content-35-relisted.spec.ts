@@ -101,7 +101,7 @@ test("a view-link guest's item menu: Move to day is not offered as enabled", asy
 test("dashboard hero for a one-day trip says '1 day'", async ({ browser }) => {
 	const d = await ctxFor(browser, "dennis");
 	await d.page.clock.setFixedTime(new Date("2027-11-10T12:00:00Z"));
-	await d.page.goto("/");
+	await d.page.goto("/dashboard");
 	const hero = d.page.getByTestId(H.heroCard);
 	await expect(hero).toBeVisible({ timeout: 20_000 });
 	const t = (await hero.innerText()).replace(/\n/g, " | ");

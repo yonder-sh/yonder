@@ -25,7 +25,7 @@ test("the next person's dashboard never shows the previous person's deadlines", 
 	const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
 	await loginViaApi(ctx.request, "dennis@asia2027.test", { first: "Dennis", last: "Tester" });
 	const page = await ctx.newPage();
-	await page.goto("/");
+	await page.goto("/dashboard");
 	await swControls(page);
 	await page.reload();
 	await page.waitForTimeout(6000);
@@ -34,7 +34,7 @@ test("the next person's dashboard never shows the previous person's deadlines", 
 	await loginViaApi(ctx.request, "kai@asia2027.test", { first: "Kai", last: "Viewer" });
 	const seen: number[] = [];
 	const t0 = Date.now();
-	await page.goto("/");
+	await page.goto("/dashboard");
 	for (let i = 0; i < 60; i++) {
 		const txt = await page.locator("body").innerText().catch(() => "");
 		if (txt.includes(NEEDLE)) {

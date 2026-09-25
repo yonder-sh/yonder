@@ -134,7 +134,7 @@ test("the owner invites, changes a role, and sees people, links and guests", asy
 			storageState: storageStateOf("maya"),
 		});
 		const mayaPage = await mayaCtx.newPage();
-		await mayaPage.goto("/");
+		await mayaPage.goto("/dashboard");
 		await expect(
 			mayaPage.locator(`a[href="/t/${c.slug}"]`).locator(".."),
 		).toContainText("Can suggest");

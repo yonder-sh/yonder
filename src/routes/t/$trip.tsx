@@ -225,7 +225,7 @@ function TripWorkspace({ tripId, slug }: { tripId: string; slug: string }) {
 				return;
 			}
 			toast("You no longer have access to this trip.");
-			void navigate({ to: "/" });
+			void navigate({ to: "/dashboard" });
 		},
 		[tripId, slug, isGuest, qc, navigate],
 	);
@@ -366,7 +366,10 @@ function TripError({ error }: { error: unknown }) {
 							Open {keptTrip.name || "your saved trip"}
 						</a>
 					) : (
-						<Link to="/" className={buttonVariants({ variant: "outline" })}>
+						<Link
+							to="/dashboard"
+							className={buttonVariants({ variant: "outline" })}
+						>
 							Go to your trips
 						</Link>
 					)

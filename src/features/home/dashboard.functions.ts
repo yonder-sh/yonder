@@ -23,7 +23,8 @@ export type { MyDeadline, MyTrip, MyTripMember } from "./types";
 /**
  * DASH-03: the dashboard's "today" for its server render, in the viewer's
  * zone (the `yonder-tz` cookie the dashboard sets), else the server's. The
- * `/` loader calls it during SSR only (the browser asks its own clock).
+ * `/dashboard` loader calls it during SSR only (the browser asks its own
+ * clock).
  */
 export const dashboardToday = createServerFn({ method: "GET" })
 	.middleware([withAccount])

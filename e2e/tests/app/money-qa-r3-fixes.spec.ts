@@ -368,7 +368,7 @@ test("FB-16: a payer's profile picture shows, round, on the row, in the split ch
 	const mp = await ctx.newPage();
 	await mp.setContent('<div style="width:96px;height:96px;background:linear-gradient(135deg,#e07a5f,#3d405b)"></div>');
 	const png = await mp.screenshot({ clip: { x: 0, y: 0, width: 96, height: 96 }, type: "png" });
-	await mp.goto("/");
+	await mp.goto("/dashboard");
 	const AVATAR = "/src/functions/avatar.functions.ts";
 	type Up = { key: string; url: string; headers: Record<string, string> };
 	const up = await callFn<Up>(mp, "createAvatarUpload", { contentType: "image/png", size: png.length }, AVATAR).catch(() => null);

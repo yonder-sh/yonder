@@ -101,13 +101,13 @@ test.describe("desktop", () => {
 		for (const scheme of ["light", "dark"] as const) {
 			await page.emulateMedia({ colorScheme: scheme });
 			const pages: [string, string][] = [
-				["dashboard", "/"],
+				["dashboard", "/dashboard"],
 				["timeline", `/t/${TRIP}/japan/tokyo?days=2027-10-05&lens=place`],
 				["rollups", `/t/${TRIP}/japan/tokyo?tab=lists`],
 				["money", `/t/${TRIP}?tab=money`],
 			];
 			for (const [name, url] of pages) {
-				if (url === "/") {
+				if (url === "/dashboard") {
 					await page.goto(url);
 					await page.waitForTimeout(2000);
 				} else await openTrip(page, url);
@@ -286,7 +286,7 @@ test.describe("desktop", () => {
 	test("EMPTY-01/02 guard: a new user's dashboard and first trip", async ({ page }) => {
 		const email = `qa-visual-${Date.now()}@asia2027.test`;
 		await loginViaApi(page.request, email, { first: "Nova", last: "Empty" });
-		await page.goto("/");
+		await page.goto("/dashboard");
 		const dash = page.getByTestId("dashboard");
 		await expect(dash).toContainText("Your next trip starts here.");
 		await expect(dash).not.toContainText(/Shared with/i);
@@ -345,7 +345,7 @@ test.describe("phone", () => {
 		await page.goto("/login");
 		await expectNoHorizontalOverflow(page);
 		await signIn(page, "dennis");
-		await page.goto("/");
+		await page.goto("/dashboard");
 		await page.waitForTimeout(1500);
 		await expectNoHorizontalOverflow(page);
 		for (const url of [
@@ -378,7 +378,7 @@ test.describe("phone", () => {
 
 	test("DEFECT MOB-02: browser Back after switching sheet tabs stays in the trip", async ({ page }) => {
 		await signIn(page, "dennis");
-		await page.goto("/");
+		await page.goto("/dashboard");
 		await openTrip(page, `/t/${TRIP}/japan/tokyo?days=2027-10-05`);
 		const sheet = page.getByTestId("mobile-sheet");
 		const b = await sheet.boundingBox();

@@ -34,7 +34,7 @@ test("viewer link: a guest can view, can't edit, and loses access when it's turn
 	const ownerConsole = collectConsole(owner);
 
 	// A fresh trip: it has no share links yet.
-	await owner.goto("/");
+	await owner.goto("/dashboard");
 	await (await hydrated(owner.getByTestId(TESTID.newTripButton))).click();
 	const tripName = `Share test ${randomBytes(2).toString("hex")}`;
 	await owner.getByTestId(TESTID.newTripName).fill(tripName);

@@ -44,7 +44,7 @@ test("ERR-04: the database is down", async ({ browser }) => {
 	await loginViaApi(ctx.request, "dennis@asia2027.test", { first: "Dennis", last: "Tester" });
 	const page = await ctx.newPage();
 	const out: Record<string, unknown> = {};
-	for (const u of ["/", "/t/asia-2027", "/login"]) {
+	for (const u of ["/dashboard", "/t/asia-2027", "/login"]) {
 		const res = await page.goto(DBDOWN + u);
 		await page.waitForTimeout(3000);
 		const html = (await res?.text()) ?? "";
@@ -57,7 +57,7 @@ test("ERR-04: the database is down", async ({ browser }) => {
 		await page.screenshot({ path: path.join(DIR, `r2-err04-${u.replace(/\W+/g, "_") || "root"}.png`) });
 	}
 	// What "Show Error" reveals on the dashboard.
-	await page.goto(DBDOWN + "/");
+	await page.goto(DBDOWN + "/dashboard");
 	await page.waitForTimeout(3000);
 	const show = page.getByRole("button", { name: /show error/i });
 	if (await show.isVisible().catch(() => false)) {
@@ -66,7 +66,7 @@ test("ERR-04: the database is down", async ({ browser }) => {
 		out.showError = (await page.locator("body").innerText()).slice(0, 600);
 		await page.screenshot({ path: path.join(DIR, "r2-err04-show-error.png") });
 	}
-	out.dashboardHtmlSql = ((await (await ctx.request.get(DBDOWN + "/")).text()).match(/Failed query|select [^<]{0,80}|ECONNREFUSED|session/gi) ?? []).slice(0, 6);
+	out.dashboardHtmlSql = ((await (await ctx.request.get(DBDOWN + "/dashboard")).text()).match(/Failed query|select [^<]{0,80}|ECONNREFUSED|session/gi) ?? []).slice(0, 6);
 	// The sign-in API itself.
 	const send = await ctx.request.post(DBDOWN + "/api/auth/email-otp/send-verification-otp", {
 		data: { email: "dennis@asia2027.test", type: "sign-in" },

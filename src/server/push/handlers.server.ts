@@ -183,7 +183,7 @@ function membershipItem(
 				actor,
 				headline: "You were removed from the trip",
 				body: actor ? `${actor} removed you.` : "",
-				url: "/",
+				url: "/dashboard",
 			};
 		default:
 			return {

@@ -76,7 +76,7 @@ test("another person signs in on the same device: the previous person's trip is 
 	const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
 	await loginViaApi(ctx.request, "dennis@asia2027.test", { first: "Dennis", last: "Tester" });
 	const page = await ctx.newPage();
-	await page.goto("/");
+	await page.goto("/dashboard");
 	await swControls(page);
 	await page.goto("/t/asia-2027?tab=plan");
 	await expect(page.getByTestId("workspace")).toBeVisible({ timeout: 30_000 });
@@ -86,7 +86,7 @@ test("another person signs in on the same device: the previous person's trip is 
 	// Dennis's session ends without a sign-out on this device.
 	await ctx.clearCookies();
 	await loginViaApi(ctx.request, "eve@asia2027.test", { first: "Eve", last: "Outsider" });
-	await page.goto("/");
+	await page.goto("/dashboard");
 	await page.waitForTimeout(6000);
 	out.eveDashboard = (await page.locator("body").innerText()).slice(0, 300).replace(/\s+/g, " ");
 	await page.screenshot({ path: path.join(DIR, "r3-switch-eve-dashboard.png") });
@@ -104,7 +104,7 @@ test("another person signs in on the same device: the previous person's trip is 
 		out.eveOffline = { workspace: await p2.getByTestId("workspace").count(), text: (await p2.locator("body").innerText()).slice(0, 200).replace(/\s+/g, " ") };
 		await p2.screenshot({ path: path.join(DIR, "r3-switch-eve-offline.png") });
 		const p3 = await ctx.newPage();
-		await p3.goto("/?source=pwa").catch(() => undefined);
+		await p3.goto("/dashboard?source=pwa").catch(() => undefined);
 		await p3.waitForTimeout(4000);
 		out.eveOfflineHome = (await p3.locator("body").innerText()).slice(0, 200).replace(/\s+/g, " ");
 		await p3.screenshot({ path: path.join(DIR, "r3-switch-eve-offline-home.png") });

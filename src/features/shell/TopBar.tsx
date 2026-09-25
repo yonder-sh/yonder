@@ -98,7 +98,7 @@ export function TripMenuItems() {
 			</DropdownMenuItem>
 			<DropdownMenuSeparator />
 			<DropdownMenuItem asChild>
-				<Link to="/">
+				<Link to="/dashboard">
 					<SquareArrowLeft /> Back to dashboard
 				</Link>
 			</DropdownMenuItem>
@@ -121,7 +121,7 @@ export function TopBar({ bp }: { bp: Breakpoint }) {
 			)}
 		>
 			<Link
-				to="/"
+				to="/dashboard"
 				aria-label="Your trips"
 				className="rounded-md p-1 text-primary hover:bg-accent"
 			>

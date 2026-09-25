@@ -185,7 +185,7 @@ test("an hour overdue reads 'Overdue 1h' on the dashboard and in Lists", async (
 	const r = p.getByTestId(TESTID.listsTab).getByTestId(L.row).filter({ hasText: text });
 	const listsChip = (await r.getByTestId(L.dueChip).innerText()).replace(/\n/g, " ");
 	console.log("Lists chip:", listsChip);
-	await p.goto("/");
+	await p.goto("/dashboard");
 	const box = p.getByTestId(HOME_TESTID.deadlines);
 	await expect(box).toBeVisible({ timeout: 20_000 });
 	const dash = box.getByTestId(HOME_TESTID.deadlineRow).filter({ hasText: text });

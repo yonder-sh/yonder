@@ -1142,7 +1142,7 @@ test("DIG-04: the dashboard card's change count matches the banner on the next o
 	for (const h of ["dennis", "audrey", "kai", "maya"]) {
 		const ctx = await browser.newContext({ storageState: auth(h), viewport: { width: 1440, height: 900 } });
 		const page = await ctx.newPage();
-		await page.goto("/");
+		await page.goto("/dashboard");
 		await expect(page.getByTestId(TESTID.dashboard)).toBeVisible({ timeout: 20_000 });
 		await page.waitForTimeout(2_000);
 		const cardText = (await page.getByTestId(TESTID.dashboard).innerText()).replace(/\s+/g, " ").split("Upcoming deadlines")[0] ?? "";

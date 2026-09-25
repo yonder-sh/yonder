@@ -61,7 +61,7 @@ test("suggester: private to-do → shared, with a due date and assignees, skips 
 	await dennis.page.waitForTimeout(2500);
 	out.dennisPageShowsIt = (await dennis.page.locator("body").innerText()).includes(stamp);
 	await dennis.page.screenshot({ path: path.join(DIR, "r3-bypass-dennis-lists.png") });
-	await dennis.page.goto("/");
+	await dennis.page.goto("/dashboard");
 	await dennis.page.waitForTimeout(3000);
 	out.dennisDashboardShowsIt = (await dennis.page.locator("body").innerText()).includes(stamp);
 	await dennis.page.screenshot({ path: path.join(DIR, "r3-bypass-dennis-dashboard.png") });

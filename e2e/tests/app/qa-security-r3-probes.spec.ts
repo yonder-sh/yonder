@@ -86,7 +86,7 @@ test("suggester: a private to-do made shared, and a private to-do assigned to ot
 		out[`${who}Sees`] = hits;
 	}
 	// The dashboard page itself as Audrey.
-	await audrey.page.goto("/");
+	await audrey.page.goto("/dashboard");
 	await audrey.page.waitForTimeout(3000);
 	out.audreyDashboardShowsGift = (await audrey.page.locator("body").innerText()).includes(giftText);
 	await audrey.page.screenshot({ path: path.join(DIR, "r3-probe-audrey-dashboard.png") });

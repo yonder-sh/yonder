@@ -15,6 +15,8 @@ export const AUTH_BRAND = {
 
 /** Where the sign-in page lives, and the onboarding (names) step. */
 export const LOGIN_PATH = "/login";
+/** The signed-in home: your trips. `/` is the public landing page. */
+export const DASHBOARD_PATH = "/dashboard";
 export const WELCOME_PATH = "/welcome";
 /** The share-link landing route. The token travels in the URL fragment: `/join#t=<token>`. */
 export const JOIN_PATH = "/join";

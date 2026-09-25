@@ -66,7 +66,7 @@ describe("zoneFromCookie", () => {
 	});
 });
 
-describe("dashboardToday (the SSR `/` loader)", () => {
+describe("dashboardToday (the SSR `/dashboard` loader)", () => {
 	it("uses the viewer's zone from the cookie", async () => {
 		cookie.value = "America%2FLos_Angeles";
 		expect(await call()).toBe(todayIn("America/Los_Angeles"));

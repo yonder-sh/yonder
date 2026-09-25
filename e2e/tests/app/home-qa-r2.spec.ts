@@ -47,7 +47,7 @@ test("DASH at 390×844: every deadline row names its whole trip", async ({
 	});
 	const a = await cloneFixtureTrip(page.request);
 	const b = await cloneFixtureTrip(page.request);
-	await page.goto("/");
+	await page.goto("/dashboard");
 	await expect(page.getByTestId(TESTID.dashboard)).toBeVisible();
 	const dueDate = new Date(Date.now() + 7 * 86_400_000)
 		.toISOString()

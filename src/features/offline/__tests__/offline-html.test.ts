@@ -66,7 +66,7 @@ describe("manifest.webmanifest", () => {
 		expect(m).toMatchObject({
 			name: "Yonder",
 			short_name: "Yonder",
-			start_url: "/?source=pwa",
+			start_url: "/dashboard?source=pwa",
 			display: "standalone",
 			theme_color: "#f9fafd",
 			background_color: "#f9fafd",

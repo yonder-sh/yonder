@@ -116,7 +116,7 @@ test("J1 sign up, new trip, Where to first? → Japan › Tokyo › Shibuya Sky,
 	test.setTimeout(150_000);
 	const logs = collectConsole(page, MAP_NOISE);
 	const email = `j1-${tag()}@example.com`;
-	await page.goto("/");
+	await page.goto("/dashboard");
 	await expect(page).toHaveURL(/\/login/);
 	await (await hydrated(page.getByTestId("login-email"))).fill(email);
 	const since = logOffset();
@@ -196,7 +196,7 @@ test("J1 sign up, new trip, Where to first? → Japan › Tokyo › Shibuya Sky,
 	await shot(page, "j1-04-scheduled");
 
 	// Back on the dashboard, the trip is listed.
-	await page.goto("/");
+	await page.goto("/dashboard");
 	await expect(page.getByTestId(TESTID.tripCard).filter({ hasText: tripName })).toBeVisible();
 	expect(logs.messages).toEqual([]);
 });
@@ -1791,7 +1791,7 @@ test("X4b share target POST through the service worker (production build)", asyn
 	const sw = await page.request.get("/sw.js");
 	test.skip(!sw.ok(), "needs the production build (pnpm build && pnpm start)");
 	const c = await cloneFixtureTrip(page.request);
-	await page.goto("/");
+	await page.goto("/dashboard");
 	await expect
 		.poll(() => page.evaluate(async () => !!(await navigator.serviceWorker.getRegistration())?.active && !!navigator.serviceWorker.controller), { timeout: 20_000 })
 		.toBe(true);

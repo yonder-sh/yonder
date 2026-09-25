@@ -119,7 +119,10 @@ function NotFound() {
 			<EmptyState
 				line="This page doesn't exist."
 				action={
-					<Link to="/" className={buttonVariants({ variant: "outline" })}>
+					<Link
+						to="/dashboard"
+						className={buttonVariants({ variant: "outline" })}
+					>
 						Go to your trips
 					</Link>
 				}

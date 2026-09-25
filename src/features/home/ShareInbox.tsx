@@ -118,7 +118,7 @@ function Shell({ children }: { children: React.ReactNode }) {
 		<div className="min-h-svh bg-background">
 			<header className="mx-auto flex h-14 max-w-[560px] items-center justify-between px-4">
 				<Link
-					to="/"
+					to="/dashboard"
 					className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
 				>
 					<ArrowLeft className="size-4" /> Your trips
@@ -563,7 +563,7 @@ function Saver({ entry }: { entry: SharedEntry }) {
 						data-testid={HOME_TESTID.shareDone}
 						onClick={() => {
 							window.close();
-							setTimeout(() => window.location.assign("/"), 150);
+							setTimeout(() => window.location.assign("/dashboard"), 150);
 						}}
 					>
 						Done
@@ -578,7 +578,7 @@ function Saver({ entry }: { entry: SharedEntry }) {
 				line="No trip to save to yet."
 				action={
 					<Button asChild>
-						<Link to="/">Go to your trips</Link>
+						<Link to="/dashboard">Go to your trips</Link>
 					</Button>
 				}
 			/>

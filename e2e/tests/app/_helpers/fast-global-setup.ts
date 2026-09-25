@@ -16,7 +16,7 @@ import { FAST, type FastEnvEntry } from "./fast-env";
 
 /** The routes most specs open (desktop), then the phone layout. */
 const WARM_DESKTOP = [
-	"/",
+	"/dashboard",
 	"/t/asia-2027",
 	"/t/asia-2027?tab=plan",
 	"/t/asia-2027?tab=lists",
@@ -28,7 +28,7 @@ const WARM_DESKTOP = [
 	"/t/asia-2027/rate",
 	"/share",
 ];
-const WARM_PHONE = ["/t/asia-2027?tab=plan", "/"];
+const WARM_PHONE = ["/t/asia-2027?tab=plan", "/dashboard"];
 const WARM_GUEST = ["/login", "/join#t=qa-share-token-viewer-asia-2027"];
 
 async function checkEnv(e: FastEnvEntry): Promise<void> {

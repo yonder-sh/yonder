@@ -299,7 +299,7 @@ test.describe("phone 390", () => {
 	test("VIS3-09: a new trip's peek says 'Where to first?', and the map's empty card stays clear of the sheet", async ({ page }, info) => {
 		test.skip(info.project.name !== "chromium", "chromium project (the viewport is set here)");
 		await signIn(page);
-		await page.goto("/");
+		await page.goto("/dashboard");
 		const created = await page.evaluate(async () => {
 			const m = await import(/* @vite-ignore */ "/src/functions/trips.functions.ts");
 			return JSON.parse(JSON.stringify(await m.createTrip({ data: { name: "Empty trip · shell e2e" } })));

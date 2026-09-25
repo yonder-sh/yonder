@@ -290,7 +290,7 @@ test("LINK-04/05: revoked and reset links stop working, open tabs included", asy
 
 test("LINK-07/08/09: token scope, signed-in non-member, token shape", async ({ browser }) => {
 	const ge = await guest(browser, "qa-share-token-editor-asia-2027");
-	await ge.page.goto("/");
+	await ge.page.goto("/dashboard");
 	await expect(ge.page).toHaveURL(/\/login/);
 	await shot(ge.page, "07-guest-dashboard");
 	await ge.page.goto("/t/phu-quoc-detour?tab=plan");
@@ -320,14 +320,14 @@ test("LINK-07/08/09: token scope, signed-in non-member, token shape", async ({ b
 	expect(eg.me.role).toBe("viewer");
 	expect(eg.members.map((m) => m.name)).not.toContain("Eve Outsider");
 	expect(await eve.page.locator('[contenteditable="true"]').count()).toBe(0);
-	await eve.page.goto("/");
+	await eve.page.goto("/dashboard");
 	await expect(eve.page.getByTestId("dashboard")).toBeVisible();
 	const edash = await eve.page.getByTestId("dashboard").innerText();
 	console.log("LINK-08 eve dashboard has Asia 2027:", edash.includes("Asia 2027"));
 	expect.soft(edash, "Asia 2027 must not appear as Eve's trip").not.toMatch(/Asia 2027/);
 	await shot(eve.page, "08-eve-dashboard", true);
 	// LINK-09: 20 viewer links → token shape; one-char change
-	await d.page.goto("/");
+	await d.page.goto("/dashboard");
 	const scratch = await callFn(d.page, "/src/functions/trips.functions.ts", "createTrip", { name: `Scratch ${uniq()}` });
 	const sid = scratch.value.tripId as string;
 	const urls: string[] = [];

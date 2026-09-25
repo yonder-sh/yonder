@@ -122,7 +122,7 @@ function MobilePills() {
 				<div className={`${PILL} min-w-0 pr-3`}>
 					{/* Home to your trips, as on the desktop top bar. */}
 					<Link
-						to="/"
+						to="/dashboard"
 						aria-label="Your trips"
 						className="flex size-11 shrink-0 items-center justify-center rounded-full text-primary"
 					>

@@ -90,7 +90,7 @@ test("AUTH-02: the name step can't be skipped, and the server refuses nameless c
 	await page.getByTestId("welcome-submit").click();
 	await expect(page.getByText(/required/i).first()).toBeVisible();
 	await shot(page, "02-first-blank");
-	await page.goto("/");
+	await page.goto("/dashboard");
 	await expect(page).toHaveURL(/\/welcome/);
 	await page.goto("/t/asia-2027?tab=plan");
 	await expect(page).toHaveURL(/\/welcome/);
@@ -147,7 +147,7 @@ test("AUTH-03: international and hostile names render literally", async ({ page 
 		void d.dismiss();
 	});
 	await loginViaApi(p2.request, `qa-home-a03x-${uniq()}@asia2027.test`, { first: "<img src=x onerror=alert(1)>", last: "Test" });
-	await p2.goto("/");
+	await p2.goto("/dashboard");
 	await expect(p2.getByTestId("dashboard")).toBeVisible();
 	await (await hydrated(p2.getByTestId("account-menu").first())).click();
 	await expect(p2.getByRole("menu")).toContainText("<img src=x onerror=alert(1)> Test");
@@ -300,9 +300,9 @@ test("AUTH-12/13: sign-out ends the session; protected routes don't leak", async
 	await loginViaApi(page.request, "dennis@asia2027.test", { first: "Dennis", last: "Tester" });
 	const cookies = await page.context().cookies();
 	const tab2 = await page.context().newPage();
-	await tab2.goto("/");
+	await tab2.goto("/dashboard");
 	await expect(tab2.getByTestId("dashboard")).toBeVisible();
-	await page.goto("/");
+	await page.goto("/dashboard");
 	await expect(page.getByTestId("dashboard")).toBeVisible();
 	await (await hydrated(page.getByTestId("account-menu").first())).click();
 	await page.getByRole("menuitem", { name: /sign out/i }).click();
@@ -317,12 +317,12 @@ test("AUTH-12/13: sign-out ends the session; protected routes don't leak", async
 	const s = await replay.get("/api/auth/get-session");
 	const body = await s.text();
 	expect.soft(body === "null" || body === "" || s.status() === 401, `replayed session: ${s.status()} ${body.slice(0, 120)}`).toBe(true);
-	const dash = await replay.get("/", { maxRedirects: 0 });
+	const dash = await replay.get("/dashboard", { maxRedirects: 0 });
 	expect.soft(dash.status(), "dashboard with replayed cookie").toBeGreaterThanOrEqual(300);
 	await replay.dispose();
 	// AUTH-13: signed-out browser, raw HTML
 	const anon = await playwright.request.newContext({ baseURL: APP_URL });
-	for (const p of ["/", "/t/asia-2027", "/t/asia-2027/japan", "/t/01a0cea5-d26d-7713-a5c8-ede8e15b9662"]) {
+	for (const p of ["/dashboard", "/t/asia-2027", "/t/asia-2027/japan", "/t/01a0cea5-d26d-7713-a5c8-ede8e15b9662"]) {
 		const r = await anon.get(p, { maxRedirects: 0 });
 		const html = await r.text();
 		console.log(`AUTH-13 ${p}: ${r.status()} ${r.headers().location ?? ""}`);
@@ -333,7 +333,7 @@ test("AUTH-12/13: sign-out ends the session; protected routes don't leak", async
 
 test("AUTH-15: changing your name later updates the account menu; both names stay required", async ({ page }) => {
 	await loginViaApi(page.request, `qa-home-a15-${uniq()}@asia2027.test`, { first: "Audrey", last: "Tester" });
-	await page.goto("/");
+	await page.goto("/dashboard");
 	await expect(page.getByTestId("dashboard")).toBeVisible();
 	await (await hydrated(page.getByTestId("account-menu").first())).click();
 	await page.getByRole("menuitem", { name: /profile/i }).click();

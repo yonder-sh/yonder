@@ -76,7 +76,7 @@ async function tripWithMember(browser: Browser, name: string) {
 	const o = await userCtx(browser, `qa-home-r2o-${uniq()}@asia2027.test`, "Olga", "Owner");
 	const k = await userCtx(browser, `qa-home-r2k-${uniq()}@asia2027.test`, "Kai", "Member");
 	const op = await o.newPage();
-	await op.goto("/");
+	await op.goto("/dashboard");
 	await op.getByTestId("new-trip-button").first().click();
 	await op.getByTestId("new-trip-name").fill(name);
 	await op.getByTestId("new-trip-submit").click();
@@ -96,7 +96,7 @@ async function tripWithMember(browser: Browser, name: string) {
 test("R2 PWA-08: removed member — dashboard online, then trip online, then offline", async ({ browser }) => {
 	const { o, k, op, row, slug } = await tripWithMember(browser, "R2 purge trip");
 	const kp = await k.newPage();
-	await kp.goto("/");
+	await kp.goto("/dashboard");
 	await swControls(kp);
 	await kp.goto(`/t/${slug}?tab=plan`);
 	await expect(kp.getByTestId("workspace")).toBeVisible({ timeout: 30_000 });
@@ -107,7 +107,7 @@ test("R2 PWA-08: removed member — dashboard online, then trip online, then off
 	await op.getByRole("menuitem", { name: /remove from trip/i }).click();
 	await expect(row).toBeHidden({ timeout: 10_000 });
 	// (b) PWA-08b: Kai opens the app at '/' online
-	await kp.goto("/");
+	await kp.goto("/dashboard");
 	await expect(kp.getByTestId("dashboard")).toBeVisible({ timeout: 20_000 });
 	await kp.waitForTimeout(3000);
 	const dash = await deviceState(kp);
@@ -122,7 +122,7 @@ test("R2 PWA-08: removed member — dashboard online, then trip online, then off
 		await shot(p, "08b-offline-trip");
 		expect.soft(ws, "removed member reads the trip offline after a dashboard visit").toBe(0);
 		const cold = await k.newPage();
-		await cold.goto("/?source=pwa");
+		await cold.goto("/dashboard?source=pwa");
 		await cold.waitForTimeout(4000);
 		console.log("R2-08b cold start:", cold.url(), "|", (await cold.locator("body").innerText()).slice(0, 200).replace(/\n/g, " | "));
 		await shot(cold, "08b-cold-start");
@@ -159,7 +159,7 @@ test("R2 PWA-08: removed member — dashboard online, then trip online, then off
 test("R2 PWA-08: sign-out purge", async ({ browser }) => {
 	const d = await userCtx(browser, `qa-home-r2s-${uniq()}@asia2027.test`, "Sam", "Signout");
 	const p = await d.newPage();
-	await p.goto("/");
+	await p.goto("/dashboard");
 	await swControls(p);
 	await p.getByTestId("new-trip-button").first().click();
 	await p.getByTestId("new-trip-name").fill("R2 signout trip");
@@ -167,7 +167,7 @@ test("R2 PWA-08: sign-out purge", async ({ browser }) => {
 	await expect(p.getByTestId("workspace")).toBeVisible({ timeout: 30_000 });
 	const slug = new URL(p.url()).pathname.split("/")[2]!;
 	await p.waitForTimeout(2500);
-	await p.goto("/");
+	await p.goto("/dashboard");
 	await expect(p.getByTestId("dashboard")).toBeVisible();
 	console.log("R2 signout before:", JSON.stringify(await deviceState(p)));
 	await p.getByTestId("account-menu").first().click();
@@ -188,7 +188,7 @@ test("R2 PWA-08: sign-out purge", async ({ browser }) => {
 		await shot(q, "signout-offline-trip");
 		expect.soft(await q.getByTestId("workspace").count()).toBe(0);
 		const c = await d.newPage();
-		await c.goto("/?source=pwa");
+		await c.goto("/dashboard?source=pwa");
 		await c.waitForTimeout(3500);
 		console.log("R2 signout offline cold start:", c.url(), (await c.locator("body").innerText()).slice(0, 200).replace(/\n/g, " | "));
 		await shot(c, "signout-offline-cold");

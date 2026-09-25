@@ -15,7 +15,7 @@ for (const value of ["%E0%A4%A", "Mars%2FOlympus_Mons", "%", "Asia%2FTokyo"]) {
 		test.skip(info.project.name !== "chromium", "server render, once");
 		const { hostname } = new URL(APP_URL);
 		await context.addCookies([{ name: "yonder-tz", value, domain: hostname, path: "/" }]);
-		const res = await page.goto("/");
+		const res = await page.goto("/dashboard");
 		expect(res?.status(), "the server render").toBe(200);
 		await expect(page.getByTestId(TESTID.dashboard)).toBeVisible();
 		await expect(page.getByRole("heading", { level: 1 })).toContainText(/^Good /, { timeout: 30_000 });

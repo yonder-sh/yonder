@@ -24,11 +24,11 @@ test("Duplicate: other members' private list items stay behind; mine come along"
 	const o = await userPage(browser, `qa-home-dp-o-${uniq()}@asia2027.test`, "Olga", "Owner");
 	const a = await userPage(browser, `qa-home-dp-a-${uniq()}@asia2027.test`, "Ann", "Member");
 	const c = await cloneFixtureTrip(o.page.request);
-	await o.page.goto("/");
+	await o.page.goto("/dashboard");
 	const aEmail = (await (await a.ctx.request.get("/api/auth/get-session")).json()).user.email;
 	const inv = await call(o.page, "/src/features/home/sharing.functions.ts", "inviteMember", { tripId: c.tripId, email: aEmail, role: "editor" });
 	expect(inv.ok, JSON.stringify(inv)).toBe(true);
-	await a.page.goto("/");
+	await a.page.goto("/dashboard");
 	const aPriv = await call(a.page, "/src/features/lists/lists.functions.ts", "createListItem", { tripId: c.tripId, target: { kind: "trip" }, list: "shopping", text: "SECRET gift for Olga", isPrivate: true });
 	const oPriv = await call(o.page, "/src/features/lists/lists.functions.ts", "createListItem", { tripId: c.tripId, target: { kind: "trip" }, list: "todo", text: "Olga private todo", isPrivate: true });
 	console.log("private items:", JSON.stringify(aPriv).slice(0, 120), JSON.stringify(oPriv).slice(0, 120));

@@ -81,7 +81,7 @@ test("PWA-01: manifest, icons, service worker", async ({ browser }) => {
 	const sw = await page.request.get("/sw.js");
 	expect(sw.status()).toBe(200);
 	expect(sw.headers()["content-type"]).toContain("javascript");
-	await page.goto("/");
+	await page.goto("/dashboard");
 	const href = await page.locator('link[rel="manifest"]').getAttribute("href");
 	const m = await (await page.request.get(href!)).json();
 	console.log("PWA-01 manifest:", JSON.stringify({ ...m, icons: m.icons, share_target: m.share_target }).slice(0, 1200));
@@ -115,7 +115,7 @@ test("PWA-01: manifest, icons, service worker", async ({ browser }) => {
 test("PWA-03/04/06: last trip offline — reload, other days/scopes, read-only, cold start, back online", async ({ browser }) => {
 	const ctx = await userCtx(browser, "dennis@asia2027.test", "Dennis", "Tester");
 	const page = await ctx.newPage();
-	await page.goto("/");
+	await page.goto("/dashboard");
 	await swControls(page);
 	await page.goto("/t/asia-2027?days=2027-10-05");
 	await expect(page.getByTestId("workspace")).toBeVisible({ timeout: 30_000 });
@@ -127,7 +127,7 @@ test("PWA-03/04/06: last trip offline — reload, other days/scopes, read-only, 
 	console.log("PWA-03 Golden Gai online:", ggOnline, "|", ggTimes.slice(0, 120));
 	// visit Mt. Fuji once? No: PWA-03 says the whole trip is cached, not only viewed pages
 	await page.waitForTimeout(2500);
-	await page.goto("/");
+	await page.goto("/dashboard");
 	await expect(page.getByTestId("home-hero")).toContainText(/Available offline/, { timeout: 15_000 });
 	await shot(page, "03-dashboard-available-offline");
 	await page.goto("/t/asia-2027?days=2027-10-05");
@@ -183,7 +183,7 @@ test("PWA-03/04/06: last trip offline — reload, other days/scopes, read-only, 
 		await shot(page, "03-offline-lists");
 		// PWA-04: cold start
 		const cold = await ctx.newPage();
-		await cold.goto("/?source=pwa");
+		await cold.goto("/dashboard?source=pwa");
 		await expect(cold).toHaveURL(/\/t\/asia-2027/, { timeout: 20_000 });
 		await expect(cold.getByTestId("workspace")).toBeVisible({ timeout: 30_000 });
 		await shot(cold, "04-cold-start");
@@ -221,7 +221,7 @@ test("PWA-03/04/06: last trip offline — reload, other days/scopes, read-only, 
 test("PWA-05: only the last trip is kept", async ({ browser }) => {
 	const ctx = await userCtx(browser, "dennis@asia2027.test", "Dennis", "Tester");
 	const page = await ctx.newPage();
-	await page.goto("/");
+	await page.goto("/dashboard");
 	await swControls(page);
 	await page.goto("/t/asia-2027?tab=plan");
 	await expect(page.getByTestId("workspace")).toBeVisible({ timeout: 30_000 });
@@ -255,7 +255,7 @@ test("PWA-07/08: offline copy refreshes; sign-out and removal purge the offline 
 	const o = await userCtx(browser, `qa-home-pwa8o-${uniq()}@asia2027.test`, "Olga", "Owner");
 	const k = await userCtx(browser, `qa-home-pwa8k-${uniq()}@asia2027.test`, "Kai", "Member");
 	const op = await o.newPage();
-	await op.goto("/");
+	await op.goto("/dashboard");
 	const kEmail = (await (await k.request.get("/api/auth/get-session")).json()).user.email;
 	const made = await op.evaluate(async () => {
 		const m = await import("/src/functions/trips.functions.ts").catch(() => null);
@@ -279,7 +279,7 @@ test("PWA-07/08: offline copy refreshes; sign-out and removal purge the offline 
 	await expect(row).toBeVisible();
 	// Kai caches it
 	const kp = await k.newPage();
-	await kp.goto("/");
+	await kp.goto("/dashboard");
 	await swControls(kp);
 	await kp.goto(`/t/${slug}?tab=plan`);
 	await expect(kp.getByTestId("workspace")).toBeVisible({ timeout: 30_000 });
@@ -295,7 +295,7 @@ test("PWA-07/08: offline copy refreshes; sign-out and removal purge the offline 
 	await op.getByRole("menuitem", { name: /remove from trip/i }).click();
 	await expect(row).toBeHidden({ timeout: 10_000 });
 	// Kai opens the app online
-	await kp.goto("/");
+	await kp.goto("/dashboard");
 	await expect(kp.getByTestId("dashboard")).toBeVisible({ timeout: 20_000 });
 	await kp.waitForTimeout(3000);
 	const afterDash = await kp.evaluate(async (s) => ({
@@ -343,12 +343,12 @@ test("PWA-07/08: offline copy refreshes; sign-out and removal purge the offline 
 		await goOnline(k);
 	}
 	// sign-out purges everything (owner)
-	await op.goto("/");
+	await op.goto("/dashboard");
 	await swControls(op);
 	await op.goto(`/t/${slug}?tab=plan`);
 	await expect(op.getByTestId("workspace")).toBeVisible({ timeout: 30_000 });
 	await op.waitForTimeout(2000);
-	await op.goto("/");
+	await op.goto("/dashboard");
 	await op.getByTestId("account-menu").first().click();
 	await op.getByRole("menuitem", { name: /sign out/i }).click();
 	await expect(op).toHaveURL(/\/login/);
@@ -398,7 +398,7 @@ const postShare = (p: Page, fields: Record<string, string>) =>
 test("Share target: Maps duplicate check, TikTok save, offline keep, sign-out clear, signed-out login round trip", async ({ browser }) => {
 	const ctx = await userCtx(browser, "dennis@asia2027.test", "Dennis", "Tester");
 	const page = await ctx.newPage();
-	await page.goto("/");
+	await page.goto("/dashboard");
 	await swControls(page);
 	// SHR-07: Itoya is in Asia 2027 (seed coords 35.6739,139.7676)
 	await postShare(page, { title: "Itoya", url: "https://www.google.com/maps/place/Itoya/@35.6739,139.7676,17z" });
@@ -409,7 +409,7 @@ test("Share target: Maps duplicate check, TikTok save, offline keep, sign-out cl
 	await shot(page, "share-01-itoya");
 	console.log("SHR-07 inbox:", (await inbox.innerText()).replace(/\n/g, " | ").slice(0, 500));
 	// SHR-02: TikTok → new idea named without hashtags
-	await page.goto("/");
+	await page.goto("/dashboard");
 	await postShare(page, { title: "Best ramen in Shinjuku!! #ramen #tokyo @foodie 🍜", text: "Check it https://www.tiktok.com/@foodie/video/7309876543210987654", url: "" });
 	await expect(page).toHaveURL(/\/share\?id=/, { timeout: 15_000 });
 	await expect(inbox).toBeVisible({ timeout: 15_000 });
@@ -422,7 +422,7 @@ test("Share target: Maps duplicate check, TikTok save, offline keep, sign-out cl
 	await expect(inbox).toContainText(/Saved/, { timeout: 15_000 });
 	await shot(page, "share-02-tiktok-saved");
 	// offline: from a page loaded online
-	await page.goto("/");
+	await page.goto("/dashboard");
 	await expect(page.getByTestId("dashboard")).toBeVisible();
 	await goOffline(ctx);
 	try {
@@ -435,7 +435,7 @@ test("Share target: Maps duplicate check, TikTok save, offline keep, sign-out cl
 	} finally {
 		await goOnline(ctx);
 	}
-	await page.goto("/");
+	await page.goto("/dashboard");
 	await expect(page.getByTestId("dashboard")).toBeVisible();
 	await page.waitForTimeout(2500);
 	const waiting = await page.getByTestId("home-shared-waiting").innerText().catch(() => "");
@@ -497,7 +497,7 @@ test("PWA-07/10: offline copy picks up a newer change; map and media offline", a
 	const a = await userCtx(browser, "audrey@asia2027.test", "Audrey", "Tester");
 	const d = await userCtx(browser, "dennis@asia2027.test", "Dennis", "Tester");
 	const dp = await d.newPage();
-	await dp.goto("/");
+	await dp.goto("/dashboard");
 	await swControls(dp);
 	await dp.goto("/t/asia-2027?days=2027-10-05");
 	await expect(dp.getByTestId("workspace")).toBeVisible({ timeout: 30_000 });
@@ -578,7 +578,7 @@ test("PWA-08b: removed member opens the app (dashboard only) online, then goes o
 	const o = await userCtx(browser, `qa-home-p8bo-${uniq()}@asia2027.test`, "Olga", "Owner");
 	const k = await userCtx(browser, `qa-home-p8bk-${uniq()}@asia2027.test`, "Kai", "Member");
 	const op = await o.newPage();
-	await op.goto("/");
+	await op.goto("/dashboard");
 	await op.getByTestId("new-trip-button").first().click();
 	await op.getByTestId("new-trip-name").fill("Removal purge trip");
 	await op.getByTestId("new-trip-submit").click();
@@ -593,7 +593,7 @@ test("PWA-08b: removed member opens the app (dashboard only) online, then goes o
 	const row = dlg.getByTestId("home-member-row").filter({ hasText: "Kai Member" });
 	await expect(row).toBeVisible();
 	const kp = await k.newPage();
-	await kp.goto("/");
+	await kp.goto("/dashboard");
 	await swControls(kp);
 	await kp.goto(`/t/${slug}?tab=plan`);
 	await expect(kp.getByTestId("workspace")).toBeVisible({ timeout: 30_000 });
@@ -603,7 +603,7 @@ test("PWA-08b: removed member opens the app (dashboard only) online, then goes o
 	await op.getByRole("menuitem", { name: /remove from trip/i }).click();
 	await expect(row).toBeHidden({ timeout: 10_000 });
 	// Kai opens the app: the dashboard, online
-	await kp.goto("/");
+	await kp.goto("/dashboard");
 	await expect(kp.getByTestId("dashboard")).toBeVisible({ timeout: 20_000 });
 	await kp.waitForTimeout(3000);
 	await goOffline(k);
@@ -617,7 +617,7 @@ test("PWA-08b: removed member opens the app (dashboard only) online, then goes o
 		await shot(p3, "08b-removed-offline");
 		expect.soft(ws, "removed member can still read the trip offline").toBe(0);
 		const cold = await k.newPage();
-		await cold.goto("/?source=pwa");
+		await cold.goto("/dashboard?source=pwa");
 		await cold.waitForTimeout(4000);
 		console.log("PWA-08b cold start:", cold.url());
 		await shot(cold, "08b-removed-cold-start");

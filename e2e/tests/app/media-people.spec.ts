@@ -155,7 +155,7 @@ test("a guest editor can upload; a guest viewer can't (MED-11)", async ({ page, 
 	test.setTimeout(90_000);
 	const c = await cloneFixtureTrip(page.request);
 	const photo = await (async () => {
-		await page.goto("/");
+		await page.goto("/dashboard");
 		return jpegFromPage(page, 20);
 	})();
 	for (const role of ["editor", "viewer"] as const) {

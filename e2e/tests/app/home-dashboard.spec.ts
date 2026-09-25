@@ -43,7 +43,7 @@ test("dashboard shows my trips with a route sketch, and fits the screen", async 
 	});
 	const c = await cloneFixtureTrip(page.request);
 	const consoleLog = collectConsole(page);
-	await page.goto("/");
+	await page.goto("/dashboard");
 	await expect(page.getByTestId(TESTID.dashboard)).toBeVisible();
 	// A to-do due within the 30-day window (the demo's own is due in 2027).
 	const soon = new Date(Date.now() + 5 * 86_400_000).toISOString().slice(0, 10);
@@ -91,7 +91,7 @@ test("dashboard shows my trips with a route sketch, and fits the screen", async 
 
 test("new trip with a date range lands in the workspace", async ({ page }, info) => {
 	test.skip(info.project.name !== "chromium", "one browser is enough");
-	await page.goto("/");
+	await page.goto("/dashboard");
 	await (await hydrated(page.getByTestId(TESTID.newTripButton))).click();
 	const name = `Range ${randomBytes(2).toString("hex")}`;
 	await page.getByTestId(TESTID.newTripName).fill(name);
@@ -130,7 +130,7 @@ test("duplicate a trip from its card", async ({ browser }, info) => {
 	});
 	const page = await ctx.newPage();
 	const c = await cloneFixtureTrip(page.request);
-	await page.goto("/");
+	await page.goto("/dashboard");
 	// Let the dashboard settle first: the client re-sorts the cards once it
 	// knows today's date, which remounts their menus (a heavy test account
 	// with hundreds of trips makes that window long).
@@ -172,7 +172,7 @@ test("FB-05: 'Rate places' in a card's ⋯ menu opens the Places tab's Rate view
 	);
 	const page = await ctx.newPage();
 	const c = await cloneFixtureTrip(page.request);
-	await page.goto("/");
+	await page.goto("/dashboard");
 	// The client re-sorts the cards once it knows today's date (remounting
 	// their menus): wait for the sketch first, as in "duplicate".
 	await expect(page.locator('svg[data-sketch="drawn"]').first()).toBeVisible({
@@ -216,7 +216,7 @@ test("DASH-03: the first paint already shows the real next trip, with an ended o
 		{ first: "Pat", last: "Past" },
 	);
 	const page = await ctx.newPage();
-	await page.goto("/");
+	await page.goto("/dashboard");
 	await expect(page.getByTestId(TESTID.dashboard)).toBeVisible();
 	await expect(page.getByRole("heading", { level: 1 })).toContainText(
 		/^Good /,
@@ -236,7 +236,7 @@ test("DASH-03: the first paint already shows the real next trip, with an ended o
 	);
 
 	// What a slow phone paints before any script runs: the server's HTML.
-	const html = await (await ctx.request.get("/")).text();
+	const html = await (await ctx.request.get("/dashboard")).text();
 	const at = html.indexOf(`data-testid="${HOME_TESTID.heroCard}"`);
 	expect(at).toBeGreaterThan(-1);
 	const past = html.indexOf(">Past<", at);
@@ -255,7 +255,7 @@ test("DASH-03: the first paint already shows the real next trip, with an ended o
 		await new Promise((r) => setTimeout(r, 1500));
 		await route.continue().catch(() => {});
 	});
-	await slow.goto("/", { waitUntil: "commit" });
+	await slow.goto("/dashboard", { waitUntil: "commit" });
 	const heroCard = slow.getByTestId(HOME_TESTID.heroCard);
 	await expect(heroCard).toBeVisible({ timeout: 20_000 });
 	const first = await heroCard.innerText();
@@ -294,7 +294,7 @@ test("DASH-HERO-DAY: a trip under way counts up from Day 1 in the hero", async (
 		{ first: "Rey", last: "Road" },
 	);
 	const page = await ctx.newPage();
-	await page.goto("/");
+	await page.goto("/dashboard");
 	await expect(page.getByRole("heading", { level: 1 })).toContainText(
 		/^Good /,
 		{ timeout: 30_000 },

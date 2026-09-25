@@ -33,6 +33,8 @@ pnpm e2e:fast                                 # full Playwright suite on isolate
 
 Tests never touch your dev data: they run on their own databases, buckets and Redis prefixes, and refuse to start against the main stack. See [`e2e/README.md`](e2e/README.md).
 
+The landing page (`/`) shows real screenshots of an invented trip: `pnpm landing:shots` seeds it in an isolated env, captures every screen with Playwright and writes `public/landing/`. `pnpm landing:globe` redraws the hero globe's land layer and `public/og.png`.
+
 ## Deploy
 
 The `Dockerfile` builds two images: `app` (web server, plus the migrate / bucket-setup / quota scripts) and `collab` (the realtime server and the job worker). `.github/workflows/build.yml` builds, signs and pushes them to GHCR on every push to `main`. Production runs on Kubernetes; the configuration a deployment needs is listed in [`.env.example`](.env.example).

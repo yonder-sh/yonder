@@ -9,11 +9,12 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as authJoinRouteImport } from './routes/(auth)/join'
 import { Route as authLoginRouteImport } from './routes/(auth)/login'
 import { Route as authWelcomeRouteImport } from './routes/(auth)/welcome'
-import { Route as AuthedIndexRouteImport } from './routes/_authed/index'
+import { Route as AuthedDashboardRouteImport } from './routes/_authed/dashboard'
 import { Route as AuthedShareRouteImport } from './routes/_authed/share'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as DevFixtureRouteImport } from './routes/dev/fixture'
@@ -31,6 +32,11 @@ import { Route as TTripRateRouteImport } from './routes/t/$trip_.rate'
 import { Route as TTripShareCardDotpngRouteImport } from './routes/t/$trip_.share-card[.]png'
 import { Route as ApiPlacesPhotoSplatRouteImport } from './routes/api/places/photo/$'
 
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthedRoute = AuthedRouteImport.update({
   id: '/_authed',
   getParentRoute: () => rootRouteImport,
@@ -50,9 +56,9 @@ const authWelcomeRoute = authWelcomeRouteImport.update({
   path: '/welcome',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthedIndexRoute = AuthedIndexRouteImport.update({
-  id: '/',
-  path: '/',
+const AuthedDashboardRoute = AuthedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
   getParentRoute: () => AuthedRoute,
 } as any)
 const AuthedShareRoute = AuthedShareRouteImport.update({
@@ -137,10 +143,11 @@ const ApiPlacesPhotoSplatRoute = ApiPlacesPhotoSplatRouteImport.update({
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof AuthedIndexRoute
+  '/': typeof IndexRoute
   '/join': typeof authJoinRoute
   '/login': typeof authLoginRoute
   '/welcome': typeof authWelcomeRoute
+  '/dashboard': typeof AuthedDashboardRoute
   '/share': typeof AuthedShareRoute
   '/api/health': typeof ApiHealthRoute
   '/dev/fixture': typeof DevFixtureRouteWithChildren
@@ -159,12 +166,13 @@ export interface FileRoutesByFullPath {
   '/api/places/photo/$': typeof ApiPlacesPhotoSplatRoute
 }
 export interface FileRoutesByTo {
+  '/': typeof IndexRoute
   '/join': typeof authJoinRoute
   '/login': typeof authLoginRoute
   '/welcome': typeof authWelcomeRoute
+  '/dashboard': typeof AuthedDashboardRoute
   '/share': typeof AuthedShareRoute
   '/api/health': typeof ApiHealthRoute
-  '/': typeof AuthedIndexRoute
   '/s/$token': typeof authSTokenRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/avatar/$userId': typeof ApiAvatarUserIdRoute
@@ -180,15 +188,16 @@ export interface FileRoutesByTo {
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
+  '/': typeof IndexRoute
   '/_authed': typeof AuthedRouteWithChildren
   '/(auth)/join': typeof authJoinRoute
   '/(auth)/login': typeof authLoginRoute
   '/(auth)/welcome': typeof authWelcomeRoute
+  '/_authed/dashboard': typeof AuthedDashboardRoute
   '/_authed/share': typeof AuthedShareRoute
   '/api/health': typeof ApiHealthRoute
   '/dev/fixture': typeof DevFixtureRouteWithChildren
   '/t/$trip': typeof TTripRouteWithChildren
-  '/_authed/': typeof AuthedIndexRoute
   '/(auth)/s/$token': typeof authSTokenRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/avatar/$userId': typeof ApiAvatarUserIdRoute
@@ -209,6 +218,7 @@ export interface FileRouteTypes {
     | '/join'
     | '/login'
     | '/welcome'
+    | '/dashboard'
     | '/share'
     | '/api/health'
     | '/dev/fixture'
@@ -227,12 +237,13 @@ export interface FileRouteTypes {
     | '/api/places/photo/$'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/'
     | '/join'
     | '/login'
     | '/welcome'
+    | '/dashboard'
     | '/share'
     | '/api/health'
-    | '/'
     | '/s/$token'
     | '/api/auth/$'
     | '/api/avatar/$userId'
@@ -247,15 +258,16 @@ export interface FileRouteTypes {
     | '/api/places/photo/$'
   id:
     | '__root__'
+    | '/'
     | '/_authed'
     | '/(auth)/join'
     | '/(auth)/login'
     | '/(auth)/welcome'
+    | '/_authed/dashboard'
     | '/_authed/share'
     | '/api/health'
     | '/dev/fixture'
     | '/t/$trip'
-    | '/_authed/'
     | '/(auth)/s/$token'
     | '/api/auth/$'
     | '/api/avatar/$userId'
@@ -271,6 +283,7 @@ export interface FileRouteTypes {
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
+  IndexRoute: typeof IndexRoute
   AuthedRoute: typeof AuthedRouteWithChildren
   authJoinRoute: typeof authJoinRoute
   authLoginRoute: typeof authLoginRoute
@@ -290,6 +303,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authed': {
       id: '/_authed'
       path: ''
@@ -318,11 +338,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof authWelcomeRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authed/': {
-      id: '/_authed/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof AuthedIndexRouteImport
+    '/_authed/dashboard': {
+      id: '/_authed/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthedDashboardRouteImport
       parentRoute: typeof AuthedRoute
     }
     '/_authed/share': {
@@ -441,13 +461,13 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthedRouteChildren {
+  AuthedDashboardRoute: typeof AuthedDashboardRoute
   AuthedShareRoute: typeof AuthedShareRoute
-  AuthedIndexRoute: typeof AuthedIndexRoute
 }
 
 const AuthedRouteChildren: AuthedRouteChildren = {
+  AuthedDashboardRoute: AuthedDashboardRoute,
   AuthedShareRoute: AuthedShareRoute,
-  AuthedIndexRoute: AuthedIndexRoute,
 }
 
 const AuthedRouteWithChildren =
@@ -480,6 +500,7 @@ const TTripRouteChildren: TTripRouteChildren = {
 const TTripRouteWithChildren = TTripRoute._addFileChildren(TTripRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
+  IndexRoute: IndexRoute,
   AuthedRoute: AuthedRouteWithChildren,
   authJoinRoute: authJoinRoute,
   authLoginRoute: authLoginRoute,

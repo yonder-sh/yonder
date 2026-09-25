@@ -92,7 +92,7 @@ test("PWA-01: manifest, icons and a controlling service worker", async ({
 }) => {
 	const sw = await request.get("/sw.js");
 	expect(sw.headers()["content-type"]).toContain("text/javascript");
-	await page.goto("/");
+	await page.goto("/dashboard");
 	const href = await page
 		.locator('link[rel="manifest"]')
 		.getAttribute("href");
@@ -113,7 +113,7 @@ test("PWA-03/04/06: the saved trip reads offline, deep links and cold start incl
 	request,
 }) => {
 	const c = await cloneFixtureTrip(request);
-	await page.goto("/");
+	await page.goto("/dashboard");
 	await swControls(page);
 	await page.goto(`/t/${c.slug}?tab=plan`);
 	await expect(page.getByTestId(TESTID.workspace)).toBeVisible({
@@ -157,7 +157,7 @@ test("PWA-03/04/06: the saved trip reads offline, deep links and cold start incl
 		});
 		// Cold start from the home screen goes straight to the saved trip.
 		const cold = await context.newPage();
-		await cold.goto("/?source=pwa");
+		await cold.goto("/dashboard?source=pwa");
 		await expect(cold).toHaveURL(new RegExp(`/t/${c.slug}\\?from=offline`), {
 			timeout: 20_000,
 		});
@@ -184,7 +184,7 @@ test("PWA-08: signing out removes the offline copy", async ({ browser }) => {
 	);
 	const c = await cloneFixtureTrip(ctx.request);
 	const page = await ctx.newPage();
-	await page.goto("/");
+	await page.goto("/dashboard");
 	await swControls(page);
 	await page.goto(`/t/${c.slug}?tab=plan`);
 	await expect(page.getByTestId(TESTID.workspace)).toBeVisible({
@@ -193,7 +193,7 @@ test("PWA-08: signing out removes the offline copy", async ({ browser }) => {
 	await expect
 		.poll(() => page.evaluate(() => caches.has("pages")))
 		.toBe(true);
-	await page.goto("/");
+	await page.goto("/dashboard");
 	await page.getByTestId(TESTID.accountMenu).click();
 	await page.getByRole("menuitem", { name: "Sign out" }).click();
 	await expect(page).toHaveURL(/\/login/);
@@ -233,7 +233,7 @@ test("PWA-08: a trip lost while away loses its offline copy when the app next op
 	await expect(row).toBeVisible();
 	// Kai opens the trip online: it's his offline copy now.
 	const kp = await kai.newPage();
-	await kp.goto("/");
+	await kp.goto("/dashboard");
 	await swControls(kp);
 	await kp.goto(`/t/${c.slug}?tab=plan`);
 	await expect(kp.getByTestId(TESTID.workspace)).toBeVisible({
@@ -255,9 +255,9 @@ test("PWA-08: a trip lost while away loses its offline copy when the app next op
 	await row.getByTestId(HOME_TESTID.memberMenu).click();
 	await op.getByRole("menuitem", { name: /remove from trip/i }).click();
 	await expect(row).toBeHidden({ timeout: 10_000 });
-	// He opens the app online at "/" (never the trip): the copy is gone, so an
+	// He opens the app online at "/dashboard" (never the trip): the copy is gone, so an
 	// offline start can't open it any more.
-	await kp.goto("/");
+	await kp.goto("/dashboard");
 	await expect(kp.getByTestId(TESTID.dashboard)).toBeVisible({
 		timeout: 20_000,
 	});
@@ -272,7 +272,7 @@ test("E8: a share sent offline opens the inbox, kept on this device", async ({
 	page,
 	context,
 }) => {
-	await page.goto("/");
+	await page.goto("/dashboard");
 	await swControls(page);
 	await expect(page.getByTestId(TESTID.dashboard)).toBeVisible();
 	// The worker keeps the /share shell while signed in (activate + WARM_SHARE).

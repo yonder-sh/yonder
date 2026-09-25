@@ -51,7 +51,7 @@ test("phone dashboard: deadlines from 'Asia 2027' and 'Asia 2027 backup' can be 
 	console.log("dup", JSON.stringify(dup));
 	const ph = await browser.newContext({ storageState: state("dennis"), viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 });
 	const pp = await ph.newPage();
-	await pp.goto("/");
+	await pp.goto("/dashboard");
 	const box = pp.getByTestId(HOME_TESTID.deadlines);
 	await expect(box).toBeVisible({ timeout: 20_000 });
 	await box.scrollIntoViewIfNeeded();

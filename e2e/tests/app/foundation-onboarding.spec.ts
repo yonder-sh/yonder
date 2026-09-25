@@ -19,7 +19,7 @@ test("sign in, onboarding, dashboard, new trip, workspace", async ({ page }, inf
 	const email = `e2e-${info.project.name}-${randomBytes(4).toString("hex")}@example.com`;
 	const logs = collectConsole(page);
 
-	await page.goto("/");
+	await page.goto("/dashboard");
 	await expect(page).toHaveURL(/\/login/);
 	await (await hydrated(page.getByTestId("login-email"))).fill(email);
 	const since = logOffset();
@@ -37,7 +37,7 @@ test("sign in, onboarding, dashboard, new trip, workspace", async ({ page }, inf
 	await page.getByTestId("welcome-submit").click();
 	await expect(page).toHaveURL(/\/welcome/);
 	await expect(page.locator("[aria-invalid=true]")).toBeVisible();
-	await page.goto("/"); // the guard sends a nameless account back
+	await page.goto("/dashboard"); // the guard sends a nameless account back
 	await expect(page).toHaveURL(/\/welcome/);
 	await (await hydrated(page.getByTestId("welcome-first-name"))).fill("Ada");
 	await page.getByTestId("welcome-last-name").fill("Lovelace");

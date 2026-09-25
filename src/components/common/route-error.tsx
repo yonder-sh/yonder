@@ -7,8 +7,8 @@ import { YonderMark } from "./yonder-mark";
 
 /**
  * The branded error page (QA ERR-04): any route without its own error view
- * (the router's `defaultErrorComponent`), e.g. `/` or `/login` while the
- * database is down. One line and a retry that re-runs the route's guards and
+ * (the router's `defaultErrorComponent`), e.g. `/dashboard` or `/login`
+ * while the database is down. One line and a retry that re-runs the route's guards and
  * loaders, so the page recovers once the service is back. Never shows the
  * error's message or stack (SECURITY: no internals in the page).
  */

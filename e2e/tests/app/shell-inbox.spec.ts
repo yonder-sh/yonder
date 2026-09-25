@@ -34,7 +34,7 @@ async function as(browser: Browser, handle: "dev" | "maya", url: string): Promis
 
 test("one inbox: a mention lights the bell, opens its place and is read everywhere", async ({ browser }, info) => {
 	test.skip(info.project.name !== "chromium", "desktop popover (the drawer is covered on mobile)");
-	const dev = await as(browser, "dev", "/");
+	const dev = await as(browser, "dev", "/dashboard");
 	const c = await cloneFixtureTrip(dev.request);
 	test.skip(!c.members.maya, "maya@example.com is not seeded");
 	const maya = await as(browser, "maya", `/t/${c.slug}?tab=plan`);
@@ -71,7 +71,7 @@ test("one inbox: a mention lights the bell, opens its place and is read everywhe
 
 test("digest: one line for other people's changes; Got it clears it", async ({ browser }, info) => {
 	test.skip(info.project.name !== "chromium", "one run is enough");
-	const dev = await as(browser, "dev", "/");
+	const dev = await as(browser, "dev", "/dashboard");
 	const c = await cloneFixtureTrip(dev.request);
 	test.skip(!c.members.maya, "maya@example.com is not seeded");
 	// Dennis opens the trip once: that is "last looked".
@@ -117,7 +117,7 @@ test("digest: one line for other people's changes; Got it clears it", async ({ b
 
 test("view settings follow the account to a fresh browser", async ({ browser }, info) => {
 	test.skip(info.project.name !== "chromium", "one run is enough");
-	const first = await as(browser, "dev", "/");
+	const first = await as(browser, "dev", "/dashboard");
 	const c = await cloneFixtureTrip(first.request);
 	await first.goto(`/t/${c.slug}?tab=plan`);
 	await expectLive(first);

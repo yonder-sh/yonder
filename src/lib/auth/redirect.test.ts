@@ -25,7 +25,7 @@ describe("safeNext (QA AUTH-05)", () => {
 		[42],
 		[`/${"a".repeat(3000)}`],
 	])("rejects %j", (next) => {
-		expect(safeNext(next)).toBe("/");
+		expect(safeNext(next)).toBe("/dashboard");
 	});
 
 	it("uses the given fallback", () => {
@@ -33,8 +33,16 @@ describe("safeNext (QA AUTH-05)", () => {
 	});
 
 	it("never lands back on the auth pages", () => {
-		expect(postAuthDestination("/login")).toBe("/");
-		expect(postAuthDestination("/welcome?next=/t/x")).toBe("/");
+		expect(postAuthDestination("/login")).toBe("/dashboard");
+		expect(postAuthDestination("/welcome?next=/t/x")).toBe("/dashboard");
 		expect(postAuthDestination("/t/x")).toBe("/t/x");
+	});
+
+	it("goes to the dashboard by default and never to the landing page", () => {
+		expect(postAuthDestination(undefined)).toBe("/dashboard");
+		expect(postAuthDestination("/")).toBe("/dashboard");
+		expect(postAuthDestination("/?source=pwa")).toBe("/dashboard");
+		expect(postAuthDestination("/dashboard")).toBe("/dashboard");
+		expect(postAuthDestination("/share?id=x")).toBe("/share?id=x");
 	});
 });

@@ -74,7 +74,7 @@ async function userPage(browser: Browser, email: string, first: string, last: st
 
 test("DASH-01/02: own vs shared trips, card content, card opens the trip", async ({ browser }) => {
 	const { ctx, page } = await userPage(browser, "dennis@asia2027.test", "Dennis", "Tester");
-	await page.goto("/");
+	await page.goto("/dashboard");
 	await expect(page.getByTestId("dashboard")).toBeVisible();
 	await expect(page.locator('svg[data-sketch="drawn"]').first()).toBeVisible({ timeout: 20_000 });
 	await shot(page, "01-dennis", true);
@@ -89,7 +89,7 @@ test("DASH-01/02: own vs shared trips, card content, card opens the trip", async
 	expect(text).toMatch(/Can view/);
 	// Eve's trips must not appear: give Eve a trip first
 	const eve = await userPage(browser, "eve@asia2027.test", "Eve", "Outsider");
-	await eve.page.goto("/");
+	await eve.page.goto("/dashboard");
 	await expect(eve.page.getByTestId("dashboard")).toBeVisible();
 	const created = await callFn(eve.page, "/src/functions/trips.functions.ts", "createTrip", { name: "Eve secret trip" });
 	expect(created.ok, JSON.stringify(created)).toBe(true);
@@ -110,7 +110,7 @@ test("DASH-01/02: own vs shared trips, card content, card opens the trip", async
 test("DASH-03: past trips move under Past; upcoming sorted by start", async ({ browser }) => {
 	const { ctx, page } = await userPage(browser, "dennis@asia2027.test", "Dennis", "Tester");
 	await page.clock.setFixedTime(new Date("2027-11-10T12:00:00Z"));
-	await page.goto("/");
+	await page.goto("/dashboard");
 	await expect(page.getByTestId("dashboard")).toBeVisible();
 	await page.waitForTimeout(1500);
 	await shot(page, "03-clock-2027-11-10", true);
@@ -128,10 +128,10 @@ test("DASH-03: past trips move under Past; upcoming sorted by start", async ({ b
 test("DASH-04: a newly shared trip shows up (reload; live bonus)", async ({ browser }) => {
 	const d = await userPage(browser, `qa-home-d4d-${uniq()}@asia2027.test`, "Dora", "Dash");
 	const a = await userPage(browser, `qa-home-d4a-${uniq()}@asia2027.test`, "Ana", "Share");
-	await d.page.goto("/");
+	await d.page.goto("/dashboard");
 	await expect(d.page.getByTestId("dashboard")).toBeVisible();
 	const doraEmail = (await (await d.ctx.request.get("/api/auth/get-session")).json()).user.email;
-	await a.page.goto("/");
+	await a.page.goto("/dashboard");
 	await expect(a.page.getByTestId("dashboard")).toBeVisible();
 	const t = await callFn(a.page, "/src/functions/trips.functions.ts", "createTrip", { name: "Shared later", startDate: "2027-03-01", endDate: "2027-03-04" });
 	expect(t.ok, JSON.stringify(t)).toBe(true);
@@ -155,7 +155,7 @@ test("DASH-04: a newly shared trip shows up (reload; live bonus)", async ({ brow
 
 test("TRIP-01: create a trip with 35 dated days; invalid input refused", async ({ browser }) => {
 	const { ctx, page } = await userPage(browser, `qa-home-t1-${uniq()}@asia2027.test`, "Dennis", "Tester");
-	await page.goto("/");
+	await page.goto("/dashboard");
 	await (await hydrated(page.getByTestId("new-trip-button").first())).click();
 	const dlg = page.getByTestId("new-trip-dialog");
 	await expect(dlg).toBeVisible();
@@ -195,7 +195,7 @@ test("TRIP-01: create a trip with 35 dated days; invalid input refused", async (
 	expect.soft(bad.ok, JSON.stringify(bad)).toBe(false);
 	const empty = await callFn(page, "/src/functions/trips.functions.ts", "createTrip", { name: "  " });
 	expect.soft(empty.ok, JSON.stringify(empty)).toBe(false);
-	await page.goto("/");
+	await page.goto("/dashboard");
 	await expect(page.getByTestId("dashboard")).toContainText("Asia 2027");
 	await expect(page.getByTestId("dashboard")).not.toContainText("Backwards");
 	await ctx.close();
@@ -203,7 +203,7 @@ test("TRIP-01: create a trip with 35 dated days; invalid input refused", async (
 
 test("TRIP-02: shrinking dates warns, confirms into Unscheduled, cancel changes nothing", async ({ browser }) => {
 	const { ctx, page } = await userPage(browser, `qa-home-t2-${uniq()}@asia2027.test`, "Dennis", "Tester");
-	await page.goto("/");
+	await page.goto("/dashboard");
 	const t = await callFn(page, "/src/functions/trips.functions.ts", "createTrip", { name: "Shrink me", startDate: "2027-11-02", endDate: "2027-11-05" });
 	expect(t.ok, JSON.stringify(t)).toBe(true);
 	const { tripId, slug } = t.value as { tripId: string; slug: string };
@@ -277,7 +277,7 @@ test("TRIP-04: rename propagates to another member (header, tab title, dashboard
 	await m.page.reload();
 	await expect(m.page.getByTestId("workspace")).toBeVisible({ timeout: 30_000 });
 	await expect.poll(() => m.page.title(), { timeout: 8000 }).toContain("Asia 2027");
-	await m.page.goto("/");
+	await m.page.goto("/dashboard");
 	await expect(m.page.getByTestId("dashboard")).toContainText(newName);
 	await shot(m.page, "t04-member-dashboard");
 	await o.ctx.close();
@@ -287,7 +287,7 @@ test("TRIP-04: rename propagates to another member (header, tab title, dashboard
 test("TRIP-05: only the owner can delete; delete removes it everywhere", async ({ browser }) => {
 	const o = await userPage(browser, `qa-home-t5o-${uniq()}@asia2027.test`, "Owner", "Five");
 	const e = await userPage(browser, `qa-home-t5e-${uniq()}@asia2027.test`, "Editor", "Five");
-	await o.page.goto("/");
+	await o.page.goto("/dashboard");
 	const t = await callFn(o.page, "/src/functions/trips.functions.ts", "createTrip", { name: "Delete me" });
 	expect(t.ok, JSON.stringify(t)).toBe(true);
 	const { tripId, slug } = t.value as { tripId: string; slug: string };
@@ -318,10 +318,10 @@ test("TRIP-05: only the owner can delete; delete removes it everywhere", async (
 	await expect(alert.getByRole("button", { name: /delete trip/i })).toBeDisabled();
 	await alert.getByRole("textbox").fill("Delete me");
 	await alert.getByRole("button", { name: /delete trip/i }).click();
-	await expect(o.page).toHaveURL(/\/$/);
+	await expect(o.page).toHaveURL(/\/dashboard$/);
 	await expect(o.page.getByTestId("dashboard")).not.toContainText("Delete me");
 	// editor's tab: trip gone
-	await e.page.goto("/");
+	await e.page.goto("/dashboard");
 	await expect(e.page.getByTestId("dashboard")).not.toContainText("Delete me");
 	await e.page.goto(`/t/${slug}?tab=plan`);
 	await expect(e.page.getByText("This trip doesn't exist or you don't have access.")).toBeVisible({ timeout: 15_000 });
@@ -336,7 +336,7 @@ test("Duplicate…: new name + start, shifted days, pinned times kept, no member
 	await expect(page.getByTestId("workspace")).toBeVisible({ timeout: 30_000 });
 	const src = await graphOf(page);
 	console.log("DUP src", src.trip.startDate, src.trip.endDate, "days", src.days.length, "items", src.items.length, "members", src.members.map((m) => `${m.name}:${m.role}:${m.status ?? ""}`));
-	await page.goto("/");
+	await page.goto("/dashboard");
 	await expect(page.locator('svg[data-sketch="drawn"]').first()).toBeVisible({ timeout: 30_000 });
 	await page.waitForTimeout(1000);
 	const menu = page.getByRole("button", { name: /More for Demo/ }).first();

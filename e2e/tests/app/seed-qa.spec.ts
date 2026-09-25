@@ -131,7 +131,7 @@ test("F1/F2: Audrey edits, Kai views, Eve has no access, the side trips exist", 
 	const a = await open("audrey", "/t/asia-2027?tab=plan");
 	await expectLive(a.page);
 	await expect.poll(() => role(a.page)).toBe("editor");
-	await a.page.goto("/");
+	await a.page.goto("/dashboard");
 	await expect(a.page.getByTestId(TESTID.dashboard)).toContainText("Phu Quoc detour");
 	await expect(a.page.getByTestId(TESTID.dashboard)).toContainText("Delete me");
 	await a.ctx.close();
@@ -145,7 +145,7 @@ test("F1/F2: Audrey edits, Kai views, Eve has no access, the side trips exist", 
 	await expect(e.page.getByText("This trip doesn't exist or you don't have access.")).toBeVisible();
 	await e.ctx.close();
 
-	const d = await open("dennis", "/");
+	const d = await open("dennis", "/dashboard");
 	await expect(d.page.getByTestId(TESTID.dashboard)).toContainText("Phu Quoc detour");
 	await d.ctx.close();
 });

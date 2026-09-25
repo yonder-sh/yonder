@@ -141,7 +141,7 @@ test("FB-16: avatar upload, private route, and circles everywhere", async ({ bro
 	const c = await cloneFixtureTrip(op.request);
 	const ownerId = await userId(op.request);
 
-	await op.goto("/");
+	await op.goto("/dashboard");
 	await hydrated(op.getByTestId("account-menu"));
 	// A non-square picture (300×200) comes back as square WebPs.
 	const up = await uploadAvatar(op, { w: 300, h: 200, color: "#2f7f86" });
@@ -155,9 +155,9 @@ test("FB-16: avatar upload, private route, and circles everywhere", async ({ bro
 		expect(r.cache).toBe("private, max-age=86400");
 	}
 	// Maya shares the trip: allowed. A stranger: 404, same as a missing picture.
-	await mp.goto("/");
+	await mp.goto("/dashboard");
 	expect((await fetchAvatar(mp, `${image}&s=64`)).status).toBe(200);
-	await sp.goto("/");
+	await sp.goto("/dashboard");
 	expect((await fetchAvatar(sp, `${image}&s=64`)).status).toBe(404);
 	const nobody = await browser.newContext({ baseURL: APP_URL });
 	expect((await nobody.request.get(image)).status()).toBe(404);

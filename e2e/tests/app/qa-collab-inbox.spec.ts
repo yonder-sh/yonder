@@ -210,7 +210,7 @@ test("DIG-08/09: a mention, a suggestion to review and a rejected suggestion rea
 	await m.page.screenshot({ path: shot("dig08-maya-bell") });
 
 	// The dashboard's card for Dennis: no more unread mention dot from this one.
-	await d.page.goto("/");
+	await d.page.goto("/dashboard");
 	await d.page.waitForTimeout(2_000);
 	await d.page.screenshot({ path: shot("dig04-dashboard") });
 

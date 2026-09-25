@@ -88,7 +88,7 @@ test("trip settings: home currency, dates preview, and the owner's tools", async
 test("profile: name and display currency (Local)", async ({ page, request }, info) => {
 	test.skip(info.project.name !== "chromium", "one browser is enough");
 	await cloneFixtureTrip(request);
-	await page.goto("/");
+	await page.goto("/dashboard");
 	await (await hydrated(page.getByTestId(TESTID.accountMenu))).click();
 	await page.getByRole("menuitem", { name: "Profile" }).click();
 	const dialog = page.getByTestId(TESTID.profileDialog);

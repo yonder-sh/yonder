@@ -3,7 +3,7 @@
   "short_name": "Yonder",
   "description": "Plan trips together.",
   "id": "/",
-  "start_url": "/?source=pwa",
+  "start_url": "/dashboard?source=pwa",
   "scope": "/",
   "display": "standalone",
   "orientation": "any",

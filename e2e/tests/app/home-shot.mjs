@@ -8,7 +8,7 @@ import { mkdirSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 
 const args = process.argv.slice(2);
-const [path = "/", name = "shot"] = args.filter((a) => !a.startsWith("--") && !args[args.indexOf(a) - 1]?.startsWith("--"));
+const [path = "/dashboard", name = "shot"] = args.filter((a) => !a.startsWith("--") && !args[args.indexOf(a) - 1]?.startsWith("--"));
 const opt = (k, d) => {
 	const i = args.indexOf(`--${k}`);
 	return i >= 0 ? args[i + 1] : d;

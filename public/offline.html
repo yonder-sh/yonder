@@ -79,8 +79,9 @@
           window.addEventListener("online", function () { location.reload(); });
           return;
         }
-        // Cold start offline (/?source=pwa, the dashboard, any non-trip page): go
-        // straight to the saved trip, once. A trip page that isn't saved stays here.
+        // Cold start offline (/dashboard?source=pwa, the landing page, any non-trip
+        // page): go straight to the saved trip, once. A trip page that isn't saved
+        // stays here.
         if (href && !tripPage && params.get("from") !== "offline") { location.replace(href); return; }
         if (tripPage) {
           document.getElementById("title").textContent = "Not available offline.";

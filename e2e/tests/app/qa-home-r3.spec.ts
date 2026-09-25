@@ -76,7 +76,7 @@ test("R3 phone dashboard: deadlines show the full trip name ('Asia 2027' vs 'Asi
 	const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 });
 	await login(ctx.request, "dennis@asia2027.test", "Dennis", "Tester");
 	const page = await ctx.newPage();
-	await page.goto("/");
+	await page.goto("/dashboard");
 	await expect(page.getByTestId("dashboard")).toBeVisible({ timeout: 30_000 });
 	const rows = page.getByTestId("home-deadline-row");
 	await expect(rows.first()).toBeVisible({ timeout: 20_000 });
@@ -128,7 +128,7 @@ test("R3 overdue: a to-do 1 hour overdue reads the same on the dashboard and in 
 	});
 	console.log("R3 overdue create:", r.ok, r.error, date, time, "assignee", me);
 	expect(r.ok).toBe(true);
-	await d.page.goto("/");
+	await d.page.goto("/dashboard");
 	await expect(d.page.getByTestId("dashboard")).toBeVisible({ timeout: 30_000 });
 	let row = d.page.getByTestId("home-deadline-row").filter({ hasText: text });
 	if (!(await row.count())) {
@@ -250,12 +250,12 @@ test("R3 restore: Golden Gai and Nakano Broadway back to 2h30", async ({ browser
 
 test("R3 dashboard first paint: a trip that already ended vs the real next trip", async ({ browser }) => {
 	const { ctx, page } = await userPage(browser, `qa-home-r3past-${uniq()}@asia2027.test`, "Pat", "Past");
-	await page.goto("/");
+	await page.goto("/dashboard");
 	await expect(page.getByTestId("dashboard")).toBeVisible({ timeout: 30_000 });
 	const a = await callFn(page, "/src/functions/trips.functions.ts", "createTrip", { name: "Spring 2026 (ended)", startDate: "2026-04-01", endDate: "2026-04-05" });
 	const b = await callFn(page, "/src/functions/trips.functions.ts", "createTrip", { name: "Winter 2026 (upcoming)", startDate: "2026-12-01", endDate: "2026-12-05" });
 	console.log("R3 past trips:", a.ok, a.error, b.ok, b.error);
-	const html = await (await ctx.request.get("/")).text();
+	const html = await (await ctx.request.get("/dashboard")).text();
 	const heroIdx = html.indexOf('data-testid="home-hero"');
 	const around = heroIdx >= 0 ? html.slice(heroIdx, heroIdx + 3000).replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").slice(0, 200) : "(no hero in SSR)";
 	console.log("R3 SSR hero:", around);
@@ -264,7 +264,7 @@ test("R3 dashboard first paint: a trip that already ended vs the real next trip"
 	// what the browser shows before and after hydration
 	const p2 = await ctx.newPage();
 	await p2.route("**/*.js", async (route) => { await new Promise((r) => setTimeout(r, 1500)); await route.continue(); });
-	await p2.goto("/", { waitUntil: "commit" });
+	await p2.goto("/dashboard", { waitUntil: "commit" });
 	await p2.waitForSelector('[data-testid="home-hero"]', { timeout: 20_000 }).catch(() => null);
 	const early = (await p2.getByTestId("home-hero").innerText().catch(() => "(none)")).replace(/\n/g, " | ");
 	await shot(p2, "dash-first-paint");

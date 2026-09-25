@@ -308,7 +308,7 @@ function DeleteTrip() {
 			setOpen(false);
 			setSettingsOpen(false);
 			toast.success(`Deleted “${graph.trip.name}”`);
-			await navigate({ to: "/" });
+			await navigate({ to: "/dashboard" });
 		},
 	});
 	return (
@@ -375,7 +375,7 @@ function LeaveTrip() {
 			await qc.invalidateQueries({ queryKey: meKeys.trips });
 			setSettingsOpen(false);
 			toast.success(`You left “${graph.trip.name}”`);
-			await navigate({ to: "/" });
+			await navigate({ to: "/dashboard" });
 		},
 	});
 	const { disabled, reason } = useEditGuard();

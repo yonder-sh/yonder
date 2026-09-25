@@ -101,7 +101,7 @@ describe("trip route: offline (PWA-05, PWA-08)", () => {
 		expect(screen.queryByText("We couldn't open this trip.")).toBeNull();
 		expect(
 			screen.getByRole("link", { name: "Go to your trips" }),
-		).toHaveAttribute("href", "/");
+		).toHaveAttribute("href", "/dashboard");
 	});
 
 	it("offers the trip that is kept", () => {

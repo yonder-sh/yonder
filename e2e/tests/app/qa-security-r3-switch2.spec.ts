@@ -23,14 +23,14 @@ test("residue after an identity switch", async ({ browser }) => {
 	const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
 	await loginViaApi(ctx.request, "dennis@asia2027.test", { first: "Dennis", last: "Tester" });
 	const page = await ctx.newPage();
-	await page.goto("/");
+	await page.goto("/dashboard");
 	await swControls(page);
 	await page.goto("/t/asia-2027?tab=plan");
 	await expect(page.getByTestId("workspace")).toBeVisible({ timeout: 30_000 });
 	await page.waitForTimeout(8000);
 	await ctx.clearCookies();
 	await loginViaApi(ctx.request, "eve@asia2027.test", { first: "Eve", last: "Outsider" });
-	await page.goto("/");
+	await page.goto("/dashboard");
 	await page.waitForTimeout(6000);
 	out.residue = await page.evaluate(async () => {
 		const res: Record<string, unknown> = {};

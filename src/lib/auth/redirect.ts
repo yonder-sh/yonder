@@ -1,3 +1,5 @@
+import { DASHBOARD_PATH } from "./constants";
+
 /**
  * `?next=` handling for /login and /welcome (SPEC §11.2 flow 1, QA AUTH-05).
  * Only same-origin relative paths are followed: they must start with "/" and
@@ -5,7 +7,7 @@
  * control characters or backslashes that a browser might normalize into a
  * different origin. Anything else falls back to the dashboard.
  */
-export function safeNext(next: unknown, fallback = "/"): string {
+export function safeNext(next: unknown, fallback = DASHBOARD_PATH): string {
 	if (typeof next !== "string" || next.length === 0 || next.length > 2048)
 		return fallback;
 	if (!next.startsWith("/") || next.startsWith("//")) return fallback;
@@ -22,12 +24,19 @@ export function safeNext(next: unknown, fallback = "/"): string {
 	}
 }
 
-/** Paths that must never be a post-sign-in destination (they would loop). */
-const AUTH_PAGES = ["/login", "/welcome"];
+/**
+ * Paths that are never a post-sign-in destination: the auth pages (they
+ * would loop) and the public landing page `/` (signed in, it only forwards
+ * to the dashboard).
+ */
+const NOT_AFTER_SIGN_IN = ["/login", "/welcome", "/"];
 
-/** `safeNext`, also refusing the auth pages themselves. */
-export function postAuthDestination(next: unknown, fallback = "/"): string {
+/** `safeNext`, also refusing the auth pages and the landing page. */
+export function postAuthDestination(
+	next: unknown,
+	fallback = DASHBOARD_PATH,
+): string {
 	const dest = safeNext(next, fallback);
 	const path = dest.split(/[?#]/, 1)[0] ?? "";
-	return AUTH_PAGES.includes(path) ? fallback : dest;
+	return NOT_AFTER_SIGN_IN.includes(path) ? fallback : dest;
 }

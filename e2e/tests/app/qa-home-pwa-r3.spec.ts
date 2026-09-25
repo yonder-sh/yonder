@@ -53,7 +53,7 @@ async function mapState(page: Page) {
 test("R3 PWA-10: the map pane on the saved trip, online then offline", async ({ browser }) => {
 	const d: BrowserContext = await userCtx(browser, "dennis@asia2027.test", "Dennis", "Tester");
 	const p = await d.newPage();
-	await p.goto("/");
+	await p.goto("/dashboard");
 	await swControls(p);
 	for (const url of ["/t/asia-2027?days=2027-10-05", "/t/asia-2027"]) {
 		await p.goto(url);

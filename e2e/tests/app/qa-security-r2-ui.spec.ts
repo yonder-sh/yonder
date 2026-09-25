@@ -111,7 +111,7 @@ test("Share dialog: role select and link created time; settings holidays", async
 test("dashboard hero on a one-day trip", async ({ browser }) => {
 	const { ctx, page } = await memberPage(browser, EMAIL.dennis, "Dennis", "Tester");
 	await page.clock.setFixedTime(new Date("2027-11-10T12:00:00Z"));
-	await page.goto("/");
+	await page.goto("/dashboard");
 	await page.waitForTimeout(3500);
 	out.hero = await page.getByTestId("home-hero").innerText().catch((e) => String(e));
 	await shot(page, "dashboard-hero");

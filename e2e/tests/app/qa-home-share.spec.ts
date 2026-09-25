@@ -114,7 +114,7 @@ test("SHARE-01 + suggester role: invite an existing user as editor / suggester v
 	await expect(sRow).toContainText(/Can suggest/);
 	await shot(o.page, "01-owner-dialog");
 	// Audrey: shared with you + Can edit; can add an item
-	await a.page.goto("/");
+	await a.page.goto("/dashboard");
 	await expect(a.page.getByTestId("dashboard")).toContainText("Demo");
 	await expect(a.page.getByTestId("dashboard")).toContainText(/Can edit/);
 	await shot(a.page, "01-audrey-dashboard");
@@ -124,7 +124,7 @@ test("SHARE-01 + suggester role: invite an existing user as editor / suggester v
 	const add = await callFn(a.page, "/src/functions/items.functions.ts", "createItem", { tripId: c.tripId, dayId: g.days[2]!.id, title: "Audrey's item" });
 	expect(add.ok, JSON.stringify(add)).toBe(true);
 	// Suggester: dashboard badge "Can suggest"; a direct edit becomes a suggestion or is refused
-	await s.page.goto("/");
+	await s.page.goto("/dashboard");
 	await expect(s.page.getByTestId("dashboard")).toContainText(/Can suggest/);
 	await openWorkspace(s.page, c.slug);
 	const gs = await graphOf(s.page);
@@ -265,7 +265,7 @@ test("SHARE-04/05: role change without re-sign-in; removal cuts access fast", as
 	const after = await callFn(k.page, "/src/functions/graph.functions.ts", "getTripGraph", { tripId: c.tripId });
 	expect(after.ok).toBe(false);
 	expect([403, 404]).toContain(after.status);
-	await k.page.goto("/");
+	await k.page.goto("/dashboard");
 	await expect(k.page.getByTestId("dashboard")).toBeVisible();
 	await expect(k.page.getByTestId("dashboard")).not.toContainText("Demo");
 	void memberId;

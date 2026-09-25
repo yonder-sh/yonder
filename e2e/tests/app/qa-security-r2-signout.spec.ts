@@ -55,14 +55,14 @@ test("sign-out on a shared device leaves no trip data", async ({ browser }) => {
 	const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
 	await loginViaApi(ctx.request, "dennis@asia2027.test", { first: "Dennis", last: "Tester" });
 	const page = await ctx.newPage();
-	await page.goto("/");
+	await page.goto("/dashboard");
 	await expect.poll(() => page.evaluate(async () => !!navigator.serviceWorker.controller), { timeout: 30_000 }).toBe(true);
 	await page.goto("/t/asia-2027/japan/tokyo/shinjuku/golden-gai");
 	await expect(page.getByTestId("workspace")).toBeVisible({ timeout: 30_000 });
 	await page.waitForTimeout(8000);
 	const needles = ["Golden Gai", "Kawaguchiko", "ZK4P7Q", "dennis@asia2027.test"];
 	out.before = (await hits(page, needles)).length;
-	await page.goto("/");
+	await page.goto("/dashboard");
 	await page.getByTestId("account-menu").first().click();
 	await page.getByRole("menuitem", { name: /sign out/i }).click();
 	await expect(page).toHaveURL(/\/login/, { timeout: 15_000 });
