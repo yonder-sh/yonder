@@ -49,7 +49,25 @@ test("TAG-04 / MENT-03 Kai removed: greyed former-member tag, plain-text mention
 	const g = await graphOf(d.page);
 	const kai = g.members.find((m) => m.name.startsWith("Kai"));
 	const sky = g.items.find((i) => (i.title ?? g.nodes.find((n) => n.id === i.nodeId)?.name) === "Shibuya Sky" && i.dayId);
-	if (!kai || !sky) throw new Error("fixture");
+	const gg = g.nodes.find((n) => n.name === "Golden Gai");
+	if (!kai || !sky || !gg) throw new Error("fixture");
+	// MENT-03 needs a mention of Kai from while he was a member: Dennis adds one to Golden Gai's note.
+	const notes = async () => {
+		await d.page.goto(`/t/asia-2027?sel=n.${gg.id}`);
+		await expectLive(d.page);
+		await d.page.getByTestId(TESTID.inspector).getByRole("tab", { name: /Notes/ }).click();
+		const editor = d.page.getByTestId(TESTID.notesPanel).getByTestId(NT.editor);
+		await expect(editor).toHaveAttribute("contenteditable", "true", { timeout: 15_000 });
+		return editor;
+	};
+	const ed0 = await notes();
+	await ed0.click();
+	await d.page.keyboard.press("Control+End");
+	await d.page.keyboard.type(" Ask @Kai");
+	await expect(d.page.getByTestId(NT.mentionPopup).getByTestId(NT.mentionOption).first()).toContainText("Kai Viewer");
+	await d.page.keyboard.press("Enter");
+	await d.page.waitForTimeout(1_500);
+	await expect((await notes()).locator("[data-mention]").filter({ hasText: /Kai/ })).toHaveCount(1);
 	const tag = await call(d.page, "/src/functions/items.functions.ts", "setItemAssignees", { itemId: sky.id, memberIds: [...new Set([...sky.assigneeIds, kai.id])] });
 	console.log("tag Kai", JSON.stringify(tag).slice(0, 100));
 	const rm = await call(d.page, "/src/features/home/sharing.functions.ts", "removeMember", { memberId: kai.id });
@@ -76,14 +94,10 @@ test("TAG-04 / MENT-03 Kai removed: greyed former-member tag, plain-text mention
 	expect(opts.join("|")).not.toMatch(/Kai/);
 	await d.page.keyboard.press("Escape");
 	// MENT-03: the Golden Gai note's @Kai renders as plain text; the popup no longer lists him.
-	const gg = g.nodes.find((n) => n.name === "Golden Gai");
-	await d.page.goto(`/t/asia-2027?sel=n.${gg?.id}`);
-	await expectLive(d.page);
-	await d.page.getByTestId(TESTID.inspector).getByRole("tab", { name: /Notes/ }).click();
-	const ed = d.page.getByTestId(TESTID.notesPanel).getByTestId(NT.editor);
-	await expect(ed).toHaveAttribute("contenteditable", "true", { timeout: 15_000 });
+	const ed = await notes();
 	const kaiChip = ed.locator("[data-mention]").filter({ hasText: /Kai/ });
-	console.log("MENT-03 Kai chips:", await kaiChip.count(), "html:", (await kaiChip.first().evaluate((e) => e.outerHTML).catch(() => "none")).slice(0, 300));
+	await expect(kaiChip).toHaveCount(1);
+	console.log("MENT-03 Kai chips:", await kaiChip.count(), "html:", (await kaiChip.evaluate((e) => e.outerHTML)).slice(0, 300));
 	await ed.click();
 	await d.page.keyboard.press("Control+End");
 	await d.page.keyboard.type(" @Ka");
