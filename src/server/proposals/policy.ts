@@ -31,6 +31,11 @@ export const MUTATION_POLICY = {
 	createAvatarUpload: "account",
 	commitAvatar: "account",
 	removeAvatar: "account",
+	/** The caller's own push subscriptions, types and trip mutes. */
+	savePushSubscription: "account",
+	deletePushSubscription: "account",
+	setPushType: "account",
+	setTripMuted: "account",
 
 	// ---- trips (F) ----
 	updateTrip: { direct: "tripSettings" },
