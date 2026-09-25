@@ -994,8 +994,12 @@ test("HRS-06 + suggested hours: Maya marks Bar Benfiddich closed on Tue 5 Oct in
 		console.log(`[hrs06] card chip: ${chipText}`);
 		expect(chipText).toMatch(/Closed/i);
 		const dayBadge = d.page.getByTestId(TESTID.dayHoursBadge).first();
-		const dayText = (await dayBadge.innerText().catch(() => "")) || (await d.page.getByTestId(TESTID.conflictBadge).first().innerText().catch(() => ""));
+		// With other issues on the day the hours fold into its "N issues" chip: no badge to wait for.
+		const dayText =
+			(await dayBadge.innerText({ timeout: 5_000 }).catch(() => "")) ||
+			(await d.page.getByTestId(TESTID.conflictBadge).first().innerText({ timeout: 5_000 }).catch(() => ""));
 		console.log(`[hrs06] day header: ${dayText.replace(/\s+/g, " ")}`);
+		expect(dayText, "the day header warns").not.toBe("");
 		await card(d.page, it.id).scrollIntoViewIfNeeded();
 		await snap(d.page, "r2-hrs06-dennis-closed");
 	} finally {
