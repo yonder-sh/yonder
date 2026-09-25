@@ -78,7 +78,7 @@ test.describe("signed out", () => {
 
 		await page.evaluate(() => window.scrollTo(0, 0));
 		const cta = await hydrated(
-			page.getByRole("link", { name: /Start planning — it's free/ }).first(),
+			page.getByRole("link", { name: /Start planning today/ }).first(),
 		);
 		await cta.click();
 		await expect(page).toHaveURL(/\/login$/);

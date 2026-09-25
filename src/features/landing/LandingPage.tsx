@@ -162,7 +162,7 @@ function PrimaryCta({ className }: { className?: string }) {
 				className,
 			)}
 		>
-			Start planning — it's free
+			Start planning today
 			<ArrowRight
 				aria-hidden="true"
 				className="size-4 transition-transform group-hover:translate-x-0.5"
