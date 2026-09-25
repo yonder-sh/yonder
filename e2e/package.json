@@ -1,0 +1,17 @@
+{
+  "name": "yonder-e2e",
+  "private": true,
+  "type": "module",
+  "description": "Standalone browser-automation harness (Playwright + nixpkgs browsers). Separate from the app's package.json on purpose.",
+  "scripts": {
+    "test": "./pw.sh playwright test",
+    "test:chromium": "./pw.sh playwright test --project chromium --project mobile",
+    "test:headed": "./pw.sh playwright test --headed --project chromium",
+    "report": "./pw.sh playwright show-report playwright-report",
+    "shot": "./pw.sh node shot.mjs"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.60.0"
+  },
+  "packageManager": "pnpm@11.5.3"
+}

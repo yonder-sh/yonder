@@ -1,0 +1,424 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Yonder brand kit</title>
+<link rel="icon" href="../icons/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- display=block only here, so screenshots never catch fallback fonts. The app uses display=swap. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Mono:wght@400..600&family=Commissioner:wght@400..700&family=Parkinsans:wght@500..700&display=block">
+<link rel="stylesheet" href="../tokens/theme.css">
+<script src="data.js"></script>
+<style>
+  :root {
+    --f-display: 'Parkinsans', 'Commissioner', system-ui, sans-serif;
+    --f-sans: 'Commissioner', system-ui, sans-serif;
+    --f-mono: 'Atkinson Hyperlegible Mono', ui-monospace, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--background);
+    color: var(--foreground);
+    font: 400 16px/1.55 var(--f-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1240px; margin: 0 auto; padding: 40px 32px 72px; }
+  .mono { font-family: var(--f-mono); }
+  .muted { color: var(--muted-foreground); }
+
+  /* ---------- hero */
+  .hero {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+    align-items: center;
+    gap: 24px;
+    padding: 56px 56px 48px;
+    border-radius: 28px;
+    color: #fff;
+    background: linear-gradient(160deg, var(--hero-high), var(--hero-deep));
+    overflow: hidden;
+  }
+  .hero .kicker { font: 500 13px/1 var(--f-mono); letter-spacing: 0.02em; opacity: 0.72; }
+  .hero h1 { font: 600 104px/0.95 var(--f-display); letter-spacing: -0.035em; margin: 18px 0 20px; }
+  .hero p { font-size: 20px; line-height: 1.5; max-width: 30ch; margin: 0; color: rgb(255 255 255 / 0.86); }
+  .hero .tagline { margin-top: 28px; font: 600 15px/1 var(--f-sans); display: inline-flex; gap: 10px; align-items: center; }
+  .hero .tagline::before { content: ''; width: 9px; height: 9px; border-radius: 50%; background: var(--glow); }
+  .hero svg { width: 100%; height: auto; display: block; }
+
+  /* ---------- sections */
+  section { margin-top: 72px; }
+  .eyebrow { font: 500 12.5px/1 var(--f-mono); color: var(--primary); letter-spacing: 0.02em; }
+  h2 { font: 600 34px/1.15 var(--f-display); letter-spacing: -0.02em; margin: 10px 0 8px; }
+  .lede { color: var(--muted-foreground); max-width: 68ch; margin: 0 0 28px; }
+  .grid { display: grid; gap: 16px; }
+  .g2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .g3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .g5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .g6 { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .card {
+    background: var(--card);
+    color: var(--card-foreground);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 22px;
+  }
+  .card.dark { background: var(--background); }
+  .cap { font: 400 12.5px/1.45 var(--f-mono); color: var(--muted-foreground); margin-top: 14px; }
+
+  /* names */
+  .name { position: relative; }
+  .name b { display: block; font: 600 28px/1.1 var(--f-display); letter-spacing: -0.02em; margin-bottom: 8px; }
+  .name p { margin: 0; font-size: 14.5px; color: var(--muted-foreground); }
+  .name.chosen { border-color: var(--primary); box-shadow: 0 0 0 1px var(--primary); }
+  .pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    font: 600 12px/1 var(--f-sans); padding: 5px 9px; border-radius: 999px;
+    background: var(--secondary); color: var(--secondary-foreground);
+  }
+  .pill.glow { background: var(--glow); color: var(--glow-foreground); }
+  .name .pill { position: absolute; top: 18px; right: 18px; }
+
+  /* logo */
+  .stage { display: grid; place-items: center; min-height: 170px; border-radius: 12px; }
+  .stage img { display: block; }
+
+  /* icons */
+  .icons { display: flex; flex-wrap: wrap; gap: 28px; align-items: flex-end; }
+  .icons figure { margin: 0; display: grid; justify-items: center; gap: 10px; }
+  .icons figcaption { font: 400 12px/1.3 var(--f-mono); color: var(--muted-foreground); text-align: center; }
+  .pixel { image-rendering: pixelated; }
+  .tab {
+    display: flex; align-items: center; gap: 8px; width: 240px; padding: 9px 12px;
+    background: var(--card); border: 1px solid var(--border); border-bottom: 0;
+    border-radius: 10px 10px 0 0; font-size: 13px;
+  }
+  .tab-strip { background: var(--muted); padding: 8px 8px 0; border-radius: 12px 12px 0 0; }
+  .mask { position: relative; width: 132px; height: 132px; }
+  .mask img { width: 132px; height: 132px; display: block; }
+  .mask.circle img { border-radius: 50%; }
+  .mask.squircle img { border-radius: 30%; }
+  .mask .safe { position: absolute; inset: 13.2px; border: 1.5px dashed rgb(255 255 255 / 0.7); border-radius: 50%; }
+
+  /* color */
+  .sw { border-radius: 16px; overflow: hidden; border: 1px solid var(--border); background: var(--card); }
+  .sw .chip { height: 104px; box-shadow: inset 0 -1px 0 var(--border); }
+  .sw .meta { padding: 12px 14px 14px; }
+  .sw b { font: 600 16px/1.2 var(--f-display); display: block; }
+  .sw .role { font-size: 13px; color: var(--muted-foreground); margin: 2px 0 8px; }
+  .sw code { font: 400 11.5px/1.5 var(--f-mono); color: var(--muted-foreground); display: block; }
+  .modes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 16px; }
+  .mode { background: var(--background); color: var(--foreground); border: 1px solid var(--border); border-radius: 18px; padding: 20px; }
+  .mode h3 { font: 600 15px/1 var(--f-sans); margin: 0 0 16px; display: flex; justify-content: space-between; }
+  .tokens { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 18px; }
+  .tok { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 10px; align-items: center; }
+  .tok i { width: 34px; height: 34px; border-radius: 9px; box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--foreground) 14%, transparent); }
+  .tok span { font: 500 12.5px/1.25 var(--f-mono); }
+  .tok small { display: block; font: 400 11px/1.35 var(--f-mono); color: var(--muted-foreground); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  /* map */
+  .map { border-radius: 16px; overflow: hidden; border: 1px solid var(--border); }
+  .map svg { display: block; width: 100%; height: auto; }
+  .legend { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 16px; }
+  .legend div { display: flex; gap: 12px; align-items: center; font-size: 14px; }
+  .legend small { display: block; font: 400 11.5px/1.4 var(--f-mono); color: var(--muted-foreground); }
+
+  /* type */
+  .type-row { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 28px; padding: 26px 0; border-top: 1px solid var(--border); }
+  .type-row:last-of-type { border-bottom: 1px solid var(--border); }
+  .type-row .who b { font: 600 17px/1.2 var(--f-sans); display: block; }
+  .type-row .who small { display: block; font: 400 12px/1.5 var(--f-mono); color: var(--muted-foreground); margin-top: 6px; }
+  .spec-display { font: 600 56px/1.05 var(--f-display); letter-spacing: -0.03em; margin: 0; }
+  .spec-body { font-size: 18px; line-height: 1.6; margin: 0; max-width: 62ch; }
+  .spec-intl { font: 600 22px/1.4 var(--f-sans); margin: 10px 0 0; letter-spacing: -0.005em; }
+  .spec-mono { font: 400 20px/1.6 var(--f-mono); margin: 0; }
+  .scale { display: flex; flex-wrap: wrap; gap: 8px 26px; margin-top: 16px; font: 400 12px/1.4 var(--f-mono); color: var(--muted-foreground); }
+
+  /* in use */
+  .ui { background: var(--background); color: var(--foreground); border: 1px solid var(--border); border-radius: 20px; overflow: hidden; }
+  .ui-bar { display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; border-bottom: 1px solid var(--border); background: var(--card); }
+  .avatars { display: flex; }
+  .avatars span {
+    width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center;
+    font: 600 11px/1 var(--f-sans); color: var(--foreground);
+    background: color-mix(in oklch, var(--c) 30%, var(--card));
+    box-shadow: inset 0 0 0 1.5px var(--c); border: 2px solid var(--card); margin-left: -6px;
+  }
+  .avatars span.more { background: var(--muted); color: var(--muted-foreground); }
+  .ui-body { padding: 20px 20px 22px; display: grid; gap: 16px; }
+  .ui-eyebrow { font: 600 13px/1 var(--f-sans); color: var(--primary); display: flex; gap: 8px; align-items: center; }
+  .ui-title { font: 600 23px/1.2 var(--f-sans); letter-spacing: -0.01em; margin: 6px 0 0; }
+  .stops { list-style: none; margin: 0; padding: 0; background: var(--card); border: 1px solid var(--border); border-radius: 14px; }
+  .stops li { display: grid; grid-template-columns: 52px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 12px 14px; }
+  .stops li + li { border-top: 1px solid var(--border); }
+  .stops time { font: 500 13.5px/1 var(--f-mono); color: var(--muted-foreground); }
+  .stops b { font-weight: 600; display: flex; align-items: center; gap: 8px; }
+  .stops b .next { width: 8px; height: 8px; border-radius: 50%; background: var(--glow); box-shadow: 0 0 0 3px color-mix(in oklch, var(--glow) 30%, transparent); }
+  .leg { display: flex; align-items: center; gap: 8px; font-size: 13.5px; color: var(--muted-foreground); margin-top: 2px; }
+  .leg svg { flex: none; }
+  .ticket { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 14px; background: var(--secondary); color: var(--secondary-foreground); font: 500 13.5px/1.35 var(--f-mono); }
+  .field {
+    display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 12px; border-radius: calc(var(--radius) - 2px);
+    background: var(--card); border: 1px solid var(--ring); box-shadow: 0 0 0 3px color-mix(in oklch, var(--ring) 45%, transparent);
+    color: var(--muted-foreground); font-size: 14.5px;
+  }
+  .btns { display: flex; flex-wrap: wrap; gap: 10px; }
+  .btn { font: 500 14px/1 var(--f-sans); height: 38px; padding: 0 16px; border-radius: calc(var(--radius) - 2px); display: inline-flex; align-items: center; border: 1px solid transparent; }
+  .btn.primary { background: var(--primary); color: var(--primary-foreground); }
+  .btn.secondary { background: var(--secondary); color: var(--secondary-foreground); }
+  .btn.outline { background: var(--card); border-color: var(--input); }
+  .btn.ghost { background: var(--accent); color: var(--accent-foreground); }
+  .btn.destructive { background: var(--destructive); color: #fff; }
+  .dark .btn.destructive { background: color-mix(in oklab, var(--destructive) 60%, var(--background)); }
+  .chart { display: flex; align-items: flex-end; gap: 10px; height: 52px; }
+  .chart i { flex: 1; border-radius: 6px 6px 2px 2px; background: var(--c); }
+
+  footer { margin-top: 72px; padding-top: 22px; border-top: 1px solid var(--border); font: 400 12.5px/1.6 var(--f-mono); color: var(--muted-foreground); display: flex; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+
+  @media (max-width: 960px) {
+    .hero { grid-template-columns: 1fr; padding: 36px 28px; }
+    .hero h1 { font-size: 72px; }
+    .g3, .g5, .g6 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .g2, .modes, .legend { grid-template-columns: 1fr; }
+    .type-row { grid-template-columns: 1fr; gap: 12px; }
+  }
+  @media (max-width: 520px) {
+    .wrap { padding: 20px 16px 48px; }
+    .g3, .g5, .g6, .tokens { grid-template-columns: 1fr; }
+    .spec-display { font-size: 40px; }
+  }
+</style>
+</head>
+<body>
+<main class="wrap">
+
+  <header class="hero" id="hero">
+    <div>
+      <div class="kicker">Brand kit · v1 · September 2026</div>
+      <h1>Yonder</h1>
+      <p>A calm place to plan a trip with the people you're going with. A weekend in Lisbon or a month across Asia.</p>
+      <div class="tagline">Plan the trip together.</div>
+    </div>
+    <svg id="hero-mark" viewBox="4 3 78 42" role="img" aria-label="The Yonder mark, annotated"></svg>
+  </header>
+
+  <section>
+    <div class="eyebrow">Name</div>
+    <h2>Five short names, one pick</h2>
+    <p class="lede">Each works for any destination and any group size. Yonder won because it names the feeling of the whole app: the place you're all heading, not yet reached.</p>
+    <div class="grid g5">
+      <div class="card name chosen"><span class="pill glow">Chosen</span><b>Yonder</b><p>"Over there." Soft, six letters, no travel cliché, and nothing in it ties the product to one region.</p></div>
+      <div class="card name"><b>Waymark</b><p>A trail marker. Clear and useful, but reads as hiking gear.</p></div>
+      <div class="card name"><b>Hither</b><p>"Come here." A warm invitation, but easily misread as "hitter".</p></div>
+      <div class="card name"><b>Plotline</b><p>Plotting a route, and the story of the trip. Sounds like a writing tool.</p></div>
+      <div class="card name"><b>Legwork</b><p>Friends join legs of a trip. Clever, but "legwork" means chores.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="eyebrow">Logo</div>
+    <h2>A route that forks toward a point</h2>
+    <p class="lede">The left branch is where someone joins; the right branch stops just short of the apricot dot, the place the group is heading. Keep that gap: it is the idea. Clear space around the logo is one dot diameter on every side.</p>
+    <div class="grid g3">
+      <div class="card"><div class="stage"><img src="../logo/yonder-lockup.svg" alt="Yonder lockup" height="58"></div><div class="cap">yonder-lockup.svg · min 96 px wide</div></div>
+      <div class="card dark"><div class="stage"><img src="../logo/yonder-lockup-dark.svg" alt="Yonder lockup, dark" height="58"></div><div class="cap">yonder-lockup-dark.svg</div></div>
+      <div class="card"><div class="stage" style="display:flex;justify-content:center;align-items:center;gap:36px">
+        <img src="../logo/yonder-mark.svg" alt="Mark" height="84">
+        <img src="../logo/yonder-wordmark.svg" alt="Wordmark" height="44">
+      </div><div class="cap">yonder-mark.svg · yonder-wordmark.svg · mark min 20 px, use the favicon below that</div></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="eyebrow">Icons</div>
+    <h2>Favicon and app icons</h2>
+    <p class="lede">The favicon uses a heavier cut of the mark with its stem on a pixel edge, so 16 and 32 px stay sharp. App icons get a quiet dusk gradient; maskable icons keep all ink inside 34% of the width from center, well inside the 40% safe zone.</p>
+    <div class="icons">
+      <figure>
+        <div class="tab-strip"><div class="tab"><img src="../icons/favicon-16.png" width="16" height="16" alt="">Day 3 · Kyoto · Yonder</div></div>
+        <figcaption>favicon in a tab</figcaption>
+      </figure>
+      <figure><img class="pixel" src="../icons/favicon-16.png" width="96" height="96" alt="16px favicon at 6x"><figcaption>16 px · 6×</figcaption></figure>
+      <figure><img class="pixel" src="../icons/favicon-32.png" width="96" height="96" alt="32px favicon at 3x"><figcaption>32 px · 3×</figcaption></figure>
+      <figure><img src="../icons/apple-touch-icon.png" width="108" height="108" alt="" style="border-radius:24px"><figcaption>apple-touch<br>180, iOS masks it</figcaption></figure>
+      <figure><img src="../icons/icon-192.png" width="120" height="120" alt=""><figcaption>icon 192 / 512<br>purpose any</figcaption></figure>
+      <figure><div class="mask circle"><img src="../icons/icon-maskable-512.png" alt=""><div class="safe"></div></div><figcaption>maskable, circle<br>dashed = safe zone</figcaption></figure>
+      <figure><div class="mask squircle"><img src="../icons/icon-maskable-512.png" alt=""></div><figcaption>maskable, squircle</figcaption></figure>
+    </div>
+  </section>
+
+  <section>
+    <div class="eyebrow">Color</div>
+    <h2>Dusk, with one warm point</h2>
+    <p class="lede">A cool, quiet evening palette. Indigo carries actions and focus; apricot is used once per screen at most, for the thing you're heading to next. Every text pair clears WCAG AA and every line and chart color clears 3:1 (run <span class="mono">pnpm check</span>).</p>
+    <div class="grid g6" id="brand-swatches"></div>
+    <div class="modes">
+      <div class="mode"><h3>Light <span class="mono muted" style="font-weight:400;font-size:12px">:root</span></h3><div class="tokens" data-mode="light"></div></div>
+      <div class="mode dark"><h3>Dark <span class="mono muted" style="font-weight:400;font-size:12px">.dark</span></h3><div class="tokens" data-mode="dark"></div></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="eyebrow">Map</div>
+    <h2>One line style per way of moving</h2>
+    <p class="lede">Mode is carried by pattern and weight as well as hue, so routes still read for color-blind travelers and in grayscale. Each line sits on a casing in the page color so it holds up over busy tiles.</p>
+    <div class="grid g2">
+      <div class="map" id="map-light"></div>
+      <div class="map dark" id="map-dark"></div>
+    </div>
+    <div class="legend" id="legend"></div>
+  </section>
+
+  <section>
+    <div class="eyebrow">Type</div>
+    <h2>Three faces, three jobs</h2>
+    <p class="lede">All from Google Fonts under the SIL Open Font License.</p>
+    <div class="type-row">
+      <div class="who"><b>Parkinsans</b><small>Display · 500–700<br>Wordmark, section titles, empty states, big numbers. Our words only: it has no Vietnamese, Greek or Cyrillic.</small></div>
+      <div><p class="spec-display">Seven days, three cities, one plan.</p>
+        <div class="scale"><span>Display 56/1.05 −0.03em</span><span>H1 36/1.15 −0.02em</span><span>H2 28/1.2 −0.02em</span></div></div>
+    </div>
+    <div class="type-row">
+      <div class="who"><b>Commissioner</b><small>Body and UI · 400–700<br>Everything people type or read, including trip and place names.</small></div>
+      <div><p class="spec-body">Leave the hotel by 7 to walk the upper loop before the tour groups arrive. Audrey wants the lunch spot by the river; Marco votes for the night market instead.</p>
+        <p class="spec-intl">Hội An · Đà Nẵng · Θεσσαλονίκη · Москва · Kraków · İstanbul</p>
+        <div class="scale"><span>H3 20/1.3 600</span><span>Body 16/1.55</span><span>Small 14/1.45</span><span>Label 13/1 600</span></div></div>
+    </div>
+    <div class="type-row">
+      <div class="who"><b>Atkinson Hyperlegible Mono</b><small>Data · 400–600<br>Times, booking refs, flight numbers, coordinates. 0/O and 1/l/I never collide.</small></div>
+      <div><p class="spec-mono">07:40 → 09:15 · JL 225 · Ref Q0L1IO<br>35.0116° N, 135.7681° E</p>
+        <div class="scale"><span>Data 13.5/1 500</span><span>Caption 12/1.45</span></div></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="eyebrow">In use</div>
+    <h2>The tokens on a day plan</h2>
+    <p class="lede">Same markup twice; the right panel only adds the <span class="mono">.dark</span> class. Content headings like the day title are set in Commissioner, not Parkinsans.</p>
+    <div class="grid g2">
+      <div class="ui-slot"></div>
+      <div class="ui-slot dark"></div>
+    </div>
+  </section>
+
+  <footer>
+    <span>Generated from brand/src/palette.mjs and brand/src/mark.mjs · pnpm build</span>
+    <span>Parkinsans, Commissioner, Atkinson Hyperlegible Mono: SIL OFL 1.1</span>
+  </footer>
+</main>
+
+<script>
+(() => {
+  const B = window.BRAND;
+  const T = B.tokens;
+  const $ = (s, el = document) => el.querySelector(s);
+
+  // Hero gradient comes from the same brand colors as the app icon.
+  const hero = $('#hero');
+  hero.style.setProperty('--hero-high', T.brand.duskHigh.oklch);
+  hero.style.setProperty('--hero-deep', T.brand.duskDeep.oklch);
+
+  // Hero mark, drawn from the shared geometry, with the gap annotated.
+  const m = B.mark;
+  const ux = 6.1 / Math.hypot(6.1, 4.9), uy = -4.9 / Math.hypot(6.1, 4.9);
+  const tip = [30.5 + ux * m.sw / 2, 16.5 + uy * m.sw / 2];
+  const edge = [m.dot.cx - ux * m.dot.r, m.dot.cy - uy * m.dot.r];
+  const gap = [(tip[0] + edge[0]) / 2, (tip[1] + edge[1]) / 2];
+  $('#hero-mark').innerHTML = `
+    <path d="${m.d}" fill="none" stroke="#fff" stroke-width="${m.sw}" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="${m.dot.cx}" cy="${m.dot.cy}" r="${m.dot.r}" fill="${T.brand.apricot.hex}"/>
+    <path d="M${gap[0] + 0.5} ${gap[1] + 0.6} L47 26 H52" fill="none" stroke="rgb(255 255 255 / .6)" stroke-width=".22"/>
+    <circle cx="${gap[0]}" cy="${gap[1]}" r=".55" fill="#fff"/>
+    <text x="53" y="25.2" fill="#fff" style="font: 600 2.1px 'Commissioner', sans-serif">the yonder point</text>
+    <text x="53" y="28.2" fill="rgb(255 255 255 / .75)" style="font: 400 1.75px 'Atkinson Hyperlegible Mono', monospace">where the group is</text>
+    <text x="53" y="30.6" fill="rgb(255 255 255 / .75)" style="font: 400 1.75px 'Atkinson Hyperlegible Mono', monospace">heading, just past</text>
+    <text x="53" y="33" fill="rgb(255 255 255 / .75)" style="font: 400 1.75px 'Atkinson Hyperlegible Mono', monospace">what's planned</text>`;
+
+  // Named brand colors.
+  const named = [
+    ['dusk', 'Dusk', 'Primary, links, focus'],
+    ['periwinkle', 'Periwinkle', 'Primary on dark'],
+    ['apricot', 'Apricot', 'The yonder point'],
+    ['ink', 'Ink', 'Text, dark surfaces'],
+    ['mist', 'Mist', 'Light ground'],
+    ['night', 'Night', 'Dark ground'],
+  ];
+  $('#brand-swatches').innerHTML = named.map(([k, name, role]) => `
+    <div class="sw"><div class="chip" style="background:${T.brand[k].oklch}"></div>
+      <div class="meta"><b>${name}</b><div class="role">${role}</div><code>${T.brand[k].oklch}</code><code>${T.brand[k].hex}</code></div></div>`).join('');
+
+  // Token chips: the swatch paints from the live CSS variable (so this also
+  // proves theme.css), the label shows the source value and its hex.
+  const keys = ['background', 'foreground', 'card', 'muted', 'muted-foreground', 'primary', 'primary-foreground', 'secondary',
+    'accent', 'accent-foreground', 'border', 'input', 'ring', 'destructive', 'glow', 'glow-foreground',
+    'chart-1', 'chart-2', 'chart-3', 'chart-4', 'chart-5', 'map-walk', 'map-transit', 'map-flight'];
+  document.querySelectorAll('.tokens').forEach((el) => {
+    const t = T[el.dataset.mode];
+    el.innerHTML = keys.map((k) => `<div class="tok"><i style="background:var(--${k})"></i><span>--${k}<small>${t[k].oklch.replace('oklch', '')} · ${t[k].hex}</small></span></div>`).join('');
+  });
+
+  // Map illustration: basemap grounds, then casing + line per mode.
+  const lines = {
+    walk: 'M92 252 C 128 244, 170 222, 206 196',
+    transit: 'M206 196 C 272 150, 344 186, 424 148',
+    flight: 'M424 148 Q 520 26, 640 34',
+  };
+  const style = (mode) => {
+    const s = T.map[mode];
+    const w = s.width;
+    const dash = s.dash ? `stroke-dasharray="${s.dash.map((d) => d * w).join(' ')}"` : '';
+    return `stroke="var(--map-${mode})" stroke-width="${w}" stroke-linecap="${s.cap}" ${dash}`;
+  };
+  function map(ground, street) {
+    const [land, water, park] = ground;
+    const stop = (x, y, mode) => `<circle cx="${x}" cy="${y}" r="7" fill="var(--map-stop)" stroke="var(--map-${mode})" stroke-width="3"/>`;
+    const label = (x, y, text, anchor = 'start') => `<text x="${x}" y="${y}" text-anchor="${anchor}" fill="var(--foreground)" stroke="var(--map-casing)" stroke-width="4" paint-order="stroke" style="font: 500 12.5px 'Atkinson Hyperlegible Mono', monospace">${text}</text>`;
+    return `<svg viewBox="0 0 640 330" role="img" aria-label="Example route with walk, transit and flight legs">
+      <rect width="640" height="330" fill="${land}"/>
+      <path d="M0 300 C 140 280, 230 318, 360 296 S 560 262, 640 272 V330 H0 Z" fill="${water}"/>
+      <path d="M92 70 C 150 40, 250 60, 262 110 S 190 170, 130 150 S 50 100, 92 70 Z" fill="${park}"/>
+      <g stroke="${street}" stroke-width="5" fill="none" stroke-linecap="round">
+        <path d="M0 200 H640"/><path d="M160 0 V330"/><path d="M330 0 C 320 120, 350 220, 340 330"/><path d="M0 120 C 200 140, 420 90, 640 110"/><path d="M500 0 L 470 330"/>
+      </g>
+      <path d="${lines.transit}" fill="none" stroke="var(--map-casing)" stroke-width="${T.map.transit.width + 4}" stroke-linecap="round"/>
+      <path d="${lines.walk}" fill="none" ${style('walk')}/>
+      <path d="${lines.transit}" fill="none" ${style('transit')}/>
+      <path d="${lines.flight}" fill="none" ${style('flight')}/>
+      ${stop(92, 252, 'walk')}${stop(206, 196, 'transit')}${stop(424, 148, 'flight')}
+      ${label(104, 274, 'Hotel')}${label(188, 222, 'Central', 'end')}${label(438, 176, 'Airport')}
+      ${label(172, 254, 'walk 12 min')}${label(292, 150, 'transit 38 min')}${label(578, 102, 'flight 2 h 05', 'middle')}
+    </svg>`;
+  }
+  $('#map-light').innerHTML = map(B.basemaps.light, '#e6e1d8');
+  $('#map-dark').innerHTML = map(B.basemaps.dark, '#262a33');
+
+  const sample = (mode) => `<svg width="56" height="12" viewBox="0 0 56 12"><path d="M4 6 H52" fill="none" ${style(mode)}/></svg>`;
+  const desc = { walk: 'Walk', transit: 'Transit', flight: 'Flight' };
+  $('#legend').innerHTML = Object.entries(T.map).map(([mode, s]) => `
+    <div>${sample(mode)}<span>${desc[mode]}<small>--map-${mode} · ${s.width}px · ${s.note}${s.dash ? ` · dash [${s.dash.join(', ')}]` : ''}</small></span></div>`).join('');
+
+  // The same day plan, twice.
+  const leg = (mode, text) => `<span class="leg"><svg width="26" height="8" viewBox="0 0 26 8"><path d="M3 4 H23" fill="none" ${style(mode).replace(/stroke-width="[^"]+"/, 'stroke-width="2.5"')}/></svg>${text}</span>`;
+  const ui = (dark) => `<div class="ui">
+    <div class="ui-bar"><img src="../logo/yonder-lockup${dark ? '-dark' : ''}.svg" height="24" alt="Yonder">
+      <div class="avatars"><span style="--c:var(--chart-1)">DP</span><span style="--c:var(--chart-3)">AU</span><span style="--c:var(--chart-4)">MR</span><span class="more">+2</span></div></div>
+    <div class="ui-body">
+      <div><div class="ui-eyebrow">Day 3 · Kyoto · Higashiyama</div><h4 class="ui-title">Temples before the crowds</h4></div>
+      <ol class="stops">
+        <li><time>07:30</time><div><b><span class="next" aria-label="Next"></span>Fushimi Inari Taisha</b>${leg('walk', 'Walk from hotel · 12 min')}</div><span class="pill">Must</span></li>
+        <li><time>09:40</time><div><b>Tōfuku-ji</b>${leg('transit', 'JR Nara Line · 6 min')}</div><span class="pill">3 votes</span></li>
+        <li><time>18:05</time><div><b>Fly to Tokyo</b>${leg('flight', 'KIX → HND · 1 h 10')}</div><span class="pill">Booked</span></li>
+      </ol>
+      <div class="ticket"><span>JL 225 · 18:05 → 19:15</span><span>Ref Q0L1IO</span></div>
+      <div class="field">Search places or paste a link</div>
+      <div class="btns"><span class="btn primary">Add stop</span><span class="btn secondary">Invite</span><span class="btn outline">Share</span><span class="btn ghost">Vote</span><span class="btn destructive">Remove</span></div>
+      <div class="chart" aria-label="Chart colors 1 to 5">${[40, 28, 52, 20, 34].map((h, i) => `<i style="--c:var(--chart-${i + 1});height:${h}px"></i>`).join('')}</div>
+    </div></div>`;
+  document.querySelectorAll('.ui-slot').forEach((el) => { el.innerHTML = ui(el.classList.contains('dark')); });
+})();
+</script>
+</body>
+</html>

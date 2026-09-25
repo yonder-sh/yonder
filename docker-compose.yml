@@ -1,0 +1,157 @@
+# Local dev infrastructure for Yonder (production runs on Kubernetes: see the
+# infrastructure repo's kubernetes/projects/apps/yonder).
+#   docker compose up -d --wait     # postgres + s3proxy (bucket pre-created) + redis, exits when healthy
+#   docker compose --profile mail up -d --wait mailpit   # optional SMTP catcher (UI on :8025)
+#   docker compose down             # stop (data kept in named volumes)
+#   docker compose down -v          # stop AND wipe db + objects + redis (never do this on a shared machine)
+# Values come from ./.env (compose reads it for ${...} interpolation); the
+# defaults below match .env.example so a missing .env still works.
+# Every port is bound to 127.0.0.1: docker bypasses the host firewall.
+# See infra/README.md.
+# The project keeps its first name so existing local volumes stay attached.
+name: trip-planner
+
+services:
+  postgres:
+    image: postgres:17.11
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: trip
+      POSTGRES_USER: trip
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-trip}
+    ports:
+      # bound to loopback only: docker bypasses the host firewall and the
+      # credentials are trivial
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U trip -d trip"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+
+  s3proxy:
+    # S3 API in front of a plain directory (jclouds "filesystem" provider).
+    image: andrewgaul/s3proxy:4.1.1
+    restart: unless-stopped
+    environment:
+      S3PROXY_ENDPOINT: http://0.0.0.0:80
+      # Empty in dev (a service path moves the health endpoint to <path>/healthz,
+      # which the healthcheck follows).
+      S3PROXY_SERVICE_PATH: ${S3PROXY_SERVICE_PATH:-}
+      S3PROXY_AUTHORIZATION: aws-v2-or-v4
+      S3PROXY_IDENTITY: ${S3_ACCESS_KEY_ID:-trip-local}
+      S3PROXY_CREDENTIAL: ${S3_SECRET_ACCESS_KEY:-trip-local-secret}
+      # empty virtual host => path-style only (http://localhost:8080/<bucket>/<key>)
+      S3PROXY_VIRTUALHOST: ""
+      # CORS: all lists are SPACE separated; origins are Java regexes matched
+      # against the whole Origin. The default allows every localhost port, so
+      # each parallel agent (its own APP_PORT, SPEC §5.7) can upload directly.
+      S3PROXY_CORS_ALLOW_ORIGINS: ${S3_CORS_ORIGINS:-http://(localhost|127\.0\.0\.1)(:[0-9]+)?}
+      S3PROXY_CORS_ALLOW_METHODS: GET HEAD PUT POST DELETE
+      # "*" echoes back whatever the preflight asks for (content-type,
+      # x-amz-*, x-amz-meta-*, checksum headers, ...). A literal list cannot
+      # express x-amz-meta-* so the wildcard is the practical choice locally.
+      S3PROXY_CORS_ALLOW_HEADERS: "*"
+      S3PROXY_CORS_EXPOSED_HEADERS: ETag Content-Length Content-Type Last-Modified x-amz-request-id x-amz-version-id
+      JCLOUDS_PROVIDER: filesystem
+      JCLOUDS_FILESYSTEM_BASEDIR: /data
+      LOG_LEVEL: info
+      S3_BUCKET: ${S3_BUCKET:-trip-media}
+    # With the filesystem provider a bucket is just a directory under the
+    # basedir, so pre-create it here: the bucket exists as soon as the service
+    # is healthy (no init container, so `up --wait` exits 0).
+    # infra/create-bucket does the same through the S3 API.
+    command:
+      - /bin/sh
+      - -c
+      - mkdir -p "$$JCLOUDS_FILESYSTEM_BASEDIR/$$S3_BUCKET" && exec /opt/s3proxy/run-docker-container.sh
+    ports:
+      - "127.0.0.1:8080:80"
+    volumes:
+      - s3data:/data
+    healthcheck:
+      # <service path>/healthz answers without auth; the image has bash but no curl or wget
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/80 && printf 'GET %s/healthz HTTP/1.0\\r\\n\\r\\n' \"$${S3PROXY_SERVICE_PATH:-}\" >&3 && head -n 1 <&3 | grep -q ' 200 '"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+
+  redis:
+    # Pub/sub for live trip invalidation (app -> collab), Hocuspocus multi-instance
+    # sync (@hocuspocus/extension-redis), BullMQ jobs, Better Auth secondary storage
+    # (rate limits) and TTL caches for external APIs (ADDENDUM §2).
+    image: redis:8.10.2-alpine
+    restart: unless-stopped
+    # AOF so queued jobs survive a restart. noeviction because BullMQ must never
+    # lose keys to eviction; caches always set their own TTLs instead.
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory-policy", "noeviction"]
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      # redis-cli exits 0 even on an error reply (e.g. LOADING), so match PONG
+      test: ["CMD-SHELL", "redis-cli ping | grep -q PONG"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 5s
+
+  postgres-e2e:
+    # Postgres for `pnpm e2e:fast` only (e2e/README.md): N parallel app envs need
+    # more connections than the dev server's 100, and the per-spec resets want
+    # speed over durability (fsync off; the data is disposable). The runner
+    # starts it for a run and stops it afterwards; the template database
+    # survives in the volume.
+    profiles: [e2e]
+    image: postgres:17.11
+    restart: "no"
+    environment:
+      POSTGRES_DB: trip_e2e
+      POSTGRES_USER: trip
+      POSTGRES_PASSWORD: trip
+    command:
+      - postgres
+      - -c
+      - max_connections=800
+      - -c
+      - shared_buffers=256MB
+      - -c
+      - fsync=off
+      - -c
+      - synchronous_commit=off
+      - -c
+      - full_page_writes=off
+      - -c
+      - max_locks_per_transaction=256
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - pgdata-e2e:/var/lib/postgresql/data
+    shm_size: 1g
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U trip -d trip_e2e"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+      start_period: 5s
+
+  mailpit:
+    # Optional SMTP catcher: set SMTP_HOST=localhost SMTP_PORT=1025 in .env,
+    # then read mail at http://localhost:8025. Not started by a plain `up`.
+    profiles: [mail]
+    image: axllent/mailpit:v1.31.2
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:1025:1025"
+      - "127.0.0.1:8025:8025"
+
+volumes:
+  pgdata:
+  pgdata-e2e:
+  s3data:
+  redisdata:

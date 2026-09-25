@@ -1,0 +1,62 @@
+#!/bin/sh
+# Create the S3 bucket on the local s3proxy (idempotent). Zero dependencies:
+# only curl >= 7.75 (for --aws-sigv4) and a POSIX sh.
+#
+#   ./infra/create-bucket                 # from the host, reads ./.env
+#   S3_BUCKET=other ./infra/create-bucket # any other bucket
+#
+# docker-compose.yml already pre-creates $S3_BUCKET on s3proxy start, so this
+# is for extra buckets, a wiped volume while running, or a non-compose S3.
+#
+# Config: env vars win, then ./.env (repo root), then the local defaults.
+set -eu
+
+here=$(cd "$(dirname "$0")" && pwd)
+env_file="${ENV_FILE:-$here/../.env}"
+
+# read KEY=value from .env without sourcing it (values may contain spaces/<>)
+from_env_file() {
+  [ -f "$env_file" ] || return 0
+  sed -n "s/^$1=//p" "$env_file" | tail -n 1 | sed -e 's/^"\(.*\)"$/\1/' -e "s/^'\(.*\)'$/\1/"
+}
+get() {
+  eval "cur=\${$1:-}"
+  if [ -n "$cur" ]; then printf '%s' "$cur"; return; fi
+  v=$(from_env_file "$1")
+  if [ -n "$v" ]; then printf '%s' "$v"; else printf '%s' "$2"; fi
+}
+
+endpoint=$(get S3_ENDPOINT http://localhost:8080)
+endpoint=${endpoint%/}
+region=$(get S3_REGION us-east-1)
+bucket=$(get S3_BUCKET trip-media)
+key=$(get S3_ACCESS_KEY_ID trip-local)
+secret=$(get S3_SECRET_ACCESS_KEY trip-local-secret)
+
+s3() { # s3 HEAD|PUT -> prints HTTP status
+  if [ "$1" = HEAD ]; then set -- --head; else set -- -X PUT -H 'Content-Length: 0'; fi
+  curl -sS -o /dev/null -w '%{http_code}' --max-time 10 \
+    --aws-sigv4 "aws:amz:${region}:s3" --user "${key}:${secret}" \
+    "$@" "${endpoint}/${bucket}"
+}
+
+# wait up to ~60s for the endpoint (s3proxy is a JVM and takes a few seconds)
+i=0
+until curl -fsS -o /dev/null --max-time 2 "${endpoint}/healthz"; do
+  i=$((i + 1))
+  if [ "$i" -ge 60 ]; then echo "create-bucket: ${endpoint} not reachable" >&2; exit 1; fi
+  sleep 1
+done
+
+status=$(s3 HEAD)
+case "$status" in
+  200) echo "create-bucket: bucket '${bucket}' already exists at ${endpoint}"; exit 0 ;;
+  404) ;;
+  *) echo "create-bucket: HEAD ${endpoint}/${bucket} returned ${status} (credentials?)" >&2; exit 1 ;;
+esac
+
+status=$(s3 PUT)
+case "$status" in
+  200|409) echo "create-bucket: created bucket '${bucket}' at ${endpoint}" ;;
+  *) echo "create-bucket: PUT ${endpoint}/${bucket} returned ${status}" >&2; exit 1 ;;
+esac

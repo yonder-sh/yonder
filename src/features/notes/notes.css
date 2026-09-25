@@ -1,0 +1,258 @@
+@reference "../../styles.css";
+
+/*
+ * WP-Lists note styles (CONTRACTS §1 rule 9), on the theme tokens.
+ */
+
+/*
+ * Note typography (DESIGN §7.4): paragraphs 15/24 Commissioner at 68ch,
+ * h1–h3 22/20/17 at 600, 20px list indent, a 2px hairline quote, mono 13
+ * code on a muted fill, primary links underlined at a 3px offset. Shared by
+ * the live editor and the static render (`.yonder-note`).
+ */
+.yonder-note {
+	font-size: 15px;
+	line-height: 24px;
+	max-width: 68ch;
+	color: var(--foreground);
+	overflow-wrap: anywhere;
+}
+.yonder-note:focus {
+	outline: none;
+}
+.yonder-note > * + * {
+	margin-top: 0.5rem;
+}
+.yonder-note h1 {
+	font-size: 22px;
+	line-height: 28px;
+	font-weight: 600;
+	margin-top: 1rem;
+}
+.yonder-note h2 {
+	font-size: 20px;
+	line-height: 26px;
+	font-weight: 600;
+	margin-top: 0.875rem;
+}
+.yonder-note h3 {
+	font-size: 17px;
+	line-height: 24px;
+	font-weight: 600;
+	margin-top: 0.75rem;
+}
+.yonder-note > :first-child {
+	margin-top: 0;
+}
+.yonder-note ul,
+.yonder-note ol {
+	padding-left: 20px;
+}
+.yonder-note ul {
+	list-style: disc;
+}
+.yonder-note ol {
+	list-style: decimal;
+}
+.yonder-note li + li {
+	margin-top: 0.125rem;
+}
+.yonder-note li > p {
+	margin: 0;
+}
+.yonder-note blockquote {
+	border-left: 2px solid var(--border);
+	padding-left: 12px;
+	color: var(--muted-foreground);
+}
+.yonder-note code {
+	font-family: var(--font-mono);
+	font-size: 13px;
+	background: var(--muted);
+	border-radius: 4px;
+	padding: 1px 4px;
+}
+.yonder-note pre {
+	font-family: var(--font-mono);
+	font-size: 13px;
+	line-height: 20px;
+	background: var(--muted);
+	border-radius: 8px;
+	padding: 8px 12px;
+	overflow-x: auto;
+}
+.yonder-note pre code {
+	background: transparent;
+	padding: 0;
+}
+.yonder-note a {
+	color: var(--primary);
+	text-decoration: underline;
+	text-decoration-thickness: 1px;
+	text-underline-offset: 3px;
+}
+.yonder-note hr {
+	border: 0;
+	border-top: 1px solid var(--border);
+	margin: 1rem 0;
+}
+
+/*
+ * Mentions: a 20px muted pill with a 6px presence dot and the CURRENT name.
+ * The name sets the pill's baseline (it sits on the line like the text around
+ * it); the dot or avatar is centred in the pill.
+ */
+.yonder-note .mention,
+.mention-input .mention {
+	display: inline-flex;
+	align-items: baseline;
+	gap: 4px;
+	height: 20px;
+	padding: 0 6px;
+	border-radius: 999px;
+	background: var(--muted);
+	font-size: 13px;
+	font-weight: 500;
+	line-height: 20px;
+	vertical-align: baseline;
+	white-space: nowrap;
+}
+.yonder-note .mention::before,
+.mention-input .mention::before {
+	content: "";
+	align-self: center;
+	width: 6px;
+	height: 6px;
+	border-radius: 999px;
+	background: var(--mention-dot, var(--muted-foreground));
+}
+/*
+ * Owner FB-16: a member with a profile picture shows it as a 16px circle in
+ * place of the dot (the stored square is clipped round, cover-cropped). Its
+ * ground is the presence colour while it loads; if it can't load (offline),
+ * the ::after (drawn only for a broken image) covers the broken-image icon
+ * with a plain presence-colour circle.
+ */
+.yonder-note .mention[data-avatar],
+.mention-input .mention[data-avatar] {
+	padding-left: 2px;
+}
+.yonder-note .mention[data-avatar]::before,
+.mention-input .mention[data-avatar]::before {
+	display: none;
+}
+.yonder-note .mention-avatar,
+.mention-input .mention-avatar {
+	position: relative;
+	display: block;
+	flex: none;
+	align-self: center;
+	overflow: hidden;
+	width: 16px;
+	height: 16px;
+	aspect-ratio: 1;
+	margin: 0;
+	border-radius: 50%;
+	object-fit: cover;
+	background: var(--mention-dot, var(--muted));
+	user-select: none;
+	pointer-events: none;
+}
+.yonder-note .mention-avatar::after,
+.mention-input .mention-avatar::after {
+	content: "";
+	position: absolute;
+	inset: 0;
+	border-radius: 50%;
+	background: var(--mention-dot, var(--muted));
+}
+/* A removed member: plain muted text, no chip (QA MENT-03). */
+.yonder-note .mention[data-former],
+.mention-input .mention[data-former] {
+	background: transparent;
+	padding: 0;
+	color: var(--muted-foreground);
+	font-weight: 400;
+}
+.yonder-note .mention[data-former]::before,
+.mention-input .mention[data-former]::before {
+	display: none;
+}
+
+/* Placeholder: "Write something… Markdown works." at 15px muted. */
+.yonder-note p.is-editor-empty:first-child::before,
+.mention-input p.is-editor-empty:first-child::before {
+	content: attr(data-placeholder);
+	float: left;
+	height: 0;
+	pointer-events: none;
+	color: var(--muted-foreground);
+}
+
+/* One-line inputs: a long placeholder ends in "…" instead of wrapping. */
+.mention-input[data-singleline] p.is-editor-empty:first-child {
+	position: relative;
+}
+.mention-input[data-singleline] p.is-editor-empty:first-child::before {
+	position: absolute;
+	inset: 0 0 auto 0;
+	float: none;
+	height: auto;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* Live carets: 2px in the presence colour with a name label that fades after 2 s idle. */
+.collaboration-carets__caret {
+	position: relative;
+	margin-left: -1px;
+	margin-right: -1px;
+	border-left: 2px solid var(--caret, var(--primary));
+	word-break: normal;
+	pointer-events: none;
+}
+.collaboration-carets__label {
+	position: absolute;
+	top: -1.35em;
+	left: -2px;
+	padding: 2px 4px;
+	border-radius: 4px;
+	background: var(--caret, var(--primary));
+	color: #ffffff;
+	font-size: 11px;
+	line-height: 14px;
+	font-weight: 600;
+	font-style: normal;
+	white-space: nowrap;
+	user-select: none;
+	animation: caret-label-fade 240ms ease-out 2s forwards;
+}
+.dark .collaboration-carets__caret {
+	border-left-color: color-mix(
+		in oklab,
+		var(--caret, var(--primary)) 85%,
+		white
+	);
+}
+@keyframes caret-label-fade {
+	to {
+		opacity: 0;
+	}
+}
+@media (prefers-reduced-motion: reduce) {
+	.collaboration-carets__label {
+		animation-duration: 120ms;
+	}
+}
+
+/* MentionInput: an input-looking TipTap field. */
+.mention-input .ProseMirror {
+	outline: none;
+	min-height: 20px;
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+}
+.mention-input .ProseMirror p {
+	margin: 0;
+}

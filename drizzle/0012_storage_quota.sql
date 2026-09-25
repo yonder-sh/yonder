@@ -1,0 +1,2 @@
+ALTER TABLE "user" ADD COLUMN "storage_quota_bytes" bigint;--> statement-breakpoint
+CREATE INDEX "attachments_created_by_live_idx" ON "attachments" USING btree ("created_by") WHERE "attachments"."deleted_at" is null;

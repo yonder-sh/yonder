@@ -1,0 +1,843 @@
+{
+  "source": {
+    "spreadsheetId": "<sheet-id>",
+    "spreadsheetTitle": "Asia 2027",
+    "spreadsheetTimeZone": "America/New_York",
+    "tab": "Cities",
+    "sheetId": 1700000003,
+    "tabIndex": 3,
+    "exportedAt": "2026-09-23T02:49:15+00:00",
+    "exporter": "gws sheets spreadsheets get (includeGridData)"
+  },
+  "headers": [
+    "Country",
+    "City",
+    "Status",
+    "Days",
+    "Notes",
+    "Guide"
+  ],
+  "columns": [
+    {
+      "letter": "A",
+      "header": "Country",
+      "has_links": false
+    },
+    {
+      "letter": "B",
+      "header": "City",
+      "has_links": false
+    },
+    {
+      "letter": "C",
+      "header": "Status",
+      "has_links": false
+    },
+    {
+      "letter": "D",
+      "header": "Days",
+      "has_links": false
+    },
+    {
+      "letter": "E",
+      "header": "Notes",
+      "has_links": true
+    },
+    {
+      "letter": "F",
+      "header": "Guide",
+      "has_links": true
+    }
+  ],
+  "rows": [
+    {
+      "_row": 2,
+      "Country": "Japan",
+      "City": "Tokyo",
+      "Status": "Planned",
+      "Days": 4,
+      "Notes": "Shinjuku, Shibuya, Asakusa, Akihabara, Kappabashi Street for knives/chopsticks/tableware/kitchenware, DisneySea",
+      "Notes_url": "https://www.japan-guide.com/e/e3020.html",
+      "Notes_links": [
+        {
+          "text": "Kappabashi Street",
+          "url": "https://www.japan-guide.com/e/e3020.html"
+        },
+        {
+          "text": "knives",
+          "url": "https://tokyocheapo.com/shopping-2/kappabashi-knife-shopping-tokyo/"
+        }
+      ],
+      "Guide": "Guide ↗",
+      "Guide_url": "https://www.japan-guide.com/e/e2164.html",
+      "Guide_links": [
+        {
+          "text": "Guide ↗",
+          "url": "https://www.japan-guide.com/e/e2164.html"
+        }
+      ]
+    },
+    {
+      "_row": 3,
+      "Country": "Japan",
+      "City": "Mt. Fuji",
+      "Status": "Planned",
+      "Days": 1,
+      "Notes": "Best viewing spots",
+      "Notes_url": "https://www.timeout.com/tokyo/things-to-do/where-to-get-the-best-views-of-mount-fuji",
+      "Notes_links": [
+        {
+          "text": "Best viewing spots",
+          "url": "https://www.timeout.com/tokyo/things-to-do/where-to-get-the-best-views-of-mount-fuji"
+        }
+      ],
+      "Guide": "Guide ↗",
+      "Guide_url": "https://www.japan-guide.com/e/e2172.html",
+      "Guide_links": [
+        {
+          "text": "Guide ↗",
+          "url": "https://www.japan-guide.com/e/e2172.html"
+        }
+      ]
+    },
+    {
+      "_row": 4,
+      "Country": "Japan",
+      "City": "Nagoya",
+      "Status": "Planned",
+      "Days": 1,
+      "Notes": "Ghibli Park, Tsutaya Bookstore",
+      "Notes_url": null,
+      "Notes_links": [],
+      "Guide": "Guide ↗",
+      "Guide_url": "https://www.japan-guide.com/e/e2155.html",
+      "Guide_links": [
+        {
+          "text": "Guide ↗",
+          "url": "https://www.japan-guide.com/e/e2155.html"
+        }
+      ]
+    },
+    {
+      "_row": 5,
+      "Country": "Japan",
+      "City": "Kyoto",
+      "Status": "Planned",
+      "Days": 2.75,
+      "Notes": "Temples, shrines, palaces, wooden houses, bamboo forest, geisha district",
+      "Notes_url": null,
+      "Notes_links": [],
+      "Guide": "Guide ↗",
+      "Guide_url": "https://www.japan-guide.com/e/e2158.html",
+      "Guide_links": [
+        {
+          "text": "Guide ↗",
+          "url": "https://www.japan-guide.com/e/e2158.html"
+        }
+      ]
+    },
+    {
+      "_row": 6,
+      "Country": "Japan",
+      "City": "Uji",
+      "Status": "Planned",
+      "Days": 0.15,
+      "Notes": "Home of Japanese matcha; tea shops on Byodoin Omotesando. ~1 hr stop between Kyoto and Nara (20 min from Kyoto, 30–40 min on to Nara), so no day of its own",
+      "Notes_url": null,
+      "Notes_links": [],
+      "Guide": "Guide ↗",
+      "Guide_url": "https://www.japan-guide.com/e/e3975.html",
+      "Guide_links": [
+        {
+          "text": "Guide ↗",
+          "url": "https://www.japan-guide.com/e/e3975.html"
+        }
+      ]
+    },
+    {
+      "_row": 7,
+      "Country": "Japan",
+      "City": "Nara",
+      "Status": "Planned",
+      "Days": 0.35,
+      "Notes": "Bowing deer at Nara Park, Todai-ji",
+      "Notes_url": null,
+      "Notes_links": [],
+      "Guide": "Guide ↗",
+      "Guide_url": "https://www.japan-guide.com/e/e2165.html",
+      "Guide_links": [
+        {
+          "text": "Guide ↗",
+          "url": "https://www.japan-guide.com/e/e2165.html"
+        }
+      ]
+    },
+    {
+      "_row": 8,
+      "Country": "Japan",
+      "City": "Osaka",
+      "Status": "Planned",
+      "Days": 1.75,
+      "Notes": "Lots of street food & shopping, Dotonbori, Osaka Castle, Universal Studios, Den Den Town (otaku paradise)",
+      "Notes_url": null,
+      "Notes_links": [],
+      "Guide": "Guide ↗",
+      "Guide_url": "https://www.japan-guide.com/e/e2157.html",
+      "Guide_links": [
+        {
+          "text": "Guide ↗",
+          "url": "https://www.japan-guide.com/e/e2157.html"
+        }
+      ]
+    },
+    {
+      "_row": 9,
+      "Country": "Japan",
+      "City": "Hiroshima",
+      "Status": "Dropped",
+      "Days": null,
+      "Notes": "<1 hour to Miyajima Island, Peace Memorial Park",
+      "Notes_url": null,
+      "Notes_links": [],
+      "Guide": "Guide ↗",
+      "Guide_url": "https://www.japan-guide.com/e/e2160.html",
+      "Guide_links": [
+        {
+          "text": "Guide ↗",
+          "url": "https://www.japan-guide.com/e/e2160.html"
+        }
+      ]
+    },
+    {
+      "_row": 10,
+      "Country": "Japan",
+      "City": "Miyajima Island",
+      "Status": "Dropped",
+      "Days": null,
+      "Notes": "Iconic floating Torii gate, temples, walking trails",
+      "Notes_url": null,
+      "Notes_links": [],
+      "Guide": "Guide ↗",
+      "Guide_url": "https://www.japan-guide.com/e/e3401.html",
+      "Guide_links": [
+        {
+          "text": "Guide ↗",
+          "url": "https://www.japan-guide.com/e/e3401.html"
+        }
+      ]
+    },
+    {
+      "_row": 11,
+      "Country": "Japan",
+      "City": "Sapporo",
+      "Status": "Dropped",
+      "Days": null,
+      "Notes": "Lake Toya and Mt. Usu are nearby for a nice hike by active volcanic craters and steaming vents; there's also a gondola; Sapporo Beer Museum, Odori Park",
+      "Notes_url": null,
+      "Notes_links": [],
+      "Guide": "Guide ↗",
+      "Guide_url": "https://www.japan-guide.com/e/e2163.html",
+      "Guide_links": [
+        {
+          "text": "Guide ↗",
+          "url": "https://www.japan-guide.com/e/e2163.html"
+        }
+      ]
+    },
+    {
+      "_row": 12,
+      "Country": "Japan",
+      "City": "Tashirojima",
+      "Status": "Dropped",
+      "Days": null,
+      "Notes": "Cat island, but pretty far from everything else",
+      "Notes_url": null,
+      "Notes_links": [],
+      "Guide": "Guide ↗",
+      "Guide_url": "https://www.japan-guide.com/e/e5031.html",
+      "Guide_links": [
+        {
+          "text": "Guide ↗",
+          "url": "https://www.japan-guide.com/e/e5031.html"
+        }
+      ]
+    },
+    {
+      "_row": 13,
+      "Country": "South Korea",
+      "City": "Seoul",
+      "Status": "Planned",
+      "Days": 2,
+      "Notes": "Seongsu, Hannam, Itaewon; Starfield Library",
+      "Notes_url": null,
+      "Notes_links": [],
+      "Guide": null,
+      "Guide_url": null,
+      "Guide_links": []
+    },
+    {
+      "_row": 14,
+      "Country": "South Korea",
+      "City": "Suwon",
+      "Status": "Dropped",
+      "Days": null,
+      "Notes": "Hwaseong Fortress, Starfield Library (best one)",
+      "Notes_url": null,
+      "Notes_links": [],
+      "Guide": "Guide ↗",
+      "Guide_url": "https://www.japan-guide.com/e/e2163.html",
+      "Guide_links": [
+        {
+          "text": "Guide ↗",
+          "url": "https://www.japan-guide.com/e/e2163.html"
+        }
+      ]
+    },
+    {
+      "_row": 15,
+      "Country": "South Korea",
+      "City": "Busan",
+      "Status": "Planned",
+      "Days": 3,
+      "Notes": "Gamcheon Culture Village, Haedong Yonggungsa Temple, Oryukdo Skywalk, Sky Capsules at Haeundae Blueline Park, Haeundae Beach, Seokbulsa Temple, Gwangalli Beach, Dongbaekseom Island Coastal Promenade, Haewol Observatory",
+      "Notes_url": null,
+      "Notes_links": [],
+      "Guide": "Guide ↗",
+      "Guide_url": "https://www.livelikeitstheweekend.com/busan-south-korea/",
+      "Guide_links": [
+        {
+          "text": "Guide ↗",
+          "url": "https://www.livelikeitstheweekend.com/busan-south-korea/"
+        }
+      ]
+    },
+    {
+      "_row": 16,
+      "Country": "Vietnam",
+      "City": "Ho Chi Minh City",
+      "Status": "Planned",
+      "Days": 3,
+      "Notes": "Ben Thanh Market, Cu Chi Tunnels, Bui Vien Walking Street, Saigon Central Post Office",
+      "Notes_url": null,
+      "Notes_links": [],
+      "Guide": null,
+      "Guide_url": null,
+      "Guide_links": []
+    },
+    {
+      "_row": 17,
+      "Country": "Vietnam",
+      "City": "Da Nang",
+      "Status": "Planned",
+      "Days": 3,
+      "Notes": "Beaches, Ba Na Hills, Golden Bridge, Monkey Mountain, Marble Mountain, My Son Sanctuary, Lady Buddha, Dragon Bridge, My Khe, Hoi An (see below)",
+      "Notes_url": null,
+      "Notes_links": [],
+      "Guide": null,
+      "Guide_url": null,
+      "Guide_links": []
+    },
+    {
+      "_row": 18,
+      "Country": "Vietnam",
+      "City": "Hoi An",
+      "Status": "Planned",
+      "Days": null,
+      "Notes": "Old Town, street food, Fujian Assembly Hall, Quan Cong Temple, Japanese Covered Bridge",
+      "Notes_url": null,
+      "Notes_links": [],
+      "Guide": null,
+      "Guide_url": null,
+      "Guide_links": []
+    },
+    {
+      "_row": 19,
+      "Country": "Vietnam",
+      "City": "Hanoi",
+      "Status": "Planned",
+      "Days": 3,
+      "Notes": "Train street, beer street, Old Quarter, street food",
+      "Notes_url": null,
+      "Notes_links": [],
+      "Guide": null,
+      "Guide_url": null,
+      "Guide_links": []
+    },
+    {
+      "_row": 20,
+      "Country": "Vietnam",
+      "City": "Sa Pa",
+      "Status": "Planned",
+      "Days": 2,
+      "Notes": "It is beautiful",
+      "Notes_url": null,
+      "Notes_links": [],
+      "Guide": "Guide ↗",
+      "Guide_url": "https://noahlangphotography.com/blog/best-things-to-do-sapa-vietnam",
+      "Guide_links": [
+        {
+          "text": "Guide ↗",
+          "url": "https://noahlangphotography.com/blog/best-things-to-do-sapa-vietnam"
+        }
+      ]
+    },
+    {
+      "_row": 21,
+      "Country": "Vietnam",
+      "City": "Ninh Binh",
+      "Status": "Planned",
+      "Days": 1,
+      "Notes": "It is beautiful; Mua Caves; Trang An, Tam Coc",
+      "Notes_url": null,
+      "Notes_links": [],
+      "Guide": "Guide ↗",
+      "Guide_url": "https://worldtosarah.blog/2025/01/16/the-best-place-to-visit-in-vietnam-ninh-binh/",
+      "Guide_links": [
+        {
+          "text": "Guide ↗",
+          "url": "https://worldtosarah.blog/2025/01/16/the-best-place-to-visit-in-vietnam-ninh-binh/"
+        }
+      ]
+    },
+    {
+      "_row": 22,
+      "Country": "Vietnam",
+      "City": "Hue",
+      "Status": "Dropped",
+      "Days": null,
+      "Notes": "Citadel, Imperial City",
+      "Notes_url": null,
+      "Notes_links": [],
+      "Guide": "Guide ↗",
+      "Guide_url": "https://thehappyjetlagger.com/en/things-to-do-in-hue/",
+      "Guide_links": [
+        {
+          "text": "Guide ↗",
+          "url": "https://thehappyjetlagger.com/en/things-to-do-in-hue/"
+        }
+      ]
+    },
+    {
+      "_row": 23,
+      "Country": "Vietnam",
+      "City": "Ha Long Bay",
+      "Status": "Dropped",
+      "Days": null,
+      "Notes": "It might be beautiful, but there are very bad reviews",
+      "Notes_url": null,
+      "Notes_links": [],
+      "Guide": null,
+      "Guide_url": null,
+      "Guide_links": []
+    },
+    {
+      "_row": 24,
+      "Country": "Vietnam",
+      "City": "Cat Ba",
+      "Status": "Dropped",
+      "Days": null,
+      "Notes": "It is beautiful; probably takes too long",
+      "Notes_url": null,
+      "Notes_links": [],
+      "Guide": null,
+      "Guide_url": null,
+      "Guide_links": []
+    },
+    {
+      "_row": 25,
+      "Country": "Taiwan",
+      "City": "Taipei",
+      "Status": "Planned",
+      "Days": 2,
+      "Notes": "Night markets, street food, National Palace Museum, Daan Forest Park, Wang Tea, cocktail bars in Da'an District",
+      "Notes_url": null,
+      "Notes_links": [],
+      "Guide": "Guide ↗",
+      "Guide_url": "https://stories.forbestravelguide.com/how-to-spend-two-days-in-taipei",
+      "Guide_links": [
+        {
+          "text": "Guide ↗",
+          "url": "https://stories.forbestravelguide.com/how-to-spend-two-days-in-taipei"
+        }
+      ]
+    },
+    {
+      "_row": 26,
+      "Country": "Taiwan",
+      "City": "Shifen",
+      "Status": "Planned",
+      "Days": 0.5,
+      "Notes": "Waterfalls and hikes",
+      "Notes_url": null,
+      "Notes_links": [],
+      "Guide": null,
+      "Guide_url": null,
+      "Guide_links": []
+    },
+    {
+      "_row": 27,
+      "Country": "Taiwan",
+      "City": "Jiufen",
+      "Status": "Planned",
+      "Days": 0.5,
+      "Notes": "Mountain town <40 mins away from Taipei that looks like Spirited Away; Jiufen Old Street, Jiufen Teahouse, Teapot Mountain hike",
+      "Notes_url": null,
+      "Notes_links": [],
+      "Guide": "Guide ↗",
+      "Guide_url": "https://www.walkmyworld.com/posts/jiufen-shifen-taiwan",
+      "Guide_links": [
+        {
+          "text": "Guide ↗",
+          "url": "https://www.walkmyworld.com/posts/jiufen-shifen-taiwan"
+        }
+      ]
+    }
+  ],
+  "raw": {
+    "values": [
+      [
+        "Country",
+        "City",
+        "Status",
+        "Days",
+        "Notes",
+        "Guide"
+      ],
+      [
+        "Japan",
+        "Tokyo",
+        "Planned",
+        "4",
+        "Shinjuku, Shibuya, Asakusa, Akihabara, Kappabashi Street for knives/chopsticks/tableware/kitchenware, DisneySea",
+        "Guide ↗"
+      ],
+      [
+        "Japan",
+        "Mt. Fuji",
+        "Planned",
+        "1",
+        "Best viewing spots",
+        "Guide ↗"
+      ],
+      [
+        "Japan",
+        "Nagoya",
+        "Planned",
+        "1",
+        "Ghibli Park, Tsutaya Bookstore",
+        "Guide ↗"
+      ],
+      [
+        "Japan",
+        "Kyoto",
+        "Planned",
+        "2.75",
+        "Temples, shrines, palaces, wooden houses, bamboo forest, geisha district",
+        "Guide ↗"
+      ],
+      [
+        "Japan",
+        "Uji",
+        "Planned",
+        "0.15",
+        "Home of Japanese matcha; tea shops on Byodoin Omotesando. ~1 hr stop between Kyoto and Nara (20 min from Kyoto, 30–40 min on to Nara), so no day of its own",
+        "Guide ↗"
+      ],
+      [
+        "Japan",
+        "Nara",
+        "Planned",
+        "0.35",
+        "Bowing deer at Nara Park, Todai-ji",
+        "Guide ↗"
+      ],
+      [
+        "Japan",
+        "Osaka",
+        "Planned",
+        "1.75",
+        "Lots of street food & shopping, Dotonbori, Osaka Castle, Universal Studios, Den Den Town (otaku paradise)",
+        "Guide ↗"
+      ],
+      [
+        "Japan",
+        "Hiroshima",
+        "Dropped",
+        "—",
+        "<1 hour to Miyajima Island, Peace Memorial Park",
+        "Guide ↗"
+      ],
+      [
+        "Japan",
+        "Miyajima Island",
+        "Dropped",
+        "—",
+        "Iconic floating Torii gate, temples, walking trails",
+        "Guide ↗"
+      ],
+      [
+        "Japan",
+        "Sapporo",
+        "Dropped",
+        "—",
+        "Lake Toya and Mt. Usu are nearby for a nice hike by active volcanic craters and steaming vents; there's also a gondola; Sapporo Beer Museum, Odori Park",
+        "Guide ↗"
+      ],
+      [
+        "Japan",
+        "Tashirojima",
+        "Dropped",
+        "—",
+        "Cat island, but pretty far from everything else",
+        "Guide ↗"
+      ],
+      [
+        "South Korea",
+        "Seoul",
+        "Planned",
+        "2",
+        "Seongsu, Hannam, Itaewon; Starfield Library",
+        "—"
+      ],
+      [
+        "South Korea",
+        "Suwon",
+        "Dropped",
+        "—",
+        "Hwaseong Fortress, Starfield Library (best one)",
+        "Guide ↗"
+      ],
+      [
+        "South Korea",
+        "Busan",
+        "Planned",
+        "3",
+        "Gamcheon Culture Village, Haedong Yonggungsa Temple, Oryukdo Skywalk, Sky Capsules at Haeundae Blueline Park, Haeundae Beach, Seokbulsa Temple, Gwangalli Beach, Dongbaekseom Island Coastal Promenade, Haewol Observatory",
+        "Guide ↗"
+      ],
+      [
+        "Vietnam",
+        "Ho Chi Minh City",
+        "Planned",
+        "3",
+        "Ben Thanh Market, Cu Chi Tunnels, Bui Vien Walking Street, Saigon Central Post Office",
+        "—"
+      ],
+      [
+        "Vietnam",
+        "Da Nang",
+        "Planned",
+        "3",
+        "Beaches, Ba Na Hills, Golden Bridge, Monkey Mountain, Marble Mountain, My Son Sanctuary, Lady Buddha, Dragon Bridge, My Khe, Hoi An (see below)",
+        "—"
+      ],
+      [
+        "Vietnam",
+        "Hoi An",
+        "Planned",
+        "—",
+        "Old Town, street food, Fujian Assembly Hall, Quan Cong Temple, Japanese Covered Bridge",
+        "—"
+      ],
+      [
+        "Vietnam",
+        "Hanoi",
+        "Planned",
+        "3",
+        "Train street, beer street, Old Quarter, street food",
+        "—"
+      ],
+      [
+        "Vietnam",
+        "Sa Pa",
+        "Planned",
+        "2",
+        "It is beautiful",
+        "Guide ↗"
+      ],
+      [
+        "Vietnam",
+        "Ninh Binh",
+        "Planned",
+        "1",
+        "It is beautiful; Mua Caves; Trang An, Tam Coc",
+        "Guide ↗"
+      ],
+      [
+        "Vietnam",
+        "Hue",
+        "Dropped",
+        "—",
+        "Citadel, Imperial City",
+        "Guide ↗"
+      ],
+      [
+        "Vietnam",
+        "Ha Long Bay",
+        "Dropped",
+        "—",
+        "It might be beautiful, but there are very bad reviews",
+        "—"
+      ],
+      [
+        "Vietnam",
+        "Cat Ba",
+        "Dropped",
+        "—",
+        "It is beautiful; probably takes too long",
+        "—"
+      ],
+      [
+        "Taiwan",
+        "Taipei",
+        "Planned",
+        "2",
+        "Night markets, street food, National Palace Museum, Daan Forest Park, Wang Tea, cocktail bars in Da'an District",
+        "Guide ↗"
+      ],
+      [
+        "Taiwan",
+        "Shifen",
+        "Planned",
+        "0.5",
+        "Waterfalls and hikes",
+        "—"
+      ],
+      [
+        "Taiwan",
+        "Jiufen",
+        "Planned",
+        "0.5",
+        "Mountain town <40 mins away from Taipei that looks like Spirited Away; Jiufen Old Street, Jiufen Teahouse, Teapot Mountain hike",
+        "Guide ↗"
+      ]
+    ],
+    "links": {
+      "E2": [
+        {
+          "text": "Kappabashi Street",
+          "url": "https://www.japan-guide.com/e/e3020.html"
+        },
+        {
+          "text": "knives",
+          "url": "https://tokyocheapo.com/shopping-2/kappabashi-knife-shopping-tokyo/"
+        }
+      ],
+      "F2": [
+        {
+          "text": "Guide ↗",
+          "url": "https://www.japan-guide.com/e/e2164.html"
+        }
+      ],
+      "E3": [
+        {
+          "text": "Best viewing spots",
+          "url": "https://www.timeout.com/tokyo/things-to-do/where-to-get-the-best-views-of-mount-fuji"
+        }
+      ],
+      "F3": [
+        {
+          "text": "Guide ↗",
+          "url": "https://www.japan-guide.com/e/e2172.html"
+        }
+      ],
+      "F4": [
+        {
+          "text": "Guide ↗",
+          "url": "https://www.japan-guide.com/e/e2155.html"
+        }
+      ],
+      "F5": [
+        {
+          "text": "Guide ↗",
+          "url": "https://www.japan-guide.com/e/e2158.html"
+        }
+      ],
+      "F6": [
+        {
+          "text": "Guide ↗",
+          "url": "https://www.japan-guide.com/e/e3975.html"
+        }
+      ],
+      "F7": [
+        {
+          "text": "Guide ↗",
+          "url": "https://www.japan-guide.com/e/e2165.html"
+        }
+      ],
+      "F8": [
+        {
+          "text": "Guide ↗",
+          "url": "https://www.japan-guide.com/e/e2157.html"
+        }
+      ],
+      "F9": [
+        {
+          "text": "Guide ↗",
+          "url": "https://www.japan-guide.com/e/e2160.html"
+        }
+      ],
+      "F10": [
+        {
+          "text": "Guide ↗",
+          "url": "https://www.japan-guide.com/e/e3401.html"
+        }
+      ],
+      "F11": [
+        {
+          "text": "Guide ↗",
+          "url": "https://www.japan-guide.com/e/e2163.html"
+        }
+      ],
+      "F12": [
+        {
+          "text": "Guide ↗",
+          "url": "https://www.japan-guide.com/e/e5031.html"
+        }
+      ],
+      "F14": [
+        {
+          "text": "Guide ↗",
+          "url": "https://www.japan-guide.com/e/e2163.html"
+        }
+      ],
+      "F15": [
+        {
+          "text": "Guide ↗",
+          "url": "https://www.livelikeitstheweekend.com/busan-south-korea/"
+        }
+      ],
+      "F20": [
+        {
+          "text": "Guide ↗",
+          "url": "https://noahlangphotography.com/blog/best-things-to-do-sapa-vietnam"
+        }
+      ],
+      "F21": [
+        {
+          "text": "Guide ↗",
+          "url": "https://worldtosarah.blog/2025/01/16/the-best-place-to-visit-in-vietnam-ninh-binh/"
+        }
+      ],
+      "F22": [
+        {
+          "text": "Guide ↗",
+          "url": "https://thehappyjetlagger.com/en/things-to-do-in-hue/"
+        }
+      ],
+      "F25": [
+        {
+          "text": "Guide ↗",
+          "url": "https://stories.forbestravelguide.com/how-to-spend-two-days-in-taipei"
+        }
+      ],
+      "F27": [
+        {
+          "text": "Guide ↗",
+          "url": "https://www.walkmyworld.com/posts/jiufen-shifen-taiwan"
+        }
+      ]
+    },
+    "formulas": {}
+  }
+}

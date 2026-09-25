@@ -1,0 +1,19 @@
+{
+	"format": "yonder-jp-rail@1",
+	"build": "N02-25.c9efe94545",
+	"dataset": "N02-25",
+	"dataDate": "2025-12-31",
+	"builtAt": "2026-09-23T09:00:08.232Z",
+	"sourceUrl": "https://nlftp.mlit.go.jp/ksj/gml/data/N02/N02-25/N02-25_GML.zip",
+	"sourceSha256": "aaf76af133b2e771e538fabc4646d2e443dc1d5a67b221382a28d744e706cc9f",
+	"datasetPage": "https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-N02-2025.html",
+	"license": "CC BY 4.0",
+	"attributionJa": "「国土数値情報（鉄道データ）」（国土交通省）を加工して作成",
+	"attributionEn": "Rail network processed from MLIT National Land Numerical Information (Railway, N02-25, as of 2025-12-31), CC BY 4.0",
+	"namesSource": "English station names: Wikidata (CC0)",
+	"graphSha256": "6d250a86187e350bd060c85bbc0057e3e9a3952f4cd83eb0c857e5741daeacf5",
+	"namesSha256": "408209d57bad52aef4ae5d2ce628fd5d0083fb8813dc37f8c4f91378df7e4d6f",
+	"lines": 597,
+	"stations": 10154,
+	"edges": 10307
+}

@@ -1,0 +1,1548 @@
+{
+  "version": 1,
+  "generatedAt": "2026-09-23",
+  "about": "Date allocation for 'Asia 2027 · Full draft' (coordinator output; SCHEMA.md §4). One entry per trip date 2027-10-02 … 2027-11-07. `sleep` = where you sleep AFTER that day (Yonder trip_days.night_node). Titles are suggestions except owner days (kept as imported). Builders must keep dates, sleeps and the flight markers; they choose the actual hotels, items and the focus of each free day.",
+  "trip": {
+    "name": "Asia 2027 · Full draft",
+    "slug": "asia-2027-full-draft",
+    "start": "2027-10-02",
+    "end": "2027-11-07",
+    "homeCurrency": "USD",
+    "dayCapacityMin": 750,
+    "members": {
+      "dennis": "owner (dennis@dennispham.me)",
+      "audrey": "placeholder member (editor)"
+    },
+    "dayNumbering": "Trip day 1 = Sat 2027-10-02 (JFK departure). The owner's Itinerary 'Day N' = trip day N+1 (Itinerary Day 1 = Sun 2027-10-03)."
+  },
+  "parts": {
+    "japan": {
+      "dates": [
+        "2027-10-02",
+        "2027-10-14"
+      ],
+      "file": "days-japan.json",
+      "note": "Oct 2 = flight marker only; Oct 3–8 are owner days (additions only); Oct 14 = 'before' half."
+    },
+    "korea": {
+      "dates": [
+        "2027-10-14",
+        "2027-10-20"
+      ],
+      "file": "days-korea.json",
+      "note": "Oct 14 = 'after' half (from KE726); Oct 20 = 'before' half (until VN423)."
+    },
+    "vietnam": {
+      "dates": [
+        "2027-10-20",
+        "2027-11-02"
+      ],
+      "file": "days-vietnam.json",
+      "note": "Oct 20 = 'after' half (from VN423); Nov 2 = 'before' half (until BR398)."
+    },
+    "taiwan": {
+      "dates": [
+        "2027-11-02",
+        "2027-11-07"
+      ],
+      "file": "days-taiwan.json",
+      "note": "Nov 2 = 'after' half (from BR398); Nov 6 ends with the TK25 marker; Nov 7 = the TK25 block's IST layover + EWR arrival only (write the day with just the marker)."
+    }
+  },
+  "flights": [
+    "NH159",
+    "KE726",
+    "VN423",
+    "VN132",
+    "VN174",
+    "BR398",
+    "TK25"
+  ],
+  "days": [
+    {
+      "date": "2027-10-02",
+      "dow": "Sat",
+      "tripDay": 1,
+      "parts": [
+        "japan"
+      ],
+      "country": null,
+      "cities": [],
+      "title": "Fly JFK → Tokyo",
+      "sleep": {
+        "kind": "flight",
+        "city": null,
+        "note": "On NH159 (JFK 02:00 → HND 05:00 Oct 3)"
+      },
+      "moves": [
+        {
+          "type": "flight",
+          "ref": "NH159",
+          "from": "JFK",
+          "to": "HND",
+          "dep": "02:00",
+          "arr": "05:00 (+1)"
+        }
+      ],
+      "notes": [
+        "Leave home Fri Oct 1 evening: the flight is at 02:00 on Sat Oct 2 (be at JFK T7 ~23:30 Fri). The day holds only the flight block; its start becomes 00:00."
+      ]
+    },
+    {
+      "date": "2027-10-03",
+      "dow": "Sun",
+      "tripDay": 2,
+      "ownerItineraryDay": 1,
+      "parts": [
+        "japan"
+      ],
+      "country": "Japan",
+      "cities": [
+        "Tokyo"
+      ],
+      "title": "Tokyo · Haneda + Shibuya (arrival)",
+      "sleep": {
+        "kind": "hotel",
+        "city": "Tokyo",
+        "area": "Shinjuku (or Shibuya)",
+        "checkIn": true,
+        "nights": 4
+      },
+      "moves": [
+        {
+          "type": "flight-arrival",
+          "ref": "NH159",
+          "at": "HND T2 05:00"
+        }
+      ],
+      "notes": [
+        "Owner's Itinerary Day 1 — keep items exactly. The NH159 arrival item goes first (before 'Breakfast').",
+        "Hotel: check-in ~15:00; bags forwarded from Haneda by takkyubin (owner's note). Shinjuku suits Oct 7 (Fuji Excursion leaves Shinjuku 08:30); Day 1 dinner says 'Shibuya / near hotel', so Shibuya also works."
+      ]
+    },
+    {
+      "date": "2027-10-04",
+      "dow": "Mon",
+      "tripDay": 3,
+      "ownerItineraryDay": 2,
+      "parts": [
+        "japan"
+      ],
+      "country": "Japan",
+      "cities": [
+        "Tokyo"
+      ],
+      "title": "Tokyo · Asakusa / Ginza",
+      "sleep": {
+        "kind": "hotel",
+        "city": "Tokyo"
+      },
+      "notes": [
+        "Owner's Itinerary Day 2 (Mon: Kappabashi open; Bar Centifolia closed Wed only)."
+      ]
+    },
+    {
+      "date": "2027-10-05",
+      "dow": "Tue",
+      "tripDay": 4,
+      "ownerItineraryDay": 3,
+      "parts": [
+        "japan"
+      ],
+      "country": "Japan",
+      "cities": [
+        "Tokyo"
+      ],
+      "title": "Tokyo · Nakano + Shinjuku",
+      "sleep": {
+        "kind": "hotel",
+        "city": "Tokyo"
+      },
+      "notes": [
+        "Owner's Itinerary Day 3 (Tue: Bar Benfiddich open; closed Sun)."
+      ]
+    },
+    {
+      "date": "2027-10-06",
+      "dow": "Wed",
+      "tripDay": 5,
+      "ownerItineraryDay": 4,
+      "parts": [
+        "japan"
+      ],
+      "country": "Japan",
+      "cities": [
+        "Tokyo"
+      ],
+      "title": "Tokyo · Harajuku / Omotesando",
+      "sleep": {
+        "kind": "hotel",
+        "city": "Tokyo"
+      },
+      "notes": [
+        "Owner's Itinerary Day 4 (Wed Oct 6: Imabari Towel closes 2nd Tue only — open).",
+        "Optional: forward big bags tonight by takkyubin straight to the Nagoya hotel (owner's Day 5 note) and carry an overnight bag to the ryokan."
+      ]
+    },
+    {
+      "date": "2027-10-07",
+      "dow": "Thu",
+      "tripDay": 6,
+      "ownerItineraryDay": 5,
+      "parts": [
+        "japan"
+      ],
+      "country": "Japan",
+      "cities": [
+        "Mt. Fuji"
+      ],
+      "title": "Mt. Fuji · Shinjuku → Kawaguchiko",
+      "sleep": {
+        "kind": "ryokan",
+        "city": "Mt. Fuji",
+        "node": "Japan|Mt. Fuji|Kawaguchiko|Kawaguchiko Ryokan",
+        "checkIn": true,
+        "nights": 1,
+        "note": "Existing node + stay from the sheet import (ryokan check-in item)."
+      },
+      "moves": [
+        {
+          "type": "train",
+          "label": "Fuji Excursion 1 · Shinjuku 08:30 → Kawaguchiko 10:22",
+          "reserved": true,
+          "bookingWindow": "JR East: 1 month before at 10:00 JST (2027-09-07 10:00 JST)",
+          "existing": true
+        }
+      ],
+      "notes": [
+        "Owner's Itinerary Day 5 — the Fuji Excursion leg already exists (sheet import); the draft may add fixed times to it only if the importer supports editing that leg."
+      ]
+    },
+    {
+      "date": "2027-10-08",
+      "dow": "Fri",
+      "tripDay": 7,
+      "ownerItineraryDay": 6,
+      "parts": [
+        "japan"
+      ],
+      "country": "Japan",
+      "cities": [
+        "Mt. Fuji",
+        "Nagoya"
+      ],
+      "title": "Mt. Fuji → Nagoya",
+      "sleep": {
+        "kind": "hotel",
+        "city": "Nagoya",
+        "area": "Nagoya Station",
+        "checkIn": true,
+        "nights": 1
+      },
+      "moves": [
+        {
+          "type": "bus",
+          "label": "Fujikyu bus Kawaguchiko → Shiraito Falls (~1h10, ~3/day)",
+          "existing": true
+        },
+        {
+          "type": "bus+train",
+          "label": "Bus Shiraito → Shin-Fuji Sta., Kodama Shin-Fuji → Nagoya (~2.5–3 h)",
+          "existing": true
+        }
+      ],
+      "notes": [
+        "Owner's Itinerary Day 6 — keep items exactly; only add the Nagoya hotel stay.",
+        "Send bags Nagoya → Kyoto hotel by takkyubin tonight (arrives Oct 9) so Ghibli Park day is hands-free."
+      ]
+    },
+    {
+      "date": "2027-10-09",
+      "dow": "Sat",
+      "tripDay": 8,
+      "parts": [
+        "japan"
+      ],
+      "country": "Japan",
+      "cities": [
+        "Nagoya",
+        "Kyoto"
+      ],
+      "title": "Nagoya · Ghibli Park → Kyoto",
+      "sleep": {
+        "kind": "hotel",
+        "city": "Kyoto",
+        "area": "Kyoto Station or Kawaramachi/Gion",
+        "checkIn": true,
+        "nights": 3
+      },
+      "moves": [
+        {
+          "type": "transit",
+          "label": "Nagoya Sta. → Ghibli Park: Higashiyama Line to Fujigaoka + Linimo to Ai·Chikyuhaku-kinen-koen (~50 min)"
+        },
+        {
+          "type": "train",
+          "label": "Tokaido Shinkansen Nozomi Nagoya → Kyoto (~35 min), e.g. ~18:40 → 19:15",
+          "reserved": true,
+          "bookingWindow": "1 month before at 10:00 JST (smartEX / JR)"
+        }
+      ],
+      "notes": [
+        "Ghibli Park (Must/Must): Sat Oct 9 — open 09:00–17:00 on weekends, closed Tuesdays; tickets are date + time specific and sell out: sale opens 14:00 JST on the 10th of the month two months before (→ 2027-08-10 14:00 JST).",
+        "Nagoya counts 1 day (Oct 8 evening + Oct 9)."
+      ]
+    },
+    {
+      "date": "2027-10-10",
+      "dow": "Sun",
+      "tripDay": 9,
+      "parts": [
+        "japan"
+      ],
+      "country": "Japan",
+      "cities": [
+        "Kyoto"
+      ],
+      "title": "Kyoto · Fushimi Inari + Higashiyama",
+      "sleep": {
+        "kind": "hotel",
+        "city": "Kyoto"
+      },
+      "notes": [
+        "Suggested focus only — the Japan builder decides. Fushimi Inari (Must) is best ~06:00–07:00.",
+        "3-day weekend in Japan (Sat Oct 9 – Mon Oct 11 Sports Day): expect crowds; start early."
+      ]
+    },
+    {
+      "date": "2027-10-11",
+      "dow": "Mon",
+      "tripDay": 10,
+      "parts": [
+        "japan"
+      ],
+      "country": "Japan",
+      "cities": [
+        "Kyoto"
+      ],
+      "title": "Kyoto · Arashiyama + Kinugasa",
+      "sleep": {
+        "kind": "hotel",
+        "city": "Kyoto"
+      },
+      "notes": [
+        "Mon Oct 11 = Sports Day (national holiday): museums normally closed Mon are open today and close Tue Oct 12 instead.",
+        "Arashiyama Bamboo Grove (Must) + Otagi Nenbutsu-ji (Really want) early morning.",
+        "Consider 1 night at a Kyoto ryokan with private onsen (Action Timeline row 17)."
+      ]
+    },
+    {
+      "date": "2027-10-12",
+      "dow": "Tue",
+      "tripDay": 11,
+      "parts": [
+        "japan"
+      ],
+      "country": "Japan",
+      "cities": [
+        "Kyoto",
+        "Uji",
+        "Nara",
+        "Osaka"
+      ],
+      "title": "Kyoto → Uji → Nara → Osaka",
+      "sleep": {
+        "kind": "hotel",
+        "city": "Osaka",
+        "area": "Namba / Shinsaibashi",
+        "checkIn": true,
+        "nights": 2
+      },
+      "moves": [
+        {
+          "type": "train",
+          "label": "JR Nara Line Kyoto → Uji (~20 min)"
+        },
+        {
+          "type": "train",
+          "label": "JR Nara Line Uji → Nara (~30–40 min)"
+        },
+        {
+          "type": "train",
+          "label": "Kintetsu Nara → Osaka-Namba (rapid express ~40 min)"
+        }
+      ],
+      "notes": [
+        "Uji ~1–1.5 h (matcha on Byodoin Omotesando: Nakamura Tokichi / Itoh Kyuemon; shopping list 'Matcha / tea'), Nara ~3.5 h (Nara Park, Todai-ji).",
+        "Tue after a Monday holiday: some museums closed (e.g. Nara National Museum); Todai-ji and Byodoin open daily.",
+        "Luggage: send Kyoto → Osaka hotel by takkyubin on Oct 11 (next-day) or use a same-day hands-free service at Kyoto Station."
+      ]
+    },
+    {
+      "date": "2027-10-13",
+      "dow": "Wed",
+      "tripDay": 12,
+      "parts": [
+        "japan"
+      ],
+      "country": "Japan",
+      "cities": [
+        "Osaka"
+      ],
+      "title": "Osaka",
+      "sleep": {
+        "kind": "hotel",
+        "city": "Osaka"
+      },
+      "notes": [
+        "Builder decides between Universal Studios (Want, full day, Express Pass, date-specific → fixedDate) and a city day (Dotonbori Must, Osaka Castle, Harukas 300, Shinsaibashi).",
+        "Shopping list: Nishikawa custom pillow fitting at Daimaru Shinsaibashi (~1 h, ~¥30k, reserve) — tax refund with passport."
+      ]
+    },
+    {
+      "date": "2027-10-14",
+      "dow": "Thu",
+      "tripDay": 13,
+      "parts": [
+        "japan",
+        "korea"
+      ],
+      "split": {
+        "before": "japan",
+        "after": "korea",
+        "marker": "KE726"
+      },
+      "country": "Japan",
+      "cities": [
+        "Osaka",
+        "Seoul"
+      ],
+      "title": "Osaka → Seoul",
+      "sleep": {
+        "kind": "hotel",
+        "city": "Seoul",
+        "area": "Seoul Station / Myeongdong (AREX + KTX both at Seoul Station)",
+        "checkIn": true,
+        "nights": 3
+      },
+      "moves": [
+        {
+          "type": "train",
+          "label": "Nankai rapi:t Namba → KIX (~38 min, reserved); leave by ~15:00"
+        },
+        {
+          "type": "flight",
+          "ref": "KE726",
+          "from": "KIX",
+          "to": "ICN",
+          "dep": "18:15",
+          "arr": "20:05"
+        },
+        {
+          "type": "train",
+          "label": "AREX Express ICN T2 → Seoul Station (~43 min)"
+        }
+      ],
+      "notes": [
+        "Half 'before' (Japan builder): Osaka morning until ~15:00 — e.g. Katsuoji (Minoh, Must) or Dotonbori/Kuromon; then the KE726 marker.",
+        "At KIX: customs tax-refund check for Japan purchases BEFORE security (refund-type system since 2026-11-01) — allow 3 h.",
+        "Half 'after' (Korea builder): KE726 marker, AREX, hotel check-in, late snack. Stay is set by the Korea half."
+      ]
+    },
+    {
+      "date": "2027-10-15",
+      "dow": "Fri",
+      "tripDay": 14,
+      "parts": [
+        "korea"
+      ],
+      "country": "South Korea",
+      "cities": [
+        "Seoul"
+      ],
+      "title": "Seoul",
+      "sleep": {
+        "kind": "hotel",
+        "city": "Seoul"
+      },
+      "notes": [
+        "Fri: palaces open (Gyeongbokgung closed Tue, Changdeokgung closed Mon). Seongsu, Hannam, Itaewon, Starfield Library (COEX)."
+      ]
+    },
+    {
+      "date": "2027-10-16",
+      "dow": "Sat",
+      "tripDay": 15,
+      "parts": [
+        "korea"
+      ],
+      "country": "South Korea",
+      "cities": [
+        "Seoul"
+      ],
+      "title": "Seoul",
+      "sleep": {
+        "kind": "hotel",
+        "city": "Seoul"
+      },
+      "notes": [
+        "Sat: busy in Seongsu/Hongdae; book any popular restaurants."
+      ]
+    },
+    {
+      "date": "2027-10-17",
+      "dow": "Sun",
+      "tripDay": 16,
+      "parts": [
+        "korea"
+      ],
+      "country": "South Korea",
+      "cities": [
+        "Seoul",
+        "Busan"
+      ],
+      "title": "Seoul → Busan (KTX)",
+      "sleep": {
+        "kind": "hotel",
+        "city": "Busan",
+        "area": "Haeundae (beach, Blueline Park) or Seomyeon",
+        "checkIn": true,
+        "nights": 3
+      },
+      "moves": [
+        {
+          "type": "train",
+          "label": "KTX Seoul → Busan (~2h40), e.g. ~08:30 → ~11:10",
+          "reserved": true,
+          "bookingWindow": "KTX: 2 months before (from Oct 2026; time of day assumed 07:00 KST — verify)"
+        }
+      ],
+      "notes": [
+        "Sun: Busan afternoon, e.g. Gamcheon Culture Village + Jagalchi market."
+      ]
+    },
+    {
+      "date": "2027-10-18",
+      "dow": "Mon",
+      "tripDay": 17,
+      "parts": [
+        "korea"
+      ],
+      "country": "South Korea",
+      "cities": [
+        "Busan"
+      ],
+      "title": "Busan",
+      "sleep": {
+        "kind": "hotel",
+        "city": "Busan"
+      },
+      "notes": [
+        "Haedong Yonggungsa (beautiful at sunrise), Haeundae Blueline Park Sky Capsule (book), Dongbaekseom, Gwangalli at night."
+      ]
+    },
+    {
+      "date": "2027-10-19",
+      "dow": "Tue",
+      "tripDay": 18,
+      "parts": [
+        "korea"
+      ],
+      "country": "South Korea",
+      "cities": [
+        "Busan"
+      ],
+      "title": "Busan",
+      "sleep": {
+        "kind": "hotel",
+        "city": "Busan"
+      },
+      "notes": [
+        "Oryukdo Skywalk, Seokbulsa (steep), Haewol Observatory. Early night: 07:30 departure tomorrow."
+      ]
+    },
+    {
+      "date": "2027-10-20",
+      "dow": "Wed",
+      "tripDay": 19,
+      "parts": [
+        "korea",
+        "vietnam"
+      ],
+      "split": {
+        "before": "korea",
+        "after": "vietnam",
+        "marker": "VN423"
+      },
+      "country": "South Korea",
+      "cities": [
+        "Busan",
+        "Ho Chi Minh City"
+      ],
+      "title": "Busan → Ho Chi Minh City",
+      "sleep": {
+        "kind": "hotel",
+        "city": "Ho Chi Minh City",
+        "area": "District 1",
+        "checkIn": true,
+        "nights": 3
+      },
+      "moves": [
+        {
+          "type": "taxi",
+          "label": "Haeundae → Gimhae Airport (~40 min), leave ~07:30"
+        },
+        {
+          "type": "flight",
+          "ref": "VN423",
+          "from": "PUS",
+          "to": "SGN",
+          "dep": "10:05",
+          "arr": "12:55"
+        },
+        {
+          "type": "taxi",
+          "label": "Grab SGN T2 → District 1 (~30–45 min)"
+        }
+      ],
+      "notes": [
+        "Half 'before' (Korea builder): breakfast + taxi; Korea tax refund at PUS. Half 'after' (Vietnam builder): arrival, District 1 afternoon (Saigon Central Post Office, Notre-Dame area), dinner.",
+        "Clocks go back 2 h (KST → ICT)."
+      ]
+    },
+    {
+      "date": "2027-10-21",
+      "dow": "Thu",
+      "tripDay": 20,
+      "parts": [
+        "vietnam"
+      ],
+      "country": "Vietnam",
+      "cities": [
+        "Ho Chi Minh City"
+      ],
+      "title": "Ho Chi Minh City · Cu Chi Tunnels",
+      "sleep": {
+        "kind": "hotel",
+        "city": "Ho Chi Minh City"
+      },
+      "notes": [
+        "Suggested: Cu Chi Tunnels half day (1.5–2 h each way; go early), afternoon/evening in District 1 (Bui Vien at night)."
+      ]
+    },
+    {
+      "date": "2027-10-22",
+      "dow": "Fri",
+      "tripDay": 21,
+      "parts": [
+        "vietnam"
+      ],
+      "country": "Vietnam",
+      "cities": [
+        "Ho Chi Minh City"
+      ],
+      "title": "Ho Chi Minh City",
+      "sleep": {
+        "kind": "hotel",
+        "city": "Ho Chi Minh City"
+      },
+      "notes": [
+        "Ben Thanh Market (bargain), War Remnants Museum, Independence Palace, street food."
+      ]
+    },
+    {
+      "date": "2027-10-23",
+      "dow": "Sat",
+      "tripDay": 22,
+      "parts": [
+        "vietnam"
+      ],
+      "country": "Vietnam",
+      "cities": [
+        "Ho Chi Minh City",
+        "Da Nang",
+        "Hoi An"
+      ],
+      "title": "Ho Chi Minh City → Da Nang → Hoi An",
+      "sleep": {
+        "kind": "hotel",
+        "city": "Hoi An",
+        "area": "near Old Town (walk to the tailors)",
+        "checkIn": true,
+        "nights": 3,
+        "note": "The Da Nang block (3 days, Cities tab) is based in Hoi An: tailor fittings + Old Town evenings; Da Nang sights are day trips."
+      },
+      "moves": [
+        {
+          "type": "taxi",
+          "label": "Grab District 1 → SGN T3 domestic (~30–40 min), leave ~11:30"
+        },
+        {
+          "type": "flight",
+          "ref": "VN132",
+          "from": "SGN",
+          "to": "DAD",
+          "dep": "13:25",
+          "arr": "14:45"
+        },
+        {
+          "type": "car",
+          "label": "DAD → Hoi An by car/Grab (~45 min)"
+        }
+      ],
+      "notes": [
+        "HCMC morning (breakfast pho, last sights).",
+        "ORDER THE TAILORING TODAY (day 1 of the block): suit, overcoats, trench coats, ao dai (shopping list) — get 2–3 quotes, see the cloth, expect 2+ fittings.",
+        "Sat night: Da Nang Dragon Bridge fire & water show 21:00 (Sat/Sun) — optional tonight or Sun Oct 24."
+      ]
+    },
+    {
+      "date": "2027-10-24",
+      "dow": "Sun",
+      "tripDay": 23,
+      "parts": [
+        "vietnam"
+      ],
+      "country": "Vietnam",
+      "cities": [
+        "Da Nang",
+        "Hoi An"
+      ],
+      "title": "Da Nang / Hoi An",
+      "sleep": {
+        "kind": "hotel",
+        "city": "Hoi An"
+      },
+      "notes": [
+        "Suggested: Ba Na Hills + Golden Bridge (full day, ~1h15 from Hoi An; go early), Dragon Bridge show 21:00 (Sun) on the way back. First tailor fitting in the evening."
+      ]
+    },
+    {
+      "date": "2027-10-25",
+      "dow": "Mon",
+      "tripDay": 24,
+      "parts": [
+        "vietnam"
+      ],
+      "country": "Vietnam",
+      "cities": [
+        "Da Nang",
+        "Hoi An"
+      ],
+      "title": "Da Nang / Hoi An",
+      "sleep": {
+        "kind": "hotel",
+        "city": "Hoi An"
+      },
+      "notes": [
+        "Suggested: My Son Sanctuary early (~1 h) or Marble Mountains + Lady Buddha/Monkey Mountain; Hoi An Old Town sights (Japanese Covered Bridge, Fujian Assembly Hall, Quan Cong Temple) + lantern evening; second fitting."
+      ]
+    },
+    {
+      "date": "2027-10-26",
+      "dow": "Tue",
+      "tripDay": 25,
+      "parts": [
+        "vietnam"
+      ],
+      "country": "Vietnam",
+      "cities": [
+        "Hoi An",
+        "Da Nang",
+        "Hanoi"
+      ],
+      "title": "Hoi An → Hanoi",
+      "sleep": {
+        "kind": "hotel",
+        "city": "Hanoi",
+        "area": "Old Quarter / Hoan Kiem",
+        "checkIn": true,
+        "nights": 1,
+        "note": "Same hotel as Oct 31 – Nov 1; it keeps the big bags during the Ninh Binh + Sa Pa loop (Oct 27–30)."
+      },
+      "moves": [
+        {
+          "type": "car",
+          "label": "Hoi An → DAD (~45 min), leave ~14:30"
+        },
+        {
+          "type": "flight",
+          "ref": "VN174",
+          "from": "DAD",
+          "to": "HAN",
+          "dep": "16:40",
+          "arr": "18:05"
+        },
+        {
+          "type": "taxi",
+          "label": "HAN T1 → Old Quarter (~45 min)"
+        }
+      ],
+      "notes": [
+        "Morning: final fitting + pickup; beach (An Bang) if time. Evening: Old Quarter street-food dinner."
+      ]
+    },
+    {
+      "date": "2027-10-27",
+      "dow": "Wed",
+      "tripDay": 26,
+      "parts": [
+        "vietnam"
+      ],
+      "country": "Vietnam",
+      "cities": [
+        "Hanoi",
+        "Ninh Binh"
+      ],
+      "title": "Hanoi → Ninh Binh",
+      "sleep": {
+        "kind": "hotel",
+        "city": "Ninh Binh",
+        "area": "Tam Coc (homestay/boutique)",
+        "checkIn": true,
+        "nights": 1
+      },
+      "moves": [
+        {
+          "type": "car",
+          "label": "Private car Hanoi → Ninh Binh (~2 h), leave ~07:30; daypacks only"
+        }
+      ],
+      "notes": [
+        "Weekday = fewer crowds than weekends. Suggested: Trang An boat (~2.5 h), Hoa Lu, Mua Caves at sunset (500 steps)."
+      ]
+    },
+    {
+      "date": "2027-10-28",
+      "dow": "Thu",
+      "tripDay": 27,
+      "parts": [
+        "vietnam"
+      ],
+      "country": "Vietnam",
+      "cities": [
+        "Ninh Binh",
+        "Hanoi"
+      ],
+      "title": "Ninh Binh → Hanoi · night train to Lao Cai",
+      "sleep": {
+        "kind": "train",
+        "city": null,
+        "note": "On SP1 Hanoi 21:35 → Lao Cai 05:15 (private sleeper cabin)"
+      },
+      "moves": [
+        {
+          "type": "car",
+          "label": "Private car Ninh Binh → Hanoi (~2 h), ~13:30 → 15:30"
+        },
+        {
+          "type": "train",
+          "label": "SP1 Hanoi Station 21:35 → Lao Cai 05:15 (+1), private 4-berth cabin (book the whole cabin)",
+          "reserved": true,
+          "bookingWindow": "No fixed window; weekend trains sell out — book ~2 months ahead"
+        }
+      ],
+      "notes": [
+        "Morning Tam Coc boat (~07:00, before the heat/crowds) + bike ride; Hanoi evening: Train Street / Old Quarter dinner, then the station (check which of Station A (Le Duan) / B (Tran Quy Cap) the cabin operator uses).",
+        "Stay = null (night train). The train leg is fixed-time and crosses midnight: Hanoi Station item (last today) → Lao Cai Station item (first Oct 29)."
+      ]
+    },
+    {
+      "date": "2027-10-29",
+      "dow": "Fri",
+      "tripDay": 28,
+      "parts": [
+        "vietnam"
+      ],
+      "country": "Vietnam",
+      "cities": [
+        "Sa Pa"
+      ],
+      "title": "Sa Pa",
+      "sleep": {
+        "kind": "hotel",
+        "city": "Sa Pa",
+        "area": "Sa Pa town / Muong Hoa valley view",
+        "checkIn": true,
+        "nights": 1
+      },
+      "moves": [
+        {
+          "type": "car",
+          "label": "Lao Cai Station → Sa Pa shuttle/car (~1 h)"
+        }
+      ],
+      "notes": [
+        "Arrive 05:15: breakfast in Lao Cai or at the hotel (ask for early check-in), then Cat Cat village / Sa Pa town; Fansipan cable car if clear."
+      ]
+    },
+    {
+      "date": "2027-10-30",
+      "dow": "Sat",
+      "tripDay": 29,
+      "parts": [
+        "vietnam"
+      ],
+      "country": "Vietnam",
+      "cities": [
+        "Sa Pa"
+      ],
+      "title": "Sa Pa · night train to Hanoi",
+      "sleep": {
+        "kind": "train",
+        "city": null,
+        "note": "On SP2 Lao Cai 20:55 → Hanoi 04:35"
+      },
+      "moves": [
+        {
+          "type": "car",
+          "label": "Sa Pa → Lao Cai Station (~1 h), leave ~19:15"
+        },
+        {
+          "type": "train",
+          "label": "SP2 Lao Cai 20:55 → Hanoi 04:35 (+1), private cabin",
+          "reserved": true,
+          "bookingWindow": "Sat-night train — sells out; book ~2 months ahead"
+        }
+      ],
+      "notes": [
+        "Muong Hoa valley trek (Lao Chai → Ta Van) with a local guide; keep the hotel room or luggage until evening (late check-out)."
+      ]
+    },
+    {
+      "date": "2027-10-31",
+      "dow": "Sun",
+      "tripDay": 30,
+      "parts": [
+        "vietnam"
+      ],
+      "country": "Vietnam",
+      "cities": [
+        "Hanoi"
+      ],
+      "title": "Hanoi",
+      "sleep": {
+        "kind": "hotel",
+        "city": "Hanoi",
+        "checkIn": true,
+        "nights": 2,
+        "note": "Book this stay from the night of Oct 30 (one extra paid night) so the 04:35 arrival can check straight in and sleep."
+      },
+      "notes": [
+        "Arrive 04:35: hotel, sleep until ~10:00. Sun evening: Hoan Kiem walking streets (Fri–Sun) + Beer Street.",
+        "Ho Chi Minh Mausoleum: mornings only, closed Mon & Fri, and usually shut for maintenance for part of the year — verify before planning it."
+      ]
+    },
+    {
+      "date": "2027-11-01",
+      "dow": "Mon",
+      "tripDay": 31,
+      "parts": [
+        "vietnam"
+      ],
+      "country": "Vietnam",
+      "cities": [
+        "Hanoi"
+      ],
+      "title": "Hanoi",
+      "sleep": {
+        "kind": "hotel",
+        "city": "Hanoi"
+      },
+      "notes": [
+        "Temple of Literature, Hoan Kiem Lake, egg coffee, Train Street (access sometimes restricted), street food."
+      ]
+    },
+    {
+      "date": "2027-11-02",
+      "dow": "Tue",
+      "tripDay": 32,
+      "parts": [
+        "vietnam",
+        "taiwan"
+      ],
+      "split": {
+        "before": "vietnam",
+        "after": "taiwan",
+        "marker": "BR398"
+      },
+      "country": "Vietnam",
+      "cities": [
+        "Hanoi",
+        "Taipei"
+      ],
+      "title": "Hanoi → Taipei",
+      "sleep": {
+        "kind": "hotel",
+        "city": "Taipei",
+        "area": "Da'an / Zhongshan / Taipei Main Station (MRT)",
+        "checkIn": true,
+        "nights": 4
+      },
+      "moves": [
+        {
+          "type": "taxi",
+          "label": "Old Quarter → HAN T2 (~45 min), leave ~09:15"
+        },
+        {
+          "type": "flight",
+          "ref": "BR398",
+          "from": "HAN",
+          "to": "TPE",
+          "dep": "12:05",
+          "arr": "15:55"
+        },
+        {
+          "type": "train",
+          "label": "Airport MRT express TPE → Taipei Main Station (~38 min)"
+        }
+      ],
+      "notes": [
+        "Half 'before' (Vietnam builder): breakfast + VAT refund at HAN. Half 'after' (Taiwan builder): check-in, night market dinner (e.g. Raohe or Ningxia).",
+        "Clocks go forward 1 h (ICT → CST)."
+      ]
+    },
+    {
+      "date": "2027-11-03",
+      "dow": "Wed",
+      "tripDay": 33,
+      "parts": [
+        "taiwan"
+      ],
+      "country": "Taiwan",
+      "cities": [
+        "Taipei"
+      ],
+      "title": "Taipei",
+      "sleep": {
+        "kind": "hotel",
+        "city": "Taipei"
+      },
+      "notes": [
+        "National Palace Museum (closed Mon — Wed is fine), Da'an District, Daan Forest Park, Wang Tea, cocktail bars in Da'an."
+      ]
+    },
+    {
+      "date": "2027-11-04",
+      "dow": "Thu",
+      "tripDay": 34,
+      "parts": [
+        "taiwan"
+      ],
+      "country": "Taiwan",
+      "cities": [
+        "Jiufen",
+        "Shifen"
+      ],
+      "title": "Jiufen + Shifen",
+      "sleep": {
+        "kind": "hotel",
+        "city": "Taipei"
+      },
+      "moves": [
+        {
+          "type": "train",
+          "label": "TRA Taipei → Ruifang (~45 min), Pingxi Line Ruifang → Shifen (~25 min)"
+        },
+        {
+          "type": "bus",
+          "label": "Shifen → Jiufen by taxi (~30 min); Jiufen → Taipei by bus 965/1062 (~1–1.5 h)"
+        }
+      ],
+      "notes": [
+        "Weekday on purpose (Jiufen Old Street is packed on weekends/midday). Shifen 0.5 + Jiufen 0.5 (Cities tab); Jiufen at dusk for the lantern view, Jiufen Teahouse; Teapot Mountain hike only if starting early."
+      ]
+    },
+    {
+      "date": "2027-11-05",
+      "dow": "Fri",
+      "tripDay": 35,
+      "parts": [
+        "taiwan"
+      ],
+      "country": "Taiwan",
+      "cities": [
+        "Taipei"
+      ],
+      "title": "Taipei (flex day)",
+      "sleep": {
+        "kind": "hotel",
+        "city": "Taipei"
+      },
+      "flex": true,
+      "notes": [
+        "FLEX DAY: the Cities tab totals 31 days; this is the one unallocated day (see flex). Fill with Taipei (e.g. Beitou hot springs, Elephant Mountain, Taipei 101, Longshan Temple) or move it (see allocation.flex.alternatives)."
+      ]
+    },
+    {
+      "date": "2027-11-06",
+      "dow": "Sat",
+      "tripDay": 36,
+      "parts": [
+        "taiwan"
+      ],
+      "country": "Taiwan",
+      "cities": [
+        "Taipei"
+      ],
+      "title": "Taipei → fly home",
+      "sleep": {
+        "kind": "flight",
+        "city": null,
+        "note": "On TK25 TPE 21:45 → IST 05:10 (+1)"
+      },
+      "moves": [
+        {
+          "type": "train",
+          "label": "Airport MRT Taipei Main Station → TPE T2 (~38 min), leave ~18:30"
+        },
+        {
+          "type": "flight",
+          "ref": "TK25",
+          "from": "TPE",
+          "to": "IST",
+          "dep": "21:45",
+          "arr": "05:10 (+1)"
+        }
+      ],
+      "notes": [
+        "Full Taipei day until ~18:00 (late check-out or luggage storage). Taiwan tax refund (TRS) at TPE before check-in."
+      ]
+    },
+    {
+      "date": "2027-11-07",
+      "dow": "Sun",
+      "tripDay": 37,
+      "parts": [
+        "taiwan"
+      ],
+      "country": null,
+      "cities": [],
+      "title": "Istanbul layover → Newark",
+      "sleep": {
+        "kind": "home",
+        "city": null,
+        "note": "Home (arrive EWR ~21:40 EST)"
+      },
+      "moves": [
+        {
+          "type": "flight-connection",
+          "ref": "TK25",
+          "label": "IST layover 05:10 → 18:50 (Layover item)"
+        },
+        {
+          "type": "flight",
+          "ref": "TK29",
+          "from": "IST",
+          "to": "EWR",
+          "dep": "18:50",
+          "arr": "21:40 (EST)"
+        }
+      ],
+      "notes": [
+        "Only the flight block's items (Layover at IST + EWR arrival). US clocks go back 1 h at 02:00 on Nov 7.",
+        "Optional: Touristanbul free city tour (6–24 h connections) or the TK Business Lounge."
+      ]
+    }
+  ],
+  "blocks": [
+    {
+      "country": "Japan",
+      "city": "Tokyo",
+      "citiesTabDays": 4,
+      "nights": [
+        "2027-10-03",
+        "2027-10-04",
+        "2027-10-05",
+        "2027-10-06"
+      ],
+      "effectiveDays": 4.0,
+      "how": "Owner's Itinerary Days 1–4"
+    },
+    {
+      "country": "Japan",
+      "city": "Mt. Fuji",
+      "citiesTabDays": 1,
+      "nights": [
+        "2027-10-07"
+      ],
+      "effectiveDays": 1.0,
+      "how": "Owner's Days 5–6 (Kawaguchiko ryokan night)"
+    },
+    {
+      "country": "Japan",
+      "city": "Nagoya",
+      "citiesTabDays": 1,
+      "nights": [
+        "2027-10-08"
+      ],
+      "effectiveDays": 1.0,
+      "how": "Oct 8 evening + Ghibli Park Oct 9"
+    },
+    {
+      "country": "Japan",
+      "city": "Kyoto",
+      "citiesTabDays": 2.75,
+      "nights": [
+        "2027-10-09",
+        "2027-10-10",
+        "2027-10-11"
+      ],
+      "effectiveDays": 2.6,
+      "how": "Oct 9 evening, Oct 10–11, Oct 12 early morning"
+    },
+    {
+      "country": "Japan",
+      "city": "Uji",
+      "citiesTabDays": 0.15,
+      "nights": [],
+      "effectiveDays": 0.15,
+      "how": "~1–1.5 h stop on Oct 12"
+    },
+    {
+      "country": "Japan",
+      "city": "Nara",
+      "citiesTabDays": 0.35,
+      "nights": [],
+      "effectiveDays": 0.35,
+      "how": "~3.5 h on Oct 12 afternoon"
+    },
+    {
+      "country": "Japan",
+      "city": "Osaka",
+      "citiesTabDays": 1.75,
+      "nights": [
+        "2027-10-12",
+        "2027-10-13"
+      ],
+      "effectiveDays": 1.75,
+      "how": "Oct 12 evening, Oct 13, Oct 14 until ~15:00"
+    },
+    {
+      "country": "South Korea",
+      "city": "Seoul",
+      "citiesTabDays": 2,
+      "nights": [
+        "2027-10-14",
+        "2027-10-15",
+        "2027-10-16"
+      ],
+      "effectiveDays": 2.1,
+      "how": "Oct 14 late evening, Oct 15–16, Oct 17 early"
+    },
+    {
+      "country": "South Korea",
+      "city": "Busan",
+      "citiesTabDays": 3,
+      "nights": [
+        "2027-10-17",
+        "2027-10-18",
+        "2027-10-19"
+      ],
+      "effectiveDays": 2.7,
+      "how": "Oct 17 from ~11:00, Oct 18–19, Oct 20 until 07:30"
+    },
+    {
+      "country": "Vietnam",
+      "city": "Ho Chi Minh City",
+      "citiesTabDays": 3,
+      "nights": [
+        "2027-10-20",
+        "2027-10-21",
+        "2027-10-22"
+      ],
+      "effectiveDays": 2.9,
+      "how": "Oct 20 from ~14:00, Oct 21–22, Oct 23 until ~11:30"
+    },
+    {
+      "country": "Vietnam",
+      "city": "Da Nang",
+      "citiesTabDays": 3,
+      "nights": [
+        "2027-10-23",
+        "2027-10-24",
+        "2027-10-25"
+      ],
+      "effectiveDays": 2.9,
+      "how": "Based in Hoi An (Hoi An row has no days: counted inside Da Nang): Oct 23 from ~16:00, Oct 24–25, Oct 26 until ~14:30"
+    },
+    {
+      "country": "Vietnam",
+      "city": "Hanoi",
+      "citiesTabDays": 3,
+      "nights": [
+        "2027-10-26",
+        "2027-10-31",
+        "2027-11-01"
+      ],
+      "effectiveDays": 2.7,
+      "how": "Oct 26 evening, Oct 28 evening, Oct 31 (after sleeping in), Nov 1, Nov 2 until ~09:15"
+    },
+    {
+      "country": "Vietnam",
+      "city": "Ninh Binh",
+      "citiesTabDays": 1,
+      "nights": [
+        "2027-10-27"
+      ],
+      "effectiveDays": 1.2,
+      "how": "Oct 27 from ~09:30, Oct 28 until ~13:30"
+    },
+    {
+      "country": "Vietnam",
+      "city": "Sa Pa",
+      "citiesTabDays": 2,
+      "nights": [
+        "2027-10-29"
+      ],
+      "effectiveDays": 1.9,
+      "how": "Night trains both ways: Oct 29 from 05:15, Oct 30 until ~19:15"
+    },
+    {
+      "country": "Taiwan",
+      "city": "Taipei",
+      "citiesTabDays": 2,
+      "nights": [
+        "2027-11-02",
+        "2027-11-03",
+        "2027-11-04",
+        "2027-11-05"
+      ],
+      "effectiveDays": 3.2,
+      "how": "Nov 2 from ~17:00, Nov 3, Nov 5 (flex), Nov 6 until ~18:30"
+    },
+    {
+      "country": "Taiwan",
+      "city": "Shifen",
+      "citiesTabDays": 0.5,
+      "nights": [],
+      "effectiveDays": 0.5,
+      "how": "Nov 4 (day trip from Taipei)"
+    },
+    {
+      "country": "Taiwan",
+      "city": "Jiufen",
+      "citiesTabDays": 0.5,
+      "nights": [],
+      "effectiveDays": 0.5,
+      "how": "Nov 4 (day trip from Taipei)"
+    }
+  ],
+  "totals": {
+    "citiesTabDays": 31,
+    "asiaDays": "Oct 3 – Nov 6 = 35 calendar days; 32 nights in hotels/ryokan, 2 on night trains, 2 on overnight flights (Oct 2, Nov 6), Nov 7 home.",
+    "nightsByKind": {
+      "flight": 2,
+      "hotel": 31,
+      "ryokan": 1,
+      "train": 2,
+      "home": 1
+    },
+    "byCountry": {
+      "Japan": {
+        "nights": 11,
+        "dates": "Oct 3–14 (flight Oct 2)",
+        "citiesTabDays": 11
+      },
+      "South Korea": {
+        "nights": 6,
+        "dates": "Oct 14–20",
+        "citiesTabDays": 5
+      },
+      "Vietnam": {
+        "nights": 13,
+        "dates": "Oct 20 – Nov 2 (2 on trains)",
+        "citiesTabDays": 12
+      },
+      "Taiwan": {
+        "nights": 4,
+        "dates": "Nov 2–6",
+        "citiesTabDays": 3
+      }
+    }
+  },
+  "flex": {
+    "date": "2027-11-05",
+    "why": "Cities tab = 31 days; Oct 3 – Nov 6 gives ~32.5 usable days after travel. The spare day lands in Taipei because TK25 leaves at 21:45 on Nov 6 (Nov 6 is a near-full day).",
+    "alternatives": [
+      "Da Nang/Hoi An +1 night (more tailor-fitting slack, Ba Na Hills and My Son both unhurried): shift Oct 26 – Nov 2 one day later; VN174 and BR398 fly daily.",
+      "Hanoi +1 day: fly BR398 on Nov 3 instead of Nov 2."
+    ]
+  },
+  "closuresAndEvents": [
+    "Sat Oct 9: Ghibli Park open 09:00–17:00 (weekends/holidays; closed Tue).",
+    "Mon Oct 11: Sports Day (JP national holiday) — Kyoto crowds; Mon-closed museums open, close Tue Oct 12.",
+    "Oct 23/24 (Sat/Sun) 21:00: Da Nang Dragon Bridge fire & water show.",
+    "Fri–Sun evenings: Hanoi Hoan Kiem walking streets (Sun Oct 31 in plan).",
+    "Taipei: National Palace Museum closed Mondays (no Monday in the Taiwan block).",
+    "Nov 7 02:00: US DST ends (EWR arrival in EST)."
+  ],
+  "bookingWindows": [
+    {
+      "what": "ANA award (NH159)",
+      "rule": "355 days before departure at 09:00 Asia/Tokyo",
+      "opens": "2026-10-12 09:00 JST (= Oct 11 20:00 ET)"
+    },
+    {
+      "what": "Turkish via United (TK25+TK29)",
+      "rule": "~337 days before departure (approx.)",
+      "opens": "~2026-12-04"
+    },
+    {
+      "what": "JR reserved seats (Fuji Excursion, Shinkansen, Haruka)",
+      "rule": "1 month before at 10:00 Asia/Tokyo",
+      "example": "Fuji Excursion Oct 7 → 2027-09-07 10:00 JST"
+    },
+    {
+      "what": "Ghibli Park",
+      "rule": "10th of the month two months before, 14:00 Asia/Tokyo",
+      "opens": "2027-08-10 14:00 JST (for Oct 9)"
+    },
+    {
+      "what": "Ghibli Museum (if used)",
+      "rule": "10th of the previous month, 10:00 Asia/Tokyo"
+    },
+    {
+      "what": "KTX (Seoul → Busan)",
+      "rule": "2 months before (new from Oct 2026); time assumed 07:00 Asia/Seoul — verify",
+      "opens": "~2027-08-17"
+    },
+    {
+      "what": "Vietnam night trains SP1/SP2 (private cabins)",
+      "rule": "no fixed window; book ~2 months ahead (weekend trains sell out)"
+    },
+    {
+      "what": "Intra-Asia cash flights",
+      "rule": "watch fares ~4–6 months out"
+    }
+  ],
+  "budgets": [
+    {
+      "scope": "trip",
+      "category": "shopping",
+      "kind": "total",
+      "amountUSD": 2500,
+      "note": "Per person, whole trip (knives, watch, lenses, pillow, tailoring…)."
+    },
+    {
+      "scope": "Japan",
+      "category": "all",
+      "kind": "per_day",
+      "amountUSD": 300
+    },
+    {
+      "scope": "Japan",
+      "category": "lodging",
+      "kind": "per_day",
+      "amountUSD": 130
+    },
+    {
+      "scope": "Japan",
+      "category": "food_drink",
+      "kind": "per_day",
+      "amountUSD": 70
+    },
+    {
+      "scope": "Japan",
+      "category": "activities",
+      "kind": "per_day",
+      "amountUSD": 45
+    },
+    {
+      "scope": "Japan",
+      "category": "transport",
+      "kind": "per_day",
+      "amountUSD": 40
+    },
+    {
+      "scope": "South Korea",
+      "category": "all",
+      "kind": "per_day",
+      "amountUSD": 220
+    },
+    {
+      "scope": "South Korea",
+      "category": "lodging",
+      "kind": "per_day",
+      "amountUSD": 90
+    },
+    {
+      "scope": "South Korea",
+      "category": "food_drink",
+      "kind": "per_day",
+      "amountUSD": 55
+    },
+    {
+      "scope": "South Korea",
+      "category": "activities",
+      "kind": "per_day",
+      "amountUSD": 30
+    },
+    {
+      "scope": "South Korea",
+      "category": "transport",
+      "kind": "per_day",
+      "amountUSD": 35
+    },
+    {
+      "scope": "Vietnam",
+      "category": "all",
+      "kind": "per_day",
+      "amountUSD": 140
+    },
+    {
+      "scope": "Vietnam",
+      "category": "lodging",
+      "kind": "per_day",
+      "amountUSD": 50
+    },
+    {
+      "scope": "Vietnam",
+      "category": "food_drink",
+      "kind": "per_day",
+      "amountUSD": 35
+    },
+    {
+      "scope": "Vietnam",
+      "category": "activities",
+      "kind": "per_day",
+      "amountUSD": 30
+    },
+    {
+      "scope": "Vietnam",
+      "category": "transport",
+      "kind": "per_day",
+      "amountUSD": 20
+    },
+    {
+      "scope": "Taiwan",
+      "category": "all",
+      "kind": "per_day",
+      "amountUSD": 190
+    },
+    {
+      "scope": "Taiwan",
+      "category": "lodging",
+      "kind": "per_day",
+      "amountUSD": 85
+    },
+    {
+      "scope": "Taiwan",
+      "category": "food_drink",
+      "kind": "per_day",
+      "amountUSD": 45
+    },
+    {
+      "scope": "Taiwan",
+      "category": "activities",
+      "kind": "per_day",
+      "amountUSD": 25
+    },
+    {
+      "scope": "Taiwan",
+      "category": "transport",
+      "kind": "per_day",
+      "amountUSD": 25
+    }
+  ]
+}

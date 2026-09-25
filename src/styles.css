@@ -1,0 +1,285 @@
+/*
+ * Yonder global styles (DESIGN §2.8, written in that order).
+ *
+ * The palette, radius and the shadcn tokens come from the brand kit
+ * (`brand/tokens/theme.css`, generated; never edit it here). This file only
+ * EXTENDS it with the semantic tokens the workspace needs: warning, travel
+ * modes, presence, category families, basemap, elevation and motion.
+ * Feature packages add `src/features/<x>/<x>.css` starting with
+ * `@reference "../../styles.css";` (SPEC §0 rule 13).
+ */
+@import "tailwindcss";
+@source not "../spikes";
+@source not "../brand";
+@source not "../e2e";
+@source not "../qa";
+@source not "../infra";
+@source not "../seed";
+@source not "../docs";
+@import "tw-animate-css";
+/* :root, .dark and @theme inline: shadcn tokens, --glow*, --map-*, --radius */
+@import "../brand/tokens/theme.css";
+/* Self-hosted fonts (D7). The Noto CSS carries unicode-range subsets, so CJK
+   files only download when those glyphs appear on screen. Its ~350 @font-face
+   rules (≈300 kB) live in `fonts-cjk.css`, loaded after first paint by the
+   root route (QA VIS2-10 / PERF-05: they made this stylesheet render-blocking
+   at 482 kB); the family names stay in the stacks below. */
+@import "@fontsource-variable/commissioner/index.css";
+@import "@fontsource-variable/parkinsans/index.css";
+@import "@fontsource-variable/atkinson-hyperlegible-mono/index.css";
+
+/* Class-based dark mode: `.dark` on <html> (set by themeInitScript + ThemeProvider). */
+@custom-variant dark (&:is(.dark *));
+
+:root {
+	/* Conflicts (§2.1 additions) */
+	--warning: #9a6212;
+	--warning-hairline: #d9a03f;
+	--warning-wash: rgb(217 160 63 / 0.1);
+	--selected-edge: rgb(24 29 47 / 0.22);
+
+	/* Travel modes (§2.3): lines, rails and glyphs; never text under 18px */
+	--mode-walk: var(--map-walk);
+	--mode-transit: var(--map-transit);
+	--mode-flight: var(--map-flight);
+	--mode-other: #5c6375;
+
+	/* Presence (§2.2): index n (0–7) in the DB → --presence-(n+1) */
+	--presence-1: #2f7f86;
+	--presence-2: #b4539a;
+	--presence-3: #c98a1c;
+	--presence-4: #4e7bd3;
+	--presence-5: #6a8f3a;
+	--presence-6: #8c5bd6;
+	--presence-7: #3f8f6b;
+	--presence-8: #a0643a;
+
+	/* Category pin families (§2.4; same in dark mode) */
+	--fam-culture: #cf3b1d;
+	--fam-food: #f0a226;
+	--fam-nature: #2cab70;
+	--fam-water: #54b8e1;
+	--fam-activity: #1c73c5;
+	--fam-shopping: #bc4891;
+	--fam-nightlife: #5e218f;
+	--fam-lodging: #202638;
+	--fam-transit: #46515d;
+	--fam-culture-ink: #ffffff;
+	--fam-food-ink: #1b1b1b;
+	--fam-nature-ink: #1b1b1b;
+	--fam-water-ink: #1b1b1b;
+	--fam-activity-ink: #ffffff;
+	--fam-shopping-ink: #ffffff;
+	--fam-nightlife-ink: #ffffff;
+	--fam-lodging-ink: #ffffff;
+	--fam-transit-ink: #ffffff;
+
+	/* Basemap (§2.5); build-map-styles.ts reads the hex values from DESIGN.md */
+	--basemap-land: #f0f2f7;
+	--basemap-water: #d9e3ee;
+	--basemap-park: #e3ece6;
+	--basemap-road: #ffffff;
+	--basemap-road-casing: #e0e3eb;
+	--basemap-boundary: #c3c9d6;
+	--basemap-label: #6b7285;
+	--basemap-label-halo: #f0f2f7;
+	/* Space round the whole-trip globe on a dark-tone basemap: the Overview
+	   hero's black in both themes (a dark basemap can sit in the light app). */
+	--basemap-space: #040507;
+	--basemap-space-glow: rgb(24 34 52 / 0.55);
+
+	/* Elevation and motion (§2.7, §11) */
+	--shadow-float: 0 1px 2px rgb(15 18 30 / 0.06), 0 8px 24px rgb(15 18 30 / 0.08);
+	--ease-zoom: cubic-bezier(0.22, 1, 0.36, 1);
+
+	/* Fixed chrome sizes (§2.7), used by layout math */
+	--topbar-h: 52px;
+	--tabbar-h: 40px;
+	--outline-w: 264px;
+	--inspector-w: 420px;
+}
+
+.dark {
+	--warning: #e0a54a;
+	--warning-hairline: #b8862f;
+	--warning-wash: rgb(224 165 74 / 0.1);
+	--selected-edge: rgb(238 240 246 / 0.26);
+	--mode-other: #a3a3a3;
+
+	/* Rings and carets are raised ~8% in lightness on dark grounds (§2.2). */
+	--presence-1: color-mix(in oklab, #2f7f86 85%, white);
+	--presence-2: color-mix(in oklab, #b4539a 85%, white);
+	--presence-3: color-mix(in oklab, #c98a1c 85%, white);
+	--presence-4: color-mix(in oklab, #4e7bd3 85%, white);
+	--presence-5: color-mix(in oklab, #6a8f3a 85%, white);
+	--presence-6: color-mix(in oklab, #8c5bd6 85%, white);
+	--presence-7: color-mix(in oklab, #3f8f6b 85%, white);
+	--presence-8: color-mix(in oklab, #a0643a 85%, white);
+
+	--basemap-land: #141414;
+	--basemap-water: #141c26;
+	--basemap-park: #141a16;
+	--basemap-road: #202020;
+	--basemap-road-casing: #2e2e2e;
+	--basemap-boundary: #3a3a3a;
+	--basemap-label: #8f8f8f;
+	--basemap-label-halo: #141414;
+
+	--shadow-float: 0 0 0 1px var(--border), 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px rgb(0 0 0 / 0.45);
+}
+
+@theme inline {
+	/* Self-hosted variable families (the brand file names the static ones). */
+	--font-display: "Parkinsans Variable", "Commissioner Variable", ui-sans-serif, system-ui, sans-serif;
+	--font-sans: "Commissioner Variable", "Noto Sans JP Variable", "Noto Sans KR Variable", "Noto Sans TC Variable", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+	--font-mono: "Atkinson Hyperlegible Mono Variable", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+	--color-warning: var(--warning);
+	--color-warning-hairline: var(--warning-hairline);
+	--color-warning-wash: var(--warning-wash);
+	--color-selected-edge: var(--selected-edge);
+
+	--color-mode-walk: var(--mode-walk);
+	--color-mode-transit: var(--mode-transit);
+	--color-mode-flight: var(--mode-flight);
+	--color-mode-other: var(--mode-other);
+
+	--color-presence-1: var(--presence-1);
+	--color-presence-2: var(--presence-2);
+	--color-presence-3: var(--presence-3);
+	--color-presence-4: var(--presence-4);
+	--color-presence-5: var(--presence-5);
+	--color-presence-6: var(--presence-6);
+	--color-presence-7: var(--presence-7);
+	--color-presence-8: var(--presence-8);
+
+	--color-fam-culture: var(--fam-culture);
+	--color-fam-food: var(--fam-food);
+	--color-fam-nature: var(--fam-nature);
+	--color-fam-water: var(--fam-water);
+	--color-fam-activity: var(--fam-activity);
+	--color-fam-shopping: var(--fam-shopping);
+	--color-fam-nightlife: var(--fam-nightlife);
+	--color-fam-lodging: var(--fam-lodging);
+	--color-fam-transit: var(--fam-transit);
+
+	--color-basemap-land: var(--basemap-land);
+	--color-basemap-water: var(--basemap-water);
+
+	--shadow-float: var(--shadow-float);
+	--ease-zoom: var(--ease-zoom);
+	--animate-glow: glow 1.2s ease-out;
+}
+
+/* Mono numbers line up (times, durations, fares, counts). */
+@utility tnum {
+	font-variant-numeric: tabular-nums;
+}
+
+/* A 1px rule in the border colour. */
+@utility hairline {
+	border-color: var(--border);
+	border-width: 1px;
+}
+
+/* Layover blocks and other "time passes here" fills (§7.1). */
+@utility bg-hatch {
+	background: repeating-linear-gradient(135deg, var(--muted) 0 6px, transparent 6px 12px);
+}
+
+/* Remote-change glow: set --glow-color to the actor's presence colour (§10.8). */
+@keyframes glow {
+	from {
+		box-shadow: 0 0 0 3px var(--glow-color, transparent);
+	}
+	to {
+		box-shadow: 0 0 0 3px transparent;
+	}
+}
+
+/* Han glyph forms follow the local name's language (§2.6). */
+:lang(zh-Hant) {
+	font-family: "Commissioner Variable", "Noto Sans TC Variable", "Noto Sans JP Variable", ui-sans-serif, sans-serif;
+}
+:lang(ko) {
+	font-family: "Commissioner Variable", "Noto Sans KR Variable", "Noto Sans JP Variable", ui-sans-serif, sans-serif;
+}
+
+@layer base {
+	* {
+		@apply border-border outline-ring/50;
+	}
+	body {
+		@apply bg-background font-sans text-foreground antialiased;
+		font-size: 14px;
+		line-height: 20px;
+	}
+	/* 2px ring with a 2px offset on every focusable element (§13). */
+	:focus-visible {
+		outline: 2px solid var(--ring);
+		outline-offset: 2px;
+	}
+	/*
+	 * Everything clickable shows the pointer (owner FB-02). Tailwind 4's
+	 * preflight leaves buttons at the browser's `default`. A utility on the
+	 * element (`cursor-grab`, `cursor-text`, `cursor-zoom-in`…) still wins:
+	 * utilities come after this layer.
+	 */
+	button,
+	[role="button"],
+	a[href],
+	summary,
+	label[for],
+	select,
+	[role="menuitem"],
+	[role="menuitemcheckbox"],
+	[role="menuitemradio"],
+	[role="tab"],
+	[role="option"],
+	[role="treeitem"],
+	[role="switch"],
+	[role="checkbox"],
+	[role="radio"],
+	[role="link"],
+	input:is(
+			[type="checkbox"],
+			[type="radio"],
+			[type="file"],
+			[type="color"],
+			[type="range"],
+			[type="submit"],
+			[type="button"],
+			[type="reset"]
+		) {
+		cursor: pointer;
+	}
+	:is(
+			button,
+			[role="button"],
+			select,
+			input,
+			[role="menuitem"],
+			[role="menuitemcheckbox"],
+			[role="menuitemradio"],
+			[role="tab"],
+			[role="option"],
+			[role="treeitem"],
+			[role="switch"],
+			[role="checkbox"],
+			[role="radio"]
+		):is(:disabled, [aria-disabled="true"], [data-disabled]:not([data-disabled="false"])) {
+		cursor: default;
+	}
+}
+
+/* Every motion becomes a short crossfade (§11). */
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		animation-duration: 120ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 120ms !important;
+		scroll-behavior: auto !important;
+	}
+}

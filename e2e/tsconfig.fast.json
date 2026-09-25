@@ -1,0 +1,14 @@
+{
+  // Used ONLY by playwright.fast.config.ts (`tsconfig` option): every spec's
+  // `@playwright/test` becomes _helpers/fast-test.ts, which adds the per-file
+  // reset fixture of the fast full run. The app's aliases are repeated because
+  // `paths` replaces, not merges.
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "paths": {
+      "@playwright/test": ["./tests/app/_helpers/fast-test.ts"],
+      "@/*": ["../src/*"],
+      "#/*": ["../src/*"]
+    }
+  }
+}

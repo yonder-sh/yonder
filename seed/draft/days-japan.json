@@ -1,0 +1,1358 @@
+{
+  "version": 1,
+  "part": "japan",
+  "nodes": [
+    {
+      "key": "Japan|Tokyo|Shinjuku|Odakyu Hotel Century Southern Tower",
+      "type": "place",
+      "category": "lodging",
+      "localName": "小田急ホテルセンチュリーサザンタワー",
+      "lat": 35.68644,
+      "lng": 139.70037,
+      "tz": "Asia/Tokyo",
+      "confidence": "high",
+      "description": "Business hotel on the upper floors of Southern Tower, at Shinjuku Station's south exit.",
+      "address": "2-2-1 Yoyogi, Shibuya-ku, Tokyo",
+      "openHours": "Check-in ~14:00–15:00; check-out ~11:00 (verify)",
+      "note": "Draft pick (not booked) for the owner's Tokyo nights Oct 3–6: ~3 min from the JR Shinjuku platforms for the 08:30 Fuji Excursion on Oct 7, and walkable to Golden Gai / Benfiddich (Day 3). Alternatives: Keio Plaza (West Shinjuku), JR Kyushu Hotel Blossom Shinjuku. Geocode: OSM hotel node (high)."
+    },
+    {
+      "key": "Japan|Nagoya|Nagoya Station|Nagoya JR Gate Tower Hotel",
+      "type": "place",
+      "category": "lodging",
+      "localName": "名古屋JRゲートタワーホテル",
+      "lat": 35.17227,
+      "lng": 136.88276,
+      "tz": "Asia/Tokyo",
+      "confidence": "high",
+      "description": "Hotel on the upper floors of JR Gate Tower, directly above Nagoya Station.",
+      "address": "JR Gate Tower, 1-1-3 Meieki, Nakamura-ku, Nagoya",
+      "openHours": "Check-in ~14:00–15:00; check-out ~11:00 (verify)",
+      "note": "Draft pick (not booked) for Oct 8: in the station, so the Fuji → Nagoya arrival, the Higashiyama Line to Ghibli Park and the Oct 9 Shinkansen are all under one roof. Alternative: Nagoya Marriott Associa (JR Central Towers). Geocode: JR Gate Tower building (OSM), high."
+    },
+    {
+      "key": "Japan|Kyoto||Hotel Granvia Kyoto",
+      "type": "place",
+      "category": "lodging",
+      "localName": "ホテルグランヴィア京都",
+      "lat": 34.98584,
+      "lng": 135.75982,
+      "tz": "Asia/Tokyo",
+      "confidence": "high",
+      "description": "Large hotel built into the Kyoto Station building.",
+      "address": "JR Kyoto Station, Karasuma-dori Shiokoji-sagaru, Shimogyo-ku, Kyoto",
+      "openHours": "Check-in ~15:00; check-out ~11:00–12:00 (verify)",
+      "note": "Draft pick (not booked) for Oct 9–11: arriving 20:00 by Shinkansen, JR Nara Line for Fushimi Inari at dawn (Oct 10) and Uji (Oct 12), JR Sagano Line for Arashiyama (Oct 11). Sat–Mon is a 3-day weekend: book early. Alternatives: The Thousand Kyoto, Hotel Kanra Kyoto; or one ryokan night with a private onsen (Action Timeline row 17). Geocode: OSM hotel node (high)."
+    },
+    {
+      "key": "Japan|Osaka|Namba|Swissotel Nankai Osaka",
+      "type": "place",
+      "category": "lodging",
+      "localName": "スイスホテル南海大阪",
+      "lat": 34.66417,
+      "lng": 135.50133,
+      "tz": "Asia/Tokyo",
+      "confidence": "high",
+      "description": "Hotel directly above Nankai Namba Station, a few minutes' walk from Dotonbori.",
+      "address": "5-1-60 Namba, Chuo-ku, Osaka",
+      "openHours": "Check-in ~15:00; check-out ~11:00–12:00 (verify)",
+      "note": "Draft pick (not booked) for Oct 12–13: the rapi:t to KIX leaves from the station below (Oct 14), Dotonbori/Shinsaibashi on foot, Midosuji Line for Katsuoji/Umeda. Alternative: Cross Hotel Osaka (Dotonbori). Geocode: OSM hotel node (high)."
+    },
+    {
+      "key": "Japan|Nagoya|Nagoya Station|Nagoya Station (Shinkansen)",
+      "type": "place",
+      "category": "station",
+      "localName": "名古屋駅 (新幹線)",
+      "lat": 35.1706,
+      "lng": 136.881,
+      "tz": "Asia/Tokyo",
+      "confidence": "high",
+      "description": "Tokaido Shinkansen platforms of JR Nagoya Station (Taiko-dori / west side).",
+      "note": "Shinkansen gates are on the Taiko-dori (west) side, next to the Esca underground mall. Geocode: station (high)."
+    },
+    {
+      "key": "Japan|Kyoto||Kyoto Station",
+      "type": "place",
+      "category": "station",
+      "localName": "京都駅",
+      "lat": 34.9855,
+      "lng": 135.7588,
+      "tz": "Asia/Tokyo",
+      "confidence": "high",
+      "description": "Kyoto's main station: Tokaido Shinkansen, JR Nara / Sagano lines, Karasuma subway.",
+      "address": "Higashishiokoji-cho, Shimogyo-ku, Kyoto",
+      "note": "Shinkansen gates are on the Hachijo (south) side; Hotel Granvia is on the north side (~5 min inside the station). Geocode: station (high)."
+    },
+    {
+      "key": "Japan|Osaka|Namba|Nankai Namba Station",
+      "type": "place",
+      "category": "station",
+      "localName": "南海なんば駅",
+      "lat": 34.6637,
+      "lng": 135.5018,
+      "tz": "Asia/Tokyo",
+      "confidence": "high",
+      "description": "Nankai terminal in Namba: rapi:t and airport expresses to Kansai Airport.",
+      "note": "Platforms are on 3F, directly under Swissotel Nankai Osaka. Geocode: OSM station node (high)."
+    },
+    {
+      "key": "Japan|Nagoya|Nagoya Station|Yabaton Esca",
+      "type": "place",
+      "category": "restaurant",
+      "localName": "矢場とん エスカ店",
+      "lat": 35.16976,
+      "lng": 136.8812,
+      "tz": "Asia/Tokyo",
+      "confidence": "high",
+      "description": "Nagoya's best-known miso-katsu chain, branch in the Esca mall by the Shinkansen gates.",
+      "address": "Esca underground mall, 6-9 Tsubaki-cho, Nakamura-ku, Nagoya",
+      "openHours": "~11:00–22:00 (Esca hours; verify)",
+      "note": "Order the waraji-tonkatsu (huge flat cutlet) or the hirekatsu; queues at dinner time move fast. Geocode: OSM restaurant node in Esca (high)."
+    },
+    {
+      "key": "Japan|Kyoto|Arashiyama|Tenryu-ji",
+      "type": "place",
+      "category": "temple_shrine",
+      "localName": "天龍寺",
+      "lat": 35.01622,
+      "lng": 135.67294,
+      "tz": "Asia/Tokyo",
+      "confidence": "high",
+      "description": "Head Zen temple of Arashiyama (UNESCO) with a famous 14th-century landscape garden.",
+      "address": "68 Saga-Tenryuji Susukinobaba-cho, Ukyo-ku, Kyoto",
+      "timeNeededMin": 60,
+      "openHours": "Garden 08:30–17:00 (last entry ~16:50); garden ~¥500, halls extra (verify)",
+      "note": "The garden's north gate opens straight onto the Bamboo Grove path. Added because it sits between the Bamboo Grove and the Shigetsu lunch. Geocode: OSM temple node (high)."
+    },
+    {
+      "key": "Japan|Kyoto|Arashiyama|Shigetsu",
+      "type": "place",
+      "category": "restaurant",
+      "localName": "篩月",
+      "lat": 35.01513,
+      "lng": 135.6736,
+      "tz": "Asia/Tokyo",
+      "confidence": "medium",
+      "description": "Buddhist vegetarian (shojin ryori) restaurant inside Tenryu-ji.",
+      "address": "Inside Tenryu-ji, 68 Saga-Tenryuji Susukinobaba-cho, Ukyo-ku, Kyoto",
+      "openHours": "Lunch ~11:00–14:00 (verify); set menus from ~¥4,000; garden ticket needed",
+      "bookAhead": true,
+      "note": "Reservations recommended on weekends/holidays (Oct 11 is a holiday). Geocode: OSM restaurant node, inside the Tenryu-ji precinct (medium, within ~150 m)."
+    },
+    {
+      "key": "Japan|Uji||Nakamura Tokichi Honten",
+      "type": "place",
+      "category": "cafe",
+      "localName": "中村藤吉本店",
+      "lat": 34.88941,
+      "lng": 135.80171,
+      "tz": "Asia/Tokyo",
+      "confidence": "high",
+      "description": "Uji tea merchant (since 1859) with a café in its old merchant house, 2 min from JR Uji Station.",
+      "address": "Uji Ichiban 10, Uji, Kyoto",
+      "openHours": "~10:00–17:00; café last order ~16:30 (verify)",
+      "note": "Matcha soft serve / matcha to take home (Shopping List: Matcha / tea). The café queue can be long; takeaway keeps Uji to ~1 h. Geocode: OSM café node (high)."
+    },
+    {
+      "key": "Japan|Osaka|Namba|Okonomiyaki Mizuno",
+      "type": "place",
+      "category": "restaurant",
+      "localName": "美津の",
+      "lat": 34.66837,
+      "lng": 135.50322,
+      "tz": "Asia/Tokyo",
+      "confidence": "high",
+      "description": "Family-run okonomiyaki restaurant on Dotonbori (since 1945), long a Michelin Bib Gourmand pick.",
+      "address": "1-4-15 Dotonbori, Chuo-ku, Osaka",
+      "openHours": "~11:00–22:00, last order ~21:00 (verify)",
+      "note": "No reservations; expect a 30–60 min queue at dinner. The house 'Mizuno-yaki' is made with yam flour. Geocode: OSM restaurant node (high)."
+    },
+    {
+      "key": "Japan|Osaka|Shinsekai|Kushikatsu Daruma (Shinsekai)",
+      "type": "place",
+      "category": "restaurant",
+      "name": "Kushikatsu Daruma (Shinsekai)",
+      "localName": "串かつだるま 新世界",
+      "lat": 34.65273,
+      "lng": 135.50647,
+      "tz": "Asia/Tokyo",
+      "confidence": "medium",
+      "description": "Osaka's famous kushikatsu (deep-fried skewers) chain, founded in Shinsekai in 1929.",
+      "openHours": "~11:00–22:30 daily (verify)",
+      "note": "Several Daruma shops within 200 m in Shinsekai (the Sohonten is the original); any of them works. House rule: no double-dipping in the shared sauce. Geocode: OSM node of a Shinsekai branch (medium)."
+    },
+    {
+      "key": "Japan|Osaka|Shinsaibashi|Nishikawa (Daimaru Shinsaibashi)",
+      "type": "place",
+      "category": "shopping",
+      "localName": "西川 大丸心斎橋店",
+      "lat": 34.67326,
+      "lng": 135.50096,
+      "tz": "Asia/Tokyo",
+      "confidence": "high",
+      "description": "Nishikawa bedding counter doing made-to-measure pillows (Daimaru Shinsaibashi Main Building 7F).",
+      "address": "Daimaru Shinsaibashi Main Building 7F, 1-7-1 Shinsaibashisuji, Chuo-ku, Osaka",
+      "website": "https://www.nihonbashi-nishikawa.com/lp/orderpillow/en/",
+      "openHours": "Daimaru ~10:00–20:00 (verify); fitting by reservation",
+      "bookAhead": true,
+      "links": [
+        {
+          "url": "https://reserva.be/nemurino32/reserve?mode=service_staff&search_evt_no=aeeJwzMjQytTQAAAQwATQ",
+          "title": "Nishikawa Daimaru Shinsaibashi · reserve a fitting"
+        }
+      ],
+      "note": "Custom pillow: ¥33,000 regular / ¥44,000 premium materials (Nishikawa site, checked 2026-09-23), made the same day. Tax refund with passport. Geocode: Daimaru Main Building (OSM), high."
+    },
+    {
+      "key": "Japan|Osaka|Shinsaibashi|Hokkyokusei Shinsaibashi Honten",
+      "type": "place",
+      "category": "restaurant",
+      "localName": "北極星 心斎橋本店",
+      "lat": 34.66963,
+      "lng": 135.49874,
+      "tz": "Asia/Tokyo",
+      "confidence": "high",
+      "description": "The restaurant credited with inventing omurice (1925), in an old wooden house in Nishi-Shinsaibashi.",
+      "address": "2-7-27 Nishi-Shinsaibashi, Chuo-ku, Osaka",
+      "openHours": "~11:30–21:30 (verify)",
+      "note": "Tatami rooms; quick lunch (~¥1,000–1,500). Geocode: OSM restaurant node (high)."
+    }
+  ],
+  "days": [
+    {
+      "date": "2027-10-02",
+      "title": "Fly JFK → Tokyo",
+      "stay": null,
+      "dayNote": "- Leave home **Fri Oct 1 evening**: NH159 departs 02:00 on Sat Oct 2 (be at JFK T7 by ~23:30 Fri).\n- Sleep on the plane; Haneda arrival ~05:00 Sun Oct 3 (JST).",
+      "items": [
+        {
+          "flight": "NH159"
+        }
+      ]
+    },
+    {
+      "date": "2027-10-03",
+      "owner": true,
+      "stay": {
+        "node": "Japan|Tokyo|Shinjuku|Odakyu Hotel Century Southern Tower",
+        "checkIn": true,
+        "nights": 4,
+        "cost": {
+          "amount": 38000,
+          "currency": "JPY",
+          "per": "night",
+          "note": "Estimate for a double/twin in early October (~¥32k–45k); not booked."
+        },
+        "note": "Check-in ~14:00–15:00. Bags sent from Haneda arrivals by takkyubin: ask whether same-day delivery is possible, otherwise next day — keep an overnight kit in the carry-on."
+      },
+      "dayNote": "**Lunch ideas** (after Gotokuji, before JINS opens 11:00): Uobei Shibuya Dogenzaka (tablet-order conveyor sushi), Gyukatsu Motomura Shibuya (queue), Ichiran Shibuya (ramen).\n\n**Dinner ideas** (Shibuya / near the hotel): Shibuya Yokocho under Miyashita Park (izakaya alley — easy after the flight), Uogashi Nihon-ichi (standing sushi), or back in Shinjuku.\n\n**Hotel:** Odakyu Hotel Century Southern Tower at Shinjuku's south exit (4 nights) — 3 min from the Fuji Excursion platform on Oct 7.",
+      "items": [
+        {
+          "flight": "NH159"
+        }
+      ]
+    },
+    {
+      "date": "2027-10-04",
+      "owner": true,
+      "stay": {
+        "node": "Japan|Tokyo|Shinjuku|Odakyu Hotel Century Southern Tower"
+      },
+      "dayNote": "**Lunch ideas** (Asakusa / Kappabashi): Daikokuya (tendon), Asakusa Imahan (sukiyaki lunch sets), Sometaro (DIY okonomiyaki).\n\n**Dinner ideas** (Ginza, before Bar Centifolia): Ginza Kagari (chicken paitan ramen; queue), Tonkatsu Bairin, or an **omakase** splurge at Sushi Kyubey (Random Notes: omakase — reserve ~1 month ahead).\n\n**Nishikawa:** if COREDO Nihonbashi is closed for redevelopment, the pillow fitting is also planned in Osaka (Daimaru Shinsaibashi, Thu Oct 14 10:00) or use Hiroo Plaza — keep one, drop the other.\n\n**Tax refund with passport** — since 2026-11-01 Japan uses a refund system: pay incl. tax, customs checks the goods at departure (KIX, Oct 14), then the store refunds (usually to the card). Keep the goods unused, receipts together, in carry-on reach.",
+      "items": []
+    },
+    {
+      "date": "2027-10-05",
+      "owner": true,
+      "stay": {
+        "node": "Japan|Tokyo|Shinjuku|Odakyu Hotel Century Southern Tower"
+      },
+      "dayNote": "**Lunch ideas** (Nakano): Aoba (Nakano's classic double-soup ramen) or the Nakano Sun Mall arcade.\n\n**Dinner ideas** (Shinjuku, before Benfiddich): Tsunahachi (tempura since 1924), Fuunji (tsukemen; queue), yakitori in Omoide Yokocho.\n\nYodobashi / Bic Camera: tax refund with passport (tax-free counter queue 10–20 min).",
+      "items": []
+    },
+    {
+      "date": "2027-10-06",
+      "owner": true,
+      "stay": {
+        "node": "Japan|Tokyo|Shinjuku|Odakyu Hotel Century Southern Tower"
+      },
+      "dayNote": "**Lunch ideas:** Maisen Aoyama Honten (tonkatsu in a former bathhouse), Afuri Harajuku (yuzu shio ramen).\n\n**Dinner ideas:** Harajuku Gyoza-ro (cheap and quick), or Shibuya.\n\n**Tonight:** forward the big bags by takkyubin to **Nagoya JR Gate Tower Hotel** (check-in Oct 8; the front desk handles it, ~¥2,000–3,000 per bag) and carry only an overnight bag to the ryokan.",
+      "items": []
+    },
+    {
+      "date": "2027-10-07",
+      "owner": true,
+      "dayNote": "**Lunch:** hoto noodles at Hoto Fudo (the cloud-shaped Higashi Koiji branch, or the one near Kawaguchiko Station).\n\n**Ryokan ideas** (Fuji-view room + private onsen — few rooms, book early): Kozantei Ubuya, Shuhokaku Kogetsu. The draft budgets ~¥90,000 for two incl. kaiseki dinner + breakfast. Confirm the dinner start (~18:00) when booking.",
+      "items": []
+    },
+    {
+      "date": "2027-10-08",
+      "owner": true,
+      "stay": {
+        "node": "Japan|Nagoya|Nagoya Station|Nagoya JR Gate Tower Hotel",
+        "checkIn": true,
+        "nights": 1,
+        "cost": {
+          "amount": 27000,
+          "currency": "JPY",
+          "per": "night",
+          "note": "Estimate (~¥22k–32k); not booked."
+        },
+        "note": "Bags forwarded from Tokyo on Oct 6 wait at the front desk."
+      },
+      "dayNote": "**Lunch:** Fujinomiya yakisoba — stalls by Shiraito Falls, or Omiya Yokocho by Fujisan Hongu Sengen Taisha if the bus runs via Fujinomiya Station.\n\n**Dinner ideas** (around Nagoya Station): tebasaki wings at Sekai no Yamachan or Furaibo, miso-nikomi udon at Yamamotoya Sohonke, hitsumabushi (eel) at Bincho or Inau in the Esca mall.\n\n**Tonight:** send the big bags by takkyubin to **Hotel Granvia Kyoto** (next-day, arrives Oct 9) so Ghibli Park is hands-free.",
+      "items": []
+    },
+    {
+      "date": "2027-10-09",
+      "title": "Nagoya · Ghibli Park → Kyoto",
+      "startTime": "07:30",
+      "stay": {
+        "node": "Japan|Kyoto||Hotel Granvia Kyoto",
+        "checkIn": true,
+        "nights": 3,
+        "cost": {
+          "amount": 48000,
+          "currency": "JPY",
+          "per": "night",
+          "note": "Estimate for a 3-day-weekend Kyoto stay (~¥38k–60k); not booked."
+        },
+        "note": "Late arrival ~20:05 (tell the hotel). Bags sent from Nagoya by takkyubin on Oct 8 are held at the front desk."
+      },
+      "dayNote": "- **Breakfast:** Nagoya 'morning' culture — coffee comes with free toast + egg until ~11:00 (Komeda's Coffee has branches around the station).\n- **Getting there:** Higashiyama Line Nagoya → Fujigaoka (~27 min) + Linimo → Ai·Chikyuhaku-kinen-koen (~13 min). Sat opening 09:00; final entry 16:30; closed Tuesdays.\n- **Grand Warehouse** is the only area with a timed slot (09:00–14:00 hourly): pick 09:00 or 10:00 when buying.\n- **Lunch** inside the park: eat early (~11:30) — noon queues are long.\n- **Rain:** the Grand Warehouse is indoors; the other areas are outdoors — bring umbrellas.\n- **Bags:** already sent to Kyoto; otherwise coin lockers at Nagoya Station.\n- **Way back:** get off the Higashiyama Line at Kamejima (1 stop before Nagoya) for TSUTAYA Noritake, then walk ~15 min to the Shinkansen side.\n- **No tickets?** Nagoya Castle + Osu shopping street, same evening train.",
+      "items": [
+        {
+          "title": "Breakfast · Nagoya 'morning' set",
+          "kind": "meal",
+          "durationMin": 30,
+          "note": "e.g. Komeda's Coffee near Nagoya Station: order a coffee before ~11:00 and toast + egg come free."
+        },
+        {
+          "ref": "2027-10-09:ghibli-park",
+          "node": "Japan|Nagoya|Nagakute|Ghibli Park",
+          "title": "Ghibli Park · Grand Warehouse, Hill of Youth, Dondoko Forest",
+          "kind": "activity",
+          "durationMin": 150,
+          "pinnedStart": "09:00",
+          "fixedDate": true,
+          "cost": {
+            "amount": 7800,
+            "currency": "JPY",
+            "per": "person",
+            "category": "activities",
+            "note": "O-sanpo Day Pass Premium, weekend adult price (all 5 areas incl. building interiors) — ghibli-park.jp, checked 2026-09-23."
+          },
+          "note": "Sat Oct 9: open 09:00–17:00 (final entry 16:30). Tickets are date-specific and sell out: sale opens on the 10th of the month two months ahead at 14:00 JST (→ 2027-08-10 14:00 JST). Grand Warehouse needs the timed slot on the ticket. Satsuki & Mei's House (Dondoko Forest) is 15–20 min on foot from the Grand Warehouse."
+        },
+        {
+          "title": "Lunch · in Ghibli Park",
+          "kind": "meal",
+          "durationMin": 45,
+          "note": "Cafés in the Grand Warehouse and the Valley of Witches; go before noon."
+        },
+        {
+          "ref": "2027-10-09:ghibli-afternoon",
+          "node": "Japan|Nagoya|Nagakute|Ghibli Park",
+          "title": "Ghibli Park · Mononoke Village + Valley of Witches",
+          "kind": "activity",
+          "durationMin": 210,
+          "note": "Howl's Castle and the House of Witches are included in the Premium pass. Leave by ~16:00."
+        },
+        {
+          "node": "Japan|Nagoya|Nagoya Station|TSUTAYA BOOKSTORE (Noritake Shinmachi)",
+          "kind": "shopping",
+          "durationMin": 30,
+          "note": "Cities tab: 'Tsutaya Bookstore'. Two-storey lit bookshelf under a mirrored ceiling; staircase photos are officially discouraged. From Kamejima Station ~5 min."
+        },
+        {
+          "ref": "2027-10-09:dinner",
+          "node": "Japan|Nagoya|Nagoya Station|Yabaton Esca",
+          "title": "Dinner · Yabaton Esca (miso katsu)",
+          "kind": "meal",
+          "durationMin": 60,
+          "cost": {
+            "amount": 2000,
+            "currency": "JPY",
+            "per": "person",
+            "note": "~¥1,800–2,500 per person"
+          },
+          "note": "Right by the Shinkansen gates. Nagoya's other specialties (tebasaki, hitsumabushi) are in the Oct 8 note."
+        },
+        {
+          "ref": "2027-10-09:nagoya-shinkansen",
+          "node": "Japan|Nagoya|Nagoya Station|Nagoya Station (Shinkansen)",
+          "title": "Nagoya Station · Shinkansen gates",
+          "kind": "transport",
+          "durationMin": 15
+        },
+        {
+          "leg": {
+            "ref": "2027-10-09:nozomi",
+            "mode": "transit",
+            "label": "Nozomi · Nagoya → Kyoto",
+            "durationMin": 35,
+            "fixed": {
+              "depart": "2027-10-09T19:15",
+              "arrive": "2027-10-09T19:50",
+              "accessMin": 15,
+              "egressMin": 10
+            },
+            "segments": [
+              {
+                "mode": "high_speed",
+                "lineName": "Tokaido Shinkansen (Nozomi)",
+                "agency": "JR Central",
+                "headsign": "Shin-Osaka",
+                "from": {
+                  "name": "Nagoya",
+                  "lat": 35.1706,
+                  "lng": 136.881
+                },
+                "to": {
+                  "name": "Kyoto",
+                  "lat": 34.9855,
+                  "lng": 135.7588
+                },
+                "durationMin": 35
+              }
+            ],
+            "booking": {
+              "class": "Reserved seat, ordinary car"
+            },
+            "cost": {
+              "amount": 5900,
+              "currency": "JPY",
+              "per": "person",
+              "note": "Reserved Nozomi Nagoya → Kyoto, approx. (verify)"
+            },
+            "bookAhead": true,
+            "note": "Nozomi runs every ~10 min; 19:15 is a placeholder — pick the exact train when booking (smartEX / JR). Seats open 1 month before at 10:00 JST; Sat Oct 9 starts a 3-day weekend, so book at opening. Big luggage (>160 cm total) needs an oversized-baggage seat — bags are forwarded, so skip it."
+          }
+        },
+        {
+          "node": "Japan|Kyoto||Kyoto Station",
+          "title": "Kyoto Station · arrival",
+          "kind": "transport",
+          "durationMin": 10
+        },
+        {
+          "node": "Japan|Kyoto||Hotel Granvia Kyoto",
+          "title": "Check in · Hotel Granvia Kyoto",
+          "kind": "lodging",
+          "durationMin": 20
+        }
+      ]
+    },
+    {
+      "date": "2027-10-10",
+      "title": "Kyoto · Fushimi Inari + Higashiyama",
+      "startTime": "05:40",
+      "stay": {
+        "node": "Japan|Kyoto||Hotel Granvia Kyoto"
+      },
+      "dayNote": "- **3-day weekend** (Sat–Mon Sports Day): everything is busy — Fushimi Inari at dawn and Kiyomizu before noon beat the worst.\n- **Fushimi Inari:** JR Nara Line Kyoto → Inari (5 min; first trains ~05:30). Up to the Yotsutsuji viewpoint (~45 min) and back; the full summit loop adds ~1 h. Sunrise ~05:58.\n- **Chawan-zaka**, the lane up to Kiyomizu, is lined with Kiyomizu-yaki pottery shops (Shopping List: ceramics).\n- **Gion:** no photos in the private lanes off Hanamikoji (signed, fines); never chase maiko.\n- **Nishiki:** most stalls close ~17:00–18:00; a few shut on Sundays. Aritsugu (knives) is at the east end (Shopping List: kitchen knives).\n- **Kaiseki ideas:** Roan Kikunoi (counter kaiseki on Kiyamachi, Michelin-starred), Gion Karyo (approachable kaiseki), or a Pontocho kaiseki house. The Kamogawa riverside terraces (yuka) close Sept 30.\n- **Bars:** Bee's Knees (speakeasy), L'Escamoteur (theatrical cocktails), Bar K6 (whisky) — all around Kiyamachi.\n- **Rain plan:** swap Gion/Nishiki for Kyoto Station (Isetan, Porta) + Kyoto Railway Museum.",
+      "items": [
+        {
+          "ref": "2027-10-10:fushimi-inari",
+          "node": "Japan|Kyoto|Fushimi|Fushimi Inari Shrine",
+          "kind": "sight",
+          "durationMin": 135,
+          "pinnedStart": "06:00",
+          "note": "Dawn visit (Must): grounds open 24 h and free. Torii tunnels are near-empty before ~07:30."
+        },
+        {
+          "title": "Breakfast near Inari Station",
+          "kind": "meal",
+          "durationMin": 30,
+          "note": "Konbini by JR Inari Station, or a café once the shrine street opens (~08:30–09:00)."
+        },
+        {
+          "node": "Japan|Kyoto|Higashiyama|Sanjusangen-do",
+          "kind": "sight",
+          "durationMin": 45,
+          "cost": {
+            "amount": 600,
+            "currency": "JPY",
+            "per": "person",
+            "note": "approx. (verify)"
+          },
+          "note": "Opens 08:30 (Apr–mid-Nov), 1,001 Kannon statues; no photos inside. Keihan Fushimi-Inari → Shichijo, ~10 min."
+        },
+        {
+          "node": "Japan|Kyoto|Higashiyama|Kiyomizu-dera Temple",
+          "kind": "sight",
+          "durationMin": 90,
+          "cost": {
+            "amount": 500,
+            "currency": "JPY",
+            "per": "person",
+            "note": "approx. (verify)"
+          },
+          "note": "Opens 06:00 (closing varies by season, ~18:00). Walk up Chawan-zaka (pottery) and leave via Sannenzaka/Ninenzaka."
+        },
+        {
+          "title": "Lunch near Ninenzaka",
+          "kind": "meal",
+          "durationMin": 60,
+          "note": "Ideas: yudofu at Okutan Kiyomizu, zenzai at Kasagiya (Ninenzaka, since 1914), or % Arabica Higashiyama for coffee. Weekend queues from 12:00 — go early. Then walk down to Shijo and across the river to Nishiki (~20 min)."
+        },
+        {
+          "node": "Japan|Kyoto|Kawaramachi|Nishiki Market",
+          "kind": "sight",
+          "durationMin": 60,
+          "note": "Kyoto's Kitchen: tamagoyaki, pickles, soy-milk doughnuts, octopus-egg skewers. Aritsugu (knives since 1560) at the east end — tax refund with passport."
+        },
+        {
+          "node": "Japan|Kyoto||Hotel Granvia Kyoto",
+          "title": "Break at the hotel",
+          "kind": "rest",
+          "durationMin": 45,
+          "note": "Up since 05:30 — rest before the evening (Karasuma subway from Shijo, ~10 min)."
+        },
+        {
+          "node": "Japan|Kyoto|Gion",
+          "kind": "sight",
+          "durationMin": 60,
+          "note": "Best at dusk (sunset ~17:30): Yasaka Shrine → Hanamikoji → Shirakawa canal, then cross Shijo Bridge to Pontocho for dinner."
+        },
+        {
+          "ref": "2027-10-10:kaiseki",
+          "node": "Japan|Kyoto|Pontocho",
+          "title": "Dinner · kaiseki (Pontocho / Kiyamachi)",
+          "kind": "meal",
+          "durationMin": 120,
+          "pinnedStart": "18:30",
+          "fixedDate": true,
+          "cost": {
+            "amount": 20000,
+            "currency": "JPY",
+            "per": "person",
+            "note": "Kyoto kaiseki dinner ~¥15k–30k per person + drinks"
+          },
+          "note": "Random Notes: kaiseki. Ideas: Roan Kikunoi (Kiyamachi, counter kaiseki), Gion Karyo, or a Pontocho kaiseki house. Reserve 1–2 months ahead (phone / TableCheck / Omakase); check the closed day — some close on Sundays."
+        },
+        {
+          "title": "Cocktails near Kiyamachi (optional)",
+          "kind": "nightlife",
+          "durationMin": 60,
+          "note": "Bee's Knees, L'Escamoteur or Bar K6 — then a lantern-lit walk down Pontocho."
+        }
+      ]
+    },
+    {
+      "date": "2027-10-11",
+      "title": "Kyoto · Arashiyama + Nijo + Philosopher's Path",
+      "startTime": "06:40",
+      "stay": {
+        "node": "Japan|Kyoto||Hotel Granvia Kyoto"
+      },
+      "dayNote": "- **Sports Day (national holiday):** museums normally closed Mondays are open; crowds everywhere — Bamboo Grove before ~08:00.\n- **Getting there:** JR Sagano Line Kyoto → Saga-Arashiyama (~15 min).\n- **Otagi Nenbutsu-ji:** taxi up (~10 min), then walk down through Saga-Toriimoto's preserved street (~35–40 min, downhill).\n- **Miffy Sakura Kitchen:** the bakery often sells out by ~11:00.\n- **Alternative afternoon (Sure why not):** Kinkaku-ji (09:00–17:00) + Ryoan-ji (08:00–17:00) by Randen instead of Nijo Castle.\n- **Philosopher's Path:** start at Ginkaku-ji (optional, 08:30–17:00) and walk south to Nanzen-ji's brick aqueduct.\n- **Dinner ideas:** Katsukura Sanjo (tonkatsu), Gion Okaru (curry udon), Kyoto Ramen Koji (Kyoto Station 10F).\n- **Tonight:** send the big bags to Swissotel Nankai Osaka by takkyubin (next-day) — or use the same-day hands-free luggage counter at Kyoto Station tomorrow morning.\n- **Ryokan option** (Action Timeline row 17 / Random Notes): make one Kyoto night a ryokan with a private onsen + kaiseki instead of the hotel.",
+      "items": [
+        {
+          "node": "Japan|Kyoto||Hotel Granvia Kyoto",
+          "title": "Breakfast at the hotel",
+          "kind": "meal",
+          "durationMin": 20,
+          "note": "Or konbini — leave by ~07:00."
+        },
+        {
+          "node": "Japan|Kyoto|Arashiyama|Arashiyama Bamboo Grove",
+          "kind": "sight",
+          "durationMin": 40,
+          "note": "Must — go before ~08:00; the path is free and open 24 h."
+        },
+        {
+          "node": "Japan|Kyoto|Arashiyama|Tenryu-ji",
+          "kind": "sight",
+          "durationMin": 45,
+          "cost": {
+            "amount": 500,
+            "currency": "JPY",
+            "per": "person",
+            "note": "garden ticket, approx. (verify)"
+          },
+          "note": "Garden opens 08:30; enter by the north gate at the top of the Bamboo Grove."
+        },
+        {
+          "leg": {
+            "mode": "other",
+            "otherKind": "taxi",
+            "label": "Taxi · Tenryu-ji → Otagi Nenbutsu-ji",
+            "durationMin": 12,
+            "cost": {
+              "amount": 1800,
+              "currency": "JPY",
+              "per": "total",
+              "note": "approx. meter fare"
+            },
+            "note": "Taxis wait on the main street by Tenryu-ji's gate. Kyoto Bus 62/72 is infrequent; walking up is ~35 min."
+          }
+        },
+        {
+          "node": "Japan|Kyoto|Arashiyama|Otagi Nenbutsu-ji",
+          "kind": "sight",
+          "durationMin": 40,
+          "cost": {
+            "amount": 300,
+            "currency": "JPY",
+            "per": "person",
+            "note": "approx. (verify)"
+          },
+          "note": "Really want: 1,200 mossy rakan statues with funny faces. Opens 08:00, usually ~17:00."
+        },
+        {
+          "node": "Japan|Kyoto|Arashiyama|Miffy Sakura Kitchen",
+          "kind": "shopping",
+          "durationMin": 20,
+          "note": "Walk down via Saga-Toriimoto (~40 min). Miffy-shaped anpan; takeaway / standing counter only."
+        },
+        {
+          "ref": "2027-10-11:shigetsu",
+          "node": "Japan|Kyoto|Arashiyama|Shigetsu",
+          "title": "Lunch · Shigetsu (shojin ryori)",
+          "kind": "meal",
+          "durationMin": 60,
+          "bookAhead": true,
+          "cost": {
+            "amount": 4000,
+            "currency": "JPY",
+            "per": "person",
+            "note": "set menu from ~¥4,000 (verify)"
+          },
+          "note": "Zen vegetarian set inside Tenryu-ji. Holiday Monday — reserve. Backup: Arashiyama Yoshimura (soba with a river view) or yudofu nearby."
+        },
+        {
+          "node": "Japan|Kyoto||Nijo Castle",
+          "kind": "sight",
+          "durationMin": 75,
+          "cost": {
+            "amount": 1300,
+            "currency": "JPY",
+            "per": "person",
+            "note": "castle + Ninomaru Palace, approx. (verify)"
+          },
+          "note": "JR Saga-Arashiyama → Nijo (~10 min) + 10 min walk. 08:45–17:00, last entry 16:00; nightingale floors in the Ninomaru Palace."
+        },
+        {
+          "node": "Japan|Kyoto|Higashiyama|Philosopher's Path",
+          "kind": "sight",
+          "durationMin": 75,
+          "note": "Taxi from Nijo Castle to Ginkaku-ji (~20 min) or Tozai Line to Keage; walk the canal south (~2 km) in the late-afternoon light."
+        },
+        {
+          "title": "Dinner near Sanjo / Kawaramachi",
+          "kind": "meal",
+          "durationMin": 90,
+          "note": "Ideas: Katsukura Sanjo Honten (tonkatsu), Gion Okaru (curry udon), or an omakase counter (Random Notes: omakase — book ahead)."
+        }
+      ]
+    },
+    {
+      "date": "2027-10-12",
+      "title": "Kyoto → Uji → Nara → Osaka",
+      "startTime": "08:00",
+      "stay": {
+        "node": "Japan|Osaka|Namba|Swissotel Nankai Osaka",
+        "checkIn": true,
+        "nights": 2,
+        "cost": {
+          "amount": 42000,
+          "currency": "JPY",
+          "per": "night",
+          "note": "Estimate (~¥34k–50k); not booked."
+        },
+        "note": "Bags forwarded from Kyoto (sent Oct 11) are held at the front desk."
+      },
+      "dayNote": "- **Bags:** already on their way to the Osaka hotel — travel light today.\n- **Uji (~1 h):** no Byodo-in (owner) — just the tea street: Tsuen by Uji Bridge (founded 1160), Itoh Kyuemon, Nakamura Tokichi. Buy matcha here (Shopping List: Matcha / tea). Kyoto → Uji: JR Nara Line (~20 min).\n- **Uji → Nara:** JR Nara Line (~30–35 min), then walk ~15 min to Sanjo-dori / Higashimuki.\n- **Nara:** Tue after a Monday holiday — Nara National Museum is closed today; Todai-ji (07:30–17:30 Apr–Oct) and the park are open. Deer crackers ~¥200. Kasuga Taisha (Sure why not) only if ahead of schedule.\n- **Lunch ideas:** kamameshi, kakinoha-zushi (persimmon-leaf sushi), or Nakatanidou mochi as a snack.\n- **Ikoma Sanjo:** weekdays 10:00–17:00, closed Thursdays (hence today); free entry, rides paid. It sits on the Kintetsu line between Nara and Namba.\n- **Dotonbori:** takoyaki first (Kukuru, Wanaka, Acchichi-honpo), then okonomiyaki at Mizuno.",
+      "items": [
+        {
+          "node": "Japan|Kyoto||Hotel Granvia Kyoto",
+          "title": "Breakfast + check-out",
+          "kind": "meal",
+          "durationMin": 30
+        },
+        {
+          "node": "Japan|Uji||Byodoin Omotesando (tea shop street)",
+          "kind": "shopping",
+          "durationMin": 60,
+          "note": "Matcha soft serve and tea shops (most open 09:00–10:00). Byodo-in skipped per owner."
+        },
+        {
+          "node": "Japan|Uji||Nakamura Tokichi Honten",
+          "title": "Nakamura Tokichi Honten · matcha",
+          "kind": "shopping",
+          "durationMin": 30,
+          "cost": {
+            "amount": 3000,
+            "currency": "JPY",
+            "per": "total",
+            "category": "shopping",
+            "note": "matcha to take home — rough"
+          },
+          "note": "On the way back to JR Uji (2 min). Takeaway keeps the stop short; the café queue can be 30–60 min."
+        },
+        {
+          "title": "Lunch near Higashimuki / Sanjo-dori",
+          "kind": "meal",
+          "durationMin": 50,
+          "note": "Kamameshi (rice pot), kakinoha-zushi, or udon in the Higashimuki arcade."
+        },
+        {
+          "node": "Japan|Nara||Nakatanidou",
+          "kind": "shopping",
+          "durationMin": 15,
+          "note": "High-speed mochi pounding happens at irregular times and usually stops by ~15:00 — so it goes first."
+        },
+        {
+          "node": "Japan|Nara||Nara Park",
+          "kind": "sight",
+          "durationMin": 45,
+          "note": "Bowing deer, Kofuku-ji's five-storey pagoda on the way."
+        },
+        {
+          "node": "Japan|Nara||Todai-ji",
+          "kind": "sight",
+          "durationMin": 60,
+          "cost": {
+            "amount": 800,
+            "currency": "JPY",
+            "per": "person",
+            "note": "Daibutsuden, approx. (verify)"
+          },
+          "note": "Great Buddha Hall: 07:30–17:30 (Apr–Oct). Squeeze through the pillar hole for luck."
+        },
+        {
+          "leg": {
+            "ref": "2027-10-12:to-ikoma",
+            "mode": "transit",
+            "label": "Kintetsu + Ikoma Cable · Nara → Mt. Ikoma",
+            "durationMin": 60,
+            "segments": [
+              {
+                "mode": "walk",
+                "from": {
+                  "name": "Todai-ji"
+                },
+                "to": {
+                  "name": "Kintetsu-Nara"
+                },
+                "durationMin": 15
+              },
+              {
+                "mode": "train",
+                "lineName": "Kintetsu Nara Line",
+                "agency": "Kintetsu",
+                "headsign": "Osaka-Namba",
+                "from": {
+                  "name": "Kintetsu-Nara",
+                  "lat": 34.6844,
+                  "lng": 135.8279
+                },
+                "to": {
+                  "name": "Ikoma"
+                },
+                "durationMin": 20
+              },
+              {
+                "mode": "walk",
+                "from": {
+                  "name": "Ikoma"
+                },
+                "to": {
+                  "name": "Toriimae"
+                },
+                "durationMin": 3
+              },
+              {
+                "mode": "cable",
+                "lineName": "Ikoma Cable Line",
+                "agency": "Kintetsu",
+                "from": {
+                  "name": "Toriimae"
+                },
+                "to": {
+                  "name": "Hozanji"
+                },
+                "durationMin": 6
+              },
+              {
+                "mode": "cable",
+                "lineName": "Ikoma Cable Line (Sanjo Line)",
+                "agency": "Kintetsu",
+                "from": {
+                  "name": "Hozanji"
+                },
+                "to": {
+                  "name": "Ikoma-sanjo",
+                  "lat": 34.678,
+                  "lng": 135.6795
+                },
+                "durationMin": 7
+              }
+            ],
+            "note": "IC cards (Suica/ICOCA) work on Kintetsu and the cable car. Change cars at Hozanji; cars run every ~20–30 min, so allow waits."
+          }
+        },
+        {
+          "node": "Japan|Ikoma||Ikoma Sanjo Amusement Park",
+          "kind": "activity",
+          "durationMin": 60,
+          "cost": {
+            "amount": 1000,
+            "currency": "JPY",
+            "per": "person",
+            "note": "rides ~¥300–600 each; entry free"
+          },
+          "note": "Want: retro hilltop park (Flying Tower from 1929) with views over Osaka. Weekday closing 17:00; closed Thursdays."
+        },
+        {
+          "leg": {
+            "ref": "2027-10-12:ikoma-to-namba",
+            "mode": "transit",
+            "label": "Ikoma Cable + Kintetsu · Mt. Ikoma → Namba",
+            "durationMin": 60,
+            "segments": [
+              {
+                "mode": "cable",
+                "lineName": "Ikoma Cable Line",
+                "agency": "Kintetsu",
+                "from": {
+                  "name": "Ikoma-sanjo"
+                },
+                "to": {
+                  "name": "Toriimae"
+                },
+                "durationMin": 15
+              },
+              {
+                "mode": "walk",
+                "from": {
+                  "name": "Toriimae"
+                },
+                "to": {
+                  "name": "Ikoma"
+                },
+                "durationMin": 3
+              },
+              {
+                "mode": "train",
+                "lineName": "Kintetsu Nara Line",
+                "agency": "Kintetsu",
+                "headsign": "Osaka-Namba",
+                "from": {
+                  "name": "Ikoma"
+                },
+                "to": {
+                  "name": "Osaka-Namba",
+                  "lat": 34.6661,
+                  "lng": 135.5003
+                },
+                "durationMin": 25
+              },
+              {
+                "mode": "walk",
+                "from": {
+                  "name": "Osaka-Namba"
+                },
+                "to": {
+                  "name": "Swissotel Nankai Osaka"
+                },
+                "durationMin": 7
+              }
+            ],
+            "note": "Take a train signed for Osaka-Namba (through service); last cars down leave shortly after the park closes — check on arrival."
+          }
+        },
+        {
+          "node": "Japan|Osaka|Namba|Swissotel Nankai Osaka",
+          "title": "Check in · Swissotel Nankai Osaka",
+          "kind": "lodging",
+          "durationMin": 20
+        },
+        {
+          "node": "Japan|Osaka|Namba|Dotonbori",
+          "kind": "sight",
+          "durationMin": 60,
+          "note": "Must: Glico sign from Ebisu Bridge, canal walk, takoyaki (Kukuru / Wanaka / Acchichi-honpo)."
+        },
+        {
+          "node": "Japan|Osaka|Namba|Okonomiyaki Mizuno",
+          "title": "Dinner · Okonomiyaki Mizuno",
+          "kind": "meal",
+          "durationMin": 60,
+          "cost": {
+            "amount": 2500,
+            "currency": "JPY",
+            "per": "person",
+            "note": "~¥2,000–3,000 per person"
+          },
+          "note": "No reservations; queue 30–60 min. Last order ~21:00."
+        },
+        {
+          "node": "Japan|Osaka|Namba|Hozenji Yokocho",
+          "kind": "sight",
+          "durationMin": 15,
+          "note": "Lantern alley one block south of Dotonbori; splash water on the moss-covered Fudo statue."
+        }
+      ]
+    },
+    {
+      "date": "2027-10-13",
+      "title": "Osaka · Katsuoji, Umeda, Castle + Harukas",
+      "startTime": "07:30",
+      "stay": {
+        "node": "Japan|Osaka|Namba|Swissotel Nankai Osaka"
+      },
+      "dayNote": "- **Katsuoji** (Must): 08:00–17:00, ¥500, daruma everywhere + a stamp rally. Midosuji Line runs through to Minoh-Kayano, then Hankyu Bus (~20–25 min, 2–3/h; check the platform and fare) or taxi (~20 min, ~¥3,400).\n- **Travel-heavy day** (~3 h on trains/buses) because Katsuoji is in the hills north of the city.\n- **Option after Katsuoji** (Sure why not): Cup Noodles Museum Ikeda (last entry 15:30) by taxi (~25 min), then Hankyu to Umeda — drop Osaka Castle if you do.\n- **Whisky / sake** (Shopping List, no shop yet): Hankyu Umeda B1 liquor floor or Yodobashi Umeda — tax refund with passport. Bottles must go in the CHECKED bag on Oct 14 (or buy airside at KIX duty-free).\n- **Harukas 300** at sunset (~17:25): tickets on 16F; open 09:00–22:00.\n- **Shinsekai:** Tsutenkaku Tower (Sure why not) is open until ~20:00 if you want a second view.\n- **Alternative day:** Universal Studios Japan (Want) — date-specific tickets + Express Pass (book ahead); Katsuoji then moves to Oct 14 morning (back by ~12:00).",
+      "items": [
+        {
+          "node": "Japan|Osaka|Namba|Swissotel Nankai Osaka",
+          "title": "Breakfast at the hotel",
+          "kind": "meal",
+          "durationMin": 30
+        },
+        {
+          "leg": {
+            "ref": "2027-10-13:to-katsuoji",
+            "mode": "transit",
+            "label": "Midosuji Line + Hankyu Bus · Namba → Katsuoji",
+            "durationMin": 80,
+            "segments": [
+              {
+                "mode": "walk",
+                "from": {
+                  "name": "Swissotel Nankai Osaka"
+                },
+                "to": {
+                  "name": "Namba (Midosuji Line)"
+                },
+                "durationMin": 5
+              },
+              {
+                "mode": "subway",
+                "lineName": "Osaka Metro Midosuji Line (through to Kita-Osaka Kyuko)",
+                "agency": "Osaka Metro / Kita-Osaka Kyuko",
+                "headsign": "Minoh-Kayano",
+                "from": {
+                  "name": "Namba",
+                  "lat": 34.6661,
+                  "lng": 135.5003
+                },
+                "to": {
+                  "name": "Minoh-Kayano"
+                },
+                "durationMin": 40
+              },
+              {
+                "mode": "bus",
+                "lineName": "Hankyu Bus (for Katsuoji)",
+                "agency": "Hankyu Bus",
+                "from": {
+                  "name": "Minoh-Kayano"
+                },
+                "to": {
+                  "name": "Katsuoji"
+                },
+                "durationMin": 25
+              }
+            ],
+            "note": "Check the train's destination reads Minoh-Kayano (some terminate earlier). Taxi from Minoh-Kayano ~20 min, ~¥3,400 — worth it if the bus just left."
+          }
+        },
+        {
+          "ref": "2027-10-13:katsuoji",
+          "node": "Japan|Minoh||Katsuoji Temple",
+          "kind": "sight",
+          "durationMin": 75,
+          "cost": {
+            "amount": 500,
+            "currency": "JPY",
+            "per": "person"
+          },
+          "note": "Must. Buy a small daruma to write a wish on; the 6-stamp rally takes 30–60 min."
+        },
+        {
+          "leg": {
+            "mode": "transit",
+            "label": "Hankyu Bus + Midosuji Line · Katsuoji → Umeda",
+            "durationMin": 70,
+            "segments": [
+              {
+                "mode": "bus",
+                "lineName": "Hankyu Bus",
+                "agency": "Hankyu Bus",
+                "from": {
+                  "name": "Katsuoji"
+                },
+                "to": {
+                  "name": "Minoh-Kayano"
+                },
+                "durationMin": 25
+              },
+              {
+                "mode": "subway",
+                "lineName": "Kita-Osaka Kyuko / Osaka Metro Midosuji Line",
+                "agency": "Osaka Metro",
+                "headsign": "Namba",
+                "from": {
+                  "name": "Minoh-Kayano"
+                },
+                "to": {
+                  "name": "Umeda",
+                  "lat": 34.7025,
+                  "lng": 135.4959
+                },
+                "durationMin": 25
+              },
+              {
+                "mode": "walk",
+                "from": {
+                  "name": "Umeda"
+                },
+                "to": {
+                  "name": "Umeda Sky Building"
+                },
+                "durationMin": 12
+              }
+            ]
+          }
+        },
+        {
+          "title": "Lunch · Takimi Koji (Umeda Sky B1)",
+          "kind": "meal",
+          "durationMin": 60,
+          "note": "Retro Showa-style food alley in the Umeda Sky basement (okonomiyaki at Kiji is the famous one; closed Thursdays). Or the Hankyu Umeda food hall."
+        },
+        {
+          "node": "Japan|Osaka|Umeda|Umeda Sky Building",
+          "kind": "sight",
+          "durationMin": 45,
+          "cost": {
+            "amount": 2000,
+            "currency": "JPY",
+            "per": "person",
+            "note": "Kuchu Teien Observatory adult (skybldg.co.jp, checked 2026-09-23)"
+          },
+          "note": "Open-air rooftop ring, 09:30–22:30 (last entry 22:00)."
+        },
+        {
+          "node": "Japan|Osaka||Osaka Castle",
+          "kind": "sight",
+          "durationMin": 105,
+          "cost": {
+            "amount": 1200,
+            "currency": "JPY",
+            "per": "person",
+            "note": "Main Tower museum; ¥600–1,200 depending on the current price — verify"
+          },
+          "note": "Midosuji → Hommachi → Chuo Line to Morinomiya (or Tanimachi 4-chome). Main Tower 09:00–17:00, last entry 16:30; the park and moats are free."
+        },
+        {
+          "node": "Japan|Osaka|Tennoji|Harukas 300",
+          "kind": "sight",
+          "durationMin": 75,
+          "pinnedStart": "16:45",
+          "cost": {
+            "amount": 2000,
+            "currency": "JPY",
+            "per": "person",
+            "note": "approx. adult ticket (verify)"
+          },
+          "note": "Sunset ~17:25. 09:00–22:00; buy tickets on 16F, lifts to 60F. Walk to Shinsekai afterwards (~10 min through Tennoji Park)."
+        },
+        {
+          "node": "Japan|Osaka|Shinsekai|Kushikatsu Daruma (Shinsekai)",
+          "title": "Dinner · Kushikatsu Daruma (Shinsekai)",
+          "kind": "meal",
+          "durationMin": 60,
+          "cost": {
+            "amount": 3000,
+            "currency": "JPY",
+            "per": "person",
+            "note": "~¥2,500–3,500 per person with a beer"
+          },
+          "note": "Kushikatsu is Shinsekai's dish; the Billiken statue and Tsutenkaku are around the corner. Back to Namba: Dobutsuen-mae → Namba (Midosuji, 5 min)."
+        }
+      ]
+    },
+    {
+      "date": "2027-10-14",
+      "half": "before",
+      "title": "Osaka → Seoul",
+      "startTime": "08:30",
+      "dayNote": "- **Check-out:** leave bags with Swissotel's bell desk; the rapi:t leaves from Nankai Namba directly below.\n- **Nishikawa pillow** (Shopping List): ~1 h fitting, ¥33,000 (¥44,000 premium), made the same day — confirm the pick-up time is before ~13:45.\n- **Tax refund with passport** — since 2026-11-01 Japan uses a refund system: pay incl. tax, customs checks the goods at departure (KIX, Oct 14), then the store refunds (usually to the card). Keep the goods unused, receipts together, in carry-on reach.\n- **Options** (Sure why not): Den Den Town or Namba Yasaka Shrine (lion-head stage) instead of more Shinsaibashi.\n- **KIX:** the 14:30 rapi:t gives ~3 h before KE726 (18:15): customs tax-refund check BEFORE security, then check-in. rapi:t runs every ~30 min.",
+      "items": [
+        {
+          "node": "Japan|Osaka|Nipponbashi|Kuromon Market",
+          "title": "Breakfast · Kuromon Market",
+          "kind": "meal",
+          "durationMin": 50,
+          "note": "Many stalls open ~08:30–09:00: grilled scallops, tamagoyaki, wagyu skewers, fruit. Touristy and pricey, but fun (owner's note). ~10 min walk from the hotel."
+        },
+        {
+          "ref": "2027-10-14:nishikawa",
+          "node": "Japan|Osaka|Shinsaibashi|Nishikawa (Daimaru Shinsaibashi)",
+          "title": "Nishikawa · custom pillow fitting",
+          "kind": "shopping",
+          "durationMin": 60,
+          "pinnedStart": "10:00",
+          "fixedDate": true,
+          "who": [
+            "dennis"
+          ],
+          "cost": {
+            "amount": 33000,
+            "currency": "JPY",
+            "per": "total",
+            "category": "shopping",
+            "note": "regular materials (¥44,000 premium)"
+          },
+          "note": "Shopping List: Custom pillow. Reserve online (link on the place). **Tax refund with passport** — since 2026-11-01 Japan uses a refund system: pay incl. tax, customs checks the goods at departure (KIX, Oct 14), then the store refunds (usually to the card). Keep the goods unused, receipts together, in carry-on reach."
+        },
+        {
+          "node": "Japan|Osaka|Shinsaibashi|Shinsaibashi-suji",
+          "kind": "shopping",
+          "durationMin": 90,
+          "note": "Want: covered arcade from Daimaru south to Dotonbori — drugstores, Uniqlo, PARCO. Tax refund with passport at the big stores."
+        },
+        {
+          "node": "Japan|Osaka|Shinsaibashi|Hokkyokusei Shinsaibashi Honten",
+          "title": "Lunch · Hokkyokusei (omurice)",
+          "kind": "meal",
+          "durationMin": 60,
+          "cost": {
+            "amount": 1500,
+            "currency": "JPY",
+            "per": "person",
+            "note": "~¥1,000–1,800 per person"
+          }
+        },
+        {
+          "node": "Japan|Osaka|Namba|Swissotel Nankai Osaka",
+          "title": "Collect bags · Swissotel",
+          "kind": "lodging",
+          "durationMin": 15
+        },
+        {
+          "ref": "2027-10-14:namba-station",
+          "node": "Japan|Osaka|Namba|Nankai Namba Station",
+          "title": "Nankai Namba · rapi:t platform",
+          "kind": "transport",
+          "durationMin": 10
+        },
+        {
+          "leg": {
+            "ref": "2027-10-14:rapit",
+            "mode": "transit",
+            "label": "rapi:t · Namba → Kansai Airport",
+            "durationMin": 38,
+            "fixed": {
+              "depart": "2027-10-14T14:30",
+              "arrive": "2027-10-14T15:08",
+              "accessMin": 10,
+              "egressMin": 5
+            },
+            "segments": [
+              {
+                "mode": "rail",
+                "lineName": "Nankai Airport Line (rapi:t)",
+                "agency": "Nankai",
+                "headsign": "Kansai Airport",
+                "from": {
+                  "name": "Namba",
+                  "lat": 34.6637,
+                  "lng": 135.5018
+                },
+                "to": {
+                  "name": "Kansai Airport",
+                  "lat": 34.4326,
+                  "lng": 135.2442
+                },
+                "durationMin": 38
+              }
+            ],
+            "booking": {
+              "class": "rapi:t Regular seat (reserved)"
+            },
+            "cost": {
+              "amount": 1500,
+              "currency": "JPY",
+              "per": "person",
+              "note": "fare + rapi:t Regular seat, approx. (verify)"
+            },
+            "note": "All seats reserved; buy at the Nankai Namba counter/machines on the day or online. 14:30 is a placeholder — rapi:t runs every ~30 min. This leg ends at the KE726 departure item (KIX)."
+          }
+        },
+        {
+          "flight": "KE726"
+        }
+      ]
+    }
+  ],
+  "expenses": [
+    {
+      "title": "Kawaguchiko ryokan · 1 night (Fuji-view room + private onsen, dinner + breakfast)",
+      "target": {
+        "node": "Japan|Mt. Fuji|Kawaguchiko|Kawaguchiko Ryokan"
+      },
+      "category": "lodging",
+      "amount": 90000,
+      "currency": "JPY",
+      "note": "Estimate for two incl. kaiseki dinner + breakfast (~¥70k–120k); not booked. Ideas: Kozantei Ubuya, Shuhokaku Kogetsu."
+    },
+    {
+      "title": "Luggage forwarding in Japan (takkyubin, ~4 transfers × 2 bags)",
+      "target": {
+        "node": "Japan"
+      },
+      "category": "transport",
+      "amount": 20000,
+      "currency": "JPY",
+      "note": "Haneda → Tokyo hotel (Oct 3), Tokyo → Nagoya (Oct 6), Nagoya → Kyoto (Oct 8), Kyoto → Osaka (Oct 11); ~¥2,000–3,000 per bag each time."
+    }
+  ],
+  "todos": [
+    {
+      "text": "Ghibli Park tickets for Sat Oct 9 go on sale — buy 2× O-sanpo Day Pass Premium (Grand Warehouse 09:00 or 10:00 slot)",
+      "target": {
+        "item": "2027-10-09:ghibli-park"
+      },
+      "kind": "opens",
+      "rule": {
+        "anchor": "2027-10-09:ghibli-park",
+        "months": 2,
+        "dayOfMonth": 10,
+        "time": "14:00",
+        "tz": "Asia/Tokyo"
+      },
+      "url": "https://ghibli-park.jp/en/ticket/",
+      "note": "Sale opens on the 10th, two months ahead, at 14:00 JST (= 2027-08-10 01:00 ET). Weekend Premium ¥7,800 per adult. Sells out fast — be online at opening.",
+      "replaces": "Ghibli Park tickets"
+    },
+    {
+      "text": "Book the Nozomi Nagoya → Kyoto for Sat Oct 9 evening (2 reserved seats)",
+      "target": {
+        "leg": "2027-10-09:nozomi"
+      },
+      "kind": "opens",
+      "rule": {
+        "anchor": "2027-10-09:nagoya-shinkansen",
+        "months": 1,
+        "time": "10:00",
+        "tz": "Asia/Tokyo"
+      },
+      "url": "https://smart-ex.jp/en/",
+      "note": "JR reserved seats open 1 month before at 10:00 JST. Start of a 3-day weekend — book at opening."
+    },
+    {
+      "text": "Reserve the Kyoto kaiseki dinner (Sun Oct 10, 18:30, 2 people)",
+      "target": {
+        "item": "2027-10-10:kaiseki"
+      },
+      "kind": "due",
+      "rule": {
+        "anchor": "2027-10-10:kaiseki",
+        "months": 1,
+        "time": "10:00",
+        "tz": "Asia/Tokyo"
+      },
+      "note": "Most kaiseki places take bookings 1–2 months ahead (phone / TableCheck / Omakase). Check the closed day — some close on Sundays; swap with Oct 11 if needed."
+    },
+    {
+      "text": "Reserve the Nishikawa pillow fitting at Daimaru Shinsaibashi (Thu Oct 14, 10:00)",
+      "target": {
+        "item": "2027-10-14:nishikawa"
+      },
+      "kind": "due",
+      "rule": {
+        "anchor": "2027-10-14:nishikawa",
+        "days": 14,
+        "time": "10:00",
+        "tz": "Asia/Tokyo"
+      },
+      "url": "https://reserva.be/nemurino32/reserve?mode=service_staff&search_evt_no=aeeJwzMjQytTQAAAQwATQ",
+      "note": "Online booking via reserva.be; Nishikawa warns slots are limited. If the Tokyo (Nihonbashi/Hiroo) fitting happens on Oct 4, cancel this one.",
+      "who": [
+        "dennis"
+      ]
+    },
+    {
+      "text": "Book the Japan hotels: Tokyo Oct 3–7 (4 n), Nagoya Oct 8 (1 n), Kyoto Oct 9–12 (3 n), Osaka Oct 12–14 (2 n)",
+      "target": {
+        "node": "Japan"
+      },
+      "kind": "due",
+      "due": {
+        "date": "2027-01-31"
+      },
+      "note": "Draft picks: Odakyu Hotel Century Southern Tower, Nagoya JR Gate Tower Hotel, Hotel Granvia Kyoto, Swissotel Nankai Osaka. Kyoto falls on a 3-day weekend (Oct 9–11) — book as soon as rates open (~12 months out), refundable rates.",
+      "replaces": "Hotels — Japan"
+    },
+    {
+      "text": "Decide: one Kyoto night in a ryokan with a private onsen (the draft keeps Hotel Granvia Oct 9–11)",
+      "target": {
+        "node": "Japan|Kyoto"
+      },
+      "kind": "due",
+      "due": {
+        "date": "2027-01-31"
+      },
+      "url": "https://www.erikastravelventures.com/ryokan-in-kyoto-with-private-onsen/",
+      "note": "Best fit: Oct 11 (after Arashiyama), with kaiseki dinner at the ryokan instead of the Oct 11 dinner row. Small ryokan book up early.",
+      "replaces": "Ryokan with private onsen (Kyoto)"
+    },
+    {
+      "text": "Send the big bags Nagoya hotel → Hotel Granvia Kyoto by takkyubin (next-day)",
+      "target": {
+        "node": "Japan|Nagoya|Nagoya Station|Nagoya JR Gate Tower Hotel"
+      },
+      "kind": "on",
+      "due": {
+        "date": "2027-10-08",
+        "time": "20:00",
+        "tz": "Asia/Tokyo"
+      },
+      "note": "Front desk handles it; ~¥2,000–3,000 per bag. Keep what you need for Ghibli Park + the evening."
+    },
+    {
+      "text": "Send the big bags Hotel Granvia Kyoto → Swissotel Nankai Osaka by takkyubin (next-day)",
+      "target": {
+        "node": "Japan|Kyoto||Hotel Granvia Kyoto"
+      },
+      "kind": "on",
+      "due": {
+        "date": "2027-10-11",
+        "time": "20:00",
+        "tz": "Asia/Tokyo"
+      },
+      "note": "Or use the same-day hands-free luggage counter at Kyoto Station on the morning of Oct 12."
+    },
+    {
+      "text": "At KIX: customs tax-refund check BEFORE security (passport + unused tax-free goods + receipts)",
+      "target": {
+        "flight": "KE726"
+      },
+      "kind": "on",
+      "due": {
+        "date": "2027-10-14",
+        "time": "15:10",
+        "tz": "Asia/Tokyo"
+      },
+      "note": "Japan's refund-type tax-free system (since 2026-11-01): customs confirms the export, then stores refund to the card. Liquids (whisky/sake) in the checked bag."
+    }
+  ],
+  "notes": [
+    "File name: the task asked for seed/draft/japan.json while SCHEMA.md §1 and allocation.parts.japan.file say days-japan.json — the file is days-japan.json and japan.json is a symlink to it (same as the Korea part).",
+    "Owner days Oct 3–8: items, order, durations, notes and the Fuji legs come from the sheet import and are NOT recreated (SCHEMA §3.5). The draft only adds the NH159 arrival marker (Oct 3, first), the Tokyo stay (Oct 3, 4 nights) and the Nagoya stay (Oct 8), dayNotes with meal ideas for the generic Lunch/Dinner rows, a ryokan cost estimate, and takkyubin todos. The Oct 7 ryokan stay is left to the import.",
+    "Oct 14 rapi:t leg: its 'after' endpoint is the KE726 departure item (KIX) that the marker creates, so the importer must place flight blocks before resolving legs.",
+    "Ghibli Park is two items on the same node (morning / afternoon) around an unlocated lunch; the autofill leg between them is a within-park walk.",
+    "Checked on the web 2026-09-23: Ghibli Park pass types/prices and the sale rule (10th, 2 months ahead, 14:00 JST; Grand Warehouse timed slots); Ikoma Sanjo weekday 10:00–17:00, closed Thursdays; Katsuoji 08:00–17:00, ¥500, bus/taxi from Minoh-Kayano; Umeda Sky 09:30–22:30 (last entry 22:00), ¥2,000; Harukas 300 09:00–22:00; Nishikawa custom pillow ¥33,000/¥44,000 at Daimaru Shinsaibashi Main Bldg 7F. New-node coordinates come from OpenStreetMap (Nominatim).",
+    "Not verified (verify nearer the date): exact Nozomi and rapi:t times + fares; entry fees for Sanjusangen-do, Kiyomizu-dera, Tenryu-ji, Otagi Nenbutsu-ji, Nijo Castle, Todai-ji, Osaka Castle (price change) and Harukas 300; restaurant hours/closed days (Yabaton Esca, Shigetsu, Nakamura Tokichi, Mizuno, Daruma, Hokkyokusei, Takimi Koji/Kiji); Ghibli Park's 2027 calendar; hotel prices (estimates at ~¥150/US$).",
+    "Day loads (item minutes incl. meals, ≤ 750): 10/09 585, 10/10 705, 10/11 465, 10/12 505, 10/13 450, 10/14 300 (Oct 14 = 'before' half). Oct 13 has ~3 h of transit (over the ~2 h guideline) because Katsuoji (Must) is in the Minoh hills; flagged, not split.",
+    "Priorities applied: Musts (Ghibli Park, Fushimi Inari, Bamboo Grove, Dotonbori, Katsuoji) and Really want (Otagi Nenbutsu-ji) are all scheduled; every Want in Kyoto/Uji/Nara/Osaka is scheduled except Universal Studios (full day; alternative in the Oct 13 note, Action Timeline todo left as is) and Amanohashidate (~2 h each way from Kyoto; no time in a 2.75-day block).",
+    "Skipped for time (Sure why not): Kinkaku-ji + Ryoan-ji (Oct 11 alternative), Kasuga Taisha, Cup Noodles Museum Ikeda (Oct 13 option), Tsutenkaku Tower (passed at dinner), Den Den Town + Namba Yasaka (Oct 14 options). Hozenji Yokocho and Kuromon Market are in (they sit on the route). Nagoya's TSUTAYA (Cities tab note) is on Oct 9.",
+    "Added places not in the Places tab: Tenryu-ji (between the Bamboo Grove and the Shigetsu lunch) plus hotels, stations and restaurants — no ratings set on any new node.",
+    "Kyoto ryokan wish (Action Timeline row 17): allocation fixes a 3-night hotel, so it is a todo + dayNote rather than a changed stay.",
+    "Nishikawa pillow: planned in Osaka (Oct 14) because the owner's Tokyo row points at COREDO Nihonbashi, which may be closed for redevelopment; keep only one of the two."
+  ]
+}

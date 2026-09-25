@@ -1,0 +1,16 @@
+{
+  "name": "yonder-brand",
+  "private": true,
+  "type": "module",
+  "description": "Brand kit for Yonder: logo, icons, palette, type. Standalone package; install with `pnpm install --ignore-workspace`.",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "check": "node scripts/check-contrast.mjs",
+    "preview:shot": "node scripts/screenshot.mjs"
+  },
+  "devDependencies": {
+    "@resvg/resvg-js": "2.6.2",
+    "culori": "4.0.2",
+    "opentype.js": "2.0.0"
+  }
+}

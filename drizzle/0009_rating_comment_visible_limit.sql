@@ -1,0 +1,2 @@
+ALTER TABLE "node_priorities" DROP CONSTRAINT "node_priorities_comment_ck";--> statement-breakpoint
+ALTER TABLE "node_priorities" ADD CONSTRAINT "node_priorities_comment_ck" CHECK ("node_priorities"."rating_comment" is null or char_length("node_priorities"."rating_comment") <= 8000);

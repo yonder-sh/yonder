@@ -1,0 +1,10 @@
+/*
+ * The CJK half of the self-hosted fonts (DESIGN §2.8, D7): Noto Sans JP, KR
+ * and TC, each as unicode-range subsets (a file downloads only when its glyphs
+ * are on screen). Not part of `styles.css`, which blocks the first paint:
+ * `loadCjkFonts()` (src/lib/fonts.ts) imports this after hydration (QA
+ * VIS2-10 / PERF-05). Until then CJK text uses the system's CJK fonts.
+ */
+@import "@fontsource-variable/noto-sans-jp/index.css";
+@import "@fontsource-variable/noto-sans-kr/index.css";
+@import "@fontsource-variable/noto-sans-tc/index.css";

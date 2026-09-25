@@ -1,0 +1,16 @@
+/*
+ * E7 suggest-mode chrome (EXTENSIONS §3.7): while the workspace is
+ * suggesting, a 2px --primary/40 rule tops the center panel and the mobile
+ * sheet. Solid, not dashed: dashed already means "est." and "proposed".
+ * `SuggestModeControl` sets the attribute on <html>.
+ *
+ * WP-Shell's `SuggestRule` (the rule plus "Suggesting — your changes need
+ * approval", `data-testid="suggest-rule"`) is the real chrome; this is the
+ * fallback for a panel that doesn't render it, so the rule is never doubled.
+ */
+html[data-yonder-suggesting]
+[data-testid="center-panel"]:not(:has([data-testid="suggest-rule"])),
+html[data-yonder-suggesting]
+	[data-testid="mobile-sheet"]:not(:has([data-testid="suggest-rule"])) {
+	border-top: 2px solid color-mix(in oklab, var(--primary) 40%, transparent);
+}

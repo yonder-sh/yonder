@@ -1,0 +1,1167 @@
+{
+  "version": 1,
+  "part": "taiwan",
+  "nodes": [
+    {
+      "key": "Taiwan|Taipei|Songshan District",
+      "type": "area",
+      "lat": 25.0505,
+      "lng": 121.576,
+      "tz": "Asia/Taipei",
+      "localName": "松山區",
+      "description": "Eastern district around Songshan Station: Raohe Night Market and Ciyou Temple",
+      "confidence": "medium"
+    },
+    {
+      "key": "Taiwan|Taipei|Xinyi District",
+      "type": "area",
+      "lat": 25.0335,
+      "lng": 121.568,
+      "tz": "Asia/Taipei",
+      "localName": "信義區",
+      "description": "Skyscraper and mall district around Taipei 101, with Elephant Mountain on its edge",
+      "confidence": "medium"
+    },
+    {
+      "key": "Taiwan|Taipei|Zhongzheng District",
+      "type": "area",
+      "lat": 25.041,
+      "lng": 121.522,
+      "tz": "Asia/Taipei",
+      "localName": "中正區",
+      "description": "Government and rail hub: Taipei Main Station, Chiang Kai-shek Memorial Hall, Huashan 1914",
+      "confidence": "medium"
+    },
+    {
+      "key": "Taiwan|Taipei|Datong District",
+      "type": "area",
+      "lat": 25.056,
+      "lng": 121.512,
+      "tz": "Asia/Taipei",
+      "localName": "大同區",
+      "description": "Old Dadaocheng merchant quarter on the Tamsui River: Dihua Street, tea houses, Ningxia Night Market",
+      "confidence": "medium"
+    },
+    {
+      "key": "Taiwan|Taipei|Beitou",
+      "type": "area",
+      "lat": 25.1368,
+      "lng": 121.507,
+      "tz": "Asia/Taipei",
+      "localName": "北投",
+      "description": "Hot-spring valley at the north end of the red MRT line (Xinbeitou)",
+      "confidence": "medium"
+    },
+    {
+      "key": "Taiwan|Taipei|Da'an District|Kimpton Da An",
+      "type": "place",
+      "category": "lodging",
+      "lat": 25.04037,
+      "lng": 121.54553,
+      "tz": "Asia/Taipei",
+      "name": "Kimpton Da An",
+      "localName": "台北金普頓大安酒店",
+      "description": "Design hotel on a quiet lane in Da'an, 3 min from Zhongxiao Fuxing MRT",
+      "address": "No. 25, Lane 27, Sec. 4, Ren'ai Rd, Da'an District, Taipei 106",
+      "website": "https://www.ihg.com/kimptonhotels/hotels/us/en/da-an-hotel-taipei/tpekm/hoteldetail",
+      "openHours": "Check-in 15:00; check-out 12:00 (verify)",
+      "bookAhead": true,
+      "timeNeededMin": 30,
+      "note": "Pin from OpenStreetMap (building footprint). Chosen for Da'an cocktail bars within walking distance (Indulge 200 m, Mume 500 m) and bus 1062 from Jiufen ending at Zhongxiao Fuxing.",
+      "confidence": "high"
+    },
+    {
+      "key": "Taiwan|Taipei|Da'an District|Yongkang Street",
+      "type": "place",
+      "category": "market",
+      "lat": 25.03246,
+      "lng": 121.52973,
+      "tz": "Asia/Taipei",
+      "localName": "永康街",
+      "description": "Food and tea-shop street by Dongmen MRT: shaved ice, dumplings, teahouses",
+      "openHours": "Shops ~11:00-21:30",
+      "timeNeededMin": 60,
+      "confidence": "high"
+    },
+    {
+      "key": "Taiwan|Taipei|Da'an District|Yong Kang Beef Noodle",
+      "type": "place",
+      "category": "restaurant",
+      "lat": 25.03292,
+      "lng": 121.52808,
+      "tz": "Asia/Taipei",
+      "localName": "永康牛肉麵",
+      "description": "Old-school braised beef noodle soup shop (since 1963) near Yongkang Street",
+      "address": "No. 17, Lane 31, Sec. 2, Jinshan S. Rd, Da'an District, Taipei",
+      "openHours": "~11:00-21:00 daily (verify)",
+      "timeNeededMin": 60,
+      "confidence": "high"
+    },
+    {
+      "key": "Taiwan|Taipei|Da'an District|Mume",
+      "type": "place",
+      "category": "restaurant",
+      "lat": 25.0363,
+      "lng": 121.54804,
+      "tz": "Asia/Taipei",
+      "localName": "MUME",
+      "description": "One-Michelin-star modern European restaurant built on Taiwanese produce",
+      "address": "No. 28, Siwei Rd, Da'an District, Taipei 106",
+      "website": "https://www.mume.tw/",
+      "openHours": "Daily 17:30-23:00 (Michelin Guide)",
+      "bookAhead": true,
+      "timeNeededMin": 150,
+      "confidence": "high"
+    },
+    {
+      "key": "Taiwan|Taipei|Da'an District|Indulge Experimental Bistro",
+      "type": "place",
+      "category": "bar",
+      "lat": 25.03905,
+      "lng": 121.54472,
+      "tz": "Asia/Taipei",
+      "description": "Cocktail bar known for tea-infused liqueurs (Asia's 50 Best regular)",
+      "address": "No. 11, Lane 219, Sec. 1, Fuxing S. Rd, Da'an District, Taipei",
+      "openHours": "Evenings ~18:00-01:00 (verify)",
+      "bookAhead": true,
+      "timeNeededMin": 60,
+      "confidence": "high"
+    },
+    {
+      "key": "Taiwan|Taipei|Da'an District|Draft Land",
+      "type": "place",
+      "category": "bar",
+      "lat": 25.0411,
+      "lng": 121.55404,
+      "tz": "Asia/Taipei",
+      "description": "Casual bar pouring cocktails on tap",
+      "openHours": "Evenings until late (verify)",
+      "timeNeededMin": 60,
+      "note": "Pin from OpenStreetMap (Lane 248, Sec. 4 Zhongxiao E. Rd); older listings give No. 101, Sec. 4 Zhongxiao E. Rd, so check the current address.",
+      "confidence": "medium"
+    },
+    {
+      "key": "Taiwan|Taipei|Xinyi District|Taipei 101",
+      "type": "place",
+      "category": "viewpoint",
+      "lat": 25.03384,
+      "lng": 121.5645,
+      "tz": "Asia/Taipei",
+      "localName": "台北101",
+      "description": "508 m skyscraper with 89F observatory and a luxury mall",
+      "address": "No. 7, Sec. 5, Xinyi Rd, Xinyi District, Taipei",
+      "openHours": "Observatory ~10:00-21:00 (last entry ~20:15); mall ~11:00-21:30 (verify)",
+      "timeNeededMin": 60,
+      "confidence": "high"
+    },
+    {
+      "key": "Taiwan|Taipei|Xinyi District|Elephant Mountain",
+      "type": "place",
+      "category": "viewpoint",
+      "lat": 25.03219,
+      "lng": 121.57644,
+      "tz": "Asia/Taipei",
+      "localName": "象山",
+      "description": "Short, steep stair trail to the classic Taipei 101 skyline view",
+      "openHours": "Trail 24 h",
+      "timeNeededMin": 60,
+      "note": "Pin = the main trailhead at Lane 150, Sec. 5 Xinyi Rd (~5 min from Xiangshan MRT); viewpoints are 20-30 min up.",
+      "confidence": "high"
+    },
+    {
+      "key": "Taiwan|Taipei|Xinyi District|Din Tai Fung Taipei 101",
+      "type": "place",
+      "category": "restaurant",
+      "lat": 25.0337,
+      "lng": 121.5646,
+      "tz": "Asia/Taipei",
+      "localName": "鼎泰豐 101店",
+      "description": "Xiaolongbao chain's showcase branch in the Taipei 101 mall basement",
+      "openHours": "~11:00-21:00; weekends from ~10:00 (verify)",
+      "timeNeededMin": 60,
+      "note": "Pin = Taipei 101 (branch is on B1 of the mall).",
+      "confidence": "medium"
+    },
+    {
+      "key": "Taiwan|Taipei|Songshan District|Raohe Night Market",
+      "type": "place",
+      "category": "market",
+      "lat": 25.05068,
+      "lng": 121.57598,
+      "tz": "Asia/Taipei",
+      "localName": "饒河街觀光夜市",
+      "description": "Single-lane night market of street-food stalls next to Songshan Station",
+      "openHours": "Daily ~17:00-24:00",
+      "timeNeededMin": 120,
+      "confidence": "high"
+    },
+    {
+      "key": "Taiwan|Taipei|Songshan District|Ciyou Temple",
+      "type": "place",
+      "category": "temple_shrine",
+      "lat": 25.05129,
+      "lng": 121.57764,
+      "tz": "Asia/Taipei",
+      "localName": "松山慈祐宮",
+      "description": "Ornate 18th-century Mazu temple at Raohe's east gate",
+      "openHours": "~05:30-22:00 daily (verify)",
+      "timeNeededMin": 30,
+      "confidence": "high"
+    },
+    {
+      "key": "Taiwan|Taipei|Zhongzheng District|Fu Hang Soy Milk",
+      "type": "place",
+      "category": "restaurant",
+      "lat": 25.04421,
+      "lng": 121.52477,
+      "tz": "Asia/Taipei",
+      "localName": "阜杭豆漿",
+      "description": "Famous Taiwanese breakfast counter: soy milk, thick flatbread with egg (Michelin Bib Gourmand)",
+      "address": "2F Huashan Market, No. 108, Sec. 1, Zhongxiao E. Rd, Zhongzheng District, Taipei",
+      "openHours": "Tue-Sun 05:30-12:30; closed Mon (verify)",
+      "timeNeededMin": 60,
+      "confidence": "high"
+    },
+    {
+      "key": "Taiwan|Taipei|Zhongzheng District|Chiang Kai-shek Memorial Hall",
+      "type": "place",
+      "category": "sight",
+      "lat": 25.03458,
+      "lng": 121.52178,
+      "tz": "Asia/Taipei",
+      "localName": "中正紀念堂",
+      "description": "Monumental memorial hall and plaza with the hourly honour-guard change",
+      "openHours": "Main hall 09:00-18:00; guard change on the hour ~09:00-17:00 (verify)",
+      "timeNeededMin": 60,
+      "confidence": "high"
+    },
+    {
+      "key": "Taiwan|Taipei|Zhongzheng District|Huashan 1914 Creative Park",
+      "type": "place",
+      "category": "shopping",
+      "lat": 25.04461,
+      "lng": 121.52918,
+      "tz": "Asia/Taipei",
+      "localName": "華山1914文化創意產業園區",
+      "description": "Old winery turned into design shops, pop-up exhibitions and weekend markets",
+      "openHours": "Grounds 24 h; shops ~11:00-21:00",
+      "timeNeededMin": 60,
+      "confidence": "high"
+    },
+    {
+      "key": "Taiwan|Taipei|Zhongzheng District|Taipei Main Station",
+      "type": "place",
+      "category": "station",
+      "lat": 25.04775,
+      "lng": 121.51712,
+      "tz": "Asia/Taipei",
+      "localName": "台北車站",
+      "description": "Hub for TRA, High Speed Rail, MRT and the Airport MRT (A1)",
+      "timeNeededMin": 30,
+      "confidence": "high"
+    },
+    {
+      "key": "Taiwan|Taipei|Datong District|Dihua Street",
+      "type": "place",
+      "category": "shopping",
+      "lat": 25.05533,
+      "lng": 121.51004,
+      "tz": "Asia/Taipei",
+      "localName": "迪化街",
+      "description": "Restored 19th-century merchant street: dried goods, herbs, fabric, design shops",
+      "openHours": "Shops ~09:00-19:00",
+      "timeNeededMin": 60,
+      "confidence": "high"
+    },
+    {
+      "key": "Taiwan|Taipei|Datong District|Xiahai City God Temple",
+      "type": "place",
+      "category": "temple_shrine",
+      "lat": 25.05563,
+      "lng": 121.51021,
+      "tz": "Asia/Taipei",
+      "localName": "臺北霞海城隍廟",
+      "description": "Tiny, busy temple on Dihua Street known for the Old Man Under the Moon matchmaker god",
+      "openHours": "~07:00-19:00 (verify)",
+      "timeNeededMin": 30,
+      "confidence": "high"
+    },
+    {
+      "key": "Taiwan|Taipei|Datong District|Dadaocheng Wharf",
+      "type": "place",
+      "category": "viewpoint",
+      "lat": 25.0567,
+      "lng": 121.50729,
+      "tz": "Asia/Taipei",
+      "localName": "大稻埕碼頭",
+      "description": "Riverside wharf with sunset views and food-container stalls in the evening",
+      "openHours": "24 h",
+      "timeNeededMin": 30,
+      "confidence": "high"
+    },
+    {
+      "key": "Taiwan|Taipei|Datong District|Ningxia Night Market",
+      "type": "place",
+      "category": "market",
+      "lat": 25.05619,
+      "lng": 121.51522,
+      "tz": "Asia/Taipei",
+      "localName": "寧夏夜市",
+      "description": "Compact night market focused on food, with several Michelin Bib Gourmand stalls",
+      "openHours": "Daily ~17:00-01:00",
+      "timeNeededMin": 90,
+      "confidence": "high"
+    },
+    {
+      "key": "Taiwan|Taipei|Beitou|Beitou Hot Spring Museum",
+      "type": "place",
+      "category": "museum",
+      "lat": 25.13658,
+      "lng": 121.50719,
+      "tz": "Asia/Taipei",
+      "localName": "北投溫泉博物館",
+      "description": "1913 Japanese-era public bathhouse turned into a free museum",
+      "openHours": "Tue-Sun 10:00-18:00; closed Mon; free (verify)",
+      "timeNeededMin": 30,
+      "confidence": "high"
+    },
+    {
+      "key": "Taiwan|Taipei|Beitou|Beitou Thermal Valley",
+      "type": "place",
+      "category": "nature",
+      "lat": 25.1373,
+      "lng": 121.5113,
+      "tz": "Asia/Taipei",
+      "localName": "地熱谷",
+      "description": "Steaming sulphur-green hot-spring pool at the head of the Beitou valley",
+      "openHours": "Tue-Sun 09:00-17:00; closed Mon; free (verify)",
+      "timeNeededMin": 30,
+      "note": "Pin between the OSM bus stop and the pond; within ~200 m.",
+      "confidence": "medium"
+    },
+    {
+      "key": "Taiwan|Taipei||Silks Palace",
+      "type": "place",
+      "category": "restaurant",
+      "lat": 25.10119,
+      "lng": 121.54777,
+      "tz": "Asia/Taipei",
+      "localName": "故宮晶華",
+      "description": "Restaurant at the National Palace Museum, known for dishes that copy famous exhibits",
+      "address": "No. 221, Sec. 2, Zhishan Rd, Shilin District, Taipei",
+      "openHours": "Lunch ~11:30-14:30, dinner ~17:30-21:30 (verify)",
+      "bookAhead": true,
+      "timeNeededMin": 60,
+      "confidence": "high"
+    },
+    {
+      "key": "Taiwan|Shifen||Shifen Old Street",
+      "type": "place",
+      "category": "sight",
+      "lat": 25.04261,
+      "lng": 121.77662,
+      "tz": "Asia/Taipei",
+      "localName": "十分老街",
+      "description": "Village street where the Pingxi Line train runs between shops that sell sky lanterns",
+      "openHours": "Shops ~09:00-19:00",
+      "timeNeededMin": 60,
+      "confidence": "high"
+    },
+    {
+      "key": "Taiwan|Shifen||Shifen Waterfall",
+      "type": "place",
+      "category": "nature",
+      "lat": 25.04895,
+      "lng": 121.78731,
+      "tz": "Asia/Taipei",
+      "localName": "十分瀑布",
+      "description": "Wide 20 m curtain waterfall, ~20 min walk from Shifen Station",
+      "openHours": "09:00-16:30 (Oct-May), to 17:30 (Jun-Sep); free (verify)",
+      "timeNeededMin": 60,
+      "confidence": "high"
+    },
+    {
+      "key": "Taiwan|Jiufen||Gold Museum",
+      "type": "place",
+      "category": "museum",
+      "lat": 25.10738,
+      "lng": 121.85771,
+      "tz": "Asia/Taipei",
+      "localName": "黃金博物館",
+      "description": "Open-air gold-mining museum park in Jinguashi, start of the Teapot Mountain trail",
+      "address": "No. 8, Jinguang Rd, Ruifang District, New Taipei",
+      "website": "https://www.gep.ntpc.gov.tw/",
+      "openHours": "Mon-Fri 09:30-17:00; Sat, Sun + holidays 09:30-18:00; closed 1st Mon of the month; NT$80",
+      "timeNeededMin": 60,
+      "confidence": "high"
+    },
+    {
+      "key": "Taiwan|Jiufen||A-Gan-Yi Taro Balls",
+      "type": "place",
+      "category": "restaurant",
+      "lat": 25.10774,
+      "lng": 121.84365,
+      "tz": "Asia/Taipei",
+      "localName": "阿柑姨芋圓",
+      "description": "Taro-ball dessert shop with a dining room over the valley and the sea",
+      "openHours": "~09:00-20:00 (verify)",
+      "timeNeededMin": 30,
+      "confidence": "high"
+    }
+  ],
+  "days": [
+    {
+      "date": "2027-11-02",
+      "half": "after",
+      "title": "Hanoi → Taipei · Raohe Night Market",
+      "stay": {
+        "node": "Taiwan|Taipei|Da'an District|Kimpton Da An",
+        "checkIn": true,
+        "nights": 4,
+        "cost": {
+          "amount": 8000,
+          "currency": "TWD",
+          "per": "night",
+          "note": "Estimate ~NT$7,000-9,500 per night for a standard king (Nov weekdays). Book a free-cancellation rate."
+        },
+        "note": "Check-in from 15:00. Nov 6: pack before going out, check out and leave bags with the concierge (or ask for late check-out)."
+      },
+      "dayNote": "**Clocks go forward 1 h** (Vietnam UTC+7 → Taiwan UTC+8).\n\n- **Arrival:** TPE T2. The Taiwan online arrival card is a flights.json todo. Buy an **EasyCard** at the Airport MRT counter or any 7-Eleven. It works on the MRT, buses, TRA trains and in convenience stores.\n- **With lots of luggage** (Hoi An tailoring): a taxi from the T2 rank is ~NT$1,300-1,500 and 50-70 min at rush hour, against ~70 min by Airport MRT.\n- **Raohe food:** Fuzhou black-pepper buns (福州世祖胡椒餅) at the temple gate (the queue moves fast), Chen Dong herbal pork-rib soup (陳董藥燉排骨), grilled mochi, oyster vermicelli, stinky tofu.\n- **Too tired?** Linjiang Street (Tonghua) Night Market (臨江街夜市) is 10 min from the hotel by taxi.",
+      "items": [
+        {
+          "flight": "BR398"
+        },
+        {
+          "leg": {
+            "ref": "2027-11-02:tw-airport-mrt",
+            "mode": "transit",
+            "label": "Airport MRT express + MRT · TPE T2 → Zhongxiao Fuxing",
+            "durationMin": 70,
+            "segments": [
+              {
+                "mode": "rail",
+                "lineName": "Taoyuan Airport MRT (Express)",
+                "agency": "Taoyuan Metro",
+                "headsign": "Taipei Main Station",
+                "from": {
+                  "name": "Airport Terminal 2 (A13)",
+                  "lat": 25.0772,
+                  "lng": 121.2322
+                },
+                "to": {
+                  "name": "Taipei Main Station (A1)",
+                  "lat": 25.0489,
+                  "lng": 121.5146
+                },
+                "durationMin": 38
+              },
+              {
+                "mode": "walk",
+                "from": {
+                  "name": "Taipei Main Station (A1)"
+                },
+                "to": {
+                  "name": "Taipei Main Station (MRT)"
+                },
+                "durationMin": 10
+              },
+              {
+                "mode": "subway",
+                "lineName": "Bannan Line (Blue)",
+                "agency": "Taipei Metro",
+                "headsign": "Nangang Exhibition Center",
+                "from": {
+                  "name": "Taipei Main Station",
+                  "lat": 25.0462,
+                  "lng": 121.5175
+                },
+                "to": {
+                  "name": "Zhongxiao Fuxing",
+                  "lat": 25.0416,
+                  "lng": 121.5437
+                },
+                "durationMin": 7
+              },
+              {
+                "mode": "walk",
+                "from": {
+                  "name": "Zhongxiao Fuxing"
+                },
+                "to": {
+                  "name": "Kimpton Da An"
+                },
+                "durationMin": 5
+              }
+            ],
+            "cost": {
+              "amount": 170,
+              "currency": "TWD",
+              "per": "person",
+              "note": "Airport MRT NT$150 + MRT ~NT$20 (EasyCard)"
+            },
+            "note": "Express trains every ~15 min (purple). Take the lift at A1 and follow the signs to the Blue line (~10 min walk underground)."
+          }
+        },
+        {
+          "ref": "2027-11-02:tw-checkin",
+          "node": "Taiwan|Taipei|Da'an District|Kimpton Da An",
+          "title": "Check in · Kimpton Da An",
+          "kind": "lodging",
+          "durationMin": 30,
+          "note": "Drop bags and freshen up. Taxi to Raohe ~15-20 min (~NT$250), or MRT Brown → Green line to Songshan ~25 min."
+        },
+        {
+          "ref": "2027-11-02:tw-ciyou",
+          "node": "Taiwan|Taipei|Songshan District|Ciyou Temple",
+          "kind": "sight",
+          "durationMin": 20,
+          "note": "Lit up at night; Raohe's east gate is right outside."
+        },
+        {
+          "ref": "2027-11-02:tw-raohe",
+          "node": "Taiwan|Taipei|Songshan District|Raohe Night Market",
+          "title": "Dinner · Raohe Night Market",
+          "kind": "meal",
+          "durationMin": 120,
+          "note": "Graze: black-pepper buns at the gate, herbal pork-rib soup, grilled mochi, oyster vermicelli. Cash (NT$100s) and a small bag for rubbish.",
+          "cost": {
+            "amount": 800,
+            "currency": "TWD",
+            "per": "total",
+            "note": "Street food for two (estimate)"
+          }
+        }
+      ]
+    },
+    {
+      "date": "2027-11-03",
+      "title": "Taipei · Palace Museum + Da'an",
+      "startTime": "07:00",
+      "stay": {
+        "node": "Taiwan|Taipei|Da'an District|Kimpton Da An"
+      },
+      "dayNote": "- **Palace Museum:** Tue-Sun 09:00-17:00 (tickets until 16:30), closed Mon, NT$350. Rent the audio guide. The Jadeite Cabbage and Meat-shaped Stone sometimes move to the Southern Branch, so check the exhibit list the week before.\n- **Getting there:** Red line to Shilin, then bus R30/255/304/815 (~15 min), or a taxi from Fu Hang (~25 min, ~NT$350).\n- **Lunch instead:** Din Tai Fung's Xinyi Rd flagship (No. 194, Sec. 2 Xinyi Rd), at the top of Yongkang Street.\n- **Yongkang:** Smoothie House (思慕昔) shaved ice (mango is out of season in Nov; try other flavours) and the tea shops.\n- **Bars after Mume:** Indulge (200 m from the hotel; book), then Draft Land (walk-in). Also on Asia's 50 Best Bars 2025 in Taipei: The Public House (#40), To Infinity & Beyond (#41), Lab (#57), Bar Mood (#72), UnderLab (#73, Da'an). Check where each is and book.\n- **Rain plan:** swap Daan Forest Park for Huashan 1914 or the Eslite bookstore at Songyan.",
+      "items": [
+        {
+          "ref": "2027-11-03:tw-fuhang",
+          "node": "Taiwan|Taipei|Zhongzheng District|Fu Hang Soy Milk",
+          "title": "Breakfast · Fu Hang Soy Milk",
+          "kind": "meal",
+          "durationMin": 60,
+          "note": "Queue 30-60 min even on weekdays; go by ~07:15. Order sweet or salty soy milk plus the thick baked flatbread with egg (厚餅夾蛋). Cash only. Closed Mondays."
+        },
+        {
+          "ref": "2027-11-03:tw-npm",
+          "node": "Taiwan|Taipei||National Palace Museum",
+          "kind": "sight",
+          "durationMin": 180,
+          "note": "Opens 09:00; start with the 3F highlights before the tour groups arrive. Closed Mon (Wed is fine).",
+          "cost": {
+            "amount": 350,
+            "currency": "TWD",
+            "per": "person",
+            "note": "Regular ticket (npm.gov.tw)"
+          }
+        },
+        {
+          "ref": "2027-11-03:tw-silks",
+          "node": "Taiwan|Taipei||Silks Palace",
+          "title": "Lunch · Silks Palace",
+          "kind": "meal",
+          "durationMin": 75,
+          "bookAhead": true,
+          "note": "Dim sum and the replica Jadeite Cabbage / Meat-shaped Stone dishes. Book a table (phone or online). Fallback: the museum's Sanxitang tea room (4F).",
+          "cost": {
+            "amount": 2400,
+            "currency": "TWD",
+            "per": "total",
+            "note": "Estimate for two"
+          }
+        },
+        {
+          "ref": "2027-11-03:tw-yongkang",
+          "node": "Taiwan|Taipei|Da'an District|Yongkang Street",
+          "kind": "meal",
+          "title": "Yongkang Street · shaved ice + tea shops",
+          "durationMin": 45,
+          "note": "Smoothie House (思慕昔) shaved ice; browse the teahouses. Dongmen MRT (Red line) from Shilin."
+        },
+        {
+          "ref": "2027-11-03:tw-daan-park",
+          "node": "Taiwan|Taipei|Da'an District|Daan Forest Park",
+          "kind": "sight",
+          "durationMin": 60,
+          "note": "~15 min walk from Yongkang. Loop past the pond (egrets and turtles). Walk back to the hotel along Xinsheng S. Rd / Ren'ai Rd (~20 min)."
+        },
+        {
+          "ref": "2027-11-03:tw-rest",
+          "node": "Taiwan|Taipei|Da'an District|Kimpton Da An",
+          "title": "Rest at the hotel",
+          "kind": "rest",
+          "durationMin": 60
+        },
+        {
+          "ref": "2027-11-03:tw-mume",
+          "node": "Taiwan|Taipei|Da'an District|Mume",
+          "title": "Dinner · Mume",
+          "kind": "meal",
+          "durationMin": 120,
+          "pinnedStart": "18:30",
+          "fixedDate": true,
+          "note": "Tasting menu (1 Michelin star). Book on mume.tw or call +886 2 2700 0901. Tell them about dietary needs. ~8 min walk from the hotel.",
+          "cost": {
+            "amount": 4500,
+            "currency": "TWD",
+            "per": "person",
+            "note": "Estimate: tasting menu + 10% service, drinks extra"
+          }
+        },
+        {
+          "ref": "2027-11-03:tw-indulge",
+          "node": "Taiwan|Taipei|Da'an District|Indulge Experimental Bistro",
+          "kind": "nightlife",
+          "durationMin": 90,
+          "bookAhead": true,
+          "note": "Tea-based signature cocktails. Reserve (inline/phone); look for the herb garden at the door.",
+          "cost": {
+            "amount": 1600,
+            "currency": "TWD",
+            "per": "total",
+            "note": "~2 cocktails each at ~NT$400 + 10%"
+          }
+        },
+        {
+          "ref": "2027-11-03:tw-draftland",
+          "node": "Taiwan|Taipei|Da'an District|Draft Land",
+          "kind": "nightlife",
+          "durationMin": 45,
+          "note": "Optional nightcap; cocktails on tap, walk-in."
+        }
+      ]
+    },
+    {
+      "date": "2027-11-04",
+      "title": "Shifen + Jiufen · waterfall, Teapot Mountain, lanterns",
+      "startTime": "07:15",
+      "stay": {
+        "node": "Taiwan|Taipei|Da'an District|Kimpton Da An"
+      },
+      "dayNote": "Weekday on purpose: Jiufen is packed at weekends and midday. **~4.5 h of travel** today (day trip, flagged).\n\n- **Train:** check the TRA timetable the night before (TRA app/website). Aim for a Ruifang train around 08:20 and a Pingxi Line connection that reaches Shifen ~10:00. The Pingxi Line runs about hourly. Tap an EasyCard (no reservation). The Pingxi day pass (NT$80) only pays off if you also stop at Houtong (cat village) or Jingtong.\n- **Teapot Mountain is optional.** The trail goes from the Gold Museum past the Golden Shrine, ~1 h up, and ends in a short rope scramble. Skip it in rain or wind (the NE monsoon makes Jiufen/Jinguashi among the wettest places in Taiwan in Nov). Then take a taxi from Shifen straight to Jiufen and add the Gold Museum's Benshan Fifth Tunnel, or Houtong.\n- **Jiufen at dusk:** sunset ~17:10 and the lanterns come on then. The Spirited Away view is A-Mei Teahouse (阿妹茶樓) on Shuqi Road, shot from the stairs opposite. Weekday stalls start closing ~19:00-20:00, so eat as you go.\n- **Back to Taipei:** bus **1062** from the Jiufen Old Street stop to Zhongxiao Fuxing MRT (3 min from the hotel), ~70-90 min, ~NT$113, EasyCard. Expect an evening queue. Or bus 965 to Beimen/Taipei Main, or bus 788 to Ruifang + TRA.",
+      "items": [
+        {
+          "ref": "2027-11-04:tw-breakfast",
+          "title": "Breakfast near the hotel",
+          "kind": "meal",
+          "durationMin": 30,
+          "note": "Any Taiwanese breakfast shop (蛋餅 egg crepe, soy milk), or pick something up at 7-Eleven. Buy water and snacks for the train."
+        },
+        {
+          "ref": "2027-11-04:tw-taipei-main",
+          "node": "Taiwan|Taipei|Zhongzheng District|Taipei Main Station",
+          "kind": "transport",
+          "title": "Taipei Main Station · TRA eastbound",
+          "durationMin": 15,
+          "note": "Blue line from Zhongxiao Fuxing (4 stops). TRA platforms are on B2; any train stopping at Ruifang (local, Tze-Chiang, Chu-Kuang)."
+        },
+        {
+          "leg": {
+            "ref": "2027-11-04:tw-tra-pingxi",
+            "mode": "transit",
+            "label": "TRA + Pingxi Line · Taipei → Ruifang → Shifen",
+            "durationMin": 100,
+            "segments": [
+              {
+                "mode": "rail",
+                "lineName": "TRA eastbound (Yilan Line)",
+                "agency": "Taiwan Railway",
+                "headsign": "Ruifang / Yilan",
+                "from": {
+                  "name": "Taipei Station",
+                  "lat": 25.0478,
+                  "lng": 121.5171
+                },
+                "to": {
+                  "name": "Ruifang Station",
+                  "lat": 25.1086,
+                  "lng": 121.806
+                },
+                "durationMin": 50
+              },
+              {
+                "mode": "walk",
+                "from": {
+                  "name": "Ruifang Station"
+                },
+                "to": {
+                  "name": "Ruifang Station (Pingxi Line platform)"
+                },
+                "durationMin": 15
+              },
+              {
+                "mode": "rail",
+                "lineName": "TRA Pingxi Line",
+                "agency": "Taiwan Railway",
+                "headsign": "Jingtong",
+                "from": {
+                  "name": "Ruifang Station",
+                  "lat": 25.1086,
+                  "lng": 121.806
+                },
+                "to": {
+                  "name": "Shifen Station",
+                  "lat": 25.0411,
+                  "lng": 121.7752
+                },
+                "durationMin": 30
+              }
+            ],
+            "cost": {
+              "amount": 100,
+              "currency": "TWD",
+              "per": "person",
+              "note": "TRA NT$49 (local) to NT$76 (Tze-Chiang) + Pingxi Line ~NT$20-30"
+            },
+            "note": "Not reserved. Timings are typical; the Ruifang wait depends on the hourly Pingxi Line departures."
+          }
+        },
+        {
+          "ref": "2027-11-04:tw-shifen-street",
+          "node": "Taiwan|Shifen||Shifen Old Street",
+          "kind": "activity",
+          "durationMin": 60,
+          "note": "Release a sky lantern on the tracks (~NT$250-300 for a 4-colour lantern; staff paint and photograph it). Step off the rails when the train comes through.",
+          "cost": {
+            "amount": 300,
+            "currency": "TWD",
+            "per": "total",
+            "category": "activities",
+            "note": "One sky lantern (shared)"
+          }
+        },
+        {
+          "ref": "2027-11-04:tw-shifen-falls",
+          "node": "Taiwan|Shifen||Shifen Waterfall",
+          "kind": "sight",
+          "durationMin": 60,
+          "note": "~20 min walk from the station, over the Jingan suspension bridge. Open 09:00-16:30 in Nov, free. Taxis wait at the car park by the visitor centre."
+        },
+        {
+          "leg": {
+            "ref": "2027-11-04:tw-taxi-jinguashi",
+            "mode": "other",
+            "otherKind": "taxi",
+            "label": "Taxi · Shifen → Gold Museum (Jinguashi)",
+            "durationMin": 40,
+            "cost": {
+              "amount": 1000,
+              "currency": "TWD",
+              "per": "total",
+              "note": "~NT$800-1,000; agree or meter before leaving"
+            },
+            "note": "Skipping Teapot Mountain? Ask for Jiufen Old Street instead (~35 min, similar fare)."
+          }
+        },
+        {
+          "ref": "2027-11-04:tw-miner-lunch",
+          "node": "Taiwan|Jiufen||Gold Museum",
+          "title": "Lunch · Gold Museum miner's lunchbox",
+          "kind": "meal",
+          "durationMin": 45,
+          "note": "The miner's lunchbox (礦工便當) comes with a tin box and cloth wrap you keep. Park entry NT$80 pp; the Benshan Fifth Tunnel is inside if you skip the hike.",
+          "cost": {
+            "amount": 740,
+            "currency": "TWD",
+            "per": "total",
+            "note": "2 × (~NT$290 lunchbox + NT$80 entry) (estimate)"
+          }
+        },
+        {
+          "ref": "2027-11-04:tw-teapot",
+          "node": "Taiwan|Jiufen||Teapot Mountain",
+          "kind": "activity",
+          "durationMin": 150,
+          "note": "OPTIONAL. 2.5-3 h round trip from the Gold Museum via the Golden Shrine. Stairs, then a rope scramble to the top (skip that part if wet). Wear shoes with grip and bring water. Be back down by ~16:15."
+        },
+        {
+          "leg": {
+            "ref": "2027-11-04:tw-bus-jiufen",
+            "mode": "transit",
+            "label": "Bus 1062 / 788 / 827 · Jinguashi → Jiufen Old Street",
+            "durationMin": 25,
+            "segments": [
+              {
+                "mode": "bus",
+                "lineName": "1062 / 788 / 827",
+                "agency": "Keelung Bus",
+                "from": {
+                  "name": "Gold Museum (Jinguashi) stop",
+                  "lat": 25.108,
+                  "lng": 121.8575
+                },
+                "to": {
+                  "name": "Jiufen Old Street stop",
+                  "lat": 25.1098,
+                  "lng": 121.8452
+                },
+                "durationMin": 12
+              },
+              {
+                "mode": "walk",
+                "from": {
+                  "name": "Jiufen Old Street stop"
+                },
+                "to": {
+                  "name": "Jiufen Teahouse"
+                },
+                "durationMin": 8
+              }
+            ],
+            "cost": {
+              "amount": 15,
+              "currency": "TWD",
+              "per": "person"
+            },
+            "note": "Or taxi ~NT$200 (~10 min)."
+          }
+        },
+        {
+          "ref": "2027-11-04:tw-jiufen-teahouse",
+          "node": "Taiwan|Jiufen||Jiufen Teahouse",
+          "kind": "meal",
+          "title": "Jiufen Teahouse · tea at sunset",
+          "durationMin": 60,
+          "note": "Gongfu-style oolong service with a view over the valley (tea + water fee per person; ~NT$500-700 for two). Ask for a window seat.",
+          "cost": {
+            "amount": 700,
+            "currency": "TWD",
+            "per": "total",
+            "note": "Estimate"
+          }
+        },
+        {
+          "ref": "2027-11-04:tw-agan",
+          "node": "Taiwan|Jiufen||A-Gan-Yi Taro Balls",
+          "title": "Dinner · A-Gan-Yi taro balls + Old Street snacks",
+          "kind": "meal",
+          "durationMin": 45,
+          "note": "Taro balls in the dining room with the sea view, then graze on Jishan Street: fish-ball soup, peanut ice-cream roll (花生捲冰淇淋), braised pork rice. Stalls close ~19:00-20:00 on weekdays."
+        },
+        {
+          "ref": "2027-11-04:tw-jiufen-street",
+          "node": "Taiwan|Jiufen||Jiufen Old Street",
+          "kind": "sight",
+          "durationMin": 75,
+          "note": "After dark with the lanterns lit: Jishan Street, then down the Shuqi Road stairs to A-Mei Teahouse (阿妹茶樓) for the classic photo. Crowds thin after ~19:00 on weekdays. Then bus 1062 back (see day note)."
+        }
+      ]
+    },
+    {
+      "date": "2027-11-05",
+      "title": "Taipei · Beitou hot springs + Dadaocheng (flex day)",
+      "startTime": "09:00",
+      "stay": {
+        "node": "Taiwan|Taipei|Da'an District|Kimpton Da An"
+      },
+      "dayNote": "**Flex day.** The Cities tab adds up to 31 days, so this is the spare one. Everything today is along the red MRT line (Beitou → Shuanglian/Daqiaotou).\n\n- **Other ways to spend it:** Longshan Temple + Bopiliao (Wanhua); Maokong Gondola and a tea house (the gondola closes most Mondays); or move this day to Hoi An (allocation.flex).\n- **Beitou:** the museum and Thermal Valley are closed on Mondays (Friday is fine). Public baths are gender-separated and nude; private rooms are for couples.\n- **Breakfast:** e.g. Yonghe Soy Milk King (永和豆漿大王) on Fuxing S. Rd, Sec. 2 (open around the clock), or pastries near the hotel.\n- **Ningxia picks:** Liu Yu Zai fried taro balls (劉芋仔), Fang Jia shredded chicken rice (方家雞肉飯), oyster omelette.\n- **Friday nightcap** (optional): back in Da'an. Try whichever Asia's 50 Best bar you missed on Nov 3.",
+      "items": [
+        {
+          "ref": "2027-11-05:tw-breakfast",
+          "title": "Breakfast near the hotel",
+          "kind": "meal",
+          "durationMin": 30
+        },
+        {
+          "ref": "2027-11-05:tw-beitou-museum",
+          "node": "Taiwan|Taipei|Beitou|Beitou Hot Spring Museum",
+          "kind": "sight",
+          "durationMin": 30,
+          "note": "Opens 10:00, free, shoes off. Red line to Beitou, then change to Xinbeitou (~40 min from the hotel)."
+        },
+        {
+          "ref": "2027-11-05:tw-thermal-valley",
+          "node": "Taiwan|Taipei|Beitou|Beitou Thermal Valley",
+          "kind": "sight",
+          "durationMin": 30,
+          "note": "5 min uphill past the park. Hot and sulphurous; do not touch the water."
+        },
+        {
+          "ref": "2027-11-05:tw-hotspring",
+          "title": "Hot-spring soak · private room (day use)",
+          "kind": "activity",
+          "durationMin": 90,
+          "note": "Several Beitou hotels rent private hot-spring rooms by the hour (e.g. Spring City Resort or Villa 32). Compare prices and book the day before. For a cheap public option there is Longnice Hot Spring (瀧乃湯, since 1907), gender-separated and nude.",
+          "cost": {
+            "amount": 2000,
+            "currency": "TWD",
+            "per": "total",
+            "note": "Private room ~NT$1,200-3,000 / 60-90 min (estimate)"
+          }
+        },
+        {
+          "ref": "2027-11-05:tw-lunch",
+          "title": "Lunch near Xinbeitou Station",
+          "kind": "meal",
+          "durationMin": 45,
+          "note": "Beitou Market's upstairs food court (braised pork rice, noodle stalls) or ramen near the station."
+        },
+        {
+          "ref": "2027-11-05:tw-wangtea",
+          "node": "Taiwan|Taipei||Wang Tea",
+          "kind": "shopping",
+          "durationMin": 60,
+          "note": "Tea merchant since 1890 (Mon-Sat 09:00-18:00, closed Sun). Taste oolongs and buy tea (Shopping List: tea). Ask about the roasting-room tour (email ahead: service@wangtea.com.tw). Tax refund: ask whether they are a TRS store and bring your passport."
+        },
+        {
+          "ref": "2027-11-05:tw-city-god",
+          "node": "Taiwan|Taipei|Datong District|Xiahai City God Temple",
+          "kind": "sight",
+          "durationMin": 20
+        },
+        {
+          "ref": "2027-11-05:tw-dihua",
+          "node": "Taiwan|Taipei|Datong District|Dihua Street",
+          "kind": "shopping",
+          "durationMin": 50,
+          "note": "Dried fruit and mullet roe, Chinese herbs, Yongle fabric market, and the ArtYard (小藝埕) design shops. Shops close ~18:00-19:00."
+        },
+        {
+          "ref": "2027-11-05:tw-wharf",
+          "node": "Taiwan|Taipei|Datong District|Dadaocheng Wharf",
+          "kind": "sight",
+          "durationMin": 30,
+          "pinnedStart": "16:55",
+          "note": "Sunset ~17:10 over the Tamsui River. Container food and beer stalls open in the evening."
+        },
+        {
+          "ref": "2027-11-05:tw-ningxia",
+          "node": "Taiwan|Taipei|Datong District|Ningxia Night Market",
+          "title": "Dinner · Ningxia Night Market",
+          "kind": "meal",
+          "durationMin": 90,
+          "note": "~15 min walk from the wharf. Liu Yu Zai taro balls, Fang Jia chicken rice, oyster omelette. Cash.",
+          "cost": {
+            "amount": 700,
+            "currency": "TWD",
+            "per": "total",
+            "note": "Street food for two (estimate)"
+          }
+        },
+        {
+          "ref": "2027-11-05:tw-nightcap",
+          "title": "Nightcap · Da'an cocktail bar (optional)",
+          "kind": "nightlife",
+          "durationMin": 60,
+          "note": "The Public House, To Infinity & Beyond, Lab, Bar Mood or UnderLab (Asia's 50 Best 2025 list). Check locations and book."
+        }
+      ]
+    },
+    {
+      "date": "2027-11-06",
+      "title": "Taipei · last day → fly home",
+      "startTime": "08:30",
+      "stay": null,
+      "dayNote": "- **Checkout:** pack before breakfast, check out, and leave the bags with the concierge (or ask for a 14:00 late check-out). **Leave the hotel by 18:05.**\n- **Taiwan tax refund (TRS):** shops with the blue TRS sign, NT$2,000+ at one shop on one day. Bring your passport to the till. Small refunds can be paid in the shop; otherwise claim at the TPE tax-refund counter **before check-in** and keep the goods in your hand luggage in case customs asks to see them.\n- **Alternatives:** Longshan Temple (Wanhua) instead of Huashan; Songshan Cultural Park + Eslite instead of the 101 mall.\n- **Airport MRT instead of a taxi:** MRT to Taipei Main, then the express to T2 (~60 min door to door, NT$150 pp). Leave by 17:50.",
+      "items": [
+        {
+          "ref": "2027-11-06:tw-breakfast",
+          "title": "Breakfast near the hotel",
+          "kind": "meal",
+          "durationMin": 30,
+          "note": "Last chance for Fu Hang Soy Milk (expect a ~1 h Saturday queue) or Yonghe Soy Milk King."
+        },
+        {
+          "ref": "2027-11-06:tw-checkout",
+          "node": "Taiwan|Taipei|Da'an District|Kimpton Da An",
+          "title": "Check out · leave bags at Kimpton Da An",
+          "kind": "lodging",
+          "durationMin": 15
+        },
+        {
+          "ref": "2027-11-06:tw-cks",
+          "node": "Taiwan|Taipei|Zhongzheng District|Chiang Kai-shek Memorial Hall",
+          "kind": "sight",
+          "durationMin": 75,
+          "note": "Be in the main hall on the hour for the honour-guard change. Photos from Liberty Square gate."
+        },
+        {
+          "ref": "2027-11-06:tw-beef-noodle",
+          "node": "Taiwan|Taipei|Da'an District|Yong Kang Beef Noodle",
+          "title": "Lunch · Yong Kang Beef Noodle",
+          "kind": "meal",
+          "durationMin": 60,
+          "note": "~15 min walk from CKS. Go at opening (~11:00) to beat the queue. Order the braised (紅燒) beef noodle soup; the half-tendon mix is a good choice. Cash."
+        },
+        {
+          "ref": "2027-11-06:tw-huashan",
+          "node": "Taiwan|Taipei|Zhongzheng District|Huashan 1914 Creative Park",
+          "kind": "shopping",
+          "durationMin": 75,
+          "note": "Weekend design markets, pop-up exhibitions and Taiwanese brands."
+        },
+        {
+          "ref": "2027-11-06:tw-elephant",
+          "node": "Taiwan|Taipei|Xinyi District|Elephant Mountain",
+          "kind": "sight",
+          "durationMin": 75,
+          "note": "Red line to Xiangshan. 20-30 min of steep stairs to the Six Giant Rocks viewpoint for the Taipei 101 shot. Skip it in heavy rain."
+        },
+        {
+          "ref": "2027-11-06:tw-101",
+          "node": "Taiwan|Taipei|Xinyi District|Taipei 101",
+          "kind": "sight",
+          "durationMin": 60,
+          "note": "89F observatory (~NT$600, buy online; skip if the top is in cloud) or the mall. **Tax refund with passport:** most mall shops are TRS. NT$2,000+ at one shop on one day; keep the receipts for the TPE counter.",
+          "cost": {
+            "amount": 600,
+            "currency": "TWD",
+            "per": "person",
+            "note": "Observatory ticket (verify 2027 price)"
+          }
+        },
+        {
+          "ref": "2027-11-06:tw-dtf",
+          "node": "Taiwan|Taipei|Xinyi District|Din Tai Fung Taipei 101",
+          "title": "Early dinner · Din Tai Fung (Taipei 101)",
+          "kind": "meal",
+          "durationMin": 60,
+          "note": "Take a queue number first (kiosk or online queue), then browse. Order pork xiaolongbao, truffle xiaolongbao, shrimp fried rice and the spicy wontons. Aim to sit down by ~16:30.",
+          "cost": {
+            "amount": 1800,
+            "currency": "TWD",
+            "per": "total",
+            "note": "Estimate for two"
+          }
+        },
+        {
+          "ref": "2027-11-06:tw-bags",
+          "node": "Taiwan|Taipei|Da'an District|Kimpton Da An",
+          "title": "Pick up bags · Kimpton Da An",
+          "kind": "lodging",
+          "durationMin": 15,
+          "note": "~15 min by taxi from Taipei 101."
+        },
+        {
+          "leg": {
+            "ref": "2027-11-06:tw-taxi-tpe",
+            "mode": "other",
+            "otherKind": "taxi",
+            "label": "Taxi · Kimpton Da An → TPE T2",
+            "durationMin": 55,
+            "cost": {
+              "amount": 1400,
+              "currency": "TWD",
+              "per": "total",
+              "note": "~NT$1,200-1,500 incl. tolls (Uber similar)"
+            },
+            "note": "Leave by 18:05 so you reach T2 by ~19:00. TK25 departs 21:45. Claim the TRS refund at the counter before Turkish check-in."
+          }
+        },
+        {
+          "flight": "TK25"
+        }
+      ]
+    },
+    {
+      "date": "2027-11-07",
+      "title": "Istanbul layover → Newark",
+      "stay": null,
+      "dayNote": "- **IST 05:10 → 18:50** (~13 h 40 m): the Turkish Airlines Business Lounge, or Touristanbul, the free city tour for transfer passengers with 6-24 h connections. Check eligibility and Türkiye entry rules before leaving the airport.\n- **US clocks go back at 02:00 today:** the EWR arrival (~21:40) is in EST.",
+      "items": [
+        {
+          "flight": "TK25"
+        }
+      ]
+    }
+  ],
+  "expenses": [
+    {
+      "title": "Bus 1062 · Jiufen → Taipei (2×)",
+      "target": {
+        "day": "2027-11-04"
+      },
+      "category": "transport",
+      "amount": 226,
+      "currency": "TWD",
+      "expectedOn": "2027-11-04",
+      "note": "~NT$113 pp by EasyCard. The ride itself is the autofilled stay leg from Jiufen Old Street to the hotel."
+    },
+    {
+      "title": "EasyCards + Taipei MRT/bus top-ups",
+      "target": {
+        "node": "Taiwan|Taipei"
+      },
+      "category": "transport",
+      "amount": 1000,
+      "currency": "TWD",
+      "expectedOn": "2027-11-02",
+      "note": "2 cards (~NT$100 each; the card fee isn't refunded) + ~NT$400 each for MRT/buses over 4 days (estimate)."
+    }
+  ],
+  "todos": [
+    {
+      "text": "Book Kimpton Da An Taipei · Nov 2-6 (4 nights, free-cancellation rate)",
+      "target": {
+        "node": "Taiwan|Taipei|Da'an District|Kimpton Da An"
+      },
+      "kind": "due",
+      "due": {
+        "date": "2027-06-30"
+      },
+      "url": "https://www.ihg.com/kimptonhotels/hotels/us/en/da-an-hotel-taipei/tpekm/hoteldetail",
+      "note": "Taiwan part of the Action Timeline row 'Hotels — Korea / Vietnam / Taiwan'. Rates ~NT$7,000-9,500/night. This is above the Taiwan lodging default of US$85 pp/day. For something cheaper nearby, look around Zhongxiao Fuxing / Zhongxiao Dunhua."
+    },
+    {
+      "text": "Reserve Mume for Wed Nov 3, 18:30 (2 people)",
+      "target": {
+        "item": "2027-11-03:tw-mume"
+      },
+      "kind": "opens",
+      "rule": {
+        "anchor": "2027-11-03:tw-mume",
+        "days": 60,
+        "time": "10:00",
+        "tz": "Asia/Taipei"
+      },
+      "url": "https://www.mume.tw/",
+      "note": "Booking window not verified. Tables usually go ~1-2 months ahead; this todo fires 60 days before. Phone +886 2 2700 0901."
+    },
+    {
+      "text": "Claim the Taiwan tax refund (TRS) at TPE before check-in: passport, receipts, goods",
+      "target": {
+        "flight": "TK25"
+      },
+      "kind": "on",
+      "due": {
+        "date": "2027-11-06",
+        "time": "19:00",
+        "tz": "Asia/Taipei"
+      },
+      "note": "Tax refund counter in the T2 departure hall before the Turkish check-in counters. Skip if every refund was already paid in the shops."
+    },
+    {
+      "text": "Check the TRA + Pingxi Line times for the Jiufen/Shifen day trip",
+      "target": {
+        "day": "2027-11-04"
+      },
+      "kind": "on",
+      "due": {
+        "date": "2027-11-03",
+        "time": "21:00",
+        "tz": "Asia/Taipei"
+      },
+      "note": "Aim to reach Shifen ~10:00. If rain is forecast, drop Teapot Mountain (see the Nov 4 day note)."
+    }
+  ],
+  "notes": [
+    "File: written as seed/draft/days-taiwan.json (the name in SCHEMA.md and allocation.json parts.taiwan.file). The task text said 'taiwan.json'.",
+    "Priorities: all Taiwan places in the Places tab are unrated. The ranking uses the Cities-tab notes (night markets, street food, National Palace Museum, Daan Forest Park, Wang Tea, Da'an cocktail bars; Shifen waterfalls; Jiufen Old Street, Jiufen Teahouse, Teapot Mountain) plus judgment. Every Places-tab Taiwan place is scheduled: Teapot Mountain as an optional item on Nov 4.",
+    "New nodes: coordinates come from OpenStreetMap/Nominatim lookups (2026-09-23) and are marked high when OSM had the exact POI. Medium: area centroids, Draft Land (address conflict), Din Tai Fung Taipei 101 (pinned to the tower), Beitou Thermal Valley, and the bus stops in leg segments.",
+    "Hours confirmed on official sites 2026-09-23: National Palace Museum (Tue-Sun 09:00-17:00, closed Mon, NT$350), Wang Tea (Mon-Sat 09:00-18:00, closed Sun), Gold Museum (weekdays 09:30-17:00, weekends 09:30-18:00, closed 1st Mon, NT$80), Mume (daily 17:30-23:00, Michelin Guide). Every other openHours value comes from memory and is marked '(verify)'.",
+    "Lodging: Kimpton Da An at ~NT$8,000/night × 4 (~US$250/night) is above the allocation's Taiwan lodging default (US$85 pp/day ≈ US$170/night for two). It was chosen for the Da'an bar focus. The budget view will show Taiwan lodging over budget unless a cheaper hotel is picked.",
+    "Nov 4 has ~4.5 h of travel (Taipei → Shifen → Jinguashi → Jiufen → Taipei), over the ~2 h/day guideline. This is inherent to the day trip. Without Teapot Mountain the day drops to ~3.5 h of travel and ~390 item-minutes.",
+    "Return legs to the hotel (Nov 2 from Raohe, Nov 4 from Jiufen by bus 1062, Nov 5 from Ningxia) are left to stay-leg autofill (Google transit) because a day with a hotel stay can't end with a written leg. The bus 1062 fare is an explicit expense on Nov 4.",
+    "Nov 2 'after' half: the day title is set here ('Hanoi → Taipei · Raohe Night Market'). Lunch is on board BR398, so this half only has dinner.",
+    "Nov 7: only the TK25 marker plus a dayNote (IST layover ideas, DST).",
+    "Estimates to verify: Silks Palace hours and prices, the Mume tasting-menu price, the Taipei 101 observatory price, Beitou private-room prices, taxi fares (Shifen → Jinguashi, hotel → TPE), and bus 1062 fare and frequency."
+  ]
+}

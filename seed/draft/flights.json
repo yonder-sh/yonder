@@ -1,0 +1,832 @@
+{
+  "version": 1,
+  "generatedAt": "2026-09-23",
+  "about": "All flights of the Asia 2027 full draft (coordinator output; see SCHEMA.md §5). Times are LOCAL at each airport and come from the 2026 timetables (2027 schedules are not published yet); every segment's uncertainties are listed. Airports are canonicalised from seed/airports/airports.json by IATA.",
+  "airportNodes": [
+    {
+      "key": "United States",
+      "type": "country",
+      "lat": 39.8283,
+      "lng": -98.5795,
+      "tz": "America/New_York",
+      "countryCode": "US",
+      "description": "Home (flight endpoints only)",
+      "confidence": "low"
+    },
+    {
+      "key": "United States|New York",
+      "type": "city",
+      "lat": 40.7128,
+      "lng": -74.006,
+      "tz": "America/New_York",
+      "description": "Home airports (JFK out, EWR back)",
+      "confidence": "high"
+    },
+    {
+      "key": "United States|New York||JFK Airport (JFK)",
+      "type": "place",
+      "category": "airport",
+      "iata": "JFK",
+      "lat": 40.639447,
+      "lng": -73.779317,
+      "tz": "America/New_York",
+      "description": "New York John F. Kennedy International Airport",
+      "confidence": "high"
+    },
+    {
+      "key": "United States|New York||Newark Airport (EWR)",
+      "type": "place",
+      "category": "airport",
+      "iata": "EWR",
+      "lat": 40.6894,
+      "lng": -74.170545,
+      "tz": "America/New_York",
+      "description": "Newark Liberty International Airport",
+      "confidence": "high"
+    },
+    {
+      "key": "Japan|Tokyo|Haneda|Haneda Airport (HND)",
+      "type": "place",
+      "category": "airport",
+      "iata": "HND",
+      "lat": 35.549678,
+      "lng": 139.786958,
+      "tz": "Asia/Tokyo",
+      "description": "Tokyo Haneda International Airport",
+      "confidence": "high"
+    },
+    {
+      "key": "Japan|Osaka||Kansai Airport (KIX)",
+      "type": "place",
+      "category": "airport",
+      "iata": "KIX",
+      "lat": 34.427299,
+      "lng": 135.244003,
+      "tz": "Asia/Tokyo",
+      "description": "Kansai International Airport (Izumisano, ~40 min from Namba by Nankai rapi:t)",
+      "confidence": "high"
+    },
+    {
+      "key": "South Korea|Seoul||Incheon Airport (ICN)",
+      "type": "place",
+      "category": "airport",
+      "iata": "ICN",
+      "lat": 37.469101,
+      "lng": 126.450996,
+      "tz": "Asia/Seoul",
+      "description": "Incheon International Airport (AREX Express to Seoul Station ~43 min)",
+      "confidence": "high"
+    },
+    {
+      "key": "South Korea|Busan||Gimhae Airport (PUS)",
+      "type": "place",
+      "category": "airport",
+      "iata": "PUS",
+      "lat": 35.179501,
+      "lng": 128.938004,
+      "tz": "Asia/Seoul",
+      "description": "Gimhae International Airport, Busan",
+      "confidence": "high"
+    },
+    {
+      "key": "Vietnam|Ho Chi Minh City||Tan Son Nhat Airport (SGN)",
+      "type": "place",
+      "category": "airport",
+      "iata": "SGN",
+      "lat": 10.8188,
+      "lng": 106.652,
+      "tz": "Asia/Ho_Chi_Minh",
+      "description": "Tan Son Nhat International Airport (T2 international, T3 domestic)",
+      "confidence": "high"
+    },
+    {
+      "key": "Vietnam|Da Nang||Da Nang Airport (DAD)",
+      "type": "place",
+      "category": "airport",
+      "iata": "DAD",
+      "lat": 16.0439,
+      "lng": 108.198997,
+      "tz": "Asia/Ho_Chi_Minh",
+      "description": "Da Nang International Airport (~45 min by car to Hoi An)",
+      "confidence": "high"
+    },
+    {
+      "key": "Vietnam|Hanoi||Noi Bai Airport (HAN)",
+      "type": "place",
+      "category": "airport",
+      "iata": "HAN",
+      "lat": 21.221201,
+      "lng": 105.806999,
+      "tz": "Asia/Ho_Chi_Minh",
+      "description": "Noi Bai International Airport (~45 min by car to the Old Quarter)",
+      "confidence": "high"
+    },
+    {
+      "key": "Taiwan|Taipei||Taoyuan Airport (TPE)",
+      "type": "place",
+      "category": "airport",
+      "iata": "TPE",
+      "lat": 25.0777,
+      "lng": 121.233002,
+      "tz": "Asia/Taipei",
+      "description": "Taiwan Taoyuan International Airport (Airport MRT express to Taipei Main Station ~38 min)",
+      "confidence": "high"
+    },
+    {
+      "key": "Türkiye",
+      "type": "country",
+      "lat": 38.9637,
+      "lng": 35.2433,
+      "tz": "Europe/Istanbul",
+      "countryCode": "TR",
+      "description": "Connection only (Istanbul layover on the way home)",
+      "confidence": "low"
+    },
+    {
+      "key": "Türkiye|Istanbul",
+      "type": "city",
+      "lat": 41.0082,
+      "lng": 28.9784,
+      "tz": "Europe/Istanbul",
+      "description": "Layover city",
+      "confidence": "high"
+    },
+    {
+      "key": "Türkiye|Istanbul||Istanbul Airport (IST)",
+      "type": "place",
+      "category": "airport",
+      "iata": "IST",
+      "lat": 41.274874,
+      "lng": 28.732136,
+      "tz": "Europe/Istanbul",
+      "description": "Istanbul Airport (Turkish Airlines hub)",
+      "confidence": "high"
+    }
+  ],
+  "flights": [
+    {
+      "key": "NH159",
+      "date": "2027-10-02",
+      "label": "Outbound · ANA NH159 JFK → HND (Business, Aeroplan award)",
+      "status": "planned",
+      "travellers": [
+        "dennis",
+        "audrey"
+      ],
+      "segments": [
+        {
+          "airline": {
+            "iata": "NH",
+            "name": "ANA"
+          },
+          "flightNumber": "NH159",
+          "from": {
+            "iata": "JFK",
+            "name": "John F. Kennedy International Airport",
+            "city": "New York",
+            "country": "US",
+            "tz": "America/New_York",
+            "lat": 40.639447,
+            "lng": -73.779317,
+            "terminal": "7"
+          },
+          "to": {
+            "iata": "HND",
+            "name": "Tokyo Haneda International Airport",
+            "city": "Tokyo",
+            "country": "JP",
+            "tz": "Asia/Tokyo",
+            "lat": 35.549678,
+            "lng": 139.786958,
+            "terminal": "2"
+          },
+          "depLocal": "2027-10-02T02:00",
+          "arrLocal": "2027-10-03T05:00",
+          "cabin": "business",
+          "aircraft": "Boeing 777-300ER (THE Room business)",
+          "points": {
+            "amount": 85000,
+            "program": "Aeroplan"
+          },
+          "fees": {
+            "amount": 80,
+            "currency": "CAD",
+            "text": "CA$80 per person (Aeroplan)"
+          },
+          "note": "Departs 02:00 on Sat Oct 2 = leave home Fri Oct 1 evening (be at JFK T7 by ~23:30 Fri). Per person: 85,000 Aeroplan (= 70,834 Chase UR with the 20% transfer bonus) + CA$80."
+        }
+      ],
+      "note": "**Award plan (Action Timeline row 3):** ANA releases seats 355 days out at 09:00 JST = **Sun Oct 11 2026, 8:00 PM ET**. Search 2 passengers in Business first; if only 1 seat, fall back per the ranked list (1F+1J same flight, 2F, …). Book as one 2-passenger booking when two seats show.\n\n- Arrival ~05:00 at Haneda: immigration + customs ~1–2 h, then breakfast at Haneda Airport Garden (owner's Day 1).\n- Forward big bags to the Tokyo hotel by takkyubin from the arrivals hall.\n- Backup departure dates (Oct 3 / 9 / 10) stay in the Action Timeline.",
+      "uncertain": [
+        "Times from the 2026 summer timetable (JFK 02:00 → HND 05:00; one source lists 05:15). The 2027 timetable is not published.",
+        "JFK Terminal 7 as of 2026; T7 is due to close as JFK's new terminals open — confirm ANA's terminal nearer the date.",
+        "HND arrival terminal: FlightStats lists T2 for NH159 (ANA also uses T3 for international) — confirm.",
+        "The coordinator task text said 'Aeroplan 75k'; the sheet (USA to Asia Flights row 3) says 85k Aeroplan + CA$80 for ANA Business — the sheet value is used."
+      ]
+    },
+    {
+      "key": "KE726",
+      "date": "2027-10-14",
+      "label": "Osaka → Seoul · Korean Air KE726 KIX → ICN",
+      "status": "planned",
+      "travellers": [
+        "dennis",
+        "audrey"
+      ],
+      "segments": [
+        {
+          "airline": {
+            "iata": "KE",
+            "name": "Korean Air"
+          },
+          "flightNumber": "KE726",
+          "from": {
+            "iata": "KIX",
+            "name": "Kansai International Airport",
+            "city": "Osaka",
+            "country": "JP",
+            "tz": "Asia/Tokyo",
+            "lat": 34.427299,
+            "lng": 135.244003,
+            "terminal": "1"
+          },
+          "to": {
+            "iata": "ICN",
+            "name": "Incheon International Airport",
+            "city": "Seoul",
+            "country": "KR",
+            "tz": "Asia/Seoul",
+            "lat": 37.469101,
+            "lng": 126.450996,
+            "terminal": "2"
+          },
+          "depLocal": "2027-10-14T18:15",
+          "arrLocal": "2027-10-14T20:05",
+          "cabin": "economy",
+          "aircraft": "Airbus A321neo",
+          "cost": {
+            "amount": 400,
+            "currency": "USD",
+            "text": "~US$200 pp (estimate)"
+          },
+          "note": "Allow 3 h at KIX: Japan's refund-type tax-free system (since 2026-11-01) means customs checks your tax-free purchases at departure — keep passport, receipts and the goods (unused) in carry-on reach."
+        }
+      ],
+      "note": "- **Tax refund:** at KIX go to the customs tax-refund check BEFORE security with passport + purchases; the refund then goes back to the card.\n- Namba → KIX: Nankai *rapi:t* (reserved, ~38 min) — leave Namba by ~15:00.\n- ICN T2 → Seoul Station: AREX Express ~43 min (or AREX all-stop ~60 min); last express ~22:40.\n- Alternative: KE724 12:35 → 14:25 (787-10) if you'd rather have a Seoul evening than an Osaka afternoon.",
+      "uncertain": [
+        "2026 timetable (KE726 KIX 18:15 → ICN 20:05, daily); 2027 times not published."
+      ]
+    },
+    {
+      "key": "VN423",
+      "date": "2027-10-20",
+      "label": "Busan → Ho Chi Minh City · Vietnam Airlines VN423 PUS → SGN",
+      "status": "planned",
+      "travellers": [
+        "dennis",
+        "audrey"
+      ],
+      "segments": [
+        {
+          "airline": {
+            "iata": "VN",
+            "name": "Vietnam Airlines"
+          },
+          "flightNumber": "VN423",
+          "from": {
+            "iata": "PUS",
+            "name": "Gimhae International Airport",
+            "city": "Busan",
+            "country": "KR",
+            "tz": "Asia/Seoul",
+            "lat": 35.179501,
+            "lng": 128.938004,
+            "terminal": "I"
+          },
+          "to": {
+            "iata": "SGN",
+            "name": "Tan Son Nhat International Airport",
+            "city": "Ho Chi Minh City",
+            "country": "VN",
+            "tz": "Asia/Ho_Chi_Minh",
+            "lat": 10.8188,
+            "lng": 106.652,
+            "terminal": "2"
+          },
+          "depLocal": "2027-10-20T10:05",
+          "arrLocal": "2027-10-20T12:55",
+          "cabin": "economy",
+          "aircraft": "Boeing 787-9",
+          "cost": {
+            "amount": 600,
+            "currency": "USD",
+            "text": "~US$300 pp (estimate)"
+          },
+          "note": "Korea tax refund: kiosks/counters in the PUS international terminal (or instant refund in-store). Vietnam e-visa must be approved before this flight."
+        }
+      ],
+      "note": "- Haeundae → Gimhae Airport by taxi ~40 min (leave ~07:30).\n- SGN T2 → District 1 by Grab ~30–45 min.\n- Codeshare KE5687. VietJet also flies PUS–SGN (5×/week) if cheaper.",
+      "uncertain": [
+        "2026 timetable (VN423 PUS ~10:05 → SGN 12:55); 2027 times not published."
+      ]
+    },
+    {
+      "key": "VN132",
+      "date": "2027-10-23",
+      "label": "Ho Chi Minh City → Da Nang · Vietnam Airlines VN132 SGN → DAD",
+      "status": "planned",
+      "travellers": [
+        "dennis",
+        "audrey"
+      ],
+      "segments": [
+        {
+          "airline": {
+            "iata": "VN",
+            "name": "Vietnam Airlines"
+          },
+          "flightNumber": "VN132",
+          "from": {
+            "iata": "SGN",
+            "name": "Tan Son Nhat International Airport",
+            "city": "Ho Chi Minh City",
+            "country": "VN",
+            "tz": "Asia/Ho_Chi_Minh",
+            "lat": 10.8188,
+            "lng": 106.652,
+            "terminal": "3"
+          },
+          "to": {
+            "iata": "DAD",
+            "name": "Da Nang International Airport",
+            "city": "Da Nang",
+            "country": "VN",
+            "tz": "Asia/Ho_Chi_Minh",
+            "lat": 16.0439,
+            "lng": 108.198997,
+            "terminal": "1"
+          },
+          "depLocal": "2027-10-23T13:25",
+          "arrLocal": "2027-10-23T14:45",
+          "cabin": "economy",
+          "aircraft": "Airbus A321",
+          "cost": {
+            "amount": 150,
+            "currency": "USD",
+            "text": "~US$75 pp incl. a checked bag (estimate)"
+          },
+          "note": "Domestic: SGN Terminal 3. Pick a fare with checked baggage (Economy Lite fares may exclude it)."
+        }
+      ],
+      "note": "- District 1 → SGN T3 by Grab ~30–40 min (leave ~11:30).\n- DAD → Hoi An by car/Grab ~45 min; hotel ~16:00, then **order the tailoring on day 1** (suits, overcoats, trench coats, ao dai) so there's time for 2+ fittings.\n- Earlier alternative: VN122 10:00 → 11:20 or VN126 11:00 → 12:20 (more Hoi An time, less HCMC morning).",
+      "uncertain": [
+        "2026 timetable (VN132 SGN 13:25 → DAD 14:45, daily)."
+      ]
+    },
+    {
+      "key": "VN174",
+      "date": "2027-10-26",
+      "label": "Da Nang → Hanoi · Vietnam Airlines VN174 DAD → HAN",
+      "status": "planned",
+      "travellers": [
+        "dennis",
+        "audrey"
+      ],
+      "segments": [
+        {
+          "airline": {
+            "iata": "VN",
+            "name": "Vietnam Airlines"
+          },
+          "flightNumber": "VN174",
+          "from": {
+            "iata": "DAD",
+            "name": "Da Nang International Airport",
+            "city": "Da Nang",
+            "country": "VN",
+            "tz": "Asia/Ho_Chi_Minh",
+            "lat": 16.0439,
+            "lng": 108.198997,
+            "terminal": "1"
+          },
+          "to": {
+            "iata": "HAN",
+            "name": "Noi Bai International Airport",
+            "city": "Hanoi (Soc Son)",
+            "country": "VN",
+            "tz": "Asia/Ho_Chi_Minh",
+            "lat": 21.221201,
+            "lng": 105.806999,
+            "terminal": "1"
+          },
+          "depLocal": "2027-10-26T16:40",
+          "arrLocal": "2027-10-26T18:05",
+          "cabin": "economy",
+          "aircraft": "Airbus A321neo",
+          "cost": {
+            "amount": 150,
+            "currency": "USD",
+            "text": "~US$75 pp incl. checked bags (estimate)"
+          },
+          "note": "Tailored clothes add weight: buy an extra checked bag if needed."
+        }
+      ],
+      "note": "- Morning: final tailor fitting + pickup in Hoi An, leave ~14:30 (car ~45 min to DAD).\n- HAN T1 → Old Quarter by taxi ~45 min.\n- Earlier alternative: VN172 13:45 → 15:10.",
+      "uncertain": [
+        "2026 timetable (VN174 DAD 16:35–16:40 → HAN 18:05, daily)."
+      ]
+    },
+    {
+      "key": "BR398",
+      "date": "2027-11-02",
+      "label": "Hanoi → Taipei · EVA Air BR398 HAN → TPE",
+      "status": "planned",
+      "travellers": [
+        "dennis",
+        "audrey"
+      ],
+      "segments": [
+        {
+          "airline": {
+            "iata": "BR",
+            "name": "EVA Air"
+          },
+          "flightNumber": "BR398",
+          "from": {
+            "iata": "HAN",
+            "name": "Noi Bai International Airport",
+            "city": "Hanoi (Soc Son)",
+            "country": "VN",
+            "tz": "Asia/Ho_Chi_Minh",
+            "lat": 21.221201,
+            "lng": 105.806999,
+            "terminal": "2"
+          },
+          "to": {
+            "iata": "TPE",
+            "name": "Taiwan Taoyuan International Airport",
+            "city": "Taoyuan",
+            "country": "TW",
+            "tz": "Asia/Taipei",
+            "lat": 25.0777,
+            "lng": 121.233002,
+            "terminal": "2"
+          },
+          "depLocal": "2027-11-02T12:05",
+          "arrLocal": "2027-11-02T15:55",
+          "cabin": "economy",
+          "aircraft": "Boeing 777-300ER",
+          "cost": {
+            "amount": 520,
+            "currency": "USD",
+            "text": "~US$260 pp (estimate)"
+          },
+          "note": "Vietnam VAT refund counter at HAN T2 (registered stores, invoices ≥ VND 2 million) before security."
+        }
+      ],
+      "note": "- Old Quarter → HAN T2 by taxi ~45 min (leave ~09:15).\n- TPE T2 → Taipei Main Station: Airport MRT express ~38 min.\n- Alternative: China Airlines CI792 11:30 → 15:20.",
+      "uncertain": [
+        "2026 timetable (BR398 HAN 12:05 → TPE 15:55, daily)."
+      ]
+    },
+    {
+      "key": "TK25",
+      "date": "2027-11-06",
+      "label": "Home · Turkish TK25 TPE → IST + TK29 IST → EWR (Business, United award)",
+      "status": "planned",
+      "travellers": [
+        "dennis",
+        "audrey"
+      ],
+      "segments": [
+        {
+          "airline": {
+            "iata": "TK",
+            "name": "Turkish Airlines"
+          },
+          "flightNumber": "TK25",
+          "from": {
+            "iata": "TPE",
+            "name": "Taiwan Taoyuan International Airport",
+            "city": "Taoyuan",
+            "country": "TW",
+            "tz": "Asia/Taipei",
+            "lat": 25.0777,
+            "lng": 121.233002,
+            "terminal": "2"
+          },
+          "to": {
+            "iata": "IST",
+            "name": "İstanbul Airport",
+            "city": "Istanbul",
+            "country": "TR",
+            "tz": "Europe/Istanbul",
+            "lat": 41.274874,
+            "lng": 28.732136
+          },
+          "depLocal": "2027-11-06T21:45",
+          "arrLocal": "2027-11-07T05:10",
+          "cabin": "business",
+          "aircraft": "Boeing 787-9",
+          "points": {
+            "amount": 110000,
+            "program": "United MileagePlus"
+          },
+          "fees": {
+            "amount": 25,
+            "currency": "USD",
+            "text": "~US$25 pp taxes (estimate)"
+          },
+          "note": "One United award covers both segments: 110,000 miles per person + taxes. Taiwan tax refund (TRS) counter at TPE before check-in."
+        },
+        {
+          "airline": {
+            "iata": "TK",
+            "name": "Turkish Airlines"
+          },
+          "flightNumber": "TK29",
+          "from": {
+            "iata": "IST",
+            "name": "İstanbul Airport",
+            "city": "Istanbul",
+            "country": "TR",
+            "tz": "Europe/Istanbul",
+            "lat": 41.274874,
+            "lng": 28.732136
+          },
+          "to": {
+            "iata": "EWR",
+            "name": "Newark Liberty International Airport",
+            "city": "Newark",
+            "country": "US",
+            "tz": "America/New_York",
+            "lat": 40.6894,
+            "lng": -74.170545,
+            "terminal": "B"
+          },
+          "depLocal": "2027-11-07T18:50",
+          "arrLocal": "2027-11-07T21:40",
+          "cabin": "business",
+          "note": "Arrival shown in EST (US clocks go back at 02:00 on Nov 7); the summer timetable is 18:50 → 22:30 EDT."
+        }
+      ],
+      "note": "**Award (Action Timeline row 7):** Turkish via United, ~110k per person, 3+ seats seen; United loads ~337 days out (≈ early Dec 2026).\n\n- Taipei → TPE: Airport MRT express ~38 min; leave Taipei Main Station by ~18:30.\n- **~13 h 40 m in Istanbul (05:10 → 18:50):** Turkish Business Lounge, or Touristanbul (free city tour for transfer passengers with 6–24 h connections) / TK hotel desk if eligible — check the rules when booking.\n- Faster alternative if the award prices it: TK3 IST 07:20 → JFK (≈2 h connection) instead of TK29 to Newark.\n- TK29 runs 6×/week (not Thursdays); Sun Nov 7 is a flying day.",
+      "uncertain": [
+        "2026 timetables: TK25 TPE 21:45 → IST 05:10+1 (787-9); TK29 IST 18:50 → EWR 22:30 EDT (summer).",
+        "TK29 arrival 21:40 EST is derived from the summer block time after US DST ends on 2027-11-07; the winter timetable may differ.",
+        "Taxes for a TPE-origin United award are an estimate (the sheet's $13.70 is for EWR-origin)."
+      ]
+    }
+  ],
+  "expenses": [
+    {
+      "title": "ANA NH159 JFK→HND · 2× Business (Aeroplan award)",
+      "target": {
+        "flight": "NH159"
+      },
+      "category": "transport",
+      "amount": 160,
+      "currency": "CAD",
+      "points": {
+        "amount": 170000,
+        "program": "Aeroplan",
+        "source": {
+          "amount": 141667,
+          "program": "Chase Ultimate Rewards"
+        }
+      },
+      "cashValue": {
+        "amount": 15000,
+        "currency": "USD"
+      },
+      "expectedOn": "2026-10-11",
+      "note": "85k Aeroplan + CA$80 per person (sheet: USA to Asia Flights row 3). Source = Chase UR at 1:1.2 with the transfer bonus that ends 2026-09-30. Cash value ~US$7,500 pp one-way is a rough estimate for cents-per-point."
+    },
+    {
+      "title": "Turkish TK25+TK29 TPE→IST→EWR · 2× Business (United award)",
+      "target": {
+        "flight": "TK25"
+      },
+      "category": "transport",
+      "amount": 50,
+      "currency": "USD",
+      "points": {
+        "amount": 220000,
+        "program": "United MileagePlus",
+        "source": {
+          "amount": 220000,
+          "program": "Chase Ultimate Rewards"
+        }
+      },
+      "cashValue": {
+        "amount": 7600,
+        "currency": "USD"
+      },
+      "expectedOn": "2026-12-04",
+      "note": "110k United miles per person + ~US$25 taxes (estimate). Source assumes a 1:1 Chase UR → United transfer (drop it if paying from existing United miles). Cash value ~US$3,800 pp one-way is a rough estimate."
+    },
+    {
+      "title": "Korean Air KE726 KIX→ICN · 2× economy",
+      "target": {
+        "flight": "KE726"
+      },
+      "category": "transport",
+      "amount": 400,
+      "currency": "USD",
+      "expectedOn": "2027-05-15",
+      "note": "Estimate ~US$200 pp; watch fares 4–6 months out."
+    },
+    {
+      "title": "Vietnam Airlines VN423 PUS→SGN · 2× economy",
+      "target": {
+        "flight": "VN423"
+      },
+      "category": "transport",
+      "amount": 600,
+      "currency": "USD",
+      "expectedOn": "2027-05-15",
+      "note": "Estimate ~US$300 pp."
+    },
+    {
+      "title": "Vietnam Airlines VN132 SGN→DAD · 2× economy",
+      "target": {
+        "flight": "VN132"
+      },
+      "category": "transport",
+      "amount": 150,
+      "currency": "USD",
+      "expectedOn": "2027-06-15",
+      "note": "Estimate ~US$75 pp incl. a checked bag."
+    },
+    {
+      "title": "Vietnam Airlines VN174 DAD→HAN · 2× economy",
+      "target": {
+        "flight": "VN174"
+      },
+      "category": "transport",
+      "amount": 150,
+      "currency": "USD",
+      "expectedOn": "2027-06-15",
+      "note": "Estimate ~US$75 pp incl. checked bags (tailoring adds weight)."
+    },
+    {
+      "title": "EVA Air BR398 HAN→TPE · 2× economy",
+      "target": {
+        "flight": "BR398"
+      },
+      "category": "transport",
+      "amount": 520,
+      "currency": "USD",
+      "expectedOn": "2027-05-15",
+      "note": "Estimate ~US$260 pp."
+    },
+    {
+      "title": "Vietnam e-visas (2×)",
+      "target": {
+        "flight": "VN423"
+      },
+      "category": "fees_other",
+      "amount": 50,
+      "currency": "USD",
+      "expectedOn": "2027-09-20",
+      "note": "US$25 each, single entry (covers Oct 20 – Nov 2; domestic flights don't exit Vietnam). Official site only: evisa.gov.vn."
+    }
+  ],
+  "todos": [
+    {
+      "text": "Transfer Chase UR → Aeroplan before the 20% bonus ends",
+      "target": {
+        "flight": "NH159"
+      },
+      "kind": "due",
+      "due": {
+        "date": "2026-09-30",
+        "time": "23:59",
+        "tz": "America/New_York"
+      },
+      "note": "DEADLINE (Action Timeline row 2): ~200k Chase → 240k Aeroplan covers every ranked ANA option.",
+      "who": [
+        "dennis"
+      ],
+      "replaces": "Chase → Aeroplan transfer (20% bonus)"
+    },
+    {
+      "text": "ANA award seats for Oct 2 open — book NH159 JFK→HND (2× Business via Aeroplan)",
+      "target": {
+        "flight": "NH159"
+      },
+      "kind": "opens",
+      "rule": {
+        "anchor": "NH159.dep",
+        "days": 355,
+        "time": "09:00",
+        "tz": "Asia/Tokyo"
+      },
+      "note": "Opens 09:00 JST = 8:00 PM ET the evening before (7 PM ET after Nov 1). Ranked options (Chase points with the bonus):\n1. 2 Business, same flight — ~141.7k\n2. 1 First + 1 Business, same flight — ~170.8k\n3. 2 First — 200k\n4. 1 First + 1 Business, different flights — ~170.8k\n5. 2 Business, different flights — ~141.7k\nSearch 2 passengers in Business first; two seats → one 2-passenger booking.",
+      "who": [
+        "dennis"
+      ],
+      "replaces": "ANA JFK→HND award (depart Oct 2)"
+    },
+    {
+      "text": "Turkish TPE→IST→EWR award opens on United (~337 days out) — book 2× Business",
+      "target": {
+        "flight": "TK25"
+      },
+      "kind": "opens",
+      "rule": {
+        "anchor": "TK25.dep",
+        "days": 337,
+        "time": "00:00",
+        "tz": "America/Chicago"
+      },
+      "note": "Approximate window (sheet: ~Dec 3 2026). 3+ seats seen at 110k each. Book TK25 + TK29 as one award.",
+      "who": [
+        "dennis"
+      ],
+      "replaces": "Turkish TPE→EWR award (United)"
+    },
+    {
+      "text": "Book the intra-Asia cash flights (KE726, VN423, VN132, VN174, BR398)",
+      "target": {
+        "flight": "KE726"
+      },
+      "kind": "opens",
+      "due": {
+        "date": "2027-05-01"
+      },
+      "note": "Watch prices ~4–6 months out (Action Timeline row 20). Vietnam domestic: pick fares with checked bags.",
+      "replaces": "Intra-Asia cash flights (KIX→ICN, PUS→SGN, SGN→DAD, DAD→HAN, HAN→TPE)"
+    },
+    {
+      "text": "Apply for Vietnam e-visas (both)",
+      "target": {
+        "flight": "VN423"
+      },
+      "kind": "due",
+      "rule": {
+        "anchor": "VN423.dep",
+        "days": 30,
+        "time": "09:00",
+        "tz": "America/New_York"
+      },
+      "url": "https://evisa.gov.vn/",
+      "note": "Official site only; ~3 working days processing; single entry is enough (Oct 20 – Nov 2)."
+    },
+    {
+      "text": "Check whether K-ETA is needed for Korea (US passports were exempt through 2026)",
+      "target": {
+        "flight": "KE726"
+      },
+      "kind": "due",
+      "rule": {
+        "anchor": "KE726.dep",
+        "days": 30,
+        "time": "09:00",
+        "tz": "America/New_York"
+      },
+      "url": "https://www.k-eta.go.kr/"
+    },
+    {
+      "text": "Fill in Visit Japan Web (immigration + customs QR codes)",
+      "target": {
+        "flight": "NH159"
+      },
+      "kind": "due",
+      "rule": {
+        "anchor": "NH159.dep",
+        "days": 7,
+        "time": "09:00",
+        "tz": "America/New_York"
+      },
+      "url": "https://www.vjw.digital.go.jp/"
+    },
+    {
+      "text": "Submit Taiwan online arrival cards",
+      "target": {
+        "flight": "BR398"
+      },
+      "kind": "due",
+      "rule": {
+        "anchor": "BR398.dep",
+        "days": 3,
+        "time": "09:00",
+        "tz": "Asia/Ho_Chi_Minh"
+      },
+      "url": "https://twac.immigration.gov.tw/"
+    }
+  ],
+  "sources": [
+    "https://www.flightstats.com/v2/flight-tracker/NH/159",
+    "https://www.flightstats.com/v2/flight-tracker/KE/726",
+    "https://www.flightstats.com/v2/flight-tracker/OZ/113",
+    "https://www.flightstats.com/v2/flight-tracker/VN/423",
+    "https://www.flightstats.com/v2/flight-tracker/VN/132",
+    "https://www.flightstats.com/v2/flight-tracker/VN/174",
+    "https://www.flightstats.com/v2/flight-tracker/BR/398",
+    "https://www.flightstats.com/v2/flight-tracker/CI/792",
+    "https://www.flightstats.com/v2/flight-tracker/TK/25",
+    "https://www.flightstats.com/v2/flight-tracker/TK/29",
+    "seed/data/usa-to-asia-flights.json, seed/data/action-timeline.json, seed/data/ana-watch-log.json"
+  ]
+}

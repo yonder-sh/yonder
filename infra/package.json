@@ -1,0 +1,15 @@
+{
+  "name": "yonder-infra",
+  "private": true,
+  "type": "module",
+  "description": "Local infra helpers (not part of the app build). Install: pnpm --dir infra install --ignore-workspace",
+  "scripts": {
+    "verify": "node verify-s3.mjs",
+    "verify:browser": "../e2e/pw.sh node ../infra/verify-browser-cors.mjs",
+    "create-bucket": "sh create-bucket"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "3.1138.0",
+    "@aws-sdk/s3-request-presigner": "3.1138.0"
+  }
+}

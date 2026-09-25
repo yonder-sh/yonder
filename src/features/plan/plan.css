@@ -1,0 +1,161 @@
+@reference "../../styles.css";
+
+/*
+ * WP-Plan: the timeline's rails, ticket stubs and the now line (DESIGN §2.3,
+ * §7.1). Everything else is Tailwind on the theme tokens.
+ */
+
+.plan-root {
+	/* The time column (88px from sm; 72px on phones) and where its rail runs. */
+	--plan-rail-col: 4.5rem;
+	--plan-rail-x: 2.75rem;
+}
+@media (min-width: 640px) {
+	.plan-root {
+		--plan-rail-col: 5.5rem;
+		--plan-rail-x: 3.5rem;
+	}
+}
+
+/* ---- Rails: 2px in the mode's pattern; colour is never the only carrier. ---- */
+.plan-rail {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: var(--plan-rail-x);
+	width: 2px;
+	border-radius: 1px;
+	pointer-events: none;
+}
+.plan-rail[data-mode="walk"],
+.plan-rail[data-mode="stay"] {
+	background:
+		radial-gradient(
+			circle at 1px 1px,
+			var(--rail-color, var(--mode-walk)) 0.9px,
+			transparent 1.2px
+		)
+		0 0 / 2px 5px repeat-y;
+}
+.plan-rail[data-mode="stay"] {
+	--rail-color: var(--mode-other);
+}
+.plan-rail[data-mode="transit"] {
+	background: var(--rail-color, var(--mode-transit));
+}
+/* ADDENDUM §10 (over DESIGN §2.3): only proposals and estimates are dashed.
+   A known flight is a double rule (the ticket stub and the plane glyph carry
+   it too), a known "other" ride a plain rule in its own colour. */
+.plan-rail[data-mode="flight"] {
+	left: calc(var(--plan-rail-x) - 0.5px);
+	width: 3px;
+	border-radius: 0;
+	background: linear-gradient(
+		to right,
+		var(--mode-flight) 0 1px,
+		transparent 1px 2px,
+		var(--mode-flight) 2px 3px
+	);
+}
+.plan-rail[data-mode="other"] {
+	background: var(--rail-color, var(--mode-other));
+}
+.plan-rail[data-mode="unset"],
+.plan-rail[data-mode="overnight"] {
+	left: calc(var(--plan-rail-x) + 0.5px);
+	width: 1px;
+	background: repeating-linear-gradient(
+		to bottom,
+		color-mix(in oklab, var(--muted-foreground) 60%, transparent) 0 3px,
+		transparent 3px 7px
+	);
+}
+/* ADDENDUM §10: dashes mean "estimate" (or a proposal). The night and the
+   quiet rows (folds, ghosts) use a dotted and a plain hairline instead. */
+.plan-rail[data-mode="overnight"] {
+	background:
+		radial-gradient(
+			circle at 0.5px 0.5px,
+			color-mix(in oklab, var(--muted-foreground) 55%, transparent) 0.6px,
+			transparent 0.9px
+		)
+		0 0 / 1px 4px repeat-y;
+}
+.plan-rail[data-mode="quiet"] {
+	left: calc(var(--plan-rail-x) + 0.5px);
+	width: 1px;
+	background: color-mix(in oklab, var(--muted-foreground) 30%, transparent);
+}
+.plan-rail[data-late] {
+	background: var(--warning-hairline);
+}
+
+/* ---- Ticket stub: two halves with a perforation (12px notches + dashed rule). ---- */
+.plan-stub {
+	--notch: 7px;
+	mask:
+		radial-gradient(
+			circle at var(--stub-split) 0,
+			#0000 var(--notch),
+			#000 calc(var(--notch) + 0.5px)
+		)
+		top / 100% 51% no-repeat,
+		radial-gradient(
+			circle at var(--stub-split) 100%,
+			#0000 var(--notch),
+			#000 calc(var(--notch) + 0.5px)
+		)
+		bottom / 100% 51% no-repeat;
+}
+.plan-stub-perf {
+	position: absolute;
+	top: calc(var(--notch, 7px) + 3px);
+	bottom: calc(var(--notch, 7px) + 3px);
+	left: var(--stub-split);
+	border-left: 1px dashed var(--border);
+}
+
+/* ---- Hatched buffer, layover and "continued" blocks. ---- */
+.plan-hatch {
+	background: repeating-linear-gradient(
+		135deg,
+		var(--muted) 0 6px,
+		transparent 6px 12px
+	);
+}
+
+/* ---- The now line (the one glow in the timeline region). ---- */
+.plan-now {
+	position: relative;
+	height: 0;
+	z-index: 5;
+}
+.plan-now::before {
+	content: "";
+	position: absolute;
+	left: var(--plan-rail-col);
+	right: 0.75rem;
+	top: -0.5px;
+	height: 1px;
+	background: var(--glow);
+}
+.plan-now-dot {
+	position: absolute;
+	left: calc(var(--plan-rail-x) - 2px);
+	top: -3px;
+	width: 6px;
+	height: 6px;
+	border-radius: 9999px;
+	background: var(--glow);
+}
+
+/* Cards glow once when someone else changes them (DESIGN §7.1, §11). */
+.plan-glow {
+	animation: glow 1.2s ease-out 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.plan-glow {
+		animation: none;
+	}
+}

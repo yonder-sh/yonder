@@ -1,0 +1,1281 @@
+{
+  "version": 1,
+  "part": "korea",
+  "nodes": [
+    {
+      "key": "South Korea|Seoul||Seoul Station",
+      "type": "place",
+      "category": "station",
+      "localName": "서울역",
+      "lat": 37.5547,
+      "lng": 126.9707,
+      "tz": "Asia/Seoul",
+      "description": "Seoul's main rail hub: KTX to Busan and the AREX airport railway.",
+      "address": "405 Hangang-daero, Jung-gu, Seoul",
+      "note": "AREX trains use the underground airport-railway concourse; KTX platforms are at ground level. Geocode: station building (high).",
+      "confidence": "high"
+    },
+    {
+      "key": "South Korea|Seoul||Four Points by Sheraton Josun Seoul Station",
+      "type": "place",
+      "category": "lodging",
+      "name": "Four Points by Sheraton Josun, Seoul Station",
+      "localName": "포포인츠 바이 쉐라톤 조선 서울역",
+      "lat": 37.5521,
+      "lng": 126.9728,
+      "tz": "Asia/Seoul",
+      "description": "Marriott Bonvoy business hotel directly connected to Seoul Station (AREX + KTX).",
+      "address": "366 Hangang-daero, Yongsan-gu, Seoul 04323",
+      "website": "https://www.marriott.com/en-us/hotels/selfp-four-points-josun-seoul-station/overview/",
+      "note": "Draft pick (not booked): picked because the AREX arrives here late on Oct 14 and the KTX leaves from here on Oct 17. Marriott points possible. Geocode: from the street address, SE side of Seoul Station (medium, within ~300 m).",
+      "confidence": "medium"
+    },
+    {
+      "key": "South Korea|Seoul||Gyeongbokgung Palace",
+      "type": "place",
+      "category": "sight",
+      "localName": "경복궁",
+      "lat": 37.5788,
+      "lng": 126.977,
+      "tz": "Asia/Seoul",
+      "description": "Main Joseon-dynasty royal palace, with the guard-changing ceremony at Gwanghwamun Gate.",
+      "timeNeededMin": 150,
+      "address": "161 Sajik-ro, Jongno-gu, Seoul",
+      "openHours": "09:00–18:00 in Sep–Oct (last entry 17:00); closed Tue; guard ceremony 10:00 & 14:00",
+      "note": "₩3,000; free entry when wearing hanbok. National Palace Museum and National Folk Museum are on the grounds (free).",
+      "confidence": "high"
+    },
+    {
+      "key": "South Korea|Seoul||Bukchon Hanok Village",
+      "type": "place",
+      "category": "sight",
+      "localName": "북촌한옥마을",
+      "lat": 37.5826,
+      "lng": 126.985,
+      "tz": "Asia/Seoul",
+      "description": "Hillside lanes of lived-in traditional hanok houses between Gyeongbokgung and Changdeokgung.",
+      "timeNeededMin": 60,
+      "address": "37 Gyedong-gil, Jongno-gu, Seoul",
+      "openHours": "Visitor hours 10:00–17:00 in the red zone (Bukchon-ro 11-gil); fines outside those hours",
+      "note": "Residential: keep voices down, no entering courtyards.",
+      "confidence": "high"
+    },
+    {
+      "key": "South Korea|Seoul||Gwangjang Market",
+      "type": "place",
+      "category": "market",
+      "localName": "광장시장",
+      "lat": 37.57,
+      "lng": 126.9997,
+      "tz": "Asia/Seoul",
+      "description": "Seoul's oldest covered market, famous for its food-stall alleys.",
+      "timeNeededMin": 60,
+      "address": "88 Changgyeonggung-ro, Jongno-gu, Seoul",
+      "openHours": "Shops ~09:00–18:00; food stalls to ~22:00–23:00; many shops closed Sun",
+      "note": "Stalls to know: Buchon Yukhoe (beef tartare, Michelin Bib Gourmand), Sunhee-ne Bindaetteok (mung-bean pancakes), mayak gimbap, the kalguksu stall from Netflix's Street Food. Carry some cash.",
+      "confidence": "high"
+    },
+    {
+      "key": "South Korea|Seoul|Seongsu|Olive Young N Seongsu",
+      "type": "place",
+      "category": "shopping",
+      "localName": "올리브영N 성수",
+      "lat": 37.5427,
+      "lng": 127.0558,
+      "tz": "Asia/Seoul",
+      "description": "Olive Young's biggest K-beauty flagship (5 floors), opened Nov 2024.",
+      "timeNeededMin": 60,
+      "address": "13 Yeonmujang 7-gil, Seongdong-gu, Seoul",
+      "openHours": "~10:00–22:00 daily (some listings 08:00–22:30)",
+      "links": [
+        {
+          "url": "https://english.visitkorea.or.kr/svc/whereToGo/locIntrdn/rgnContentsView.do?vcontsId=148541",
+          "title": "VisitKorea: Olive Young N Seongsu"
+        }
+      ],
+      "note": "Tax refund with passport: instant refund on ₩15,000+ receipts at the 2F service lounge. Geocode: from the street address (medium).",
+      "confidence": "medium"
+    },
+    {
+      "key": "South Korea|Seoul|Seongsu|Haus Nowhere Seoul",
+      "type": "place",
+      "category": "shopping",
+      "localName": "하우스 노웨어 서울",
+      "lat": 37.5418,
+      "lng": 127.05,
+      "tz": "Asia/Seoul",
+      "description": "Gentle Monster's 14-storey HQ flagship with Tamburins and the Nudake Tea House (opened Sep 2025).",
+      "timeNeededMin": 60,
+      "address": "433 Ttukseom-ro, Seongdong-gu, Seoul",
+      "openHours": "~11:00–21:00 (verify)",
+      "note": "~900 m from Seongsu Station exit 3. Geocode: estimated from the address, not verified on a map (low).",
+      "confidence": "low"
+    },
+    {
+      "key": "South Korea|Seoul|Gangnam|Bongeunsa Temple",
+      "type": "place",
+      "category": "temple_shrine",
+      "localName": "봉은사",
+      "lat": 37.515,
+      "lng": 127.0577,
+      "tz": "Asia/Seoul",
+      "description": "Buddhist temple founded in 794, across the road from COEX, with a 23 m Maitreya statue.",
+      "timeNeededMin": 60,
+      "address": "531 Bongeunsa-ro, Gangnam-gu, Seoul",
+      "openHours": "Grounds ~05:00–22:00; free",
+      "confidence": "high"
+    },
+    {
+      "key": "South Korea|Seoul|Gangnam|Zest",
+      "type": "place",
+      "category": "bar",
+      "localName": "제스트",
+      "lat": 37.525,
+      "lng": 127.046,
+      "tz": "Asia/Seoul",
+      "description": "Zero-waste cocktail bar in Cheongdam; No. 2 on Asia's 50 Best Bars 2026 and Korea's best bar.",
+      "timeNeededMin": 90,
+      "address": "B1, 26 Dosan-daero 55-gil, Gangnam-gu, Seoul",
+      "openHours": "Evenings (hours not published — verify on Instagram)",
+      "bookAhead": true,
+      "links": [
+        {
+          "url": "https://www.instagram.com/zest.seoul/",
+          "title": "Zest on Instagram"
+        },
+        {
+          "url": "https://www.the50.com/bars/asia/the-list/zest.html",
+          "title": "Asia's 50 Best Bars: Zest"
+        }
+      ],
+      "note": "Phone +82 10-3177-8801. Geocode: estimated from the address in Cheongdam (low — pin it properly).",
+      "confidence": "low"
+    },
+    {
+      "key": "South Korea|Seoul|Hannam|Leeum Museum of Art",
+      "type": "place",
+      "category": "museum",
+      "localName": "리움미술관",
+      "lat": 37.5381,
+      "lng": 126.999,
+      "tz": "Asia/Seoul",
+      "description": "Samsung's art museum in Hannam: Korean ceramics and Buddhist art plus contemporary art, in buildings by Botta, Nouvel and Koolhaas.",
+      "timeNeededMin": 150,
+      "address": "60-16 Itaewon-ro 55-gil, Yongsan-gu, Seoul",
+      "website": "https://www.leeumhoam.org/",
+      "openHours": "10:00–18:00; closed Mon; reservation required (opens 14 days ahead, max 4 per booking)",
+      "bookAhead": true,
+      "note": "Permanent (traditional) collection is free but still needs a timed reservation; special exhibitions are paid.",
+      "confidence": "high"
+    },
+    {
+      "key": "South Korea|Busan||Busan Station",
+      "type": "place",
+      "category": "station",
+      "localName": "부산역",
+      "lat": 35.1151,
+      "lng": 129.0414,
+      "tz": "Asia/Seoul",
+      "description": "Busan's KTX terminus in Choryang, next to Busan Station subway (Line 1).",
+      "address": "206 Jungang-daero, Dong-gu, Busan",
+      "note": "Luggage delivery to Haeundae hotels (ZIM CARRY) and lockers in the station.",
+      "confidence": "high"
+    },
+    {
+      "key": "South Korea|Busan||Bonjeon Dwaeji Gukbap",
+      "type": "place",
+      "category": "restaurant",
+      "localName": "본전돼지국밥",
+      "lat": 35.1164,
+      "lng": 129.0398,
+      "tz": "Asia/Seoul",
+      "description": "Well-known dwaeji gukbap (pork and rice soup) restaurant across the road from Busan Station.",
+      "timeNeededMin": 45,
+      "openHours": "~09:00–21:00 (verify)",
+      "note": "Busan's signature soup; add salted shrimp and chives to taste. Geocode: across the road from the station (medium).",
+      "confidence": "medium"
+    },
+    {
+      "key": "South Korea|Busan||BIFF Square",
+      "type": "place",
+      "category": "sight",
+      "name": "BIFF Square",
+      "localName": "BIFF광장",
+      "lat": 35.0988,
+      "lng": 129.0277,
+      "tz": "Asia/Seoul",
+      "description": "Nampo-dong street of the original Busan Film Festival, with street food, next to Gukje Market.",
+      "timeNeededMin": 60,
+      "openHours": "Street; food stalls ~11:00–22:00",
+      "note": "Street food: ssiat hotteok (seed-stuffed pancakes), eomuk (fish cake). Gukje and Kkangtong markets are next door.",
+      "confidence": "high"
+    },
+    {
+      "key": "South Korea|Busan||Jagalchi Fish Market",
+      "type": "place",
+      "category": "market",
+      "localName": "자갈치시장",
+      "lat": 35.0966,
+      "lng": 129.0306,
+      "tz": "Asia/Seoul",
+      "description": "Korea's largest seafood market on Nampo harbour; 2F restaurants cook what you buy.",
+      "timeNeededMin": 90,
+      "address": "52 Jagalchihaean-ro, Jung-gu, Busan",
+      "openHours": "~05:00–22:00; closed 1st & 3rd Tue",
+      "confidence": "high"
+    },
+    {
+      "key": "South Korea|Busan|Haeundae",
+      "type": "area",
+      "localName": "해운대",
+      "lat": 35.162,
+      "lng": 129.16,
+      "tz": "Asia/Seoul",
+      "description": "Busan's beach district: Haeundae Beach, Dongbaekseom, Marine City and the Blueline Park coast.",
+      "confidence": "high"
+    },
+    {
+      "key": "South Korea|Busan|Haeundae|L7 Haeundae by LOTTE",
+      "type": "place",
+      "category": "lodging",
+      "name": "L7 Haeundae by LOTTE",
+      "localName": "L7 해운대",
+      "lat": 35.16,
+      "lng": 129.1578,
+      "tz": "Asia/Seoul",
+      "description": "Lotte's lifestyle hotel one block from Haeundae Beach, with a 19F rooftop infinity pool.",
+      "address": "55 Haeundae-ro 570beon-gil, Haeundae-gu, Busan",
+      "website": "https://www.lottehotel.com/haeundae-l7/en/about/information",
+      "note": "Draft pick (not booked). ~600 m from Haeundae Station (Line 2); walk to Dongbaekseom and Mipo. Alternatives: The Westin Josun Busan (Marriott points, pricier), Grand Josun Busan. Geocode: from the street address (medium, within ~500 m).",
+      "confidence": "medium"
+    },
+    {
+      "key": "South Korea|Busan|Haeundae|Haeundae Beach",
+      "type": "place",
+      "category": "beach",
+      "localName": "해운대해수욕장",
+      "lat": 35.1587,
+      "lng": 129.1604,
+      "tz": "Asia/Seoul",
+      "description": "Busan's 1.5 km city beach between Dongbaekseom and Mipo.",
+      "timeNeededMin": 60,
+      "openHours": "24h",
+      "confidence": "high"
+    },
+    {
+      "key": "South Korea|Busan|Haeundae|Haeundae Market",
+      "type": "place",
+      "category": "market",
+      "localName": "해운대시장",
+      "lat": 35.1622,
+      "lng": 129.1615,
+      "tz": "Asia/Seoul",
+      "description": "Small traditional market street near Haeundae Station: tteokbokki, eomuk, gukbap, grilled fish.",
+      "timeNeededMin": 60,
+      "openHours": "Stalls ~09:00–22:00 (vary)",
+      "confidence": "medium"
+    },
+    {
+      "key": "South Korea|Busan|Haeundae|Geumsu Bokguk",
+      "type": "place",
+      "category": "restaurant",
+      "name": "Geumsu Bokguk (Haeundae)",
+      "localName": "금수복국 해운대본점",
+      "lat": 35.1628,
+      "lng": 129.1668,
+      "tz": "Asia/Seoul",
+      "description": "Long-running Haeundae restaurant known for bokguk (clear blowfish soup), a classic Busan breakfast.",
+      "timeNeededMin": 45,
+      "openHours": "Reported 24 h (verify)",
+      "note": "Geocode: Jung-dong, Haeundae, not verified on a map (low).",
+      "confidence": "low"
+    },
+    {
+      "key": "South Korea|Busan|Haeundae|Haeundae Amso Galbi",
+      "type": "place",
+      "category": "restaurant",
+      "localName": "해운대암소갈비집",
+      "lat": 35.164,
+      "lng": 129.164,
+      "tz": "Asia/Seoul",
+      "description": "Haeundae's famous marinated beef-galbi house (since 1964).",
+      "timeNeededMin": 90,
+      "openHours": "~11:30–22:00 (verify); no reservations; can sell out",
+      "note": "Geocode: Jung-dong near Haeundae Station, not verified on a map (low).",
+      "confidence": "low"
+    },
+    {
+      "key": "South Korea|Busan|Haeundae|The Bay 101",
+      "type": "place",
+      "category": "viewpoint",
+      "name": "The Bay 101",
+      "localName": "더베이101",
+      "lat": 35.1564,
+      "lng": 129.1522,
+      "tz": "Asia/Seoul",
+      "description": "Yacht-club complex at the Dongbaekseom end of Haeundae, best for the night view of Marine City's towers.",
+      "timeNeededMin": 60,
+      "address": "52 Dongbaek-ro, Haeundae-gu, Busan",
+      "openHours": "Cafés/bars ~10:00–24:00",
+      "confidence": "medium"
+    },
+    {
+      "key": "South Korea|Busan|Haeundae|Cheongsapo Daritdol Skywalk",
+      "type": "place",
+      "category": "viewpoint",
+      "localName": "청사포 다릿돌전망대",
+      "lat": 35.1609,
+      "lng": 129.1917,
+      "tz": "Asia/Seoul",
+      "description": "Short glass-floored skywalk over the sea at Cheongsapo fishing village, the Sky Capsule's eastern end.",
+      "timeNeededMin": 30,
+      "openHours": "~09:00–18:00 (verify); free",
+      "confidence": "medium"
+    },
+    {
+      "key": "South Korea|Busan||Dongnae Halmae Pajeon",
+      "type": "place",
+      "category": "restaurant",
+      "localName": "동래할매파전",
+      "lat": 35.2045,
+      "lng": 129.0835,
+      "tz": "Asia/Seoul",
+      "description": "Dongnae's historic restaurant for Dongnae pajeon (thick green-onion and seafood pancake).",
+      "timeNeededMin": 60,
+      "openHours": "~12:00–22:00; closed Mon (verify)",
+      "note": "Geocode: Dongnae-gu near Dongnae Station, not verified on a map (low).",
+      "confidence": "low"
+    },
+    {
+      "key": "South Korea|Busan||Spa Land Centum City",
+      "type": "place",
+      "category": "onsen",
+      "localName": "스파랜드 센텀시티",
+      "lat": 35.1689,
+      "lng": 129.1296,
+      "tz": "Asia/Seoul",
+      "description": "Large jjimjilbang/spa in Shinsegae Centum City with hot-spring baths and themed sauna rooms.",
+      "timeNeededMin": 150,
+      "address": "35 Centum nam-daero, Haeundae-gu, Busan (Shinsegae Centum City)",
+      "openHours": "~09:00–20:00, last entry 19:00 (verify); closes on some department-store closure days",
+      "note": "Baths are gender-separated (nude); the sauna rooms and lounges are mixed (clothes provided). Shinsegae Centum City has a tax-refund desk (passport).",
+      "confidence": "high"
+    }
+  ],
+  "days": [
+    {
+      "date": "2027-10-14",
+      "half": "after",
+      "title": "Osaka → Seoul",
+      "stay": {
+        "node": "South Korea|Seoul||Four Points by Sheraton Josun Seoul Station",
+        "checkIn": true,
+        "nights": 3,
+        "cost": {
+          "amount": 210000,
+          "currency": "KRW",
+          "per": "night",
+          "note": "Estimate for a double/twin in mid-October (~₩180k–240k); Marriott points possible."
+        },
+        "note": "Late check-in ~22:15 — tell the hotel you arrive after 22:00. Connected to Seoul Station underground."
+      },
+      "dayNote": "**Arrival in Korea** — KE726 lands at ICN T2 20:05.\n- Entry: K-ETA / e-Arrival Card sorted beforehand (todos). Immigration + bags ~45–75 min.\n- In T2 arrivals: get a **WOWPASS** or **T-money** card at a CU/GS25 (top up with cash). T-money works on the subway, buses and most taxis.\n- **AREX Express** to Seoul Station (~51 min from T2, ~₩11,000). Last express ~22:40 (verify). Fallback: AREX all-stop (~66 min, T-money) or a taxi (~60 min, ~₩70,000).\n- Apps: **Naver Map** or **KakaoMap** (Google Maps directions are weak in Korea), **Kakao T** or **K.Ride** for taxis, **Papago** to translate.\n- No Korean public holidays Oct 14–20 (Hangul Day is Oct 9; Chuseok is mid-September in 2027).",
+      "items": [
+        {
+          "flight": "KE726"
+        },
+        {
+          "leg": {
+            "ref": "2027-10-14:arex",
+            "mode": "transit",
+            "label": "AREX Express · ICN T2 → Seoul Station",
+            "durationMin": 75,
+            "segments": [
+              {
+                "mode": "walk",
+                "from": {
+                  "name": "ICN T2 arrivals"
+                },
+                "to": {
+                  "name": "Incheon Airport T2 Station (AREX, B1)"
+                },
+                "durationMin": 10
+              },
+              {
+                "mode": "train",
+                "lineName": "AREX Express",
+                "agency": "AREX (Airport Railroad)",
+                "headsign": "Seoul Station",
+                "from": {
+                  "name": "Incheon Airport Terminal 2",
+                  "lat": 37.4471,
+                  "lng": 126.4526
+                },
+                "to": {
+                  "name": "Seoul Station",
+                  "lat": 37.5547,
+                  "lng": 126.9707
+                },
+                "durationMin": 51
+              },
+              {
+                "mode": "walk",
+                "from": {
+                  "name": "Seoul Station (AREX, B2)"
+                },
+                "to": {
+                  "name": "Four Points Josun Seoul Station"
+                },
+                "durationMin": 10
+              }
+            ],
+            "cost": {
+              "amount": 11000,
+              "currency": "KRW",
+              "per": "person",
+              "note": "AREX Express adult fare (~₩11,000; verify)"
+            },
+            "note": "Express runs ~every 30–40 min; buy at the AREX counter/kiosk in T2 B1 or online. All-stop trains take T-money and are cheaper but ~66 min."
+          }
+        },
+        {
+          "ref": "2027-10-14:checkin-seoul",
+          "node": "South Korea|Seoul||Four Points by Sheraton Josun Seoul Station",
+          "title": "Check in · Four Points Josun Seoul Station",
+          "kind": "lodging",
+          "durationMin": 15,
+          "note": "Late arrival (~22:15)."
+        },
+        {
+          "title": "Late snack · convenience store or gukbap",
+          "kind": "meal",
+          "durationMin": 30,
+          "note": "Easy options: a CU/GS25 run (samgak gimbap, cup ramyeon, banana milk) or a 24-h gukbap/haejangguk place around Seoul Station."
+        }
+      ]
+    },
+    {
+      "date": "2027-10-15",
+      "title": "Seoul · Palace, Gwangjang & Seongsu",
+      "startTime": "08:00",
+      "stay": {
+        "node": "South Korea|Seoul||Four Points by Sheraton Josun Seoul Station"
+      },
+      "dayNote": "Friday: palaces are open (Gyeongbokgung closes Tuesdays only) and Seongsu is calmer than on Saturday.\n- **Tax refund:** carry passports. Olive Young and most big stores refund on the spot (₩15,000+ per receipt; limits ~₩1M per receipt / ₩5M per trip — verify). Keep other receipts for the kiosks at PUS on Oct 20.\n- **Hanbok:** wearing one gets you into Gyeongbokgung free; rental shops around the palace (~₩20,000–30,000 for 2 h).\n- **Rain plan:** swap Bukchon for the National Palace Museum (on the palace grounds, free); Seongsu works indoors (Haus Nowhere, Olive Young, cafés).\n- **Seongsu dinner ideas:** Seongsu Jokbal (pig's trotters, usually a queue — verify), Korean BBQ on the side streets, or ask your friend for current picks.\n- Home from Cheongdam: taxi ~30 min (~₩20,000) or the subway until ~midnight.",
+      "items": [
+        {
+          "title": "Breakfast near the hotel",
+          "kind": "meal",
+          "durationMin": 30,
+          "note": "Hotel breakfast, a bakery in Seoul Station, or Isaac Toast (Myeongdong, ~10 min)."
+        },
+        {
+          "ref": "2027-10-15:gyeongbokgung",
+          "node": "South Korea|Seoul||Gyeongbokgung Palace",
+          "kind": "sight",
+          "durationMin": 120,
+          "note": "Arrive at the 09:00 opening; the guard-changing ceremony is at 10:00 at Gwanghwamun Gate (~20 min). Closed Tue. ₩3,000.",
+          "cost": {
+            "amount": 3000,
+            "currency": "KRW",
+            "per": "person",
+            "category": "activities"
+          }
+        },
+        {
+          "ref": "2027-10-15:bukchon",
+          "node": "South Korea|Seoul||Bukchon Hanok Village",
+          "kind": "sight",
+          "durationMin": 60,
+          "note": "Walk over from the palace's east side (~15 min, via Samcheong-dong). Red-zone visitor hours are 10:00–17:00; keep it quiet."
+        },
+        {
+          "ref": "2027-10-15:gwangjang",
+          "node": "South Korea|Seoul||Gwangjang Market",
+          "title": "Lunch · Gwangjang Market",
+          "kind": "meal",
+          "durationMin": 75,
+          "note": "Graze: yukhoe at Buchon Yukhoe, bindaetteok at Sunhee-ne, mayak gimbap, kalguksu. Cash helps. ~10 min by taxi from Bukchon."
+        },
+        {
+          "ref": "2027-10-15:seongsu",
+          "node": "South Korea|Seoul|Seongsu",
+          "title": "Seongsu · cafés, warehouses & pop-ups",
+          "kind": "shopping",
+          "durationMin": 90,
+          "note": "Wander Yeonmujang-gil: Daelim Changgo (warehouse gallery café), Cafe Onion Seongsu, Point of View (stationery), brand pop-ups (search \"성수 팝업\" on Instagram/Naver that week). Seoul Forest is next door if the weather is nice."
+        },
+        {
+          "ref": "2027-10-15:haus-nowhere",
+          "node": "South Korea|Seoul|Seongsu|Haus Nowhere Seoul",
+          "kind": "shopping",
+          "durationMin": 60,
+          "note": "Gentle Monster (2F), Tamburins (3F), Nudake Tea House (5F) — installations change seasonally."
+        },
+        {
+          "ref": "2027-10-15:olive-young",
+          "node": "South Korea|Seoul|Seongsu|Olive Young N Seongsu",
+          "kind": "shopping",
+          "durationMin": 60,
+          "note": "K-beauty haul. **Tax refund with passport**: pay on 1F, then the instant refund at the 2F service lounge. Calmest before noon, busiest 14:00–20:00."
+        },
+        {
+          "title": "Dinner in Seongsu",
+          "kind": "meal",
+          "durationMin": 90,
+          "note": "Ideas in the day note."
+        },
+        {
+          "leg": {
+            "mode": "other",
+            "otherKind": "taxi",
+            "label": "Taxi · Seongsu → Cheongdam",
+            "durationMin": 15,
+            "cost": {
+              "amount": 10000,
+              "currency": "KRW",
+              "per": "total",
+              "note": "Taxi fare estimate (meter)"
+            }
+          }
+        },
+        {
+          "ref": "2027-10-15:zest",
+          "node": "South Korea|Seoul|Gangnam|Zest",
+          "title": "Cocktails · Zest",
+          "kind": "nightlife",
+          "durationMin": 90,
+          "bookAhead": true,
+          "note": "Asia's 50 Best Bars 2026 #2. Reserve (Instagram DM @zest.seoul or +82 10-3177-8801); hours unverified.",
+          "cost": {
+            "amount": 100000,
+            "currency": "KRW",
+            "per": "total",
+            "category": "food_drink",
+            "note": "~2 cocktails each"
+          }
+        }
+      ]
+    },
+    {
+      "date": "2027-10-16",
+      "title": "Seoul · COEX, Hannam & Itaewon (with friend)",
+      "startTime": "09:30",
+      "stay": {
+        "node": "South Korea|Seoul||Four Points by Sheraton Josun Seoul Station"
+      },
+      "dayNote": "Saturday with your Korean friend. The stops below are defaults; let them pick lunch, dinner and bars.\n- **Leeum** needs an online reservation even for the free permanent collection (opens 14 days ahead, max 4 per booking) — book for 3 if your friend comes.\n- COEX/Starfield is busiest on weekend afternoons — be there by ~11:00.\n- **Dinner ideas:** Mongtan (Samgakji, straw-fire galbi; join the remote waitlist early — 1–3 h waits are normal), Itaewon's global food (Gyeongnidan-gil), or modern Korean in Hannam.\n- **Bars:** Itaewon/Hannam, or the rooftop bars of Haebangchon for Namsan views. For a top cocktail bar with a Korean-spirits focus, **Bar Cham** (hanok bar in Seochon, Asia's 50 Best 2026 #33) is ~20 min away.\n- **Option:** N Seoul Tower at sunset (~17:50) — Namsan rises right above Hannam/Itaewon.",
+      "items": [
+        {
+          "title": "Breakfast near the hotel",
+          "kind": "meal",
+          "durationMin": 45
+        },
+        {
+          "ref": "2027-10-16:bongeunsa",
+          "node": "South Korea|Seoul|Gangnam|Bongeunsa Temple",
+          "kind": "sight",
+          "durationMin": 45,
+          "note": "Quiet temple across the road from COEX. Samseong (Line 2) or Bongeunsa (Line 9) stations."
+        },
+        {
+          "ref": "2027-10-16:starfield",
+          "node": "South Korea|Seoul|Gangnam|Starfield Library (COEX)",
+          "kind": "sight",
+          "durationMin": 45,
+          "note": "Free; mall hours 10:30–22:00. Photos from the upper walkway. COEX mall has a tax-refund desk if you shop."
+        },
+        {
+          "title": "Lunch in Hannam (with friend)",
+          "kind": "meal",
+          "durationMin": 75,
+          "note": "~25 min by taxi from COEX. Friend's pick; otherwise the cafés and bistros along Hannam-daero 20-gil / Daesagwan-ro."
+        },
+        {
+          "ref": "2027-10-16:leeum",
+          "node": "South Korea|Seoul|Hannam|Leeum Museum of Art",
+          "kind": "sight",
+          "durationMin": 120,
+          "pinnedStart": "14:00",
+          "fixedDate": true,
+          "note": "Timed reservation (todo). Permanent collection free; special exhibitions paid. Closed Mon."
+        },
+        {
+          "ref": "2027-10-16:hannam",
+          "node": "South Korea|Seoul|Hannam",
+          "title": "Hannam-dong · boutiques & galleries",
+          "kind": "shopping",
+          "durationMin": 90,
+          "note": "Designer and Korean-label boutiques, concept stores and small galleries on the streets below Leeum toward Hannam-daero."
+        },
+        {
+          "title": "Dinner in Itaewon (friend's pick)",
+          "kind": "meal",
+          "durationMin": 90,
+          "note": "Ideas in the day note."
+        },
+        {
+          "ref": "2027-10-16:itaewon",
+          "node": "South Korea|Seoul|Itaewon",
+          "title": "Itaewon · bars & nightlife",
+          "kind": "nightlife",
+          "durationMin": 120,
+          "note": "Saturday night peak. Taxi or Line 6 → Samgakji → Line 4 back to Seoul Station (~20 min)."
+        }
+      ]
+    },
+    {
+      "date": "2027-10-17",
+      "title": "Seoul → Busan · KTX, Gamcheon & Nampo",
+      "startTime": "07:00",
+      "stay": {
+        "node": "South Korea|Busan|Haeundae|L7 Haeundae by LOTTE",
+        "checkIn": true,
+        "nights": 3,
+        "cost": {
+          "amount": 190000,
+          "currency": "KRW",
+          "per": "night",
+          "note": "Estimate, Sun–Tue nights in mid-October (~₩160k–230k)."
+        },
+        "note": "Check-in from 15:00; bags arrive by luggage delivery from Busan Station."
+      },
+      "dayNote": "Sunday: KTX to Busan, afternoon in old Busan (Nampo), evening in Haeundae.\n- **Bags:** send them from Busan Station to the hotel (ZIM CARRY: drop by ~14:50, delivered from ~16:00; book online a day ahead — verify price and counter), or use lockers.\n- ⚠ **Gukje Market** traditionally closes on the 1st & 3rd Sundays and Oct 17 is the 3rd Sunday — BIFF Square's street food still runs.\n- **Jagalchi:** buy on the ground floor or go straight to the 2F restaurants, which grill or slice what you pick (~₩50,000–80,000 for two). Closed 1st & 3rd Tuesdays (not today).\n- **Option:** Busan Tower / Yongdusan Park (5 min from BIFF Square) for a city view.\n- Nampo → Haeundae: taxi ~40 min (~₩25,000) or the subway (Line 1 → Line 2, ~60 min).\n- If the Busan International Film Festival falls on these dates, Haeundae/Centum will be busier.",
+      "items": [
+        {
+          "node": "South Korea|Seoul||Four Points by Sheraton Josun Seoul Station",
+          "title": "Check out · Four Points Josun Seoul Station",
+          "kind": "lodging",
+          "durationMin": 15
+        },
+        {
+          "title": "Breakfast · bakery at Seoul Station (eat on the KTX)",
+          "kind": "meal",
+          "durationMin": 20
+        },
+        {
+          "ref": "2027-10-17:seoul-station",
+          "node": "South Korea|Seoul||Seoul Station",
+          "title": "Seoul Station · KTX to Busan",
+          "kind": "transport",
+          "durationMin": 20,
+          "note": "Board ~5 min before departure; the car and seat are on the e-ticket (Korail Talk app)."
+        },
+        {
+          "leg": {
+            "ref": "2027-10-17:ktx",
+            "mode": "transit",
+            "label": "KTX · Seoul → Busan",
+            "durationMin": 150,
+            "fixed": {
+              "depart": "2027-10-17T08:30",
+              "arrive": "2027-10-17T11:00",
+              "fromTz": "Asia/Seoul",
+              "toTz": "Asia/Seoul",
+              "accessMin": 15,
+              "egressMin": 10
+            },
+            "segments": [
+              {
+                "mode": "high_speed",
+                "lineName": "KTX (Gyeongbu HSR)",
+                "agency": "Korail",
+                "headsign": "Busan",
+                "from": {
+                  "name": "Seoul Station",
+                  "lat": 37.5547,
+                  "lng": 126.9707
+                },
+                "to": {
+                  "name": "Busan Station",
+                  "lat": 35.1151,
+                  "lng": 129.0414
+                },
+                "durationMin": 150
+              }
+            ],
+            "booking": {
+              "class": "Standard"
+            },
+            "cost": {
+              "amount": 59800,
+              "currency": "KRW",
+              "per": "person",
+              "note": "Standard class ~₩59,800 pp; First ~₩83,700 (2025–26 fares; verify)"
+            },
+            "bookAhead": true,
+            "note": "Placeholder time: pick the actual train when sales open (2 months ahead since Oct 2026). Fastest services ~2h15, most 2h30–2h45. Book on letskorail.com / Korail Talk. SRT from Suseo is the alternative."
+          }
+        },
+        {
+          "ref": "2027-10-17:busan-station",
+          "node": "South Korea|Busan||Busan Station",
+          "title": "Busan Station · send bags to the hotel",
+          "kind": "transport",
+          "durationMin": 20,
+          "bookAhead": true,
+          "note": "Luggage delivery to Haeundae (ZIM CARRY counter; ~₩20,000–25,000 per bag — verify), lockers as fallback.",
+          "cost": {
+            "amount": 45000,
+            "currency": "KRW",
+            "per": "total",
+            "category": "transport",
+            "note": "2 bags, estimate"
+          }
+        },
+        {
+          "ref": "2027-10-17:bonjeon",
+          "node": "South Korea|Busan||Bonjeon Dwaeji Gukbap",
+          "title": "Lunch · Bonjeon Dwaeji Gukbap",
+          "kind": "meal",
+          "durationMin": 45,
+          "note": "Busan's pork-and-rice soup, across from the station. Alternative nearby: Choryang milmyeon (Busan cold wheat noodles)."
+        },
+        {
+          "leg": {
+            "mode": "other",
+            "otherKind": "taxi",
+            "label": "Taxi · Busan Station → Gamcheon",
+            "durationMin": 20,
+            "cost": {
+              "amount": 9000,
+              "currency": "KRW",
+              "per": "total",
+              "note": "Taxi fare estimate (meter)"
+            },
+            "note": "Steep hill; taxi to the top entrance and walk down. Subway Line 1 → Toseong + village bus 2 is the transit option (~35 min)."
+          }
+        },
+        {
+          "ref": "2027-10-17:gamcheon",
+          "node": "South Korea|Busan||Gamcheon Culture Village",
+          "kind": "sight",
+          "durationMin": 120,
+          "note": "Buy the stamp-tour map at the info centre (~₩2,000), find the Little Prince statue, cafés with harbour views. Shops ~09:00–18:00; steep lanes — good shoes."
+        },
+        {
+          "ref": "2027-10-17:biff",
+          "node": "South Korea|Busan||BIFF Square",
+          "kind": "sight",
+          "durationMin": 75,
+          "note": "Ssiat hotteok and fish-cake skewers; Gukje Market may be closed today (3rd Sunday) — Kkangtong night market nearby. ~15 min by taxi from Gamcheon."
+        },
+        {
+          "ref": "2027-10-17:jagalchi",
+          "node": "South Korea|Busan||Jagalchi Fish Market",
+          "title": "Dinner · Jagalchi Fish Market",
+          "kind": "meal",
+          "durationMin": 90,
+          "note": "Walk the market floor, then eat at a 2F restaurant: hoe (raw fish), grilled fish or spicy maeuntang.",
+          "cost": {
+            "amount": 70000,
+            "currency": "KRW",
+            "per": "total",
+            "category": "food_drink",
+            "note": "Seafood dinner for two, estimate"
+          }
+        },
+        {
+          "leg": {
+            "mode": "other",
+            "otherKind": "taxi",
+            "label": "Taxi · Nampo → Haeundae",
+            "durationMin": 40,
+            "cost": {
+              "amount": 25000,
+              "currency": "KRW",
+              "per": "total",
+              "note": "Taxi fare estimate (meter)"
+            }
+          }
+        },
+        {
+          "ref": "2027-10-17:checkin-busan",
+          "node": "South Korea|Busan|Haeundae|L7 Haeundae by LOTTE",
+          "title": "Check in · L7 Haeundae",
+          "kind": "lodging",
+          "durationMin": 15
+        },
+        {
+          "ref": "2027-10-17:haeundae-beach",
+          "node": "South Korea|Busan|Haeundae|Haeundae Beach",
+          "title": "Haeundae Beach · evening stroll",
+          "kind": "sight",
+          "durationMin": 45,
+          "note": "Lit-up beachfront; Gunam-ro food street runs from the beach to Haeundae Station. Early night — sunrise start tomorrow."
+        }
+      ]
+    },
+    {
+      "date": "2027-10-18",
+      "title": "Busan · Sunrise temple & Haeundae coast",
+      "startTime": "05:35",
+      "stay": {
+        "node": "South Korea|Busan|Haeundae|L7 Haeundae by LOTTE"
+      },
+      "dayNote": "Monday. Sunrise ≈06:27 — Haedong Yonggungsa is at its best and nearly empty at dawn. Alarm ~05:15.\n- Book a **Kakao T** taxi the night before, or ask the front desk to call one.\n- **Sky Capsule:** a 2-person capsule is ₩40,000 one way (Jul 2026 price); book a timed slot online (bluelinepark.com, Klook, KKday) — slots sell out. The Beach Train (₩8,000) is the backup.\n- Walk back from Cheongsapo on the flat Blueline coastal path (~2 km) via **Haewol Observatory** (free, 09:00–21:00).\n- **Rest block:** the L7 rooftop pool (verify hours) or a nap — it's been a 05:45 start.\n- **Dinner:** Haeundae Amso Galbi (no reservations; queue from ~17:00; can sell out). Backup: Haeundae Market or BBQ around Gunam-ro.\n- **Rain plan:** skip the coast walk; move Spa Land (Tue) here and add Shinsegae Centum City (tax refund with passport).",
+      "items": [
+        {
+          "node": "South Korea|Busan|Haeundae|L7 Haeundae by LOTTE",
+          "title": "Leave hotel · taxi to Yonggungsa",
+          "kind": "transport",
+          "durationMin": 5
+        },
+        {
+          "leg": {
+            "mode": "other",
+            "otherKind": "taxi",
+            "label": "Taxi · Haeundae → Haedong Yonggungsa",
+            "durationMin": 20,
+            "cost": {
+              "amount": 15000,
+              "currency": "KRW",
+              "per": "total",
+              "note": "Taxi fare estimate (meter)"
+            }
+          }
+        },
+        {
+          "ref": "2027-10-18:yonggungsa",
+          "node": "South Korea|Busan||Haedong Yonggungsa Temple",
+          "title": "Haedong Yonggungsa at sunrise",
+          "kind": "sight",
+          "durationMin": 75,
+          "pinnedStart": "06:05",
+          "note": "Opens ~04:30–05:00 until ~19:00; free. Sunrise ≈06:27 — stand on the sunrise rock to the right of the 108 steps. Crowded after ~10:00."
+        },
+        {
+          "leg": {
+            "mode": "other",
+            "otherKind": "taxi",
+            "label": "Taxi · Yonggungsa → Haeundae",
+            "durationMin": 20,
+            "cost": {
+              "amount": 15000,
+              "currency": "KRW",
+              "per": "total",
+              "note": "Taxi fare estimate (meter)"
+            }
+          }
+        },
+        {
+          "ref": "2027-10-18:geumsu",
+          "node": "South Korea|Busan|Haeundae|Geumsu Bokguk",
+          "title": "Breakfast · Geumsu Bokguk",
+          "kind": "meal",
+          "durationMin": 45,
+          "note": "Clear blowfish soup (bokguk), the classic Busan morning meal; reported open 24 h (verify)."
+        },
+        {
+          "ref": "2027-10-18:sky-capsule",
+          "node": "South Korea|Busan||Haeundae Blueline Park",
+          "title": "Sky Capsule · board at Mipo",
+          "kind": "activity",
+          "durationMin": 15,
+          "fixedDate": true,
+          "bookAhead": true,
+          "note": "Mipo station at the east end of Haeundae Beach. Arrive 10–15 min before the slot."
+        },
+        {
+          "leg": {
+            "ref": "2027-10-18:sky-capsule-ride",
+            "mode": "transit",
+            "label": "Sky Capsule · Mipo → Cheongsapo",
+            "durationMin": 30,
+            "fixed": {
+              "depart": "2027-10-18T09:00",
+              "arrive": "2027-10-18T09:30",
+              "fromTz": "Asia/Seoul",
+              "toTz": "Asia/Seoul",
+              "accessMin": 5,
+              "egressMin": 5
+            },
+            "cost": {
+              "amount": 40000,
+              "currency": "KRW",
+              "per": "total",
+              "note": "One 2-person capsule, one way (Jul 2026 price)"
+            },
+            "bookAhead": true,
+            "note": "Timed slot; October hours ~09:00–18:30. Sit facing the sea (the Mipo → Cheongsapo direction runs closest to the water).",
+            "segments": [
+              {
+                "mode": "tram",
+                "lineName": "Sky Capsule",
+                "agency": "Haeundae Blueline Park",
+                "from": {
+                  "name": "Mipo"
+                },
+                "to": {
+                  "name": "Cheongsapo"
+                },
+                "durationMin": 30
+              }
+            ]
+          }
+        },
+        {
+          "ref": "2027-10-18:cheongsapo",
+          "node": "South Korea|Busan|Haeundae|Cheongsapo Daritdol Skywalk",
+          "kind": "sight",
+          "durationMin": 30,
+          "note": "Glass skywalk over the rocks; Cheongsapo's twin lighthouses. Clam-grill restaurants if you're hungry."
+        },
+        {
+          "ref": "2027-10-18:haewol",
+          "node": "South Korea|Busan||Haewol Observatory",
+          "kind": "sight",
+          "durationMin": 30,
+          "note": "On the coastal path back toward Mipo (~15–20 min walk); crescent deck 134 m out over the sea. Free, 09:00–21:00."
+        },
+        {
+          "ref": "2027-10-18:haeundae-market",
+          "node": "South Korea|Busan|Haeundae|Haeundae Market",
+          "title": "Lunch · Haeundae Market",
+          "kind": "meal",
+          "durationMin": 60,
+          "note": "Tteokbokki, eomuk, twigim, gukbap — graze the stalls."
+        },
+        {
+          "node": "South Korea|Busan|Haeundae|L7 Haeundae by LOTTE",
+          "title": "Rest · hotel (rooftop pool / nap)",
+          "kind": "rest",
+          "durationMin": 150
+        },
+        {
+          "ref": "2027-10-18:dongbaekseom",
+          "node": "South Korea|Busan||Dongbaekseom Island Coastal Promenade",
+          "kind": "sight",
+          "durationMin": 90,
+          "note": "Easy loop around the island: Nurimaru APEC House (~09:00–18:00), the lighthouse and the Mermaid statue, skyline views of Marine City."
+        },
+        {
+          "ref": "2027-10-18:bay101",
+          "node": "South Korea|Busan|Haeundae|The Bay 101",
+          "kind": "sight",
+          "durationMin": 60,
+          "note": "Sunset ≈17:45, then Marine City's towers light up across the water. Drink on the terrace; Fingers & Chat for fish and chips."
+        },
+        {
+          "ref": "2027-10-18:amso-galbi",
+          "node": "South Korea|Busan|Haeundae|Haeundae Amso Galbi",
+          "title": "Dinner · Haeundae Amso Galbi",
+          "kind": "meal",
+          "durationMin": 90,
+          "note": "Marinated beef galbi grilled at the table; finish with naengmyeon. No reservations — put your name down early.",
+          "cost": {
+            "amount": 100000,
+            "currency": "KRW",
+            "per": "total",
+            "category": "food_drink",
+            "note": "Estimate for two"
+          }
+        }
+      ]
+    },
+    {
+      "date": "2027-10-19",
+      "title": "Busan · Seokbulsa, Oryukdo & Gwangalli",
+      "startTime": "09:00",
+      "stay": {
+        "node": "South Korea|Busan|Haeundae|L7 Haeundae by LOTTE"
+      },
+      "dayNote": "Tuesday, the last full day. Make it an early night: wake-up ~06:00 tomorrow.\n- **Seokbulsa:** taxis can drive the steep paved road almost to the temple. Ask the driver to wait (~30–40 min; pay the waiting fare), because calling a taxi up there is unreliable. Walking from Mandeok Station (Line 3) is ~2.4 km uphill (~1 h).\n- **Oryukdo Skywalk:** 09:00–18:00 (last entry 17:50); free; closes in bad weather or strong wind.\n- **Spa Land:** ~09:00–20:00, last entry 19:00, ~₩25,000 pp (verify the price and the Shinsegae closure days). Shinsegae Centum City has a tax-refund desk (passport).\n- **Gwangalli:** Gwangan Bridge lights up after dark. The drone show runs on Saturdays only (as of 2025–26), so it's not on this trip.\n- **Dinner ideas:** raw fish at Millak Raw Fish Center (민락회센터), grilled clams (jogae-gui), or a bridge-view pub on the beachfront.\n- Jagalchi is closed on the 1st & 3rd Tuesdays (Oct 19 is the 3rd), which is why it's on Sunday.",
+      "items": [
+        {
+          "node": "South Korea|Busan|Haeundae|L7 Haeundae by LOTTE",
+          "title": "Breakfast · hotel",
+          "kind": "meal",
+          "durationMin": 40
+        },
+        {
+          "leg": {
+            "mode": "other",
+            "otherKind": "taxi",
+            "label": "Taxi · Haeundae → Seokbulsa (driver waits)",
+            "durationMin": 45,
+            "cost": {
+              "amount": 40000,
+              "currency": "KRW",
+              "per": "total",
+              "note": "Taxi fare estimate (meter)"
+            },
+            "note": "Say \"석불사\" (Seokbulsa). ~₩30,000 up + waiting time; estimate includes the wait."
+          }
+        },
+        {
+          "ref": "2027-10-19:seokbulsa",
+          "node": "South Korea|Busan||Seokbulsa Temple",
+          "kind": "sight",
+          "durationMin": 75,
+          "note": "Cliff-carved Buddha and guardian reliefs in a narrow rock gorge; views over Busan. Final stretch is steep. Free."
+        },
+        {
+          "leg": {
+            "mode": "other",
+            "otherKind": "taxi",
+            "label": "Taxi · Seokbulsa → Dongnae",
+            "durationMin": 20,
+            "cost": {
+              "amount": 15000,
+              "currency": "KRW",
+              "per": "total",
+              "note": "Taxi fare estimate (meter)"
+            }
+          }
+        },
+        {
+          "ref": "2027-10-19:pajeon",
+          "node": "South Korea|Busan||Dongnae Halmae Pajeon",
+          "title": "Lunch · Dongnae Halmae Pajeon",
+          "kind": "meal",
+          "durationMin": 60,
+          "note": "Dongnae pajeon: thick green-onion pancake with seafood, eaten with chogochujang. Hours/closed day unverified — backup: any gukbap or milmyeon place around Dongnae Station."
+        },
+        {
+          "leg": {
+            "mode": "other",
+            "otherKind": "taxi",
+            "label": "Taxi · Dongnae → Oryukdo",
+            "durationMin": 35,
+            "cost": {
+              "amount": 20000,
+              "currency": "KRW",
+              "per": "total",
+              "note": "Taxi fare estimate (meter)"
+            }
+          }
+        },
+        {
+          "ref": "2027-10-19:oryukdo",
+          "node": "South Korea|Busan||Oryukdo Skywalk",
+          "kind": "sight",
+          "durationMin": 60,
+          "note": "Glass U-walkway 35 m over the cliffs; the five Oryukdo islets. Start of the Igidae coastal trail if you want a 30-min extra walk."
+        },
+        {
+          "leg": {
+            "mode": "other",
+            "otherKind": "taxi",
+            "label": "Taxi · Oryukdo → Centum City",
+            "durationMin": 25,
+            "cost": {
+              "amount": 15000,
+              "currency": "KRW",
+              "per": "total",
+              "note": "Taxi fare estimate (meter)"
+            }
+          }
+        },
+        {
+          "ref": "2027-10-19:spa-land",
+          "node": "South Korea|Busan||Spa Land Centum City",
+          "kind": "activity",
+          "durationMin": 120,
+          "note": "Hot-spring baths + themed sauna rooms; a proper recovery before the flight day.",
+          "cost": {
+            "amount": 25000,
+            "currency": "KRW",
+            "per": "person",
+            "category": "activities",
+            "note": "Estimate; verify"
+          }
+        },
+        {
+          "ref": "2027-10-19:gwangalli",
+          "node": "South Korea|Busan||Gwangalli Beach",
+          "title": "Gwangalli Beach · sunset & bridge lights",
+          "kind": "sight",
+          "durationMin": 60,
+          "note": "~10 min from Centum (Line 2 → Gwangan). Sunset ≈17:44; the bridge lights up after dark. Coffee street along the beachfront."
+        },
+        {
+          "title": "Dinner in Gwangalli",
+          "kind": "meal",
+          "durationMin": 90,
+          "note": "Ideas in the day note. Taxi back to Haeundae ~15 min."
+        }
+      ]
+    },
+    {
+      "date": "2027-10-20",
+      "half": "before",
+      "title": "Busan → Ho Chi Minh City",
+      "startTime": "06:10",
+      "dayNote": "Leave the hotel by **06:40** — Haeundae → Gimhae Airport takes 40–60 min in rush hour, and the flight block wants you at PUS 2.5 h before VN423 (10:05).\n- **Korea tax refund at PUS:** instant refunds happen in the stores; for any receipts not refunded yet, use the refund kiosks in the international terminal before check-in (passport, receipts, goods to hand).\n- Spend leftover T-money/WOWPASS balance or refund it (convenience stores / WOWPASS machine, small fee).\n- Clocks go back 2 h on landing (KST → ICT).",
+      "items": [
+        {
+          "title": "Breakfast · convenience store or hotel",
+          "kind": "meal",
+          "durationMin": 20
+        },
+        {
+          "node": "South Korea|Busan|Haeundae|L7 Haeundae by LOTTE",
+          "title": "Check out · L7 Haeundae",
+          "kind": "lodging",
+          "durationMin": 10
+        },
+        {
+          "leg": {
+            "mode": "other",
+            "otherKind": "taxi",
+            "label": "Taxi · Haeundae → Gimhae Airport (PUS)",
+            "durationMin": 50,
+            "cost": {
+              "amount": 40000,
+              "currency": "KRW",
+              "per": "total",
+              "note": "Taxi fare estimate (meter)"
+            },
+            "note": "Kakao T or the front desk. Rush hour; leave by ~06:40."
+          }
+        },
+        {
+          "flight": "VN423"
+        }
+      ]
+    }
+  ],
+  "expenses": [
+    {
+      "title": "T-money / WOWPASS top-ups · subway & buses (Seoul + Busan)",
+      "target": {
+        "node": "South Korea"
+      },
+      "category": "transport",
+      "amount": 60000,
+      "currency": "KRW",
+      "note": "Estimate for two over 6 days; taxis are on their own legs."
+    }
+  ],
+  "todos": [
+    {
+      "text": "Book KTX Seoul → Busan (Sun Oct 17, ~08:30)",
+      "target": {
+        "leg": "2027-10-17:ktx"
+      },
+      "kind": "opens",
+      "rule": {
+        "anchor": "2027-10-17:seoul-station",
+        "months": 2,
+        "time": "07:00",
+        "tz": "Asia/Seoul"
+      },
+      "url": "https://www.letskorail.com/",
+      "note": "2-month window from Oct 1 2026 (Korea Times, 2026-09-20). The 07:00 KST opening time was the old 1-month rule — verify. Korail Talk app or letskorail.com."
+    },
+    {
+      "text": "Reserve Leeum Museum of Art (Sat Oct 16, 14:00, 3 people incl. friend)",
+      "target": {
+        "item": "2027-10-16:leeum"
+      },
+      "kind": "opens",
+      "rule": {
+        "anchor": "2027-10-16:leeum",
+        "days": 14,
+        "time": "10:00",
+        "tz": "Asia/Seoul"
+      },
+      "url": "https://www.leeumhoam.org/",
+      "note": "Reservations open 14 days ahead (max 4 per booking); the time of day is a guess."
+    },
+    {
+      "text": "Book the Sky Capsule (Mon Oct 18, 09:00 slot, Mipo → Cheongsapo)",
+      "target": {
+        "item": "2027-10-18:sky-capsule"
+      },
+      "kind": "due",
+      "due": {
+        "date": "2027-09-18"
+      },
+      "url": "https://www.bluelinepark.com/",
+      "note": "Booking window not verified — check bluelinepark.com about a month out; also sold on Klook/KKday. ₩40,000 per 2-person capsule."
+    },
+    {
+      "text": "Book the Seoul hotel (Four Points Josun Seoul Station, Oct 14–17, 3 nights)",
+      "target": {
+        "node": "South Korea|Seoul||Four Points by Sheraton Josun Seoul Station"
+      },
+      "kind": "due",
+      "due": {
+        "date": "2027-06-30"
+      },
+      "note": "Refundable rate; Marriott points or cash. Action Timeline row 16 (Hotels — Korea / Vietnam / Taiwan)."
+    },
+    {
+      "text": "Book the Busan hotel (L7 Haeundae, Oct 17–20, 3 nights)",
+      "target": {
+        "node": "South Korea|Busan|Haeundae|L7 Haeundae by LOTTE"
+      },
+      "kind": "due",
+      "due": {
+        "date": "2027-06-30"
+      },
+      "note": "Refundable rate. Action Timeline row 16 (Hotels — Korea / Vietnam / Taiwan)."
+    },
+    {
+      "text": "Plan Sat Oct 16 with your Korean friend (meeting point, lunch/dinner picks, bars)",
+      "target": {
+        "day": "2027-10-16"
+      },
+      "kind": "due",
+      "due": {
+        "date": "2027-09-15"
+      },
+      "note": "The draft assumes Saturday; move the friend's day if Friday suits them better."
+    },
+    {
+      "text": "Reserve Busan Station → hotel luggage delivery (Sun Oct 17)",
+      "target": {
+        "item": "2027-10-17:busan-station"
+      },
+      "kind": "due",
+      "rule": {
+        "anchor": "2027-10-17:busan-station",
+        "days": 1,
+        "time": "18:00",
+        "tz": "Asia/Seoul"
+      },
+      "note": "ZIM CARRY (Klook/KKday or their site); drop-off by ~14:50 for same-day delivery. Verify counter and price."
+    },
+    {
+      "text": "Korea e-Arrival Card (only if K-ETA isn't required)",
+      "target": {
+        "flight": "KE726"
+      },
+      "kind": "due",
+      "rule": {
+        "anchor": "KE726.dep",
+        "days": 3,
+        "time": "09:00",
+        "tz": "Asia/Tokyo"
+      },
+      "url": "https://www.e-arrivalcard.go.kr/",
+      "note": "K-ETA holders are exempt. The 3-day submission window and URL are from memory — verify."
+    },
+    {
+      "text": "Install Naver Map / KakaoMap, Kakao T (or K.Ride), Papago; plan WOWPASS or T-money",
+      "target": {
+        "day": "2027-10-14"
+      },
+      "kind": "due",
+      "due": {
+        "date": "2027-10-10"
+      },
+      "note": "Google Maps has no walking/driving directions in Korea; Kakao T takes foreign cards (verify) — K.Ride is the foreigner-friendly alternative."
+    }
+  ],
+  "notes": [
+    "File name: SCHEMA.md and allocation.json call this part `days-korea.json`; the task text said `korea.json`. Written as days-korea.json, with korea.json as a symlink to it.",
+    "Priorities: all Korea places in the Places tab are unrated, so the order follows the Cities tab notes (Seongsu, Hannam, Itaewon, Starfield Library; every Busan place listed, Haewol Observatory included) plus judgment. Added unrated classics with new nodes: Gyeongbokgung, Bukchon, Gwangjang Market, Bongeunsa, Leeum, Jagalchi, BIFF Square, Cheongsapo, Spa Land.",
+    "The Korean friend is assumed for Sat Oct 16 (Hannam/Itaewon, dinner + bars); lunch/dinner on that day are left as the friend's pick.",
+    "Hotels are draft picks, not booked: Four Points by Sheraton Josun Seoul Station (Marriott; connected to Seoul Station for AREX + KTX) and L7 Haeundae by LOTTE (one block from Haeundae Beach). Room prices are estimates.",
+    "KTX 08:30 → 11:00 on Oct 17 is a placeholder slot, not a real train number. The fare is the 2025–26 standard fare. The 2-month booking window is confirmed from Oct 1 2026; the 07:00 opening time is not.",
+    "The Sky Capsule is modelled as a fixed leg (Mipo → Cheongsapo, 09:00 slot). The boarding item sits on the existing 'Haeundae Blueline Park' node, which is pinned at Mipo.",
+    "Low-confidence geocodes (pin before relying on them): Haus Nowhere Seoul, Zest, Geumsu Bokguk, Haeundae Amso Galbi, Dongnae Halmae Pajeon. Medium: Four Points, Olive Young N Seongsu, L7 Haeundae, Haeundae Market, Bonjeon Dwaeji Gukbap, The Bay 101, Cheongsapo.",
+    "Verified on the web (Sep 2026): Sky Capsule price and October hours, Haewol Observatory (opened Jul 2024, 09:00–21:00 Sep–Nov), Oryukdo hours, Starfield hours, Gyeongbokgung hours and Tuesday closure, Bukchon red-zone hours, Olive Young N Seongsu address and refund, Haus Nowhere (opened Sep 2025), Zest (Asia's 50 Best 2026 #2), Leeum 14-day reservations, KTX 2-month window, ZIM CARRY luggage delivery. The web-search budget ran out before the restaurant hours could be checked (Bonjeon, Geumsu Bokguk, Amso Galbi, Dongnae Halmae Pajeon), and before Spa Land's price and closure days. These are marked 'verify'.",
+    "Gukje Market's 1st/3rd-Sunday closure and Jagalchi's 1st/3rd-Tuesday closure are from memory, so verify them. The plan avoids Jagalchi on Tue Oct 19 either way.",
+    "Oct 20: the taxi leg sits right before the VN423 marker and relies on the importer resolving the flight block's PUS departure item as the leg's next located item. The same applies on Oct 14, where the AREX leg starts from the KE726 ICN arrival item.",
+    "The heaviest day is Oct 15 (675 min of items, 08:00 to ~22:30 with travel). Every Korea day is under the 750-min item cap."
+  ]
+}

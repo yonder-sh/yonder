@@ -1,0 +1,109 @@
+<!doctype html>
+<!-- The offline fallback page (SPEC §16.4, QA PWA-04). The service worker serves it for
+     any page it can't reach or find in its cache. With a saved trip it goes straight
+     there (`?from=offline` is the loop guard: a trip page that isn't cached falls back
+     here again and then lists the trip instead of redirecting). Static: it can't import
+     TypeScript, so the localStorage key `yonder:saved-trips` is hard-coded and checked
+     against BRAND by src/features/offline/__tests__/offline-html.test.ts.
+     On /share (E8, a share sent offline before the inbox shell was cached) it never
+     redirects: the entry is already stored on the device, so it says so. -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#f9fafd" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: dark)" />
+    <title>Offline · Yonder</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #f9fafd; --fg: #181d2f; --muted: #5c6375; --card: #ffffff; --line: #e0e3eb;
+        --primary: #494fa7; --primary-fg: #f9faff; --glow: #f8b05d;
+        font-family: "Commissioner Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root { --bg: #0a0a0a; --fg: #f5f5f5; --muted: #a3a3a3; --card: #171717; --line: #2e2e2e;
+                --primary: #9fabf7; --primary-fg: #11132c; }
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; min-height: 100svh; display: grid; place-items: center; background: var(--bg); color: var(--fg);
+             padding: env(safe-area-inset-top) 16px env(safe-area-inset-bottom); }
+      main { width: 100%; max-width: 380px; text-align: center; }
+      .mark { width: 44px; height: 44px; margin: 0 auto 20px; display: block; }
+      h1 { margin: 0 0 8px; font-size: 22px; line-height: 28px; font-weight: 600; letter-spacing: -0.01em; }
+      p { margin: 0; font-size: 14px; line-height: 20px; color: var(--muted); }
+      .card { margin-top: 24px; display: flex; align-items: center; gap: 12px; padding: 14px 16px; border: 1px solid var(--line);
+              border-radius: 14px; background: var(--card); color: var(--fg); text-decoration: none; text-align: left; }
+      .card:hover, .card:focus-visible { border-color: color-mix(in oklab, var(--fg) 20%, transparent); outline: none; }
+      .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--glow); flex: none; }
+      .card span { flex: 1; min-width: 0; }
+      .card b { display: block; font-weight: 600; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .card small { display: block; color: var(--muted); font-size: 12px; margin-top: 2px; }
+      .retry { margin-top: 16px; display: inline-flex; height: 36px; align-items: center; padding: 0 16px; border-radius: 10px;
+               border: 1px solid var(--line); background: transparent; color: var(--fg); font: inherit; font-size: 14px; cursor: pointer; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <svg class="mark" viewBox="0 0 512 512" aria-hidden="true"><defs><linearGradient id="d" x1="0" y1="0" x2="0.35" y2="1"><stop offset="0" stop-color="#635eb6"/><stop offset="1" stop-color="#384198"/></linearGradient></defs><rect width="512" height="512" rx="116" fill="url(#d)"/><g transform="translate(30.34 42.73) scale(8.85)"><path d="M13 12C13 19 24 19 24 27L24 38M24 27C24 21.5 28 18.5 30.5 16.5" fill="none" stroke="#fff" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="36.6" cy="11.6" r="3.7" fill="#f8b05d"/></g></svg>
+      <h1 id="title">You're offline.</h1>
+      <p id="line">This page isn't saved for offline. Yonder keeps the last trip you opened.</p>
+      <div id="saved"></div>
+      <button class="retry" type="button" id="retry">Try again</button>
+    </main>
+    <script>
+      (function () {
+        var KEY = "yonder:saved-trips";
+        var saved = null;
+        try {
+          var list = JSON.parse(localStorage.getItem(KEY) || "[]");
+          saved = Array.isArray(list) ? list[0] : null;
+          if (!saved || typeof saved.slug !== "string" || !/^[a-z0-9-]{1,100}$/.test(saved.slug)) saved = null;
+        } catch (e) { saved = null; }
+        var params = new URLSearchParams(location.search);
+        var href = saved ? "/t/" + encodeURIComponent(saved.slug) + "?from=offline" : null;
+        var tripPage = location.pathname.indexOf("/t/") === 0;
+        var sharePage = location.pathname === "/share";
+        if (sharePage) {
+          // E8: the service worker already kept what was shared (IndexedDB).
+          var kept = !!params.get("id");
+          document.getElementById("title").textContent = kept ? "Saved on this device." : "You're offline.";
+          document.getElementById("line").textContent = kept
+            ? "You're offline — it's kept on this device. Open Yonder later to finish."
+            : params.get("lost")
+              ? "Couldn't receive that — share it again when you're online."
+              : "Open Yonder again when you're online.";
+          document.getElementById("retry").addEventListener("click", function () { location.reload(); });
+          window.addEventListener("online", function () { location.reload(); });
+          return;
+        }
+        // Cold start offline (/?source=pwa, the dashboard, any non-trip page): go
+        // straight to the saved trip, once. A trip page that isn't saved stays here.
+        if (href && !tripPage && params.get("from") !== "offline") { location.replace(href); return; }
+        if (tripPage) {
+          document.getElementById("title").textContent = "Not available offline.";
+          document.getElementById("line").textContent = href
+            ? "Open this trip once while you're online. Your saved trip:"
+            : "Open this trip once while you're online to keep a copy.";
+        }
+        if (href) {
+          var a = document.createElement("a");
+          a.className = "card";
+          a.href = href;
+          var dot = document.createElement("i"); dot.className = "dot"; a.appendChild(dot);
+          var s = document.createElement("span");
+          var b = document.createElement("b"); b.textContent = String(saved.name || saved.slug); s.appendChild(b);
+          var small = document.createElement("small");
+          var when = typeof saved.savedAt === "number" ? new Date(saved.savedAt) : null;
+          small.textContent = when ? "Saved copy from " + when.toLocaleString([], { weekday: "short", hour: "2-digit", minute: "2-digit", hour12: false }) : "Saved copy";
+          s.appendChild(small); a.appendChild(s);
+          document.getElementById("saved").appendChild(a);
+        }
+        document.getElementById("retry").addEventListener("click", function () { location.reload(); });
+        window.addEventListener("online", function () { location.reload(); });
+      })();
+    </script>
+  </body>
+</html>

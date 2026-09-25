@@ -1,0 +1,492 @@
+{
+  "source": {
+    "spreadsheetId": "<sheet-id>",
+    "spreadsheetTitle": "Asia 2027",
+    "spreadsheetTimeZone": "America/New_York",
+    "tab": "Action Timeline",
+    "sheetId": 1700000006,
+    "tabIndex": 2,
+    "exportedAt": "2026-09-23T02:49:15+00:00",
+    "exporter": "gws sheets spreadsheets get (includeGridData)"
+  },
+  "headers": [
+    "What",
+    "Type",
+    "For travel date",
+    "Booking opens",
+    "Time (ET)",
+    "Status",
+    "Notes",
+    "Link"
+  ],
+  "columns": [
+    {
+      "letter": "A",
+      "header": "What",
+      "has_links": false
+    },
+    {
+      "letter": "B",
+      "header": "Type",
+      "has_links": false
+    },
+    {
+      "letter": "C",
+      "header": "For travel date",
+      "has_links": false
+    },
+    {
+      "letter": "D",
+      "header": "Booking opens",
+      "has_links": false
+    },
+    {
+      "letter": "E",
+      "header": "Time (ET)",
+      "has_links": false
+    },
+    {
+      "letter": "F",
+      "header": "Status",
+      "has_links": false
+    },
+    {
+      "letter": "G",
+      "header": "Notes",
+      "has_links": false
+    },
+    {
+      "letter": "H",
+      "header": "Link",
+      "has_links": false
+    }
+  ],
+  "rows": [
+    {
+      "_row": 2,
+      "What": "Chase → Aeroplan transfer (20% bonus)",
+      "Type": "Points",
+      "For travel date": null,
+      "Booking opens": "2026-09-30",
+      "Time (ET)": "End of day",
+      "Status": "Not yet",
+      "Notes": "DEADLINE, not an opening. Bonus ends Sep 30; plan is ~200k Chase → 240k Aeroplan",
+      "Link": null
+    },
+    {
+      "_row": 3,
+      "What": "ANA JFK→HND award (depart Oct 2)",
+      "Type": "Flight",
+      "For travel date": "2027-10-02",
+      "Booking opens": "2026-10-11",
+      "Time (ET)": "8:00 PM",
+      "Status": null,
+      "Notes": "Take the best option available, in this order (Chase points with the 20% bonus):\n1. 2 Business, same flight — ~141.7k\n2. 1 First + 1 Business, same flight — ~170.8k\n3. 2 First, same or different flights — 200k\n4. 1 First + 1 Business, different flights — ~170.8k\n5. 2 Business, different flights — ~141.7k\nANA releases 9 AM JST = 8 PM ET the evening before. Search 2 passengers in Business first: if the flight drops out, only 1 seat exists; two seats → book as a single 2-passenger booking. Otherwise search 1 passenger per cabin. Two tabs are fine for searching, but book one at a time",
+      "Link": null
+    },
+    {
+      "_row": 4,
+      "What": "ANA JFK→HND award (depart Oct 3)",
+      "Type": "Flight",
+      "For travel date": "2027-10-03",
+      "Booking opens": "2026-10-12",
+      "Time (ET)": "8:00 PM",
+      "Status": null,
+      "Notes": null,
+      "Link": null
+    },
+    {
+      "_row": 5,
+      "What": "ANA JFK→HND award (depart Oct 9)",
+      "Type": "Flight",
+      "For travel date": "2027-10-09",
+      "Booking opens": "2026-10-18",
+      "Time (ET)": "8:00 PM",
+      "Status": null,
+      "Notes": null,
+      "Link": null
+    },
+    {
+      "_row": 6,
+      "What": "ANA JFK→HND award (depart Oct 10)",
+      "Type": "Flight",
+      "For travel date": "2027-10-10",
+      "Booking opens": "2026-10-19",
+      "Time (ET)": "8:00 PM",
+      "Status": null,
+      "Notes": "After Nov 1 the release time shifts to 7 PM ET",
+      "Link": null
+    },
+    {
+      "_row": 7,
+      "What": "Turkish TPE→EWR award (United)",
+      "Type": "Flight",
+      "For travel date": null,
+      "Booking opens": "2026-12-03",
+      "Time (ET)": null,
+      "Status": null,
+      "Notes": "Approximate: United loads ~337 days out, so early-Nov 2027 dates open around early Dec 2026. 3+ seats seen at 110k each",
+      "Link": null
+    },
+    {
+      "_row": 8,
+      "What": "Ghibli Park tickets",
+      "Type": "Attraction",
+      "For travel date": null,
+      "Booking opens": "TBD",
+      "Time (ET)": null,
+      "Status": null,
+      "Notes": "Sells out instantly — check the on-sale rule and set a date",
+      "Link": null
+    },
+    {
+      "_row": 9,
+      "What": "Ghibli Museum tickets",
+      "Type": "Attraction",
+      "For travel date": null,
+      "Booking opens": "TBD",
+      "Time (ET)": null,
+      "Status": null,
+      "Notes": "Reservation-only, sells out fast; released the month before",
+      "Link": null
+    },
+    {
+      "_row": 10,
+      "What": "Universal Studios Japan + Express Pass",
+      "Type": "Attraction",
+      "For travel date": null,
+      "Booking opens": "TBD",
+      "Time (ET)": null,
+      "Status": null,
+      "Notes": "Express pass worth it per your note; book well ahead",
+      "Link": null
+    },
+    {
+      "_row": 11,
+      "What": "Tokyo DisneySea tickets",
+      "Type": "Attraction",
+      "For travel date": null,
+      "Booking opens": "TBD",
+      "Time (ET)": null,
+      "Status": null,
+      "Notes": "Date-specific tickets",
+      "Link": null
+    },
+    {
+      "_row": 12,
+      "What": "teamLab Planets tickets",
+      "Type": "Attraction",
+      "For travel date": null,
+      "Booking opens": "TBD",
+      "Time (ET)": null,
+      "Status": null,
+      "Notes": "Timed entry",
+      "Link": null
+    },
+    {
+      "_row": 13,
+      "What": "JAL Sky Museum tour",
+      "Type": "Attraction",
+      "For travel date": null,
+      "Booking opens": "TBD",
+      "Time (ET)": null,
+      "Status": null,
+      "Notes": "Reservations open ~1 month ahead and fill fast",
+      "Link": null
+    },
+    {
+      "_row": 14,
+      "What": "Shibuya Sky (sunset slot)",
+      "Type": "Attraction",
+      "For travel date": null,
+      "Booking opens": "TBD",
+      "Time (ET)": null,
+      "Status": null,
+      "Notes": "Sunset slots sell out",
+      "Link": null
+    },
+    {
+      "_row": 15,
+      "What": "Hotels — Japan",
+      "Type": "Hotel",
+      "For travel date": null,
+      "Booking opens": "TBD",
+      "Time (ET)": null,
+      "Status": null,
+      "Notes": null,
+      "Link": null
+    },
+    {
+      "_row": 16,
+      "What": "Hotels — Korea / Vietnam / Taiwan",
+      "Type": "Hotel",
+      "For travel date": null,
+      "Booking opens": "TBD",
+      "Time (ET)": null,
+      "Status": null,
+      "Notes": null,
+      "Link": null
+    },
+    {
+      "_row": 17,
+      "What": "Ryokan with private onsen (Kyoto)",
+      "Type": "Hotel",
+      "For travel date": null,
+      "Booking opens": "TBD",
+      "Time (ET)": null,
+      "Status": null,
+      "Notes": "From Random Notes; small ryokan book up early",
+      "Link": null
+    },
+    {
+      "_row": 18,
+      "What": "Mt. Fuji ryokan (Kawaguchiko, Fuji-view room + private onsen)",
+      "Type": "Hotel",
+      "For travel date": null,
+      "Booking opens": "TBD",
+      "Time (ET)": null,
+      "Status": "Not yet",
+      "Notes": "1 night between Tokyo and Nagoya. Fuji-view rooms with a private onsen are few and book up early; also sets up a sunrise visit to Chureito Pagoda the next morning",
+      "Link": null
+    },
+    {
+      "_row": 19,
+      "What": "Fuji Excursion train (Shinjuku → Kawaguchiko)",
+      "Type": "Train",
+      "For travel date": null,
+      "Booking opens": "TBD",
+      "Time (ET)": "9:00 PM (eve before)",
+      "Status": "Not yet",
+      "Notes": "Direct limited express, ~1h55m, only a few departures a day, all seats reserved. JR East opens seats 10 AM JST one month before travel (9 PM ET the evening before). Aim for the ~8:30–9 AM departure. Backup: highway bus from Busta Shinjuku",
+      "Link": null
+    },
+    {
+      "_row": 20,
+      "What": "Intra-Asia cash flights (KIX→ICN, PUS→SGN, SGN→DAD, DAD→HAN, HAN→TPE)",
+      "Type": "Flight",
+      "For travel date": null,
+      "Booking opens": "TBD",
+      "Time (ET)": null,
+      "Status": null,
+      "Notes": "Cash; watch prices ~4-6 months out",
+      "Link": null
+    },
+    {
+      "_row": 21,
+      "What": "Hanoi ↔ Lao Cai overnight trains (Sa Pa)",
+      "Type": "Train",
+      "For travel date": null,
+      "Booking opens": "TBD",
+      "Time (ET)": null,
+      "Status": null,
+      "Notes": "Sells out on weekends",
+      "Link": null
+    },
+    {
+      "_row": 22,
+      "What": "Hoi An tailors (suit + coats)",
+      "Type": "Other",
+      "For travel date": null,
+      "Booking opens": "TBD",
+      "Time (ET)": null,
+      "Status": null,
+      "Notes": "Not booked ahead, but order on day 1 of the Hoi An block",
+      "Link": null
+    }
+  ],
+  "raw": {
+    "values": [
+      [
+        "What",
+        "Type",
+        "For travel date",
+        "Booking opens",
+        "Time (ET)",
+        "Status",
+        "Notes",
+        "Link"
+      ],
+      [
+        "Chase → Aeroplan transfer (20% bonus)",
+        "Points",
+        "—",
+        "Wed, Sep 30, 2026",
+        "End of day",
+        "Not yet",
+        "DEADLINE, not an opening. Bonus ends Sep 30; plan is ~200k Chase → 240k Aeroplan"
+      ],
+      [
+        "ANA JFK→HND award (depart Oct 2)",
+        "Flight",
+        "Sat, Oct 2, 2027",
+        "Sun, Oct 11, 2026",
+        "8:00 PM",
+        "",
+        "Take the best option available, in this order (Chase points with the 20% bonus):\n1. 2 Business, same flight — ~141.7k\n2. 1 First + 1 Business, same flight — ~170.8k\n3. 2 First, same or different flights — 200k\n4. 1 First + 1 Business, different flights — ~170.8k\n5. 2 Business, different flights — ~141.7k\nANA releases 9 AM JST = 8 PM ET the evening before. Search 2 passengers in Business first: if the flight drops out, only 1 seat exists; two seats → book as a single 2-passenger booking. Otherwise search 1 passenger per cabin. Two tabs are fine for searching, but book one at a time"
+      ],
+      [
+        "ANA JFK→HND award (depart Oct 3)",
+        "Flight",
+        "Sun, Oct 3, 2027",
+        "Mon, Oct 12, 2026",
+        "8:00 PM"
+      ],
+      [
+        "ANA JFK→HND award (depart Oct 9)",
+        "Flight",
+        "Sat, Oct 9, 2027",
+        "Sun, Oct 18, 2026",
+        "8:00 PM"
+      ],
+      [
+        "ANA JFK→HND award (depart Oct 10)",
+        "Flight",
+        "Sun, Oct 10, 2027",
+        "Mon, Oct 19, 2026",
+        "8:00 PM",
+        "",
+        "After Nov 1 the release time shifts to 7 PM ET"
+      ],
+      [
+        "Turkish TPE→EWR award (United)",
+        "Flight",
+        "—",
+        "Thu, Dec 3, 2026",
+        "",
+        "",
+        "Approximate: United loads ~337 days out, so early-Nov 2027 dates open around early Dec 2026. 3+ seats seen at 110k each"
+      ],
+      [
+        "Ghibli Park tickets",
+        "Attraction",
+        "—",
+        "TBD",
+        "",
+        "",
+        "Sells out instantly — check the on-sale rule and set a date"
+      ],
+      [
+        "Ghibli Museum tickets",
+        "Attraction",
+        "—",
+        "TBD",
+        "",
+        "",
+        "Reservation-only, sells out fast; released the month before"
+      ],
+      [
+        "Universal Studios Japan + Express Pass",
+        "Attraction",
+        "—",
+        "TBD",
+        "",
+        "",
+        "Express pass worth it per your note; book well ahead"
+      ],
+      [
+        "Tokyo DisneySea tickets",
+        "Attraction",
+        "—",
+        "TBD",
+        "",
+        "",
+        "Date-specific tickets"
+      ],
+      [
+        "teamLab Planets tickets",
+        "Attraction",
+        "—",
+        "TBD",
+        "",
+        "",
+        "Timed entry"
+      ],
+      [
+        "JAL Sky Museum tour",
+        "Attraction",
+        "—",
+        "TBD",
+        "",
+        "",
+        "Reservations open ~1 month ahead and fill fast"
+      ],
+      [
+        "Shibuya Sky (sunset slot)",
+        "Attraction",
+        "—",
+        "TBD",
+        "",
+        "",
+        "Sunset slots sell out"
+      ],
+      [
+        "Hotels — Japan",
+        "Hotel",
+        "—",
+        "TBD"
+      ],
+      [
+        "Hotels — Korea / Vietnam / Taiwan",
+        "Hotel",
+        "—",
+        "TBD"
+      ],
+      [
+        "Ryokan with private onsen (Kyoto)",
+        "Hotel",
+        "—",
+        "TBD",
+        "",
+        "",
+        "From Random Notes; small ryokan book up early"
+      ],
+      [
+        "Mt. Fuji ryokan (Kawaguchiko, Fuji-view room + private onsen)",
+        "Hotel",
+        "—",
+        "TBD",
+        "",
+        "Not yet",
+        "1 night between Tokyo and Nagoya. Fuji-view rooms with a private onsen are few and book up early; also sets up a sunrise visit to Chureito Pagoda the next morning"
+      ],
+      [
+        "Fuji Excursion train (Shinjuku → Kawaguchiko)",
+        "Train",
+        "—",
+        "TBD",
+        "9:00 PM (eve before)",
+        "Not yet",
+        "Direct limited express, ~1h55m, only a few departures a day, all seats reserved. JR East opens seats 10 AM JST one month before travel (9 PM ET the evening before). Aim for the ~8:30–9 AM departure. Backup: highway bus from Busta Shinjuku"
+      ],
+      [
+        "Intra-Asia cash flights (KIX→ICN, PUS→SGN, SGN→DAD, DAD→HAN, HAN→TPE)",
+        "Flight",
+        "—",
+        "TBD",
+        "",
+        "",
+        "Cash; watch prices ~4-6 months out"
+      ],
+      [
+        "Hanoi ↔ Lao Cai overnight trains (Sa Pa)",
+        "Train",
+        "—",
+        "TBD",
+        "",
+        "",
+        "Sells out on weekends"
+      ],
+      [
+        "Hoi An tailors (suit + coats)",
+        "Other",
+        "—",
+        "TBD",
+        "",
+        "",
+        "Not booked ahead, but order on day 1 of the Hoi An block"
+      ]
+    ],
+    "links": {},
+    "formulas": {}
+  }
+}

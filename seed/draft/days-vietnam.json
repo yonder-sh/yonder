@@ -1,0 +1,2478 @@
+{
+  "version": 1,
+  "part": "vietnam",
+  "nodes": [
+    {
+      "key": "Vietnam|Ho Chi Minh City||Caravelle Saigon",
+      "type": "place",
+      "category": "lodging",
+      "localName": "Khách sạn Caravelle Sài Gòn",
+      "lat": 10.776148,
+      "lng": 106.70361,
+      "tz": "Asia/Ho_Chi_Minh",
+      "description": "Landmark 1959 hotel on Lam Son Square next to the Opera House; rooftop pool and the Saigon Saigon bar.",
+      "address": "19–23 Lam Son Square (Công trường Lam Sơn), Saigon ward (old District 1)",
+      "website": "https://www.caravellehotel.com/",
+      "openHours": "Check-in 14:00, check-out 12:00 (verify)",
+      "confidence": "high",
+      "note": "Draft pick for Oct 20–23 (3 nights). Alternatives: Liberty Central Saigon Riverside (cheaper), Park Hyatt Saigon (splurge). Pin: OSM/Nominatim lookup 2026-09-23 (high)."
+    },
+    {
+      "key": "Vietnam|Ho Chi Minh City||Saigon Saigon Rooftop Bar",
+      "type": "place",
+      "category": "bar",
+      "lat": 10.776148,
+      "lng": 106.70361,
+      "tz": "Asia/Ho_Chi_Minh",
+      "description": "Classic open-air rooftop bar on the Caravelle's 10th floor, live band in the evening.",
+      "timeNeededMin": 60,
+      "address": "Caravelle Saigon, 10th floor, 19–23 Lam Son Square",
+      "openHours": "~11:00–late; live music evenings (verify)",
+      "confidence": "high",
+      "note": "Same building as the hotel (pin = hotel)."
+    },
+    {
+      "key": "Vietnam|Ho Chi Minh City||Nguyen Hue Walking Street",
+      "type": "place",
+      "category": "sight",
+      "localName": "Phố đi bộ Nguyễn Huệ",
+      "lat": 10.7746,
+      "lng": 106.7033,
+      "tz": "Asia/Ho_Chi_Minh",
+      "description": "Pedestrian boulevard from the People's Committee building to the river; fountains, cafés, evening crowds.",
+      "timeNeededMin": 60,
+      "openHours": "24h; liveliest after ~18:00",
+      "confidence": "medium",
+      "note": "Pin = middle of the boulevard (~350 m long each way). Pin: OSM/Nominatim lookup 2026-09-23."
+    },
+    {
+      "key": "Vietnam|Ho Chi Minh City||Banh Xeo 46A",
+      "type": "place",
+      "category": "restaurant",
+      "localName": "Bánh Xèo 46A",
+      "lat": 10.789605,
+      "lng": 106.6913,
+      "tz": "Asia/Ho_Chi_Minh",
+      "description": "Famous open-air bánh xèo (crispy turmeric crêpe) shop.",
+      "timeNeededMin": 60,
+      "address": "46A Đinh Công Tráng, Tân Định ward",
+      "openHours": "~10:00–21:00 daily (verify)",
+      "confidence": "high",
+      "note": "Pin: OSM/Nominatim lookup 2026-09-23"
+    },
+    {
+      "key": "Vietnam|Ho Chi Minh City||Pho Hoa Pasteur",
+      "type": "place",
+      "category": "restaurant",
+      "localName": "Phở Hòa Pasteur",
+      "lat": 10.786801,
+      "lng": 106.689046,
+      "tz": "Asia/Ho_Chi_Minh",
+      "description": "Long-running southern-style phở house, a Saigon breakfast classic.",
+      "timeNeededMin": 60,
+      "address": "260C Pasteur, Xuân Hòa ward (old District 3)",
+      "openHours": "~06:00–22:00 daily (verify)",
+      "confidence": "high",
+      "note": "Pin: OSM/Nominatim lookup 2026-09-23"
+    },
+    {
+      "key": "Vietnam|Ho Chi Minh City||Cuc Gach Quan",
+      "type": "place",
+      "category": "restaurant",
+      "localName": "Cục Gạch Quán",
+      "lat": 10.793,
+      "lng": 106.68893,
+      "tz": "Asia/Ho_Chi_Minh",
+      "description": "Home-style southern Vietnamese cooking in an antique-filled old house.",
+      "timeNeededMin": 90,
+      "address": "10 Đặng Tất, Tân Định ward",
+      "openHours": "~09:00–23:00 daily (verify)",
+      "bookAhead": true,
+      "confidence": "high",
+      "note": "Reserve a day or two ahead (phone / Facebook page). Pin: OSM/Nominatim lookup 2026-09-23."
+    },
+    {
+      "key": "Vietnam|Ho Chi Minh City||Jade Emperor Pagoda",
+      "type": "place",
+      "category": "temple_shrine",
+      "localName": "Chùa Ngọc Hoàng (Phước Hải Tự)",
+      "lat": 10.791528,
+      "lng": 106.697687,
+      "tz": "Asia/Ho_Chi_Minh",
+      "description": "Atmospheric 1909 Taoist pagoda full of incense and carved deities.",
+      "timeNeededMin": 60,
+      "address": "73 Mai Thị Lựu, Tân Định ward (old Đa Kao, District 1)",
+      "openHours": "~07:00–18:00 daily; free (verify)",
+      "confidence": "high",
+      "note": "Pin: OSM/Nominatim lookup 2026-09-23"
+    },
+    {
+      "key": "Vietnam|Ho Chi Minh City||Tan Dinh Church",
+      "type": "place",
+      "category": "temple_shrine",
+      "localName": "Nhà thờ Tân Định",
+      "lat": 10.78836,
+      "lng": 106.690642,
+      "tz": "Asia/Ho_Chi_Minh",
+      "description": "Bright-pink 1876 Gothic-Romanesque church.",
+      "timeNeededMin": 30,
+      "address": "289 Hai Bà Trưng",
+      "openHours": "Exterior any time; interior mostly around Mass times",
+      "confidence": "high",
+      "note": "Pin: OSM/Nominatim lookup 2026-09-23"
+    },
+    {
+      "key": "Vietnam|Ho Chi Minh City||Independence Palace",
+      "type": "place",
+      "category": "sight",
+      "localName": "Dinh Độc Lập",
+      "lat": 10.777035,
+      "lng": 106.695488,
+      "tz": "Asia/Ho_Chi_Minh",
+      "description": "1960s palace where the war ended in 1975; untouched state rooms and basement bunker.",
+      "timeNeededMin": 150,
+      "address": "135 Nam Kỳ Khởi Nghĩa",
+      "website": "https://dinhdoclap.gov.vn/en/visiting-hours/",
+      "openHours": "07:00–18:00 daily (tickets at the 135 Nam Kỳ Khởi Nghĩa gate); palace + exhibition 80k VND from May 2026",
+      "confidence": "high",
+      "note": "Hours/prices from the official site (fetched 2026-09-23). Pin: OSM/Nominatim lookup 2026-09-23."
+    },
+    {
+      "key": "Vietnam|Ho Chi Minh City||War Remnants Museum",
+      "type": "place",
+      "category": "museum",
+      "localName": "Bảo tàng Chứng tích Chiến tranh",
+      "lat": 10.779365,
+      "lng": 106.692281,
+      "tz": "Asia/Ho_Chi_Minh",
+      "description": "Museum of the Vietnam War from the Vietnamese side; aircraft and tanks in the yard.",
+      "timeNeededMin": 150,
+      "address": "28 Võ Văn Tần, Xuân Hòa ward (old District 3)",
+      "openHours": "07:30–17:30 daily; ~40k VND (verify)",
+      "confidence": "high",
+      "note": "Pin: OSM/Nominatim lookup 2026-09-23"
+    },
+    {
+      "key": "Vietnam|Ho Chi Minh City||Ho Chi Minh City Museum",
+      "type": "place",
+      "category": "museum",
+      "localName": "Bảo tàng Thành phố Hồ Chí Minh",
+      "lat": 10.775911,
+      "lng": 106.699621,
+      "tz": "Asia/Ho_Chi_Minh",
+      "description": "City history museum in the 1890 Gia Long Palace; the steps are a wedding-photo favourite.",
+      "timeNeededMin": 60,
+      "address": "65 Lý Tự Trọng",
+      "openHours": "~08:00–17:00 daily; ~30k VND (verify)",
+      "confidence": "high",
+      "note": "Pin: OSM/Nominatim lookup 2026-09-23"
+    },
+    {
+      "key": "Vietnam|Ho Chi Minh City||Takashimaya Saigon Centre",
+      "type": "place",
+      "category": "shopping",
+      "lat": 10.77315,
+      "lng": 106.700535,
+      "tz": "Asia/Ho_Chi_Minh",
+      "description": "Japanese department store in the Saigon Centre tower on Le Loi.",
+      "timeNeededMin": 60,
+      "address": "Saigon Centre, 65 Lê Lợi",
+      "openHours": "~09:30–21:30 daily (verify)",
+      "confidence": "high",
+      "note": "For VAT-refundable purchases: ask each counter for a VAT-refund invoice (passport). Pin: OSM/Nominatim lookup 2026-09-23."
+    },
+    {
+      "key": "Vietnam|Da Nang||Be Man Seafood",
+      "type": "place",
+      "category": "restaurant",
+      "localName": "Hải sản Bé Mặn",
+      "lat": 16.081809,
+      "lng": 108.247276,
+      "tz": "Asia/Ho_Chi_Minh",
+      "description": "Big, loud beachfront seafood restaurant; pick from the tanks, priced by weight.",
+      "timeNeededMin": 90,
+      "address": "Võ Nguyên Giáp (My Khe beachfront), Sơn Trà ward",
+      "openHours": "~10:00–22:00 daily (verify)",
+      "confidence": "high",
+      "note": "Pin: OSM/Nominatim lookup 2026-09-23"
+    },
+    {
+      "key": "Vietnam|Da Nang||Mi Quang 1A",
+      "type": "place",
+      "category": "restaurant",
+      "localName": "Mì Quảng 1A",
+      "lat": 16.072381,
+      "lng": 108.219128,
+      "tz": "Asia/Ho_Chi_Minh",
+      "description": "Well-known mì Quảng (turmeric noodle) shop in central Da Nang.",
+      "timeNeededMin": 60,
+      "address": "1 Hải Phòng, Hải Châu",
+      "openHours": "~06:00–21:00 daily (verify)",
+      "confidence": "high",
+      "note": "Pin: OSM/Nominatim lookup 2026-09-23"
+    },
+    {
+      "key": "Vietnam|Hoi An||Little Riverside Hoi An",
+      "type": "place",
+      "category": "lodging",
+      "lat": 15.877337,
+      "lng": 108.33718,
+      "tz": "Asia/Ho_Chi_Minh",
+      "description": "Boutique riverside hotel with pool, ~10 min walk east of the Old Town.",
+      "address": "9 Phan Bội Châu, Hội An",
+      "openHours": "Check-in 14:00, check-out 12:00 (verify)",
+      "confidence": "high",
+      "note": "Draft pick for Oct 23–26 (3 nights): walkable to the tailors. Alternatives: Anantara Hoi An (1 Phạm Hồng Thái, closer, pricier), Allegro Hoi An. Pin: OSM/Nominatim lookup 2026-09-23."
+    },
+    {
+      "key": "Vietnam|Hoi An|Old Town|BeBe Tailor",
+      "type": "place",
+      "category": "shopping",
+      "lat": 15.87823,
+      "lng": 108.33266,
+      "tz": "Asia/Ho_Chi_Minh",
+      "description": "Popular Hoi An tailor (suits, coats, dresses); one of the names that comes up most.",
+      "timeNeededMin": 60,
+      "address": "Hoàng Diệu (nos. 05–11), Hội An",
+      "openHours": "~08:00–21:30 daily (verify)",
+      "confidence": "medium",
+      "links": [
+        {
+          "url": "https://www.tripadvisor.com/Attraction_Review-g298082-d2429676-Reviews-Bebe_Tailor-Hoi_An_Quang_Nam_Province.html",
+          "title": "BeBe on TripAdvisor"
+        }
+      ],
+      "note": "Pin from OSM 'Bebe Clothing, 05-07 Hoàng Diệu' (the tailor shop is on the same block; medium)."
+    },
+    {
+      "key": "Vietnam|Hoi An|Old Town|A Dong Silk",
+      "type": "place",
+      "category": "shopping",
+      "lat": 15.88009,
+      "lng": 108.326884,
+      "tz": "Asia/Ho_Chi_Minh",
+      "description": "Long-established Hoi An tailor and silk shop.",
+      "timeNeededMin": 60,
+      "address": "62 Trần Hưng Đạo, Hội An",
+      "openHours": "~08:00–21:30 daily (verify)",
+      "confidence": "high",
+      "note": "Pin: OSM/Nominatim lookup 2026-09-23"
+    },
+    {
+      "key": "Vietnam|Hoi An|Old Town|Yaly Couture",
+      "type": "place",
+      "category": "shopping",
+      "lat": 15.876574,
+      "lng": 108.329768,
+      "tz": "Asia/Ho_Chi_Minh",
+      "description": "Big, well-known (priciest) Hoi An tailor; several branches.",
+      "timeNeededMin": 60,
+      "address": "47 Nguyễn Thái Học, Hội An (also 358 Nguyễn Duy Hiệu)",
+      "openHours": "~07:30–21:30 daily (verify)",
+      "confidence": "high",
+      "links": [
+        {
+          "url": "https://www.tripadvisor.com/Attraction_Review-g298082-d555725-Reviews-Yaly_Couture-Hoi_An_Quang_Nam_Province.html",
+          "title": "Yaly on TripAdvisor"
+        }
+      ],
+      "note": "Pin: OSM/Nominatim lookup 2026-09-23"
+    },
+    {
+      "key": "Vietnam|Hoi An|Old Town|Banh Mi Phuong",
+      "type": "place",
+      "category": "restaurant",
+      "localName": "Bánh Mì Phượng",
+      "lat": 15.878484,
+      "lng": 108.332008,
+      "tz": "Asia/Ho_Chi_Minh",
+      "description": "Hoi An's most famous bánh mì stall.",
+      "timeNeededMin": 30,
+      "address": "2B Phan Châu Trinh, Hội An",
+      "openHours": "~06:30–21:30 daily (verify)",
+      "confidence": "high",
+      "note": "Pin: OSM/Nominatim lookup 2026-09-23"
+    },
+    {
+      "key": "Vietnam|Hoi An|Old Town|Morning Glory",
+      "type": "place",
+      "category": "restaurant",
+      "lat": 15.87662,
+      "lng": 108.327785,
+      "tz": "Asia/Ho_Chi_Minh",
+      "description": "Ms Vy's Old Town restaurant for Hoi An classics (cao lầu, white rose, mì Quảng).",
+      "timeNeededMin": 90,
+      "address": "106 Nguyễn Thái Học, Hội An",
+      "openHours": "~10:00–22:00 daily (verify)",
+      "confidence": "high",
+      "note": "Pin: OSM/Nominatim lookup 2026-09-23"
+    },
+    {
+      "key": "Vietnam|Hoi An|Old Town|Madam Khanh Banh Mi",
+      "type": "place",
+      "category": "restaurant",
+      "localName": "Madam Khánh – The Bánh Mì Queen",
+      "lat": 15.880633,
+      "lng": 108.327913,
+      "tz": "Asia/Ho_Chi_Minh",
+      "description": "Tiny, beloved bánh mì shop just north of the Old Town.",
+      "timeNeededMin": 30,
+      "address": "115 Trần Cao Vân, Hội An",
+      "openHours": "~07:00–19:00 daily (verify)",
+      "confidence": "high",
+      "note": "Pin: OSM/Nominatim lookup 2026-09-23"
+    },
+    {
+      "key": "Vietnam|Hoi An|Old Town|Hoi An Night Market",
+      "type": "place",
+      "category": "market",
+      "localName": "Chợ đêm Hội An",
+      "lat": 15.875777,
+      "lng": 108.325929,
+      "tz": "Asia/Ho_Chi_Minh",
+      "description": "Lantern-lit evening market on An Hoi islet across the river from the Old Town.",
+      "timeNeededMin": 60,
+      "address": "Nguyễn Hoàng, An Hội",
+      "openHours": "~17:00–22:00 daily",
+      "confidence": "high",
+      "note": "Pin: OSM/Nominatim lookup 2026-09-23"
+    },
+    {
+      "key": "Vietnam|Hanoi|Old Quarter|La Siesta Premium Hang Be",
+      "type": "place",
+      "category": "lodging",
+      "lat": 21.033135,
+      "lng": 105.853977,
+      "tz": "Asia/Ho_Chi_Minh",
+      "description": "Boutique Old Quarter hotel with a rooftop bar, 2 blocks from Beer Street and the lake.",
+      "address": "27 Hàng Bè, Hoàn Kiếm",
+      "openHours": "Check-in 14:00, check-out 12:00 (verify)",
+      "confidence": "high",
+      "note": "Draft pick for Oct 26 + Oct 30 (paid early night) – Nov 2; keeps the big bags Oct 27–31. Pin: OSM/Nominatim lookup 2026-09-23."
+    },
+    {
+      "key": "Vietnam|Hanoi||Hanoi Station",
+      "type": "place",
+      "category": "station",
+      "localName": "Ga Hà Nội",
+      "lat": 21.024214,
+      "lng": 105.841094,
+      "tz": "Asia/Ho_Chi_Minh",
+      "description": "Hanoi's main railway station (Lao Cai / Sa Pa night trains, Reunification Express).",
+      "timeNeededMin": 30,
+      "address": "120 Lê Duẩn (Sa Pa trains: several guides say board via the Trần Quý Cáp side gate — confirm on the ticket)",
+      "confidence": "high",
+      "note": "Pin = main building on Lê Duẩn. Pin: OSM/Nominatim lookup 2026-09-23."
+    },
+    {
+      "key": "Vietnam|Hanoi||Hoan Kiem Lake",
+      "type": "place",
+      "category": "sight",
+      "localName": "Hồ Hoàn Kiếm",
+      "lat": 21.028831,
+      "lng": 105.852536,
+      "tz": "Asia/Ho_Chi_Minh",
+      "description": "The lake at the heart of Hanoi: Turtle Tower, The Huc bridge, weekend walking streets.",
+      "timeNeededMin": 60,
+      "openHours": "24h; walking streets Fri 19:00 – Sun 24:00",
+      "confidence": "high",
+      "note": "Pin: OSM/Nominatim lookup 2026-09-23"
+    },
+    {
+      "key": "Vietnam|Hanoi||Ngoc Son Temple",
+      "type": "place",
+      "category": "temple_shrine",
+      "localName": "Đền Ngọc Sơn",
+      "lat": 21.030727,
+      "lng": 105.852376,
+      "tz": "Asia/Ho_Chi_Minh",
+      "description": "Temple on an islet in Hoan Kiem Lake, reached by the red The Huc bridge.",
+      "timeNeededMin": 60,
+      "openHours": "~07:00–18:00 daily; ~50k VND (verify)",
+      "confidence": "high",
+      "note": "Pin: OSM/Nominatim lookup 2026-09-23"
+    },
+    {
+      "key": "Vietnam|Hanoi|Old Quarter|Cafe Giang",
+      "type": "place",
+      "category": "cafe",
+      "localName": "Cà phê Giảng",
+      "lat": 21.033606,
+      "lng": 105.854622,
+      "tz": "Asia/Ho_Chi_Minh",
+      "description": "The original Hanoi egg coffee (cà phê trứng) café, since 1946.",
+      "timeNeededMin": 30,
+      "address": "39 Nguyễn Hữu Huân (up the alley)",
+      "openHours": "~07:00–22:00 daily (verify)",
+      "confidence": "high",
+      "note": "Pin: OSM/Nominatim lookup 2026-09-23"
+    },
+    {
+      "key": "Vietnam|Hanoi||Bun Cha Huong Lien",
+      "type": "place",
+      "category": "restaurant",
+      "localName": "Bún chả Hương Liên",
+      "lat": 21.01805,
+      "lng": 105.853884,
+      "tz": "Asia/Ho_Chi_Minh",
+      "description": "The 'Obama bún chả' shop (2016 visit with Anthony Bourdain).",
+      "timeNeededMin": 60,
+      "address": "24 Lê Văn Hưu, Hai Bà Trưng",
+      "openHours": "~08:00–20:30 daily (verify)",
+      "confidence": "high",
+      "note": "Pin: OSM/Nominatim lookup 2026-09-23"
+    },
+    {
+      "key": "Vietnam|Hanoi|Old Quarter|Cha Ca Thang Long",
+      "type": "place",
+      "category": "restaurant",
+      "localName": "Chả Cá Thăng Long",
+      "lat": 21.032965,
+      "lng": 105.846123,
+      "tz": "Asia/Ho_Chi_Minh",
+      "description": "Chả cá: turmeric-dill fish sizzled at the table; the one-dish specialist.",
+      "timeNeededMin": 75,
+      "address": "6B Đường Thành (branches along the street)",
+      "openHours": "~10:00–21:30 daily (verify)",
+      "confidence": "high",
+      "note": "Pin: OSM/Nominatim lookup 2026-09-23"
+    },
+    {
+      "key": "Vietnam|Hanoi|Old Quarter|Pho Gia Truyen Bat Dan",
+      "type": "place",
+      "category": "restaurant",
+      "localName": "Phở Gia Truyền Bát Đàn",
+      "lat": 21.033638,
+      "lng": 105.846379,
+      "tz": "Asia/Ho_Chi_Minh",
+      "description": "Cult Hanoi phở bò shop: queue, pay, carry your own bowl.",
+      "timeNeededMin": 30,
+      "address": "49 Bát Đàn",
+      "openHours": "~06:00–10:00 and ~18:00–20:30 (verify); cash",
+      "confidence": "high",
+      "note": "Pin: OSM/Nominatim lookup 2026-09-23"
+    },
+    {
+      "key": "Vietnam|Hanoi|Old Quarter|Banh Mi 25",
+      "type": "place",
+      "category": "restaurant",
+      "localName": "Bánh Mì 25",
+      "lat": 21.03608,
+      "lng": 105.848693,
+      "tz": "Asia/Ho_Chi_Minh",
+      "description": "Popular Old Quarter bánh mì shop with seating.",
+      "timeNeededMin": 30,
+      "address": "25 Hàng Cá",
+      "openHours": "~07:00–21:00 daily (verify)",
+      "confidence": "high",
+      "note": "Pin: OSM/Nominatim lookup 2026-09-23"
+    },
+    {
+      "key": "Vietnam|Hanoi||Temple of Literature",
+      "type": "place",
+      "category": "temple_shrine",
+      "localName": "Văn Miếu – Quốc Tử Giám",
+      "lat": 21.02879,
+      "lng": 105.835953,
+      "tz": "Asia/Ho_Chi_Minh",
+      "description": "1070 Confucian temple and Vietnam's first university; five courtyards and stone stelae.",
+      "timeNeededMin": 90,
+      "openHours": "~08:00–17:00 daily; ~70k VND (verify)",
+      "confidence": "high",
+      "note": "Pin: OSM/Nominatim lookup 2026-09-23"
+    },
+    {
+      "key": "Vietnam|Hanoi||Hoa Lo Prison",
+      "type": "place",
+      "category": "museum",
+      "localName": "Nhà tù Hỏa Lò",
+      "lat": 21.025422,
+      "lng": 105.846509,
+      "tz": "Asia/Ho_Chi_Minh",
+      "description": "French colonial prison, later the 'Hanoi Hilton'; now a museum.",
+      "timeNeededMin": 90,
+      "address": "1 Hỏa Lò",
+      "openHours": "08:00–17:00 daily; ~50k VND (verify)",
+      "confidence": "high",
+      "note": "Pin: OSM/Nominatim lookup 2026-09-23"
+    },
+    {
+      "key": "Vietnam|Hanoi||Thang Long Water Puppet Theatre",
+      "type": "place",
+      "category": "activity",
+      "localName": "Nhà hát Múa rối nước Thăng Long",
+      "lat": 21.031704,
+      "lng": 105.853455,
+      "tz": "Asia/Ho_Chi_Minh",
+      "description": "Traditional water-puppet shows with live folk music, by Hoan Kiem Lake.",
+      "timeNeededMin": 60,
+      "address": "57B Đinh Tiên Hoàng",
+      "openHours": "Several ~50-min shows daily, roughly 15:00–20:00 (verify times)",
+      "bookAhead": true,
+      "confidence": "high",
+      "note": "Pin: OSM/Nominatim lookup 2026-09-23"
+    },
+    {
+      "key": "Vietnam|Hanoi||Tam Vi",
+      "type": "place",
+      "category": "restaurant",
+      "localName": "Tầm Vị",
+      "lat": 21.028775,
+      "lng": 105.839455,
+      "tz": "Asia/Ho_Chi_Minh",
+      "description": "Michelin-starred northern home cooking in a wooden-house dining room.",
+      "timeNeededMin": 90,
+      "address": "4B Yên Thế (by the Temple of Literature)",
+      "openHours": "~11:00–22:00 daily (verify)",
+      "bookAhead": true,
+      "confidence": "high",
+      "note": "Michelin one star since the first Hanoi guide (2023) — verify for 2027. Pin: OSM/Nominatim lookup 2026-09-23."
+    },
+    {
+      "key": "Vietnam|Hanoi||St. Joseph's Cathedral",
+      "type": "place",
+      "category": "temple_shrine",
+      "localName": "Nhà thờ Lớn Hà Nội",
+      "lat": 21.028648,
+      "lng": 105.848857,
+      "tz": "Asia/Ho_Chi_Minh",
+      "description": "Neo-Gothic 1886 cathedral; lemon-tea stools on the streets around it.",
+      "timeNeededMin": 30,
+      "address": "40 Nhà Chung",
+      "openHours": "Exterior any time; interior around Mass times",
+      "confidence": "high",
+      "note": "Pin: OSM/Nominatim lookup 2026-09-23"
+    },
+    {
+      "key": "Vietnam|Hanoi||One Pillar Pagoda",
+      "type": "place",
+      "category": "temple_shrine",
+      "localName": "Chùa Một Cột",
+      "lat": 21.035856,
+      "lng": 105.833614,
+      "tz": "Asia/Ho_Chi_Minh",
+      "description": "Tiny 11th-century-style pagoda on a single pillar, beside the Ho Chi Minh Mausoleum.",
+      "timeNeededMin": 30,
+      "openHours": "~07:00–18:00 daily (verify)",
+      "confidence": "high",
+      "note": "Pin: OSM/Nominatim lookup 2026-09-23"
+    },
+    {
+      "key": "Vietnam|Ninh Binh||Tam Coc Garden Resort",
+      "type": "place",
+      "category": "lodging",
+      "lat": 20.211299,
+      "lng": 105.908034,
+      "tz": "Asia/Ho_Chi_Minh",
+      "description": "Stone-bungalow boutique resort among rice fields and karsts near Tam Coc.",
+      "address": "Hải Nham village, Ninh Hải (Tam Cốc), Ninh Bình",
+      "openHours": "Check-in 14:00, check-out 12:00 (verify)",
+      "confidence": "high",
+      "note": "Draft pick for Oct 27 (1 night). Cheaper alternatives: Aravinda Resort, Hidden Charm. Pin: OSM/Nominatim lookup 2026-09-23."
+    },
+    {
+      "key": "Vietnam|Ninh Binh||Hoa Lu Ancient Capital",
+      "type": "place",
+      "category": "sight",
+      "localName": "Cố đô Hoa Lư",
+      "lat": 20.283483,
+      "lng": 105.899599,
+      "tz": "Asia/Ho_Chi_Minh",
+      "description": "10th-century capital: temples of the Đinh and Lê kings under the karsts.",
+      "timeNeededMin": 60,
+      "openHours": "~07:00–17:30 daily; ~20k VND (verify)",
+      "confidence": "high",
+      "note": "Pin: OSM/Nominatim lookup 2026-09-23"
+    },
+    {
+      "key": "Vietnam|Sa Pa||Lao Cai Station",
+      "type": "place",
+      "category": "station",
+      "localName": "Ga Lào Cai",
+      "lat": 22.491848,
+      "lng": 103.978077,
+      "tz": "Asia/Ho_Chi_Minh",
+      "description": "Lao Cai city railway station, ~35 km (≈1 h by road) below Sa Pa; night trains to/from Hanoi.",
+      "timeNeededMin": 30,
+      "address": "Phố Khánh Yên, Lào Cai city",
+      "confidence": "high",
+      "note": "Not in Sa Pa itself (no Lao Cai row in the Cities tab), so filed under Sa Pa. Pin: OSM/Nominatim lookup 2026-09-23 (station square)."
+    },
+    {
+      "key": "Vietnam|Sa Pa||Pao's Sapa Leisure Hotel",
+      "type": "place",
+      "category": "lodging",
+      "lat": 22.327011,
+      "lng": 103.84664,
+      "tz": "Asia/Ho_Chi_Minh",
+      "description": "Hotel on the edge of town with Muong Hoa valley views and an indoor pool.",
+      "address": "Muong Hoa / Violet road, Sa Pa",
+      "openHours": "Check-in 14:00, check-out 12:00 (verify)",
+      "confidence": "medium",
+      "note": "Draft pick for Oct 29 (1 night). Alternative: Hotel de la Coupole – MGallery (town centre). Pin: OSM/Nominatim lookup 2026-09-23 (medium)."
+    },
+    {
+      "key": "Vietnam|Sa Pa||Fansipan Legend Cable Car",
+      "type": "place",
+      "category": "activity",
+      "localName": "Cáp treo Fansipan Legend",
+      "lat": 22.337076,
+      "lng": 103.824323,
+      "tz": "Asia/Ho_Chi_Minh",
+      "description": "Cable car to Fansipan (3,143 m), Indochina's highest peak, with temples on the summit.",
+      "timeNeededMin": 240,
+      "openHours": "~07:30–17:30, weekends from ~07:00 (verify); ~800k VND return (verify)",
+      "confidence": "high",
+      "note": "Pin = lower station (Sun World Fansipan Legend). Pin: OSM/Nominatim lookup 2026-09-23."
+    },
+    {
+      "key": "Vietnam|Sa Pa||Cat Cat Village",
+      "type": "place",
+      "category": "sight",
+      "localName": "Bản Cát Cát",
+      "lat": 22.328533,
+      "lng": 103.83468,
+      "tz": "Asia/Ho_Chi_Minh",
+      "description": "Black Hmong village and waterfall a steep walk below Sa Pa town.",
+      "timeNeededMin": 150,
+      "openHours": "~06:00–18:00 daily; ~150k VND (verify)",
+      "confidence": "high",
+      "note": "Pin: OSM/Nominatim lookup 2026-09-23"
+    },
+    {
+      "key": "Vietnam|Sa Pa||The Hill Station Signature Restaurant",
+      "type": "place",
+      "category": "restaurant",
+      "lat": 22.333178,
+      "lng": 103.840635,
+      "tz": "Asia/Ho_Chi_Minh",
+      "description": "Hmong-inspired modern restaurant with valley views and a rice-wine tasting flight.",
+      "timeNeededMin": 90,
+      "address": "37 Fansipan, Sa Pa",
+      "openHours": "~07:00–22:30 daily (verify)",
+      "confidence": "high",
+      "note": "Pin: OSM/Nominatim lookup 2026-09-23"
+    },
+    {
+      "key": "Vietnam|Sa Pa||Muong Hoa Valley",
+      "type": "place",
+      "category": "nature",
+      "localName": "Thung lũng Mường Hoa",
+      "lat": 22.3065,
+      "lng": 103.882,
+      "tz": "Asia/Ho_Chi_Minh",
+      "description": "Terraced valley below Sa Pa; classic trek Lao Chai → Ta Van through Hmong and Giay villages.",
+      "timeNeededMin": 300,
+      "confidence": "medium",
+      "note": "Pin between Lao Chai (22.3100, 103.8762) and Ta Van (22.3027, 103.8886) from OSM; valley spans ~8 km (medium)."
+    }
+  ],
+  "days": [
+    {
+      "date": "2027-10-20",
+      "half": "after",
+      "title": "Ho Chi Minh City · arrival, Post Office + Nguyen Hue",
+      "stay": {
+        "node": "Vietnam|Ho Chi Minh City||Caravelle Saigon",
+        "checkIn": true,
+        "nights": 3,
+        "cost": {
+          "amount": 3800000,
+          "currency": "VND",
+          "per": "night",
+          "note": "Deluxe double, typical Oct rate (~US$145); a bit over the US$50 pp/night Vietnam lodging line"
+        },
+        "note": "Check-in 14:00 — you arrive ~15:00. Ask for a high floor facing the Opera House."
+      },
+      "dayNote": "- Clocks went back 2 h on landing (KST → ICT, UTC+7).\n- SGN T2 immigration with the e-visa: allow 30–60 min; get VND from an airport ATM (a few million) and a local SIM/eSIM.\n- **Grab** (car) is the default way around Vietnam — install it and add a card before the trip.\n- Saigon **Notre-Dame Cathedral** (next to the Post Office) is still under restoration — completion has slipped to 2027 or later, so expect scaffolding and no interior.\n- Addresses: HCMC abolished its districts in 2025 (wards now), but everyone still says \"District 1\".",
+      "items": [
+        {
+          "flight": "VN423"
+        },
+        {
+          "leg": {
+            "ref": "2027-10-20:grab-sgn",
+            "mode": "other",
+            "otherKind": "taxi",
+            "label": "Grab · SGN T2 → District 1",
+            "durationMin": 45,
+            "cost": {
+              "amount": 180000,
+              "currency": "VND",
+              "per": "total",
+              "note": "GrabCar estimate"
+            },
+            "note": "Grab pickup zone outside arrivals; 30–45 min depending on traffic."
+          }
+        },
+        {
+          "ref": "2027-10-20:caravelle-checkin",
+          "node": "Vietnam|Ho Chi Minh City||Caravelle Saigon",
+          "title": "Check in · Caravelle Saigon",
+          "kind": "lodging",
+          "durationMin": 30
+        },
+        {
+          "title": "Late lunch · bánh mì or phở near the hotel",
+          "kind": "meal",
+          "durationMin": 30,
+          "note": "Snack-sized — dinner is at 19:00. Ideas: Bánh Mì Huỳnh Hoa (26 Lê Thị Riêng, huge and famous; its hours have changed over the years, check first) or any phở shop around Ben Thanh."
+        },
+        {
+          "node": "Vietnam|Ho Chi Minh City||Saigon Central Post Office",
+          "kind": "sight",
+          "durationMin": 45,
+          "note": "~07:00–19:00 daily (verify). 1880s French post office with the vaulted hall and painted maps; still sells stamps + postcards. **Book Street** (Nguyễn Văn Bình) runs alongside; Notre-Dame is across the square (exterior only, restoration)."
+        },
+        {
+          "node": "Vietnam|Ho Chi Minh City||Nguyen Hue Walking Street",
+          "kind": "sight",
+          "durationMin": 45,
+          "note": "Start at the People's Committee building (exterior, lit at night) and walk toward the river. The Café Apartments (42 Nguyễn Huệ) has cafés on every floor — pick one with a balcony."
+        },
+        {
+          "node": "Vietnam|Ho Chi Minh City||Saigon Saigon Rooftop Bar",
+          "title": "Sunset drinks · Saigon Saigon Rooftop Bar",
+          "kind": "nightlife",
+          "durationMin": 75,
+          "note": "Sunset ~17:35. 10th floor of your hotel; smart-casual."
+        },
+        {
+          "node": "Vietnam|Ho Chi Minh City||Banh Xeo 46A",
+          "title": "Dinner · Bánh Xèo 46A",
+          "kind": "meal",
+          "durationMin": 75,
+          "note": "Order bánh xèo + gỏi cuốn (fresh rolls): wrap pieces of the crêpe in mustard greens and herbs, dip in nước chấm. Open-air, cash. ~10 min by Grab."
+        }
+      ]
+    },
+    {
+      "date": "2027-10-21",
+      "title": "Ho Chi Minh City · Cu Chi Tunnels + Bui Vien",
+      "startTime": "07:00",
+      "stay": {
+        "node": "Vietnam|Ho Chi Minh City||Caravelle Saigon"
+      },
+      "dayNote": "- **Cu Chi:** go early — it's hot and tour buses arrive from ~10:00. Wear clothes that can get dirty and closed shoes; the crawl sections are optional.\n- Alternative transport: a speedboat Cu Chi tour up the Saigon River (e.g. Les Rives) instead of the car — pricier, more scenic.\n- **War Remnants Museum** is heavy going (Agent Orange, photo-journalist rooms) — pace yourselves.\n- XO Tours ends ~22:00; ask to be dropped at Bui Vien. Rain plan: afternoon showers are common — the museum and the tour run in the rain (ponchos provided).",
+      "items": [
+        {
+          "node": "Vietnam|Ho Chi Minh City||Caravelle Saigon",
+          "title": "Breakfast · hotel",
+          "kind": "meal",
+          "durationMin": 30
+        },
+        {
+          "leg": {
+            "ref": "2027-10-21:car-cuchi",
+            "mode": "other",
+            "otherKind": "car",
+            "label": "Private car · District 1 → Cu Chi (Ben Dinh)",
+            "durationMin": 90,
+            "cost": {
+              "amount": 1600000,
+              "currency": "VND",
+              "per": "total",
+              "note": "Round trip with the driver waiting (~6 h); hotel car or a Klook/GetYourGuide private transfer"
+            },
+            "note": "Leave ~07:30; ~60 km, 1.5 h."
+          }
+        },
+        {
+          "ref": "2027-10-21:cu-chi",
+          "node": "Vietnam|Ho Chi Minh City||Cu Chi Tunnels",
+          "kind": "sight",
+          "durationMin": 150,
+          "cost": {
+            "amount": 125000,
+            "currency": "VND",
+            "per": "person",
+            "note": "Ben Dinh entry for foreigners (2025–26 price; verify)"
+          },
+          "note": "Ben Dinh site, ~07:00–17:00 daily. Guided loop: trapdoors, a widened tunnel section (30–100 m crawl), kitchens with hidden smoke vents, tapioca + tea stop. Shooting range is extra (paid per bullet, cash). ~1.5–2 h each way from the city (places note)."
+        },
+        {
+          "leg": {
+            "mode": "other",
+            "otherKind": "car",
+            "label": "Private car · Cu Chi → War Remnants Museum",
+            "durationMin": 90,
+            "note": "Same car (round trip above)."
+          }
+        },
+        {
+          "title": "Lunch near the War Remnants Museum",
+          "kind": "meal",
+          "durationMin": 60,
+          "note": "Ideas: cơm tấm (broken rice with grilled pork chop) or bún thịt nướng in the streets around Võ Văn Tần / Nam Kỳ Khởi Nghĩa."
+        },
+        {
+          "node": "Vietnam|Ho Chi Minh City||War Remnants Museum",
+          "kind": "sight",
+          "durationMin": 120,
+          "cost": {
+            "amount": 40000,
+            "currency": "VND",
+            "per": "person",
+            "note": "verify"
+          },
+          "note": "07:30–17:30 daily (verify). Start upstairs (Requiem photo gallery), then the tiger cages yard."
+        },
+        {
+          "node": "Vietnam|Ho Chi Minh City||Caravelle Saigon",
+          "title": "Rest · hotel pool",
+          "kind": "rest",
+          "durationMin": 60
+        },
+        {
+          "ref": "2027-10-21:xo-tour",
+          "title": "Street-food dinner · XO Tours (motorbike, evening)",
+          "kind": "meal",
+          "durationMin": 240,
+          "pinnedStart": "17:45",
+          "cost": {
+            "amount": 85,
+            "currency": "USD",
+            "per": "person",
+            "category": "food_drink",
+            "note": "Estimate for the evening foodie tour"
+          },
+          "note": "Riders in ao dai pick you up at the hotel; ~4 h through Districts 4/5/8 with 5–6 food stops (bánh xèo, seafood, hot pot, dessert) — drinks included. Tell them any food limits when booking (see todo)."
+        },
+        {
+          "node": "Vietnam|Ho Chi Minh City||Bui Vien Walking Street",
+          "kind": "nightlife",
+          "durationMin": 75,
+          "note": "Pedestrian from ~19:00; loud bars, street food, people-watching. Beer ~30–50k VND; watch phones/bags and check bar bills."
+        }
+      ]
+    },
+    {
+      "date": "2027-10-22",
+      "title": "Ho Chi Minh City · Independence Palace, Ben Thanh + food",
+      "startTime": "07:45",
+      "stay": {
+        "node": "Vietnam|Ho Chi Minh City||Caravelle Saigon"
+      },
+      "dayNote": "- Morning cluster in Tân Định (phở → pink church → Jade Emperor), then the palace and Ben Thanh; rest through the midday heat.\n- **Tax refund with passport:** Vietnam's VAT refund works only with a VAT-refund invoice from a participating store (≥ VND 2 million per store per day), goods unused, claimed at the departure airport — for this trip at **HAN T2 on Nov 2**. Markets (Ben Thanh) and tailors don't issue these.\n- Friday night: Bui Vien is at its loudest if you want round two; Chill Skybar (AB Tower, Lê Lai) is the dressy rooftop alternative.",
+      "items": [
+        {
+          "node": "Vietnam|Ho Chi Minh City||Pho Hoa Pasteur",
+          "title": "Breakfast · Phở Hòa Pasteur",
+          "kind": "meal",
+          "durationMin": 45,
+          "note": "Southern-style phở with a heap of herbs and bean sprouts; ~90–110k VND a bowl."
+        },
+        {
+          "node": "Vietnam|Ho Chi Minh City||Tan Dinh Church",
+          "kind": "sight",
+          "durationMin": 20,
+          "note": "Photo from across Hai Bà Trưng; step inside if the door is open."
+        },
+        {
+          "node": "Vietnam|Ho Chi Minh City||Jade Emperor Pagoda",
+          "kind": "sight",
+          "durationMin": 45,
+          "note": "Free; turtles in the courtyard pond, carved-wood deities, the Hall of Ten Hells."
+        },
+        {
+          "node": "Vietnam|Ho Chi Minh City||Independence Palace",
+          "kind": "sight",
+          "durationMin": 90,
+          "cost": {
+            "amount": 80000,
+            "currency": "VND",
+            "per": "person",
+            "note": "Palace + exhibition combo (official price from May 2026)"
+          },
+          "note": "07:00–18:00 daily. State rooms, rooftop helipad, basement war room and bunker; replica tanks on the lawn. Audio guide available."
+        },
+        {
+          "title": "Lunch · Ben Thanh Market food stalls",
+          "kind": "meal",
+          "durationMin": 45,
+          "note": "Stalls inside the market (south side): bánh xèo, bún bò Huế, chè for dessert. Point and share."
+        },
+        {
+          "node": "Vietnam|Ho Chi Minh City||Ben Thanh Market",
+          "kind": "shopping",
+          "durationMin": 75,
+          "note": "~06:00–18:00. **Expect to bargain** (places note) — start around half the first price. Purses/bags (shopping list: Audrey), coffee (phin filters, beans), lacquerware, dried fruit. No VAT refund at the market."
+        },
+        {
+          "node": "Vietnam|Ho Chi Minh City||Caravelle Saigon",
+          "title": "Rest · hotel (midday heat)",
+          "kind": "rest",
+          "durationMin": 90
+        },
+        {
+          "node": "Vietnam|Ho Chi Minh City||Takashimaya Saigon Centre",
+          "kind": "shopping",
+          "durationMin": 60,
+          "note": "Air-conditioned department store; **tax refund with passport** — ask each counter whether it issues a VAT-refund invoice (keep it with the goods for HAN, Nov 2)."
+        },
+        {
+          "node": "Vietnam|Ho Chi Minh City||Cuc Gach Quan",
+          "title": "Dinner · Cục Gạch Quán",
+          "kind": "meal",
+          "durationMin": 90,
+          "bookAhead": true,
+          "cost": {
+            "amount": 1000000,
+            "currency": "VND",
+            "per": "total",
+            "note": "Estimate for 2 with drinks"
+          },
+          "note": "Reserve a day or two ahead. Try the fried tofu with lemongrass, caramelised clay-pot fish, morning glory with garlic."
+        },
+        {
+          "title": "Nightcap · rooftop or Bui Vien (optional)",
+          "kind": "nightlife",
+          "durationMin": 60,
+          "note": "Saigon Saigon (your hotel) is the easy option."
+        }
+      ]
+    },
+    {
+      "date": "2027-10-23",
+      "title": "Ho Chi Minh City → Hoi An · order the tailoring",
+      "startTime": "08:00",
+      "stay": {
+        "node": "Vietnam|Hoi An||Little Riverside Hoi An",
+        "checkIn": true,
+        "nights": 3,
+        "cost": {
+          "amount": 2900000,
+          "currency": "VND",
+          "per": "night",
+          "note": "Deluxe river/pool view, typical Oct rate (~US$110)"
+        },
+        "note": "Check-in ~16:20. The Da Nang block (3 days) is based here: tailor fittings + Old Town evenings; Da Nang sights are day trips."
+      },
+      "dayNote": "- Domestic flights leave from **SGN Terminal 3**; VN132 fare must include checked bags.\n- ⚠ Late October is central Vietnam's rainiest month (flooding in the Old Town some years; typhoon risk): pack a light rain jacket, check the forecast daily, and keep the tailor schedule fixed while swapping sightseeing days around it.\n- Hoi An has been part of Da Nang city since 2025 (addresses may say \"Đà Nẵng\").\n- Dragon Bridge show is planned for Sun night (Oct 24), not tonight.",
+      "items": [
+        {
+          "node": "Vietnam|Ho Chi Minh City||Caravelle Saigon",
+          "title": "Breakfast · hotel",
+          "kind": "meal",
+          "durationMin": 30
+        },
+        {
+          "node": "Vietnam|Ho Chi Minh City||Ho Chi Minh City Museum",
+          "kind": "sight",
+          "durationMin": 60,
+          "cost": {
+            "amount": 30000,
+            "currency": "VND",
+            "per": "person",
+            "note": "verify"
+          },
+          "note": "Neoclassical Gia Long Palace; Saturday-morning wedding shoots on the steps. 3 min walk from the hotel."
+        },
+        {
+          "title": "Early lunch · phở or bánh mì",
+          "kind": "meal",
+          "durationMin": 30,
+          "note": "VN132 only serves a snack. Any phở shop along Lý Tự Trọng / Pasteur, or grab bánh mì to go."
+        },
+        {
+          "node": "Vietnam|Ho Chi Minh City||Caravelle Saigon",
+          "title": "Check out · Caravelle Saigon",
+          "kind": "lodging",
+          "durationMin": 20,
+          "note": "Leave by ~11:00."
+        },
+        {
+          "leg": {
+            "ref": "2027-10-23:grab-sgn",
+            "mode": "other",
+            "otherKind": "taxi",
+            "label": "Grab · District 1 → SGN T3 (domestic)",
+            "durationMin": 40,
+            "cost": {
+              "amount": 180000,
+              "currency": "VND",
+              "per": "total",
+              "note": "GrabCar estimate"
+            }
+          }
+        },
+        {
+          "flight": "VN132"
+        },
+        {
+          "leg": {
+            "ref": "2027-10-23:car-dad-hoian",
+            "mode": "other",
+            "otherKind": "car",
+            "label": "Car · DAD → Hoi An",
+            "durationMin": 50,
+            "cost": {
+              "amount": 380000,
+              "currency": "VND",
+              "per": "total",
+              "note": "Hotel transfer or Grab; ~30 km"
+            },
+            "note": "Pre-book with the hotel (driver with a name sign) or GrabCar from arrivals."
+          }
+        },
+        {
+          "node": "Vietnam|Hoi An||Little Riverside Hoi An",
+          "title": "Check in · Little Riverside Hoi An",
+          "kind": "lodging",
+          "durationMin": 20
+        },
+        {
+          "node": "Vietnam|Hoi An|Old Town|Yaly Couture",
+          "title": "Tailor quote · Yaly Couture",
+          "kind": "shopping",
+          "durationMin": 45,
+          "note": "Priciest, mixed reviews (shopping list) — use it as the price/quality benchmark. Get a written quote per piece."
+        },
+        {
+          "node": "Vietnam|Hoi An|Old Town|A Dong Silk",
+          "title": "Tailor quote · A Dong Silk",
+          "kind": "shopping",
+          "durationMin": 45,
+          "note": "Second quote; compare fabrics side by side (take photos of the swatches + prices)."
+        },
+        {
+          "ref": "2027-10-23:tailor-order",
+          "node": "Vietnam|Hoi An|Old Town|BeBe Tailor",
+          "title": "Order the tailoring · BeBe Tailor (or the best quote)",
+          "kind": "shopping",
+          "durationMin": 90,
+          "note": "**Order everything today** (day 1 of the Hoi An block) so there's time for 2+ fittings.\n- Dennis: suit. Both: overcoat, trench coat. Audrey: ao dai. Optional: leather wallet (Dennis) / bag (Audrey) — Hoi An leather shops make them in 1–2 days.\n- Bring reference photos; **see and feel the cloth** and ask what the wool actually is (pure wool vs. blend). Rough suit prices: ~$80–150 basic, $180–300 mid-range, $280–500 good wool (shopping list).\n- Get written quotes at 2–3 shops (Yaly and A Dong Silk before this), then order at the best — BeBe is the default; Ba Ri and 45 Thu are the other names that come up.\n- Agree the fittings now: **Sun 15:30, Mon 17:30, final Tue 08:30**; pay a 30–50% deposit; get a receipt listing each piece, fabric and price; ask about shipping anything unfinished to Hanoi."
+        },
+        {
+          "node": "Vietnam|Hoi An|Old Town|Morning Glory",
+          "title": "Dinner · Morning Glory",
+          "kind": "meal",
+          "durationMin": 75,
+          "note": "Hoi An classics: cao lầu, white rose dumplings, mì Quảng, bánh xèo. Busy on Saturdays — go by ~19:45 or book."
+        },
+        {
+          "node": "Vietnam|Hoi An|Old Town|Hoi An Night Market",
+          "title": "Hoi An Night Market + lanterns",
+          "kind": "sight",
+          "durationMin": 45,
+          "note": "Across the An Hội bridge; lantern stalls and riverside lights. The lantern boat is planned for Mon."
+        }
+      ]
+    },
+    {
+      "date": "2027-10-24",
+      "title": "Hoi An · My Son, Old Town + Dragon Bridge",
+      "startTime": "05:30",
+      "stay": {
+        "node": "Vietnam|Hoi An||Little Riverside Hoi An"
+      },
+      "dayNote": "- Long day (05:30 → ~22:15), with a pool break at midday.\n- **Rain plan:** swap with Mon (Ba Na) if today is the drier day — My Son and the Old Town are fine in light rain; the fitting stays at 15:30.\n- The **Old Town ticket** (~120k VND pp, 5 coupons) covers the Covered Bridge, Fujian Hall, Quan Cong Temple + 2 more (e.g. Tan Ky Old House, a museum). Buy at any ticket booth; keep it for evening walks.\n- Dragon Bridge: fire & water show at **21:00** Sat/Sun (2026 local listings say Fri–Sun); cancelled in storms.",
+      "items": [
+        {
+          "node": "Vietnam|Hoi An||Little Riverside Hoi An",
+          "title": "Breakfast · hotel breakfast box",
+          "kind": "meal",
+          "durationMin": 15,
+          "note": "Ask reception the evening before (buffet usually opens ~06:30)."
+        },
+        {
+          "leg": {
+            "ref": "2027-10-24:car-myson",
+            "mode": "other",
+            "otherKind": "car",
+            "label": "Private car · Hoi An → My Son",
+            "durationMin": 60,
+            "cost": {
+              "amount": 750000,
+              "currency": "VND",
+              "per": "total",
+              "note": "Round trip, driver waits ~3 h"
+            },
+            "note": "Leave 05:45; ~40 km."
+          }
+        },
+        {
+          "ref": "2027-10-24:my-son",
+          "node": "Vietnam|Da Nang||My Son Sanctuary",
+          "kind": "sight",
+          "durationMin": 120,
+          "cost": {
+            "amount": 150000,
+            "currency": "VND",
+            "per": "person",
+            "note": "Incl. the electric shuttle from the gate (verify)"
+          },
+          "note": "Opens ~06:00 (some sources say 06:30 — verify). Be there at opening, before the heat and the tour buses (~08:30). Cham brick towers (4th–13th c.) in a jungle valley; Groups B/C/D are the best preserved. Short Cham dance shows run mid-morning (times vary). Hat + water."
+        },
+        {
+          "leg": {
+            "mode": "other",
+            "otherKind": "car",
+            "label": "Private car · My Son → Hoi An",
+            "durationMin": 60,
+            "note": "Same car."
+          }
+        },
+        {
+          "node": "Vietnam|Hoi An|Old Town|Madam Khanh Banh Mi",
+          "title": "Brunch · Madam Khánh – The Bánh Mì Queen",
+          "kind": "meal",
+          "durationMin": 30
+        },
+        {
+          "node": "Vietnam|Hoi An|Old Town|Japanese Covered Bridge",
+          "kind": "sight",
+          "durationMin": 30,
+          "cost": {
+            "amount": 120000,
+            "currency": "VND",
+            "per": "person",
+            "note": "Old Town ticket, 5 coupons (verify 2027 price)"
+          },
+          "note": "Restored and reopened in 2024. Early 1600s bridge-temple; the coupon is checked at the entrance."
+        },
+        {
+          "node": "Vietnam|Hoi An|Old Town|Fujian Assembly Hall",
+          "kind": "sight",
+          "durationMin": 40,
+          "note": "~07:00–17:30. The most ornate assembly hall: dragon fountain, incense coils."
+        },
+        {
+          "node": "Vietnam|Hoi An|Old Town|Quan Cong Temple",
+          "kind": "sight",
+          "durationMin": 30,
+          "note": "~07:00–17:30. Across from the central market; Guan Yu statue and carp pond."
+        },
+        {
+          "title": "Lunch · Hoi An chicken rice (cơm gà)",
+          "kind": "meal",
+          "durationMin": 45,
+          "note": "Ideas: Cơm Gà Bà Buội (22 Phan Châu Trinh), the famous one; Bánh Mì Phượng (2B Phan Châu Trinh) is a block away if you want the other famous bánh mì."
+        },
+        {
+          "node": "Vietnam|Hoi An||Little Riverside Hoi An",
+          "title": "Rest · hotel pool",
+          "kind": "rest",
+          "durationMin": 90
+        },
+        {
+          "ref": "2027-10-24:fitting-1",
+          "node": "Vietnam|Hoi An|Old Town|BeBe Tailor",
+          "title": "Tailor fitting 1 · BeBe Tailor",
+          "kind": "shopping",
+          "durationMin": 60,
+          "pinnedStart": "15:30",
+          "note": "First fitting (basted). Be picky now — changes are easy at this stage. Move to the shop you ordered from if it wasn't BeBe."
+        },
+        {
+          "leg": {
+            "ref": "2027-10-24:car-danang",
+            "mode": "other",
+            "otherKind": "car",
+            "label": "Car · Hoi An → Da Nang (My Khe) · evening hire",
+            "durationMin": 50,
+            "cost": {
+              "amount": 900000,
+              "currency": "VND",
+              "per": "total",
+              "note": "Evening hire incl. the ride back to Hoi An after the show (~22:15)"
+            },
+            "note": "Driver waits through dinner and the show."
+          }
+        },
+        {
+          "node": "Vietnam|Da Nang||My Khe",
+          "kind": "sight",
+          "durationMin": 45,
+          "note": "Dusk ~17:25 (the sun sets behind the city). Monsoon swell in Oct–Nov: swim only between the flags, if at all."
+        },
+        {
+          "node": "Vietnam|Da Nang||Be Man Seafood",
+          "title": "Dinner · Hải Sản Bé Mặn",
+          "kind": "meal",
+          "durationMin": 90,
+          "cost": {
+            "amount": 1200000,
+            "currency": "VND",
+            "per": "total",
+            "note": "Estimate for 2 with beer"
+          },
+          "note": "Pick seafood from the tanks — **confirm the price per kg before it's cooked**. Try scallops with scallion oil, clams in lemongrass broth, grilled squid, a whole fish."
+        },
+        {
+          "ref": "2027-10-24:dragon-bridge",
+          "node": "Vietnam|Da Nang||Dragon Bridge",
+          "title": "Dragon Bridge fire & water show",
+          "kind": "sight",
+          "durationMin": 45,
+          "pinnedStart": "20:40",
+          "note": "Show at **21:00**, ~15–20 min: fire bursts first, then water. Stand on the east bank near the dragon's head (Trần Hưng Đạo / Võ Văn Kiệt) or on the bridge's side walkways — the front rows get soaked. Car back to Hoi An ~50 min."
+        }
+      ]
+    },
+    {
+      "date": "2027-10-25",
+      "title": "Da Nang · Ba Na Hills + Marble Mountains",
+      "startTime": "07:00",
+      "stay": {
+        "node": "Vietnam|Hoi An||Little Riverside Hoi An"
+      },
+      "dayNote": "- Ba Na on a **Monday** = fewer domestic weekend crowds than Sunday.\n- ⚠ **Weather:** Ba Na's summit (~1,400 m) is often in cloud in late October. Check the forecast / Sun World webcam at 07:00: if socked in, skip Ba Na and do Marble Mountains + the Museum of Cham Sculpture (Da Nang) + An Bang beach instead.\n- Summit is ~8–10 °C cooler than Hoi An — bring a layer and a rain jacket.",
+      "items": [
+        {
+          "node": "Vietnam|Hoi An||Little Riverside Hoi An",
+          "title": "Breakfast · hotel",
+          "kind": "meal",
+          "durationMin": 30
+        },
+        {
+          "leg": {
+            "ref": "2027-10-25:car-bana",
+            "mode": "other",
+            "otherKind": "car",
+            "label": "Private car · Hoi An → Ba Na Hills cable car (day hire)",
+            "durationMin": 75,
+            "cost": {
+              "amount": 1400000,
+              "currency": "VND",
+              "per": "total",
+              "note": "Day hire: Ba Na → Marble Mountains → Hoi An"
+            },
+            "note": "Leave 07:30; ~55 km."
+          }
+        },
+        {
+          "node": "Vietnam|Da Nang||Golden Bridge",
+          "kind": "sight",
+          "durationMin": 30,
+          "note": "Head here first off the cable car (Included in the Ba Na Hills ticket — places note), before the crowds and before clouds build."
+        },
+        {
+          "ref": "2027-10-25:ba-na",
+          "node": "Vietnam|Da Nang||Ba Na Hills",
+          "kind": "activity",
+          "durationMin": 180,
+          "cost": {
+            "amount": 950000,
+            "currency": "VND",
+            "per": "person",
+            "note": "Adult ticket incl. cable cars — 2026 estimate ~900k–1M VND; buy online on the Sun World site/app; buffet lunch extra"
+          },
+          "note": "Cable cars ~07:30/08:00–17:00 (verify). French Village, Le Jardin d'Amour gardens, Linh Ứng pagoda on the peak, Fantasy Park (indoor, good if it rains). Record-length cable car ride (~20 min)."
+        },
+        {
+          "title": "Lunch · Ba Na Hills",
+          "kind": "meal",
+          "durationMin": 60,
+          "note": "Buffet at the French Village (combo ticket) or the Beer Plaza; pricier than town."
+        },
+        {
+          "leg": {
+            "mode": "other",
+            "otherKind": "car",
+            "label": "Private car · Ba Na Hills → Marble Mountains",
+            "durationMin": 60,
+            "note": "Same car."
+          }
+        },
+        {
+          "node": "Vietnam|Da Nang||Marble Mountain",
+          "kind": "sight",
+          "durationMin": 90,
+          "cost": {
+            "amount": 55000,
+            "currency": "VND",
+            "per": "person",
+            "note": "Thủy Sơn entry ~40k + elevator ~15k (verify)"
+          },
+          "note": "~07:00–17:30. Climb Thủy Sơn: Huyền Không cave (light shafts, shrine), Tam Thai + Linh Ứng pagodas, Vọng Giang viewpoint. Lots of steps (elevator one way). The stone-carving shops at the base push hard — browse only."
+        },
+        {
+          "leg": {
+            "mode": "other",
+            "otherKind": "car",
+            "label": "Private car · Marble Mountains → Hoi An",
+            "durationMin": 25,
+            "note": "Same car."
+          }
+        },
+        {
+          "node": "Vietnam|Hoi An||Little Riverside Hoi An",
+          "title": "Rest · hotel",
+          "kind": "rest",
+          "durationMin": 45
+        },
+        {
+          "ref": "2027-10-25:fitting-2",
+          "node": "Vietnam|Hoi An|Old Town|BeBe Tailor",
+          "title": "Tailor fitting 2 · BeBe Tailor",
+          "kind": "shopping",
+          "durationMin": 60,
+          "pinnedStart": "17:30",
+          "note": "Second fitting (near-final). Try every piece with the shoes/shirt you'll wear. Confirm the final pickup **Tue 08:30** and shipping to the Hanoi hotel for anything that can't be finished."
+        },
+        {
+          "title": "Dinner · Old Town",
+          "kind": "meal",
+          "durationMin": 75,
+          "note": "Ideas: Bale Well (Giếng Bá Lễ, 45/51 Trần Hưng Đạo — one set menu of bánh xèo, nem lụi and rice paper rolls), or riverside places on Bạch Đằng."
+        },
+        {
+          "node": "Vietnam|Hoi An|Old Town",
+          "title": "Lantern boat · Thu Bồn River",
+          "kind": "activity",
+          "durationMin": 30,
+          "cost": {
+            "amount": 150000,
+            "currency": "VND",
+            "per": "total",
+            "note": "Per boat for 2, ~15–20 min; paper lantern ~10–20k"
+          },
+          "note": "Boats leave from the riverside by the An Hội bridge after dark; float a candle lantern."
+        }
+      ]
+    },
+    {
+      "date": "2027-10-26",
+      "title": "Hoi An → Son Tra → Hanoi",
+      "startTime": "07:30",
+      "stay": {
+        "node": "Vietnam|Hanoi|Old Quarter|La Siesta Premium Hang Be",
+        "checkIn": true,
+        "nights": 1,
+        "cost": {
+          "amount": 2700000,
+          "currency": "VND",
+          "per": "night",
+          "note": "Deluxe double, typical Oct rate (~US$105)"
+        },
+        "note": "Same hotel as Oct 30 – Nov 2. Ask them to store the big bags + tailoring Oct 27–31 (you're back briefly Oct 28 afternoon)."
+      },
+      "dayNote": "- If the tailoring needs more time, have the shop courier it to La Siesta Premium Hàng Bè (Hanoi) — you're back there Oct 28 and Oct 31.\n- Son Tra detour runs from ~10:30 to 14:00; skip it and go to An Bang beach instead if it's pouring.\n- VN174 fare should include checked bags (tailoring adds weight; buy extra kg online if needed).",
+      "items": [
+        {
+          "node": "Vietnam|Hoi An||Little Riverside Hoi An",
+          "title": "Breakfast · hotel",
+          "kind": "meal",
+          "durationMin": 30
+        },
+        {
+          "ref": "2027-10-26:fitting-final",
+          "node": "Vietnam|Hoi An|Old Town|BeBe Tailor",
+          "title": "Final fitting + pickup · BeBe Tailor",
+          "kind": "shopping",
+          "durationMin": 60,
+          "pinnedStart": "08:30",
+          "note": "Check seams, lining, buttons, sleeve + trouser lengths, how the coats sit over a jacket. Pay the balance (cash avoids a ~3% card fee). Ask for garment bags."
+        },
+        {
+          "node": "Vietnam|Hoi An||Little Riverside Hoi An",
+          "title": "Pack + check out · Little Riverside",
+          "kind": "lodging",
+          "durationMin": 45
+        },
+        {
+          "leg": {
+            "ref": "2027-10-26:car-sontra",
+            "mode": "other",
+            "otherKind": "car",
+            "label": "Private car · Hoi An → Son Tra → DAD",
+            "durationMin": 60,
+            "cost": {
+              "amount": 900000,
+              "currency": "VND",
+              "per": "total",
+              "note": "Half-day hire with stops, ending at the airport"
+            },
+            "note": "Leave ~10:30."
+          }
+        },
+        {
+          "node": "Vietnam|Da Nang||Monkey Mountain",
+          "title": "Son Tra peninsula · look for douc langurs",
+          "kind": "sight",
+          "durationMin": 60,
+          "note": "**MONKEYS!!!** (places note). Red-shanked douc langurs live in the canopy along the Son Tra roads; best odds early morning or late afternoon, midday is hit-or-miss — ask the driver to stop at the known langur spots and scan the treetops quietly. Don't feed the macaques (they grab bags)."
+        },
+        {
+          "node": "Vietnam|Da Nang||Lady Buddha",
+          "kind": "sight",
+          "durationMin": 45,
+          "note": "Linh Ứng Pagoda: the 67 m Lady Buddha facing the bay; free. Cover shoulders and knees."
+        },
+        {
+          "node": "Vietnam|Da Nang||Mi Quang 1A",
+          "title": "Lunch · Mì Quảng 1A",
+          "kind": "meal",
+          "durationMin": 45,
+          "note": "Quảng-style turmeric noodles with pork, shrimp or chicken, rice crackers and herbs; ~40–60k VND."
+        },
+        {
+          "leg": {
+            "mode": "other",
+            "otherKind": "car",
+            "label": "Car · Mì Quảng 1A → DAD",
+            "durationMin": 15,
+            "note": "Same car; at DAD by ~14:55 (domestic)."
+          }
+        },
+        {
+          "flight": "VN174"
+        },
+        {
+          "leg": {
+            "ref": "2027-10-26:taxi-han",
+            "mode": "other",
+            "otherKind": "taxi",
+            "label": "Taxi · HAN T1 → Old Quarter",
+            "durationMin": 45,
+            "cost": {
+              "amount": 380000,
+              "currency": "VND",
+              "per": "total",
+              "note": "Grab or hotel pickup estimate"
+            }
+          }
+        },
+        {
+          "node": "Vietnam|Hanoi|Old Quarter|La Siesta Premium Hang Be",
+          "title": "Check in · La Siesta Premium Hàng Bè",
+          "kind": "lodging",
+          "durationMin": 20
+        },
+        {
+          "title": "Late dinner · Old Quarter street food",
+          "kind": "meal",
+          "durationMin": 60,
+          "note": "Ideas: bún bò Nam Bộ (67 Hàng Điếu), a bowl of phở, or bún chả; Tạ Hiện (Beer Street) is 5 min away for a bia hơi."
+        }
+      ]
+    },
+    {
+      "date": "2027-10-27",
+      "title": "Ninh Binh · Hoa Lu, Tam Coc + Mua Caves",
+      "startTime": "06:45",
+      "stay": {
+        "node": "Vietnam|Ninh Binh||Tam Coc Garden Resort",
+        "checkIn": true,
+        "nights": 1,
+        "cost": {
+          "amount": 3200000,
+          "currency": "VND",
+          "per": "night",
+          "note": "Bungalow, typical Oct rate (~US$125); cheaper homestays in Tam Coc ~US$40–70"
+        },
+        "note": "Drop the daypacks ~10:30; rooms from 14:00. Bikes are usually free for guests."
+      },
+      "dayNote": "- Weekday = far fewer crowds than weekends. Daypacks only; the big bags stay in Hanoi.\n- October: rice is harvested (the golden fields are late May–June), but the karsts are the show.\n- Skipped for time: Bái Đính pagoda (huge, 20 km north) — swap it for Hoa Lu if you prefer big temples.",
+      "items": [
+        {
+          "ref": "2027-10-27:breakfast",
+          "node": "Vietnam|Hanoi|Old Quarter|Pho Gia Truyen Bat Dan",
+          "title": "Breakfast · Phở Gia Truyền Bát Đàn",
+          "kind": "meal",
+          "durationMin": 30,
+          "note": "Queue, order + pay at the counter, carry your own bowl; cash (~50–70k VND). Opens ~06:00."
+        },
+        {
+          "leg": {
+            "ref": "2027-10-27:car-ninhbinh",
+            "mode": "other",
+            "otherKind": "car",
+            "label": "Private car · Hanoi → Hoa Lu (Ninh Binh)",
+            "durationMin": 120,
+            "cost": {
+              "amount": 1700000,
+              "currency": "VND",
+              "per": "total",
+              "note": "One way, private car via the hotel"
+            },
+            "note": "Pickup ~07:15 (Bát Đàn is 10 min from the hotel); ~100 km on the expressway."
+          }
+        },
+        {
+          "node": "Vietnam|Ninh Binh||Hoa Lu Ancient Capital",
+          "kind": "sight",
+          "durationMin": 60,
+          "cost": {
+            "amount": 20000,
+            "currency": "VND",
+            "per": "person",
+            "note": "verify"
+          }
+        },
+        {
+          "leg": {
+            "mode": "other",
+            "otherKind": "car",
+            "label": "Car · Hoa Lu → Tam Coc",
+            "durationMin": 20,
+            "note": "Same car (drop-off at the hotel)."
+          }
+        },
+        {
+          "node": "Vietnam|Ninh Binh||Tam Coc Garden Resort",
+          "title": "Drop bags · Tam Coc Garden Resort",
+          "kind": "lodging",
+          "durationMin": 15
+        },
+        {
+          "node": "Vietnam|Ninh Binh||Tam Coc",
+          "title": "Tam Coc boat ride",
+          "kind": "activity",
+          "durationMin": 120,
+          "cost": {
+            "amount": 200000,
+            "currency": "VND",
+            "per": "person",
+            "note": "~120k entry pp + ~150k per 2-person boat (verify)"
+          },
+          "note": "~2 h return through three river caves between karsts; rowers often row with their feet. Hat + sunscreen; vendors paddle up selling drinks — a ~50k tip for the rower is customary."
+        },
+        {
+          "title": "Lunch · goat + crispy rice (dê núi, cơm cháy)",
+          "kind": "meal",
+          "durationMin": 60,
+          "note": "Ninh Binh specialties: mountain goat (dê tái chanh, grilled) and crispy rice with a savoury topping; plenty of places on Tam Coc's main street."
+        },
+        {
+          "node": "Vietnam|Ninh Binh||Tam Coc Garden Resort",
+          "title": "Check in + rest · Tam Coc Garden Resort",
+          "kind": "rest",
+          "durationMin": 90
+        },
+        {
+          "node": "Vietnam|Ninh Binh||Mua Caves",
+          "kind": "sight",
+          "durationMin": 90,
+          "cost": {
+            "amount": 100000,
+            "currency": "VND",
+            "per": "person",
+            "note": "verify"
+          },
+          "note": "~500 steps to the Lying Dragon viewpoint over Tam Coc (places note). Start ~16:00 for sunset (~17:20). ~06:00–19:00. Water + grippy shoes; slippery after rain."
+        },
+        {
+          "title": "Dinner · Tam Coc village",
+          "kind": "meal",
+          "durationMin": 75,
+          "note": "Ask the hotel; goat hotpot or river fish."
+        }
+      ]
+    },
+    {
+      "date": "2027-10-28",
+      "title": "Ninh Binh → Hanoi · Trang An + night train",
+      "startTime": "06:15",
+      "stay": null,
+      "dayNote": "- **Trang An early:** first boats ~07:00; tour buses from Hanoi arrive ~10:30.\n- Afternoon in Hanoi: swap bags at La Siesta (warm layers for Sa Pa: 12–20 °C, Fansipan ~0–10 °C, plus a rain jacket), egg coffee, Train Street, then the station.\n- **Night train:** drafted as **SP3 22:00 → ~06:00** (see part notes — the allocation's SP1 21:35 isn't in every 2026 timetable). Board ~30 min early; the private-carriage staff check you in on the platform. Several guides say Sa Pa trains board via the **Trần Quý Cáp** side gate (\"Station B\") — follow the ticket/operator's instructions.",
+      "items": [
+        {
+          "node": "Vietnam|Ninh Binh||Tam Coc Garden Resort",
+          "title": "Breakfast · hotel (early)",
+          "kind": "meal",
+          "durationMin": 30,
+          "note": "Ask for 06:15 the evening before."
+        },
+        {
+          "leg": {
+            "mode": "other",
+            "otherKind": "taxi",
+            "label": "Taxi · Tam Coc → Trang An wharf",
+            "durationMin": 15,
+            "cost": {
+              "amount": 150000,
+              "currency": "VND",
+              "per": "total",
+              "note": "Hotel taxi estimate"
+            }
+          }
+        },
+        {
+          "ref": "2027-10-28:trang-an",
+          "node": "Vietnam|Ninh Binh||Trang An",
+          "title": "Trang An boat (first boats)",
+          "kind": "activity",
+          "durationMin": 180,
+          "pinnedStart": "07:00",
+          "cost": {
+            "amount": 250000,
+            "currency": "VND",
+            "per": "person",
+            "note": "Boat ticket per person, boats seat 4–5 (verify)"
+          },
+          "note": "UNESCO karst landscape (places note). Pick **Route 1** (most caves, ~2.5–3 h) or Route 2 (temples + Kong: Skull Island set). Rowers stop at temples on the way. Bring a light rain jacket; low caves — mind your head."
+        },
+        {
+          "leg": {
+            "mode": "other",
+            "otherKind": "taxi",
+            "label": "Taxi · Trang An → Tam Coc hotel",
+            "durationMin": 15,
+            "cost": {
+              "amount": 150000,
+              "currency": "VND",
+              "per": "total",
+              "note": "Hotel taxi estimate"
+            }
+          }
+        },
+        {
+          "node": "Vietnam|Ninh Binh||Tam Coc Garden Resort",
+          "title": "Check out · Tam Coc Garden Resort",
+          "kind": "lodging",
+          "durationMin": 20,
+          "note": "Leave the daypacks at reception."
+        },
+        {
+          "title": "Bike ride · Tam Coc rice fields + Bích Động Pagoda",
+          "kind": "activity",
+          "durationMin": 75,
+          "note": "Hotel bikes; flat lanes along the river; Bích Động (three-level pagoda built into the cliff) is ~2 km south of the Tam Coc wharf."
+        },
+        {
+          "title": "Lunch · Tam Coc",
+          "kind": "meal",
+          "durationMin": 60
+        },
+        {
+          "leg": {
+            "ref": "2027-10-28:car-hanoi",
+            "mode": "other",
+            "otherKind": "car",
+            "label": "Private car · Tam Coc → Hanoi Old Quarter",
+            "durationMin": 120,
+            "cost": {
+              "amount": 1700000,
+              "currency": "VND",
+              "per": "total",
+              "note": "One way, private car via the hotel"
+            },
+            "note": "Leave ~13:00."
+          }
+        },
+        {
+          "node": "Vietnam|Hanoi|Old Quarter|La Siesta Premium Hang Be",
+          "title": "Bag swap · La Siesta Premium Hàng Bè",
+          "kind": "lodging",
+          "durationMin": 30,
+          "note": "Swap the Ninh Binh daypacks for the Sa Pa bag; leave everything else stored. Ask whether you can shower (or book a day room)."
+        },
+        {
+          "node": "Vietnam|Hanoi|Old Quarter|Cafe Giang",
+          "title": "Egg coffee · Café Giảng",
+          "kind": "meal",
+          "durationMin": 30,
+          "note": "The original cà phê trứng (whipped egg yolk + sugar over strong coffee), since 1946; also try it cold or with cocoa."
+        },
+        {
+          "node": "Vietnam|Hanoi||Hoan Kiem Lake",
+          "title": "Hoan Kiem Lake stroll",
+          "kind": "sight",
+          "durationMin": 45,
+          "note": "Loop the lake past Turtle Tower and The Huc bridge (you visit Ngoc Son Temple on Sun)."
+        },
+        {
+          "node": "Vietnam|Hanoi||Bun Cha Huong Lien",
+          "title": "Early dinner · Bún Chả Hương Liên",
+          "kind": "meal",
+          "durationMin": 60,
+          "note": "The 'Obama bún chả' — order the combo (bún chả + seafood nem + Hanoi beer). Closes ~20:30; ~2 km from the station."
+        },
+        {
+          "ref": "2027-10-28:train-street",
+          "node": "Vietnam|Hanoi||Train street",
+          "kind": "sight",
+          "durationMin": 90,
+          "note": "Sit at a café that lets you in, order a drink and ask when the next train passes (evening trains ~19:00–20:00; varies daily). **Access is sometimes restricted by police** (places note) — don't stand on the tracks. Backup: Mon Nov 1 afternoon."
+        },
+        {
+          "ref": "2027-10-28:hanoi-station",
+          "node": "Vietnam|Hanoi||Hanoi Station",
+          "title": "Hanoi Station · board SP3",
+          "kind": "transport",
+          "durationMin": 20,
+          "pinnedStart": "21:20",
+          "note": "Bring passports + the booking. Snacks and water are sold at the station; the private carriage has bottled water + blankets."
+        },
+        {
+          "leg": {
+            "ref": "2027-10-28:sp3",
+            "mode": "transit",
+            "label": "SP3 night train · Hanoi Station → Lao Cai Station",
+            "durationMin": 480,
+            "fixed": {
+              "depart": "2027-10-28T22:00",
+              "arrive": "2027-10-29T06:00",
+              "fromTz": "Asia/Ho_Chi_Minh",
+              "toTz": "Asia/Ho_Chi_Minh",
+              "accessMin": 15,
+              "egressMin": 10
+            },
+            "segments": [
+              {
+                "mode": "rail",
+                "lineName": "SP3",
+                "agency": "Vietnam Railways (Chapa Express private carriage)",
+                "headsign": "Lao Cai Station",
+                "from": {
+                  "name": "Hanoi Station",
+                  "lat": 21.024214,
+                  "lng": 105.841094
+                },
+                "to": {
+                  "name": "Lao Cai Station",
+                  "lat": 22.491848,
+                  "lng": 103.978077
+                },
+                "durationMin": 480
+              }
+            ],
+            "booking": {
+              "trainNumber": "SP3",
+              "class": "Chapa Express VIP 2-berth cabin"
+            },
+            "cost": {
+              "amount": 180,
+              "currency": "USD",
+              "per": "total",
+              "note": "Whole private cabin for 2, one way — estimate; 2026 listings run ~US$150–260 depending on cabin type"
+            },
+            "note": "Drafted as SP3 22:00 → ~06:00 (2026 timetables: 05:55–06:05). Private cabin in the Chapa Express carriage (VIP 2-berth, or buy all 4 berths of a Deluxe cabin for privacy). No fixed booking window; book ~2 months ahead (see todo). SP1 (21:35 → ~05:30) is an alternative if it runs in 2027."
+          }
+        }
+      ]
+    },
+    {
+      "date": "2027-10-29",
+      "title": "Sa Pa · Fansipan + Cat Cat",
+      "startTime": "06:00",
+      "stay": {
+        "node": "Vietnam|Sa Pa||Pao's Sapa Leisure Hotel",
+        "checkIn": true,
+        "nights": 1,
+        "cost": {
+          "amount": 2600000,
+          "currency": "VND",
+          "per": "night",
+          "note": "Valley-view room, typical Oct rate (~US$100)"
+        },
+        "note": "Arrive ~07:15. Standard check-in is 14:00 — guarantee an immediate room by booking from the night of Oct 28 (+1 night, ~2.6M VND), or at least request early check-in + store bags and shower."
+      },
+      "dayNote": "- Late October is one of Sa Pa's best months: dry, clear-ish, post-harvest terraces. Days 15–20 °C, nights ~12 °C.\n- **Fansipan first** — mornings are clearer; clouds build after noon. If the summit is in cloud at 08:00 (check the Sun World webcam), swap Fansipan and Cat Cat, or skip Fansipan.\n- You slept on a train: the 90-min rest after lunch is deliberate.",
+      "items": [
+        {
+          "ref": "2027-10-29:lao-cai-station",
+          "node": "Vietnam|Sa Pa||Lao Cai Station",
+          "title": "Lao Cai Station · arrive (SP3)",
+          "kind": "transport",
+          "durationMin": 15
+        },
+        {
+          "leg": {
+            "ref": "2027-10-29:car-sapa",
+            "mode": "other",
+            "otherKind": "car",
+            "label": "Private car · Lao Cai Station → Sa Pa",
+            "durationMin": 60,
+            "cost": {
+              "amount": 700000,
+              "currency": "VND",
+              "per": "total",
+              "note": "Private car via the hotel/Chapa Express; shared shuttle ~100k VND pp"
+            },
+            "note": "Driver with a name sign outside the station; ~35 km of mountain road."
+          }
+        },
+        {
+          "node": "Vietnam|Sa Pa||Pao's Sapa Leisure Hotel",
+          "title": "Early check-in / bags · Pao's Sapa Leisure Hotel",
+          "kind": "lodging",
+          "durationMin": 30
+        },
+        {
+          "node": "Vietnam|Sa Pa||Pao's Sapa Leisure Hotel",
+          "title": "Breakfast · hotel",
+          "kind": "meal",
+          "durationMin": 45
+        },
+        {
+          "ref": "2027-10-29:fansipan",
+          "node": "Vietnam|Sa Pa||Fansipan Legend Cable Car",
+          "title": "Fansipan Legend cable car (if clear)",
+          "kind": "activity",
+          "durationMin": 180,
+          "cost": {
+            "amount": 800000,
+            "currency": "VND",
+            "per": "person",
+            "note": "Cable car return, 2026 estimate; the Mường Hoa funicular and the summit tram are extra (verify)"
+          },
+          "note": "~20-min cable car up to ~3,000 m, then ~600 steps (or the tram) to the 3,143 m summit marker; pagodas and a giant Buddha on the ridge. **Cold and windy on top** — bring the warm layers. Last cars down ~17:00."
+        },
+        {
+          "node": "Vietnam|Sa Pa||The Hill Station Signature Restaurant",
+          "title": "Lunch · The Hill Station Signature Restaurant",
+          "kind": "meal",
+          "durationMin": 75,
+          "note": "Hmong-inspired: smoked pork, rainbow trout, black chicken; try the local rice-wine tasting flight."
+        },
+        {
+          "node": "Vietnam|Sa Pa||Pao's Sapa Leisure Hotel",
+          "title": "Rest · hotel (catch up on sleep)",
+          "kind": "rest",
+          "durationMin": 90
+        },
+        {
+          "node": "Vietnam|Sa Pa||Cat Cat Village",
+          "kind": "sight",
+          "durationMin": 120,
+          "cost": {
+            "amount": 150000,
+            "currency": "VND",
+            "per": "person",
+            "note": "verify"
+          },
+          "note": "Walk down from town (~20–30 min, steep): Black Hmong village, indigo dyeing and weaving, waterfall + suspension bridge. Touristy but pretty. Motorbike taxi back up ~50k VND."
+        },
+        {
+          "title": "Dinner · Sa Pa town",
+          "kind": "meal",
+          "durationMin": 75,
+          "note": "Sa Pa specialties: salmon/sturgeon hotpot (lẩu cá hồi), street-grill BBQ skewers, thắng cố (adventurous). Walk the Stone Church square and the night market after."
+        }
+      ]
+    },
+    {
+      "date": "2027-10-30",
+      "title": "Sa Pa · Muong Hoa valley trek + night train",
+      "startTime": "07:30",
+      "stay": null,
+      "dayNote": "- Trek: ~10–12 km, mostly downhill on dirt paths — muddy after rain; wear proper shoes. The guide arranges lunch in Ta Van and the car back.\n- Keep the room (late check-out ~18:00, often half the nightly rate) or book a day-use room so you can shower before the train.\n- **Saturday-night train sells out** — the SP4 cabin must be booked early (see todo). Pick up snacks + water in town.",
+      "items": [
+        {
+          "node": "Vietnam|Sa Pa||Pao's Sapa Leisure Hotel",
+          "title": "Breakfast · hotel",
+          "kind": "meal",
+          "durationMin": 45
+        },
+        {
+          "ref": "2027-10-30:trek",
+          "node": "Vietnam|Sa Pa||Muong Hoa Valley",
+          "title": "Muong Hoa valley trek · Lao Chai → Ta Van (local guide)",
+          "kind": "activity",
+          "durationMin": 240,
+          "cost": {
+            "amount": 45,
+            "currency": "USD",
+            "per": "person",
+            "category": "activities",
+            "note": "Guided day trek incl. lunch, estimate"
+          },
+          "note": "Hire a local Hmong guide — Sapa Sisters (Hmong-women-run) or the hotel's guide. Route: Sa Pa → Ý Linh Hồ → Lao Chải → Tả Van through rice terraces, bamboo and Giáy/Hmong villages. Hawkers will follow you — a polite 'no thank you' works."
+        },
+        {
+          "title": "Lunch · homestay in Ta Van (with the guide)",
+          "kind": "meal",
+          "durationMin": 60
+        },
+        {
+          "leg": {
+            "mode": "other",
+            "otherKind": "car",
+            "label": "Car · Ta Van → Sa Pa",
+            "durationMin": 25,
+            "cost": {
+              "amount": 250000,
+              "currency": "VND",
+              "per": "total",
+              "note": "Often included in the trek price — check"
+            },
+            "note": "Arranged by the guide."
+          }
+        },
+        {
+          "node": "Vietnam|Sa Pa||Pao's Sapa Leisure Hotel",
+          "title": "Shower + rest · Pao's (late check-out)",
+          "kind": "rest",
+          "durationMin": 120,
+          "note": "Late check-out to ~18:00 or a day-use room; pack the warm layer for the train."
+        },
+        {
+          "title": "Sa Pa town walk · Stone Church, square + market",
+          "kind": "sight",
+          "durationMin": 60,
+          "note": "Holy Rosary 'Stone Church' (1895), the central square and Sa Pa Lake; Saturday evening is lively."
+        },
+        {
+          "title": "Dinner · Sa Pa town",
+          "kind": "meal",
+          "durationMin": 75,
+          "note": "Early dinner (~18:00); buy snacks + water for the train."
+        },
+        {
+          "leg": {
+            "ref": "2027-10-30:car-laocai",
+            "mode": "other",
+            "otherKind": "car",
+            "label": "Private car · Sa Pa → Lao Cai Station",
+            "durationMin": 60,
+            "cost": {
+              "amount": 700000,
+              "currency": "VND",
+              "per": "total",
+              "note": "Private car via the hotel"
+            },
+            "note": "Leave by ~19:40 (fog can slow the pass road)."
+          }
+        },
+        {
+          "ref": "2027-10-30:lao-cai-station",
+          "node": "Vietnam|Sa Pa||Lao Cai Station",
+          "title": "Lao Cai Station · board SP4",
+          "kind": "transport",
+          "durationMin": 20,
+          "pinnedStart": "20:50"
+        },
+        {
+          "leg": {
+            "ref": "2027-10-30:sp4",
+            "mode": "transit",
+            "label": "SP4 night train · Lao Cai Station → Hanoi Station",
+            "durationMin": 480,
+            "fixed": {
+              "depart": "2027-10-30T21:30",
+              "arrive": "2027-10-31T05:30",
+              "fromTz": "Asia/Ho_Chi_Minh",
+              "toTz": "Asia/Ho_Chi_Minh",
+              "accessMin": 15,
+              "egressMin": 10
+            },
+            "segments": [
+              {
+                "mode": "rail",
+                "lineName": "SP4",
+                "agency": "Vietnam Railways (Chapa Express private carriage)",
+                "headsign": "Hanoi Station",
+                "from": {
+                  "name": "Lao Cai Station",
+                  "lat": 22.491848,
+                  "lng": 103.978077
+                },
+                "to": {
+                  "name": "Hanoi Station",
+                  "lat": 21.024214,
+                  "lng": 105.841094
+                },
+                "durationMin": 480
+              }
+            ],
+            "booking": {
+              "trainNumber": "SP4",
+              "class": "Chapa Express VIP 2-berth cabin"
+            },
+            "cost": {
+              "amount": 180,
+              "currency": "USD",
+              "per": "total",
+              "note": "Whole private cabin for 2, one way — estimate; 2026 listings run ~US$150–260 depending on cabin type"
+            },
+            "note": "Drafted as SP4 21:30 → ~05:30 (2026 timetables: 05:25–05:35). Private cabin in the Chapa Express carriage (VIP 2-berth, or buy all 4 berths of a Deluxe cabin). Saturday night — sells out; book ~2 months ahead with SP3 (see todo). The allocation's SP2 (20:55 → 04:35) isn't in every 2026 timetable."
+          }
+        }
+      ]
+    },
+    {
+      "date": "2027-10-31",
+      "title": "Hanoi · Old Quarter, Hoa Lo + Beer Street",
+      "startTime": "05:30",
+      "stay": {
+        "node": "Vietnam|Hanoi|Old Quarter|La Siesta Premium Hang Be",
+        "checkIn": true,
+        "nights": 2,
+        "cost": {
+          "amount": 2700000,
+          "currency": "VND",
+          "per": "night",
+          "note": "Deluxe double, typical Oct rate (~US$105)"
+        },
+        "note": "**Book this stay from the night of Oct 30** (one extra paid night, see expenses) so the ~05:45 arrival checks straight in and sleeps. The hotel also returns the stored bags + tailoring."
+      },
+      "dayNote": "- **Hoan Kiem walking streets:** Fri 19:00 – Sun 24:00 around the lake — tonight is the last evening.\n- **Ho Chi Minh Mausoleum:** closed Mon & Fri; today it's open ~07:30–10:30 (summer hours end Oct 31; usually closed ~2 months mid-year for maintenance — verify). Only worth trading the lie-in for if you really want it; strict dress code, no bags/cameras inside.\n- Afternoon slack before the puppets: Vietnamese Women's Museum (Lý Thường Kiệt) or coffee by the lake.",
+      "items": [
+        {
+          "ref": "2027-10-31:hanoi-station",
+          "node": "Vietnam|Hanoi||Hanoi Station",
+          "title": "Hanoi Station · arrive (SP4)",
+          "kind": "transport",
+          "durationMin": 15
+        },
+        {
+          "leg": {
+            "mode": "other",
+            "otherKind": "taxi",
+            "label": "Taxi · Hanoi Station → Old Quarter hotel",
+            "durationMin": 15,
+            "cost": {
+              "amount": 80000,
+              "currency": "VND",
+              "per": "total",
+              "note": "Grab / Mai Linh / G7 meter"
+            },
+            "note": "Ignore touts on the platform; use Grab or the metered taxi rank."
+          }
+        },
+        {
+          "node": "Vietnam|Hanoi|Old Quarter|La Siesta Premium Hang Be",
+          "title": "Check in (booked from Oct 30) · La Siesta Premium Hàng Bè",
+          "kind": "lodging",
+          "durationMin": 15
+        },
+        {
+          "node": "Vietnam|Hanoi|Old Quarter|La Siesta Premium Hang Be",
+          "title": "Sleep in · hotel",
+          "kind": "rest",
+          "durationMin": 180
+        },
+        {
+          "node": "Vietnam|Hanoi|Old Quarter|Banh Mi 25",
+          "title": "Brunch · Bánh Mì 25",
+          "kind": "meal",
+          "durationMin": 30
+        },
+        {
+          "node": "Vietnam|Hanoi||Ngoc Son Temple",
+          "kind": "sight",
+          "durationMin": 45,
+          "cost": {
+            "amount": 50000,
+            "currency": "VND",
+            "per": "person",
+            "note": "verify"
+          },
+          "note": "Over the red The Huc bridge; the preserved giant Hoan Kiem turtle is inside."
+        },
+        {
+          "node": "Vietnam|Hanoi||Hoa Lo Prison",
+          "kind": "sight",
+          "durationMin": 75,
+          "cost": {
+            "amount": 50000,
+            "currency": "VND",
+            "per": "person",
+            "note": "verify"
+          },
+          "note": "08:00–17:00. French-era cells and guillotine, then the 'Hanoi Hilton' rooms (John McCain's flight suit). Audio guide worth it."
+        },
+        {
+          "node": "Vietnam|Hanoi||St. Joseph's Cathedral",
+          "kind": "sight",
+          "durationMin": 20,
+          "note": "Lemon-tea (trà chanh) stools on Nhà Chung / Nhà Thờ streets if you need a break."
+        },
+        {
+          "title": "Lunch · near the cathedral",
+          "kind": "meal",
+          "durationMin": 60,
+          "note": "Ideas: phở cuốn, bún chả, or a café lunch on Nhà Thờ / Ấu Triệu."
+        },
+        {
+          "node": "Vietnam|Hanoi|Old Quarter|La Siesta Premium Hang Be",
+          "title": "Rest · hotel",
+          "kind": "rest",
+          "durationMin": 60
+        },
+        {
+          "ref": "2027-10-31:water-puppets",
+          "node": "Vietnam|Hanoi||Thang Long Water Puppet Theatre",
+          "title": "Water puppet show · Thang Long",
+          "kind": "activity",
+          "durationMin": 60,
+          "pinnedStart": "17:00",
+          "bookAhead": true,
+          "cost": {
+            "amount": 200000,
+            "currency": "VND",
+            "per": "person",
+            "note": "Best-seat tickets, estimate"
+          },
+          "note": "Show times vary (roughly 15:00–20:00, ~50 min) — take the one nearest 17:00; buy a day ahead at the box office or online. Front rows can get splashed."
+        },
+        {
+          "node": "Vietnam|Hanoi|Old Quarter|Cha Ca Thang Long",
+          "title": "Dinner · Chả Cá Thăng Long",
+          "kind": "meal",
+          "durationMin": 75,
+          "note": "The one dish: turmeric-dill fish sizzled at your table, with bún, peanuts, herbs, shrimp paste (optional)."
+        },
+        {
+          "node": "Vietnam|Hanoi||Hoan Kiem Lake",
+          "title": "Hoan Kiem walking street (Sun night)",
+          "kind": "sight",
+          "durationMin": 45,
+          "note": "Street performers, folk games, families; closed to traffic until midnight."
+        },
+        {
+          "node": "Vietnam|Hanoi|Old Quarter|Beer street",
+          "kind": "nightlife",
+          "durationMin": 60,
+          "note": "Tạ Hiện: bia hơi (~20k VND a glass) on plastic stools; busiest weekend nights. Watch bags/phones."
+        }
+      ]
+    },
+    {
+      "date": "2027-11-01",
+      "title": "Hanoi · Temple of Literature + Old Quarter shopping",
+      "startTime": "08:00",
+      "stay": {
+        "node": "Vietnam|Hanoi|Old Quarter|La Siesta Premium Hang Be"
+      },
+      "dayNote": "- Monday closures: **Ho Chi Minh Mausoleum** (see Oct 31) and the **Museum of Ethnology** are closed; the Temple of Literature and Hoa Lo are open.\n- **Tax refund with passport:** for anything bigger (silk, lacquer, jewellery) ask for a **VAT-refund invoice** (≥ VND 2 million per store per day, participating stores only); claim at HAN T2 tomorrow before check-in with the goods.\n- Train Street backup: if it was closed on Oct 28, try again ~15:00–16:00 or ~19:00 (ask a café for today's train times).\n- Last night in Vietnam: pack the tailoring carefully (garment bags, weigh the bags for BR398).",
+      "items": [
+        {
+          "node": "Vietnam|Hanoi|Old Quarter|La Siesta Premium Hang Be",
+          "title": "Breakfast · hotel",
+          "kind": "meal",
+          "durationMin": 30
+        },
+        {
+          "node": "Vietnam|Hanoi||One Pillar Pagoda",
+          "kind": "sight",
+          "durationMin": 30,
+          "note": "Part of the Ba Đình complex; the mausoleum and Presidential Palace grounds are closed today — see the square from outside."
+        },
+        {
+          "node": "Vietnam|Hanoi||Temple of Literature",
+          "kind": "sight",
+          "durationMin": 75,
+          "cost": {
+            "amount": 70000,
+            "currency": "VND",
+            "per": "person",
+            "note": "verify"
+          },
+          "note": "~08:00–17:00. Five courtyards; the stelae of doctoral laureates on stone turtles; students pose in graduation gowns."
+        },
+        {
+          "title": "Lunch · near the Temple of Literature",
+          "kind": "meal",
+          "durationMin": 60,
+          "note": "Ideas: bún chả or phở on Văn Miếu / Quốc Tử Giám streets; keep room for dinner."
+        },
+        {
+          "node": "Vietnam|Hanoi|Old Quarter|La Siesta Premium Hang Be",
+          "title": "Rest · hotel",
+          "kind": "rest",
+          "durationMin": 60
+        },
+        {
+          "node": "Vietnam|Hanoi|Old Quarter",
+          "title": "Shopping · Hàng Gai silk street + Old Quarter",
+          "kind": "shopping",
+          "durationMin": 120,
+          "note": "Hàng Gai: silk scarves, embroidery, tailoring shops; Hàng Bạc: silver; Hàng Mã: paper goods; Tô Tịch: bamboo/lacquer. Bargain in the stalls; fixed prices in the boutiques. **Tax refund with passport** only at VAT-refund stores."
+        },
+        {
+          "title": "Coffee · coconut coffee (cà phê cốt dừa)",
+          "kind": "meal",
+          "durationMin": 30,
+          "note": "Cộng Cà Phê (several branches around the lake) is the classic."
+        },
+        {
+          "ref": "2027-11-01:tam-vi",
+          "node": "Vietnam|Hanoi||Tam Vi",
+          "title": "Dinner · Tầm Vị",
+          "kind": "meal",
+          "durationMin": 90,
+          "cost": {
+            "amount": 1200000,
+            "currency": "VND",
+            "per": "total",
+            "note": "Estimate for 2 with drinks"
+          },
+          "note": "Michelin-starred northern home cooking (verify 2027 guide): pork belly with shrimp paste, braised fish, crab soup, seasonal greens. Reserve (see todo). ~10 min by taxi."
+        },
+        {
+          "title": "Nightcap · La Siesta rooftop or Beer Street (optional)",
+          "kind": "nightlife",
+          "durationMin": 60
+        }
+      ]
+    },
+    {
+      "date": "2027-11-02",
+      "half": "before",
+      "startTime": "07:00",
+      "dayNote": "- Leave the hotel by **~08:50** (HAN T2 international, 2.5 h before BR398 at 12:05; ~45 min by car).\n- **Vietnam VAT refund at HAN T2:** refund counter before check-in/security — passport, VAT-refund invoices (≥ VND 2 million per store), goods unused and in hand. Refund comes in VND cash (or card).\n- Spend or change leftover VND at the airport; the next stop uses NT$.",
+      "items": [
+        {
+          "node": "Vietnam|Hanoi||Hoan Kiem Lake",
+          "title": "Morning walk · Hoan Kiem Lake",
+          "kind": "sight",
+          "durationMin": 45,
+          "note": "06:00–07:30 is the lake's best hour: tai chi, badminton, dance groups."
+        },
+        {
+          "node": "Vietnam|Hanoi|Old Quarter|La Siesta Premium Hang Be",
+          "title": "Breakfast · hotel",
+          "kind": "meal",
+          "durationMin": 30
+        },
+        {
+          "node": "Vietnam|Hanoi|Old Quarter|La Siesta Premium Hang Be",
+          "title": "Check out · La Siesta Premium Hàng Bè",
+          "kind": "lodging",
+          "durationMin": 20,
+          "note": "Collect the stored bags; keep VAT-refund invoices and the goods in the carry-on."
+        },
+        {
+          "leg": {
+            "ref": "2027-11-02:taxi-han",
+            "mode": "other",
+            "otherKind": "taxi",
+            "label": "Taxi · Old Quarter → HAN T2",
+            "durationMin": 45,
+            "cost": {
+              "amount": 380000,
+              "currency": "VND",
+              "per": "total",
+              "note": "Grab / hotel car estimate"
+            },
+            "note": "Leave by ~08:50."
+          }
+        },
+        {
+          "flight": "BR398"
+        }
+      ]
+    }
+  ],
+  "expenses": [
+    {
+      "title": "Hoi An tailor · suit (Dennis)",
+      "target": {
+        "item": "2027-10-23:tailor-order"
+      },
+      "category": "shopping",
+      "amount": 7000000,
+      "currency": "VND",
+      "expectedOn": "2027-10-26",
+      "split": [
+        "dennis"
+      ],
+      "note": "Mid-range wool suit ~US$180–300 (shopping list); 30–50% deposit on Oct 23, balance at pickup."
+    },
+    {
+      "title": "Hoi An tailor · overcoats ×2",
+      "target": {
+        "item": "2027-10-23:tailor-order"
+      },
+      "category": "shopping",
+      "amount": 10000000,
+      "currency": "VND",
+      "expectedOn": "2027-10-26",
+      "note": "One each (Audrey, Dennis); estimate ~US$190 each for real wool — see the cloth first."
+    },
+    {
+      "title": "Hoi An tailor · trench coats ×2",
+      "target": {
+        "item": "2027-10-23:tailor-order"
+      },
+      "category": "shopping",
+      "amount": 8000000,
+      "currency": "VND",
+      "expectedOn": "2027-10-26",
+      "note": "One each (Audrey, Dennis); estimate ~US$150 each."
+    },
+    {
+      "title": "Hoi An tailor · ao dai (Audrey)",
+      "target": {
+        "item": "2027-10-23:tailor-order"
+      },
+      "category": "shopping",
+      "amount": 1500000,
+      "currency": "VND",
+      "expectedOn": "2027-10-26",
+      "split": [
+        "audrey"
+      ],
+      "note": "Silk ao dai, estimate ~US$60."
+    },
+    {
+      "title": "La Siesta Premium Hàng Bè · early night Oct 30 (04:35–05:45 check-in)",
+      "target": {
+        "node": "Vietnam|Hanoi|Old Quarter|La Siesta Premium Hang Be"
+      },
+      "category": "lodging",
+      "amount": 2700000,
+      "currency": "VND",
+      "expectedOn": "2027-10-30",
+      "note": "The Oct 31 stay is booked from the night of Oct 30 so the room is ready when the SP4 night train arrives (~05:30). Oct 30 itself is a train night, so this can't be a stay."
+    }
+  ],
+  "todos": [
+    {
+      "text": "Book the Sa Pa night trains: SP3 Oct 28 + SP4 Oct 30 (private cabins)",
+      "target": {
+        "leg": "2027-10-28:sp3"
+      },
+      "kind": "opens",
+      "rule": {
+        "anchor": "2027-10-28:hanoi-station",
+        "months": 2,
+        "time": "09:00",
+        "tz": "Asia/Ho_Chi_Minh"
+      },
+      "url": "https://chapaexpresstrain.com/",
+      "note": "No fixed opening; weekend trains sell out (Action Timeline) — the Sat Oct 30 SP4 especially. Book both directions together ~2 months out (≈ Aug 28 2027): Chapa Express (or Sapaly / King Express) VIP 2-berth, or all 4 berths of a Deluxe cabin. Re-check the 2027 timetable (SP3/SP4 vs SP1/SP2) and which Hanoi gate they use.",
+      "replaces": "Hanoi ↔ Lao Cai overnight trains (Sa Pa)"
+    },
+    {
+      "text": "Order the Hoi An tailoring on arrival day (Sat Oct 23): suit, overcoats, trench coats, ao dai",
+      "target": {
+        "item": "2027-10-23:tailor-order"
+      },
+      "kind": "on",
+      "due": {
+        "date": "2027-10-23",
+        "time": "16:30",
+        "tz": "Asia/Ho_Chi_Minh"
+      },
+      "note": "Not booked ahead (Action Timeline). Quotes at Yaly + A Dong Silk, order at BeBe or the best quote; fittings Sun 15:30, Mon 17:30, final Tue 08:30.",
+      "replaces": "Hoi An tailors (suit + coats)"
+    },
+    {
+      "text": "Collect reference photos + measurements for the Hoi An tailoring",
+      "target": {
+        "item": "2027-10-23:tailor-order"
+      },
+      "kind": "due",
+      "rule": {
+        "anchor": "2027-10-23:tailor-order",
+        "days": 14,
+        "time": "09:00",
+        "tz": "America/New_York"
+      },
+      "note": "Photos of the suit/overcoat/trench/ao dai styles you want (front, back, details), a favourite shirt/jacket to copy, preferred fabrics."
+    },
+    {
+      "text": "Book the Vietnam hotels (5) — free-cancellation rates",
+      "target": {
+        "node": "Vietnam"
+      },
+      "kind": "due",
+      "due": {
+        "date": "2027-06-01"
+      },
+      "note": "Caravelle Saigon Oct 20–23 · Little Riverside Hoi An Oct 23–26 · La Siesta Premium Hàng Bè Oct 26–27 **and Oct 30 – Nov 2 (includes the early-arrival night of Oct 30; ask to store bags Oct 27–31)** · Tam Coc Garden Oct 27–28 · Pao's Sapa Oct 29–30 (consider Oct 28 too for a 07:00 check-in; ask for late check-out Oct 30)."
+    },
+    {
+      "text": "Book the XO Tours evening food tour (Thu Oct 21, ~17:45 pickup)",
+      "target": {
+        "item": "2027-10-21:xo-tour"
+      },
+      "kind": "due",
+      "rule": {
+        "anchor": "2027-10-21:xo-tour",
+        "days": 14,
+        "time": "09:00",
+        "tz": "Asia/Ho_Chi_Minh"
+      },
+      "note": "Tell them about food limits; ask for drop-off at Bui Vien."
+    },
+    {
+      "text": "Reserve Tầm Vị for dinner Mon Nov 1 (~19:00)",
+      "target": {
+        "item": "2027-11-01:tam-vi"
+      },
+      "kind": "due",
+      "rule": {
+        "anchor": "2027-11-01:tam-vi",
+        "days": 14,
+        "time": "09:00",
+        "tz": "Asia/Ho_Chi_Minh"
+      }
+    },
+    {
+      "text": "Book a local guide for the Muong Hoa trek (Sat Oct 30)",
+      "target": {
+        "item": "2027-10-30:trek"
+      },
+      "kind": "due",
+      "rule": {
+        "anchor": "2027-10-30:trek",
+        "days": 30,
+        "time": "09:00",
+        "tz": "Asia/Ho_Chi_Minh"
+      },
+      "note": "Sapa Sisters (Hmong-women-run) or the hotel; ask for the Lao Chai → Ta Van route with homestay lunch and a car back."
+    },
+    {
+      "text": "Arrange Ninh Binh cars (Oct 27 07:15 Hanoi pickup, Oct 28 ~13:00 return) + Trang An taxis",
+      "target": {
+        "leg": "2027-10-27:car-ninhbinh"
+      },
+      "kind": "due",
+      "rule": {
+        "anchor": "2027-10-27:breakfast",
+        "days": 7,
+        "time": "09:00",
+        "tz": "Asia/Ho_Chi_Minh"
+      },
+      "note": "Via La Siesta or Tam Coc Garden; ~1.7M VND each way."
+    },
+    {
+      "text": "Arrange Hoi An drivers: My Son Oct 24 05:45 · Da Nang evening Oct 24 · Ba Na day Oct 25 · Son Tra + DAD Oct 26",
+      "target": {
+        "leg": "2027-10-24:car-myson"
+      },
+      "kind": "due",
+      "rule": {
+        "anchor": "2027-10-24:my-son",
+        "days": 7,
+        "time": "09:00",
+        "tz": "Asia/Ho_Chi_Minh"
+      },
+      "note": "Via the hotel or one driver for all four (cheaper, same person). Also the DAD → Hoi An pickup on Oct 23."
+    },
+    {
+      "text": "Install Grab + add a card (Vietnam rides)",
+      "target": {
+        "flight": "VN423"
+      },
+      "kind": "due",
+      "rule": {
+        "anchor": "VN423.dep",
+        "days": 7,
+        "time": "09:00",
+        "tz": "America/New_York"
+      }
+    }
+  ],
+  "budgets": [
+    {
+      "scope": "Vietnam|Hoi An",
+      "category": "shopping",
+      "kind": "total",
+      "amountUSD": 650,
+      "note": "Per person: Hoi An tailoring (suit, overcoat, trench, ao dai) + leather goods; inside the trip's US$2,500 shopping total."
+    }
+  ],
+  "notes": [
+    "File name: SCHEMA.md and allocation.json call this part `days-vietnam.json`; the task text said `vietnam.json`. Written as days-vietnam.json, with vietnam.json as a symlink to it (same as the Korea/Taiwan builders).",
+    "Night trains: the allocation's SP1 21:35→05:15 / SP2 20:55→04:35 don't appear in every 2026 timetable; 2026 sources consistently list SP3 (Hanoi 22:00 → Lao Cai ~05:55–06:05) and SP4 (Lao Cai 21:30 → Hanoi ~05:25–05:35) as the daily trains carrying the private cabin carriages (Chapa Express etc.). Drafted with SP3/SP4 (22:00→06:00, 21:30→05:30). Sleep kinds/dates unchanged; the Hanoi hotel is still booked from Oct 30 for the ~05:45 arrival. Re-check the 2027 timetable and the Hanoi boarding gate (main station, 120 Lê Duẩn, vs the Trần Quý Cáp side) when booking.",
+    "Priorities: all Vietnam places in the Places tab are unrated, so the order follows the Cities-tab notes + places notes (Ben Thanh, Cu Chi, Bui Vien, Post Office; Ba Na/Golden Bridge, Monkey Mountain ('MONKEYS!!!'), Marble Mountain, My Son, Lady Buddha, Dragon Bridge, My Khe; Old Town + its 3 sights; Old Quarter, Train Street, Beer Street; Mua Caves, Trang An, Tam Coc; Sa Pa) plus judgment. Every listed Vietnam place is scheduled once. New unrated classics added as nodes (Independence Palace, War Remnants Museum, Jade Emperor Pagoda, HCMC Museum, Hoan Kiem Lake, Ngoc Son, Hoa Lo, Temple of Literature, One Pillar Pagoda, water puppets, Hoa Lu, Cat Cat, Fansipan, Muong Hoa trek) without priorities.",
+    "Da Nang/Hoi An order differs from the allocation's suggestion: Sun Oct 24 = My Son early + Old Town + the Dragon Bridge show (21:00 Sat/Sun; 2026 local listings say Fri–Sun); Mon Oct 25 = Ba Na Hills (weekday crowds) + Marble Mountains; Tue Oct 26 = Son Tra (langurs, Lady Buddha) on the way to DAD. Tailoring: ordered Sat ~18:00, fittings Sun 15:30, Mon 17:30, final Tue 08:30.",
+    "Ninh Binh: the task asked for early Trang An boats, so Trang An is Thu Oct 28 at 07:00 (first boats) and Tam Coc is the Wed Oct 27 afternoon boat; Mua Caves at sunset Oct 27. The allocation had these the other way round.",
+    "Weather risk: late October is peak rain/flood/typhoon season in central Vietnam (Hoi An Old Town floods some years; Ba Na's summit is often in cloud) — dayNotes give swaps. HCMC is at the end of its rainy season; Hanoi, Ninh Binh and Sa Pa are dry and mild (Fansipan summit ~0–10 °C).",
+    "Hotels are draft picks (existence + pins checked on OpenStreetMap): Caravelle Saigon, Little Riverside Hoi An, La Siesta Premium Hàng Bè, Tam Coc Garden Resort, Pao's Sapa Leisure Hotel. Nightly prices are typical October rates from memory (not quotes). Vietnam lodging averages ~US$55 pp/night vs the US$50 line.",
+    "Hanoi stays: Oct 26 (1 night) + Oct 31 block (2 nights) as stays; the paid early night of Oct 30 is an explicit lodging expense on the hotel node (Oct 30 is a train night, stay = null).",
+    "Prices: VND at ~26,000/USD, 2025–26 levels. Verified on 2026-09-23: Independence Palace hours + 80k combo (official site); Dragon Bridge show 21:00 weekends; SP3/SP4 times (several ticket sites); Notre-Dame Saigon still under restoration. Marked '(verify)': most restaurant hours, My Son opening (06:00 vs 06:30), Ba Na (~950k), Fansipan (~800k), Cu Chi (125k), Hoi An Old Town (120k), Temple of Literature (70k), Ngoc Son, Tam Coc, Mua, Cat Cat, water-puppet show times.",
+    "Pins: every new node was looked up on OpenStreetMap/Nominatim (2026-09-23); confidence 'high' = matching OSM object at that address. Medium: BeBe Tailor (OSM has 'Bebe Clothing' at 05–07 Hoàng Diệu), Pao's Sapa (OSM street name differs), Nguyen Hue Walking Street (mid-boulevard), Muong Hoa Valley (between Lao Chai and Ta Van). Lao Cai Station is filed under Sa Pa (no Lao Cai city in the Cities tab).",
+    "Administrative changes (2025): HCMC's districts were replaced by wards (addresses use the new ward names; 'District 1' kept informally); Hoi An is now inside Da Nang city; Sa Pa is a ward of the enlarged Lao Cai province. Node cities follow the Cities tab (Hoi An, Sa Pa kept).",
+    "Restaurants named only where well known and confirmed on OSM (Bánh Xèo 46A, Phở Hòa Pasteur, Cục Gạch Quán, Morning Glory, Madam Khánh, Bé Mặn, Mì Quảng 1A, Phở Bát Đàn, Bánh Mì 25, Café Giảng, Bún Chả Hương Liên, Chả Cá Thăng Long, Tầm Vị, The Hill Station); other meals are title-only with ideas in the note.",
+    "Day capacity: every day's item time (incl. meals and rests) is ≤ 750 min; the heaviest are Oct 21 (735) and Oct 31 (740, incl. a 3 h sleep after the night train). Oct 24 runs 05:30–22:15 with a 90-min midday rest.",
+    "Owner notes carried: tax refund with passport (Vietnam VAT refund invoices ≥ VND 2 million, claimed at HAN T2 on Nov 2 — Takashimaya and Hàng Gai items + Nov 2 dayNote); book-ahead items as todos (night trains, XO Tours, Tầm Vị, trek guide, drivers, hotels) or bookAhead flags (Cục Gạch Quán, water puppets); shopping list: Hoi An tailoring on day 1 of the block (suit, overcoats, trench coats, ao dai + wallet/purse idea), purses at Ben Thanh."
+  ]
+}

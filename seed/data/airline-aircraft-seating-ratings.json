@@ -1,0 +1,322 @@
+{
+  "source": {
+    "spreadsheetId": "<sheet-id>",
+    "spreadsheetTitle": "Asia 2027",
+    "spreadsheetTimeZone": "America/New_York",
+    "tab": "Airline Aircraft Seating Ratings",
+    "sheetId": 1700000002,
+    "tabIndex": 1,
+    "exportedAt": "2026-09-23T02:49:15+00:00",
+    "exporter": "gws sheets spreadsheets get (includeGridData)"
+  },
+  "headers": [
+    "Airline",
+    "Aircraft",
+    "Seat Config",
+    "Rating",
+    "Lie-Flat",
+    "Private Suite",
+    "Notes"
+  ],
+  "columns": [
+    {
+      "letter": "A",
+      "header": "Airline",
+      "has_links": false
+    },
+    {
+      "letter": "B",
+      "header": "Aircraft",
+      "has_links": false
+    },
+    {
+      "letter": "C",
+      "header": "Seat Config",
+      "has_links": false
+    },
+    {
+      "letter": "D",
+      "header": "Rating",
+      "has_links": false
+    },
+    {
+      "letter": "E",
+      "header": "Lie-Flat",
+      "has_links": false
+    },
+    {
+      "letter": "F",
+      "header": "Private Suite",
+      "has_links": false
+    },
+    {
+      "letter": "G",
+      "header": "Notes",
+      "has_links": false
+    }
+  ],
+  "rows": [
+    {
+      "_row": 2,
+      "Airline": "ANA",
+      "Aircraft": "Boeing 787-9",
+      "Seat Config": "1-2-1",
+      "Rating": "Amazing",
+      "Lie-Flat": "Yes",
+      "Private Suite": "Yes",
+      "Notes": null
+    },
+    {
+      "_row": 3,
+      "Airline": "Air India",
+      "Aircraft": "Airbus A350-900",
+      "Seat Config": "1-2-1",
+      "Rating": "Amazing",
+      "Lie-Flat": "Yes",
+      "Private Suite": "Yes",
+      "Notes": null
+    },
+    {
+      "_row": 4,
+      "Airline": "Air India",
+      "Aircraft": "Boeing 787-8",
+      "Seat Config": "1-2-1",
+      "Rating": "Amazing",
+      "Lie-Flat": "Yes",
+      "Private Suite": "Yes",
+      "Notes": null
+    },
+    {
+      "_row": 5,
+      "Airline": "Singapore Airlines",
+      "Aircraft": "Airbus A380-800",
+      "Seat Config": "1-2-1",
+      "Rating": "Amazing",
+      "Lie-Flat": "Yes",
+      "Private Suite": "No",
+      "Notes": "Almost a private suite, but no door"
+    },
+    {
+      "_row": 6,
+      "Airline": "Singapore Airlines",
+      "Aircraft": "Airbus A350-900",
+      "Seat Config": "1-2-1",
+      "Rating": "Good",
+      "Lie-Flat": "Yes",
+      "Private Suite": "No",
+      "Notes": null
+    },
+    {
+      "_row": 7,
+      "Airline": "Singapore Airlines",
+      "Aircraft": "Boeing 777-300ER",
+      "Seat Config": "1-2-1",
+      "Rating": "Good",
+      "Lie-Flat": "Yes",
+      "Private Suite": "No",
+      "Notes": null
+    },
+    {
+      "_row": 8,
+      "Airline": "Turkish Airlines",
+      "Aircraft": "Airbus A350-900",
+      "Seat Config": "1-2-1",
+      "Rating": "Good",
+      "Lie-Flat": "Yes",
+      "Private Suite": "No",
+      "Notes": null
+    },
+    {
+      "_row": 9,
+      "Airline": "Turkish Airlines",
+      "Aircraft": "Boeing 787-9",
+      "Seat Config": "1-2-1",
+      "Rating": "Good",
+      "Lie-Flat": "Yes",
+      "Private Suite": "No",
+      "Notes": null
+    },
+    {
+      "_row": 10,
+      "Airline": "Egypt Air",
+      "Aircraft": "Boeing 787-9",
+      "Seat Config": "1-2-1",
+      "Rating": "Fine",
+      "Lie-Flat": "Yes",
+      "Private Suite": "No",
+      "Notes": "Food is mid; no alcohol served"
+    },
+    {
+      "_row": 11,
+      "Airline": "Air India",
+      "Aircraft": "Boeing 787-8",
+      "Seat Config": "2-2-2",
+      "Rating": "Bad",
+      "Lie-Flat": "Yes",
+      "Private Suite": "No",
+      "Notes": null
+    },
+    {
+      "_row": 12,
+      "Airline": "Air India",
+      "Aircraft": "Boeing 777-300ER",
+      "Seat Config": "2-3-2",
+      "Rating": "Bad",
+      "Lie-Flat": "Yes",
+      "Private Suite": "No",
+      "Notes": null
+    },
+    {
+      "_row": 13,
+      "Airline": "Egypt Air",
+      "Aircraft": "Boeing 777-300ER",
+      "Seat Config": "2-3-2",
+      "Rating": "Bad",
+      "Lie-Flat": "Yes",
+      "Private Suite": "No",
+      "Notes": null
+    },
+    {
+      "_row": 14,
+      "Airline": "Turkish Airlines",
+      "Aircraft": "Boeing 777-300ER",
+      "Seat Config": "2-3-2",
+      "Rating": "Bad",
+      "Lie-Flat": "Yes",
+      "Private Suite": "No",
+      "Notes": null
+    }
+  ],
+  "raw": {
+    "values": [
+      [
+        "Airline",
+        "Aircraft",
+        "Seat Config",
+        "Rating",
+        "Lie-Flat",
+        "Private Suite",
+        "Notes"
+      ],
+      [
+        "ANA",
+        "Boeing 787-9",
+        "1-2-1",
+        "Amazing",
+        "Yes",
+        "Yes",
+        "—"
+      ],
+      [
+        "Air India",
+        "Airbus A350-900",
+        "1-2-1",
+        "Amazing",
+        "Yes",
+        "Yes",
+        "—"
+      ],
+      [
+        "Air India",
+        "Boeing 787-8",
+        "1-2-1",
+        "Amazing",
+        "Yes",
+        "Yes",
+        "—"
+      ],
+      [
+        "Singapore Airlines",
+        "Airbus A380-800",
+        "1-2-1",
+        "Amazing",
+        "Yes",
+        "No",
+        "Almost a private suite, but no door"
+      ],
+      [
+        "Singapore Airlines",
+        "Airbus A350-900",
+        "1-2-1",
+        "Good",
+        "Yes",
+        "No",
+        "—"
+      ],
+      [
+        "Singapore Airlines",
+        "Boeing 777-300ER",
+        "1-2-1",
+        "Good",
+        "Yes",
+        "No",
+        "—"
+      ],
+      [
+        "Turkish Airlines",
+        "Airbus A350-900",
+        "1-2-1",
+        "Good",
+        "Yes",
+        "No",
+        "—"
+      ],
+      [
+        "Turkish Airlines",
+        "Boeing 787-9",
+        "1-2-1",
+        "Good",
+        "Yes",
+        "No",
+        "—"
+      ],
+      [
+        "Egypt Air",
+        "Boeing 787-9",
+        "1-2-1",
+        "Fine",
+        "Yes",
+        "No",
+        "Food is mid; no alcohol served"
+      ],
+      [
+        "Air India",
+        "Boeing 787-8",
+        "2-2-2",
+        "Bad",
+        "Yes",
+        "No",
+        "—"
+      ],
+      [
+        "Air India",
+        "Boeing 777-300ER",
+        "2-3-2",
+        "Bad",
+        "Yes",
+        "No",
+        "—"
+      ],
+      [
+        "Egypt Air",
+        "Boeing 777-300ER",
+        "2-3-2",
+        "Bad",
+        "Yes",
+        "No",
+        "—"
+      ],
+      [
+        "Turkish Airlines",
+        "Boeing 777-300ER",
+        "2-3-2",
+        "Bad",
+        "Yes",
+        "No",
+        "—"
+      ]
+    ],
+    "links": {},
+    "formulas": {}
+  }
+}

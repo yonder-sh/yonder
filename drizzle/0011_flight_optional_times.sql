@@ -1,0 +1,2 @@
+ALTER TABLE "legs" DROP CONSTRAINT "legs_flight_ck";--> statement-breakpoint
+ALTER TABLE "legs" ADD CONSTRAINT "legs_flight_ck" CHECK ("legs"."mode" is distinct from 'flight' or ("legs"."kind" = 'pair' and ("legs"."dep_at" is null) = ("legs"."arr_at" is null)));

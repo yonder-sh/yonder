@@ -1,0 +1,48 @@
+{
+  // One program for the app (src), the collab/worker process (collab), the CLI
+  // scripts (scripts) and the root configs. e2e/, spikes/, brand/, infra/ and
+  // seed/ are standalone packages or reference material and are NOT included.
+  "include": [
+    "src",
+    "collab",
+    "scripts",
+    "vite.config.ts",
+    "vitest.config.ts",
+    "drizzle.config.ts",
+    "sw.config.ts"
+  ],
+  "compilerOptions": {
+    "target": "ES2022",
+    "jsx": "react-jsx",
+    "module": "ESNext",
+    // ES2023 adds toSorted/toReversed/with/findLast (Baseline in every browser we support).
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "types": ["vite/client", "node"],
+    // `@/…` is what components.json and every agent uses; `#/…` mirrors the
+    // package.json "imports" field the scaffolder added. Vite, Vitest, tsx and
+    // esbuild all resolve these from here.
+    "paths": {
+      "@/*": ["./src/*"],
+      "#/*": ["./src/*"]
+    },
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+    "resolveJsonModule": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+
+    /* Strictness */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedSideEffectImports": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "forceConsistentCasingInFileNames": true
+  }
+}

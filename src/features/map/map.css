@@ -1,0 +1,618 @@
+@reference "../../styles.css";
+/*
+ * WP-Map (DESIGN §9): HTML pins, cluster and edge chips, map controls and the
+ * chips over the map. Tokens only; mode colours live in the canvas layers.
+ */
+
+.yonder-map .maplibregl-map,
+.yonder-map.maplibregl-map {
+	background: var(--basemap-land);
+	font-family: var(--font-sans);
+	/* Marker z-indices (`MARKER_Z`, up to 1400) stack inside the map only:
+	   the map chips, the controls and the inspector stay on top. */
+	isolation: isolate;
+}
+/* On a dark-tone basemap (dark, satellite) the whole-trip globe floats in
+   space like the Overview's hero, with a faint even glow round the planet
+   (`GlobeGlow`, behind the canvas: the space sits on the ground below both,
+   so the map itself is see-through). The light basemap's globe and flat maps
+   keep the land colour. */
+.yonder-map[data-globe] .yonder-map-ground.is-dark {
+	background:
+		radial-gradient(
+			ellipse 70% 60% at 50% 45%,
+			var(--basemap-space-glow),
+			transparent 70%
+		),
+		var(--basemap-space);
+}
+.yonder-map[data-globe] .yonder-map-ground.is-dark .maplibregl-map {
+	background: transparent;
+}
+.yonder-globe-glow {
+	position: absolute;
+	top: 0;
+	left: 0;
+	border-radius: 50%;
+	pointer-events: none;
+	box-shadow:
+		0 0 14px 1px rgb(140 175 230 / 0.2),
+		0 0 48px 10px rgb(80 120 185 / 0.12);
+}
+.yonder-map .maplibregl-canvas:focus-visible {
+	outline: 2px solid var(--ring);
+	outline-offset: -2px;
+}
+
+/* ---- pins -------------------------------------------------------------- */
+
+.yonder-pin {
+	position: relative;
+	transition: opacity 160ms ease-out;
+}
+.yonder-pin-btn {
+	display: grid;
+	place-items: center;
+	padding: 6px;
+	margin: 0;
+	border: 0;
+	background: none;
+	cursor: pointer;
+	-webkit-tap-highlight-color: transparent;
+}
+@media (pointer: coarse) {
+	/* 44px touch targets even when the pin is smaller (DESIGN §6). */
+	.yonder-pin-btn {
+		padding: 10px;
+	}
+}
+.yonder-pin-btn:focus-visible {
+	outline: none;
+}
+.yonder-pin-body {
+	position: relative;
+	display: grid;
+	place-items: center;
+}
+.yonder-pin-face {
+	--pin-ring: 0 0 0 0 transparent;
+	--pin-halo: 0 0 0 0 transparent;
+	display: grid;
+	place-items: center;
+	box-sizing: border-box;
+	border-radius: 9999px;
+	box-shadow: var(--pin-ring), var(--pin-halo);
+	transition:
+		transform 160ms ease-out,
+		box-shadow 160ms ease-out;
+	color: var(--foreground);
+}
+.yonder-pin-btn:hover .yonder-pin-face,
+.yonder-pin.is-hovered .yonder-pin-face {
+	transform: scale(1.08);
+}
+.yonder-pin-btn:focus-visible .yonder-pin-face,
+.yonder-pin.is-selected .yonder-pin-face {
+	outline: 2px solid var(--primary);
+	outline-offset: 3px;
+}
+
+.yonder-pin-country {
+	border: 2px solid var(--foreground);
+	background: color-mix(in oklab, var(--card) 72%, transparent);
+}
+.yonder-pin-region {
+	border: 1.5px solid var(--foreground);
+	background: var(--card);
+}
+.yonder-pin-city {
+	background: var(--foreground);
+	color: var(--background);
+	--pin-ring: 0 0 0 1.5px var(--map-casing);
+}
+.yonder-pin-area {
+	border-radius: 6px;
+	border: 1.5px solid var(--foreground);
+	background: var(--card);
+}
+.yonder-pin-place {
+	--pin-ring: 0 0 0 2px #ffffff;
+	filter: drop-shadow(0 1px 2px rgb(0 0 0 / 0.35));
+}
+:where(.dark) .yonder-pin-place {
+	--pin-ring: 0 0 0 2px oklch(0.22 0 0), 0 0 0 3px #ffffff;
+}
+.yonder-map-ground.is-light .yonder-pin-place {
+	--pin-ring: 0 0 0 2px #ffffff;
+}
+.yonder-pin-idea {
+	border: 1.5px solid var(--muted-foreground);
+	background: color-mix(in oklab, var(--card) 55%, transparent);
+}
+.yonder-pin-num {
+	font-family: var(--font-mono);
+	font-size: 11px;
+	font-weight: 600;
+	line-height: 1;
+	font-variant-numeric: tabular-nums;
+}
+
+.yonder-pin-badge,
+.yonder-pin-revisit {
+	position: absolute;
+	height: 14px;
+	min-width: 14px;
+	padding: 0 3px;
+	border-radius: 9999px;
+	font-family: var(--font-mono);
+	font-size: 9px;
+	font-weight: 600;
+	line-height: 14px;
+	text-align: center;
+	font-variant-numeric: tabular-nums;
+	pointer-events: none;
+}
+.yonder-pin-badge {
+	top: -6px;
+	right: -7px;
+	background: var(--foreground);
+	color: var(--background);
+	box-shadow: 0 0 0 1.5px var(--map-casing);
+}
+.yonder-pin-revisit {
+	bottom: -6px;
+	right: -9px;
+	background: var(--card);
+	color: var(--foreground);
+	box-shadow: 0 0 0 1px var(--border);
+}
+.yonder-pin-author {
+	position: absolute;
+	top: -6px;
+	left: -6px;
+	display: grid;
+	place-items: center;
+	width: 14px;
+	height: 14px;
+	border-radius: 9999px;
+	background: var(--proposal);
+	color: #fff;
+	box-shadow: 0 0 0 1.5px var(--map-casing);
+	font-family: var(--font-sans);
+	font-size: 8px;
+	font-weight: 700;
+	line-height: 1;
+	pointer-events: none;
+}
+
+.yonder-pin-label {
+	position: absolute;
+	top: 50%;
+	left: calc(100% + 6px);
+	transform: translateY(-50%);
+	max-width: 11rem;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-size: 12px;
+	font-weight: 500;
+	line-height: 1.25;
+	color: var(--foreground);
+	pointer-events: none;
+	text-shadow:
+		0 0 2px var(--basemap-label-halo),
+		0 0 2px var(--basemap-label-halo),
+		0 0 3px var(--basemap-label-halo),
+		0 0 4px var(--basemap-label-halo);
+}
+.yonder-pin-label.is-left {
+	left: auto;
+	right: calc(100% + 6px);
+}
+.yonder-pin-label.is-below {
+	top: calc(100% + 4px);
+	left: 50%;
+	transform: translateX(-50%);
+}
+.yonder-pin-label.is-above {
+	top: auto;
+	bottom: calc(100% + 4px);
+	left: 50%;
+	transform: translateX(-50%);
+}
+.yonder-pin[data-shape="country"] .yonder-pin-label.is-below {
+	font-size: 13px;
+	font-weight: 600;
+}
+
+/* hollow = an idea (outline only, no number); dropped = struck out */
+.yonder-pin.is-dropped {
+	opacity: 0.6;
+}
+.yonder-pin.is-next .yonder-pin-face {
+	--pin-halo: 0 0 0 8px color-mix(in oklab, var(--glow) 55%, transparent);
+}
+.yonder-pin.has-peer .yonder-pin-face {
+	--pin-halo: 0 0 0 7px color-mix(in oklab, var(--peer) 35%, transparent);
+}
+.yonder-pin.is-hollow .yonder-pin-face {
+	background: color-mix(in oklab, var(--card) 55%, transparent);
+	border: 1.5px solid var(--muted-foreground);
+	color: var(--muted-foreground);
+	--pin-ring: 0 0 0 0 transparent;
+	filter: none;
+}
+.yonder-pin.is-proposed-delete .yonder-pin-face {
+	opacity: 0.5;
+}
+.yonder-pin.is-dropped .yonder-pin-label,
+.yonder-pin.is-proposed-delete .yonder-pin-label {
+	text-decoration: line-through;
+}
+.yonder-pin.is-filtered .yonder-pin-label {
+	display: none;
+}
+/* E7: a dashed ring in the author's colour (+ their avatar) */
+.yonder-pin.is-proposed:not(.is-selected) .yonder-pin-face {
+	outline: 1.5px dashed var(--proposal);
+	outline-offset: 3px;
+}
+/* a coarser rep (or a node drawn on someone else's coordinates) is dashed */
+.yonder-pin.is-coarse:not(.is-selected):not(.is-proposed) .yonder-pin-face {
+	outline: 1.5px dashed var(--foreground);
+	outline-offset: 1.5px;
+}
+
+/* file drag over a pin: a primary dashed ring and "Attach to Shibuya" (wins over the rings above) */
+.yonder-pin.is-drop.is-drop.is-drop .yonder-pin-face {
+	outline: 2px dashed var(--primary);
+	outline-offset: 4px;
+}
+.yonder-pin-drop-tip {
+	position: absolute;
+	bottom: calc(100% + 6px);
+	left: 50%;
+	transform: translateX(-50%);
+	padding: 3px 8px;
+	border-radius: 6px;
+	background: var(--foreground);
+	color: var(--background);
+	font-size: 12px;
+	white-space: nowrap;
+	pointer-events: none;
+}
+
+/* ---- clusters, edge chips, spider legs ---------------------------------- */
+
+.yonder-cluster {
+	display: grid;
+	place-items: center;
+	width: 26px;
+	height: 26px;
+	border: 0;
+	border-radius: 9999px;
+	background: var(--card);
+	color: var(--foreground);
+	box-shadow:
+		0 0 0 1.5px var(--foreground),
+		0 1px 3px rgb(0 0 0 / 0.2);
+	font-family: var(--font-mono);
+	font-size: 12px;
+	font-weight: 600;
+	cursor: pointer;
+	transition: transform 160ms ease-out;
+}
+.yonder-cluster:hover,
+.yonder-cluster:focus-visible {
+	transform: scale(1.08);
+	outline: none;
+}
+.yonder-cluster:focus-visible {
+	box-shadow:
+		0 0 0 1.5px var(--foreground),
+		0 0 0 4px var(--ring);
+}
+/* E7: a suggestion inside the cluster: the author's dashed ring */
+.yonder-cluster.is-proposed {
+	outline: 1.5px dashed var(--proposal);
+	outline-offset: 3px;
+}
+.yonder-cluster.is-legend {
+	width: 18px;
+	height: 18px;
+	font-size: 10px;
+	box-shadow: 0 0 0 1.25px var(--foreground);
+	cursor: default;
+}
+
+.yonder-edge-chip {
+	display: grid;
+	place-items: center;
+	min-width: 18px;
+	height: 18px;
+	padding: 0 4px;
+	border: 0;
+	border-radius: 9999px;
+	background: var(--card);
+	color: var(--foreground);
+	box-shadow: 0 0 0 1px var(--border);
+	font-family: var(--font-mono);
+	font-size: 11px;
+	line-height: 1;
+	cursor: pointer;
+}
+.yonder-edge-chip.is-stay {
+	color: var(--mode-other);
+}
+
+.yonder-spider line {
+	stroke: var(--muted-foreground);
+	stroke-width: 1;
+}
+.yonder-spider circle {
+	fill: var(--muted-foreground);
+}
+
+/* ---- controls and chips ------------------------------------------------- */
+
+.yonder-map-controls {
+	position: absolute;
+	z-index: 10;
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	transition: right 160ms ease-out;
+}
+.yonder-map-ctl {
+	position: relative;
+	display: grid;
+	place-items: center;
+	width: 32px;
+	height: 32px;
+	border: 0;
+	border-radius: 10px;
+	background: var(--card);
+	color: var(--foreground);
+	box-shadow: var(--shadow-float);
+	cursor: pointer;
+	transition: background-color 160ms ease-out;
+}
+.yonder-map-ctl:hover {
+	background: var(--muted);
+}
+.yonder-map-ctl:focus-visible {
+	outline: 2px solid var(--ring);
+	outline-offset: 2px;
+}
+.yonder-map-ctl.is-active {
+	color: var(--primary);
+}
+.yonder-map-ctl svg {
+	width: 16px;
+	height: 16px;
+}
+/* 44px tap targets on a phone or any touch screen (DESIGN §6, QA MOB-07). */
+.yonder-map-controls.is-touch {
+	gap: 8px;
+}
+.yonder-map-controls.is-touch .yonder-map-ctl {
+	width: 44px;
+	height: 44px;
+	border-radius: 12px;
+}
+@media (pointer: coarse) {
+	.yonder-map-controls {
+		gap: 8px;
+	}
+	.yonder-map-ctl {
+		width: 44px;
+		height: 44px;
+		border-radius: 12px;
+	}
+}
+.yonder-map-controls.is-touch .yonder-map-ctl svg {
+	width: 18px;
+	height: 18px;
+}
+@media (pointer: coarse) {
+	.yonder-map-ctl svg {
+		width: 18px;
+		height: 18px;
+	}
+}
+.yonder-map-ctl-dot {
+	position: absolute;
+	top: 5px;
+	right: 5px;
+	width: 6px;
+	height: 6px;
+	border-radius: 9999px;
+	background: var(--primary);
+}
+.yonder-map-zoom {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	margin-top: 6px;
+}
+@media (pointer: coarse) {
+	.yonder-map-zoom {
+		display: none;
+	}
+}
+
+.yonder-map-chip {
+	position: absolute;
+	z-index: 10;
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	height: 28px;
+	padding: 0 10px;
+	border: 0;
+	border-radius: 9999px;
+	background: var(--card);
+	color: var(--foreground);
+	box-shadow: var(--shadow-float);
+	font-size: 13px;
+	white-space: nowrap;
+}
+.yonder-map-chip.is-filter {
+	max-width: calc(100% - 24px);
+}
+/* QA ERR-06: a status, not a control: the map underneath still pans */
+.yonder-map-chip.is-tiles-down {
+	pointer-events: none;
+	animation: yonder-map-fade-in 200ms ease-out both;
+}
+.yonder-map-chip.is-hint {
+	max-width: calc(100% - 96px);
+	height: auto;
+	min-height: 28px;
+	padding-block: 4px;
+	white-space: normal;
+	line-height: 1.3;
+	animation: yonder-map-fade 200ms ease-out 200ms both;
+}
+/* on a phone it sits top-left, clear of the control column: fade only */
+.yonder-map-chip.is-hint.is-start {
+	animation-name: yonder-map-fade-in;
+}
+@keyframes yonder-map-fade-in {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
+}
+.yonder-map-chip.is-finer {
+	cursor: pointer;
+	animation: yonder-map-fade 200ms ease-out 400ms both;
+}
+.yonder-map-chip.is-finer:hover {
+	background: var(--muted);
+}
+@keyframes yonder-map-fade {
+	from {
+		opacity: 0;
+		transform: translate(-50%, -4px);
+	}
+	to {
+		opacity: 1;
+		transform: translate(-50%, 0);
+	}
+}
+
+/* hovering an edge: a small card that follows the pointer */
+.yonder-edge-tip {
+	position: absolute;
+	top: 0;
+	left: 0;
+	z-index: 12;
+	display: grid;
+	gap: 1px;
+	max-width: 280px;
+	padding: 6px 10px;
+	border-radius: 10px;
+	background: var(--card);
+	color: var(--foreground);
+	box-shadow: var(--shadow-float);
+	font-size: 12px;
+	line-height: 1.35;
+	pointer-events: none;
+	will-change: transform;
+}
+
+/* MapLibre's own controls, in the brand's quiet style */
+.yonder-map .maplibregl-ctrl-attrib {
+	font-size: 10px;
+	background: color-mix(in oklab, var(--card) 80%, transparent);
+	color: var(--muted-foreground);
+}
+.yonder-map .maplibregl-ctrl-attrib a {
+	color: var(--muted-foreground);
+}
+.yonder-map .maplibregl-ctrl-attrib.maplibregl-compact {
+	min-height: 20px;
+}
+:where(.dark) .yonder-map .maplibregl-ctrl-attrib-button,
+.yonder-map-ground.is-dark .maplibregl-ctrl-attrib-button {
+	filter: invert(1);
+}
+.yonder-map-ground.is-light .maplibregl-ctrl-attrib-button {
+	filter: none;
+}
+.yonder-map .maplibregl-marker {
+	/* marker DOM sits above the canvas but below map chips (z 10: the map is
+	   isolated, see above); no will-change: 300 pins would be 300 compositor
+	   layers for no gain. */
+	contain: layout style;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.yonder-pin,
+	.yonder-pin-face,
+	.yonder-cluster,
+	.yonder-map-controls {
+		transition: opacity 120ms linear;
+	}
+	.yonder-pin-btn:hover .yonder-pin-face,
+	.yonder-pin.is-hovered .yonder-pin-face {
+		transform: none;
+	}
+	.yonder-map-chip.is-finer,
+	.yonder-map-chip.is-hint,
+	.yonder-map-chip.is-tiles-down {
+		animation: none;
+	}
+}
+
+/* ---- the basemap's tone (FB-04) ------------------------------------------
+   Pins, labels, chips on the map and MapLibre's attribution take the tone of
+   the basemap the person chose, not the app's: MapCanvas puts `dark is-dark`
+   (dark and satellite) or `is-light` on `.yonder-map-ground`. `.dark` brings
+   the brand's dark tokens by itself; a light basemap inside the dark app needs
+   the light ones back. They mirror `:root` of brand/tokens/theme.css and
+   src/styles.css (map-styles.test.ts fails when they drift). */
+:where(.dark) .yonder-map-ground.is-light {
+	color-scheme: light;
+	--background: oklch(0.985 0.004 265);
+	--foreground: oklch(0.235 0.035 272);
+	--card: oklch(1 0 0);
+	--card-foreground: oklch(0.235 0.035 272);
+	--popover: oklch(1 0 0);
+	--popover-foreground: oklch(0.235 0.035 272);
+	--primary: oklch(0.47 0.14 277);
+	--primary-foreground: oklch(0.985 0.008 277);
+	--muted: oklch(0.962 0.007 268);
+	--muted-foreground: oklch(0.5 0.03 270);
+	--border: oklch(0.915 0.012 270);
+	--ring: oklch(0.6 0.13 277);
+	--glow: oklch(0.81 0.13 68);
+	--map-walk: oklch(0.56 0.12 165);
+	--map-transit: oklch(0.5 0.16 277);
+	--map-flight: oklch(0.6 0.17 42);
+	--map-casing: oklch(1 0 0);
+	--map-stop: oklch(1 0 0);
+	--selected-edge: rgb(24 29 47 / 0.22);
+	--mode-other: #5c6375;
+	--presence-1: #2f7f86;
+	--presence-2: #b4539a;
+	--presence-3: #c98a1c;
+	--presence-4: #4e7bd3;
+	--presence-5: #6a8f3a;
+	--presence-6: #8c5bd6;
+	--presence-7: #3f8f6b;
+	--presence-8: #a0643a;
+	--basemap-land: #f0f2f7;
+	--basemap-water: #d9e3ee;
+	--basemap-park: #e3ece6;
+	--basemap-road: #ffffff;
+	--basemap-road-casing: #e0e3eb;
+	--basemap-boundary: #c3c9d6;
+	--basemap-label: #6b7285;
+	--basemap-label-halo: #f0f2f7;
+	--shadow-float:
+		0 1px 2px rgb(15 18 30 / 0.06), 0 8px 24px rgb(15 18 30 / 0.08);
+}

@@ -1,0 +1,368 @@
+/*
+ * The live-cursor layer (FB-17): one fixed, click-through layer over the
+ * workspace. Positions are written straight to `transform` by the overlay
+ * (never a React render per update). Presence colours only (DESIGN §2.2);
+ * labels are the caret-label style (11/14 600, white on the colour, radius 4).
+ */
+.yc-layer {
+	position: fixed;
+	inset: 0;
+	z-index: 45;
+	pointer-events: none;
+	overflow: hidden;
+	contain: strict;
+}
+
+.yc-cursor {
+	position: absolute;
+	top: 0;
+	left: 0;
+	will-change: transform, opacity;
+	opacity: 0;
+	transition: opacity 240ms ease-out;
+	color: var(--yc-color);
+}
+.yc-cursor[data-state="on"] {
+	opacity: 1;
+}
+.yc-cursor[data-state="idle"] {
+	opacity: 0;
+	transition-duration: 900ms;
+}
+.yc-cursor svg {
+	display: block;
+	width: 18px;
+	height: 18px;
+	margin: -1px 0 0 -1px;
+	filter: drop-shadow(0 1px 1.5px rgb(15 18 30 / 0.28));
+}
+.yc-tag {
+	position: absolute;
+	top: 16px;
+	left: 13px;
+	/* An absolute box inside the 18px cursor would shrink to 5px: give it room. */
+	width: 260px;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 3px;
+}
+.yc-label {
+	max-width: 160px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	border-radius: 4px;
+	padding: 2px 5px;
+	background: var(--yc-color);
+	color: #fff;
+	font: 600 11px / 14px var(--font-sans);
+}
+.yc-chat {
+	max-width: 240px;
+	border-radius: 4px 12px 12px 12px;
+	padding: 5px 9px;
+	background: var(--card);
+	color: var(--foreground);
+	box-shadow: var(--shadow-float);
+	outline: 1.5px solid var(--yc-color);
+	font: 500 13px / 18px var(--font-sans);
+	overflow-wrap: anywhere;
+	white-space: pre-wrap;
+}
+
+/* An off-screen cursor: an arrow on the region's edge with the name. */
+.yc-edge {
+	position: absolute;
+	top: 0;
+	left: 0;
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	height: 22px;
+	padding: 0 7px 0 3px;
+	border-radius: 999px;
+	background: var(--yc-color);
+	color: #fff;
+	font: 600 11px / 14px var(--font-sans);
+	white-space: nowrap;
+	pointer-events: auto;
+	cursor: pointer;
+	box-shadow: var(--shadow-float);
+	opacity: 0;
+	transition: opacity 200ms ease-out;
+}
+.yc-edge[data-state="on"] {
+	opacity: 1;
+}
+.yc-edge[data-state="off"] {
+	pointer-events: none;
+}
+.yc-edge svg {
+	width: 14px;
+	height: 14px;
+	flex: none;
+}
+.yc-edge:focus-visible {
+	outline: 2px solid var(--ring);
+	outline-offset: 2px;
+}
+
+/* A tap on a phone (touch never hovers): a ripple where they tapped. */
+.yc-ripple {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 36px;
+	height: 36px;
+	margin: -18px 0 0 -18px;
+	border-radius: 999px;
+	border: 2px solid var(--yc-color);
+	background: color-mix(in oklab, var(--yc-color) 18%, transparent);
+	animation: yc-ripple 700ms ease-out forwards;
+}
+@keyframes yc-ripple {
+	from {
+		opacity: 0.9;
+		scale: 0.3;
+	}
+	to {
+		opacity: 0;
+		scale: 1.5;
+	}
+}
+
+/* An emoji reaction floats up from where it was made and fades. */
+.yc-react {
+	position: absolute;
+	top: 0;
+	left: 0;
+	margin: -16px 0 0 -14px;
+	font-size: 28px;
+	line-height: 32px;
+	animation: yc-float 1700ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+	filter: drop-shadow(0 2px 3px rgb(15 18 30 / 0.2));
+}
+.yc-react-name {
+	display: block;
+	margin-top: -2px;
+	text-align: center;
+	font: 600 10px / 12px var(--font-sans);
+	color: var(--yc-color);
+	text-shadow:
+		0 0 2px var(--background),
+		0 0 2px var(--background);
+}
+@keyframes yc-float {
+	0% {
+		opacity: 0;
+		translate: 0 6px;
+		scale: 0.6;
+	}
+	15% {
+		opacity: 1;
+		scale: 1.1;
+	}
+	30% {
+		scale: 1;
+	}
+	75% {
+		opacity: 1;
+	}
+	100% {
+		opacity: 0;
+		translate: 0 -56px;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.yc-cursor,
+	.yc-edge {
+		transition: none;
+	}
+	.yc-ripple {
+		animation: yc-fade 700ms linear forwards;
+		scale: 1;
+	}
+	.yc-react {
+		animation: yc-fade 1700ms linear forwards;
+	}
+}
+@keyframes yc-fade {
+	0%,
+	70% {
+		opacity: 1;
+	}
+	100% {
+		opacity: 0;
+	}
+}
+
+/* My own chat composer and the reaction palette (FB-17c/d): the only
+ * interactive bits of the layer. */
+.yc-compose {
+	position: fixed;
+	top: 0;
+	left: 0;
+	z-index: 46;
+	pointer-events: auto;
+	will-change: transform;
+}
+.yc-compose input {
+	width: 220px;
+	border-radius: 4px 12px 12px 12px;
+	padding: 5px 9px;
+	background: var(--card);
+	color: var(--foreground);
+	box-shadow: var(--shadow-float);
+	outline: 2px solid var(--yc-color);
+	font: 500 13px / 18px var(--font-sans);
+}
+.yc-compose input::placeholder {
+	color: var(--muted-foreground);
+}
+
+/* FB-23 live drags: a ghost of the dragged card at their cursor, and the
+ * line where it would land (the original is dimmed by a style rule). */
+.yc-drag {
+	position: absolute;
+	top: 0;
+	left: 0;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 3px;
+	will-change: transform;
+	animation: yc-in 140ms ease-out;
+}
+.yc-drag[hidden] {
+	display: none;
+}
+.yc-drag-card {
+	max-width: 240px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	border-radius: 8px;
+	padding: 6px 10px;
+	background: var(--card);
+	color: var(--foreground);
+	opacity: 0.88;
+	box-shadow: var(--shadow-float);
+	outline: 1.5px solid var(--yc-color);
+	font: 500 13px / 18px var(--font-sans);
+	rotate: -1.5deg;
+}
+.yc-drag .yc-label {
+	max-width: 260px;
+}
+.yc-drop {
+	position: absolute;
+	top: 0;
+	left: 0;
+	height: 2px;
+	border-radius: 1px;
+	background: var(--yc-color);
+	box-shadow: 0 0 0 1px color-mix(in oklab, var(--yc-color) 25%, transparent);
+	will-change: transform;
+}
+.yc-drop[hidden] {
+	display: none;
+}
+
+/* FB-25 open menus: a quiet, non-interactive copy of their menu. */
+.yc-menu {
+	position: absolute;
+	top: 0;
+	left: 0;
+	min-width: 168px;
+	max-width: 260px;
+	padding: 4px;
+	border-radius: 8px;
+	background: color-mix(in oklab, var(--popover) 92%, transparent);
+	color: var(--popover-foreground);
+	border: 1px solid color-mix(in oklab, var(--yc-color) 55%, var(--border));
+	box-shadow: var(--shadow-float);
+	font: 400 13px / 18px var(--font-sans);
+	will-change: transform;
+	animation: yc-in 140ms ease-out;
+}
+.yc-menu[hidden] {
+	display: none;
+}
+.yc-menu-tag {
+	position: absolute;
+	top: -9px;
+	left: 8px;
+	border-radius: 4px;
+	padding: 1px 5px;
+	background: var(--yc-color);
+	color: #fff;
+	font: 600 10px / 13px var(--font-sans);
+}
+.yc-menu-item {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	border-radius: 5px;
+	padding: 5px 8px;
+}
+.yc-menu-item[data-hi] {
+	background: color-mix(in oklab, var(--yc-color) 16%, transparent);
+}
+.yc-menu-sep {
+	height: 1px;
+	margin: 4px -4px;
+	background: var(--border);
+}
+@keyframes yc-in {
+	from {
+		opacity: 0;
+	}
+}
+/* The dragged card's own overlay never hides my cursor's anchor (FB-23). */
+.yc-dnd-overlay {
+	pointer-events: none;
+}
+@media (prefers-reduced-motion: reduce) {
+	.yc-drag,
+	.yc-menu {
+		animation: none;
+	}
+	.yc-drag-card {
+		rotate: none;
+	}
+}
+
+/* FB-24 form presence: "Dennis is editing NH 744" on the thing's card / row. */
+.yc-form {
+	position: absolute;
+	top: 0;
+	left: 0;
+	max-width: 280px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	border-radius: 4px;
+	padding: 2px 6px;
+	background: var(--yc-color);
+	color: #fff;
+	font: 600 11px / 14px var(--font-sans);
+	box-shadow: 0 1px 2px rgb(15 18 30 / 0.18);
+	will-change: transform;
+}
+.yc-form[hidden] {
+	display: none;
+}
+
+/* Cursors stay above the ghosts (a cursor over a menu ghost sits on it). */
+.yc-drag,
+.yc-drop,
+.yc-menu,
+.yc-form {
+	z-index: 1;
+}
+.yc-cursor,
+.yc-edge {
+	z-index: 2;
+}

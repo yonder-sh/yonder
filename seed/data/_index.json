@@ -1,0 +1,70 @@
+{
+  "spreadsheetId": "<sheet-id>",
+  "title": "Asia 2027",
+  "exportedAt": "2026-09-23T02:49:15+00:00",
+  "tabs": [
+    {
+      "tab": "USA to Asia Flights",
+      "sheetId": 1700000001,
+      "file": "usa-to-asia-flights.json",
+      "rows": 20,
+      "links": 0
+    },
+    {
+      "tab": "Airline Aircraft Seating Ratings",
+      "sheetId": 1700000002,
+      "file": "airline-aircraft-seating-ratings.json",
+      "rows": 13,
+      "links": 0
+    },
+    {
+      "tab": "Action Timeline",
+      "sheetId": 1700000006,
+      "file": "action-timeline.json",
+      "rows": 21,
+      "links": 0
+    },
+    {
+      "tab": "Cities",
+      "sheetId": 1700000003,
+      "file": "cities.json",
+      "rows": 26,
+      "links": 21
+    },
+    {
+      "tab": "Places",
+      "sheetId": 1700000004,
+      "file": "places.json",
+      "rows": 125,
+      "links": 8
+    },
+    {
+      "tab": "Shopping List",
+      "sheetId": 1700000005,
+      "file": "shopping-list.json",
+      "rows": 27,
+      "links": 10
+    },
+    {
+      "tab": "Itinerary",
+      "sheetId": 1700000008,
+      "file": "itinerary.json",
+      "rows": 65,
+      "links": 0
+    },
+    {
+      "tab": "ANA Watch Log",
+      "sheetId": 1700000007,
+      "file": "ana-watch-log.json",
+      "rows": 33,
+      "links": 0
+    },
+    {
+      "tab": "Random Notes",
+      "sheetId": 2037826441,
+      "file": "random-notes.json",
+      "rows": 19,
+      "links": 4
+    }
+  ]
+}

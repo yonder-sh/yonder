@@ -1,0 +1,86 @@
+/*
+ * WP-Map: the map's "Stops" list (QA A11Y-03, `StopsList`). Its own file so
+ * it is styled in the no-WebGL fallback too (map.css loads with MapCanvas).
+ */
+
+/* QA A11Y-03: the "Stops" list, the map's text alternative. Hidden until it
+   has keyboard focus, then a card over the map's top-left corner. */
+.yonder-stops:not(:focus-within) {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	white-space: nowrap;
+	border: 0;
+}
+.yonder-stops:focus-within {
+	position: absolute;
+	top: 12px;
+	left: 12px;
+	z-index: 20;
+	display: grid;
+	gap: 4px;
+	width: min(22rem, calc(100% - 24px));
+	max-height: calc(100% - 24px);
+	overflow-y: auto;
+	padding: 8px;
+	border-radius: 12px;
+	background: var(--card);
+	color: var(--foreground);
+	box-shadow: var(--shadow-float);
+}
+.yonder-stops.is-mobile:focus-within {
+	top: calc(env(safe-area-inset-top, 0px) + 124px);
+	max-height: calc(100% - env(safe-area-inset-top, 0px) - 136px);
+}
+.yonder-stops-title {
+	padding: 2px 6px;
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: var(--muted-foreground);
+}
+.yonder-stops ol {
+	display: grid;
+	gap: 2px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+.yonder-stops li {
+	display: grid;
+}
+.yonder-stops-stop,
+.yonder-stops-leg {
+	display: block;
+	width: 100%;
+	padding: 4px 6px;
+	border: 0;
+	border-radius: 6px;
+	background: none;
+	text-align: left;
+	cursor: pointer;
+}
+.yonder-stops-stop {
+	font-size: 13px;
+	font-weight: 500;
+	color: var(--foreground);
+}
+.yonder-stops-leg {
+	padding-left: 18px;
+	font-size: 12px;
+	color: var(--muted-foreground);
+}
+.yonder-stops-stop:hover,
+.yonder-stops-leg:hover {
+	background: var(--muted);
+}
+.yonder-stops-stop:focus-visible,
+.yonder-stops-leg:focus-visible {
+	outline: 2px solid var(--ring);
+	outline-offset: 2px;
+}

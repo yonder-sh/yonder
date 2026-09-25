@@ -1,0 +1,276 @@
+{
+  "source": {
+    "spreadsheetId": "<sheet-id>",
+    "spreadsheetTitle": "Asia 2027",
+    "spreadsheetTimeZone": "America/New_York",
+    "tab": "Random Notes",
+    "sheetId": 2037826441,
+    "tabIndex": 8,
+    "exportedAt": "2026-09-23T02:49:15+00:00",
+    "exporter": "gws sheets spreadsheets get (includeGridData)"
+  },
+  "headers": null,
+  "columns": null,
+  "rows": [
+    {
+      "_row": 1,
+      "text": "ryokan in kyoto",
+      "extra": [
+        "https://www.erikastravelventures.com/ryokan-in-kyoto-with-private-onsen/"
+      ],
+      "url": "https://www.erikastravelventures.com/ryokan-in-kyoto-with-private-onsen/",
+      "links": [
+        {
+          "text": "https://www.erikastravelventures.com/ryokan-in-kyoto-with-private-onsen/",
+          "url": "https://www.erikastravelventures.com/ryokan-in-kyoto-with-private-onsen/"
+        }
+      ]
+    },
+    {
+      "_row": 2,
+      "text": "omakase",
+      "extra": [],
+      "url": null,
+      "links": []
+    },
+    {
+      "_row": 3,
+      "text": "kaiseki",
+      "extra": [],
+      "url": null,
+      "links": []
+    },
+    {
+      "_row": 5,
+      "text": "Bar Centifolia",
+      "extra": [],
+      "url": null,
+      "links": []
+    },
+    {
+      "_row": 6,
+      "text": "https://www.jytravels.com/japan/cocktail-bar-guide-to-tokyo",
+      "extra": [],
+      "url": "https://www.jytravels.com/japan/cocktail-bar-guide-to-tokyo",
+      "links": [
+        {
+          "text": "https://www.jytravels.com/japan/cocktail-bar-guide-to-tokyo",
+          "url": "https://www.jytravels.com/japan/cocktail-bar-guide-to-tokyo"
+        }
+      ]
+    },
+    {
+      "_row": 7,
+      "text": "https://www.reddit.com/r/cocktails/comments/1vc3tgg/we_ranked_japans_best_cocktail_bars_2026/",
+      "extra": [],
+      "url": "https://www.reddit.com/r/cocktails/comments/1vc3tgg/we_ranked_japans_best_cocktail_bars_2026/",
+      "links": [
+        {
+          "text": "https://www.reddit.com/r/cocktails/comments/1vc3tgg/we_ranked_japans_best_cocktail_bars_2026/",
+          "url": "https://www.reddit.com/r/cocktails/comments/1vc3tgg/we_ranked_japans_best_cocktail_bars_2026/"
+        }
+      ]
+    },
+    {
+      "_row": 17,
+      "text": "https://www.dailydrop.com/transfer-partners-cheat-sheet",
+      "extra": [],
+      "url": "https://www.dailydrop.com/transfer-partners-cheat-sheet",
+      "links": [
+        {
+          "text": "https://www.dailydrop.com/transfer-partners-cheat-sheet",
+          "url": "https://www.dailydrop.com/transfer-partners-cheat-sheet"
+        }
+      ]
+    },
+    {
+      "_row": 24,
+      "text": "Shopping List",
+      "extra": [],
+      "url": null,
+      "links": []
+    },
+    {
+      "_row": 25,
+      "text": "pillow",
+      "extra": [],
+      "url": null,
+      "links": []
+    },
+    {
+      "_row": 26,
+      "text": "watch",
+      "extra": [],
+      "url": null,
+      "links": []
+    },
+    {
+      "_row": 27,
+      "text": "kitchen knives",
+      "extra": [],
+      "url": null,
+      "links": []
+    },
+    {
+      "_row": 28,
+      "text": "camera lenses",
+      "extra": [],
+      "url": null,
+      "links": []
+    },
+    {
+      "_row": 29,
+      "text": "glasses",
+      "extra": [],
+      "url": null,
+      "links": []
+    },
+    {
+      "_row": 30,
+      "text": "onitsuka tiger shoes",
+      "extra": [],
+      "url": null,
+      "links": []
+    },
+    {
+      "_row": 31,
+      "text": "matcha",
+      "extra": [],
+      "url": null,
+      "links": []
+    },
+    {
+      "_row": 32,
+      "text": "rings",
+      "extra": [],
+      "url": null,
+      "links": []
+    },
+    {
+      "_row": 33,
+      "text": "wallet",
+      "extra": [],
+      "url": null,
+      "links": []
+    },
+    {
+      "_row": 34,
+      "text": "bags",
+      "extra": [],
+      "url": null,
+      "links": []
+    },
+    {
+      "_row": 35,
+      "text": "imabari towels",
+      "extra": [],
+      "url": null,
+      "links": []
+    }
+  ],
+  "raw": {
+    "values": [
+      [
+        "ryokan in kyoto",
+        "https://www.erikastravelventures.com/ryokan-in-kyoto-with-private-onsen/"
+      ],
+      [
+        "omakase"
+      ],
+      [
+        "kaiseki"
+      ],
+      [],
+      [
+        "Bar Centifolia"
+      ],
+      [
+        "https://www.jytravels.com/japan/cocktail-bar-guide-to-tokyo"
+      ],
+      [
+        "https://www.reddit.com/r/cocktails/comments/1vc3tgg/we_ranked_japans_best_cocktail_bars_2026/"
+      ],
+      [],
+      [],
+      [],
+      [],
+      [],
+      [],
+      [],
+      [],
+      [],
+      [
+        "https://www.dailydrop.com/transfer-partners-cheat-sheet"
+      ],
+      [],
+      [],
+      [],
+      [],
+      [],
+      [],
+      [
+        "Shopping List"
+      ],
+      [
+        "pillow"
+      ],
+      [
+        "watch"
+      ],
+      [
+        "kitchen knives"
+      ],
+      [
+        "camera lenses"
+      ],
+      [
+        "glasses"
+      ],
+      [
+        "onitsuka tiger shoes"
+      ],
+      [
+        "matcha"
+      ],
+      [
+        "rings"
+      ],
+      [
+        "wallet"
+      ],
+      [
+        "bags"
+      ],
+      [
+        "imabari towels"
+      ]
+    ],
+    "links": {
+      "B1": [
+        {
+          "text": "https://www.erikastravelventures.com/ryokan-in-kyoto-with-private-onsen/",
+          "url": "https://www.erikastravelventures.com/ryokan-in-kyoto-with-private-onsen/"
+        }
+      ],
+      "A6": [
+        {
+          "text": "https://www.jytravels.com/japan/cocktail-bar-guide-to-tokyo",
+          "url": "https://www.jytravels.com/japan/cocktail-bar-guide-to-tokyo"
+        }
+      ],
+      "A7": [
+        {
+          "text": "https://www.reddit.com/r/cocktails/comments/1vc3tgg/we_ranked_japans_best_cocktail_bars_2026/",
+          "url": "https://www.reddit.com/r/cocktails/comments/1vc3tgg/we_ranked_japans_best_cocktail_bars_2026/"
+        }
+      ],
+      "A17": [
+        {
+          "text": "https://www.dailydrop.com/transfer-partners-cheat-sheet",
+          "url": "https://www.dailydrop.com/transfer-partners-cheat-sheet"
+        }
+      ]
+    },
+    "formulas": {}
+  }
+}

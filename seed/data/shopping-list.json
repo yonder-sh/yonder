@@ -1,0 +1,783 @@
+{
+  "source": {
+    "spreadsheetId": "<sheet-id>",
+    "spreadsheetTitle": "Asia 2027",
+    "spreadsheetTimeZone": "America/New_York",
+    "tab": "Shopping List",
+    "sheetId": 1700000005,
+    "tabIndex": 5,
+    "exportedAt": "2026-09-23T02:49:15+00:00",
+    "exporter": "gws sheets spreadsheets get (includeGridData)"
+  },
+  "headers": [
+    "Item",
+    "For",
+    "Where",
+    "City",
+    "Rough budget",
+    "Status",
+    "Notes",
+    "Sources"
+  ],
+  "columns": [
+    {
+      "letter": "A",
+      "header": "Item",
+      "has_links": false
+    },
+    {
+      "letter": "B",
+      "header": "For",
+      "has_links": false
+    },
+    {
+      "letter": "C",
+      "header": "Where",
+      "has_links": false
+    },
+    {
+      "letter": "D",
+      "header": "City",
+      "has_links": false
+    },
+    {
+      "letter": "E",
+      "header": "Rough budget",
+      "has_links": false
+    },
+    {
+      "letter": "F",
+      "header": "Status",
+      "has_links": false
+    },
+    {
+      "letter": "G",
+      "header": "Notes",
+      "has_links": false
+    },
+    {
+      "letter": "H",
+      "header": "Sources",
+      "has_links": true
+    }
+  ],
+  "rows": [
+    {
+      "_row": 2,
+      "Item": "Custom pillow",
+      "For": "Dennis",
+      "Where": "Nishikawa — Osaka (Daimaru Shinsaibashi) or Tokyo (Hiroo)",
+      "City": "Osaka / Tokyo",
+      "Rough budget": "~¥30,000",
+      "Status": "Want it",
+      "Notes": "Fitting ~1 h, ~¥30k. Nihonbashi (COREDO) branch in redevelopment for the trip dates — use Daimaru Shinsaibashi (Osaka, on your list) or Hiroo (Tokyo)",
+      "Sources": "Nishikawa order pillows ↗",
+      "Sources_url": "https://www.nihonbashi-nishikawa.com/lp/orderpillow/en/",
+      "Sources_links": [
+        {
+          "text": "Nishikawa order pillows ↗",
+          "url": "https://www.nihonbashi-nishikawa.com/lp/orderpillow/en/"
+        }
+      ]
+    },
+    {
+      "_row": 3,
+      "Item": "Watch",
+      "For": "Dennis",
+      "Where": "Nakano Broadway",
+      "City": "Tokyo",
+      "Rough budget": null,
+      "Status": "Want it",
+      "Notes": "Used and vintage dealers on the 3rd floor; Ginza for new Seiko/Grand Seiko",
+      "Sources": "Tokyo Weekender: vintage watches ↗",
+      "Sources_url": "https://www.tokyoweekender.com/things-to-do-in-tokyo/where-to-buy-vintage-watches-in-tokyo/",
+      "Sources_links": [
+        {
+          "text": "Tokyo Weekender: vintage watches ↗",
+          "url": "https://www.tokyoweekender.com/things-to-do-in-tokyo/where-to-buy-vintage-watches-in-tokyo/"
+        }
+      ]
+    },
+    {
+      "_row": 4,
+      "Item": "Kitchen knives",
+      "For": "Dennis",
+      "Where": "Kappabashi Street",
+      "City": "Tokyo",
+      "Rough budget": null,
+      "Status": "Want it",
+      "Notes": "Also knife shops in Nishiki Market (Kyoto) and Tsukiji",
+      "Sources": null,
+      "Sources_url": null,
+      "Sources_links": []
+    },
+    {
+      "_row": 5,
+      "Item": "Knife sharpener (whetstone)",
+      "For": "Dennis",
+      "Where": "Kappabashi Street",
+      "City": "Tokyo",
+      "Rough budget": null,
+      "Status": "Want it",
+      "Notes": "Japanese knives need whetstones rather than pull-through sharpeners; Kappabashi's knife shops sell them and many will show you how to use one",
+      "Sources": null,
+      "Sources_url": null,
+      "Sources_links": []
+    },
+    {
+      "_row": 6,
+      "Item": "Scissors",
+      "For": "Dennis",
+      "Where": "Kappabashi Street",
+      "City": "Tokyo",
+      "Rough budget": null,
+      "Status": "Want it",
+      "Notes": "Japanese-made scissors and kitchen shears; Kappabashi's knife shops carry them, and Hands / Loft stock everyday ones",
+      "Sources": null,
+      "Sources_url": null,
+      "Sources_links": []
+    },
+    {
+      "_row": 7,
+      "Item": "Nail clippers",
+      "For": "Dennis",
+      "Where": "Hands Shibuya · Shibuya Loft",
+      "City": "Tokyo",
+      "Rough budget": null,
+      "Status": "Want it",
+      "Notes": "Suwada is the famous maker (hand-finished, from Niigata); also Kai / Seki. Found at Hands, Loft and department stores",
+      "Sources": null,
+      "Sources_url": null,
+      "Sources_links": []
+    },
+    {
+      "_row": 8,
+      "Item": "Zojirushi thermoses / mugs",
+      "For": "Dennis",
+      "Where": "Yodobashi Camera",
+      "City": "Tokyo",
+      "Rough budget": null,
+      "Status": "Want it",
+      "Notes": "Bic Camera and Yodobashi carry the full range, including Japan-only colours and sizes, cheaper than abroad; tax refund with passport",
+      "Sources": null,
+      "Sources_url": null,
+      "Sources_links": []
+    },
+    {
+      "_row": 9,
+      "Item": "Self-standing BBQ tongs",
+      "For": "Dennis",
+      "Where": "Kappabashi Street",
+      "City": "Tokyo",
+      "Rough budget": null,
+      "Status": "Want it",
+      "Notes": "Tongs designed to rest on the table with the tips raised off the counter. Kappabashi's kitchenware shops carry them; Hands and Loft too. Tsubame-Sanjo stainless is the quality mark to look for",
+      "Sources": null,
+      "Sources_url": null,
+      "Sources_links": []
+    },
+    {
+      "_row": 10,
+      "Item": "Chopsticks",
+      "For": "Dennis",
+      "Where": "Kappabashi Street",
+      "City": "Tokyo",
+      "Rough budget": null,
+      "Status": "Want it",
+      "Notes": "Nothing specific — any nice set is fine; Kappabashi has everything from everyday to lacquered",
+      "Sources": null,
+      "Sources_url": null,
+      "Sources_links": []
+    },
+    {
+      "_row": 11,
+      "Item": "Ceramics / pottery",
+      "For": "Audrey, Dennis",
+      "Where": "Kappabashi Street",
+      "City": "Tokyo",
+      "Rough budget": null,
+      "Status": "Want it",
+      "Notes": "Japanese plates, bowls and cups; Kappabashi has tableware shops, and Kyoto (Kiyomizu pottery near Kiyomizu-dera) is another good source",
+      "Sources": null,
+      "Sources_url": null,
+      "Sources_links": []
+    },
+    {
+      "_row": 12,
+      "Item": "Shupatto bags",
+      "For": "Dennis",
+      "Where": "Hands Shibuya · Shibuya Loft",
+      "City": "Tokyo",
+      "Rough budget": null,
+      "Status": "Want it",
+      "Notes": "Marna Shupatto: foldable shopping bag that packs down with one pull; lots of sizes and colours at Hands and Loft",
+      "Sources": null,
+      "Sources_url": null,
+      "Sources_links": []
+    },
+    {
+      "_row": 13,
+      "Item": "Stationary (pens, notebooks)",
+      "For": "Dennis",
+      "Where": "Itoya (G.Itoya) · Shibuya Loft",
+      "City": "Tokyo",
+      "Rough budget": null,
+      "Status": "Want it",
+      "Notes": "Japanese pens (Uni Jetstream, Zebra Sarasa, Pilot) and notebooks; cheap and genuinely better than at home",
+      "Sources": null,
+      "Sources_url": null,
+      "Sources_links": []
+    },
+    {
+      "_row": 14,
+      "Item": "Camera lenses",
+      "For": "Dennis",
+      "Where": "Camera Town",
+      "City": "Tokyo",
+      "Rough budget": null,
+      "Status": "Want it",
+      "Notes": "Used dealers by Shinjuku west exit; Yodobashi and Bic for new",
+      "Sources": null,
+      "Sources_url": null,
+      "Sources_links": []
+    },
+    {
+      "_row": 15,
+      "Item": "Glasses",
+      "For": "Dennis",
+      "Where": "JINS",
+      "City": "Tokyo",
+      "Rough budget": "from ~¥6,600",
+      "Status": "Want it",
+      "Notes": "Often ready in ~30 min",
+      "Sources": null,
+      "Sources_url": null,
+      "Sources_links": []
+    },
+    {
+      "_row": 16,
+      "Item": "Onitsuka Tiger shoes",
+      "For": "Audrey, Dennis",
+      "Where": "Onitsuka Tiger (Omotesando)",
+      "City": "Tokyo",
+      "Rough budget": null,
+      "Status": "Want it",
+      "Notes": "Japan-exclusive models; NIPPON MADE shop next door",
+      "Sources": null,
+      "Sources_url": null,
+      "Sources_links": []
+    },
+    {
+      "_row": 17,
+      "Item": "Imabari towels",
+      "For": "Dennis",
+      "Where": "Imabari Towel (Minami-Aoyama)",
+      "City": "Tokyo",
+      "Rough budget": null,
+      "Status": "Want it",
+      "Notes": null,
+      "Sources": null,
+      "Sources_url": null,
+      "Sources_links": []
+    },
+    {
+      "_row": 18,
+      "Item": "Whiskey / sake",
+      "For": "Dennis",
+      "Where": null,
+      "City": "Tokyo",
+      "Rough budget": null,
+      "Status": "Want it",
+      "Notes": "No shop picked yet",
+      "Sources": null,
+      "Sources_url": null,
+      "Sources_links": []
+    },
+    {
+      "_row": 19,
+      "Item": "Matcha / tea",
+      "For": "Dennis",
+      "Where": "Cha no Ikedaya (Tokyo) · Byodoin Omotesando (Uji)",
+      "City": "Tokyo, Uji",
+      "Rough budget": null,
+      "Status": "Want it",
+      "Notes": "Uji is the source for top-grade matcha (Nakamura Tokichi, Itoh Kyuemon, Tsuen), ~1 hr stop on the Kyoto → Nara day. Cha no Ikedaya is the easy Tokyo option; also Wang Tea in Taipei",
+      "Sources": null,
+      "Sources_url": null,
+      "Sources_links": []
+    },
+    {
+      "_row": 20,
+      "Item": "Rings",
+      "For": "Audrey, Dennis",
+      "Where": "glänta (Omotesando)",
+      "City": "Tokyo",
+      "Rough budget": null,
+      "Status": "Want it",
+      "Notes": "Make-your-own pair rings, same day; also branches in Kyoto and Osaka",
+      "Sources": null,
+      "Sources_url": null,
+      "Sources_links": []
+    },
+    {
+      "_row": 21,
+      "Item": "Embroidered Uniqlo bag",
+      "For": "Audrey",
+      "Where": "Uniqlo Ginza",
+      "City": "Tokyo",
+      "Rough budget": "from ~¥700",
+      "Status": "Want it",
+      "Notes": "RE.UNIQLO STUDIO counters do embroidery, patches, and sashiko from ~¥700, at Ginza, UNIQLO TOKYO (Marunouchi), and Asakusa. Turnaround varies a lot — one report says up to 3 weeks at Ginza while printing is same-day, so ask on arrival and order early in the trip",
+      "Sources": "Uniqlo embroidery FAQ ↗ · TripAdvisor thread ↗",
+      "Sources_url": "https://faq-us.uniqlo.com/articles/en_US/FAQ/UNIQLO-Embroidery-Service",
+      "Sources_links": [
+        {
+          "text": "Uniqlo embroidery FAQ ↗",
+          "url": "https://faq-us.uniqlo.com/articles/en_US/FAQ/UNIQLO-Embroidery-Service"
+        },
+        {
+          "text": "TripAdvisor thread ↗",
+          "url": "https://www.tripadvisor.com/ShowTopic-g298184-i861-k14339135-Uniqlo_shops_with_embroidery-Tokyo_Tokyo_Prefecture_Kanto.html"
+        }
+      ]
+    },
+    {
+      "_row": 22,
+      "Item": "Travel bags (shoulder / sling)",
+      "For": "Dennis",
+      "Where": "PORTER Omotesando",
+      "City": "Tokyo",
+      "Rough budget": null,
+      "Status": "Want it",
+      "Notes": "Brands to compare: Porter (Yoshida) for nylon/utility, Tsuchiya Kaban and Ganzo for leather, master-piece for commuter bags, Hender Scheme for design pieces. Porter flagships: Omotesando and Marunouchi. To see many brands at once: Isetan Shinjuku bag floor, Shibuya Parco, Dover Street Market Ginza; Komehyo (Shinjuku) and Ragtag for used",
+      "Sources": "Porter Omotesando ↗ · Yoshida & Co. stores ↗",
+      "Sources_url": "https://www.yoshidakaban.com/en/shopinfo/porter/omotesando/",
+      "Sources_links": [
+        {
+          "text": "Porter Omotesando ↗",
+          "url": "https://www.yoshidakaban.com/en/shopinfo/porter/omotesando/"
+        },
+        {
+          "text": "Yoshida & Co. stores ↗",
+          "url": "https://www.yoshidakaban.com/en/shopinfo/"
+        }
+      ]
+    },
+    {
+      "_row": 23,
+      "Item": "Wallet",
+      "For": "Dennis",
+      "Where": null,
+      "City": "Tokyo, Vietnam",
+      "Rough budget": null,
+      "Status": "Want it",
+      "Notes": "Leather brands worth trying: Ganzo, Tsuchiya Kaban, Porter; department store floors (Isetan Shinjuku) carry several at once. In Vietnam, Hoi An's leather shops make wallets to order cheaply",
+      "Sources": null,
+      "Sources_url": null,
+      "Sources_links": []
+    },
+    {
+      "_row": 24,
+      "Item": "Purses",
+      "For": "Audrey",
+      "Where": null,
+      "City": "Tokyo, Vietnam",
+      "Rough budget": null,
+      "Status": "Want it",
+      "Notes": "No shop picked yet — Komehyo (Shinjuku) for used designer, or department stores like Isetan for new. In Vietnam, Hoi An's tailors and leather shops make bags to order in a day or two; markets like Ben Thanh (Saigon) for cheaper finds",
+      "Sources": null,
+      "Sources_url": null,
+      "Sources_links": []
+    },
+    {
+      "_row": 25,
+      "Item": "Suit",
+      "For": "Dennis",
+      "Where": "Hoi An tailors (Old Town)",
+      "City": "Hoi An",
+      "Rough budget": null,
+      "Status": "Want it",
+      "Notes": "Order on day 1 so there's time for fittings. Rough prices: ~$80–150 basic, $180–300 mid-range, $280–500 good wool. Names that come up most: BeBe, A Dong Silk, Ba Ri, 45 Thu; Yaly is priciest with mixed reviews",
+      "Sources": "Finding Alexx ↗ · Indochina Voyages ↗",
+      "Sources_url": "https://findingalexx.com/hoi-an-tailors-guide/",
+      "Sources_links": [
+        {
+          "text": "Finding Alexx ↗",
+          "url": "https://findingalexx.com/hoi-an-tailors-guide/"
+        },
+        {
+          "text": "Indochina Voyages ↗",
+          "url": "https://www.indochinavoyages.com/travel-blog/best-tailors-in-hoi-an"
+        }
+      ]
+    },
+    {
+      "_row": 26,
+      "Item": "Overcoat",
+      "For": "Audrey, Dennis",
+      "Where": "Hoi An tailors (Old Town)",
+      "City": "Hoi An",
+      "Rough budget": null,
+      "Status": "Want it",
+      "Notes": "Bring reference photos; ask what the wool actually is and see the cloth first. ~400 tailors in town and the quality gap is huge, so check recent Google/TripAdvisor reviews yourself",
+      "Sources": "BeBe on TripAdvisor ↗",
+      "Sources_url": "https://www.tripadvisor.com/Attraction_Review-g298082-d2429676-Reviews-Bebe_Tailor-Hoi_An_Quang_Nam_Province.html",
+      "Sources_links": [
+        {
+          "text": "BeBe on TripAdvisor ↗",
+          "url": "https://www.tripadvisor.com/Attraction_Review-g298082-d2429676-Reviews-Bebe_Tailor-Hoi_An_Quang_Nam_Province.html"
+        }
+      ]
+    },
+    {
+      "_row": 27,
+      "Item": "Trench coat",
+      "For": "Audrey, Dennis",
+      "Where": "Hoi An tailors (Old Town)",
+      "City": "Hoi An",
+      "Rough budget": null,
+      "Status": "Want it",
+      "Notes": "Same 3-day block as the other tailoring; get quotes at 2–3 shops before ordering, and expect 2+ fittings on structured pieces",
+      "Sources": "Yaly on TripAdvisor ↗",
+      "Sources_url": "https://www.tripadvisor.com/Attraction_Review-g298082-d555725-Reviews-Yaly_Couture-Hoi_An_Quang_Nam_Province.html",
+      "Sources_links": [
+        {
+          "text": "Yaly on TripAdvisor ↗",
+          "url": "https://www.tripadvisor.com/Attraction_Review-g298082-d555725-Reviews-Yaly_Couture-Hoi_An_Quang_Nam_Province.html"
+        }
+      ]
+    },
+    {
+      "_row": 28,
+      "Item": "Ao dai",
+      "For": "Audrey",
+      "Where": "Hoi An tailors (Old Town)",
+      "City": "Hoi An",
+      "Rough budget": null,
+      "Status": "Want it",
+      "Notes": null,
+      "Sources": null,
+      "Sources_url": null,
+      "Sources_links": []
+    }
+  ],
+  "raw": {
+    "values": [
+      [
+        "Item",
+        "For",
+        "Where",
+        "City",
+        "Rough budget",
+        "Status",
+        "Notes",
+        "Sources"
+      ],
+      [
+        "Custom pillow",
+        "Dennis",
+        "Nishikawa — Osaka (Daimaru Shinsaibashi) or Tokyo (Hiroo)",
+        "Osaka / Tokyo",
+        "~¥30,000",
+        "Want it",
+        "Fitting ~1 h, ~¥30k. Nihonbashi (COREDO) branch in redevelopment for the trip dates — use Daimaru Shinsaibashi (Osaka, on your list) or Hiroo (Tokyo)",
+        "Nishikawa order pillows ↗"
+      ],
+      [
+        "Watch",
+        "Dennis",
+        "Nakano Broadway",
+        "Tokyo",
+        "",
+        "Want it",
+        "Used and vintage dealers on the 3rd floor; Ginza for new Seiko/Grand Seiko",
+        "Tokyo Weekender: vintage watches ↗"
+      ],
+      [
+        "Kitchen knives",
+        "Dennis",
+        "Kappabashi Street",
+        "Tokyo",
+        "",
+        "Want it",
+        "Also knife shops in Nishiki Market (Kyoto) and Tsukiji"
+      ],
+      [
+        "Knife sharpener (whetstone)",
+        "Dennis",
+        "Kappabashi Street",
+        "Tokyo",
+        "",
+        "Want it",
+        "Japanese knives need whetstones rather than pull-through sharpeners; Kappabashi's knife shops sell them and many will show you how to use one"
+      ],
+      [
+        "Scissors",
+        "Dennis",
+        "Kappabashi Street",
+        "Tokyo",
+        "",
+        "Want it",
+        "Japanese-made scissors and kitchen shears; Kappabashi's knife shops carry them, and Hands / Loft stock everyday ones"
+      ],
+      [
+        "Nail clippers",
+        "Dennis",
+        "Hands Shibuya · Shibuya Loft",
+        "Tokyo",
+        "",
+        "Want it",
+        "Suwada is the famous maker (hand-finished, from Niigata); also Kai / Seki. Found at Hands, Loft and department stores"
+      ],
+      [
+        "Zojirushi thermoses / mugs",
+        "Dennis",
+        "Yodobashi Camera",
+        "Tokyo",
+        "",
+        "Want it",
+        "Bic Camera and Yodobashi carry the full range, including Japan-only colours and sizes, cheaper than abroad; tax refund with passport"
+      ],
+      [
+        "Self-standing BBQ tongs",
+        "Dennis",
+        "Kappabashi Street",
+        "Tokyo",
+        "",
+        "Want it",
+        "Tongs designed to rest on the table with the tips raised off the counter. Kappabashi's kitchenware shops carry them; Hands and Loft too. Tsubame-Sanjo stainless is the quality mark to look for"
+      ],
+      [
+        "Chopsticks",
+        "Dennis",
+        "Kappabashi Street",
+        "Tokyo",
+        "",
+        "Want it",
+        "Nothing specific — any nice set is fine; Kappabashi has everything from everyday to lacquered"
+      ],
+      [
+        "Ceramics / pottery",
+        "Audrey, Dennis",
+        "Kappabashi Street",
+        "Tokyo",
+        "",
+        "Want it",
+        "Japanese plates, bowls and cups; Kappabashi has tableware shops, and Kyoto (Kiyomizu pottery near Kiyomizu-dera) is another good source"
+      ],
+      [
+        "Shupatto bags",
+        "Dennis",
+        "Hands Shibuya · Shibuya Loft",
+        "Tokyo",
+        "",
+        "Want it",
+        "Marna Shupatto: foldable shopping bag that packs down with one pull; lots of sizes and colours at Hands and Loft"
+      ],
+      [
+        "Stationary (pens, notebooks)",
+        "Dennis",
+        "Itoya (G.Itoya) · Shibuya Loft",
+        "Tokyo",
+        "",
+        "Want it",
+        "Japanese pens (Uni Jetstream, Zebra Sarasa, Pilot) and notebooks; cheap and genuinely better than at home"
+      ],
+      [
+        "Camera lenses",
+        "Dennis",
+        "Camera Town",
+        "Tokyo",
+        "",
+        "Want it",
+        "Used dealers by Shinjuku west exit; Yodobashi and Bic for new"
+      ],
+      [
+        "Glasses",
+        "Dennis",
+        "JINS",
+        "Tokyo",
+        "from ~¥6,600",
+        "Want it",
+        "Often ready in ~30 min"
+      ],
+      [
+        "Onitsuka Tiger shoes",
+        "Audrey, Dennis",
+        "Onitsuka Tiger (Omotesando)",
+        "Tokyo",
+        "",
+        "Want it",
+        "Japan-exclusive models; NIPPON MADE shop next door"
+      ],
+      [
+        "Imabari towels",
+        "Dennis",
+        "Imabari Towel (Minami-Aoyama)",
+        "Tokyo",
+        "",
+        "Want it"
+      ],
+      [
+        "Whiskey / sake",
+        "Dennis",
+        "",
+        "Tokyo",
+        "",
+        "Want it",
+        "No shop picked yet"
+      ],
+      [
+        "Matcha / tea",
+        "Dennis",
+        "Cha no Ikedaya (Tokyo) · Byodoin Omotesando (Uji)",
+        "Tokyo, Uji",
+        "",
+        "Want it",
+        "Uji is the source for top-grade matcha (Nakamura Tokichi, Itoh Kyuemon, Tsuen), ~1 hr stop on the Kyoto → Nara day. Cha no Ikedaya is the easy Tokyo option; also Wang Tea in Taipei"
+      ],
+      [
+        "Rings",
+        "Audrey, Dennis",
+        "glänta (Omotesando)",
+        "Tokyo",
+        "",
+        "Want it",
+        "Make-your-own pair rings, same day; also branches in Kyoto and Osaka"
+      ],
+      [
+        "Embroidered Uniqlo bag",
+        "Audrey",
+        "Uniqlo Ginza",
+        "Tokyo",
+        "from ~¥700",
+        "Want it",
+        "RE.UNIQLO STUDIO counters do embroidery, patches, and sashiko from ~¥700, at Ginza, UNIQLO TOKYO (Marunouchi), and Asakusa. Turnaround varies a lot — one report says up to 3 weeks at Ginza while printing is same-day, so ask on arrival and order early in the trip",
+        "Uniqlo embroidery FAQ ↗ · TripAdvisor thread ↗"
+      ],
+      [
+        "Travel bags (shoulder / sling)",
+        "Dennis",
+        "PORTER Omotesando",
+        "Tokyo",
+        "",
+        "Want it",
+        "Brands to compare: Porter (Yoshida) for nylon/utility, Tsuchiya Kaban and Ganzo for leather, master-piece for commuter bags, Hender Scheme for design pieces. Porter flagships: Omotesando and Marunouchi. To see many brands at once: Isetan Shinjuku bag floor, Shibuya Parco, Dover Street Market Ginza; Komehyo (Shinjuku) and Ragtag for used",
+        "Porter Omotesando ↗ · Yoshida & Co. stores ↗"
+      ],
+      [
+        "Wallet",
+        "Dennis",
+        "",
+        "Tokyo, Vietnam",
+        "",
+        "Want it",
+        "Leather brands worth trying: Ganzo, Tsuchiya Kaban, Porter; department store floors (Isetan Shinjuku) carry several at once. In Vietnam, Hoi An's leather shops make wallets to order cheaply"
+      ],
+      [
+        "Purses",
+        "Audrey",
+        "",
+        "Tokyo, Vietnam",
+        "",
+        "Want it",
+        "No shop picked yet — Komehyo (Shinjuku) for used designer, or department stores like Isetan for new. In Vietnam, Hoi An's tailors and leather shops make bags to order in a day or two; markets like Ben Thanh (Saigon) for cheaper finds"
+      ],
+      [
+        "Suit",
+        "Dennis",
+        "Hoi An tailors (Old Town)",
+        "Hoi An",
+        "",
+        "Want it",
+        "Order on day 1 so there's time for fittings. Rough prices: ~$80–150 basic, $180–300 mid-range, $280–500 good wool. Names that come up most: BeBe, A Dong Silk, Ba Ri, 45 Thu; Yaly is priciest with mixed reviews",
+        "Finding Alexx ↗ · Indochina Voyages ↗"
+      ],
+      [
+        "Overcoat",
+        "Audrey, Dennis",
+        "Hoi An tailors (Old Town)",
+        "Hoi An",
+        "",
+        "Want it",
+        "Bring reference photos; ask what the wool actually is and see the cloth first. ~400 tailors in town and the quality gap is huge, so check recent Google/TripAdvisor reviews yourself",
+        "BeBe on TripAdvisor ↗"
+      ],
+      [
+        "Trench coat",
+        "Audrey, Dennis",
+        "Hoi An tailors (Old Town)",
+        "Hoi An",
+        "",
+        "Want it",
+        "Same 3-day block as the other tailoring; get quotes at 2–3 shops before ordering, and expect 2+ fittings on structured pieces",
+        "Yaly on TripAdvisor ↗"
+      ],
+      [
+        "Ao dai",
+        "Audrey",
+        "Hoi An tailors (Old Town)",
+        "Hoi An",
+        "",
+        "Want it"
+      ]
+    ],
+    "links": {
+      "H2": [
+        {
+          "text": "Nishikawa order pillows ↗",
+          "url": "https://www.nihonbashi-nishikawa.com/lp/orderpillow/en/"
+        }
+      ],
+      "H3": [
+        {
+          "text": "Tokyo Weekender: vintage watches ↗",
+          "url": "https://www.tokyoweekender.com/things-to-do-in-tokyo/where-to-buy-vintage-watches-in-tokyo/"
+        }
+      ],
+      "H21": [
+        {
+          "text": "Uniqlo embroidery FAQ ↗",
+          "url": "https://faq-us.uniqlo.com/articles/en_US/FAQ/UNIQLO-Embroidery-Service"
+        },
+        {
+          "text": "TripAdvisor thread ↗",
+          "url": "https://www.tripadvisor.com/ShowTopic-g298184-i861-k14339135-Uniqlo_shops_with_embroidery-Tokyo_Tokyo_Prefecture_Kanto.html"
+        }
+      ],
+      "H22": [
+        {
+          "text": "Porter Omotesando ↗",
+          "url": "https://www.yoshidakaban.com/en/shopinfo/porter/omotesando/"
+        },
+        {
+          "text": "Yoshida & Co. stores ↗",
+          "url": "https://www.yoshidakaban.com/en/shopinfo/"
+        }
+      ],
+      "H25": [
+        {
+          "text": "Finding Alexx ↗",
+          "url": "https://findingalexx.com/hoi-an-tailors-guide/"
+        },
+        {
+          "text": "Indochina Voyages ↗",
+          "url": "https://www.indochinavoyages.com/travel-blog/best-tailors-in-hoi-an"
+        }
+      ],
+      "H26": [
+        {
+          "text": "BeBe on TripAdvisor ↗",
+          "url": "https://www.tripadvisor.com/Attraction_Review-g298082-d2429676-Reviews-Bebe_Tailor-Hoi_An_Quang_Nam_Province.html"
+        }
+      ],
+      "H27": [
+        {
+          "text": "Yaly on TripAdvisor ↗",
+          "url": "https://www.tripadvisor.com/Attraction_Review-g298082-d555725-Reviews-Yaly_Couture-Hoi_An_Quang_Nam_Province.html"
+        }
+      ]
+    },
+    "formulas": {}
+  }
+}
