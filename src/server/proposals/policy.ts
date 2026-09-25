@@ -160,6 +160,10 @@ export const MUTATION_POLICY = {
 	/** Closing your own reminder line. */
 	dismissRateReminder: { direct: "read" },
 
+	// ---- the welcome for people who join ----
+	/** Closing it: the caller's own seen state. */
+	markWelcomeSeen: { direct: "read" },
+
 	// ---- WP-Insights ----
 	setOpeningHours: "proposable",
 	fetchOpeningHours: "edit-only",

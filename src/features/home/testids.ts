@@ -28,6 +28,8 @@ export const HOME_TESTID = {
 	// Share dialog
 	inviteEmail: "home-invite-email",
 	inviteRole: "home-invite-role",
+	/** The invite's optional note (the welcome's quote). */
+	inviteNote: "home-invite-note",
 	inviteSubmit: "home-invite-submit",
 	memberRow: "home-member-row",
 	memberRole: "home-member-role",
@@ -44,6 +46,8 @@ export const HOME_TESTID = {
 	linkCreated: "home-share-link-created",
 	/** FB-13: the one link's role Select. */
 	linkRole: "home-share-link-role",
+	/** The link's optional note for people who join. */
+	linkNote: "home-share-link-note",
 	// Trip settings
 	settingsName: "home-settings-name",
 	settingsSlug: "home-settings-slug",

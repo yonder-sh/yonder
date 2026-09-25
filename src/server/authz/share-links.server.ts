@@ -163,8 +163,8 @@ export async function joinRateLinks(
 	const joined: string[] = [];
 	for (const r of res.rows as { tripId: string; color: number | string }[]) {
 		const ins = await tx.execute(sql`
-			insert into trip_members (id, trip_id, user_id, status, role, color, joined_at)
-			values (${newId()}, ${r.tripId}, ${userId}, 'active', 'rater', ${Number(r.color)}, now())
+			insert into trip_members (id, trip_id, user_id, status, role, color, joined_at, joined_by_link)
+			values (${newId()}, ${r.tripId}, ${userId}, 'active', 'rater', ${Number(r.color)}, now(), true)
 			on conflict do nothing
 			returning trip_id`);
 		if (!ins.rows.length) continue;

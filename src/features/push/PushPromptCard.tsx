@@ -17,6 +17,7 @@ import { BellRing, Share, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { useWelcome } from "@/features/welcome/welcome-store";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import {
 	enablePush,
@@ -33,6 +34,8 @@ const SHOW_AFTER_MS = 1200;
 
 export function PushPromptCard() {
 	const { mode } = useWorkspace();
+	// The welcome asks first (and marks this seen): wait until it has settled.
+	const welcome = useWelcome((s) => s.status);
 	const live = mode === "live";
 	const account = useHasAccount(live);
 	const settings = usePushSettings(live && account);
@@ -44,6 +47,7 @@ export function PushPromptCard() {
 	useEffect(() => {
 		if (!publicKey) return;
 		void syncPushSubscription(publicKey);
+		if (welcome !== "done") return;
 		const env = pushEnv();
 		if (promptSeen() || env === "unsupported") return;
 		if (env === "supported" && permission() !== "default") return;
@@ -52,9 +56,9 @@ export function PushPromptCard() {
 			SHOW_AFTER_MS,
 		);
 		return () => clearTimeout(t);
-	}, [publicKey]);
+	}, [publicKey, welcome]);
 
-	if (!show || !publicKey) return null;
+	if (!show || !publicKey || welcome !== "done") return null;
 
 	const close = () => {
 		markPromptSeen();

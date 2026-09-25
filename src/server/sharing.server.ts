@@ -64,12 +64,13 @@ type LiveLink = {
 	role: ShareRole;
 	enabled: boolean;
 	expired: boolean;
+	note: string | null;
 };
 
 /** Newest first: "the" link is the newest live row (the only one after the migration). */
 async function liveLinks(tx: SqlExec, tripId: string): Promise<LiveLink[]> {
 	const res = await tx.execute(sql`
-		select id::text as id, role::text as role, enabled,
+		select id::text as id, role::text as role, enabled, note,
 		       (expires_at is not null and expires_at <= now()) as expired
 		  from share_links
 		 where trip_id = ${tripId} and revoked_at is null
@@ -133,6 +134,7 @@ async function createLink(
 	role: ShareRole,
 	userId: string,
 	enabled = true,
+	note: string | null = null,
 ): Promise<{ id: string }> {
 	const [row] = await tx
 		.insert(shareLinks)
@@ -142,6 +144,7 @@ async function createLink(
 			enabled,
 			createdBy: userId,
 			expiresAt: linkExpiry(role),
+			note,
 		})
 		.returning({ id: shareLinks.id });
 	if (!row) throw new Error("createLink: insert returned no row");
@@ -231,6 +234,21 @@ export async function setLinkEnabled(
 	out.emit({ keys: ["sharing", "graph"] });
 }
 
+/** The link's note for people who join (the welcome's quote); null clears it. */
+export async function setLinkNote(
+	tx: Tx,
+	out: TxOutbox,
+	tripId: string,
+	note: string | null,
+): Promise<void> {
+	const link = await theLink(tx, out, tripId);
+	if (!link) return fail("NOT_FOUND", "link");
+	await tx.execute(
+		sql`update share_links set note = ${note?.trim() || null} where id = ${link.id}`,
+	);
+	out.emit({ keys: ["sharing"] });
+}
+
 /** "Extend": the link expires LINK_TTL_DAYS (of its role) from now. */
 export async function extendLink(
 	tx: Tx,
@@ -272,6 +290,7 @@ export async function resetLink(
 			role ?? was?.role ?? DEFAULT_LINK_ROLE,
 			userId,
 			was ? was.enabled : true,
+			was?.note ?? null,
 		);
 	out.emit({ entity: "trip" });
 	out.emit({ keys: ["sharing", "graph"] });
@@ -315,6 +334,7 @@ export type SharingRows = {
 		useCount: number;
 		expiresAt: Date | null;
 		createdAt: Date | null;
+		note: string | null;
 	} | null;
 	guests: {
 		userId: string;
@@ -344,7 +364,7 @@ export async function loadSharing(
 	const links = await exec.execute(sql`
 		select role::text as role, enabled,
 		       last_used_at as "lastUsedAt", use_count as "useCount", expires_at as "expiresAt",
-		       created_at as "createdAt"
+		       created_at as "createdAt", note
 		  from share_links where trip_id = ${tripId} and revoked_at is null
 		 order by created_at desc, id desc
 		 limit 1`);

@@ -39,6 +39,7 @@ import {
 	SuggestModeControl,
 	SuggestModeMenuItem,
 } from "@/features/suggest/SuggestModeControl";
+import { WelcomeMenuItem } from "@/features/welcome/WelcomeDialog";
 import { TESTID } from "@/lib/testids";
 import { useUi } from "@/lib/workspace/ui-store";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
@@ -96,6 +97,7 @@ export function TripMenuItems() {
 				<Keyboard /> Keyboard shortcuts
 				<DropdownMenuShortcut>?</DropdownMenuShortcut>
 			</DropdownMenuItem>
+			<WelcomeMenuItem />
 			<DropdownMenuSeparator />
 			<DropdownMenuItem asChild>
 				<Link to="/dashboard">

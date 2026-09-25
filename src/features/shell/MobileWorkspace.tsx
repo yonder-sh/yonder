@@ -44,6 +44,7 @@ import {
 	SuggestModeControl,
 	SuggestModeMenuItem,
 } from "@/features/suggest/SuggestModeControl";
+import { WelcomeMenuItem } from "@/features/welcome/WelcomeDialog";
 import { mustRedact } from "@/lib/auth/roles";
 import { signOut } from "@/lib/auth/sign-out";
 import { TESTID } from "@/lib/testids";
@@ -192,6 +193,7 @@ function MobilePills() {
 							>
 								View settings…
 							</DropdownMenuItem>
+							<WelcomeMenuItem iconless />
 							<DropdownMenuSeparator />
 							<DropdownMenuItem onSelect={() => setProfileOpen(true)}>
 								Profile

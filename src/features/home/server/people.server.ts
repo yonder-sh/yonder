@@ -145,6 +145,8 @@ export async function inviteCore(
 		email: string;
 		role: ShareRole;
 		inviter: { id: string; email: string };
+		/** A one-line note for the welcome. */
+		note?: string | null;
 	},
 ): Promise<InviteResult> {
 	const email = args.email.trim().toLowerCase();
@@ -161,14 +163,15 @@ export async function inviteCore(
 		return fail("CONFLICT", "They're already invited.");
 	const color = await nextColor(tx, args.tripId);
 	const memberId = newId();
+	const note = args.note?.trim() || null;
 	if (account)
 		await tx.execute(sql`
-			insert into trip_members (id, trip_id, user_id, status, role, color, invited_by, joined_at)
-			values (${memberId}, ${args.tripId}, ${account.id}, 'active', ${args.role}, ${color}, ${args.inviter.id}, now())`);
+			insert into trip_members (id, trip_id, user_id, status, role, color, invited_by, joined_at, invite_note)
+			values (${memberId}, ${args.tripId}, ${account.id}, 'active', ${args.role}, ${color}, ${args.inviter.id}, now(), ${note})`);
 	else
 		await tx.execute(sql`
-			insert into trip_members (id, trip_id, status, role, email, color, invited_by)
-			values (${memberId}, ${args.tripId}, 'invited', ${args.role}, ${email}, ${color}, ${args.inviter.id})`);
+			insert into trip_members (id, trip_id, status, role, email, color, invited_by, invite_note)
+			values (${memberId}, ${args.tripId}, 'invited', ${args.role}, ${email}, ${color}, ${args.inviter.id}, ${note})`);
 	if (account) {
 		// Invited as "Can view": an old edit-link grant doesn't outrank it.
 		await dropLinkGrants(tx, out, args.tripId, account.id);
@@ -214,6 +217,8 @@ export async function linkPlaceholderToEmail(
 		placeholder: MemberRow;
 		email: string;
 		linkerRole: TripRole;
+		/** Who linked it (the welcome's "Maya invited you"). */
+		linkerId?: string;
 	},
 ): Promise<LinkResult> {
 	const { tripId, placeholder } = args;
@@ -241,7 +246,8 @@ export async function linkPlaceholderToEmail(
 	}
 	await tx.execute(sql`
 		update trip_members
-		   set status = 'invited', email = ${email}, role = ${role}, updated_at = now()
+		   set status = 'invited', email = ${email}, role = ${role},
+		       invited_by = coalesce(${args.linkerId ?? null}, invited_by), updated_at = now()
 		 where id = ${placeholder.id} and trip_id = ${tripId}`);
 	out.emit({ entity: "member", keys: ["graph", "sharing"] });
 	return { kind: "invited", email };
@@ -300,8 +306,8 @@ export async function promoteGuestCore(
 	} else {
 		memberId = newId();
 		await tx.execute(sql`
-			insert into trip_members (id, trip_id, user_id, status, role, color, joined_at)
-			values (${memberId}, ${args.tripId}, ${g.id}, 'active', ${args.role}, ${Number(g.color ?? 0)}, now())`);
+			insert into trip_members (id, trip_id, user_id, status, role, color, joined_at, joined_by_link)
+			values (${memberId}, ${args.tripId}, ${g.id}, 'active', ${args.role}, ${Number(g.color ?? 0)}, now(), true)`);
 	}
 	const placeholders = await tx.execute(sql`
 		select id::text as id, display_name as name, status::text as status

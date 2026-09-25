@@ -55,6 +55,7 @@ import {
 	removeGuestGrants,
 	resetLink,
 	setLinkEnabled,
+	setLinkNote,
 	tripUrl,
 } from "@/server/sharing.server";
 import { mutationMeta, withTripTx } from "@/server/tx.server";
@@ -101,6 +102,8 @@ export type SharingDto = {
 		expiresAt: string | null;
 		/** When this link was made (a reset makes a new one; QA SHARE-08). */
 		createdAt: string | null;
+		/** The owner's note for people who join (the welcome's quote). */
+		note: string | null;
 	} | null;
 	guests: {
 		userId: string;
@@ -113,6 +116,8 @@ export type SharingDto = {
 };
 
 const TripId = z.object({ tripId: z.uuid() });
+/** The inviter's one-line note on the welcome (empty = none). */
+const InviteNote = z.string().trim().max(140).nullable();
 /** "Can view" / "Can suggest" / "Can edit" (EXTENSIONS §1.4). */
 const Role = z.enum(SHARE_ROLE_VALUES);
 
@@ -179,6 +184,7 @@ export const getSharing = createServerFn({ method: "GET" })
 						useCount: l.useCount,
 						expiresAt: iso(l.expiresAt),
 						createdAt: iso(l.createdAt),
+						note: l.note ?? null,
 					}
 				: null,
 			guests: owner
@@ -202,7 +208,13 @@ export const getSharing = createServerFn({ method: "GET" })
  */
 export const inviteMember = createServerFn({ method: "POST" })
 	.middleware([withAccount])
-	.validator(TripId.extend({ email: z.email().max(254), role: Role }).strict())
+	.validator(
+		TripId.extend({
+			email: z.email().max(254),
+			role: Role,
+			note: InviteNote.optional(),
+		}).strict(),
+	)
 	.handler(
 		async ({
 			data,
@@ -226,6 +238,7 @@ export const inviteMember = createServerFn({ method: "POST" })
 						email: data.email,
 						role: data.role,
 						inviter: { id: context.user.id, email: context.user.email },
+						note: data.note,
 					});
 					// Never the address: every member (and guest) reads the activity.
 					await logActivity(tx, out, {
@@ -256,6 +269,7 @@ export const inviteMember = createServerFn({ method: "POST" })
 				tripName: r.trip.name,
 				slug: r.trip.slug,
 				roleLabel: roleLabel(data.role),
+				note: data.note?.trim() || null,
 			});
 			return { memberId: r.memberId, status: r.status };
 		},
@@ -308,6 +322,7 @@ export const linkPlaceholder = createServerFn({ method: "POST" })
 						placeholder: ph,
 						email: data.email,
 						linkerRole: access.role,
+						linkerId: context.user.id,
 					}),
 				);
 				await logActivity(tx, out, {
@@ -473,16 +488,25 @@ export const removeMember = createServerFn({ method: "POST" })
  * everyone who came in through it (their open sockets re-check; "Can view"
  * withdraws their open suggestions). OFF revokes: its guests' grants are
  * deleted and their sockets closed at once; turning it on again restores
- * nobody (they open the address again).
+ * nobody (they open the address again). `note` is the welcome's one line for
+ * people who join through it.
  */
 export const setShareLink = createServerFn({ method: "POST" })
 	.middleware([withAccount])
 	.validator(
-		TripId.extend({ role: Role.optional(), enabled: z.boolean().optional() })
+		TripId.extend({
+			role: Role.optional(),
+			enabled: z.boolean().optional(),
+			note: InviteNote.optional(),
+		})
 			.strict()
-			.refine((d) => d.role !== undefined || d.enabled !== undefined, {
-				message: "role or enabled",
-			}),
+			.refine(
+				(d) =>
+					d.role !== undefined ||
+					d.enabled !== undefined ||
+					d.note !== undefined,
+				{ message: "role, enabled or note" },
+			),
 	)
 	.handler(async ({ data, context }): Promise<{ ok: true }> => {
 		const access = await requireDirect(
@@ -506,14 +530,17 @@ export const setShareLink = createServerFn({ method: "POST" })
 		return withTripTx(
 			data.tripId,
 			async (tx, out) => {
-				await setLinkEnabled(
-					tx,
-					out,
-					data.tripId,
-					data.role ?? null,
-					data.enabled ?? null,
-					context.user.id,
-				);
+				if (data.role !== undefined || data.enabled !== undefined)
+					await setLinkEnabled(
+						tx,
+						out,
+						data.tripId,
+						data.role ?? null,
+						data.enabled ?? null,
+						context.user.id,
+					);
+				if (data.note !== undefined)
+					await setLinkNote(tx, out, data.tripId, data.note);
 				return { ok: true as const };
 			},
 			mutationMeta(access, context.user),

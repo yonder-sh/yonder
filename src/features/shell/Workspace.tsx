@@ -23,6 +23,7 @@ import { AddPlaceDialog } from "@/features/places/AddPlaceDialog";
 import { PushPromptCard } from "@/features/push/PushPromptCard";
 import { ReviewDrawer } from "@/features/suggest/ReviewDrawer";
 import { AddFlightDialog } from "@/features/transit/AddFlightDialog";
+import { WelcomeGate } from "@/features/welcome/WelcomeDialog";
 import { mustRedact } from "@/lib/auth/roles";
 import { TESTID } from "@/lib/testids";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
@@ -102,6 +103,8 @@ export function Workspace() {
 			<ActivityDialog />
 			<ShortcutsDialog />
 			<ViewSettingsDialog />
+			{/* The welcome, the first time someone opens a trip they didn't create. */}
+			{live ? <WelcomeGate /> : null}
 			{/* Web Push: "Turn on notifications", the first time on a device. */}
 			{live ? <PushPromptCard /> : null}
 		</WorkspaceDnd>

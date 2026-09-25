@@ -20,10 +20,13 @@ export function inviteEmail(p: {
 	tripName: string;
 	url: string;
 	roleLabel: string;
+	/** The inviter's one-line note. */
+	note?: string | null;
 }): { subject: string; text: string; html: string } {
 	const subject = `${p.inviter} invited you to ${p.tripName} on ${p.appName}`;
 	const text = [
 		`${p.inviter} invited you to plan “${p.tripName}” together on ${p.appName} (${p.roleLabel.toLowerCase()}).`,
+		...(p.note ? ["", `“${p.note}”`] : []),
 		"",
 		`Open the trip: ${p.url}`,
 		"",
@@ -34,6 +37,9 @@ export function inviteEmail(p: {
 	const trip = escapeHtml(p.tripName);
 	const href = escapeHtml(p.url);
 	const role = escapeHtml(p.roleLabel.toLowerCase());
+	const note = p.note
+		? `<tr><td style="padding:16px 32px 0;font-size:15px;line-height:1.5;font-style:italic">“${escapeHtml(p.note)}”</td></tr>\n`
+		: "";
 	// Hex colours from brand/tokens (email clients don't support oklch()).
 	const html = `<!doctype html><html><body style="margin:0;background:#f9fafd;font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#181d2f">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:40px 16px">
@@ -41,7 +47,7 @@ export function inviteEmail(p: {
 <tr><td style="padding:32px 32px 8px;font-size:15px;color:#5c6375">${app}</td></tr>
 <tr><td style="padding:0 32px;font-size:22px;font-weight:600;line-height:1.3">${inviter} invited you to ${trip}</td></tr>
 <tr><td style="padding:12px 32px 0;font-size:14px;line-height:1.5;color:#5c6375">You can ${role === "can edit" ? "edit the plan" : role === "can suggest" ? "suggest changes" : role === "can rate" ? "rate places" : "view the plan"} with everyone on the trip.</td></tr>
-<tr><td style="padding:24px 32px"><a href="${href}" style="display:inline-block;background:#494fa7;color:#f9faff;text-decoration:none;font-weight:600;font-size:14px;padding:10px 18px;border-radius:10px">Open the trip</a></td></tr>
+${note}<tr><td style="padding:24px 32px"><a href="${href}" style="display:inline-block;background:#494fa7;color:#f9faff;text-decoration:none;font-weight:600;font-size:14px;padding:10px 18px;border-radius:10px">Open the trip</a></td></tr>
 <tr><td style="padding:0 32px 32px;font-size:13px;line-height:1.5;color:#5c6375">Sign in with this email address and the trip will be waiting for you.</td></tr>
 </table></td></tr></table></body></html>`;
 	return { subject, text, html };
@@ -54,6 +60,7 @@ export async function sendInvite(p: {
 	tripName: string;
 	slug: string;
 	roleLabel: string;
+	note?: string | null;
 }): Promise<void> {
 	try {
 		const env = getEnv();
@@ -64,6 +71,7 @@ export async function sendInvite(p: {
 			tripName: p.tripName,
 			url,
 			roleLabel: p.roleLabel,
+			note: p.note,
 		});
 		await sendMail({ to: p.to, ...mail, outboxMeta: { kind: "invite" } });
 	} catch (e) {

@@ -452,7 +452,7 @@ describe("members (SHARE)", () => {
 		// The validator refuses a call with neither.
 		expect(
 			await codeOf(call(setShareLink, U.owner, { tripId: c.tripId })),
-		).toMatch(/role or enabled/);
+		).toMatch(/role, enabled or note/);
 		const { url, slug } = await call<{ url: string; slug: string }>(
 			resetShareLink,
 			U.owner,

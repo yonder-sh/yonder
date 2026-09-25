@@ -214,15 +214,27 @@ function useShareAction(tripId: string) {
 // People
 // ---------------------------------------------------------------------------
 
+/** The welcome's quote (and the invite email's), e.g. "Rate the Kyoto places before Sunday!". */
+const NOTE_MAX = 140;
+const NOTE_EXAMPLE = "Rate the Kyoto places before Sunday!";
+
 function InviteRow({ tripId }: { tripId: string }) {
 	const [email, setEmail] = useState("");
 	const [role, setRole] = useState<ShareRole>("editor");
+	const [note, setNote] = useState("");
 	const [error, setError] = useState<string | null>(null);
 	const { disabled, reason } = useEditGuard();
 	const qc = useQueryClient();
 	const invite = useMutation({
 		mutationFn: () =>
-			inviteMember({ data: { tripId, email: email.trim(), role } }),
+			inviteMember({
+				data: {
+					tripId,
+					email: email.trim(),
+					role,
+					...(note.trim() ? { note: note.trim() } : {}),
+				},
+			}),
 		meta: { silent: true },
 		onSuccess: async (r) => {
 			toast.success(
@@ -231,6 +243,7 @@ function InviteRow({ tripId }: { tripId: string }) {
 					: `Invited ${email.trim()}. They'll get an email.`,
 			);
 			setEmail("");
+			setNote("");
 			setError(null);
 			await Promise.all([
 				qc.invalidateQueries({ queryKey: tripKeys.sharing(tripId) }),
@@ -286,12 +299,62 @@ function InviteRow({ tripId }: { tripId: string }) {
 					<Mail /> Invite
 				</Button>
 			</div>
+			{/* Once there's an address: an optional note for their welcome. */}
+			{email.trim() ? (
+				<Input
+					value={note}
+					maxLength={NOTE_MAX}
+					placeholder={`Add a note (optional), e.g. “${NOTE_EXAMPLE}”`}
+					aria-label="A note for them (optional)"
+					disabled={disabled}
+					onChange={(e) => setNote(e.target.value)}
+					data-testid={HOME_TESTID.inviteNote}
+					className="h-8"
+				/>
+			) : null}
 			{error ? (
 				<p className="text-[13px] text-destructive" role="alert">
 					{error}
 				</p>
 			) : null}
 		</form>
+	);
+}
+
+/** The link's note for people who join (their welcome shows it). */
+function LinkNote({ tripId, note }: { tripId: string; note: string | null }) {
+	const act = useShareAction(tripId);
+	const { disabled } = useEditGuard();
+	const [draft, setDraft] = useState<string | null>(null);
+	const save = (raw: string) => {
+		setDraft(null);
+		const next = raw.trim();
+		if (next === (note ?? "")) return;
+		act.mutate(
+			() => setShareLink({ data: { tripId, note: next ? next : null } }),
+			{
+				onSuccess: () => toast.success(next ? "Note saved" : "Note removed"),
+			},
+		);
+	};
+	return (
+		<Input
+			value={draft ?? note ?? ""}
+			maxLength={NOTE_MAX}
+			placeholder={`A note for people who join (optional), e.g. “${NOTE_EXAMPLE}”`}
+			aria-label="A note for people who join (optional)"
+			disabled={disabled || act.isPending}
+			onChange={(e) => setDraft(e.target.value)}
+			onBlur={(e) => save(e.target.value)}
+			onKeyDown={(e) => {
+				if (e.key === "Enter") {
+					e.preventDefault();
+					save(e.currentTarget.value);
+				}
+			}}
+			data-testid={HOME_TESTID.linkNote}
+			className="h-8 text-[13px]"
+		/>
 	);
 }
 
@@ -800,6 +863,7 @@ function TripLink({ tripId, data }: { tripId: string; data: SharingDto }) {
 					) : null}
 				</div>
 				<AddressRow url={data.url} />
+				{on ? <LinkNote tripId={tripId} note={link?.note ?? null} /> : null}
 				{!confirm ? (
 					<div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
 						<p
