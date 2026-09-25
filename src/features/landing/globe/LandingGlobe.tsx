@@ -35,7 +35,11 @@ export function LandingGlobe({ className }: { className?: string }) {
 			role="img"
 			aria-labelledby="landing-globe-title"
 			overflow="visible"
-			className={cn("landing-globe block h-auto w-full", className)}
+			className={cn(
+				// Decoration: its glow runs under the header and the hero's button.
+				"landing-globe pointer-events-none block h-auto w-full",
+				className,
+			)}
 		>
 			<title id="landing-globe-title">
 				A globe with an example trip drawn on it: from New York to Tokyo and
