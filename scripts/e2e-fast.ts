@@ -41,6 +41,7 @@ import {
 	type Running,
 	sourceEnv,
 	startEnv,
+	startWeatherStub,
 	stopAll,
 	stopPostgres,
 	TEMPLATE_DB,
@@ -261,9 +262,11 @@ async function main(): Promise<number> {
 	stopLeftovers();
 	assertMemory("e2e:fast");
 	const startedPg = await ensurePostgres();
+	const stopWeather = await startWeatherStub();
 	try {
 		return await run(args, t0);
 	} finally {
+		stopWeather();
 		if (!args.keep && startedPg) stopPostgres();
 	}
 }

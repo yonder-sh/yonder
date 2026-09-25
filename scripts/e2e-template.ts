@@ -39,6 +39,7 @@ import {
 	sleep,
 	sourceEnv,
 	startEnv,
+	startWeatherStub,
 	stopAll,
 	TEMPLATE_DB,
 	VITE_BASE_CACHE,
@@ -412,8 +413,10 @@ async function warmCaches(): Promise<void> {
 if (process.argv[1]?.endsWith("e2e-template.ts")) {
 	const main = process.argv.includes("--warm-caches")
 		? warmCaches()
-		: ensureTemplate({ force: process.argv.includes("--force") }).then(
-				() => {},
+		: startWeatherStub().then((stopWeather) =>
+				ensureTemplate({ force: process.argv.includes("--force") })
+					.then(() => {})
+					.finally(stopWeather),
 			);
 	main.catch((e) => {
 		console.error("[e2e:template]", e instanceof Error ? e.message : e);

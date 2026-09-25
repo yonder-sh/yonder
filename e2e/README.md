@@ -16,6 +16,8 @@ It starts several isolated copies of the app (each with its own database cloned 
 
 Flags: `--envs N`, `--rebuild` (refresh the template), `--keep` (leave the envs running), `--baseline <file>` (mark new failures). The HTML report lands in `e2e/playwright-report/fast`, logs in `.data/e2e-fast/`.
 
+Climate comes from a local Open-Meteo stub (`e2e/stubs/weather-stub.mjs`), so runs never spend the free API's daily quota.
+
 ## Run against one env
 
 The single-env runner still works, e.g. while writing a spec:
