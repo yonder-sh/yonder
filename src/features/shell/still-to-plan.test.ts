@@ -82,6 +82,17 @@ describe("stillToPlan on the demo trip", () => {
 		]);
 	});
 
+	it("a night in a town (no hotel yet) still needs a stay", () => {
+		const s = scenario({
+			days: [
+				{ night: "tokyo", items: [] },
+				{ night: "ryokan", items: [] },
+				{ items: [] },
+			],
+		});
+		expect(run(s.graph).nights.map((x) => x.dayId)).toEqual([s.D.d1]);
+	});
+
 	it("an overnight flight covers its night", () => {
 		const s = scenario({
 			days: [

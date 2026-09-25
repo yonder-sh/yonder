@@ -3,8 +3,9 @@
  * is still missing, each with enough to link to a filtered view.
  *
  * - **Nights with no stay:** every day but the last whose `nightNodeId` is
- *   empty, unless a timed leg (overnight flight, night train) leaves that day
- *   and lands on a later one.
+ *   empty or only a town (the day split's "Tokyo", no hotel yet), unless a
+ *   timed leg (overnight flight, night train) leaves that day and lands on a
+ *   later one.
  * - **Still to book:** open to-dos that are booking tasks ("Book ahead",
  *   "Book Shibuya Sky…", or a booking window: `dueKind: 'opens'`).
  * - **Windows opening in the next 14 days:** open `opens` to-dos whose
@@ -282,7 +283,9 @@ function nightsWithoutStay(ix: GraphIndex): StillToPlan["nights"] {
 	}
 	return days
 		.slice(0, -1)
-		.filter((d) => !d.nightNodeId && !covered.has(d.id))
+		.filter(
+			(d) => ix.node(d.nightNodeId)?.type !== "place" && !covered.has(d.id),
+		)
 		.map((d) => ({ dayId: d.id, date: d.date }));
 }
 

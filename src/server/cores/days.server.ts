@@ -220,7 +220,11 @@ export async function updateDayCore(
 	return { updatedAt: row.updatedAt.toISOString() };
 }
 
-/** `day.stay`: the night's stay for a day range; the node must be a live place. Keys: graph. */
+/**
+ * `day.stay`: the night's stay for a day range: a live place (the hotel), or
+ * the town you sleep in before one is picked (a city, region or area; the
+ * Schedule step's day split). Never a country. Keys: graph.
+ */
 export async function setDayStayCore(
 	tx: Tx,
 	out: TxOutbox,
@@ -237,7 +241,8 @@ export async function setDayStayCore(
 	if (data.nodeId) {
 		const node = ix.node(data.nodeId);
 		if (!node) return fail("NOT_FOUND", "place");
-		if (node.type !== "place") return fail("VALIDATION", "a stay is a place");
+		if (node.type === "country")
+			return fail("VALIDATION", "a stay is a place or a town");
 		if (ix.isDropped(node.id))
 			return fail("CONFLICT", "restore the place first");
 	}

@@ -646,11 +646,20 @@ describe("days (§7.7): never lose items", () => {
 				.filter((d) => d.nightNodeId === c.ids.nodes.ryokan)
 				.map((d) => d.id),
 		).toEqual(expect.arrayContaining([D.d1, D.d2, D.d3]));
+		// A town before the hotel is picked (the day split); never a country.
+		await call(setDayStay, U.owner, {
+			fromDayId: D.d1,
+			nodeId: c.ids.nodes.tokyo,
+		});
+		const after = await graphOf(c.tripId);
+		expect(after.days.find((d) => d.id === D.d1)?.nightNodeId).toBe(
+			c.ids.nodes.tokyo,
+		);
 		expect(
 			await codeOf(
 				call(setDayStay, U.owner, {
 					fromDayId: D.d1,
-					nodeId: c.ids.nodes.tokyo,
+					nodeId: c.ids.nodes.japan,
 				}),
 			),
 		).toBe("VALIDATION");
