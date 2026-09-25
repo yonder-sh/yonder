@@ -13,10 +13,18 @@ import { toast } from "sonner";
 import { CategoryIcon } from "@/components/common/glyphs";
 import { Button } from "@/components/ui/button";
 import { raters } from "@/features/places/lib/rate";
+import { useMoveItem, useSetDayStay } from "@/features/places/mutations";
+import {
+	buildRows,
+	type PlaceRow,
+	placesInScope,
+} from "@/features/places/tab/model";
+import { PLACES_TAB_TESTID as T } from "@/features/places/tab/testids";
+import { ScoreChip } from "@/features/places/tab/ui";
+import type { PlacesData } from "@/features/places/tab/use-places";
 import { humanError } from "@/lib/errors";
 import { formatDayDate, formatDuration } from "@/lib/format";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
-import { useMoveItem, useSetDayStay } from "../mutations";
 import {
 	type ApplyPlan,
 	applyPlan,
@@ -36,10 +44,6 @@ import {
 	unusedText,
 	withOverrides,
 } from "./day-split";
-import { buildRows, type PlaceRow, placesInScope } from "./model";
-import { PLACES_TAB_TESTID as T } from "./testids";
-import { ScoreChip } from "./ui";
-import type { PlacesData } from "./use-places";
 
 const NO_FREE_DAY = "No free days left. Take one from another city first.";
 

@@ -6,15 +6,16 @@
  * on the days, and what applying it writes (the nights) and moves off a day
  * (places on a day that changes city). Pure.
  */
+
+import type { CityDaysTable } from "@/features/places/lib/days";
+import { isRateable } from "@/features/places/lib/rate";
+import type { PlaceRow } from "@/features/places/tab/model";
+import { cityRowOf, sightDays } from "@/features/places/tab/schedule-next";
+import { compareByScore } from "@/features/places/tab/score";
 import { defaultItemDuration } from "@/lib/domain/taxonomy";
 import { haversineKm, type LngLat } from "@/lib/engine/geo";
 import type { GraphIndex } from "@/lib/engine/graph-index";
 import type { GraphItem, GraphMember } from "@/lib/engine/types";
-import type { CityDaysTable } from "../lib/days";
-import { isRateable } from "../lib/rate";
-import type { PlaceRow } from "./model";
-import { cityRowOf, sightDays } from "./schedule-next";
-import { compareByScore } from "./score";
 
 // ---------------------------------------------------------------------------
 // Cities and what their shortlist needs

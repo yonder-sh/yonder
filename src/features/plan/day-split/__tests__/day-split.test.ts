@@ -7,6 +7,7 @@
 import { describe, expect, it } from "vitest";
 import { cityDayTable } from "@/features/places/lib/days";
 import { raters } from "@/features/places/lib/rate";
+import { buildRows, placesInScope } from "@/features/places/tab/model";
 import type { DaySpec, LegSpec } from "@/lib/engine/__fixtures__/demo";
 import { scenario } from "@/lib/engine/__fixtures__/demo";
 import { haversineKm, type LngLat } from "@/lib/engine/geo";
@@ -37,7 +38,6 @@ import {
 	unusedText,
 	withOverrides,
 } from "../day-split";
-import { buildRows, placesInScope } from "../model";
 
 const D = DEMO_MEMBERS.dennis;
 const A = DEMO_MEMBERS.audrey;

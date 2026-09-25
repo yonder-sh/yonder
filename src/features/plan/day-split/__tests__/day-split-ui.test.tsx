@@ -6,14 +6,14 @@
  */
 import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
+import { PlacesTab } from "@/features/places/tab/PlacesTab";
+import { PLACES_TAB_TESTID as T } from "@/features/places/tab/testids";
 import type { DaySpec } from "@/lib/engine/__fixtures__/demo";
 import type { GraphNode, Priority, TripGraph } from "@/lib/engine/types";
 import { DEMO_MEMBERS, scenario } from "@/lib/fixtures/demo";
 import { useUi } from "@/lib/workspace/ui-store";
 import { renderWithWorkspace } from "@/test/render-workspace";
 import { splitOverrides } from "../DaySplit";
-import { PlacesTab } from "../PlacesTab";
-import { PLACES_TAB_TESTID as T } from "../testids";
 
 const fns = vi.hoisted(() => ({
 	setDayStay: vi.fn(async (_: { data: unknown }) => ({ dayIds: [] })),

@@ -15,6 +15,12 @@ import { type ReactNode, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { DaysPerCityTable } from "@/features/places/DaysPerCityTable";
 import {
+	DaysLine,
+	SplitSuggestion,
+	useApplySplit,
+	useDaySplit,
+} from "@/features/plan/day-split/DaySplit";
+import {
 	formatDateRange,
 	formatDayDate,
 	formatDistance,
@@ -23,12 +29,6 @@ import {
 import { useUi } from "@/lib/workspace/ui-store";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { formatDays } from "../lib/days";
-import {
-	DaysLine,
-	SplitSuggestion,
-	useApplySplit,
-	useDaySplit,
-} from "./DaySplit";
 import type { FlowTally } from "./flow";
 import { formatDayNumbers } from "./model";
 import { categoryLabel } from "./PlacesTable";
