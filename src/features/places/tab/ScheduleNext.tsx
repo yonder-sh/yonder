@@ -260,7 +260,7 @@ function WindowSection({ w }: { w: WindowPlan }) {
 					· {nums}
 				</span>
 				<span className="ml-auto font-mono text-xs text-muted-foreground tnum">
-					{w.count} to schedule
+					{w.count} not on a day
 				</span>
 			</header>
 			{w.groups.map((g) => (
@@ -387,7 +387,7 @@ export function ScheduleNext({
 						<p className="max-w-prose text-sm text-muted-foreground">
 							{tally.shortlisted
 								? "New places join the shortlist as people rate them. They'll wait here, next to the days you're in their city."
-								: `Rate places first: anything the group scores ${data.threshold >= 0 ? "+" : ""}${data.threshold} or more (one Must, or a Really want and a Want) is shortlisted and shows up here with the days it fits.`}
+								: "Rate places first: the places the group likes most make the shortlist and show up here with the days they fit."}
 						</p>
 						{!tally.shortlisted && tally.toRate ? (
 							<Button size="sm" onClick={onRate}>

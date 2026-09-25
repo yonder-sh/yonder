@@ -1,13 +1,13 @@
 /**
  * The planning flow (owner, 2026-09-25): **rate places → review them →
- * schedule the shortlist**. Adding is an action on every step ("Add a
+ * add the shortlist to days**. Adding is an action on every step ("Add a
  * place"), not a step. The Places tab leads with the three steps, each with
  * its count ("12 to rate", "48 places", "9 shortlisted · 4 not on a day");
- * the step with work waiting for you gets a dot, the Overview's next-step
- * card and the phone's Rate pill read the same numbers. Pure.
+ * the step with work waiting for you gets a dot, and the phone's Rate pill
+ * reads the same numbers. Pure.
  *
  * The step lives in the URL as the view (`pv`): table / board / map are
- * Review, `rate` is Rate, `schedule` is Schedule, so every old `pv` link
+ * Review, `rate` is Rate, `schedule` is Add to days, so every old `pv` link
  * still lands where it did. Without `pv` the tab picks the most useful
  * step (`pickStep`).
  */
@@ -24,7 +24,7 @@ export type ReviewView = (typeof REVIEW_VIEWS)[number];
 export const STEP_LABEL: Record<FlowStep, string> = {
 	rate: "Rate",
 	review: "Review",
-	schedule: "Schedule",
+	schedule: "Add to days",
 };
 
 /** The step a `pv` names (null: none, the tab picks one). */
@@ -148,44 +148,4 @@ export function stepCounts(
 			? `${t.shortlisted} shortlisted · ${t.notOnDay} not on a day`
 			: `${t.shortlisted} shortlisted · all on a day`;
 	return { rate, review, schedule };
-}
-
-/** The next-step card's steps: Rate, Schedule, or adding (an action, no step). */
-export type CardStep = Exclude<FlowStep, "review"> | "add";
-
-export type NextStepCard = {
-	step: CardStep;
-	/** "12 places to rate". */
-	text: string;
-	/** "Start rating". */
-	action: string;
-};
-
-/**
- * The Overview's one next-step card: places to rate, else shortlisted
- * places to put on days, else adding places (editors). Null: nothing to say.
- */
-export function nextStepCard(
-	t: FlowTally,
-	c: FlowContext,
-): NextStepCard | null {
-	if (t.toRate)
-		return {
-			step: "rate",
-			text: `${plural(t.toRate, "place")} to rate`,
-			action: "Start rating",
-		};
-	if (t.notOnDay && c.hasDays && c.canEdit)
-		return {
-			step: "schedule",
-			text: `${plural(t.notOnDay, "shortlisted place")} ${t.notOnDay === 1 ? "isn't" : "aren't"} on a day yet`,
-			action: "Schedule",
-		};
-	if (c.canEdit)
-		return {
-			step: "add",
-			text: "Add the places you want to go",
-			action: "Add places",
-		};
-	return null;
 }

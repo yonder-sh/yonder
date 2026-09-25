@@ -55,7 +55,7 @@ const asViewer: TripGraph = {
 };
 
 describe("the Places tab's steps", () => {
-	it("1 Rate · 2 Review · 3 Schedule with their counts; the dot on Rate", () => {
+	it("1 Rate · 2 Review · 3 Add to days with their counts; the dot on Rate", () => {
 		renderWithWorkspace(<PlacesTab />, {
 			search: { tab: "places", pv: "table" },
 		});
@@ -68,6 +68,11 @@ describe("the Places tab's steps", () => {
 			"schedule",
 		]);
 		expect(steps[1]).toHaveAttribute("aria-current", "step");
+		expect(steps.map((s) => s.textContent?.match(/^\d(\D+?)\d/)?.[1])).toEqual([
+			"Rate",
+			"Review",
+			"Add to days",
+		]);
 		const counts = within(bar)
 			.getAllByTestId(T.stepCount)
 			.map((c) => c.textContent);
@@ -87,7 +92,7 @@ describe("the Places tab's steps", () => {
 		);
 	});
 
-	it("a step click changes the view in the URL; Rate and Schedule drop the status pill", () => {
+	it("a step click changes the view in the URL; Rate and Add to days drop the status pill", () => {
 		const { navigations } = renderWithWorkspace(<PlacesTab />, {
 			search: { tab: "places", pv: "board", pst: "shortlist" },
 		});

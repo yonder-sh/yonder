@@ -18,7 +18,6 @@ import {
 	type FlowTally,
 	flowTally,
 	nextStep,
-	nextStepCard,
 	pickStep,
 	reviewViewOf,
 	stepCounts,
@@ -39,7 +38,7 @@ const D = DEMO_MEMBERS.dennis;
 const A = DEMO_MEMBERS.audrey;
 
 describe("the step in the URL", () => {
-	it("table / board / map are Review, rate is Rate, schedule is Schedule, none is picked", () => {
+	it("table / board / map are Review, rate is Rate, schedule is Add to days, none is picked", () => {
 		expect(stepOfView("table")).toBe("review");
 		expect(stepOfView("board")).toBe("review");
 		expect(stepOfView("map")).toBe("review");
@@ -74,7 +73,7 @@ describe("which step Places opens on", () => {
 	it("Rate when you have places to rate", () => {
 		expect(at({ toRate: 4, notOnDay: 2 })).toBe("rate");
 	});
-	it("then Schedule for shortlisted places not on a day (editors, with days)", () => {
+	it("then Add to days for shortlisted places not on a day (editors, with days)", () => {
 		expect(at({ toRate: 0, notOnDay: 2 })).toBe("schedule");
 		expect(at({ notOnDay: 2 }, { canEdit: false })).toBe("review");
 		expect(at({ notOnDay: 2 }, { hasDays: false })).toBe("review");
@@ -126,26 +125,6 @@ describe("the steps' counts", () => {
 		expect(stepCounts(tally({ shortlisted: 3 })).schedule).toBe(
 			"3 shortlisted · all on a day",
 		);
-	});
-	it("the Overview's card: rate, else schedule, else add (editors)", () => {
-		expect(nextStepCard(tally({ toRate: 12, notOnDay: 4 }), EDIT)).toEqual({
-			step: "rate",
-			text: "12 places to rate",
-			action: "Start rating",
-		});
-		expect(nextStepCard(tally({ notOnDay: 4 }), EDIT)).toEqual({
-			step: "schedule",
-			text: "4 shortlisted places aren't on a day yet",
-			action: "Schedule",
-		});
-		expect(nextStepCard(tally({ notOnDay: 1 }), EDIT)?.text).toBe(
-			"1 shortlisted place isn't on a day yet",
-		);
-		expect(nextStepCard(tally({}), EDIT)).toMatchObject({
-			step: "add",
-			action: "Add places",
-		});
-		expect(nextStepCard(tally({}), { ...EDIT, canEdit: false })).toBeNull();
 	});
 });
 

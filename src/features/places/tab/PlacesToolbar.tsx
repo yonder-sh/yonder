@@ -5,7 +5,7 @@
  * Shortlist · Ideas · Scheduled · Dropped · Talk about it) and per-member
  * rating progress ("Audrey 42/78 · rate her unrated · Remind"). Everything
  * but the search lives in the URL and is shared by every view; the settings
- * hold the shortlist's level. Rate and Schedule are the tab's steps
+ * hold the shortlist's level. Rate and Add to days are the tab's steps
  * (`PlacesSteps`); "Add a place" and wide mode sit on the steps' bar.
  */
 import { cn } from "cn";
