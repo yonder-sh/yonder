@@ -344,7 +344,7 @@ function MainStep({
 					/>
 				)}
 			</div>
-			<div className="grid gap-4 p-5 sm:p-6">
+			<div className="flex flex-1 flex-col gap-4 p-5 sm:p-6">
 				{info?.note ? (
 					<figure
 						data-testid={T.note}
@@ -375,7 +375,6 @@ function MainStep({
 					actions={false}
 					onNavigate={onClose}
 				/>
-				<WelcomeNotify onShown={onNotifyShown} />
 				<div className="flex flex-wrap items-center gap-2 pt-1 max-sm:mt-auto">
 					<Button
 						ref={primary}
@@ -408,6 +407,8 @@ function MainStep({
 						slug={graph.trip.slug}
 					/>
 				) : null}
+				{/* At the end: the notifications ask (a tap, so the browser may prompt). */}
+				<WelcomeNotify onShown={onNotifyShown} />
 			</div>
 		</div>
 	);
