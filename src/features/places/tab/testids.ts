@@ -92,6 +92,9 @@ export const PLACES_TAB_TESTID = {
 	splitApply: "places-split-apply",
 	splitCancel: "places-split-cancel",
 	splitConfirm: "places-split-confirm",
+	splitExpand: "places-split-expand",
+	splitPlaces: "places-split-places",
+	splitPlace: "places-split-place",
 	ratePill: "places-rate-pill",
 	nextStep: "places-next-step",
 } as const;

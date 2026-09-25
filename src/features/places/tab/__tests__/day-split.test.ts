@@ -174,6 +174,26 @@ describe("what each city's shortlist needs", () => {
 		// Everyone said Nah to Tōdai-ji: Nara has nothing that isn't dropped.
 		expect(by.Nara).toBeUndefined();
 	});
+
+	it("what's in each city: the shortlist, what's left to rate, and the rest's count", () => {
+		const { cities, rows } = world(empty(14));
+		const by = Object.fromEntries(cities.map((c) => [c.name, c]));
+		const names = (ids: readonly string[] = []) =>
+			ids.map((id) => rows.find((r) => r.id === id)?.node.name);
+		expect(names(by.Tokyo?.shortlistIds).sort()).toEqual([
+			"t1",
+			"t2",
+			"t3",
+			"t4",
+		]);
+		expect(by.Tokyo?.toRateIds).toHaveLength(7);
+		expect(names(by.Osaka?.toRateIds).sort()).toEqual(["o1", "o2", "o3"]);
+		expect(by.Osaka?.shortlistIds).toEqual([]);
+		for (const c of cities)
+			expect(
+				c.shortlistIds.length + c.toRateIds.length + c.belowShortlist,
+			).toBeGreaterThanOrEqual(c.shortlisted);
+	});
 });
 
 describe("fitting the trip's length", () => {

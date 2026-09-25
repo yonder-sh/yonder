@@ -14,6 +14,7 @@ import type { CityDaysTable } from "../lib/days";
 import { isRateable } from "../lib/rate";
 import type { PlaceRow } from "./model";
 import { cityRowOf, sightDays } from "./schedule-next";
+import { compareByScore } from "./score";
 
 // ---------------------------------------------------------------------------
 // Cities and what their shortlist needs
@@ -31,6 +32,10 @@ export type SplitCity = {
 	minutes: number;
 	/** Whole days that time takes: at least 1 with anything shortlisted, else 0. */
 	need: number;
+	/** What's there: the shortlist (best first), the places not rated by everyone yet, and the rest's count. */
+	shortlistIds: string[];
+	toRateIds: string[];
+	belowShortlist: number;
 };
 
 type Tree = Pick<GraphIndex, "isWithin" | "path" | "node">;
@@ -60,6 +65,7 @@ export function splitCities(
 	opts: { raterIds: readonly string[]; capacityMin: number },
 ): SplitCity[] {
 	const by = new Map<string, SplitCity>();
+	const short = new Map<string, PlaceRow[]>();
 	for (const row of rows) {
 		if (row.status === "dropped") continue;
 		const city = splitCityOf(ix, cityDays, row);
@@ -74,19 +80,31 @@ export function splitCities(
 				notRated: 0,
 				minutes: 0,
 				need: 0,
+				shortlistIds: [],
+				toRateIds: [],
+				belowShortlist: 0,
 			};
 			by.set(city.id, c);
 		}
-		if (row.status === "shortlist" || row.status === "scheduled") {
+		const listed = row.status === "shortlist" || row.status === "scheduled";
+		const unrated = opts.raterIds.some(
+			(m) => row.node.priorities[m] === undefined,
+		);
+		if (listed) {
 			c.shortlisted += 1;
 			c.minutes += defaultItemDuration(row.node);
-		}
-		if (opts.raterIds.some((m) => row.node.priorities[m] === undefined))
-			c.notRated += 1;
+			short.set(c.id, [...(short.get(c.id) ?? []), row]);
+		} else if (unrated) c.toRateIds.push(row.id);
+		else c.belowShortlist += 1;
+		if (unrated) c.notRated += 1;
 	}
 	const out = [...by.values()];
-	for (const c of out)
+	for (const c of out) {
 		c.need = c.shortlisted ? daysNeeded(c.minutes, opts.capacityMin) : 0;
+		c.shortlistIds = (short.get(c.id) ?? [])
+			.sort(compareByScore)
+			.map((r) => r.id);
+	}
 	return out;
 }
 

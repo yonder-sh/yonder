@@ -136,6 +136,32 @@ describe("the day split (no day has a city yet)", () => {
 		expect(screen.queryByTestId(T.splitOver)).toBeNull();
 	});
 
+	it("a city opens to its places: the shortlist with time and score, then what's left to rate", () => {
+		const { graph } = trip(empty(10));
+		const { ws } = schedule(graph);
+		const tokyo = rowOf("Tokyo");
+		expect(within(tokyo).queryByTestId(T.splitPlaces)).toBeNull();
+		fireEvent.click(within(tokyo).getByTestId(T.splitExpand));
+		const places = within(tokyo).getByTestId(T.splitPlaces);
+		expect(places).toHaveTextContent("About 48h of sights on the shortlist");
+		const listed = within(places).getAllByTestId(T.splitPlace);
+		expect(listed.map((b) => b.textContent?.slice(0, 2)).sort()).toEqual([
+			"T1",
+			"T2",
+			"T3",
+			"T4",
+		]);
+		expect(places).toHaveTextContent(/Not rated yet:/);
+		// A place opens its details.
+		fireEvent.click(listed[0] as HTMLElement);
+		expect(ws().sel?.kind).toBe("node");
+		// Osaka: nothing shortlisted, all to rate.
+		fireEvent.click(within(rowOf("Osaka")).getByTestId(T.splitExpand));
+		expect(within(rowOf("Osaka")).getByTestId(T.splitPlaces)).toHaveTextContent(
+			/Nothing shortlisted here yet\..*Not rated yet: O1/,
+		);
+	});
+
 	it("Rate opens the Rate step", () => {
 		const { graph } = trip(empty(10));
 		const { navigations } = schedule(graph);

@@ -7,13 +7,14 @@
  * `day.stay` and `item.move`, so suggest mode, proposals and live sync hold.
  */
 import { cn } from "cn";
-import { Minus, Plus, Star } from "lucide-react";
+import { ChevronRight, Minus, Plus, Star } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { CategoryIcon } from "@/components/common/glyphs";
 import { Button } from "@/components/ui/button";
 import { raters } from "@/features/places/lib/rate";
 import { humanError } from "@/lib/errors";
-import { formatDayDate } from "@/lib/format";
+import { formatDayDate, formatDuration } from "@/lib/format";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { useMoveItem, useSetDayStay } from "../mutations";
 import {
@@ -35,8 +36,9 @@ import {
 	unusedText,
 	withOverrides,
 } from "./day-split";
-import { buildRows, placesInScope } from "./model";
+import { buildRows, type PlaceRow, placesInScope } from "./model";
 import { PLACES_TAB_TESTID as T } from "./testids";
+import { ScoreChip } from "./ui";
 import type { PlacesData } from "./use-places";
 
 const NO_FREE_DAY = "No free days left. Take one from another city first.";
@@ -90,7 +92,11 @@ export function useDaySplit(data: PlacesData) {
 	// No day in a city with places yet: the split is the step's main content.
 	const listed = new Set(cities.map((c) => c.id));
 	const hasDays = current.some((c) => c !== null && listed.has(c));
-	return { cities, suggestion, current, left, hasDays };
+	const rowById = useMemo(
+		() => new Map(trip.rows.map((r) => [r.id, r])),
+		[trip.rows],
+	);
+	return { cities, suggestion, current, left, hasDays, rowById };
 }
 
 export type DaySplitInfo = ReturnType<typeof useDaySplit>;
@@ -132,18 +138,111 @@ type Row = {
 	notRated: number;
 };
 
+/** A city's places under its row: the shortlist (what its days are for), then what's left to rate. */
+function CityPlaces({ info, cityId }: { info: DaySplitInfo; cityId: string }) {
+	const { nav } = useWorkspace();
+	const city = info.cities.find((c) => c.id === cityId);
+	if (!city) return null;
+	const rowsOf = (ids: readonly string[]) =>
+		ids.flatMap((id) => info.rowById.get(id) ?? []);
+	const short = rowsOf(city.shortlistIds);
+	const toRate = rowsOf(city.toRateIds);
+	const open = (r: PlaceRow) => nav.select({ kind: "node", id: r.id });
+	return (
+		<div
+			data-testid={T.splitPlaces}
+			className="grid gap-2 pb-3 pl-11 pr-4 text-sm"
+		>
+			{short.length ? (
+				<>
+					<p className="text-xs text-muted-foreground">
+						About {formatDuration(city.minutes, { compact: true })} of sights on
+						the shortlist
+					</p>
+					<ul className="grid gap-0.5">
+						{short.map((r) => (
+							<li key={r.id}>
+								<button
+									type="button"
+									data-testid={T.splitPlace}
+									onClick={() => open(r)}
+									className="flex w-full min-w-0 cursor-pointer items-center gap-2 rounded-md px-1.5 py-1 text-left hover:bg-accent"
+								>
+									{r.node.category ? (
+										<CategoryIcon
+											category={r.node.category}
+											className="size-3.5 text-muted-foreground"
+										/>
+									) : (
+										<span className="size-3.5" />
+									)}
+									<span className="min-w-0 flex-1 truncate">{r.node.name}</span>
+									<span className="shrink-0 font-mono text-xs text-muted-foreground tnum">
+										{r.timeMin
+											? formatDuration(r.timeMin, { compact: true })
+											: ""}
+									</span>
+									<ScoreChip score={r.score} size="sm" />
+								</button>
+							</li>
+						))}
+					</ul>
+				</>
+			) : (
+				<p className="text-xs text-muted-foreground">
+					Nothing shortlisted here yet.
+				</p>
+			)}
+			{toRate.length ? (
+				<p className="text-xs text-muted-foreground">
+					<span className="font-medium text-foreground">Not rated yet:</span>{" "}
+					{toRate.map((r, i) => (
+						<span key={r.id}>
+							{i ? ", " : ""}
+							<button
+								type="button"
+								onClick={() => open(r)}
+								className="cursor-pointer underline-offset-2 hover:text-foreground hover:underline"
+							>
+								{r.node.name}
+							</button>
+						</span>
+					))}
+				</p>
+			) : null}
+			{city.belowShortlist ? (
+				<p className="text-xs text-muted-foreground">
+					{city.belowShortlist}{" "}
+					{city.belowShortlist === 1 ? "other place" : "other places"} didn't
+					make the shortlist.
+				</p>
+			) : null}
+		</div>
+	);
+}
+
 function SplitRows({
+	info,
 	rows,
 	unused,
 	onStep,
 	busy,
 }: {
+	info: DaySplitInfo;
 	rows: readonly Row[];
 	unused: number;
 	/** Null: read-only (no − / +). */
 	onStep: ((index: number, delta: 1 | -1) => void) | null;
 	busy: boolean;
 }) {
+	const [open, setOpen] = useState<ReadonlySet<string>>(new Set());
+	const toggle = (id: string) =>
+		setOpen((s) => {
+			const n = new Set(s);
+			if (n.has(id)) n.delete(id);
+			else n.add(id);
+			return n;
+		});
 	return (
 		<ul className="@container divide-y rounded-xl border bg-card">
 			{rows.map((r, i) => (
@@ -152,58 +251,77 @@ function SplitRows({
 					data-testid={T.splitRow}
 					data-city={r.id}
 					data-days={r.days}
-					className="flex items-center gap-3 px-4 py-2.5 @lg:grid @lg:grid-cols-[minmax(0,10rem)_4.5rem_minmax(0,1fr)_auto]"
 				>
-					<div className="min-w-0 flex-1 @lg:contents">
-						<div className="flex min-w-0 items-baseline gap-2 @lg:contents">
-							<span
+					<div className="flex items-center gap-3 px-4 py-2.5 @lg:grid @lg:grid-cols-[1.5rem_minmax(0,10rem)_4.5rem_minmax(0,1fr)_auto]">
+						<button
+							type="button"
+							data-testid={T.splitExpand}
+							aria-expanded={open.has(r.id)}
+							aria-label={`${open.has(r.id) ? "Hide" : "Show"} the places in ${r.name}`}
+							onClick={() => toggle(r.id)}
+							className="-ml-1.5 grid size-6 shrink-0 cursor-pointer place-items-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
+						>
+							<ChevronRight
 								className={cn(
-									"truncate text-[15px] font-medium",
-									!r.days && "text-muted-foreground",
+									"size-4 transition-transform",
+									open.has(r.id) && "rotate-90",
 								)}
-							>
-								{r.name}
-							</span>
-							<span
-								className={cn(
-									"shrink-0 text-sm",
-									!r.days && "text-muted-foreground",
-								)}
-							>
-								<span className="font-mono tnum">{r.days}</span>{" "}
-								{r.days === 1 ? "day" : "days"}
+							/>
+						</button>
+						<div className="min-w-0 flex-1 @lg:contents">
+							<div className="flex min-w-0 items-baseline gap-2 @lg:contents">
+								<button
+									type="button"
+									onClick={() => toggle(r.id)}
+									className={cn(
+										"cursor-pointer truncate text-left text-[15px] font-medium hover:underline",
+										!r.days && "text-muted-foreground",
+									)}
+								>
+									{r.name}
+								</button>
+								<span
+									className={cn(
+										"shrink-0 text-sm",
+										!r.days && "text-muted-foreground",
+									)}
+								>
+									<span className="font-mono tnum">{r.days}</span>{" "}
+									{r.days === 1 ? "day" : "days"}
+								</span>
+							</div>
+							<span className="block truncate text-xs text-muted-foreground @lg:text-[13px]">
+								{r.shortlisted} shortlisted
+								{r.notRated ? ` · ${r.notRated} not rated yet` : ""}
 							</span>
 						</div>
-						<span className="block truncate text-xs text-muted-foreground @lg:text-[13px]">
-							{r.shortlisted} shortlisted
-							{r.notRated ? ` · ${r.notRated} not rated yet` : ""}
-						</span>
+						{onStep ? (
+							<div className="flex shrink-0 gap-1">
+								<Button
+									variant="outline"
+									size="icon-sm"
+									data-testid={T.splitMinus}
+									aria-label={`One day less in ${r.name}`}
+									disabled={busy || r.days < 1}
+									onClick={() => onStep(i, -1)}
+								>
+									<Minus />
+								</Button>
+								<Button
+									variant="outline"
+									size="icon-sm"
+									data-testid={T.splitPlus}
+									aria-label={`One day more in ${r.name}`}
+									title={unused < 1 ? NO_FREE_DAY : undefined}
+									disabled={busy || unused < 1}
+									onClick={() => onStep(i, 1)}
+								>
+									<Plus />
+								</Button>
+							</div>
+						) : null}
 					</div>
-					{onStep ? (
-						<div className="flex shrink-0 gap-1">
-							<Button
-								variant="outline"
-								size="icon-sm"
-								data-testid={T.splitMinus}
-								aria-label={`One day less in ${r.name}`}
-								disabled={busy || r.days < 1}
-								onClick={() => onStep(i, -1)}
-							>
-								<Minus />
-							</Button>
-							<Button
-								variant="outline"
-								size="icon-sm"
-								data-testid={T.splitPlus}
-								aria-label={`One day more in ${r.name}`}
-								title={unused < 1 ? NO_FREE_DAY : undefined}
-								disabled={busy || unused < 1}
-								onClick={() => onStep(i, 1)}
-							>
-								<Plus />
-							</Button>
-						</div>
-					) : null}
+					{open.has(r.id) ? <CityPlaces info={info} cityId={r.id} /> : null}
 				</li>
 			))}
 		</ul>
@@ -290,6 +408,7 @@ export function SplitSuggestion({
 				</p>
 			) : null}
 			<SplitRows
+				info={info}
 				rows={split.rows.map((r) => ({ ...r, key: r.id }))}
 				unused={split.unused}
 				busy={busy}
@@ -430,6 +549,7 @@ function ChangePanel({
 	return (
 		<div className="flex flex-col gap-3 rounded-xl bg-muted/50 p-3 sm:p-4">
 			<SplitRows
+				info={info}
 				rows={rows}
 				unused={unused}
 				busy={busy}
