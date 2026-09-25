@@ -95,7 +95,7 @@ export function NewTripDialog({ trigger }: { trigger?: React.ReactNode }) {
 							autoFocus
 							required
 							maxLength={120}
-							placeholder="Asia 2027"
+							placeholder="Summer in Japan"
 							value={name}
 							onChange={(e) => setName(e.target.value)}
 							data-testid={TESTID.newTripName}
