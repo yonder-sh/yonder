@@ -7,7 +7,8 @@
  * - Review: one filtered set in three views (Table, Board, Map) with
  *   grouping, sort and filters shared by all of them (and kept in the URL,
  *   so they deep-link and follow);
- * - Schedule: "Schedule next" (per stay window, with fit hints).
+ * - Schedule: "Schedule next" (per stay window, with fit hints); before
+ *   any day has a city, the day split between the cities.
  * With no places yet, every step shows the empty state that teaches the flow.
  * The step is the URL's view (`pv`); with none the tab picks the most useful
  * one (`pickStep`) and writes it in. Opening a place docks its details

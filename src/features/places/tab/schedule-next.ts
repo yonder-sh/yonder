@@ -246,6 +246,14 @@ export type ScheduleNextResult = {
 	waiting: number;
 };
 
+/** Sights' time in half days of the day capacity ("about 1.5 days"), at least half a day. */
+export function sightDays(minutes: number, capacityMin: number): number {
+	return Math.max(
+		0.5,
+		Math.round((minutes / Math.max(60, capacityMin)) * 2) / 2,
+	);
+}
+
 function areaOf(ix: GraphIndex, nodeId: string, cityId: string) {
 	const path = ix.path(nodeId).slice(0, -1);
 	const at = path.findIndex((n) => n.id === cityId);
@@ -405,10 +413,7 @@ export function scheduleNext(
 		rows: [...c.rows].sort(
 			(a, b) => b.score - a.score || a.name.localeCompare(b.name),
 		),
-		days: Math.max(
-			0.5,
-			Math.round((c.minutes / Math.max(60, capacity)) * 2) / 2,
-		),
+		days: sightDays(c.minutes, capacity),
 	}));
 	cities.sort(
 		(a, b) => b.rows.length - a.rows.length || a.name.localeCompare(b.name),

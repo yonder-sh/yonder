@@ -5,7 +5,9 @@
  * time needed against the day's free time, the distance from that day's
  * stay or stops) and a one-click "Add to Mon 11 Oct" that puts it at the
  * best spot of the best day. Then the cities with shortlisted places but no
- * days, and what can't fit. Read-only for people who can't edit.
+ * days, and what can't fit. Before any day has a city, the day split
+ * (`DaySplit.tsx`) instead; with no dates, a way to set them. Read-only for
+ * people who can't edit.
  */
 import { cn } from "cn";
 import { CalendarPlus, ChevronRight, Star } from "lucide-react";
@@ -21,6 +23,12 @@ import {
 import { useUi } from "@/lib/workspace/ui-store";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { formatDays } from "../lib/days";
+import {
+	DaysLine,
+	SplitSuggestion,
+	useApplySplit,
+	useDaySplit,
+} from "./DaySplit";
 import type { FlowTally } from "./flow";
 import { formatDayNumbers } from "./model";
 import { categoryLabel } from "./PlacesTable";
@@ -303,7 +311,7 @@ export function ScheduleNext({
 }: {
 	data: PlacesData;
 	tally: FlowTally;
-	/** Opens the Rate step (from the "nothing shortlisted" state). */
+	/** Opens the Rate step (nothing shortlisted, or places left to rate in the day split). */
 	onRate: () => void;
 }) {
 	const { ix, schedule, graph, nav } = useWorkspace();
@@ -318,14 +326,58 @@ export function ScheduleNext({
 			}),
 		[ix, schedule, data.rows, data.cityDays, holidays],
 	);
-	const noDays = ix.days.length === 0;
-	return (
+	const split = useDaySplit(data);
+	const { apply, busy } = useApplySplit();
+	const shell = (mode: string, children: ReactNode) => (
 		<div
 			data-testid={PLACES_TAB_TESTID.schedule}
 			data-waiting={plan.waiting}
+			data-mode={mode}
 			className="min-h-0 flex-1 overflow-y-auto"
 		>
 			<div className="mx-auto flex max-w-4xl flex-col gap-8 px-4 pt-4 pb-10 md:px-6">
+				{children}
+			</div>
+		</div>
+	);
+	if (ix.days.length === 0)
+		return shell(
+			"dates",
+			<div
+				data-testid={PLACES_TAB_TESTID.scheduleNoDates}
+				className="flex flex-col items-start gap-3 rounded-xl border border-dashed p-5"
+			>
+				<p className="font-display text-lg font-semibold">
+					Pick your trip dates first
+				</p>
+				{act.canEdit ? (
+					<Button size="sm" onClick={() => setSettingsOpen(true)}>
+						Set dates
+					</Button>
+				) : null}
+			</div>,
+		);
+	if (!split.hasDays)
+		return shell(
+			"split",
+			<SplitSuggestion
+				info={split}
+				canEdit={act.canEdit}
+				onRate={onRate}
+				apply={apply}
+				busy={busy}
+			/>,
+		);
+	return shell(
+		"schedule",
+		<>
+			<div className="flex flex-col gap-4">
+				<DaysLine
+					info={split}
+					canEdit={act.canEdit}
+					apply={apply}
+					busy={busy}
+				/>
 				{plan.waiting === 0 ? (
 					<div
 						data-testid={PLACES_TAB_TESTID.scheduleDone}
@@ -349,119 +401,103 @@ export function ScheduleNext({
 						) : null}
 					</div>
 				) : (
-					<p className="max-w-prose text-sm text-muted-foreground">
-						<span className="font-medium text-foreground">
-							{plan.waiting} shortlisted{" "}
-							{plan.waiting === 1 ? "place isn't" : "places aren't"} on a day
-							yet.
-						</span>{" "}
-						{noDays
-							? "Set the trip's dates to fit them into days."
-							: act.canEdit
-								? "Each one shows the days you're in its city; Add puts it on the best one, next to the stops nearby."
-								: "Each one shows the days you're in its city and which fits best."}
-					</p>
-				)}
-
-				{plan.windows.map((w) => (
-					<WindowSection key={w.key} w={w} />
-				))}
-
-				{plan.noDays.length ? (
-					<Section
-						title={
-							noDays
-								? "Shortlisted, waiting for days"
-								: "Cities with shortlisted places but no days yet"
-						}
-						testid={PLACES_TAB_TESTID.scheduleNoDays}
+					<header
+						data-testid={PLACES_TAB_TESTID.scheduleIntro}
+						className="flex flex-col gap-1"
 					>
-						<ul className="divide-y rounded-xl border">
-							{plan.noDays.map((c) => (
-								<li
-									key={c.key}
-									data-city={c.cityId ?? ""}
-									className="flex flex-col gap-0.5 px-4 py-2.5"
-								>
-									<span className="text-[15px]">
-										<span className="font-medium">{c.name}</span>
-										<span className="text-muted-foreground">
-											{" "}
-											· {c.rows.length} shortlisted · about {daysText(c.days)}{" "}
-											of sights · no days planned
-										</span>
-									</span>
-									<span className="truncate text-xs text-muted-foreground">
-										{c.rows.map((r) => r.name).join(", ")}
-									</span>
-								</li>
-							))}
-						</ul>
-						{noDays ? (
-							act.canEdit ? (
-								<Button
-									size="sm"
-									variant="outline"
-									className="self-start"
-									onClick={() => setSettingsOpen(true)}
-								>
-									Set dates
-								</Button>
-							) : null
-						) : (
-							<button
-								type="button"
-								aria-expanded={daysTable}
-								onClick={() => setDaysTable((v) => !v)}
-								className="inline-flex h-7 cursor-pointer items-center gap-1 self-start text-xs font-medium text-primary underline-offset-2 hover:underline"
-							>
-								Days per city
-								<ChevronRight
-									className={cn(
-										"size-3 transition-transform",
-										daysTable && "rotate-90",
-									)}
-								/>
-							</button>
-						)}
-						{daysTable ? (
-							<div className="rounded-xl border p-3">
-								<DaysPerCityTable />
-							</div>
-						) : null}
-					</Section>
-				) : null}
-
-				{plan.cantFit.length ? (
-					<Section title="Can't fit" testid={PLACES_TAB_TESTID.scheduleCantFit}>
-						<ul className="divide-y rounded-xl border">
-							{plan.cantFit.map((c) => (
-								<li
-									key={`${c.kind}:${c.row.id}`}
-									data-place={c.row.id}
-									data-kind={c.kind}
-									className="flex items-center gap-2.5 px-4 py-2.5"
-								>
-									<ScoreChip score={c.row.score} size="sm" />
-									<span className="min-w-0 flex-1">
-										<button
-											type="button"
-											onClick={() => nav.select({ kind: "node", id: c.row.id })}
-											className="cursor-pointer text-[15px] font-medium hover:underline"
-										>
-											{c.row.name}
-										</button>
-										<span className="block truncate text-xs text-muted-foreground">
-											{c.reason}
-											{c.detail ? ` · ${c.detail}` : ""}
-										</span>
-									</span>
-								</li>
-							))}
-						</ul>
-					</Section>
-				) : null}
+						<h2 className="font-display text-lg font-semibold">
+							Put your shortlist on days
+						</h2>
+						<p className="max-w-prose text-sm text-muted-foreground">
+							{act.canEdit
+								? "Each place lists the days you're in its city. The button adds it to the best one."
+								: "Each place lists the days you're in its city and the best one."}
+						</p>
+					</header>
+				)}
 			</div>
-		</div>
+
+			{plan.windows.map((w) => (
+				<WindowSection key={w.key} w={w} />
+			))}
+
+			{plan.noDays.length ? (
+				<Section
+					title="Cities with shortlisted places but no days yet"
+					testid={PLACES_TAB_TESTID.scheduleNoDays}
+				>
+					<ul className="divide-y rounded-xl border">
+						{plan.noDays.map((c) => (
+							<li
+								key={c.key}
+								data-city={c.cityId ?? ""}
+								className="flex flex-col gap-0.5 px-4 py-2.5"
+							>
+								<span className="text-[15px]">
+									<span className="font-medium">{c.name}</span>
+									<span className="text-muted-foreground">
+										{" "}
+										· {c.rows.length} shortlisted · about {daysText(c.days)} of
+										sights · no days planned
+									</span>
+								</span>
+								<span className="truncate text-xs text-muted-foreground">
+									{c.rows.map((r) => r.name).join(", ")}
+								</span>
+							</li>
+						))}
+					</ul>
+					<button
+						type="button"
+						aria-expanded={daysTable}
+						onClick={() => setDaysTable((v) => !v)}
+						className="inline-flex h-7 cursor-pointer items-center gap-1 self-start text-xs font-medium text-primary underline-offset-2 hover:underline"
+					>
+						Days per city
+						<ChevronRight
+							className={cn(
+								"size-3 transition-transform",
+								daysTable && "rotate-90",
+							)}
+						/>
+					</button>
+					{daysTable ? (
+						<div className="rounded-xl border p-3">
+							<DaysPerCityTable />
+						</div>
+					) : null}
+				</Section>
+			) : null}
+
+			{plan.cantFit.length ? (
+				<Section title="Can't fit" testid={PLACES_TAB_TESTID.scheduleCantFit}>
+					<ul className="divide-y rounded-xl border">
+						{plan.cantFit.map((c) => (
+							<li
+								key={`${c.kind}:${c.row.id}`}
+								data-place={c.row.id}
+								data-kind={c.kind}
+								className="flex items-center gap-2.5 px-4 py-2.5"
+							>
+								<ScoreChip score={c.row.score} size="sm" />
+								<span className="min-w-0 flex-1">
+									<button
+										type="button"
+										onClick={() => nav.select({ kind: "node", id: c.row.id })}
+										className="cursor-pointer text-[15px] font-medium hover:underline"
+									>
+										{c.row.name}
+									</button>
+									<span className="block truncate text-xs text-muted-foreground">
+										{c.reason}
+										{c.detail ? ` · ${c.detail}` : ""}
+									</span>
+								</span>
+							</li>
+						))}
+					</ul>
+				</Section>
+			) : null}
+		</>,
 	);
 }
