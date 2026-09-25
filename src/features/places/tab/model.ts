@@ -87,6 +87,16 @@ export function placesInScope(
 	);
 }
 
+/** The trip's places to rate: every live one not dropped by hand (the bar, progress, reminders). */
+export function openPlaces(
+	ix: GraphIndex,
+	liveIds?: ReadonlySet<string>,
+): GraphNode[] {
+	return placesInScope(ix, null, liveIds).filter(
+		(n) => n.ideaStatus !== "dropped" && !ix.isDropped(n.id),
+	);
+}
+
 export function buildRows(
 	ix: GraphIndex,
 	nodes: readonly GraphNode[],

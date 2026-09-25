@@ -8,8 +8,8 @@ import { canRateOwn } from "@/lib/auth/roles";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { raters } from "../lib/rate";
 import { type FlowContext, type FlowTally, flowTally } from "./flow";
-import { shortlistThreshold } from "./lifecycle";
 import { buildRows, placesInScope } from "./model";
+import { useShortlistBar } from "./use-bar";
 
 export function useFlowTally(scopeId: string | null): FlowTally & FlowContext {
 	const { ix, graph, access } = useWorkspace();
@@ -17,7 +17,7 @@ export function useFlowTally(scopeId: string | null): FlowTally & FlowContext {
 	const canEdit = access.mode !== "read";
 	const canRate = canRateOwn(access);
 	const me = access.memberId;
-	const threshold = shortlistThreshold(graph.trip.settings);
+	const threshold = useShortlistBar().bar;
 	return useMemo(() => {
 		// Proposal ghosts are reviewed in the workspace, never rated here.
 		const liveIds = new Set(graph.nodes.map((n) => n.id));

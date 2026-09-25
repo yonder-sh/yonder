@@ -81,11 +81,14 @@ export function StatusChip({
 	info,
 	className,
 	long = false,
+	reason,
 }: {
 	info: StatusInfo;
 	className?: string;
 	/** "Shortlist · suggested" instead of the short "Suggested". */
 	long?: boolean;
+	/** Why it is (or isn't) on the shortlist: the tooltip (`bar.ts`). */
+	reason?: string | null;
 }) {
 	const label =
 		info.status === "shortlist"
@@ -108,6 +111,7 @@ export function StatusChip({
 			data-testid={PLACES_TAB_TESTID.statusChip}
 			data-status={info.status}
 			data-pinned={info.pinned || undefined}
+			title={reason ?? undefined}
 			className={cn(
 				"inline-flex h-[22px] shrink-0 items-center gap-1 rounded-full px-2 text-xs font-medium whitespace-nowrap",
 				STATUS_STYLE[info.status],

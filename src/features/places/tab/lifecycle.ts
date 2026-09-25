@@ -1,14 +1,14 @@
 /**
  * The places lifecycle as the Places tab shows it (docs/PLACES.md §3):
  * Idea → Shortlist → Scheduled, or Dropped. Scheduled is derived (the place
- * is on a day); the shortlist is **suggested** at a group score of
- * `shortlistMinScore` (a trip setting, default +3) or more, and anyone with
- * edit rights can pin a place on (it stays whatever the ratings) or unpin a
- * suggested one (it stays off until the ratings change). Dropped is explicit,
- * or everyone rated it Nah. Pure.
+ * is on a day); the shortlist is **suggested** at a group score of the
+ * trip's bar (`bar.ts`: a level per person × the people rating) or more, and
+ * anyone with edit rights can pin a place on (it stays whatever the ratings)
+ * or unpin a suggested one (it stays off until the ratings change). Dropped
+ * is explicit, or everyone rated it Nah. Pure.
  */
 import type { LifecycleFields } from "@/lib/domain/places-lifecycle";
-import type { ShortlistPin, TripSettings } from "@/lib/engine/types";
+import type { ShortlistPin } from "@/lib/engine/types";
 
 export type PlaceStatus = "idea" | "shortlist" | "scheduled" | "dropped";
 
@@ -18,17 +18,6 @@ export const STATUS_LABEL: Record<PlaceStatus, string> = {
 	scheduled: "Scheduled",
 	dropped: "Dropped",
 };
-
-export const DEFAULT_SHORTLIST_MIN = 3;
-
-export function shortlistThreshold(
-	settings: Pick<TripSettings, "shortlistMinScore"> | undefined,
-): number {
-	const v = settings?.shortlistMinScore;
-	return typeof v === "number" && Number.isFinite(v)
-		? v
-		: DEFAULT_SHORTLIST_MIN;
-}
 
 export type StatusInfo = {
 	status: PlaceStatus;

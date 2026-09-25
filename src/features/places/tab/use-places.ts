@@ -9,7 +9,11 @@ import { useQuery } from "@tanstack/react-query";
 import { useCallback, useMemo } from "react";
 import { noteFor, tripNotesQuery } from "@/features/notes/queries";
 import { cityDayTable } from "@/features/places/lib/days";
-import { raters } from "@/features/places/lib/rate";
+import {
+	raters,
+	ratingMembers,
+	ratingsCount,
+} from "@/features/places/lib/rate";
 import { useViewPrefs } from "@/features/shell/view-prefs";
 import type { GraphMember } from "@/lib/engine/types";
 import { filterContextOf } from "@/lib/workspace/filter-match";
@@ -22,7 +26,7 @@ import {
 	stepOfView,
 } from "./flow";
 import { type GroupBy, groupPlaces, type SortBy } from "./grouping";
-import { type PlaceStatus, shortlistThreshold } from "./lifecycle";
+import type { PlaceStatus } from "./lifecycle";
 import {
 	buildRows,
 	countRows,
@@ -31,6 +35,7 @@ import {
 	placesInScope,
 	ratedCount,
 } from "./model";
+import { useShortlistBar } from "./use-bar";
 
 export type PlacesState = {
 	/** The Review step's view (table, board or map; table when `pv` names another step). */
@@ -82,6 +87,8 @@ export type MemberProgress = {
 	member: GraphMember;
 	rated: number;
 	total: number;
+	/** False: their ratings are left out ("Maya · not counted"). */
+	counted: boolean;
 };
 
 export function usePlaces(q = "") {
@@ -94,7 +101,8 @@ export function usePlaces(q = "") {
 		enabled: mode === "live" && q.trim().length > 0,
 	}).data;
 	const scopeId = scope?.id ?? null;
-	const threshold = shortlistThreshold(graph.trip.settings);
+	const bar = useShortlistBar();
+	const threshold = bar.bar;
 	// Proposal ghosts are reviewed in the workspace, never rated or pinned here.
 	const liveIds = useMemo(
 		() => new Set(graph.nodes.map((n) => n.id)),
@@ -104,10 +112,12 @@ export function usePlaces(q = "") {
 		() => placesInScope(ix, scopeId, liveIds),
 		[ix, scopeId, liveIds],
 	);
-	const members = useMemo(
-		() => raters(graph.members, nodes),
+	// Everyone who rates (left-out ratings still show, dimmed); only `members` count.
+	const allRaters = useMemo(
+		() => ratingMembers(graph.members, nodes),
 		[graph.members, nodes],
 	);
+	const members = useMemo(() => allRaters.filter(ratingsCount), [allRaters]);
 	const memberIds = useMemo(() => members.map((m) => m.id), [members]);
 	const cityDays = useMemo(
 		() => cityDayTable(ix, schedule, null),
@@ -163,15 +173,16 @@ export function usePlaces(q = "") {
 	);
 	const progress = useMemo<MemberProgress[]>(
 		() =>
-			members.map((m) => ({
+			allRaters.map((m) => ({
 				member: m,
 				rated: ratedCount(
 					rows.filter((r) => r.status !== "dropped"),
 					m.id,
 				),
 				total: tally.all,
+				counted: ratingsCount(m),
 			})),
-		[members, rows, tally.all],
+		[allRaters, rows, tally.all],
 	);
 	return {
 		state,
@@ -181,8 +192,10 @@ export function usePlaces(q = "") {
 		groups,
 		counts: tally,
 		members,
+		allRaters,
 		memberIds,
 		threshold,
+		bar,
 		progress,
 		cityDays,
 	};

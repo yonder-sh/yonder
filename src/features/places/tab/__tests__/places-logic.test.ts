@@ -25,7 +25,7 @@ import {
 	startSession,
 } from "../feed";
 import { groupPlaces, levelGroupOf, SPLIT_AT, splitByArea } from "../grouping";
-import { placeStatus, shortlistThreshold, toggleShortlist } from "../lifecycle";
+import { placeStatus, toggleShortlist } from "../lifecycle";
 import {
 	buildRows,
 	countRows,
@@ -119,9 +119,7 @@ describe("lifecycle (docs/PLACES.md §3)", () => {
 		threshold: 3,
 		allNah: false,
 	};
-	it("suggests the shortlist at the threshold (default +3, a trip setting)", () => {
-		expect(shortlistThreshold({})).toBe(3);
-		expect(shortlistThreshold({ shortlistMinScore: 5 })).toBe(5);
+	it("suggests the shortlist at the bar (bar.ts)", () => {
 		expect(placeStatus({ ...base, score: 2 }).status).toBe("idea");
 		const s = placeStatus({ ...base, score: 3 });
 		expect(s).toMatchObject({ status: "shortlist", suggested: true });

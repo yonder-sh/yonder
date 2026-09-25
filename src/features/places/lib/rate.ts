@@ -76,8 +76,11 @@ export function rateableNodes(
 	);
 }
 
-/** Members who rate: everyone assignable except viewers who never rated anything. */
-export function raters(
+/**
+ * Everyone who rates: members but viewers who never rated anything, and
+ * those whose ratings are left out too (their ratings still show, dimmed).
+ */
+export function ratingMembers(
 	members: readonly GraphMember[],
 	nodes: readonly GraphNode[],
 ): GraphMember[] {
@@ -90,6 +93,19 @@ export function raters(
 			!m.mergedIntoId &&
 			(m.role !== "viewer" || rated.has(m.id)),
 	);
+}
+
+/** Their ratings add to group scores (not left out). */
+export function ratingsCount(m: Pick<GraphMember, "ratingsCounted">): boolean {
+	return m.ratingsCounted !== false;
+}
+
+/** Members whose ratings count: every score, the shortlist and progress use these. */
+export function raters(
+	members: readonly GraphMember[],
+	nodes: readonly GraphNode[],
+): GraphMember[] {
+	return ratingMembers(members, nodes).filter(ratingsCount);
 }
 
 /**
