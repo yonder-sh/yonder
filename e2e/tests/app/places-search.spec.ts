@@ -10,6 +10,7 @@ import { TESTID } from "../../../src/lib/testids";
 import { APP_URL, shotPath, storageStateOf } from "./_helpers/env";
 import { cloneFixtureTrip } from "./_helpers/fixture";
 import { collectConsole, expectLive } from "./_helpers/page";
+import { openLink } from "./_helpers/link";
 
 test.use({ storageState: storageStateOf("dev") });
 
@@ -187,7 +188,7 @@ test("a viewer can't use the provider functions or the preview photo route", asy
 	const guestCtx = await browser.newContext({ storageState: { cookies: [], origins: [] } });
 	const guest = await guestCtx.newPage();
 	const logs = collectConsole(guest, [/Failed to load resource: the server responded with a status of 40[34]/]);
-	await guest.goto(`${APP_URL}/join#t=${c.shareTokens.viewer}`);
+	await openLink(guest, c.slug, "viewer");
 	await expect(guest).toHaveURL(new RegExp(`/t/${c.slug}`), { timeout: 20_000 });
 	await expectLive(guest);
 

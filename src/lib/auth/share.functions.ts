@@ -1,64 +1,89 @@
 import { createServerFn } from "@tanstack/react-start";
-import {
-	getRequestHeaders,
-	getRequestIP,
-	setResponseHeader,
-} from "@tanstack/react-start/server";
+import { getRequestHeaders, getRequestIP } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { announceTripChange } from "@/server/announce.server";
 import { authLimits } from "@/server/auth/limits.server";
 import { auth } from "@/server/auth.server";
-import { withNamedUser, withUser } from "@/server/authz/middleware";
+import {
+	withNamedUser,
+	withSession,
+	withUser,
+} from "@/server/authz/middleware";
 import { fail } from "@/server/authz/session.server";
 import {
 	guestNameClashes,
-	redeemShareToken,
+	openTripLink,
+	tripLinkIsOpen,
 } from "@/server/authz/share-links.server";
 import { GuestName } from "./names";
 import type { ShareRole } from "./roles";
 
 /**
- * Share-link and guest-identity server functions (SPEC §13.6 `redeemShareLink`,
- * `renameGuest`). The `*.server` imports are only used inside handlers, which
- * TanStack Start strips from the client build (SPEC §0 rule 8).
+ * Opening a trip through its link, and guest identity (SPEC §13.6,
+ * `renameGuest`; the 2026-09-25 redesign). The trip's address `/t/<slug>`
+ * is its share link, like Google Drive: the `/t/$trip` route calls
+ * `openTripByLink` when the viewer has no access of their own, and a
+ * signed-out visitor's guard asks `tripLinkOpen` before it makes them an
+ * anonymous guest. The `*.server` imports are only used inside handlers,
+ * which TanStack Start strips from the client build (SPEC §0 rule 8). Like
+ * every server function they answer `Cache-Control: private, no-store`
+ * (`privateCacheHeaders`).
  */
 
-export interface RedeemResult {
+const SlugInput = z.object({ slug: z.string().min(1).max(100) }).strict();
+
+/**
+ * One non-member trip open for this IP (30/min in production,
+ * `authLimits`): false when over. Opening addresses as a non-member is how
+ * someone would guess them, so both calls below spend it.
+ */
+async function withinTripOpenLimit(): Promise<boolean> {
+	const wait = await authLimits().tripOpenRetryAfter(
+		getRequestIP({ xForwardedFor: true }) ?? "",
+	);
+	return wait <= 0;
+}
+
+export interface OpenTripResult {
 	tripId: string;
 	slug: string;
 	role: ShareRole;
 }
 
 /**
- * Exchanges a share token for a grant on its trip (SECURITY §2). The caller
- * must be signed in: `/join` first creates an anonymous guest session when
- * there is none. Unknown, disabled and revoked tokens all answer
- * `NOT_FOUND: link` (404), and redemptions are limited to 10/min per IP (429).
- * A signed-in non-member gets the link's role for that trip only; they are
- * never added as a member (QA LINK-08).
+ * A signed-in non-member (an account, or the anonymous guest session made
+ * for a signed-out visitor) opens the trip's address while "Anyone with the
+ * link" is on: they get the link's role through a grant (SECURITY §2), never
+ * a membership (QA LINK-08; a signed-in account on a "Can rate" link is the
+ * one exception, PLACES §1c). An unknown slug, a link that is off, revoked or
+ * expired, an active member, and an IP over its limit all answer the same
+ * NOT_FOUND (404): the "no access" page, which never says which.
  */
-export const redeemShareLink = createServerFn({ method: "POST" })
+export const openTripByLink = createServerFn({ method: "POST" })
 	.middleware([withNamedUser])
-	.validator(z.object({ token: z.string().min(1).max(256) }).strict())
-	.handler(async ({ data, context }): Promise<RedeemResult> => {
-		setResponseHeader("Cache-Control", "private, no-store");
-		setResponseHeader("Referrer-Policy", "no-referrer");
-		const wait = await authLimits().redeemRetryAfter(
-			getRequestIP({ xForwardedFor: true }) ?? "",
-		);
-		if (wait > 0) {
-			setResponseHeader("Retry-After", String(Math.ceil(wait / 1000)));
-			return fail("RATE_LIMITED");
-		}
-		const redeemed = await redeemShareToken(data.token, context.user.id);
-		if (!redeemed) return fail("NOT_FOUND", "link");
+	.validator(SlugInput)
+	.handler(async ({ data, context }): Promise<OpenTripResult> => {
+		if (!(await withinTripOpenLimit())) return fail("NOT_FOUND");
+		const opened = await openTripLink(data.slug, context.user.id);
+		if (!opened) return fail("NOT_FOUND");
 		// The owner's Share dialog and guest list show the new guest (after COMMIT).
-		await announceTripChange([redeemed.tripId], ["sharing", "graph"]);
-		return {
-			tripId: redeemed.tripId,
-			slug: redeemed.slug,
-			role: redeemed.role,
-		};
+		await announceTripChange([opened.tripId], ["sharing", "graph"]);
+		return { tripId: opened.tripId, slug: opened.slug, role: opened.role };
+	});
+
+/**
+ * For a signed-out visitor at `/t/<slug>`: whether anyone with the link may
+ * open it right now, so the page makes an anonymous guest session only when
+ * it will be let in. `{ open: false }` for an unknown slug, a link that is
+ * off, and an IP over its limit alike: it says nothing opening the address
+ * wouldn't. A read, with or without a session (`withSession`).
+ */
+export const tripLinkOpen = createServerFn({ method: "GET" })
+	.middleware([withSession])
+	.validator(SlugInput)
+	.handler(async ({ data }): Promise<{ open: boolean }> => {
+		if (!(await withinTripOpenLimit())) return { open: false };
+		return { open: await tripLinkIsOpen(data.slug) };
 	});
 
 /**

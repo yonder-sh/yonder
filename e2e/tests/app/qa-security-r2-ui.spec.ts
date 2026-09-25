@@ -12,6 +12,7 @@ import { loginViaApi } from "./_helpers/auth";
 import { cloneFixtureTrip } from "./_helpers/fixture";
 import { hydrated } from "./_helpers/page";
 import { call, EMAIL, MOD, memberPage } from "./qa-security-helpers";
+import { openLink } from "./_helpers/link";
 
 test.skip(!process.env.QA_SEC_DIR, "QA security verifier probes: set QA_SEC_DIR (see qa-security-helpers.ts)");
 const DIR = process.env.QA_SEC_DIR ?? "/tmp";
@@ -30,7 +31,7 @@ test("signed-in guest named like a placeholder: no working 'Are you …?' claim"
 	const o = await user(browser, `qa-sec-r2-o-${stamp}@example.com`, "Olga", "Owner");
 	const c = await cloneFixtureTrip(o.page.request);
 	const g = await user(browser, `qa-sec-r2-a-${stamp}@example.com`, "Audrey", "Guestname");
-	await g.page.goto(`/join#t=${c.shareTokens.viewer}`);
+	await openLink(g.page, c.slug, "viewer");
 	await expect(g.page.getByTestId("workspace")).toBeVisible({ timeout: 30_000 });
 	await g.page.waitForTimeout(3000);
 	const prompt = g.page.getByTestId("home-claim-prompt");

@@ -1,15 +1,17 @@
 /**
- * `requireTripViewer` (QA LINK-04/05, HOME-6): a returning guest whose
- * remembered link was turned off or replaced lands on /join's "This link no
- * longer works." view, never the account sign-in page. QA COLLAB-R2-06: when
- * someone else signs in on the page, the previous identity's cache goes.
+ * `requireTripViewer`: the trip's address is its share link (like Google
+ * Drive). A signed-out visitor becomes an anonymous link guest only when the
+ * trip is open to anyone with the link; otherwise it's the "no access" page
+ * (not found), never a guest left behind. QA COLLAB-R2-06: when someone else
+ * signs in on the page, the previous identity's cache goes.
  */
 import { QueryClient } from "@tanstack/react-query";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const m = vi.hoisted(() => ({
 	session: vi.fn(),
-	redeem: vi.fn(),
+	open: vi.fn(),
+	peek: vi.fn(),
 	signInAnon: vi.fn(),
 	deleteAnon: vi.fn(),
 	removePersisted: vi.fn(async () => {}),
@@ -18,7 +20,10 @@ const m = vi.hoisted(() => ({
 }));
 
 vi.mock("./session.functions", () => ({ getSessionFn: m.session }));
-vi.mock("./share.functions", () => ({ redeemShareLink: m.redeem }));
+vi.mock("./share.functions", () => ({
+	openTripByLink: m.open,
+	tripLinkOpen: m.peek,
+}));
 vi.mock("./auth-client", () => ({
 	authClient: {
 		signIn: { anonymous: m.signInAnon },
@@ -41,20 +46,10 @@ vi.mock("@/features/offline/app-lifecycle", () => ({
 }));
 
 import { sessionKey } from "@/lib/query/keys";
-import { grantFor, saveGrant } from "./grants";
+import { hasGrant } from "./grants";
 import { requireAccountViewer, requireTripViewer } from "./guards";
 import { onSignOut } from "./sign-out";
 import type { Viewer } from "./viewer";
-
-async function redirectOf(p: Promise<unknown>): Promise<string | null> {
-	try {
-		await p;
-		return null;
-	} catch (e) {
-		const r = e as { options?: { href?: string }; href?: string };
-		return r.options?.href ?? r.href ?? String(e);
-	}
-}
 
 beforeEach(() => {
 	vi.clearAllMocks();
@@ -63,24 +58,86 @@ beforeEach(() => {
 	m.deleteAnon.mockResolvedValue({});
 });
 
-describe("requireTripViewer", () => {
-	it("a dead remembered link goes to /join (no longer works) and is forgotten", async () => {
-		saveGrant("asia-2027", "qa-share-token-viewer-asia-2027");
-		expect(grantFor("asia-2027")).not.toBeNull();
-		m.session.mockResolvedValue(null);
-		m.redeem.mockRejectedValue(new Error("NOT_FOUND: link"));
-		expect(
-			await redirectOf(requireTripViewer("asia-2027", "/t/asia-2027")),
-		).toBe("/join");
-		expect(grantFor("asia-2027")).toBeNull();
-		expect(m.deleteAnon).toHaveBeenCalled();
+/** What a guard threw: a redirect's href, "notFound", or null when it let the viewer in. */
+async function outcomeOf(p: Promise<unknown>): Promise<string | null> {
+	try {
+		await p;
+		return null;
+	} catch (e) {
+		if ((e as { isNotFound?: boolean }).isNotFound) return "notFound";
+		const r = e as { options?: { href?: string }; href?: string };
+		return r.options?.href ?? r.href ?? String(e);
+	}
+}
+
+describe("requireTripViewer: the address is the link", () => {
+	const SLUG = "asia-2027-k7m2qxw9";
+	const guestIbis = {
+		id: "anon-ibis",
+		email: null,
+		name: "Guest Ibis",
+		firstName: "",
+		lastName: "",
+		image: null,
+		isAnonymous: true,
+		named: true,
+	} satisfies Viewer;
+
+	it("a signed-out visitor becomes an anonymous guest when anyone with the link may open it", async () => {
+		m.session.mockResolvedValueOnce(null).mockResolvedValue(guestIbis);
+		m.peek.mockResolvedValue({ open: true });
+		m.open.mockResolvedValue({ tripId: "t", slug: SLUG, role: "viewer" });
+		const qc = new QueryClient();
+		const r = await requireTripViewer(SLUG, `/t/${SLUG}`, { queryClient: qc });
+		expect(r.viewer.id).toBe("anon-ibis");
+		expect(m.peek).toHaveBeenCalledWith({ data: { slug: SLUG } });
+		expect(m.signInAnon).toHaveBeenCalledOnce();
+		expect(m.open).toHaveBeenCalledWith({ data: { slug: SLUG } });
+		expect(hasGrant(SLUG)).toBe(true);
+		expect(qc.getQueryData(sessionKey)).toEqual(guestIbis);
 	});
 
-	it("no session and no link still goes to sign-in", async () => {
+	it("link access off (or no such trip): not found, and no guest is made", async () => {
 		m.session.mockResolvedValue(null);
-		expect(
-			await redirectOf(requireTripViewer("asia-2027", "/t/asia-2027")),
-		).toMatch(/^\/login\?next=/);
+		m.peek.mockResolvedValue({ open: false });
+		expect(await outcomeOf(requireTripViewer(SLUG, `/t/${SLUG}`))).toBe(
+			"notFound",
+		);
+		expect(m.signInAnon).not.toHaveBeenCalled();
+		expect(m.open).not.toHaveBeenCalled();
+	});
+
+	it("a link turned off in between leaves no orphan guest", async () => {
+		m.session.mockResolvedValue(null);
+		m.peek.mockResolvedValue({ open: true });
+		m.open.mockRejectedValue(new Error("NOT_FOUND"));
+		expect(await outcomeOf(requireTripViewer(SLUG, `/t/${SLUG}`))).toBe(
+			"notFound",
+		);
+		expect(m.deleteAnon).toHaveBeenCalledOnce();
+		expect(hasGrant(SLUG)).toBe(false);
+	});
+
+	it("a signed-in viewer is let through (the loader decides: member, or the link)", async () => {
+		m.session.mockResolvedValue({
+			...guestIbis,
+			id: "u-eve",
+			isAnonymous: false,
+		});
+		expect(await outcomeOf(requireTripViewer(SLUG, `/t/${SLUG}`))).toBeNull();
+		expect(m.peek).not.toHaveBeenCalled();
+	});
+
+	it("an account without names goes to /welcome first", async () => {
+		m.session.mockResolvedValue({
+			...guestIbis,
+			id: "u-new",
+			isAnonymous: false,
+			named: false,
+		});
+		expect(await outcomeOf(requireTripViewer(SLUG, `/t/${SLUG}`))).toMatch(
+			/^\/welcome\?next=/,
+		);
 	});
 });
 

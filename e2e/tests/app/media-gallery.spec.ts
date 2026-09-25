@@ -12,6 +12,7 @@ import { shotPath, storageStateOf } from "./_helpers/env";
 import { cloneFixtureTrip } from "./_helpers/fixture";
 import { clearToasts } from "./media-helpers";
 import { collectConsole, expectLive, expectNoHorizontalOverflow } from "./_helpers/page";
+import { openLink } from "./_helpers/link";
 
 test.use({ storageState: storageStateOf("dev") });
 
@@ -179,7 +180,7 @@ test("photos, PDFs and links: upload, roll up, view, hide from guests", async ({
 	// A clean context: `test.use({ storageState })` would otherwise sign it in as dev.
 	const guestCtx = await browser.newContext({ storageState: { cookies: [], origins: [] } });
 	const guest = await guestCtx.newPage();
-	await guest.goto(`/join#t=${c.shareTokens.viewer}`);
+	await openLink(guest, c.slug, "viewer");
 	await expect(guest).toHaveURL(new RegExp(`/t/${c.slug}`), { timeout: 20_000 });
 	await openMedia(guest, c.slug);
 	await expect(guest.locator(`[data-testid=${TESTID.galleryItem}][data-kind=photo]`)).toHaveCount(1);

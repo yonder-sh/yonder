@@ -3,11 +3,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const authSignOut = vi.hoisted(() => vi.fn());
 vi.mock("./auth-client", () => ({ authClient: { signOut: authSignOut } }));
 
-const { clearGrants, forgetGrant, grantFor, readGrants, saveGrant } =
+const { clearGrants, forgetGrant, hasGrant, readGrants, saveGrant } =
 	await import("./grants");
 const { onSignOut, signOut } = await import("./sign-out");
-
-const TOKEN = "B6w5wDJRMARa-yKzZs0D4QDToWum602dv3OUaZ6v4UM";
 
 beforeEach(() => {
 	localStorage.clear();
@@ -17,23 +15,20 @@ beforeEach(() => {
 
 describe("grants (localStorage yonder:grants)", () => {
 	it("saves, reads and forgets per slug", () => {
-		saveGrant("asia-2027", TOKEN);
-		saveGrant("phu-quoc", TOKEN);
-		expect(grantFor("asia-2027")).toBe(TOKEN);
-		forgetGrant("asia-2027");
-		expect(readGrants()).toEqual({ "phu-quoc": TOKEN });
+		saveGrant("asia-2027-k7m2qxw9");
+		saveGrant("phu-quoc");
+		expect(hasGrant("asia-2027-k7m2qxw9")).toBe(true);
+		forgetGrant("asia-2027-k7m2qxw9");
+		expect(readGrants()).toEqual(["phu-quoc"]);
 		clearGrants();
-		expect(readGrants()).toEqual({});
+		expect(readGrants()).toEqual([]);
 	});
 
-	it("tolerates corrupted storage and drops malformed tokens", () => {
+	it("tolerates corrupted storage and drops what isn't a slug", () => {
 		localStorage.setItem("yonder:grants", "{not json");
-		expect(readGrants()).toEqual({});
-		localStorage.setItem(
-			"yonder:grants",
-			JSON.stringify({ a: TOKEN, b: "short", c: 3 }),
-		);
-		expect(readGrants()).toEqual({ a: TOKEN });
+		expect(readGrants()).toEqual([]);
+		localStorage.setItem("yonder:grants", JSON.stringify(["a", 3, null]));
+		expect(readGrants()).toEqual(["a"]);
 	});
 });
 
@@ -43,10 +38,10 @@ describe("signOut (SPEC §11.2 flow 8, SECURITY §11)", () => {
 		const off = onSignOut(cleanup);
 		const queryClient = { clear: vi.fn() };
 		const navigate = vi.fn();
-		saveGrant("asia-2027", TOKEN);
+		saveGrant("asia-2027-k7m2qxw9");
 		localStorage.setItem("yonder:saved-trips", "[]");
 		localStorage.setItem("yonder-theme", "dark");
-		sessionStorage.setItem("yonder:pending-join", TOKEN);
+		sessionStorage.setItem("yonder:draft", "x");
 
 		await signOut({ queryClient, reload: false, navigate });
 
@@ -67,7 +62,7 @@ describe("signOut (SPEC §11.2 flow 8, SECURITY §11)", () => {
 			.fn()
 			.mockRejectedValue(new Error("provider already gone"));
 		const off = onSignOut(failing);
-		saveGrant("asia-2027", TOKEN);
+		saveGrant("asia-2027-k7m2qxw9");
 		const navigate = vi.fn();
 		await signOut({ reload: false, navigate });
 		expect(localStorage.getItem("yonder:grants")).toBeNull();

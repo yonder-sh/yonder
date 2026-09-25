@@ -1,9 +1,11 @@
 /**
  * QA security verifier (I2 round 2), PRODUCTION build + service worker:
- * PWA-08 for a LINK GUEST. The guest opens a clone through its view link
- * (the trip is saved for offline), the owner turns the link off, the guest
- * opens the app online once ("no longer works"), then goes offline. Nothing
- * of the trip may be readable offline, in the UI or in Cache Storage/IDB.
+ * PWA-08 for a LINK GUEST. The guest opens the trip's address while its
+ * view link is on (the trip is saved for offline), the owner turns the link
+ * off, the guest opens the app online once ("no longer active"), then goes
+ * offline. Nothing of the trip may be readable offline, in the UI or in
+ * Cache Storage/IDB. (Turning the link on gives the seeded `asia-2027` its
+ * address tail: the spec reads the address from the Share dialog.)
  * Needs QA_PROD_SH (start|stop) and APP_URL = the built server.
  */
 import { execFileSync } from "node:child_process";
@@ -62,20 +64,21 @@ test("PWA-08 for a link guest whose link is turned off", async ({ browser }) => 
 	const octx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
 	await loginViaApi(octx.request, "dennis@asia2027.test", { first: "Dennis", last: "Tester" });
 	const op = await octx.newPage();
-	const slug = "asia-2027";
-	const token = "qa-share-token-viewer-asia-2027";
-	await op.goto(`/t/${slug}?tab=plan`);
+	await op.goto("/t/asia-2027?tab=plan");
 	await expect(op.getByTestId("workspace")).toBeVisible({ timeout: 30_000 });
 	await op.getByTestId("share-button").first().click();
 	const dlg = op.getByTestId("share-dialog");
 	const row = dlg.locator('[data-testid=share-link-row][data-role=viewer]');
 	if ((await row.getByTestId("share-link-switch").getAttribute("aria-checked")) !== "true") await row.getByTestId("share-link-switch").click();
 	await expect(row.getByTestId("share-link-switch")).toHaveAttribute("aria-checked", "true");
+	// The trip's address is the link.
+	const address = new URL(await row.getByTestId("share-link-url").inputValue()).pathname;
+	const slug = address.replace(/^\/t\//, "");
 	const g: BrowserContext = await browser.newContext();
 	const gp = await g.newPage();
 	await gp.goto("/login");
 	await swControls(gp);
-	await gp.goto(`/join#t=${token}`);
+	await gp.goto(address);
 	await expect(gp.getByTestId("workspace")).toBeVisible({ timeout: 30_000 });
 	await gp.waitForTimeout(8000);
 	const needles = ["Golden Gai", "Shibuya Sky", "Kawaguchiko"];
@@ -87,7 +90,7 @@ test("PWA-08 for a link guest whose link is turned off", async ({ browser }) => 
 	// Control: a fresh browser with the same link.
 	const fresh = await browser.newContext();
 	const fp = await fresh.newPage();
-	await fp.goto(`/join#t=${token}`);
+	await fp.goto(address);
 	await fp.waitForTimeout(4000);
 	out.freshAfterRevoke = (await fp.locator("body").innerText()).slice(0, 80).replace(/\s+/g, " ");
 	await fresh.close();

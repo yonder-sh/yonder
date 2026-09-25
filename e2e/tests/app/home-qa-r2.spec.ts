@@ -17,6 +17,7 @@ import { shotPath, storageStateOf } from "./_helpers/env";
 import { cloneFixtureTrip } from "./_helpers/fixture";
 import { logOffset, readOtp } from "./_helpers/otp";
 import { expectLive, hydrated } from "./_helpers/page";
+import { openLink } from "./_helpers/link";
 
 test.use({ storageState: storageStateOf("dev") });
 
@@ -157,7 +158,7 @@ test("COLLAB-R2-06: a link guest who signs in to keep the trip is their account 
 	const acct = await browser.newContext(signedOut);
 	await loginViaApi(acct.request, email, { first: "Kip", last: "Keeper" });
 	const kip = await acct.newPage();
-	await kip.goto(`/join#t=${c.shareTokens.editor}`);
+	await openLink(kip, c.slug, "editor");
 	await expect(kip).toHaveURL(new RegExp(`/t/${c.slug}`), { timeout: 20_000 });
 	await acct.close();
 
@@ -166,7 +167,7 @@ test("COLLAB-R2-06: a link guest who signs in to keep the trip is their account 
 		viewport: { width: 1440, height: 900 },
 	});
 	const page = await ctx.newPage();
-	await page.goto(`/join#t=${c.shareTokens.editor}`);
+	await openLink(page, c.slug, "editor");
 	await expect(page).toHaveURL(new RegExp(`/t/${c.slug}`), {
 		timeout: 20_000,
 	});

@@ -31,7 +31,7 @@ import {
 	buildSecurityHeaders,
 	newCspNonce,
 	privateCacheHeaders,
-	tokenPageHeaders,
+	tripPageHeaders,
 } from "@/server/security-headers.server";
 
 const securityHeaders = createMiddleware().server(
@@ -49,7 +49,7 @@ const securityHeaders = createMiddleware().server(
 				cookie: request.headers.get("cookie"),
 				pathname: new URL(request.url).pathname,
 			}),
-			...tokenPageHeaders(new URL(request.url).pathname),
+			...tripPageHeaders(new URL(request.url).pathname),
 		};
 		for (const [k, v] of Object.entries(headers)) setResponseHeader(k, v);
 		return next({ context: { cspNonce: nonce } });

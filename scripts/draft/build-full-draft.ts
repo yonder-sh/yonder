@@ -2817,19 +2817,35 @@ async function main(): Promise<void> {
 			.where(orm.eq(schema.user.email, args.owner));
 		if (!owner) throw new Error(`no user ${args.owner}`);
 		const user = owner as unknown as AuthUser;
-		const [source] = await db
-			.select({
-				id: schema.trips.id,
-				version: schema.trips.version,
-				name: schema.trips.name,
-			})
-			.from(schema.trips)
-			.where(
-				orm.and(
-					orm.eq(schema.trips.slug, args.source),
-					orm.isNull(schema.trips.deletedAt),
-				),
-			);
+		// Imports and copies get a random address tail (src/lib/trip-slug.ts):
+		// `asia-2027` finds `asia-2027-k7m2qxw9` too, among the owner's trips.
+		const at = async (address: string) => {
+			const res = await db.execute(orm.sql`
+				select id::text as id, slug, slug_tail as "slugTail" from trips
+				 where deleted_at is null
+				   and (slug = ${address}
+				        or (slug_tail is not null and created_by = ${user.id}
+				            and slug = ${address} || '-' || slug_tail))
+				 order by (slug = ${address}) desc, created_at desc`);
+			const rows = res.rows as { id: string; slug: string }[];
+			const exact = rows.find((r) => r.slug === address);
+			if (!exact && rows.length > 1)
+				throw new Error(
+					`several trips at /t/${address}-…: ${rows.map((r) => r.slug).join(", ")}; pass the whole address`,
+				);
+			return exact ?? rows[0] ?? null;
+		};
+		const sourceAt = await at(args.source);
+		const [source] = sourceAt
+			? await db
+					.select({
+						id: schema.trips.id,
+						version: schema.trips.version,
+						name: schema.trips.name,
+					})
+					.from(schema.trips)
+					.where(orm.eq(schema.trips.id, sourceAt.id))
+			: [];
 		if (!source) throw new Error(`no trip "${args.source}"`);
 		const access = await app.getTripAccess(source.id, user);
 		if (access?.role !== "owner")
@@ -2864,19 +2880,17 @@ async function main(): Promise<void> {
 		if (args.check) return;
 
 		// ---- 3. replace an earlier draft (never the real trip) ------------------
-		const [old] = await db
-			.select({
-				id: schema.trips.id,
-				name: schema.trips.name,
-				createdBy: schema.trips.createdBy,
-			})
-			.from(schema.trips)
-			.where(
-				orm.and(
-					orm.eq(schema.trips.slug, slug),
-					orm.isNull(schema.trips.deletedAt),
-				),
-			);
+		const oldAt = await at(slug);
+		const [old] = oldAt
+			? await db
+					.select({
+						id: schema.trips.id,
+						name: schema.trips.name,
+						createdBy: schema.trips.createdBy,
+					})
+					.from(schema.trips)
+					.where(orm.eq(schema.trips.id, oldAt.id))
+			: [];
 		let replacedTripId: string | null = null;
 		if (old) {
 			if (old.id === source.id)
@@ -2911,9 +2925,10 @@ async function main(): Promise<void> {
 			}),
 		);
 		if (tripId === source.id) throw new Error("the copy is the real trip?!");
-		if (gotSlug !== slug)
+		// The copy's address is its readable part and a random tail.
+		if (!gotSlug.startsWith(`${slug}-`))
 			throw new Error(
-				`the copy got the slug "${gotSlug}", expected "${slug}" — is another trip holding it?`,
+				`the copy got the address "${gotSlug}", expected "${slug}-<tail>"`,
 			);
 		console.log(`[draft] copied ${args.source} → ${gotSlug} (${tripId})`);
 

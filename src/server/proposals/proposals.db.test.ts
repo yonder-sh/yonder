@@ -6,7 +6,7 @@
  * private-item guard. The server functions run for real through
  * `src/test/start-mock.ts`; the suggest-mode header comes from `hdr.mode`.
  */
-import { randomBytes, randomUUID } from "node:crypto";
+import { randomUUID } from "node:crypto";
 import { sql } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
@@ -40,8 +40,7 @@ import {
 	ensureDatabase,
 	migrateDatabase,
 } from "@/db/migrate.server";
-import { shareLinks, tripMembers, user } from "@/db/schema";
-import { shareTokenColumns } from "@/db/share-token.server";
+import { tripMembers, user } from "@/db/schema";
 import { createListItem } from "@/features/lists/lists.functions";
 import { getTripGraph, listActivity } from "@/functions/graph.functions";
 import {
@@ -62,8 +61,11 @@ import { shiftTripDates, updateTrip } from "@/functions/trips.functions";
 import type { ProposalDto } from "@/lib/schemas/proposals";
 import type { AuthUser } from "@/server/auth.server";
 import { errorCode } from "@/server/authz/errors";
-import { redeemShareToken } from "@/server/authz/share-links.server";
-import { cloneDemoTrip, type FixtureClone } from "@/server/fixture.server";
+import {
+	cloneDemoTrip,
+	type FixtureClone,
+	joinTestLink,
+} from "@/server/fixture.server";
 import { closeQueues, getQueue } from "@/server/live/jobs.server";
 import { closeRedis, redis, redisPrefix } from "@/server/live/redis.server";
 import { changeMemberRole } from "@/server/members.server";
@@ -164,18 +166,9 @@ async function freshTrip(): Promise<Trip> {
 				color: 5,
 			},
 		]);
-	const suggestToken = randomBytes(32).toString("base64url");
-	await getDb()
-		.insert(shareLinks)
-		.values({
-			tripId: c.tripId,
-			role: "suggester",
-			...shareTokenColumns(suggestToken, process.env.BETTER_AUTH_SECRET),
-			createdBy: U.owner.id,
-		});
-	await redeemShareToken(c.shareTokens.viewer, U.guestViewer.id);
-	await redeemShareToken(c.shareTokens.editor, U.guestEditor.id);
-	await redeemShareToken(suggestToken, U.guestSuggester.id);
+	await joinTestLink(getDb(), c, U.guestViewer.id, "viewer");
+	await joinTestLink(getDb(), c, U.guestEditor.id, "editor");
+	await joinTestLink(getDb(), c, U.guestSuggester.id, "suggester");
 	return { ...c, sueMember };
 }
 

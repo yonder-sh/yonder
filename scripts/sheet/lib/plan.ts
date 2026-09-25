@@ -242,7 +242,9 @@ export type ReportFacts = {
 export type ImportPlan = {
 	trip: {
 		id: string;
+		/** The whole address; `runImport` gives it a random tail (`slugTail`). */
 		slug: string;
+		slugTail?: string | null;
 		name: string;
 		startDate: string;
 		endDate: string;

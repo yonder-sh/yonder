@@ -1,12 +1,15 @@
 /**
  * I2 verifier "home" (round 1): LINK-* (qa/SCENARIOS §8), incl. the suggester
- * link (EXTENSIONS §3.1). Isolated server (APP_URL), QA seed loaded.
+ * link (EXTENSIONS §3.1). The trip's address is its share link (the
+ * 2026-09-25 redesign): guests open `/t/<slug>` while its link gives their
+ * role (`openLink`). Isolated server (APP_URL), QA seed loaded.
  */
 import { type APIRequestContext, type Browser, type Page, expect, test } from "@playwright/test";
 import { loginViaApi } from "./_helpers/auth";
 import { APP_URL } from "./_helpers/env";
 import { cloneFixtureTrip } from "./_helpers/fixture";
 import { hydrated } from "./_helpers/page";
+import { openLink } from "./_helpers/link";
 
 test.beforeEach(({}, info) => {
 	test.skip(info.project.name === "mobile", "qa-home specs run on the desktop project");
@@ -73,16 +76,17 @@ async function userPage(browser: Browser, email: string, first: string, last: st
 	return { ctx, page, email };
 }
 
-async function guest(browser: Browser, token: string) {
+/** A fresh browser that opens the trip at `slug` while its link gives `role`. */
+async function guest(browser: Browser, slug: string, role: string) {
 	const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
 	const page = await ctx.newPage();
-	await page.goto(`/join#t=${token}`);
+	await openLink(page, slug, role);
 	await expect(page.getByTestId("workspace")).toBeVisible({ timeout: 30_000 });
 	return { ctx, page };
 }
 
 test("LINK-01: viewer link renders read-only with no sign-in prompt", async ({ browser }) => {
-	const g = await guest(browser, "qa-share-token-viewer-asia-2027");
+	const g = await guest(browser, "asia-2027", "viewer");
 	await g.page.waitForTimeout(2000);
 	await shot(g.page, "01-guest-viewer");
 	const gr = await graphOf(g.page);
@@ -109,7 +113,7 @@ test("LINK-02/10: editor link — guest edits reach the owner live, attributed t
 	await o.page.goto(`/t/${c.slug}?tab=plan`);
 	await expect(o.page.getByTestId("workspace")).toBeVisible({ timeout: 30_000 });
 	const og = await graphOf(o.page);
-	const ge = await guest(browser, c.shareTokens.editor);
+	const ge = await guest(browser, c.slug, "editor");
 	const gg = await graphOf(ge.page);
 	expect(gg.me.role).toBe("editor");
 	expect(gg.me.isGuest).toBe(true);
@@ -160,7 +164,7 @@ test("LINK-02/10: editor link — guest edits reach the owner live, attributed t
 	const after = (await graphOf(ge.page)).me;
 	expect(after.color).toBe(before.color);
 	expect(after.name).toBe(before.name);
-	const ge2 = await guest(browser, c.shareTokens.editor);
+	const ge2 = await guest(browser, c.slug, "editor");
 	const other = (await graphOf(ge2.page)).me;
 	console.log("LINK-10 guests:", before, other);
 	expect.soft(other.color, "second guest gets a different colour").not.toBe(before.color);
@@ -176,7 +180,7 @@ test("LINK-03: what a link editor can't do (Asia 2027 editor link)", async ({ br
 	page.on("response", async (r) => {
 		if (r.url().includes("/_serverFn/")) bodies.push(await r.text().catch(() => ""));
 	});
-	await page.goto("/join#t=qa-share-token-editor-asia-2027");
+	await openLink(page, "asia-2027", "editor");
 	await expect(page.getByTestId("workspace")).toBeVisible({ timeout: 30_000 });
 	const g = await graphOf(page);
 	expect(g.me.role).toBe("editor");
@@ -201,7 +205,7 @@ test("LINK-03: what a link editor can't do (Asia 2027 editor link)", async ({ br
 	const all = bodies.join("\n");
 	expect(all, "booking ref ZK4P7Q must never reach a guest").not.toContain("ZK4P7Q");
 	expect(all, "member emails must never reach a guest").not.toMatch(/@asia2027\.test/);
-	expect(all, "link tokens must never reach a guest").not.toContain("qa-share-token");
+	expect(all, "the link's state never reaches a guest").not.toMatch(/"useCount"|"expiresAt"/);
 	const tripId = g.trip.id;
 	const r: Record<string, { ok: boolean; status: number | null; error?: string; value?: any }> = {};
 	r.getSharing = await callFn(page, SHARING, "getSharing", { tripId });
@@ -218,7 +222,8 @@ test("LINK-03: what a link editor can't do (Asia 2027 editor link)", async ({ br
 	const sharingJson = JSON.stringify(r.getSharing.value ?? {});
 	console.log("LINK-03 getSharing for guest editor:", r.getSharing.status, sharingJson.slice(0, 300));
 	expect.soft(sharingJson).not.toMatch(/@asia2027\.test/);
-	expect.soft(sharingJson).not.toContain("qa-share-token");
+	// Nobody but the owner learns whether the link is on (QA LINK-03).
+	expect.soft((r.getSharing.value as { link?: unknown } | undefined)?.link ?? null).toBeNull();
 	for (const k of ["setShareLink", "resetShareLink", "inviteMember", "deleteTrip", "duplicateTrip"]) {
 		console.log(`LINK-03 ${k}: ${r[k]!.status} ${r[k]!.error ?? ""}`);
 		expect.soft(r[k]!.ok, k).toBe(false);
@@ -235,8 +240,8 @@ test("LINK-04/05: revoked and reset links stop working, open tabs included", asy
 	const c = await cloneFixtureTrip(o.page.request);
 	await o.page.goto(`/t/${c.slug}?tab=plan`);
 	await expect(o.page.getByTestId("workspace")).toBeVisible({ timeout: 30_000 });
-	const ge = await guest(browser, c.shareTokens.editor);
-	const gv = await guest(browser, c.shareTokens.viewer);
+	const ge = await guest(browser, c.slug, "editor");
+	const gv = await guest(browser, c.slug, "viewer");
 	// LINK-05 first: reset the viewer link
 	const reset = await callFn(o.page, SHARING, "resetShareLink", { tripId: c.tripId, role: "viewer" });
 	expect(reset.ok, JSON.stringify(reset)).toBe(true);
@@ -246,11 +251,12 @@ test("LINK-04/05: revoked and reset links stop working, open tabs included", asy
 	await expect(gv.page.getByTestId("workspace")).toBeHidden({ timeout: 5000 });
 	console.log("LINK-05 viewer kicked after ms:", Date.now() - t0, "at", gv.page.url());
 	await shot(gv.page, "05-viewer-after-reset");
-	// old URL: no longer works
+	// A new address; the old one opens nothing (the same page as a trip that doesn't exist).
+	expect(new URL(newUrl).pathname).not.toBe(`/t/${c.slug}`);
 	const old = await browser.newContext();
 	const op = await old.newPage();
-	await op.goto(`/join#t=${c.shareTokens.viewer}`);
-	await expect(op.getByText("This link no longer works.")).toBeVisible({ timeout: 15_000 });
+	await op.goto(`/t/${c.slug}`);
+	await expect(op.getByTestId("trip-no-access")).toBeVisible({ timeout: 15_000 });
 	// new URL works
 	const nw = await browser.newContext();
 	const np = await nw.newPage();
@@ -288,8 +294,8 @@ test("LINK-04/05: revoked and reset links stop working, open tabs included", asy
 	await o.ctx.close();
 });
 
-test("LINK-07/08/09: token scope, signed-in non-member, token shape", async ({ browser }) => {
-	const ge = await guest(browser, "qa-share-token-editor-asia-2027");
+test("LINK-07/08/09: link scope, signed-in non-member, address shape", async ({ browser }) => {
+	const ge = await guest(browser, "asia-2027", "editor");
 	await ge.page.goto("/dashboard");
 	await expect(ge.page).toHaveURL(/\/login/);
 	await shot(ge.page, "07-guest-dashboard");
@@ -313,7 +319,7 @@ test("LINK-07/08/09: token scope, signed-in non-member, token shape", async ({ b
 	expect(crossWrite.ok).toBe(false);
 	// LINK-08: Eve opens the viewer link
 	const eve = await userPage(browser, "eve@asia2027.test", "Eve", "Outsider");
-	await eve.page.goto("/join#t=qa-share-token-viewer-asia-2027");
+	await openLink(eve.page, "asia-2027", "viewer");
 	await expect(eve.page.getByTestId("workspace")).toBeVisible({ timeout: 30_000 });
 	const eg = await graphOf(eve.page);
 	console.log("LINK-08 eve me:", eg.me);
@@ -326,7 +332,8 @@ test("LINK-07/08/09: token scope, signed-in non-member, token shape", async ({ b
 	console.log("LINK-08 eve dashboard has Asia 2027:", edash.includes("Asia 2027"));
 	expect.soft(edash, "Asia 2027 must not appear as Eve's trip").not.toMatch(/Asia 2027/);
 	await shot(eve.page, "08-eve-dashboard", true);
-	// LINK-09: 20 viewer links → token shape; one-char change
+	// LINK-09: reset links → address shape (readable part + an unguessable
+	// tail, all different); one changed character opens nothing.
 	await d.page.goto("/dashboard");
 	const scratch = await callFn(d.page, "/src/functions/trips.functions.ts", "createTrip", { name: `Scratch ${uniq()}` });
 	const sid = scratch.value.tripId as string;
@@ -339,21 +346,23 @@ test("LINK-07/08/09: token scope, signed-in non-member, token shape", async ({ b
 		}
 		urls.push(r.value.url);
 	}
-	const tokens = urls.map((u) => decodeURIComponent(u.split("#t=")[1] ?? ""));
-	console.log("LINK-09 tokens:", tokens);
-	for (const tk of tokens) {
-		expect(tk.length).toBeGreaterThanOrEqual(22);
-		expect(tk).toMatch(/^[A-Za-z0-9_-]+$/);
-	}
-	expect(new Set(tokens).size).toBe(tokens.length);
-	for (const u of urls) expect(u).not.toMatch(/\/\d+(\/|$)|tripId|trip=/);
-	const good = tokens.at(-1)!;
-	const bad = good.slice(0, -1) + (good.at(-1) === "A" ? "B" : "A");
+	const slugs = urls.map((u) => new URL(u).pathname.replace(/^\/t\//, ""));
+	console.log("LINK-09 addresses:", slugs);
+	expect(slugs.length).toBe(6);
+	const base = slugs[0]!.slice(0, -9);
+	for (const sl of slugs) expect(sl).toMatch(new RegExp(`^${base}-[23456789abcdefghjkmnpqrstuvwxyz]{8}$`));
+	expect(new Set(slugs).size).toBe(slugs.length);
+	for (const u of urls) expect(u).not.toMatch(/tripId|trip=|[0-9a-f]{8}-[0-9a-f]{4}-/);
+	const good = slugs.at(-1)!;
+	const bad = good.slice(0, -1) + (good.at(-1) === "a" ? "b" : "a");
 	const bctx = await browser.newContext();
 	const bp = await bctx.newPage();
-	await bp.goto(`/join#t=${bad}`);
-	await expect(bp.getByText("This link no longer works.")).toBeVisible({ timeout: 15_000 });
-	await shot(bp, "09-altered-token");
+	await bp.goto(`/t/${bad}`);
+	await expect(bp.getByTestId("trip-no-access")).toBeVisible({ timeout: 15_000 });
+	await shot(bp, "09-altered-address");
+	const gp = await bctx.newPage();
+	await gp.goto(`/t/${good}`);
+	await expect(gp.getByTestId("workspace")).toBeVisible({ timeout: 30_000 });
 	await bctx.close();
 	await eve.ctx.close();
 	await d.ctx.close();
@@ -361,7 +370,7 @@ test("LINK-07/08/09: token scope, signed-in non-member, token shape", async ({ b
 });
 
 test("Suggester link: guest suggester proposes, can't apply edits or upload", async ({ browser }) => {
-	const gs = await guest(browser, "qa-share-token-suggester-asia-2027");
+	const gs = await guest(browser, "asia-2027", "suggester");
 	const g = await graphOf(gs.page);
 	console.log("SUG-LINK me:", g.me);
 	expect(g.me.role).toBe("suggester");

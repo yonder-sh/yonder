@@ -74,9 +74,13 @@ export const TESTID = {
 	notesPanel: "notes-panel", // WP-Lists
 	mentionInput: "mention-input", // WP-Lists
 	shareDialog: "share-dialog", // WP-Home
-	shareLinkRow: "share-link-row", // WP-Home (F stub: one per role, data-role="viewer|editor")
+	/** `/t/<slug>` answered "no access" (the same for a trip that doesn't exist); `data-link-gone` when a guest's link ended. */
+	tripNoAccess: "trip-no-access",
+	tripNoAccessSignIn: "trip-no-access-sign-in",
+	shareLinkRow: "share-link-row", // WP-Home: the trip's one link (data-role, data-enabled)
 	shareLinkSwitch: "share-link-switch", // WP-Home (F stub)
-	shareLinkUrl: "share-link-url", // WP-Home (F stub)
+	shareLinkUrl: "share-link-url", // WP-Home: the trip's address (its link)
+	shareLinkCopy: "share-link-copy", // WP-Home: "Copy link"
 	shareLinkReset: "share-link-reset", // WP-Home (F stub)
 	shareLinkExpiry: "share-link-expiry", // WP-Home (F stub)
 	shareLinkExtend: "share-link-extend", // WP-Home (F stub)

@@ -11,6 +11,7 @@ import { TESTID } from "../../../src/lib/testids";
 import { shotPath, storageStateOf } from "./_helpers/env";
 import { cloneFixtureTrip } from "./_helpers/fixture";
 import { collectConsole } from "./_helpers/page";
+import { openLink } from "./_helpers/link";
 
 test.use({ storageState: storageStateOf("dev") });
 
@@ -334,7 +335,7 @@ test("a view-only link guest gets the same map: selectable, filterable, no sugge
 	const guestCtx = await browser.newContext({ storageState: { cookies: [], origins: [] } });
 	const guest = await guestCtx.newPage();
 	const logs = collectConsole(guest, [/status of 40[13]/]);
-	await guest.goto(`/join#t=${c.shareTokens.viewer}`);
+	await openLink(guest, c.slug, "viewer");
 	await expect(guest).toHaveURL(new RegExp(`/t/${c.slug}`), { timeout: 30_000 });
 	await guest.goto(`/t/${c.slug}/japan?lens=city`);
 	await mapReady(guest, "city");

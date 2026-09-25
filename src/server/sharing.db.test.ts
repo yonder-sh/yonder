@@ -1,15 +1,17 @@
 /**
- * FB-13 (owner feedback 2026-09-23): ONE share link per trip, like Google
- * Docs, against real Postgres. The link's role is every link guest's role
- * (changing it changes theirs at once, re-checks their sockets and, down to
- * "Can view", withdraws their open suggestions); OFF and "Reset link" still
- * remove everyone who came in through it; any write folds a leftover second
- * live link into the one the owner sees. Also the `0008_single_trip_link`
- * migration: older per-role links become one, and per-person join links
- * (FB-14) are gone from the schema.
+ * FB-13 and the 2026-09-25 redesign: ONE link per trip, like Google Drive,
+ * and it is the trip's address, against real Postgres. The link's role is
+ * every link guest's role (changing it changes theirs at once, re-checks
+ * their sockets and, down to "Can view", withdraws their open suggestions);
+ * OFF and "Reset link" (a new address tail) still remove everyone who came
+ * in through it; turning it on gives a tail-less (seeded) address a tail; any
+ * write folds a leftover second live link into the one the owner sees. Also
+ * the migrations `0008_single_trip_link` (older per-role links become one,
+ * per-person join links are gone) and `0016_trip_link_address` (every trip
+ * gets an address tail, tokens are gone).
  * Uses its own throwaway databases (created, migrated and dropped here).
  */
-import { randomBytes, randomUUID } from "node:crypto";
+import { createHash, randomBytes, randomUUID } from "node:crypto";
 import {
 	cpSync,
 	mkdtempSync,
@@ -30,11 +32,14 @@ import {
 	migrateDatabase,
 } from "@/db/migrate.server";
 import { user } from "@/db/schema";
-import { hashShareToken } from "@/db/share-token.server";
-import { parseShareFragment } from "@/lib/auth/share-link";
-import { redeemShareToken } from "./authz/share-links.server";
+import { SLUG_TAIL_ALPHABET } from "@/lib/trip-slug";
+import { openTripLink } from "./authz/share-links.server";
 import { loadTripAccess } from "./authz/trip-access.server";
-import { cloneDemoTrip, type FixtureClone } from "./fixture.server";
+import {
+	cloneDemoTrip,
+	type FixtureClone,
+	pinTestLink,
+} from "./fixture.server";
 import { TxOutbox } from "./live/outbox.server";
 import {
 	extendLink,
@@ -100,8 +105,16 @@ async function run<T>(
 	return { value, access: users ? [...users] : [] };
 }
 
-const tokenOf = (url: string) =>
-	parseShareFragment(new URL(url).hash) ?? "(no token)";
+/** A token hash as the pre-0016 schema stored it (43 base64url characters). */
+const oldTokenHash = () =>
+	createHash("sha256").update(randomBytes(32)).digest("base64url");
+const TAIL = `[${SLUG_TAIL_ALPHABET}]{8}`;
+
+const tripSlug = async (tripId: string) =>
+	(
+		await q<{ slug: string; slugTail: string | null }>(sql`
+			select slug, slug_tail as "slugTail" from trips where id = ${tripId}`)
+	)[0];
 
 const liveLinks = (tripId: string) =>
 	q<{ id: string; role: string; enabled: boolean; expiresAt: Date | null }>(sql`
@@ -116,13 +129,13 @@ const daysLeft = (d: Date | null) =>
 
 let owner: string;
 let c: FixtureClone;
-/** The trip's one link after a reset: its token (the fixture seeds two legacy links). */
+/** A fresh clone whose one link has `role`, after a reset: its (new) address. */
 async function freshLink(role: "viewer" | "suggester" | "editor") {
 	c = await cloneDemoTrip(db(), owner);
-	const { value: url } = await run(c.tripId, (tx, out) =>
+	const { value: slug } = await run(c.tripId, (tx, out) =>
 		resetLink(tx, out, c.tripId, role, owner),
 	);
-	return tokenOf(url);
+	return slug;
 }
 
 async function openProposal(tripId: string, authorUserId: string) {
@@ -145,14 +158,14 @@ beforeAll(async () => {
 	owner = await newUser("Olga");
 }, 60_000);
 
-describe("one link per trip (FB-13)", () => {
+describe("one link per trip, at the trip's address (FB-13)", () => {
 	it("changing the link's role changes every guest who came in through it, at once", async () => {
-		const token = await freshLink("viewer");
+		const slug = await freshLink("viewer");
 		expect(await liveLinks(c.tripId)).toHaveLength(1);
 		const anon = await newUser("Heron", true);
 		const signed = await newUser("Kai");
-		expect((await redeemShareToken(token, anon))?.role).toBe("viewer");
-		expect((await redeemShareToken(token, signed))?.role).toBe("viewer");
+		expect((await openTripLink(slug, anon))?.role).toBe("viewer");
+		expect((await openTripLink(slug, signed))?.role).toBe("viewer");
 		expect(await roleOf(c.tripId, anon)).toBe("viewer");
 
 		const up = await run(c.tripId, (tx, out) =>
@@ -162,8 +175,9 @@ describe("one link per trip (FB-13)", () => {
 		expect(up.access.sort()).toEqual([anon, signed].sort());
 		expect(await roleOf(c.tripId, anon)).toBe("editor");
 		expect(await roleOf(c.tripId, signed)).toBe("editor");
-		// Same link, same URL: nobody needs a new one.
-		expect((await redeemShareToken(token, await newUser("Lee")))?.role).toBe(
+		// Same link, same address: nobody needs a new one.
+		expect((await tripSlug(c.tripId))?.slug).toBe(slug);
+		expect((await openTripLink(slug, await newUser("Lee")))?.role).toBe(
 			"editor",
 		);
 		expect(await liveLinks(c.tripId)).toHaveLength(1);
@@ -173,6 +187,7 @@ describe("one link per trip (FB-13)", () => {
 		);
 		expect(await roleOf(c.tripId, anon)).toBe("suggester");
 		const sharing = await loadSharing(db(), c.tripId);
+		expect(sharing.slug).toBe(slug);
 		expect(sharing.link?.role).toBe("suggester");
 		expect(sharing.guests.map((g) => g.role)).toEqual([
 			"suggester",
@@ -182,9 +197,9 @@ describe("one link per trip (FB-13)", () => {
 	});
 
 	it("down to 'Can view' withdraws the link guests' open suggestions; a member's stay", async () => {
-		const token = await freshLink("suggester");
+		const slug = await freshLink("suggester");
 		const guest = await newUser("Wren", true);
-		await redeemShareToken(token, guest);
+		await openTripLink(slug, guest);
 		const theirs = await openProposal(c.tripId, guest);
 		const members = await openProposal(c.tripId, owner);
 		await run(c.tripId, (tx, out) =>
@@ -223,47 +238,67 @@ describe("one link per trip (FB-13)", () => {
 		expect(daysLeft(new Date(iso))).toBe(LINK_TTL_DAYS.viewer);
 	});
 
-	it("OFF removes everyone for good; ON again keeps the role and needs the link again", async () => {
-		const token = await freshLink("editor");
+	it("OFF removes everyone for good; ON again keeps the role and the address, and they open it again", async () => {
+		const slug = await freshLink("editor");
 		const guest = await newUser("Ash", true);
-		await redeemShareToken(token, guest);
+		await openTripLink(slug, guest);
 		const off = await run(c.tripId, (tx, out) =>
 			setLinkEnabled(tx, out, c.tripId, null, false, owner),
 		);
 		expect(off.access).toEqual([guest]);
 		expect(await roleOf(c.tripId, guest)).toBeNull();
-		expect(await redeemShareToken(token, guest)).toBeNull();
+		expect(await openTripLink(slug, guest)).toBeNull();
 		await run(c.tripId, (tx, out) =>
 			setLinkEnabled(tx, out, c.tripId, null, true, owner),
 		);
 		expect(await roleOf(c.tripId, guest)).toBeNull();
 		expect((await liveLinks(c.tripId))[0]?.role).toBe("editor");
-		expect((await redeemShareToken(token, guest))?.role).toBe("editor");
+		expect((await tripSlug(c.tripId))?.slug).toBe(slug);
+		expect((await openTripLink(slug, guest))?.role).toBe("editor");
 	});
 
-	it("'Reset link' kills the old address and its guests; the new one keeps the role", async () => {
-		const token = await freshLink("suggester");
+	it("'Reset link' gives the trip a new address tail: the old address and its guests are gone; the role stays", async () => {
+		const slug = await freshLink("suggester");
 		const guest = await newUser("Fox", true);
-		await redeemShareToken(token, guest);
-		const { value: url, access } = await run(c.tripId, (tx, out) =>
+		await openTripLink(slug, guest);
+		const { value: next, access } = await run(c.tripId, (tx, out) =>
 			resetLink(tx, out, c.tripId, null, owner),
 		);
 		expect(access).toEqual([guest]);
 		expect(await roleOf(c.tripId, guest)).toBeNull();
-		expect(await redeemShareToken(token, guest)).toBeNull();
-		expect(tokenOf(url)).not.toBe(token);
+		expect(next).not.toBe(slug);
+		// The readable part stays; only the tail is new.
+		expect(next).toMatch(new RegExp(`^demo-${TAIL}$`));
+		expect(await tripSlug(c.tripId)).toEqual({
+			slug: next,
+			slugTail: next.slice(-8),
+		});
+		expect(await openTripLink(slug, guest)).toBeNull();
 		const links = await liveLinks(c.tripId);
 		expect(links).toHaveLength(1);
 		expect(links[0]?.role).toBe("suggester");
-		expect((await redeemShareToken(tokenOf(url), guest))?.role).toBe(
-			"suggester",
-		);
+		expect((await openTripLink(next, guest))?.role).toBe("suggester");
 	});
 
-	it("turning the link on for a trip without one makes a view link", async () => {
+	it("'Reset link' while the link is off gives a new address and keeps it off", async () => {
+		const slug = await freshLink("viewer");
+		await run(c.tripId, (tx, out) =>
+			setLinkEnabled(tx, out, c.tripId, null, false, owner),
+		);
+		const { value: next } = await run(c.tripId, (tx, out) =>
+			resetLink(tx, out, c.tripId, null, owner),
+		);
+		expect(next).not.toBe(slug);
+		expect((await liveLinks(c.tripId)).map((l) => l.enabled)).toEqual([false]);
+		expect(await openTripLink(next, await newUser("Nox", true))).toBeNull();
+	});
+
+	it("turning the link on for a trip without one makes a view link; a tail-less (seeded) address gets a tail first", async () => {
 		c = await cloneDemoTrip(db(), owner);
+		// A seed's fixed address, like the QA seed's `asia-2027`.
+		const seeded = `seeded-${randomBytes(3).toString("hex")}`;
 		await db().execute(
-			sql`delete from share_links where trip_id = ${c.tripId}`,
+			sql`update trips set slug = ${seeded}, slug_tail = null where id = ${c.tripId}`,
 		);
 		expect((await loadSharing(db(), c.tripId)).link).toBeNull();
 		await run(c.tripId, (tx, out) =>
@@ -271,6 +306,21 @@ describe("one link per trip (FB-13)", () => {
 		);
 		const links = await liveLinks(c.tripId);
 		expect(links.map((l) => [l.role, l.enabled])).toEqual([["viewer", true]]);
+		const address = await tripSlug(c.tripId);
+		expect(address?.slug).toMatch(new RegExp(`^${seeded}-${TAIL}$`));
+		expect(address?.slugTail).toBe(address?.slug.slice(-8));
+		// The guessable address opens nothing; the new one does.
+		const g = await newUser("Pip", true);
+		expect(await openTripLink(seeded, g)).toBeNull();
+		expect((await openTripLink(address?.slug ?? "", g))?.role).toBe("viewer");
+		// Turning it off and on again keeps that address.
+		await run(c.tripId, (tx, out) =>
+			setLinkEnabled(tx, out, c.tripId, null, false, owner),
+		);
+		await run(c.tripId, (tx, out) =>
+			setLinkEnabled(tx, out, c.tripId, null, true, owner),
+		);
+		expect((await tripSlug(c.tripId))?.slug).toBe(address?.slug);
 		// A role change needs a link: it never makes one silently.
 		await db().execute(
 			sql`delete from share_links where trip_id = ${c.tripId}`,
@@ -284,24 +334,25 @@ describe("one link per trip (FB-13)", () => {
 
 	it("a leftover second live link (fixtures, pre-migration rows) is retired by the owner's next change", async () => {
 		c = await cloneDemoTrip(db(), owner);
-		// The fixture seeds an editor and a view link; guests on both.
+		// Test fixtures may hold a live link per role; guests on both.
 		const onEdit = await newUser("Eddie", true);
 		const onView = await newUser("Vera", true);
-		await redeemShareToken(c.shareTokens.editor, onEdit);
-		await redeemShareToken(c.shareTokens.viewer, onView);
+		await pinTestLink(db(), c.tripId, "editor");
+		await openTripLink(c.slug, onEdit);
+		await pinTestLink(db(), c.tripId, "viewer");
+		await openTripLink(c.slug, onView);
 		expect(await liveLinks(c.tripId)).toHaveLength(2);
 		const shown = (await loadSharing(db(), c.tripId)).link;
+		expect(shown?.role).toBe("viewer");
 		await run(c.tripId, (tx, out) =>
 			setLinkEnabled(tx, out, c.tripId, null, true, owner),
 		);
 		const links = await liveLinks(c.tripId);
 		expect(links).toHaveLength(1);
 		// The one the owner saw is the one that stays.
-		expect(links[0]?.role).toBe(shown?.role);
-		const kept = shown?.role === "editor" ? onEdit : onView;
-		const dropped = kept === onEdit ? onView : onEdit;
-		expect(await roleOf(c.tripId, kept)).toBe(shown?.role);
-		expect(await roleOf(c.tripId, dropped)).toBeNull();
+		expect(links[0]?.role).toBe("viewer");
+		expect(await roleOf(c.tripId, onView)).toBe("viewer");
+		expect(await roleOf(c.tripId, onEdit)).toBeNull();
 	});
 });
 
@@ -363,7 +414,7 @@ describe("migration 0008_single_trip_link", () => {
 						users.soleOwner,
 					],
 				);
-				const claim = hashShareToken(randomBytes(32).toString("base64url"));
+				const claim = oldTokenHash();
 				await exec(
 					`insert into trip_members (id, trip_id, status, role, color, display_name, claim_token_hash, claim_token_prefix)
 					 values ($1, $2, 'placeholder', 'editor', 1, 'Audrey', $3, 'abcdef')`,
@@ -381,7 +432,7 @@ describe("migration 0008_single_trip_link", () => {
 						[
 							id,
 							tripId,
-							hashShareToken(randomBytes(32).toString("base64url")),
+							oldTokenHash(),
 							role,
 							opts.enabled ?? true,
 							opts.used ?? null,
@@ -469,6 +520,104 @@ describe("migration 0008_single_trip_link", () => {
 					`select count(*)::int as n from pg_class where relname like '_fb13_%'`,
 				);
 				expect(temp.rows[0]?.n).toBe(0);
+			} finally {
+				await client.end();
+			}
+		} finally {
+			rmSync(dir, { recursive: true, force: true });
+			await dropDatabase(url).catch(() => {});
+		}
+	}, 120_000);
+});
+
+describe("migration 0016_trip_link_address", () => {
+	it("gives every trip an address tail, keeping the readable part, and drops the tokens", async () => {
+		// Migrate a database up to 0015, write the old shape, then apply 0016.
+		const dir = mkdtempSync(path.join(tmpdir(), "yonder-mig16-"));
+		const url = scratch("mig16");
+		try {
+			cpSync(MIGRATIONS_FOLDER, dir, { recursive: true });
+			const journalPath = path.join(dir, "meta", "_journal.json");
+			const journal = JSON.parse(readFileSync(journalPath, "utf8")) as {
+				entries: { tag: string }[];
+			};
+			journal.entries = journal.entries.filter(
+				(e) => e.tag < "0016_trip_link_address",
+			);
+			writeFileSync(journalPath, JSON.stringify(journal));
+			await ensureDatabase(url);
+			await migrateDatabase(url, { migrationsFolder: dir });
+
+			const client = new pg.Client({ connectionString: url });
+			await client.connect();
+			try {
+				const exec = (text: string, values: unknown[] = []) =>
+					client.query(text, values);
+				const guest = randomUUID();
+				await exec(
+					`insert into "user" (id, name, email, email_verified, is_anonymous) values ($1, 'G', $2, true, true)`,
+					[guest, `g-${guest}@example.test`],
+				);
+				const long = `a${"-b".repeat(49)}c`; // 100 characters
+				const trips = {
+					plain: [randomUUID(), "asia-2027", null],
+					long: [randomUUID(), long, null],
+					deleted: [randomUUID(), "asia-2027", "2026-09-01"],
+				} as const;
+				for (const [id, slug, deletedAt] of Object.values(trips))
+					await exec(
+						`insert into trips (id, slug, name, deleted_at) values ($1, $2, 'Trip', $3)`,
+						[id, slug, deletedAt],
+					);
+				const link = randomUUID();
+				await exec(
+					`insert into share_links (id, trip_id, token_hash, token_prefix, role) values ($1, $2, $3, 'abcdef', 'viewer')`,
+					[link, trips.plain[0], oldTokenHash()],
+				);
+				await exec(
+					`insert into share_grants (trip_id, share_link_id, user_id, color) values ($1, $2, $3, 1)`,
+					[trips.plain[0], link, guest],
+				);
+
+				await migrateDatabase(url);
+
+				const rows = (
+					await exec(
+						`select id::text as id, slug, slug_tail as "slugTail" from trips`,
+					)
+				).rows as { id: string; slug: string; slugTail: string }[];
+				const byId = new Map(rows.map((r) => [r.id, r]));
+				const tail = new RegExp(`^${TAIL}$`);
+				for (const r of rows) {
+					expect(r.slugTail).toMatch(tail);
+					expect(r.slug.endsWith(`-${r.slugTail}`)).toBe(true);
+					expect(r.slug.length).toBeLessThanOrEqual(100);
+				}
+				expect(byId.get(trips.plain[0])?.slug).toMatch(
+					new RegExp(`^asia-2027-${TAIL}$`),
+				);
+				expect(
+					byId.get(trips.long[0])?.slug.startsWith(long.slice(0, 91)),
+				).toBe(true);
+				// Two trips never share a tail by chance here, and the live one is unique.
+				expect(new Set(rows.map((r) => r.slugTail)).size).toBe(rows.length);
+				// The link row and the guest's grant stay; the token columns are gone.
+				const grants = await exec(
+					`select count(*)::int as n from share_grants where share_link_id = $1`,
+					[link],
+				);
+				expect(grants.rows[0]?.n).toBe(1);
+				const cols = await exec(
+					`select column_name from information_schema.columns
+					  where table_name = 'share_links' and column_name like 'token%'`,
+				);
+				expect(cols.rows).toEqual([]);
+				// The address check holds for later writes.
+				await expect(
+					exec(`update trips set slug_tail = 'zzzzzzzz' where id = $1`, [
+						trips.plain[0],
+					]),
+				).rejects.toThrow(/trips_slug_tail_ck/);
 			} finally {
 				await client.end();
 			}

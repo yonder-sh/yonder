@@ -30,6 +30,7 @@ import { shotPath, storageStateOf } from "./_helpers/env";
 import { cloneFixtureTrip } from "./_helpers/fixture";
 import { logOffset, readOtpFromLog } from "./_helpers/otp";
 import { collectConsole, expectLive, hydrated } from "./_helpers/page";
+import { openLink } from "./_helpers/link";
 
 const MAP_NOISE = [/GL Driver Message|WebGL|layers\[[^\]]+\]\.filter/];
 
@@ -74,6 +75,9 @@ async function tripLink(page: Page, role: "Can view" | "Can suggest" | "Can edit
 		await page.getByRole("option", { name: role }).click();
 	}
 	await expect(select).toContainText(role);
+	// The options close with an animation: until they're gone, Esc closes
+	// them, not the dialog (turning the link on just before makes it slower).
+	await expect(page.getByRole("listbox")).toHaveCount(0);
 	return row;
 }
 
@@ -624,8 +628,9 @@ test("J5 edit link: an incognito guest edits, never sees the booking ref, and a 
 	// The trip link as "Can edit", from the Share dialog.
 	await owner.getByTestId(TESTID.shareButton).click();
 	const row = await tripLink(owner, "Can edit");
+	// The link is the trip's own address.
 	const link = await row.getByTestId(TESTID.shareLinkUrl).inputValue();
-	expect(link).toMatch(/\/join#t=/);
+	expect(new URL(link).pathname).toBe(`/t/${c.slug}`);
 	await owner.keyboard.press("Escape");
 
 	// An incognito guest opens it and lands in the trip as a guest editor.
@@ -639,7 +644,6 @@ test("J5 edit link: an incognito guest edits, never sees the booking ref, and a 
 	await guest.goto(link);
 	await expect(guest).toHaveURL(new RegExp(`/t/${c.slug}`), { timeout: 20_000 });
 	await expectLive(guest);
-	expect(guest.url()).not.toContain("#t=");
 	await shot(guest, "j5-01-guest-in");
 
 	// The guest edits: Hands Shibuya becomes 1h30; the owner sees it.
@@ -669,12 +673,13 @@ test("J5 edit link: an incognito guest edits, never sees the booking ref, and a 
 	expect(bodies.join("\n")).not.toMatch(/QX7P2M/i);
 	await shot(guest, "j5-02-guest-masked");
 
-	// The owner resets the link: the guest is cut off at once.
+	// The owner resets the link: a new address, and the guest is cut off at once.
 	await owner.getByTestId(TESTID.shareButton).click();
 	await row.getByTestId(TESTID.shareLinkReset).click();
 	await row.getByRole("button", { name: "Reset" }).last().click();
 	await expect(row.getByTestId(TESTID.shareLinkUrl)).not.toHaveValue(link, { timeout: 10_000 });
-	await expect(guest).not.toHaveURL(new RegExp(`/t/${c.slug}`), { timeout: 15_000 });
+	await expect(guest.getByTestId(TESTID.workspace)).toHaveCount(0, { timeout: 15_000 });
+	await expect(guest.getByText("This link is no longer active.")).toBeVisible();
 	await shot(guest, "j5-03-guest-kicked");
 	expect(logs.messages).toEqual([]);
 	expect(guestLogs.messages).toEqual([]);
@@ -1595,7 +1600,7 @@ test("X8 PDFs: a general PDF shows to guests until hidden; a flight PDF starts h
 	guest.on("response", async (r) => {
 		if (r.url().includes("/_serverFn/")) bodies.push(await r.text().catch(() => ""));
 	});
-	await guest.goto(`/join#t=${c.shareTokens.viewer}`);
+	await openLink(guest, c.slug, "viewer");
 	await expect(guest).toHaveURL(new RegExp(`/t/${c.slug}`), { timeout: 20_000 });
 	await guest.goto(skyUrl);
 	await expectLive(guest);

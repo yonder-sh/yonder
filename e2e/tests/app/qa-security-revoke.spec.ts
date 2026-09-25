@@ -9,6 +9,7 @@ import { writeFileSync } from "node:fs";
 import path from "node:path";
 import { expect, type Page, test } from "@playwright/test";
 import { call, EMAIL, GG, guestPage, MOD, memberPage, T, TOKEN } from "./qa-security-helpers";
+import { setTestLink } from "./_helpers/link";
 
 // Probes against the isolated QA-security stack (fixed QA-seed ids, own ports): opt-in only.
 test.skip(!process.env.QA_SEC_DIR, "QA security verifier probes: set QA_SEC_DIR (see qa-security-helpers.ts)");
@@ -84,14 +85,15 @@ test("turning links off cuts open tabs and sockets", async ({ browser }) => {
 	out.reloadHtmlHasTrip = /Golden Gai|Asia 2027|Shinjuku/.test(html);
 	out.reloadPage = (await gv.page.locator("body").innerText()).slice(0, 200);
 	await gv.page.screenshot({ path: path.join(DIR, "revoke-guest-viewer-reload.png") });
-	// Re-opening the old link.
-	await gv.page.goto(`/join#t=${TOKEN.viewer}`);
+	// Re-opening the address while the link is off.
+	await gv.page.goto("/t/asia-2027");
 	await gv.page.waitForTimeout(4000);
 	out.rejoinPage = (await gv.page.locator("body").innerText()).slice(0, 200);
 
+	// On again through the test route (the app would give the seeded address a tail).
 	for (const role of ["editor", "viewer"] as const) {
-		const r = await call(dennis.page, MOD.sharing, "setShareLink", { tripId: T, role, enabled: true });
-		out[`on:${role}`] = r.ok ? "OK" : r.err;
+		await setTestLink(dennis.page.request, "asia-2027", role);
+		out[`on:${role}`] = "OK";
 	}
 	writeFileSync(path.join(DIR, "revoke.json"), JSON.stringify(out, null, 1));
 	await ge.ctx.close();

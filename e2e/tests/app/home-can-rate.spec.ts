@@ -101,12 +101,12 @@ test("a friend joins with the \"Can rate\" link, rates a place, and can't change
 	await page.goto(`/t/${c.slug}?tab=plan`);
 	await expectLive(page);
 
-	// The owner makes the one link "Can rate" (a fresh link: clones carry old ones).
+	// The owner turns the one link on and makes it "Can rate".
 	await page.getByTestId(TESTID.shareButton).click();
 	const dialog = page.getByTestId(TESTID.shareDialog);
 	const row = dialog.getByTestId(TESTID.shareLinkRow);
-	await row.getByTestId(TESTID.shareLinkReset).click();
-	await dialog.getByTestId(HOME_TESTID.resetConfirm).click();
+	await row.getByTestId(TESTID.shareLinkSwitch).click();
+	await expect(row).toHaveAttribute("data-enabled", "true");
 	await row.getByTestId(HOME_TESTID.linkRole).click();
 	await expect(page.getByRole("option")).toHaveText([
 		"Can view",
@@ -117,8 +117,9 @@ test("a friend joins with the \"Can rate\" link, rates a place, and can't change
 	await page.getByRole("option", { name: "Can rate" }).click();
 	await expect(row).toHaveAttribute("data-role", "rater");
 	await expect(row).toContainText("rate places once they sign in");
+	// The link is the trip's address.
 	const url = await row.getByTestId(TESTID.shareLinkUrl).inputValue();
-	expect(url).toMatch(/\/join#t=[A-Za-z0-9_-]{43}$/);
+	expect(new URL(url).pathname).toBe(`/t/${c.slug}`);
 	await page.screenshot({
 		path: shotPath("home/share-link-can-rate.png"),
 		animations: "disabled",

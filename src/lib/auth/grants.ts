@@ -1,16 +1,18 @@
 import { AUTH_BRAND } from "./constants";
-import { isShareToken } from "./share-link";
 
 /**
- * `localStorage["yonder:grants"]` = `{ [tripSlug]: shareToken }` (SPEC §11.2):
- * lets a guest whose session expired re-redeem the link they came in with.
+ * `localStorage["yonder:grants"]` = the trip slugs this browser opened as a
+ * link guest (SPEC §11.2; the 2026-09-25 redesign: the trip's address is its
+ * link, so there is no token to keep). It only decides how a trip that
+ * stops opening reads: "This link is no longer active" for a trip this
+ * browser had link access to, the plain "no access" page for any other.
  * Every accessor tolerates SSR, private mode and corrupted JSON.
  */
 const KEY = AUTH_BRAND.storage.grants;
 /** Slugs whose link stopped working here (see `markGrantGone`). */
 const GONE_KEY = AUTH_BRAND.storage.grantsGone;
 /** Enough for any realistic number of links on one device. */
-const GONE_MAX = 50;
+const MAX = 50;
 
 function storage(): Storage | null {
 	try {
@@ -20,44 +22,57 @@ function storage(): Storage | null {
 	}
 }
 
-export function readGrants(): Record<string, string> {
-	const raw = storage()?.getItem(KEY);
-	if (!raw) return {};
+/** A JSON list of strings; an older `{ slug: token }` object reads as its slugs. */
+function readList(key: string): string[] {
+	const raw = storage()?.getItem(key);
+	if (!raw) return [];
 	try {
 		const parsed: unknown = JSON.parse(raw);
-		if (!parsed || typeof parsed !== "object" || Array.isArray(parsed))
-			return {};
-		return Object.fromEntries(
-			Object.entries(parsed).filter(
-				(e): e is [string, string] =>
-					typeof e[0] === "string" && isShareToken(e[1]),
-			),
-		);
+		const list = Array.isArray(parsed)
+			? parsed
+			: parsed && typeof parsed === "object"
+				? Object.keys(parsed)
+				: [];
+		return list.filter((s): s is string => typeof s === "string");
 	} catch {
-		return {};
+		return [];
 	}
 }
 
-function write(grants: Record<string, string>): void {
+function writeList(key: string, slugs: string[]): void {
 	try {
-		storage()?.setItem(KEY, JSON.stringify(grants));
+		if (slugs.length) storage()?.setItem(key, JSON.stringify(slugs));
+		else storage()?.removeItem(key);
 	} catch {
-		// quota or private mode: re-redeem just won't be available
+		// quota or private mode: the plain "no access" page will do
 	}
 }
 
-export function grantFor(slug: string): string | null {
-	return readGrants()[slug] ?? null;
+export function readGrants(): string[] {
+	return readList(KEY);
 }
 
-export function saveGrant(slug: string, token: string): void {
-	write({ ...readGrants(), [slug]: token });
-	unmarkGone(slug);
+/** Whether this browser opened `slug` as a link guest (and hasn't lost it). */
+export function hasGrant(slug: string): boolean {
+	return readGrants().includes(slug);
+}
+
+/** This browser just opened `slug` through its link. */
+export function saveGrant(slug: string): void {
+	writeList(KEY, [...readGrants().filter((s) => s !== slug), slug].slice(-MAX));
+	const gone = readList(GONE_KEY);
+	if (gone.includes(slug))
+		writeList(
+			GONE_KEY,
+			gone.filter((s) => s !== slug),
+		);
 }
 
 export function forgetGrant(slug: string): void {
-	const { [slug]: _dropped, ...rest } = readGrants();
-	write(rest);
+	writeList(
+		KEY,
+		readGrants().filter((s) => s !== slug),
+	);
 }
 
 export function clearGrants(): void {
@@ -74,51 +89,26 @@ export function clearGrants(): void {
 // ---------------------------------------------------------------------------
 
 /**
- * `localStorage["yonder:grants-gone"]` = the slugs whose remembered link was
- * turned off or replaced while this browser held it. Only those say "This
- * link is no longer active" (and keep saying it on reload, after the token
- * itself is forgotten); any other trip a guest can't open is the plain "no
- * access" page, and its grant (for another trip) is left alone.
+ * `localStorage["yonder:grants-gone"]` = the slugs whose link was turned off
+ * or reset while this browser held it. Only those say "This link is no
+ * longer active" (and keep saying it on reload); any other trip a guest
+ * can't open is the plain "no access" page, and the trips they do have are
+ * left alone.
  */
-function readGone(): string[] {
-	const raw = storage()?.getItem(GONE_KEY);
-	if (!raw) return [];
-	try {
-		const parsed: unknown = JSON.parse(raw);
-		return Array.isArray(parsed)
-			? parsed.filter((s): s is string => typeof s === "string")
-			: [];
-	} catch {
-		return [];
-	}
-}
-
-function writeGone(slugs: string[]): void {
-	try {
-		if (slugs.length) storage()?.setItem(GONE_KEY, JSON.stringify(slugs));
-		else storage()?.removeItem(GONE_KEY);
-	} catch {
-		// quota or private mode
-	}
-}
-
-function unmarkGone(slug: string): void {
-	const gone = readGone();
-	if (gone.includes(slug)) writeGone(gone.filter((s) => s !== slug));
-}
-
-/** The link for `slug` stopped working: forget its token, remember that it went. */
 export function markGrantGone(slug: string): void {
 	forgetGrant(slug);
-	writeGone([...readGone().filter((s) => s !== slug), slug].slice(-GONE_MAX));
+	writeList(
+		GONE_KEY,
+		[...readList(GONE_KEY).filter((s) => s !== slug), slug].slice(-MAX),
+	);
 }
 
 /**
- * Whether a guest who can't open `slug` lost a link to it: a remembered token
- * for that slug (the trip now answers NOT_FOUND, so the link was turned off
- * or replaced), or a link already marked gone. False for a trip the guest
- * never had a link to (QA LINK-07).
+ * Whether a guest who can't open `slug` lost link access to it: a trip this
+ * browser opened through its link (it now answers NOT_FOUND, so the link was
+ * turned off or reset), or one already marked gone. False for a trip the
+ * guest never opened (QA LINK-07).
  */
 export function lostLinkFor(slug: string): boolean {
-	return grantFor(slug) !== null || readGone().includes(slug);
+	return hasGrant(slug) || readList(GONE_KEY).includes(slug);
 }

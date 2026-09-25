@@ -12,7 +12,7 @@ import {
 	useParams,
 	useRouter,
 } from "@tanstack/react-router";
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/common/empty-state";
 import { YonderMark } from "@/components/common/yonder-mark";
@@ -26,7 +26,7 @@ import {
 	removeTripPageOffline,
 } from "@/features/offline/saved-trips";
 import { Workspace } from "@/features/shell/Workspace";
-import { JOIN_PATH, LOGIN_PATH } from "@/lib/auth/constants";
+import { LOGIN_PATH } from "@/lib/auth/constants";
 import { lostLinkFor, markGrantGone } from "@/lib/auth/grants";
 import { requireTripViewer } from "@/lib/auth/guards";
 import { requestReauth } from "@/lib/auth/reauth";
@@ -34,17 +34,18 @@ import { can } from "@/lib/auth/roles";
 import type { Viewer } from "@/lib/auth/viewer";
 import { pageTitle } from "@/lib/brand";
 import { errorCode, isAccessDenied } from "@/lib/errors";
-import { sessionKey } from "@/lib/query/keys";
+import { sessionKey, tripSlugKey } from "@/lib/query/keys";
+import { ensureTripBySlug } from "@/lib/query/open-trip";
 import {
 	tripCountsQuery,
 	tripDigestQuery,
 	tripGraphQuery,
 	tripProposalsQuery,
-	tripSlugQuery,
 } from "@/lib/query/trip-queries";
 import { useConnectionStatus } from "@/lib/realtime/connection";
 import { AUTH_FAILURE, type JobEvent } from "@/lib/realtime/protocol";
 import { TripChannelProvider } from "@/lib/realtime/trip-channel";
+import { TESTID } from "@/lib/testids";
 import {
 	WorkspaceModelProvider,
 	type WorkspaceRouteBinding,
@@ -55,13 +56,19 @@ import { useUi } from "@/lib/workspace/ui-store";
 
 /**
  * `/t/$trip/…` — the trip workspace (SPEC §12.1, D5: `ssr: false`). The scope
- * is the URL tail (`/t/asia-2027/japan/tokyo`, the `$` child route); lens,
- * tab, days, sel, only, list, mf and who are search params (§12.1).
+ * is the URL tail (`/t/asia-2027-k7m2qxw9/japan/tokyo`, the `$` child route);
+ * lens, tab, days, sel, only, list, mf and who are search params (§12.1).
  *
- * The guard signs a returning link guest back in; the loader resolves the
- * slug and loads the graph (from IndexedDB first when offline, §16.4). The
- * component mounts the live trip channel (invalidation + presence, §10.5)
- * around the workspace model and WP-Shell's `<Workspace/>`.
+ * The address is also the trip's share link, like Google Drive: members
+ * open it as members; while "Anyone with the link" is on, anyone else gets
+ * its role (the guard makes a signed-out visitor an anonymous guest, the
+ * loader opens the link for a signed-in non-member: `ensureTripBySlug`);
+ * otherwise it is the "no access" page, the same as for a trip that doesn't
+ * exist. The loader loads the graph (from IndexedDB first when offline,
+ * §16.4). The component mounts the live trip channel (invalidation +
+ * presence, §10.5) around the workspace model and WP-Shell's `<Workspace/>`.
+ * Trip pages are never indexed (`X-Robots-Tag` from the server, and the
+ * robots meta here).
  */
 export const Route = createFileRoute("/t/$trip")({
 	ssr: false,
@@ -71,13 +78,10 @@ export const Route = createFileRoute("/t/$trip")({
 			queryClient: context.queryClient,
 		}),
 	loader: async ({ context, params }) => {
-		let tripId: string | undefined;
 		try {
-			({ tripId } = await context.queryClient.ensureQueryData(
-				tripSlugQuery(params.trip),
-			));
-			const graph = await context.queryClient.ensureQueryData(
-				tripGraphQuery(tripId),
+			const { tripId, graph } = await ensureTripBySlug(
+				context.queryClient,
+				params.trip,
 			);
 			// EXTENSIONS §9: the digest snapshot comes with the trip bootstrap (not
 			// awaited; the banner takes it if it lands within 1.5 s of first paint).
@@ -91,7 +95,9 @@ export const Route = createFileRoute("/t/$trip")({
 			if (code === "NOT_FOUND" || code === "FORBIDDEN") {
 				// SPEC §16.4: a trip that is gone (or no longer ours) leaves the device.
 				const saved =
-					tripId ??
+					context.queryClient.getQueryData<{ tripId: string }>(
+						tripSlugKey(params.trip),
+					)?.tripId ??
 					readSavedTrips().find((t) => t.slug === params.trip)?.tripId;
 				if (saved) void removeTripOffline(saved);
 				// An expected answer, not a crash: the not-found view, no error boundary.
@@ -101,7 +107,11 @@ export const Route = createFileRoute("/t/$trip")({
 		}
 	},
 	head: ({ loaderData }) => ({
-		meta: [{ title: pageTitle(loaderData?.name) }],
+		meta: [
+			{ title: pageTitle(loaderData?.name) },
+			// The address is a share link: never in search results.
+			{ name: "robots", content: "noindex, nofollow" },
+		],
 	}),
 	pendingComponent: WorkspacePending,
 	errorComponent: TripError,
@@ -112,9 +122,19 @@ export const Route = createFileRoute("/t/$trip")({
 function TripRoute() {
 	const { tripId } = Route.useLoaderData();
 	const { trip: slug } = Route.useParams();
+	// A link guest whose access ended while the page was open (the link was
+	// turned off or reset, or the owner removed them): the workspace goes and
+	// the page says so in place (QA LINK-04). Opening the address again tries
+	// the link again.
+	const [lostAt, setLostAt] = useState<string | null>(null);
+	if (lostAt === slug) return <TripError error={new Error("NOT_FOUND")} />;
 	return (
 		<>
-			<TripWorkspace tripId={tripId} slug={slug} />
+			<TripWorkspace
+				tripId={tripId}
+				slug={slug}
+				onLinkLost={() => setLostAt(slug)}
+			/>
 			<Outlet />
 		</>
 	);
@@ -132,7 +152,15 @@ function jobToast(e: JobEvent) {
 	else toast.loading(`${label}… ${e.total - e.remaining}/${e.total}`, { id });
 }
 
-function TripWorkspace({ tripId, slug }: { tripId: string; slug: string }) {
+function TripWorkspace({
+	tripId,
+	slug,
+	onLinkLost,
+}: {
+	tripId: string;
+	slug: string;
+	onLinkLost: () => void;
+}) {
 	const { data: graph, error: graphError } = useSuspenseQuery(
 		tripGraphQuery(tripId),
 	);
@@ -154,6 +182,21 @@ function TripWorkspace({ tripId, slug }: { tripId: string; slug: string }) {
 	useEffect(() => {
 		void markTripSaved(slug, tripId, graph.trip.name);
 	}, [slug, tripId, graph.trip.name]);
+	// The address changed while the trip was open (the owner edited it in
+	// settings, or reset the link): this tab moves to the new one, so a reload
+	// or a copied URL keeps working.
+	const liveSlug = graph.trip.slug;
+	useEffect(() => {
+		if (!liveSlug || liveSlug === slug) return;
+		qc.setQueryData(tripSlugKey(liveSlug), { tripId });
+		const { pathname, search, hash } = window.location;
+		const prefix = `/t/${slug}`;
+		if (!pathname.startsWith(prefix)) return;
+		void navigate({
+			href: `/t/${liveSlug}${pathname.slice(prefix.length)}${search}${hash}`,
+			replace: true,
+		});
+	}, [liveSlug, slug, tripId, qc, navigate]);
 	// A live rename reaches the tab title too (QA TRIP-04); `head()` only sees
 	// the loader's snapshot.
 	useEffect(() => {
@@ -215,19 +258,20 @@ function TripWorkspace({ tripId, slug }: { tripId: string; slug: string }) {
 				return;
 			}
 			void removeTripOffline(tripId);
-			qc.removeQueries({ queryKey: ["trip", tripId] });
 			if (isGuest) {
-				// QA LINK-04/05: the link was turned off or replaced. A guest has no
-				// dashboard to go back to: the page says the link no longer works
-				// (and says so again on reload), never the account sign-in.
+				// QA LINK-04/05: the link was turned off or reset. A guest has no
+				// dashboard to go back to: the page says the link is no longer
+				// active (and says so again on reload), never the account sign-in.
 				markGrantGone(slug);
-				void navigate({ href: JOIN_PATH, replace: true });
+				onLinkLost();
+				qc.removeQueries({ queryKey: ["trip", tripId] });
 				return;
 			}
+			qc.removeQueries({ queryKey: ["trip", tripId] });
 			toast("You no longer have access to this trip.");
 			void navigate({ to: "/dashboard" });
 		},
-		[tripId, slug, isGuest, qc, navigate],
+		[tripId, slug, isGuest, qc, navigate, onLinkLost],
 	);
 	// QA SEC-R2-04 / PWA-08: the graph came from this device's saved copy and
 	// its revalidation says the trip is gone for us (a link turned off while
@@ -318,6 +362,9 @@ function TripError({ error }: { error: unknown }) {
 		viewer?.isAnonymous === true &&
 		!!slug &&
 		lostLinkFor(plainSlug(slug));
+	// Signed out, and the trip isn't open to anyone with the link (or doesn't
+	// exist: the same page): members sign in here, and come back to it.
+	const signedOut = noAccess && !viewer;
 	// Offline on a trip this device doesn't keep (QA PWA-05/08): the service
 	// worker can still hold a page shell for it (a visit that ended here), but
 	// the shell alone can't open the trip. Say what offline.html says, and
@@ -337,7 +384,11 @@ function TripError({ error }: { error: unknown }) {
 		if (linkGone) markGrantGone(plainSlug(slug));
 	}, [noAccess, linkGone, slug]);
 	return (
-		<main className="flex min-h-svh flex-col items-center justify-center gap-6 p-8">
+		<main
+			className="flex min-h-svh flex-col items-center justify-center gap-6 p-8"
+			data-testid={noAccess ? TESTID.tripNoAccess : undefined}
+			data-link-gone={linkGone || undefined}
+		>
 			<YonderMark className="size-8 text-primary" />
 			<EmptyState
 				line={
@@ -350,10 +401,20 @@ function TripError({ error }: { error: unknown }) {
 								: "We couldn't open this trip."
 				}
 				action={
-					linkGone ? (
+					linkGone || signedOut ? (
 						<Link
 							to={LOGIN_PATH}
-							className={buttonVariants({ variant: "outline" })}
+							search={
+								signedOut && typeof window !== "undefined"
+									? {
+											next: `${window.location.pathname}${window.location.search}`,
+										}
+									: undefined
+							}
+							className={buttonVariants({
+								variant: signedOut ? "default" : "outline",
+							})}
+							data-testid={TESTID.tripNoAccessSignIn}
 						>
 							Sign in
 						</Link>

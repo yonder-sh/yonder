@@ -31,6 +31,20 @@ vi.mock(
 	"@tanstack/react-start/server",
 	() => import("@/test/start-server-mock"),
 );
+/** The per-IP limit on non-member trip opens (off outside production): switchable here. */
+const tripOpenLimit = vi.hoisted(() => ({ over: false }));
+vi.mock("@/server/auth/limits.server", async (importOriginal) => {
+	const real =
+		await importOriginal<typeof import("@/server/auth/limits.server")>();
+	const off = real.memoryAuthLimits(false);
+	return {
+		...real,
+		authLimits: () => ({
+			...off,
+			tripOpenRetryAfter: async () => (tripOpenLimit.over ? 60_000 : 0),
+		}),
+	};
+});
 
 import { closeDb, getDb } from "@/db/db.server";
 import {
@@ -39,13 +53,18 @@ import {
 	migrateDatabase,
 } from "@/db/migrate.server";
 import { tripMembers, user } from "@/db/schema";
-import { parseShareFragment } from "@/lib/auth/share-link";
+import { openTripByLink, tripLinkOpen } from "@/lib/auth/share.functions";
 import { mentionToken } from "@/lib/notes/mentions";
 import type { AuthUser } from "@/server/auth.server";
 import { errorCode } from "@/server/authz/errors";
-import { redeemShareToken } from "@/server/authz/share-links.server";
+import { openTripLink } from "@/server/authz/share-links.server";
 import { loadTripAccess } from "@/server/authz/trip-access.server";
-import { cloneDemoTrip, type FixtureClone } from "@/server/fixture.server";
+import {
+	cloneDemoTrip,
+	type FixtureClone,
+	joinTestLink,
+	pinTestLink,
+} from "@/server/fixture.server";
 import { closeQueues } from "@/server/live/jobs.server";
 import { closeRedis, redis, redisPrefix } from "@/server/live/redis.server";
 import {
@@ -140,8 +159,8 @@ async function freshTrip(): Promise<FixtureClone> {
 		role: "viewer",
 		color: 5,
 	});
-	await redeemShareToken(c.shareTokens.viewer, U.guest.id);
-	await redeemShareToken(c.shareTokens.viewer, U.signedGuest.id);
+	await joinTestLink(getDb(), c, U.guest.id, "viewer");
+	await joinTestLink(getDb(), c, U.signedGuest.id, "viewer");
 	return c;
 }
 
@@ -314,7 +333,7 @@ describe("members (SHARE)", () => {
 		await getDb().execute(
 			sql`delete from trip_members where trip_id = ${c.tripId} and user_id = ${U.signedGuest.id}`,
 		);
-		await redeemShareToken(c.shareTokens.viewer, U.signedGuest.id);
+		await joinTestLink(getDb(), c, U.signedGuest.id, "viewer");
 		await getDb().execute(sql`
 			insert into trip_members (id, trip_id, status, role, email, color)
 			values (gen_random_uuid(), ${c.tripId}, 'invited', 'viewer', ${U.signedGuest.email.toLowerCase()}, 3)`);
@@ -350,7 +369,7 @@ describe("members (SHARE)", () => {
 	it("QA HOME-2: a promoted or re-roled member gets exactly the owner's role (their link grant goes)", async () => {
 		const c = await freshTrip();
 		const gina = await newUser({ first: "Gina", last: "Guest" });
-		await redeemShareToken(c.shareTokens.editor, gina.id);
+		await joinTestLink(getDb(), c, gina.id, "editor");
 		expect((await loadTripAccess(c.tripId, gina.id))?.role).toBe("editor");
 		const { memberId } = await call<{ memberId: string }>(
 			promoteGuest,
@@ -367,14 +386,17 @@ describe("members (SHARE)", () => {
 		expect(grants[0]?.n).toBe(0);
 		await call(updateMemberRole, U.owner, { memberId, role: "viewer" });
 		expect((await loadTripAccess(c.tripId, gina.id))?.role).toBe("viewer");
-		// A member who opened the edit link before: the owner's pick still wins.
+		// A member who opens the address while the edit link is on keeps their
+		// own role: members get no link grant (SHARE-04); the owner's pick wins.
 		const mayaRow = await memberOf(c.tripId, U.maya.id);
 		if (!mayaRow) throw new Error("fixture");
 		await call(updateMemberRole, U.owner, {
 			memberId: mayaRow.id,
 			role: "viewer",
 		});
-		await redeemShareToken(c.shareTokens.editor, U.maya.id);
+		await pinTestLink(getDb(), c.tripId, "editor");
+		expect(await openTripLink(c.slug, U.maya.id)).toBeNull();
+		expect((await loadTripAccess(c.tripId, U.maya.id))?.role).toBe("viewer");
 		await call(updateMemberRole, U.owner, {
 			memberId: mayaRow.id,
 			role: "suggester",
@@ -382,7 +404,7 @@ describe("members (SHARE)", () => {
 		expect((await loadTripAccess(c.tripId, U.maya.id))?.role).toBe("suggester");
 		// Inviting an account that holds an edit-link grant: the invite's role.
 		const lee = await newUser({ first: "Lee", last: "Linker" });
-		await redeemShareToken(c.shareTokens.editor, lee.id);
+		await joinTestLink(getDb(), c, lee.id, "editor");
 		await call(inviteMember, U.owner, {
 			tripId: c.tripId,
 			email: lee.email,
@@ -394,28 +416,31 @@ describe("members (SHARE)", () => {
 		});
 	});
 
-	it("QA SEC-R1-11 / SHARE-08: the link (with its creation date) goes to the owner only", async () => {
+	it("QA SEC-R1-11 / SHARE-08: the link's state (with its creation date) goes to the owner only; the address to everyone", async () => {
 		const c = await freshTrip();
 		const owner = await call<{
-			link: { role: string; createdAt: string | null; url: string | null };
+			url: string;
+			link: { role: string; createdAt: string | null };
 		}>(getSharing, U.owner, { tripId: c.tripId });
-		expect(owner.link.url).toBeTruthy();
+		expect(new URL(owner.url).pathname).toBe(`/t/${c.slug}`);
 		expect(Date.parse(owner.link.createdAt ?? "")).not.toBeNaN();
 		for (const u of [U.maya, U.viewer, U.guest, U.signedGuest]) {
-			const r = await call<{ link: unknown; guests: unknown[] }>(
+			const r = await call<{ url: string; link: unknown; guests: unknown[] }>(
 				getSharing,
 				u,
 				{ tripId: c.tripId },
 			);
 			expect(r.link).toBeNull();
 			expect(r.guests).toEqual([]);
+			expect(r.url).toBe(owner.url);
 		}
 	});
 
-	it("FB-13: one link per trip; its role Select changes every link guest's role", async () => {
+	it("FB-13: one link per trip, at the trip's address; its role Select changes every link guest's role", async () => {
 		const c = await freshTrip();
 		type Dto = {
-			link: { role: string; enabled: boolean; url: string } | null;
+			url: string;
+			link: { role: string; enabled: boolean } | null;
 			guests: { userId: string; role: string }[];
 		};
 		// Only the owner manages it; a role alone needs no `enabled`.
@@ -428,30 +453,97 @@ describe("members (SHARE)", () => {
 		expect(
 			await codeOf(call(setShareLink, U.owner, { tripId: c.tripId })),
 		).toMatch(/role or enabled/);
-		const { url } = await call<{ url: string }>(resetShareLink, U.owner, {
-			tripId: c.tripId,
-			role: "viewer",
-		});
-		const token = parseShareFragment(new URL(url).hash) ?? "";
+		const { url, slug } = await call<{ url: string; slug: string }>(
+			resetShareLink,
+			U.owner,
+			{ tripId: c.tripId, role: "viewer" },
+		);
+		// A new address tail: the old address opens nothing any more.
+		expect(slug).not.toBe(c.slug);
+		expect(slug).toMatch(/^demo-[23456789abcdefghjkmnpqrstuvwxyz]{8}$/);
+		expect(new URL(url).pathname).toBe(`/t/${slug}`);
 		const gina = await newUser({ first: "Gina", last: "Guest" });
-		await redeemShareToken(token, gina.id);
+		expect(await openTripLink(c.slug, gina.id)).toBeNull();
+		expect((await openTripLink(slug, gina.id))?.role).toBe("viewer");
 		let dto = await call<Dto>(getSharing, U.owner, { tripId: c.tripId });
-		expect(dto.link).toMatchObject({ role: "viewer", enabled: true, url });
+		expect(dto.url).toBe(url);
+		expect(dto.link).toMatchObject({ role: "viewer", enabled: true });
 		expect(dto.guests.find((g) => g.userId === gina.id)?.role).toBe("viewer");
 		await call(setShareLink, U.owner, { tripId: c.tripId, role: "editor" });
 		expect((await loadTripAccess(c.tripId, gina.id))?.role).toBe("editor");
 		dto = await call<Dto>(getSharing, U.owner, { tripId: c.tripId });
-		expect(dto.link).toMatchObject({ role: "editor", enabled: true, url });
+		expect(dto.link).toMatchObject({ role: "editor", enabled: true });
+		expect(dto.url).toBe(url);
 		expect(dto.guests.find((g) => g.userId === gina.id)?.role).toBe("editor");
 		const live = await q<{ n: number }>(sql`
 			select count(*)::int as n from share_links where trip_id = ${c.tripId} and revoked_at is null`);
 		expect(live[0]?.n).toBe(1);
-		// OFF still removes everyone who came in through it.
+		// OFF still removes everyone who came in through it, and the address
+		// lets no one else in.
 		await call(setShareLink, U.owner, { tripId: c.tripId, enabled: false });
 		expect(await loadTripAccess(c.tripId, gina.id)).toBeNull();
+		expect(await openTripLink(slug, gina.id)).toBeNull();
 		dto = await call<Dto>(getSharing, U.owner, { tripId: c.tripId });
 		expect(dto.link).toMatchObject({ role: "editor", enabled: false });
 		expect(dto.guests).toEqual([]);
+	});
+});
+
+describe("opening a trip through its address (the link)", () => {
+	it("a non-member gets the link's role while it is on; off, unknown and over the per-IP limit all answer NOT_FOUND", async () => {
+		const c = await freshTrip();
+		const nina = await newUser({ first: "Nina", last: "Newcomer" });
+		// Off: nothing to open, and nothing says the trip exists.
+		await call(setShareLink, U.owner, { tripId: c.tripId, enabled: false });
+		expect(await call(tripLinkOpen, nina, { slug: c.slug })).toEqual({
+			open: false,
+		});
+		expect(await codeOf(call(openTripByLink, nina, { slug: c.slug }))).toBe(
+			"NOT_FOUND",
+		);
+		expect(
+			await codeOf(
+				call(openTripByLink, nina, { slug: "no-such-trip-k7m2qxw9" }),
+			),
+		).toBe("NOT_FOUND");
+		// On as "Can suggest": she gets that role through a grant, never a membership.
+		await call(setShareLink, U.owner, {
+			tripId: c.tripId,
+			enabled: true,
+			role: "suggester",
+		});
+		expect(await call(tripLinkOpen, nina, { slug: c.slug })).toEqual({
+			open: true,
+		});
+		expect(await call(openTripByLink, nina, { slug: c.slug })).toEqual({
+			tripId: c.tripId,
+			slug: c.slug,
+			role: "suggester",
+		});
+		expect(await loadTripAccess(c.tripId, nina.id)).toMatchObject({
+			role: "suggester",
+			isGuest: true,
+			memberId: null,
+		});
+		// Members open it as members: no grant.
+		expect(await codeOf(call(openTripByLink, U.maya, { slug: c.slug }))).toBe(
+			"NOT_FOUND",
+		);
+		expect((await loadTripAccess(c.tripId, U.maya.id))?.isGuest).toBe(false);
+		// Over the per-IP limit: the same answers as for a closed trip.
+		tripOpenLimit.over = true;
+		try {
+			const omar = await newUser({ first: "Omar", last: "Other" });
+			expect(await call(tripLinkOpen, omar, { slug: c.slug })).toEqual({
+				open: false,
+			});
+			expect(await codeOf(call(openTripByLink, omar, { slug: c.slug }))).toBe(
+				"NOT_FOUND",
+			);
+			expect(await loadTripAccess(c.tripId, omar.id)).toBeNull();
+		} finally {
+			tripOpenLimit.over = false;
+		}
 	});
 });
 
@@ -472,7 +564,7 @@ describe("placeholders ↔ accounts (ADDENDUM §10)", () => {
 		).toBe("NOT_FOUND");
 		// Signed in on the VIEW link: no membership, no money, no booking refs.
 		const audreyGuest = await newUser({ first: "Audrey", last: "Nguyen" });
-		await redeemShareToken(c.shareTokens.viewer, audreyGuest.id);
+		await joinTestLink(getDb(), c, audreyGuest.id, "viewer");
 		for (const u of [U.signedGuest, audreyGuest])
 			expect(
 				await codeOf(
@@ -562,7 +654,7 @@ describe("placeholders ↔ accounts (ADDENDUM §10)", () => {
 			)[0]?.n;
 		// The owner links a placeholder to the email of an edit-link guest.
 		const hana = await newUser({ first: "Hana", last: "Holder" });
-		await redeemShareToken(c.shareTokens.editor, hana.id);
+		await joinTestLink(getDb(), c, hana.id, "editor");
 		const ph2 = await call<{ memberId: string }>(addPlaceholder, U.owner, {
 			tripId: c.tripId,
 			displayName: "Hana",
@@ -670,6 +762,13 @@ describe("duplicateTrip (ADDENDUM §9)", () => {
 			},
 		);
 		expect(r.tripId).not.toBe(c.tripId);
+		// Its own address: the copy's name and a random tail (link sharing off).
+		expect(r.slug).toMatch(/^demo-again-[23456789abcdefghjkmnpqrstuvwxyz]{8}$/);
+		const [addr] = await q<{ tail: string; links: number }>(sql`
+			select slug_tail as tail,
+			       (select count(*)::int from share_links where trip_id = ${r.tripId}) as links
+			  from trips where id = ${r.tripId}`);
+		expect(addr).toEqual({ tail: r.slug.slice(-8), links: 0 });
 		const dup = (
 			await q<{
 				start: string;

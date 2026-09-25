@@ -1,13 +1,15 @@
 /**
  * The invite email (SPEC §11.2 flow 5): "Dennis invited you to Asia 2027".
- * The button points to `${APP_URL}/login?next=/t/<slug>`; signing in with the
- * invited address turns the pending row active (`claimInvites`). Never a
- * magic link (QA AUTH-09). Sent AFTER the transaction commits; a failure is
+ * The button points to the trip's address, `${APP_URL}/t/<slug>` (the one
+ * link for everyone, like Google Drive); signing in with the invited address
+ * turns the pending row active (`claimInvites`). Never a magic link (QA
+ * AUTH-09). Sent AFTER the transaction commits; a failure is
  * logged, never thrown into the caller (the invite row stands either way).
  */
 import { BRAND } from "@/lib/brand";
 import { maskEmail, sendMail } from "@/server/auth/email.server";
 import { getEnv } from "@/server/env.server";
+import { tripUrl } from "@/server/sharing.server";
 
 const escapeHtml = (s: string) =>
 	s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
@@ -55,10 +57,7 @@ export async function sendInvite(p: {
 }): Promise<void> {
 	try {
 		const env = getEnv();
-		const url = new URL(
-			`/login?${new URLSearchParams({ next: `/t/${p.slug}` })}`,
-			env.APP_URL,
-		).toString();
+		const url = tripUrl(p.slug, env.APP_URL);
 		const mail = inviteEmail({
 			appName: process.env.APP_NAME || BRAND.name,
 			inviter: p.inviter,

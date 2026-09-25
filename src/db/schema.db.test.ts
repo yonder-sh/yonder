@@ -28,7 +28,6 @@ import {
 	yjsDocuments,
 } from "./schema";
 import { seedDemoSkeleton } from "./seed.server";
-import { hashShareToken, shareTokenColumns } from "./share-token.server";
 
 // .env is loaded by vitest.config.ts (variables already set win).
 
@@ -507,24 +506,12 @@ describe("bundles", () => {
 });
 
 describe("share links", () => {
-	it("look up by hash and allow one live link per role", async () => {
+	it("allow one live link per role (the app keeps one per trip)", async () => {
 		const { tripId } = await newTrip("share");
-		const token = "dev-share-token-editor";
-		await db
-			.insert(shareLinks)
-			.values({ tripId, role: "editor", ...shareTokenColumns(token) });
-		const [found] = await db
-			.select({ id: shareLinks.id, role: shareLinks.role })
-			.from(shareLinks)
-			.where(eq(shareLinks.tokenHash, hashShareToken(token)));
-		expect(found?.role).toBe("editor");
+		await db.insert(shareLinks).values({ tripId, role: "editor" });
 		expect(
 			await sqlState(() =>
-				db.insert(shareLinks).values({
-					tripId,
-					role: "editor",
-					...shareTokenColumns("another-token-value"),
-				}),
+				db.insert(shareLinks).values({ tripId, role: "editor" }),
 			),
 		).toBe(UNIQUE_VIOLATION);
 		await db
@@ -533,13 +520,27 @@ describe("share links", () => {
 			.where(and(eq(shareLinks.tripId, tripId), eq(shareLinks.role, "editor")));
 		expect(
 			await sqlState(() =>
-				db.insert(shareLinks).values({
-					tripId,
-					role: "editor",
-					...shareTokenColumns("another-token-value"),
-				}),
+				db.insert(shareLinks).values({ tripId, role: "editor" }),
 			),
 		).toBe("ok");
+	});
+});
+
+describe("trip addresses (slug + tail)", () => {
+	it("a tail must be 8 unambiguous characters at the end of the slug; null is a seed's fixed slug", async () => {
+		const { tripId } = await newTrip("address");
+		const set = (slug: string, slugTail: string | null) =>
+			sqlState(() =>
+				db.update(trips).set({ slug, slugTail }).where(eq(trips.id, tripId)),
+			);
+		expect(await set("address-k7m2qxw9", "k7m2qxw9")).toBe("ok");
+		expect(await set("address", null)).toBe("ok");
+		// Not at the end, the wrong length, or a look-alike (0/o/1/l/i).
+		expect(await set("address-k7m2qxw9", "zzzzzzzz")).toBe(CHECK_VIOLATION);
+		expect(await set("address-k7m2qxw", "k7m2qxw")).toBe(CHECK_VIOLATION);
+		expect(await set("address-k7m2qxw0", "k7m2qxw0")).toBe(CHECK_VIOLATION);
+		expect(await set("address-k7m2qxwo", "k7m2qxwo")).toBe(CHECK_VIOLATION);
+		expect(await set("addressk7m2qxw9", "k7m2qxw9")).toBe(CHECK_VIOLATION);
 	});
 });
 

@@ -54,7 +54,14 @@ export interface DayRange {
 
 export interface GraphTrip {
 	id: string;
+	/** The address (`/t/<slug>`), which is also the share link. */
 	slug: string;
+	/**
+	 * The random end of `slug` (`src/lib/trip-slug.ts`): the settings dialog
+	 * edits only the rest. Null (or absent in older payloads) for a seeded,
+	 * tail-less address.
+	 */
+	slugTail?: string | null;
 	name: string;
 	startDate: string | null;
 	endDate: string | null;

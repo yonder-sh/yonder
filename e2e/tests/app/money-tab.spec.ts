@@ -11,6 +11,7 @@ import { TESTID } from "../../../src/lib/testids";
 import { shotPath, storageStateOf } from "./_helpers/env";
 import { cloneFixtureTrip, type FixtureClone } from "./_helpers/fixture";
 import { collectConsole, expectLive, expectNoHorizontalOverflow } from "./_helpers/page";
+import { openLink } from "./_helpers/link";
 
 test.use({ storageState: storageStateOf("dev") });
 
@@ -228,7 +229,7 @@ test("MONEY-04: a guest sees no Money tab and listMoney refuses them", async ({ 
 	await owner.close();
 	const guestCtx = await browser.newContext({ storageState: { cookies: [], origins: [] } });
 	const guest = await guestCtx.newPage();
-	await guest.goto(`/join#t=${c.shareTokens.editor}`);
+	await openLink(guest, c.slug, "editor");
 	await expect(guest.getByTestId(TESTID.workspace)).toBeVisible({ timeout: 30_000 });
 	await expect(guest.getByTestId(TESTID.centerTabs).getByRole("tab", { name: /Money/ })).toHaveCount(0);
 	await expect(callFn(guest, "listMoney", { tripId: c.tripId })).rejects.toThrow(/permission|403|FORBIDDEN/i);

@@ -18,7 +18,7 @@ export const BRAND = {
 		queryPrefix: "yonder-q",
 		/** localStorage index read by public/offline.html. */
 		savedTrips: "yonder:saved-trips",
-		/** localStorage { slug → share token } (§11.2). */
+		/** localStorage [slug]: trips this browser opened as a link guest (§11.2). */
 		grants: "yonder:grants",
 		/** localStorage [slug]: links turned off or replaced while this guest had them (QA LINK-04). */
 		grantsGone: "yonder:grants-gone",

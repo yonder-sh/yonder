@@ -33,8 +33,20 @@ export const trips = pgTable(
 	"trips",
 	{
 		id: pk(),
-		/** URL slug (`/t/<slug>`); unique among live trips. */
+		/**
+		 * The trip's address (`/t/<slug>`), unique among live trips: a readable
+		 * part and the tail, `asia-2027-k7m2qxw9` (`src/lib/trip-slug.ts`). It is
+		 * also the share link: anyone with it gets the link role while the link
+		 * is on.
+		 */
 		slug: text().notNull(),
+		/**
+		 * The unguessable end of `slug` (8 characters, `SLUG_TAIL_ALPHABET`), so
+		 * the settings dialog edits only the readable part. Null only for a
+		 * seed's fixed, tail-less slug: every app flow that makes or changes an
+		 * address sets one ("Reset link" replaces it).
+		 */
+		slugTail: text(),
 		name: text().notNull(),
 		/** = min/max(trip_days.date), maintained by the day functions. */
 		startDate: date({ mode: "string" }),
@@ -58,6 +70,10 @@ export const trips = pgTable(
 		// A deleted trip frees its slug.
 		uniqueIndex("trips_slug_uq").on(t.slug).where(sql`${t.deletedAt} is null`),
 		check("trips_slug_ck", sql`${t.slug} ~ '^[a-z0-9-]{1,100}$'`),
+		check(
+			"trips_slug_tail_ck",
+			sql`${t.slugTail} is null or (${t.slugTail} ~ '^[23456789abcdefghjkmnpqrstuvwxyz]{8}$' and right(${t.slug}, 9) = '-' || ${t.slugTail})`,
+		),
 		check(
 			"trips_dates_ck",
 			sql`${t.startDate} is null or ${t.endDate} is null or ${t.startDate} <= ${t.endDate}`,
@@ -151,27 +167,21 @@ export const tripMembers = pgTable(
 );
 
 /**
- * The trip's link (FB-13: ONE per trip, like Google Docs, with a role,
- * on/off and reset; `src/server/sharing.server.ts` keeps one live row per
- * trip and the `*_single_trip_link` migration folded older per-role links
- * into one). `role` is read on every request, so changing it changes every
- * guest who came in through it. The raw token is never stored (SECURITY.md
- * §2, §13): lookups go by `token_hash` = SHA-256(token), and `token_sealed`
- * is the token encrypted with a server key so the owner can copy the link
- * again. Use the helpers in `src/db/share-token.server.ts`. "Reset" sets
- * `revoked_at` and inserts a new row.
+ * The trip's general access (FB-13, like Google Drive): "Anyone with the
+ * link" with a role (Can view / Can rate / Can suggest / Can edit), on/off,
+ * an expiry and "Reset link". The link IS the trip's address (`/t/<slug>`):
+ * opening it as a non-member while the row is live gives a `share_grants`
+ * row (`openTripLink`). `role` is read on every request, so changing it
+ * changes every guest who came in through it. "Reset link" gives the trip a
+ * new slug tail, sets `revoked_at` here (deleting its grants) and inserts a
+ * new row. `src/server/sharing.server.ts` keeps one live row per trip; test
+ * fixtures may hold one live row per role (`pinTestLink`).
  */
 export const shareLinks = pgTable(
 	"share_links",
 	{
 		id: pk(),
 		tripId: tripRef(),
-		/** base64url SHA-256 of the raw token (43 chars). */
-		tokenHash: text().notNull(),
-		/** First 6 characters of the raw token, for UI and logs. */
-		tokenPrefix: text().notNull(),
-		/** AES-256-GCM sealed raw token (`sealShareToken`), for the owner's copy button; null = shown once only. */
-		tokenSealed: text(),
 		role: shareRole().notNull(),
 		enabled: boolean().notNull().default(true),
 		/** Null = never expires. The server picks the default (SECURITY.md §2). */
@@ -184,20 +194,18 @@ export const shareLinks = pgTable(
 	},
 	(t) => [
 		unique("share_links_trip_id_id_uq").on(t.tripId, t.id),
-		uniqueIndex("share_links_token_hash_uq").on(t.tokenHash),
 		uniqueIndex("share_links_live_role_uq")
 			.on(t.tripId, t.role)
 			.where(sql`${t.revokedAt} is null`),
-		check("share_links_token_hash_ck", sql`char_length(${t.tokenHash}) = 43`),
-		check(
-			"share_links_token_prefix_ck",
-			sql`char_length(${t.tokenPrefix}) between 1 and 12`,
-		),
 		check("share_links_use_count_ck", sql`${t.useCount} >= 0`),
 	],
 );
 
-/** A guest's access through a share link (D2: guests are Better Auth anonymous users). */
+/**
+ * A non-member's access through the trip's link (D2: guests are Better Auth
+ * anonymous users, or accounts that opened the address). Revoking the link
+ * row (off, "Reset link") deletes its grants.
+ */
 export const shareGrants = pgTable(
 	"share_grants",
 	{

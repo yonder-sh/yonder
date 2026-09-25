@@ -10,6 +10,7 @@ import { PLACES_TESTID as P } from "../../../src/features/places/testids";
 import { PLAN_TESTID as PL } from "../../../src/features/plan/testids";
 import { TESTID } from "../../../src/lib/testids";
 import { expectLive } from "./_helpers/page";
+import { openLink } from "./_helpers/link";
 
 test.skip(!process.env.QA_AUTH_DIR, "I2 content verifier spec: set QA_AUTH_DIR");
 const AUTH = process.env.QA_AUTH_DIR ?? "";
@@ -77,7 +78,7 @@ test("search: 'daan' finds Da'an District", async ({ browser }) => {
 
 test("a view-link guest's item menu: Move to day is not offered as enabled", async ({ browser }) => {
 	const gv = await ctxFor(browser, null);
-	await gv.page.goto("/join#t=qa-share-token-viewer-asia-2027");
+	await openLink(gv.page, "asia-2027", "viewer");
 	await expect(gv.page).toHaveURL(/\/t\/asia-2027/, { timeout: 20_000 });
 	await gv.page.goto("/t/asia-2027?days=2027-10-05");
 	await expectLive(gv.page);

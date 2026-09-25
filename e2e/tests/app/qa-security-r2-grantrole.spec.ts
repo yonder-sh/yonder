@@ -11,6 +11,7 @@ import { type Browser, expect, test } from "@playwright/test";
 import { loginViaApi } from "./_helpers/auth";
 import { cloneFixtureTrip } from "./_helpers/fixture";
 import { call, MOD } from "./qa-security-helpers";
+import { openLink } from "./_helpers/link";
 
 test.skip(!process.env.QA_SEC_DIR, "QA security verifier probes: set QA_SEC_DIR (see qa-security-helpers.ts)");
 const DIR = process.env.QA_SEC_DIR ?? "/tmp";
@@ -41,7 +42,7 @@ test("a member made from an edit-link guest gets the role the owner picked", asy
 	// Email invite as "Can view" of an account that holds the edit link.
 	const hEmail = `qa-sec-r2-gr-h-${stamp}@example.com`;
 	const h = await user(browser, hEmail, "Hana", "Guest");
-	await h.page.goto(`/join#t=${c.shareTokens.editor}`);
+	await openLink(h.page, c.slug, "editor");
 	await expect(h.page.getByTestId("workspace")).toBeVisible({ timeout: 30_000 });
 	const inv = await call(o.page, MOD.sharing, "inviteMember", { tripId: c.tripId, email: hEmail, role: "viewer" });
 	out.b_invite = inv.ok ? inv.r : inv.err;

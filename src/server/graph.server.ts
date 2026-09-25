@@ -137,7 +137,7 @@ export async function loadTripGraph(
 	] = await runAll<Row[] | null>(exec, [
 		() =>
 			rows(sql`
-				select t.id, t.slug, t.name, t.start_date::text as "startDate", t.end_date::text as "endDate",
+				select t.id, t.slug, t.slug_tail as "slugTail", t.name, t.start_date::text as "startDate", t.end_date::text as "endDate",
 				       t.default_tz as "defaultTz",
 				       -- ADDENDUM §9: a cover hidden from guests (or a receipt) is no cover for them.
 				       ${
@@ -226,6 +226,7 @@ export async function loadTripGraph(
 	const trip: GraphTrip = {
 		id: String(t.id),
 		slug: String(t.slug),
+		slugTail: str(t.slugTail),
 		name: String(t.name),
 		startDate: str(t.startDate),
 		endDate: str(t.endDate),

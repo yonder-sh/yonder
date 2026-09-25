@@ -5,6 +5,7 @@ import { expect, test } from "@playwright/test";
 import { TRANSIT_TESTID as T } from "../../../src/features/transit/testids";
 import { TESTID } from "../../../src/lib/testids";
 import { APP, asUser, graph, itemLabel, OUT, onlyHere, shot } from "./qa-map-transit-helpers";
+import { openLink } from "./_helpers/link";
 
 onlyHere();
 const LOG = path.join(OUT, "guestsave-results.txt");
@@ -21,7 +22,7 @@ test("guest editor saves NH 9; Fuji Excursion booking too", async ({ browser }) 
 	log(`before: ${before}`);
 	const gc = await browser.newContext({ viewport: { width: 1440, height: 900 } });
 	const guest = await gc.newPage();
-	await guest.goto(`${APP}/join#t=qa-share-token-editor-asia-2027`);
+	await openLink(guest, "asia-2027", "editor");
 	await expect(guest).toHaveURL(/\/t\/asia-2027/, { timeout: 30_000 });
 	await guest.goto(`/t/asia-2027?sel=l.${nh9?.fromItemId}.${nh9?.toItemId}`);
 	const ov = guest.getByTestId(TESTID.legOverview);

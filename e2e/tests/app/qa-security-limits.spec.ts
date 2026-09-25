@@ -68,18 +68,23 @@ test("OTP send/verify caps, anonymous sign-in and link redemption limits", async
 	out.anonymousStatuses = anon;
 
 	}
-	// E. Share-token guessing from one browser (10/min per IP), through /join.
+	// E. Guessing trip addresses from one browser: non-member trip opens are
+	// limited per IP (30/min); over the limit even a real address answers the
+	// same "no access" page (the trip's address is its share link).
 	const ctx = await browser.newContext({ baseURL: PROD });
 	const page = await ctx.newPage();
 	const states: string[] = [];
-	for (let i = 0; i < 13; i++) {
-		const tok = `guess${stamp}${i}${"x".repeat(24)}`;
+	const visit = async (slug: string) => {
 		await page.goto("about:blank");
-		await page.goto(`/join#t=${tok}`);
-		await page.waitForFunction(() => /no longer works|Too many|try again|wait/i.test(document.body.innerText), undefined, { timeout: 15_000 }).catch(() => undefined);
-		const t = await page.locator("body").innerText();
-		states.push(/no longer works/i.test(t) ? "dead" : /too many|wait|try again/i.test(t) ? "LIMITED" : t.slice(0, 40).replace(/\s+/g, " "));
-	}
+		await page.goto(`/t/${slug}`);
+		await page
+			.waitForFunction(() => !!document.querySelector('[data-testid="workspace"], [data-testid="trip-no-access"]'), undefined, { timeout: 15_000 })
+			.catch(() => undefined);
+		return (await page.getByTestId("workspace").count()) ? "IN" : (await page.getByTestId("trip-no-access").count()) ? "no access" : (await page.locator("body").innerText()).slice(0, 40).replace(/\s+/g, " ");
+	};
+	for (let i = 0; i < 33; i++) states.push(await visit(`asia-2027-guess${stamp}${i}`));
+	// The real address (its link must be on) right after, from the same IP.
+	states.push(`real: ${await visit("asia-2027")}`);
 	out.guessStates = states;
 	await page.screenshot({ path: path.join(DIR, "limits-guess.png") });
 

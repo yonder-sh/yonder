@@ -9,6 +9,7 @@ import { MEDIA_TESTID as MT } from "../../../src/features/media/testids";
 import { TESTID } from "../../../src/lib/testids";
 import { E2E_ROOT } from "./_helpers/env";
 import { expectLive } from "./_helpers/page";
+import { openLink } from "./_helpers/link";
 
 // Needs this verifier's env (QA_AUTH_DIR with qa-* storage states for APP_URL); skipped in a normal `pnpm e2e`.
 test.skip(!process.env.QA_AUTH_DIR, "I2 content verifier spec: set QA_AUTH_DIR");
@@ -36,7 +37,7 @@ async function ctxFor(browser: Browser, h: string | null) {
 }
 async function guest(browser: Browser, role: "viewer" | "editor") {
 	const c = await ctxFor(browser, null);
-	await c.page.goto(`/join#t=qa-share-token-${role}-asia-2027`);
+	await openLink(c.page, "asia-2027", role);
 	await expect(c.page).toHaveURL(/\/t\/asia-2027/, { timeout: 20_000 });
 	return c;
 }

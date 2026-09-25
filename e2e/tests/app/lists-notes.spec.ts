@@ -16,6 +16,7 @@ import { loginViaApi } from "./_helpers/auth";
 import { shotPath, storageStateOf } from "./_helpers/env";
 import { cloneFixtureTrip } from "./_helpers/fixture";
 import { collectConsole, expectLive } from "./_helpers/page";
+import { openLink } from "./_helpers/link";
 
 async function open(browser: Browser, handle: "dev" | "maya", url: string) {
 	const ctx = await browser.newContext({
@@ -123,7 +124,7 @@ test("a viewer reads live but can't type; a private note stays private", async (
 		last: "Viewer",
 	});
 	const v = await viewerCtx.newPage();
-	await v.goto(`/join#t=${trip.shareTokens.viewer}`);
+	await openLink(v, trip.slug, "viewer");
 	await expect(v).toHaveURL(new RegExp(`/t/${trip.slug}`), { timeout: 20_000 });
 	await v.goto(url);
 	await expectLive(v);

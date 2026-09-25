@@ -88,20 +88,15 @@ export function newCspNonce(): string {
 }
 
 /**
- * SECURITY §2/§12: pages that carry a share or claim token (the fragment on
- * `/join`, the legacy `/s/<token>` path) never send a `Referer` anywhere and
- * are never cached. Applied after the global headers, so they win.
+ * Trip addresses are share links (like Google Drive: `/t/<slug>` with an
+ * unguessable tail): never indexed, whatever links to them. The page also
+ * carries `<meta name="robots">`, but the shell is rendered on the client
+ * (`ssr: false`), so the header is what crawlers see. Applied after the
+ * global headers.
  */
-export function tokenPageHeaders(pathname: string): Record<string, string> {
-	if (
-		pathname === "/join" ||
-		pathname.startsWith("/join/") ||
-		pathname.startsWith("/s/")
-	)
-		return {
-			"Referrer-Policy": "no-referrer",
-			"Cache-Control": "private, no-store",
-		};
+export function tripPageHeaders(pathname: string): Record<string, string> {
+	if (pathname === "/t" || pathname.startsWith("/t/"))
+		return { "X-Robots-Tag": "noindex, nofollow" };
 	return {};
 }
 

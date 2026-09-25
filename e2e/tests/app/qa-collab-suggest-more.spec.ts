@@ -15,6 +15,7 @@ import { TRANSIT_TESTID as T } from "../../../src/features/transit/testids";
 import { TESTID } from "../../../src/lib/testids";
 import { shotPath } from "./_helpers/env";
 import { cloneFixtureTrip } from "./_helpers/fixture";
+import { openLink } from "./_helpers/link";
 import { expectLive } from "./_helpers/page";
 
 const AUTH = process.env.QA_AUTH_DIR ?? path.resolve("e2e/.auth");
@@ -22,19 +23,17 @@ const auth = (h: string) => path.join(AUTH, `${h}.json`);
 const shot = (n: string) =>
 	process.env.QA_SHOTS_DIR ? path.join(process.env.QA_SHOTS_DIR, `${n}.png`) : shotPath(`qa-collab/${n}.png`);
 const TOKYO = "/t/asia-2027/japan/tokyo";
-const SUGGEST_TOKEN = "qa-share-token-suggester-asia-2027";
-const VIEW_TOKEN = "qa-share-token-viewer-asia-2027";
+const SUGGEST_TOKEN = "suggester";
+const VIEW_TOKEN = "viewer";
 
-async function open(browser: Browser, handle: string | null, url: string, token?: string) {
+/** `role`: first open the QA trip through its link as a guest of that role. */
+async function open(browser: Browser, handle: string | null, url: string, role?: string) {
 	const ctx = await browser.newContext({
 		...(handle ? { storageState: auth(handle) } : {}),
 		viewport: { width: 1440, height: 900 },
 	});
 	const page = await ctx.newPage();
-	if (token) {
-		await page.goto(`/join#t=${token}`);
-		await expect(page).toHaveURL(/\/t\//, { timeout: 20_000 });
-	}
+	if (role) await openLink(page, "asia-2027", role);
 	await page.goto(url);
 	await expectLive(page);
 	await page.waitForFunction(() => !!(window as unknown as { __yonder?: { graph?: unknown } }).__yonder?.graph);
@@ -315,17 +314,19 @@ test("SUG-10: the 'Can suggest' link grants suggester (not edit, not upload); re
 	const c = await demoClone(browser, "editor");
 	const o = await open(browser, "dev", `/t/${c.slug}?tab=plan`);
 	await call(o.page, "/src/features/home/sharing.functions.ts", "setShareLink", { tripId: c.tripId, role: "suggester", enabled: true });
-	// FB-13: one link per trip; its role is "Can suggest" now.
-	const sharing = await call<{ link: { role: string; url: string | null } | null }>(
+	// FB-13: one link per trip, at the trip's address; its role is "Can suggest" now.
+	const sharing = await call<{ url: string; link: { role: string; enabled: boolean } | null }>(
 		o.page,
 		"/src/features/home/sharing.functions.ts",
 		"getSharing",
 		{ tripId: c.tripId },
 	);
-	const link = sharing.link?.role === "suggester" ? sharing.link.url : null;
-	if (!link) throw new Error(`no suggester link: ${JSON.stringify(sharing.link)}`);
-	const token = link.split("#t=")[1] as string;
-	const gst = await open(browser, null, `/t/${c.slug}?tab=plan`, token);
+	if (sharing.link?.role !== "suggester" || !sharing.link.enabled)
+		throw new Error(`no suggester link: ${JSON.stringify(sharing.link)}`);
+	const address = new URL(sharing.url).pathname;
+	expect(address).toBe(`/t/${c.slug}`);
+	// A fresh browser opens the address: the link's role, no token.
+	const gst = await open(browser, null, `${address}?tab=plan`);
 	const pill = gst.page.getByTestId(TESTID.suggestModeControl).first();
 	await expect(pill).toContainText("Suggesting");
 	// A direct move becomes a suggestion.
@@ -345,14 +346,14 @@ test("SUG-10: the 'Can suggest' link grants suggester (not edit, not upload); re
 	console.log(`[sug10] guest upload: ${upErr}`);
 	expect(upErr).toMatch(/FORBIDDEN|edit access|not allowed|permission/i);
 
-	// Reset → the guest is out within 2 s; the proposal is withdrawn.
-	await call(o.page, "/src/features/home/sharing.functions.ts", "resetShareLink", { tripId: c.tripId, role: "suggester" });
+	// Reset → a new address; the guest is out within 2 s; the proposal is withdrawn.
+	const reset = await call<{ slug: string }>(o.page, "/src/features/home/sharing.functions.ts", "resetShareLink", {
+		tripId: c.tripId,
+		role: "suggester",
+	});
+	expect(reset.slug).not.toBe(c.slug);
 	const t0 = Date.now();
-	await expect.poll(async () => {
-		const url = gst.page.url();
-		const pillGone = (await gst.page.getByTestId(TESTID.workspace).count()) === 0;
-		return pillGone || !url.includes(`/t/${c.slug}`);
-	}, { timeout: 6_000 }).toBe(true);
+	await expect.poll(async () => (await gst.page.getByTestId(TESTID.workspace).count()) === 0, { timeout: 6_000 }).toBe(true);
 	console.log(`[sug10] kicked after ~${Date.now() - t0} ms`);
 	await gst.page.screenshot({ path: shot("sug10-guest-kicked") });
 	const list = await proposals(o.page, c.tripId);

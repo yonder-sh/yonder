@@ -15,6 +15,7 @@ import { loginViaApi } from "./_helpers/auth";
 import { cloneFixtureTrip, type FixtureClone } from "./_helpers/fixture";
 import { expectLive } from "./_helpers/page";
 import { call, MOD } from "./qa-security-helpers";
+import { openLink } from "./_helpers/link";
 
 test.skip(!process.env.QA_SEC_DIR, "QA security verifier probes: set QA_SEC_DIR (see qa-security-helpers.ts)");
 const DIR = process.env.QA_SEC_DIR ?? "/tmp";
@@ -188,10 +189,10 @@ test("LINK-07: a guest who opens a trip their link doesn't cover keeps their own
 	const out: Record<string, unknown> = {};
 	const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
 	const p = await ctx.newPage();
-	await p.goto("/join#t=qa-share-token-editor-asia-2027");
+	await openLink(p, "asia-2027", "editor");
 	await p.waitForURL(/\/t\/asia-2027/, { timeout: 30_000 });
 	await expectLive(p);
-	out.grantsBefore = await p.evaluate(() => Object.keys(JSON.parse(localStorage.getItem("yonder:grants") ?? "{}")));
+	out.grantsBefore = await p.evaluate(() => JSON.parse(localStorage.getItem("yonder:grants") ?? "[]"));
 	for (const slug of ["phu-quoc-detour", "delete-me", "no-such-trip-r3"]) {
 		await p.goto(`/t/${slug}?tab=plan`);
 		await p.waitForTimeout(4000);
@@ -199,7 +200,7 @@ test("LINK-07: a guest who opens a trip their link doesn't cover keeps their own
 		await p.screenshot({ path: path.join(DIR, `r3-link07-${slug}.png`) });
 	}
 	out.grantsAfter = await p.evaluate(() => ({
-		grants: Object.keys(JSON.parse(localStorage.getItem("yonder:grants") ?? "{}")),
+		grants: JSON.parse(localStorage.getItem("yonder:grants") ?? "[]"),
 		gone: localStorage.getItem("yonder:grants-gone"),
 	}));
 	await p.goto("/t/asia-2027?tab=plan");

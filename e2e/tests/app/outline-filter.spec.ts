@@ -12,6 +12,7 @@ import { TESTID } from "../../../src/lib/testids";
 import { shotPath, storageStateOf } from "./_helpers/env";
 import { cloneFixtureTrip } from "./_helpers/fixture";
 import { collectConsole, expectLive, expectNoHorizontalOverflow } from "./_helpers/page";
+import { openLink } from "./_helpers/link";
 
 test.use({ storageState: storageStateOf("dev") });
 
@@ -108,7 +109,7 @@ test("a guest with the view link browses, and every edit affordance is disabled"
 	// No session: `test.use({ storageState })` would otherwise apply here too.
 	const guestCtx = await browser.newContext({ storageState: { cookies: [], origins: [] } });
 	const guest = await guestCtx.newPage();
-	await guest.goto(`/join#t=${c.shareTokens.viewer}`);
+	await openLink(guest, c.slug, "viewer");
 	await expect(guest.getByTestId(TESTID.workspace)).toBeVisible({ timeout: 20_000 });
 	await expectLive(guest);
 	await expect(outline(guest).getByRole("button", { name: "Add a place" })).toBeDisabled();

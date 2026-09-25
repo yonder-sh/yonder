@@ -11,6 +11,7 @@ import { SHELL_TESTID as SH } from "../../../src/features/shell/testids";
 import { TESTID } from "../../../src/lib/testids";
 import { shotPath } from "./_helpers/env";
 import { collectConsole, expectLive } from "./_helpers/page";
+import { openLink } from "./_helpers/link";
 
 const AUTH = process.env.QA_AUTH_DIR ?? path.resolve("e2e/.auth");
 const auth = (h: string) => path.join(AUTH, `${h}.json`);
@@ -223,7 +224,7 @@ test("DIG-05: a link guest's digest never counts money changes; guests have no b
 	test.setTimeout(120_000);
 	const gctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
 	const gp = await gctx.newPage();
-	await gp.goto("/join#t=qa-share-token-editor-asia-2027");
+	await openLink(gp, "asia-2027", "editor");
 	await expect(gp).toHaveURL(/\/t\/asia-2027/, { timeout: 20_000 });
 	await expectLive(gp);
 	const g0 = await graph(gp);

@@ -151,20 +151,10 @@ export default defineConfig({
 						"X-Frame-Options": "DENY",
 					},
 				},
-				// SECURITY §2/§12: pages that carry a share or claim token never send
-				// a Referer and are never cached (these win over "/**"; the app's
-				// middleware sets the same, `tokenPageHeaders`).
-				"/join": {
-					headers: {
-						"Referrer-Policy": "no-referrer",
-						"Cache-Control": "private, no-store",
-					},
-				},
-				"/s/**": {
-					headers: {
-						"Referrer-Policy": "no-referrer",
-						"Cache-Control": "private, no-store",
-					},
+				// Trip addresses are share links: never indexed (the app's middleware
+				// sets the same, `tripPageHeaders`).
+				"/t/**": {
+					headers: { "X-Robots-Tag": "noindex, nofollow" },
 				},
 				"/offline.html": {
 					headers: {

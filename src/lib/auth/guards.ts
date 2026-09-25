@@ -1,17 +1,12 @@
 import { hashKey, type QueryClient } from "@tanstack/react-query";
-import { redirect } from "@tanstack/react-router";
+import { notFound, redirect } from "@tanstack/react-router";
 import { sessionKey } from "@/lib/query/keys";
 import { queryPersister } from "@/lib/query/persister";
 import { authClient } from "./auth-client";
-import {
-	DASHBOARD_PATH,
-	JOIN_PATH,
-	LOGIN_PATH,
-	WELCOME_PATH,
-} from "./constants";
-import { forgetGrant, grantFor } from "./grants";
+import { DASHBOARD_PATH, LOGIN_PATH, WELCOME_PATH } from "./constants";
+import { saveGrant } from "./grants";
 import { getSessionFn } from "./session.functions";
-import { redeemShareLink } from "./share.functions";
+import { openTripByLink, tripLinkOpen } from "./share.functions";
 import { purgePreviousUserData } from "./sign-out";
 import type { Viewer } from "./viewer";
 
@@ -183,11 +178,46 @@ export async function redirectSignedInToDashboard(
 }
 
 /**
- * The workspace's guard. With no session but a remembered share token for
- * this slug (`yonder:grants`), it silently re-enters as a guest and re-redeems
- * the link; a dead link is forgotten and falls through to /login. Accounts
- * with blank names go to /welcome. Whether the viewer may see this trip is
- * decided by the trip queries (NOT_FOUND → "no access" screen).
+ * A signed-out visitor at `/t/<slug>` whose trip is open to anyone with the
+ * link (the address is the link, like Google Drive): they become an
+ * anonymous guest with the link's role, as today's share links did. Null when
+ * the trip isn't open to them (unknown, off, over the rate limit: one
+ * answer), or the guest session can't be made. A link turned off in between
+ * leaves no orphan guest behind.
+ */
+async function enterAsLinkGuest(
+	slug: string,
+	opts: GuardOptions,
+): Promise<Viewer | null> {
+	const open = await tripLinkOpen({ data: { slug } })
+		.then((r) => r.open)
+		.catch(() => false);
+	if (!open) return null;
+	const { error } = await authClient.signIn.anonymous();
+	if (error) return null;
+	try {
+		await openTripByLink({ data: { slug } });
+	} catch {
+		await authClient.deleteAnonymousUser().catch(() => undefined);
+		return null;
+	}
+	saveGrant(slug);
+	const viewer = await getSessionFn();
+	if (viewer && opts.queryClient) {
+		await adoptViewer(opts.queryClient, viewer);
+		opts.queryClient.setQueryData(sessionKey, viewer);
+	}
+	return viewer;
+}
+
+/**
+ * The workspace's guard. The trip's address is its share link (like Google
+ * Drive): a signed-out visitor becomes an anonymous link guest when the trip
+ * is open to anyone with the link, and otherwise gets the "no access" page
+ * (`notFound()`: the same for a trip that doesn't exist, with a way to sign
+ * in). Accounts with blank names go to /welcome. Whether a signed-in viewer
+ * may see this trip is decided by the route's loader (a non-member opens
+ * the link there, `openTripByLink`; else NOT_FOUND → "no access").
  *
  * Client-only (reads localStorage): use it on `ssr: false` routes.
  */
@@ -197,27 +227,9 @@ export async function requireTripViewer(
 	opts: GuardOptions = {},
 ): Promise<{ viewer: Viewer }> {
 	let viewer = await loadViewer(opts);
-	if (!viewer) {
-		const token = typeof window === "undefined" ? null : grantFor(slug);
-		if (token) {
-			const { error } = await authClient.signIn.anonymous();
-			if (!error) {
-				try {
-					await redeemShareLink({ data: { token } });
-					viewer = await getSessionFn();
-					if (viewer && opts.queryClient)
-						await adoptViewer(opts.queryClient, viewer);
-				} catch {
-					forgetGrant(slug);
-					await authClient.deleteAnonymousUser().catch(() => undefined);
-					// QA LINK-05: a remembered link that was turned off or replaced
-					// says so ("This link no longer works."), not the sign-in page.
-					throw redirect({ href: JOIN_PATH, replace: true });
-				}
-			}
-		}
-	}
-	if (!viewer) throw redirect({ href: withNext(LOGIN_PATH, href) });
+	if (!viewer && typeof window !== "undefined")
+		viewer = await enterAsLinkGuest(slug, opts);
+	if (!viewer) throw notFound();
 	if (!viewer.named) throw redirect({ href: withNext(WELCOME_PATH, href) });
 	return { viewer };
 }

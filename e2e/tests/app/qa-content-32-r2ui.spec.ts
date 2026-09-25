@@ -11,6 +11,7 @@ import { MEDIA_TESTID as MT } from "../../../src/features/media/testids";
 import { TESTID } from "../../../src/lib/testids";
 import { expectLive } from "./_helpers/page";
 import { ensureQaPdfs } from "./_helpers/qa-pdfs";
+import { openLink } from "./_helpers/link";
 
 test.skip(!process.env.QA_AUTH_DIR, "I2 content verifier spec: set QA_AUTH_DIR");
 
@@ -26,7 +27,7 @@ async function ctxFor(browser: Browser, h: string | null) {
 }
 async function guest(browser: Browser, role: "viewer" | "editor") {
 	const c = await ctxFor(browser, null);
-	await c.page.goto(`/join#t=qa-share-token-${role}-asia-2027`);
+	await openLink(c.page, "asia-2027", role);
 	await expect(c.page).toHaveURL(/\/t\/asia-2027/, { timeout: 20_000 });
 	return c;
 }

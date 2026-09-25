@@ -8,6 +8,7 @@
  */
 import path from "node:path";
 import { type APIResponse, expect, test } from "@playwright/test";
+import { openLink } from "./_helpers/link";
 
 test.skip(!process.env.QA_AUTH_DIR, "share-card spec: set QA_AUTH_DIR (QA seed + qa-content-00-auth)");
 test.beforeEach(({}, info) => {
@@ -61,7 +62,7 @@ test("a view-link guest gets a card", async ({ browser }) => {
 	test.setTimeout(90_000);
 	const ctx = await browser.newContext();
 	const page = await ctx.newPage();
-	await page.goto("/join#t=qa-share-token-viewer-asia-2027");
+	await openLink(page, "asia-2027", "viewer");
 	await expect(page).toHaveURL(/\/t\/asia-2027/, { timeout: 30_000 });
 	const res = await ctx.request.get(URL_OF("story"));
 	expect(res.status()).toBe(200);

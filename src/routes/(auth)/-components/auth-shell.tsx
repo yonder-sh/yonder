@@ -3,7 +3,7 @@ import { RouteSketch } from "./route-sketch";
 import { YonderLockup } from "./yonder-lockup";
 
 /**
- * The split layout shared by /login, /welcome and /join (DESIGN §10.1):
+ * The split layout shared by /login and /welcome (DESIGN §10.1):
  * form on the left (max 360 wide, vertically centred), the route sketch on the
  * right at ≥ 1024 px; below that, a 120 px strip of the sketch on top.
  */

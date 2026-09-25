@@ -16,7 +16,6 @@ import {
 	applyQaFixtures,
 	loadAirports,
 	QA_DATES,
-	QA_SHARE_TOKENS,
 	qaMoney,
 	qaProposals,
 } from "./lib/qa";
@@ -283,15 +282,5 @@ describe("EXTENSIONS §2.1 additions", () => {
 		);
 		expect(aki).toMatchObject({ dayId: null, durationMin: 240 });
 		expect(shorter?.input).toMatchObject({ patch: { durationMin: 180 } });
-	});
-
-	it("has a 22–128 character token per share role", () => {
-		expect(Object.keys(QA_SHARE_TOKENS).sort()).toEqual([
-			"editor",
-			"suggester",
-			"viewer",
-		]);
-		for (const t of Object.values(QA_SHARE_TOKENS))
-			expect(t.length).toBeGreaterThanOrEqual(22);
 	});
 });

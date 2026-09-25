@@ -6,6 +6,7 @@ import { PLAN_TESTID } from "../../../src/features/plan/testids";
 import { TRANSIT_TESTID as T } from "../../../src/features/transit/testids";
 import { TESTID } from "../../../src/lib/testids";
 import { APP, asUser, graph, itemLabel, OUT, onlyHere, shot } from "./qa-map-transit-helpers";
+import { openLink } from "./_helpers/link";
 
 onlyHere();
 test.describe.configure({ mode: "serial" });
@@ -117,7 +118,7 @@ test("FLT-04/05: guests never in seat pickers; refs masked and never sent to lin
 		const ct = r.headers()["content-type"] ?? "";
 		if (/json|html|text|javascript|stream/.test(ct) || r.url().includes("_serverFn")) bodies.push({ url: r.url(), text: await r.text().catch(() => "") });
 	});
-	await guest.goto(`${APP}/join#t=qa-share-token-editor-asia-2027`);
+	await openLink(guest, "asia-2027", "editor");
 	await expect(guest).toHaveURL(/\/t\/asia-2027/, { timeout: 30_000 });
 	await guest.waitForTimeout(2500);
 	const { page } = await asUser(browser, "dennis@asia2027.test");
@@ -160,7 +161,7 @@ test("FLT-04/05: guests never in seat pickers; refs masked and never sent to lin
 		const ct = r.headers()["content-type"] ?? "";
 		if (/json|html|text|javascript|stream/.test(ct) || r.url().includes("_serverFn")) bodies.push({ url: `V ${r.url()}`, text: await r.text().catch(() => "") });
 	});
-	await v.goto(`${APP}/join#t=qa-share-token-viewer-asia-2027`);
+	await openLink(v, "asia-2027", "viewer");
 	await expect(v).toHaveURL(/\/t\/asia-2027/, { timeout: 30_000 });
 	await v.goto(`/t/asia-2027?${sel}`);
 	await expect(v.getByTestId(TESTID.legOverview)).toBeVisible({ timeout: 30_000 });

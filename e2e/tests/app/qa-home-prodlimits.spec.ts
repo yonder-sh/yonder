@@ -1,5 +1,6 @@
-/** I2 verifier "home": production-mode limits on the built app (share-link redemption). */
+/** I2 verifier "home": production-mode limits on the built app (non-member trip opens per IP). */
 import { expect, test } from "@playwright/test";
+import { openLink, setTestLink, settled } from "./_helpers/link";
 
 test.beforeEach(({}, info) => {
 	test.skip(info.project.name === "mobile", "qa-home specs run on the desktop project");
@@ -10,25 +11,27 @@ test.beforeEach(({}, info) => {
 });
 
 
-test("LINK-09b: guessing tokens is rate-limited ('Too many tries')", async ({ browser }) => {
+test("LINK-09b: guessing trip addresses is rate-limited (the same 'no access' page)", async ({ browser, request }) => {
+	// The real address works while its link is on…
+	await setTestLink(request, "asia-2027", "viewer");
 	const ctx = await browser.newContext();
 	const page = await ctx.newPage();
 	const seen: string[] = [];
-	for (let i = 0; i < 14; i++) {
+	// …until one IP has opened 30 trips it isn't a member of in a minute.
+	for (let i = 0; i < 31; i++) {
 		await page.goto("about:blank");
-		await page.goto(`/join#t=guess${i}${"x".repeat(43 - `guess${i}`.length)}`);
-		const h = page.locator("h1, h2").first();
-		await expect(h).not.toHaveText(/Opening the trip/, { timeout: 15_000 });
-		seen.push(`${i}:${(await h.innerText()).trim()}`);
+		await page.goto(`/t/asia-2027-guess${i}`);
+		await settled(page);
+		seen.push(`${i}:${(await page.getByTestId("trip-no-access").count()) ? "no access" : "?"}`);
 	}
 	console.log("LINK-09b:", seen.join(" | "));
-	expect(seen.join(" ")).toMatch(/Too many tries/);
-	await page.screenshot({ path: `${process.env.QA_SHOTS}/link-09b-too-many.png` });
-	// a real link right after, from the same IP
+	expect(seen.every((s) => s.endsWith("no access"))).toBe(true);
+	// A real link right after, from the same IP: the same page, nothing revealed.
 	const p2 = await (await browser.newContext()).newPage();
-	await p2.goto("/join#t=qa-share-token-viewer-asia-2027");
-	await p2.waitForTimeout(4000);
-	console.log("LINK-09b real link after limit:", p2.url(), (await p2.locator("body").innerText()).slice(0, 120).replace(/\n/g, " | "));
+	await p2.goto("/t/asia-2027");
+	await settled(p2);
+	await expect(p2.getByTestId("trip-no-access")).toBeVisible();
+	await page.screenshot({ path: `${process.env.QA_SHOTS}/link-09b-limited.png` });
 	await ctx.close();
 });
 
@@ -37,7 +40,7 @@ test("R2 HOME-13: a group of 8 on one IP opens the real view link within a minut
 	for (let i = 0; i < 8; i++) {
 		const ctx = await browser.newContext();
 		const p = await ctx.newPage();
-		await p.goto("/join#t=qa-share-token-viewer-asia-2027");
+		await openLink(p, "asia-2027", "viewer");
 		const ok = await p.getByTestId("workspace").waitFor({ state: "visible", timeout: 30_000 }).then(() => "ok").catch(async () => `FAIL:${(await p.locator("body").innerText()).slice(0, 80).replace(/\n/g, " ")}`);
 		results.push(`${i}:${ok}`);
 		if (i === 7) await p.screenshot({ path: `${process.env.QA_SHOTS}/link-r2-group-8th.png` });

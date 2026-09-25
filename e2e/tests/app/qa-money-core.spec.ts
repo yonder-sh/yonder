@@ -7,6 +7,7 @@
 import { type APIRequestContext, type Browser, expect, type Page, test } from "@playwright/test";
 import { MONEY_TESTID as M } from "../../../src/features/money/testids";
 import { TESTID } from "../../../src/lib/testids";
+import { openLink } from "./_helpers/link";
 
 const BASE = process.env.APP_URL ?? "http://localhost:5350";
 const SHOTS = process.env.QA_SHOTS ?? "/tmp/qa-money-shots";
@@ -62,7 +63,6 @@ export async function callFnErr(page: Page, fn: string, data: unknown, module = 
 export type Clone = {
 	tripId: string;
 	slug: string;
-	shareTokens: { editor: string; viewer: string };
 	ids: { items: Record<string, string>; days: Record<string, string>; nodes: Record<string, string>; legs: Record<string, string> };
 	members: { owner: string; maya: string | null; audrey: string };
 };
@@ -613,7 +613,7 @@ test("privacy + roles: suggester adds directly, private expense, guests never se
 	for (const kind of ["viewer", "editor"] as const) {
 		const g = await browser.newContext({ baseURL: BASE, viewport: { width: 1440, height: 900 } });
 		const gp = await g.newPage();
-		await gp.goto(`/join#t=${c.shareTokens[kind]}`);
+		await openLink(gp, c.slug, kind);
 		await gp.waitForURL(/\/t\//, { timeout: 30_000 });
 		await waitLive(gp);
 		out[`guest_${kind}_tabs`] = await gp.getByRole("tab").allInnerTexts();

@@ -21,7 +21,8 @@ export type MutationPolicy =
 
 export const MUTATION_POLICY = {
 	// ---- auth / account (not trip-scoped) ----
-	redeemShareLink: "account",
+	/** The trip's address is its link: a non-member opening it gets a grant. */
+	openTripByLink: "account",
 	renameGuest: "account",
 	createTrip: "account",
 	setUserPrefs: "account",

@@ -26,6 +26,7 @@ import { shotPath, storageStateOf } from "./_helpers/env";
 import { cloneFixtureTrip, type FixtureClone } from "./_helpers/fixture";
 import { collectConsole, expectLive, expectNoHorizontalOverflow } from "./_helpers/page";
 import { callServerFn, centerRuleWidth, dayOfItem, settle, withSuggestUi } from "./suggest-helpers";
+import { openLink } from "./_helpers/link";
 
 const ITEMS = "/src/functions/items.functions.ts";
 
@@ -321,7 +322,7 @@ test.describe("live review (desktop 1440×900)", () => {
 			storageState: { cookies: [], origins: [] },
 		});
 		const guest = await ctx.newPage();
-		await guest.goto(`/join#t=${c.shareTokens.viewer}`);
+		await openLink(guest, c.slug, "viewer");
 		await expect(guest).toHaveURL(new RegExp(`/t/${c.slug}`), { timeout: 20_000 });
 		await expectLive(guest);
 		await withSuggestUi(guest, "live");

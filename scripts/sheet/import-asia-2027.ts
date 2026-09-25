@@ -1,7 +1,9 @@
 /**
  * The Asia 2027 import (SPEC §17.3 as overridden by ADDENDUM §8 and §10):
  * reads `seed/data/*.json` (+ geocode hints, `seed/media` photos with their
- * manifest) and creates the trip `asia-2027` for dennis@dennispham.me in ONE
+ * manifest) and creates the trip `asia-2027-<random tail>` (the address is
+ * the share link, `src/lib/trip-slug.ts`; `--replace` keeps the replaced
+ * trip's address) for dennis@dennispham.me in ONE
  * transaction, then queues leg autofill and writes `seed/import/last-report.md`.
  *
  *   N pnpm sheet:import                               # defaults: ADDENDUM §8 owner and dates
@@ -37,7 +39,7 @@ try {
 
 run("sheet:import", async () => {
 	if (args.remove) {
-		const id = await removeImport(args.slug);
+		const id = await removeImport(args.slug, undefined, args.owner);
 		console.log(
 			`[sheet:import] ${id ? `removed trip ${args.slug} (${id})` : `no trip ${args.slug}`}`,
 		);

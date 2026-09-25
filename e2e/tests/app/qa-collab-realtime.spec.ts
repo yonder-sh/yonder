@@ -12,13 +12,13 @@ import { NOTES_TESTID as NT } from "../../../src/features/notes/testids";
 import { PLAN_TESTID as P } from "../../../src/features/plan/testids";
 import { TESTID } from "../../../src/lib/testids";
 import { shotPath } from "./_helpers/env";
+import { openLink } from "./_helpers/link";
 import { collectConsole, expectLive } from "./_helpers/page";
 
 const AUTH = process.env.QA_AUTH_DIR ?? path.resolve("e2e/.auth");
 const auth = (h: string) => path.join(AUTH, `${h}.json`);
 const shot = (n: string) =>
 	process.env.QA_SHOTS_DIR ? path.join(process.env.QA_SHOTS_DIR, `${n}.png`) : shotPath(`qa-collab/${n}.png`);
-const EDIT_TOKEN = "qa-share-token-editor-asia-2027";
 const GG = "/t/asia-2027/japan/tokyo/shinjuku/golden-gai";
 
 async function open(browser: Browser, handle: string | null, url: string) {
@@ -27,10 +27,8 @@ async function open(browser: Browser, handle: string | null, url: string) {
 		viewport: { width: 1440, height: 900 },
 	});
 	const page = await ctx.newPage();
-	if (!handle) {
-		await page.goto(`/join#t=${EDIT_TOKEN}`);
-		await expect(page).toHaveURL(/\/t\/asia-2027/, { timeout: 20_000 });
-	}
+	// Guest-E: the trip's address while its link gives "Can edit".
+	if (!handle) await openLink(page, "asia-2027", "editor");
 	await page.goto(url);
 	await expectLive(page);
 	return { ctx, page };

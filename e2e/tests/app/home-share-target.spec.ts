@@ -12,6 +12,7 @@ import { loginViaApi } from "./_helpers/auth";
 import { APP_URL, shotPath, storageStateOf } from "./_helpers/env";
 import { cloneFixtureTrip } from "./_helpers/fixture";
 import { expectLive, expectNoHorizontalOverflow, hydrated } from "./_helpers/page";
+import { openLink } from "./_helpers/link";
 
 test.use({ storageState: storageStateOf("dev") });
 
@@ -156,7 +157,7 @@ test("a signed-in guest is asked 'Are you Audrey?'; the owner's 'Add to trip' ma
 		{ first: "Audrey", last: "Nguyen" },
 	);
 	const guest = await ctx.newPage();
-	await guest.goto(`/join#t=${c.shareTokens.viewer}`);
+	await openLink(guest, c.slug, "viewer");
 	await expect(guest).toHaveURL(new RegExp(`/t/${c.slug}`), {
 		timeout: 20_000,
 	});

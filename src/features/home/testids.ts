@@ -47,6 +47,8 @@ export const HOME_TESTID = {
 	// Trip settings
 	settingsName: "home-settings-name",
 	settingsSlug: "home-settings-slug",
+	/** The address's random tail beside the Address input (read-only). */
+	settingsSlugTail: "home-settings-slug-tail",
 	settingsDates: "home-settings-dates",
 	settingsCurrency: "home-settings-currency",
 	settingsSave: "home-settings-save",

@@ -1,11 +1,13 @@
 /**
  * QA security verifier (I2 round 1) helpers: actors signed in through the API
- * or through a share link, and a generic "call a server function from the
- * page" probe. Fixture ids are the QA seed's (`pnpm db:seed:qa`).
+ * or through the trip's link (its address, `/t/asia-2027`, with link access
+ * set by `POST /api/test/link`), and a generic "call a server function from
+ * the page" probe. Fixture ids are the QA seed's (`pnpm db:seed:qa`).
  */
 import type { Browser, BrowserContext, Page } from "@playwright/test";
 import { readFileSync } from "node:fs";
 import { loginViaApi } from "./_helpers/auth";
+import { type LinkRole, openLink } from "./_helpers/link";
 
 /** Round 3: ids of a re-seeded QA database (`QA_SEC_IDS` = a JSON file), else the round-1 seed's. */
 export const IDS: Record<string, string> & { MEMBER?: Record<string, string> } = process.env.QA_SEC_IDS
@@ -30,11 +32,15 @@ export const MEMBER = {
 	kai: IDS.MEMBER?.kai ?? "01a0cf13-fec7-770d-83d2-81162526e869",
 	maya: IDS.MEMBER?.maya ?? "01a0cf13-fec7-770d-83d2-86dbdcf78d14",
 };
+/**
+ * The link roles a guest comes in with (the trip's address is the link; there
+ * are no tokens any more). The name stays so the specs read as before.
+ */
 export const TOKEN = {
-	editor: "qa-share-token-editor-asia-2027",
-	viewer: "qa-share-token-viewer-asia-2027",
-	suggester: "qa-share-token-suggester-asia-2027",
-};
+	editor: "editor",
+	viewer: "viewer",
+	suggester: "suggester",
+} as const satisfies Record<string, LinkRole>;
 export const EMAIL = {
 	dennis: "dennis@asia2027.test",
 	audrey: "audrey@asia2027.test",
@@ -111,16 +117,19 @@ export async function memberPage(
 	return { ctx, page };
 }
 
-/** A fresh browser (anonymous guest) or a signed-in account that opens a share link. */
+/**
+ * A fresh browser (anonymous guest) or a signed-in account that opens the QA
+ * trip's address while its link gives `role` (`TOKEN.viewer`, …).
+ */
 export async function guestPage(
 	browser: Browser,
-	token: string,
+	role: LinkRole,
 	signedInEmail?: string,
 ): Promise<{ ctx: BrowserContext; page: Page }> {
 	const ctx = await browser.newContext();
 	if (signedInEmail) await loginViaApi(ctx.request, signedInEmail);
 	const page = await ctx.newPage();
-	await page.goto(`/join#t=${token}`);
+	await openLink(page, "asia-2027", role);
 	await page.waitForURL(/\/t\/asia-2027/, { timeout: 30_000 });
 	return { ctx, page };
 }

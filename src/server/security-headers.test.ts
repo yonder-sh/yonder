@@ -3,7 +3,7 @@ import {
 	buildSecurityHeaders,
 	newCspNonce,
 	privateCacheHeaders,
-	tokenPageHeaders,
+	tripPageHeaders,
 } from "./security-headers.server";
 
 describe("buildSecurityHeaders", () => {
@@ -189,14 +189,17 @@ describe("script-src (SEC-R1-09, SECURITY §7)", () => {
 	});
 });
 
-describe("tokenPageHeaders (SEC-R1-10)", () => {
-	it("/join and the legacy /s/<token> never send a Referer and are never cached", () => {
-		for (const path of ["/join", "/s/abc123"])
-			expect(tokenPageHeaders(path)).toEqual({
-				"Referrer-Policy": "no-referrer",
-				"Cache-Control": "private, no-store",
+describe("tripPageHeaders (trip addresses are share links)", () => {
+	it("keeps every trip page out of search results", () => {
+		for (const path of [
+			"/t/asia-2027-k7m2qxw9",
+			"/t/asia-2027-k7m2qxw9/japan/tokyo",
+			"/t/asia-2027-k7m2qxw9/share-card.png",
+		])
+			expect(tripPageHeaders(path)).toEqual({
+				"X-Robots-Tag": "noindex, nofollow",
 			});
-		expect(tokenPageHeaders("/joiner")).toEqual({});
-		expect(tokenPageHeaders("/t/asia-2027")).toEqual({});
+		for (const path of ["/", "/login", "/trips", "/terms"])
+			expect(tripPageHeaders(path)).toEqual({});
 	});
 });

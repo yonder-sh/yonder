@@ -51,8 +51,11 @@ import { updateTrip } from "@/functions/trips.functions";
 import { balances } from "@/lib/engine/money";
 import type { AuthUser } from "@/server/auth.server";
 import { errorCode } from "@/server/authz/errors";
-import { redeemShareToken } from "@/server/authz/share-links.server";
-import { cloneDemoTrip, type FixtureClone } from "@/server/fixture.server";
+import {
+	cloneDemoTrip,
+	type FixtureClone,
+	joinTestLink,
+} from "@/server/fixture.server";
 import { closeQueues } from "@/server/live/jobs.server";
 import { closeRedis, redis, redisPrefix } from "@/server/live/redis.server";
 import { retireMember } from "@/server/members.server";
@@ -190,7 +193,7 @@ async function freshTrip(): Promise<Trip> {
 			color: 6,
 		})
 		.returning({ id: tripMembers.id });
-	await redeemShareToken(c.shareTokens.editor, U.guestEditor.id);
+	await joinTestLink(getDb(), c, U.guestEditor.id, "editor");
 	return {
 		...c,
 		viewerMember: v?.id as string,

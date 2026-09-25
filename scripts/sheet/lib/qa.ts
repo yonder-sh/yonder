@@ -9,7 +9,7 @@
  * ones here are invented and only have to be plausible.
  *
  * The EXTENSIONS §2.1 additions live here too, as pure builders: Maya (a
- * suggester member), the "Can suggest" link token, three expenses (one
+ * suggester member), three expenses (one
  * private) and Maya's two suggestions, plus the ANA 355-day window on NH 9
  * (QA DUE-09).
  */
@@ -85,14 +85,6 @@ export const QA_DATES = {
 	start: "2027-10-02",
 	day1: "2027-10-03",
 	end: "2027-11-05",
-} as const;
-
-/** Fixed share tokens for the QA database (dev and test databases only). */
-export const QA_SHARE_TOKENS = {
-	editor: "qa-share-token-editor-asia-2027",
-	viewer: "qa-share-token-viewer-asia-2027",
-	/** EXTENSIONS §2.1: the "Can suggest" link. */
-	suggester: "qa-share-token-suggester-asia-2027",
 } as const;
 
 class Patch {

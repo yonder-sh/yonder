@@ -46,10 +46,10 @@ import { markdownToYdoc } from "@/lib/notes/ydoc.server";
 import { noteDocName } from "@/lib/realtime/protocol";
 import type { AuthUser } from "@/server/auth.server";
 import { errorCode } from "@/server/authz/errors";
-import { redeemShareToken } from "@/server/authz/share-links.server";
 import {
 	cloneDemoTrip,
 	type FixtureClone,
+	joinTestLink,
 	seedDev,
 } from "@/server/fixture.server";
 import { closeQueues, getQueue } from "@/server/live/jobs.server";
@@ -74,7 +74,9 @@ import {
 	updateNode,
 } from "../nodes.functions";
 import {
+	createTrip,
 	previewTripDates,
+	resolveTripSlug,
 	setTripDates,
 	shiftTripDates,
 	updateTrip,
@@ -146,8 +148,8 @@ async function freshTrip(): Promise<FixtureClone> {
 		role: "viewer",
 		color: 5,
 	});
-	await redeemShareToken(c.shareTokens.viewer, U.guestViewer.id);
-	await redeemShareToken(c.shareTokens.editor, U.guestEditor.id);
+	await joinTestLink(getDb(), c, U.guestViewer.id, "viewer");
+	await joinTestLink(getDb(), c, U.guestEditor.id, "editor");
 	return c;
 }
 
@@ -1307,6 +1309,111 @@ describe("ADDENDUM §9/§10 (F-ext0 columns)", () => {
 	});
 });
 
+describe("trip addresses: a readable part and an unguessable tail (the share link)", () => {
+	const TAIL = "[23456789abcdefghjkmnpqrstuvwxyz]{8}";
+	const addressOf = async (tripId: string) =>
+		(
+			await getDb().execute(
+				sql`select slug, slug_tail as "slugTail" from trips where id = ${tripId}`,
+			)
+		).rows[0] as { slug: string; slugTail: string | null };
+
+	it("a new trip gets its name's readable part and a random tail; the same name another", async () => {
+		const a = await call<{ tripId: string; slug: string }>(
+			createTrip,
+			U.owner,
+			{ name: "Hội An & Huế" },
+		);
+		expect(a.slug).toMatch(new RegExp(`^hoi-an-hue-${TAIL}$`));
+		expect(await addressOf(a.tripId)).toEqual({
+			slug: a.slug,
+			slugTail: a.slug.slice(-8),
+		});
+		const b = await call<{ slug: string }>(createTrip, U.owner, {
+			name: "Hội An & Huế",
+		});
+		expect(b.slug).toMatch(new RegExp(`^hoi-an-hue-${TAIL}$`));
+		expect(b.slug).not.toBe(a.slug);
+	});
+
+	it("editing the address changes only the readable part; the tail stays", async () => {
+		const c = await freshTrip();
+		const tail = c.slug.slice(-8);
+		const r = await call<{ slug: string }>(updateTrip, U.owner, {
+			tripId: c.tripId,
+			slug: "tokyo-spring",
+		});
+		expect(r.slug).toBe(`tokyo-spring-${tail}`);
+		expect(await addressOf(c.tripId)).toEqual({
+			slug: `tokyo-spring-${tail}`,
+			slugTail: tail,
+		});
+		// The same readable part again changes nothing.
+		expect(
+			(
+				await call<{ slug: string }>(updateTrip, U.owner, {
+					tripId: c.tripId,
+					slug: "tokyo-spring",
+				})
+			).slug,
+		).toBe(`tokyo-spring-${tail}`);
+		// Trailing and doubled dashes are tidied; nothing usable is refused.
+		expect(
+			(
+				await call<{ slug: string }>(updateTrip, U.owner, {
+					tripId: c.tripId,
+					slug: "tokyo--spring-",
+				})
+			).slug,
+		).toBe(`tokyo-spring-${tail}`);
+		expect(
+			await codeOf(
+				call(updateTrip, U.owner, { tripId: c.tripId, slug: "---" }),
+			),
+		).toBe("VALIDATION");
+		// Members open the new address; the old one resolves for nobody.
+		expect(
+			await call(resolveTripSlug, U.maya, { slug: `tokyo-spring-${tail}` }),
+		).toEqual({ tripId: c.tripId });
+		expect(await codeOf(call(resolveTripSlug, U.maya, { slug: c.slug }))).toBe(
+			"NOT_FOUND",
+		);
+	});
+
+	it("a tail-less (seeded) address gets a tail when it is edited", async () => {
+		const c = await freshTrip();
+		await getDb().execute(
+			sql`update trips set slug = ${`seeded-${hex}`}, slug_tail = null where id = ${c.tripId}`,
+		);
+		// Unchanged: it stays as seeded.
+		await call(updateTrip, U.owner, {
+			tripId: c.tripId,
+			slug: `seeded-${hex}`,
+		});
+		expect((await addressOf(c.tripId)).slugTail).toBeNull();
+		const r = await call<{ slug: string }>(updateTrip, U.owner, {
+			tripId: c.tripId,
+			slug: `renamed-${hex}`,
+		});
+		expect(r.slug).toMatch(new RegExp(`^renamed-${hex}-${TAIL}$`));
+		expect((await addressOf(c.tripId)).slugTail).toBe(r.slug.slice(-8));
+	});
+
+	it("resolveTripSlug: members and link guests only; everyone else gets the same NOT_FOUND", async () => {
+		const c = await freshTrip();
+		expect(await call(resolveTripSlug, U.owner, { slug: c.slug })).toEqual({
+			tripId: c.tripId,
+		});
+		expect(
+			await call(resolveTripSlug, U.guestViewer, { slug: c.slug }),
+		).toEqual({ tripId: c.tripId });
+		for (const slug of [c.slug, "no-such-trip-k7m2qxw9"])
+			expect(await codeOf(call(resolveTripSlug, U.stranger, { slug }))).toBe(
+				"NOT_FOUND",
+			);
+	});
+});
+
 describe("dev seed (§17.1)", () => {
 	it("is idempotent and writes the fixture with its fixed ids", async () => {
 		const a = await seedDev(getDb());
@@ -1317,16 +1424,13 @@ describe("dev seed (§17.1)", () => {
 			       (select count(*) from legs where trip_id = ${a.tripId})::int as legs,
 			       (select count(*) from share_links where trip_id = ${a.tripId})::int as links,
 			       (select count(*) from "user" where email in ('dev@example.com', 'maya@example.com'))::int as users`);
+		// The fixed `/t/demo`, link sharing off (turning it on adds a tail).
 		expect(counts.rows[0]).toEqual({
 			items: demo.graph.items.length,
 			legs: demo.graph.legs.length,
-			links: 2,
+			links: 0,
 			users: 2,
 		});
-		const redeemed = await redeemShareToken(
-			"dev-share-token-viewer",
-			U.guestViewer.id,
-		);
-		expect(redeemed?.role).toBe("viewer");
+		expect(b.slug).toBe("demo");
 	});
 });

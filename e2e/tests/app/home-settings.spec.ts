@@ -39,7 +39,9 @@ test("trip settings: home currency, dates preview, and the owner's tools", async
 		"Demo · Japan & Korea",
 	);
 	// Owner-only: the address, Duplicate… and the Danger zone.
-	await expect(dialog.getByTestId(HOME_TESTID.settingsSlug)).toHaveValue(c.slug);
+	// The address: only its readable part is edited; the random tail shows beside it.
+	await expect(dialog.getByTestId(HOME_TESTID.settingsSlug)).toHaveValue("demo");
+	await expect(dialog.getByTestId(HOME_TESTID.settingsSlugTail)).toHaveText(`-${c.slug.slice(-8)}`);
 	await expect(dialog.getByTestId(HOME_TESTID.settingsDelete)).toBeVisible();
 	// QA HOME-9 / VIS-15: one "Public holidays" heading (the editor's own).
 	await expect(dialog.getByText("Public holidays", { exact: true })).toHaveCount(

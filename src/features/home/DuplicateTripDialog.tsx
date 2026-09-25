@@ -3,7 +3,7 @@
  * settings: a new name, a new start date (every day shifts with it; pinned
  * local times stay) and what to copy. The structure always comes along;
  * notes, lists (reset to open), media (re-referenced), trip-default budgets
- * and people without an account are checkboxes. Members, share links, money,
+ * and people without an account are checkboxes. Members, link sharing, money,
  * suggestions and activity never are. Opens the copy when it's ready.
  */
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -203,8 +203,8 @@ export function DuplicateTripDialog({
 							);
 						})}
 						<p className="pt-1 text-xs text-muted-foreground">
-							Never copied: members, share links, expenses, suggestions and
-							activity.
+							Never copied: members, link sharing, expenses, suggestions and
+							activity. The copy gets its own address.
 						</p>
 					</fieldset>
 					{dup.error ? (

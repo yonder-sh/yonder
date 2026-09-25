@@ -7,9 +7,9 @@
  *   - the F2 trips "Phu Quoc detour" (Audrey's, Dennis views) and "Delete me"
  *     (Dennis's, Audrey edits);
  *   - the F3 ★ nodes and the F4 timeline fixtures (`scripts/sheet/lib/qa.ts`);
- *   - the share links, with the fixed tokens `qa-share-token-editor-asia-2027`,
- *     `qa-share-token-viewer-asia-2027` and `qa-share-token-suggester-asia-2027`
- *     (share tokens are 22–128 characters);
+ *   - no link sharing: the trip keeps its fixed address `/t/asia-2027` (no
+ *     random tail), and e2e specs let guests in with `POST /api/test/link`
+ *     (`pinTestLink`) before they open it;
  *   - EXTENSIONS §2.1: Maya (maya@asia2027.test) as a suggester member and
  *     three expenses (one private, Dennis's), home currency USD.
  * After the commit, Maya's two suggestions go through the real propose path
@@ -33,7 +33,7 @@ import {
 	writeFileSync,
 } from "node:fs";
 import path from "node:path";
-import { and, eq, inArray, isNull, sql } from "drizzle-orm";
+import { and, eq, isNull, sql } from "drizzle-orm";
 import { v7 as uuidv7 } from "uuid";
 import { getDb, type Tx } from "../src/db/db.server";
 import {
@@ -42,16 +42,11 @@ import {
 	expenseShares,
 	expenses,
 	nodes,
-	shareLinks,
 	tripDays,
 	tripMembers,
 	trips,
 	user,
 } from "../src/db/schema";
-import {
-	hashShareToken,
-	shareTokenColumns,
-} from "../src/db/share-token.server";
 import { slugify } from "../src/lib/engine/tree";
 import { closeQueues } from "../src/server/live/jobs.server";
 import { run } from "./lib/lifecycle";
@@ -61,7 +56,6 @@ import {
 	applyQaFixtures,
 	loadAirports,
 	QA_DATES,
-	QA_SHARE_TOKENS,
 	QA_USERS,
 	type QaHandle,
 	qaMoney,
@@ -391,6 +385,8 @@ run("db:seed:qa", async () => {
 			report: REPORT,
 		},
 		{
+			// The fixed `asia-2027` (no random tail): the e2e specs open it.
+			fixedSlug: true,
 			patchPlan: (plan) => applyQaFixtures(plan, airports),
 			memberUsers: async (tx) => {
 				ids.dennis = await qaUser(tx, QA_USERS.dennis);
@@ -432,19 +428,6 @@ run("db:seed:qa", async () => {
 				await tx.insert(expensePayments).values(money.payments);
 				await tx.insert(expensePaymentPayers).values(money.payers);
 				await tx.insert(expenseShares).values(money.shares);
-				// The fixed QA tokens may still be held by an older, soft-deleted copy.
-				const hashes = Object.values(QA_SHARE_TOKENS).map(hashShareToken);
-				await tx
-					.delete(shareLinks)
-					.where(inArray(shareLinks.tokenHash, hashes));
-				const secret = process.env.BETTER_AUTH_SECRET || undefined;
-				for (const role of ["editor", "viewer", "suggester"] as const)
-					await tx.insert(shareLinks).values({
-						tripId,
-						role,
-						...shareTokenColumns(QA_SHARE_TOKENS[role], secret),
-						createdBy: dennis,
-					});
 				await sideTrip(tx, {
 					slug: "phu-quoc-detour",
 					name: "Phu Quoc detour",
@@ -494,9 +477,7 @@ run("db:seed:qa", async () => {
 	console.log(
 		`[db:seed:qa] users: ${Object.values(QA_USERS)
 			.map((u) => u.email)
-			.join(
-				", ",
-			)}; share links /join#t=${QA_SHARE_TOKENS.editor} (editor), /join#t=${QA_SHARE_TOKENS.viewer} (viewer), /join#t=${QA_SHARE_TOKENS.suggester} (suggester)`,
+			.join(", ")}; link sharing off (e2e: POST /api/test/link)`,
 	);
 	console.log(
 		`[db:seed:qa] money: 3 expenses (1 private) in USD; Maya's suggestions: ${suggestions

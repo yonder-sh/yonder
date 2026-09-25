@@ -1,45 +1,58 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import {
 	clearGrants,
-	grantFor,
+	hasGrant,
 	lostLinkFor,
 	markGrantGone,
+	readGrants,
 	saveGrant,
 } from "./grants";
-
-const TOKEN = "B6w5wDJRMARa-yKzZs0D4QDToWum602dv3OUaZ6v4UM";
-const TOKEN2 = "Zz5wDJRMARa-yKzZs0D4QDToWum602dv3OUaZ6v4UM";
 
 beforeEach(() => localStorage.clear());
 
 describe("lost links (QA LINK-04/05/07)", () => {
-	it("a trip the guest never had a link to is not a lost link, and their link is kept", () => {
-		saveGrant("asia-2027", TOKEN);
+	it("a trip the guest never opened through its link is not a lost link, and their trip is kept", () => {
+		saveGrant("asia-2027-k7m2qxw9");
 		expect(lostLinkFor("phu-quoc-detour")).toBe(false);
-		expect(grantFor("asia-2027")).toBe(TOKEN);
+		expect(hasGrant("asia-2027-k7m2qxw9")).toBe(true);
 	});
 
-	it("a remembered link whose trip now refuses the guest is lost", () => {
-		saveGrant("asia-2027", TOKEN);
-		expect(lostLinkFor("asia-2027")).toBe(true);
+	it("a trip opened through its link that now refuses the guest is lost", () => {
+		saveGrant("asia-2027-k7m2qxw9");
+		expect(lostLinkFor("asia-2027-k7m2qxw9")).toBe(true);
 	});
 
-	it("stays lost on reload after the token is forgotten", () => {
-		saveGrant("asia-2027", TOKEN);
-		markGrantGone("asia-2027");
-		expect(grantFor("asia-2027")).toBeNull();
-		expect(lostLinkFor("asia-2027")).toBe(true);
+	it("stays lost on reload after the grant is forgotten", () => {
+		saveGrant("asia-2027-k7m2qxw9");
+		markGrantGone("asia-2027-k7m2qxw9");
+		expect(hasGrant("asia-2027-k7m2qxw9")).toBe(false);
+		expect(lostLinkFor("asia-2027-k7m2qxw9")).toBe(true);
 		expect(lostLinkFor("phu-quoc-detour")).toBe(false);
 	});
 
-	it("a new link for the same trip clears the mark; sign-out clears everything", () => {
-		markGrantGone("asia-2027");
-		saveGrant("asia-2027", TOKEN2);
+	it("opening the trip again clears the mark; sign-out clears everything", () => {
+		markGrantGone("asia-2027-k7m2qxw9");
+		saveGrant("asia-2027-k7m2qxw9");
 		markGrantGone("other");
 		expect(localStorage.getItem("yonder:grants-gone")).toBe('["other"]');
 		clearGrants();
 		expect(lostLinkFor("other")).toBe(false);
 		expect(localStorage.getItem("yonder:grants-gone")).toBeNull();
+		expect(localStorage.getItem("yonder:grants")).toBeNull();
+	});
+
+	it("keeps each slug once, and reads the old { slug: token } shape as its slugs", () => {
+		saveGrant("a");
+		saveGrant("b");
+		saveGrant("a");
+		expect(readGrants()).toEqual(["b", "a"]);
+		localStorage.setItem(
+			"yonder:grants",
+			JSON.stringify({
+				"asia-2027": "B6w5wDJRMARa-yKzZs0D4QDToWum602dv3OUaZ6v4UM",
+			}),
+		);
+		expect(hasGrant("asia-2027")).toBe(true);
 	});
 
 	it("tolerates corrupted storage", () => {

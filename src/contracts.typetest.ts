@@ -411,11 +411,11 @@ export type ServerFnContracts = [
 	Assert<Equals<Out<Fns["setDayStay"]>, P<{ dayIds: string[] }>>>,
 	Assert<Equals<Out<Fns["getSharing"]>, SharingDto>>,
 	Assert<Equals<Out<Fns["setShareLink"]>, { ok: true }>>,
-	Assert<Equals<Out<Fns["resetShareLink"]>, { url: string }>>,
+	Assert<Equals<Out<Fns["resetShareLink"]>, { url: string; slug: string }>>,
 	Assert<Equals<Out<Fns["extendShareLink"]>, { expiresAt: string }>>,
 	Assert<Equals<Out<Fns["removeGuest"]>, { ok: true }>>,
 	Assert<
-		Out<Fns["redeemShareLink"]> extends {
+		Out<Fns["openTripByLink"]> extends {
 			tripId: string;
 			slug: string;
 			role: string;
@@ -423,6 +423,7 @@ export type ServerFnContracts = [
 			? true
 			: false
 	>,
+	Assert<Equals<Out<Fns["tripLinkOpen"]>, { open: boolean }>>,
 	// ---- F-ext0: proposals, digest, prefs (F) ----
 	Assert<Equals<Out<Fns["listProposals"]>, ProposalDto[]>>,
 	Assert<Equals<Out<Fns["resolveProposal"]>, ResolveResult>>,

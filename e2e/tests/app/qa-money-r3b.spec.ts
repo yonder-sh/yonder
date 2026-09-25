@@ -7,6 +7,7 @@
 import { type APIRequestContext, type Browser, expect, type Page, test } from "@playwright/test";
 import { MONEY_TESTID as M } from "../../../src/features/money/testids";
 import { TESTID } from "../../../src/lib/testids";
+import { openLink } from "./_helpers/link";
 
 const BASE = process.env.APP_URL ?? "http://localhost:5350";
 const SHOTS = process.env.QA_SHOTS ?? "/tmp/qa-money-shots";
@@ -177,7 +178,7 @@ test("Asia 2027: Kai (viewer) reads money without write controls; Maya (suggeste
 	// anonymous edit-link guest
 	const ctx = await browser.newContext({ baseURL: BASE, viewport: { width: 1440, height: 900 } });
 	const gp = await ctx.newPage();
-	await gp.goto("/join#t=qa-share-token-editor-asia-2027");
+	await openLink(gp, "asia-2027", "editor");
 	await gp.waitForURL(/\/t\//, { timeout: 30_000 });
 	await waitLive(gp);
 	await gp.goto("/t/asia-2027?tab=money");

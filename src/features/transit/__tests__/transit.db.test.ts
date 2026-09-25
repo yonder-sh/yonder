@@ -48,9 +48,12 @@ import type { GraphLeg, TripGraph } from "@/lib/engine/types";
 import type { TransitRoute } from "@/lib/schemas/legs";
 import type { AuthUser } from "@/server/auth.server";
 import { errorCode } from "@/server/authz/errors";
-import { redeemShareToken } from "@/server/authz/share-links.server";
 import { cacheSet } from "@/server/cache.server";
-import { cloneDemoTrip, type FixtureClone } from "@/server/fixture.server";
+import {
+	cloneDemoTrip,
+	type FixtureClone,
+	joinTestLink,
+} from "@/server/fixture.server";
 import { closeQueues } from "@/server/live/jobs.server";
 import { closeRedis, redis, redisPrefix } from "@/server/live/redis.server";
 import { autofillLeg } from "../server/autofill.server";
@@ -134,7 +137,7 @@ async function freshTrip(): Promise<FixtureClone> {
 		role: "viewer",
 		color: 5,
 	});
-	await redeemShareToken(c.shareTokens.editor, U.guestEditor.id);
+	await joinTestLink(getDb(), c, U.guestEditor.id, "editor");
 	return c;
 }
 

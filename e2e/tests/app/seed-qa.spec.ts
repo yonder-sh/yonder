@@ -1,8 +1,9 @@
 /**
  * The QA seed (SPEC §17.2; qa/SCENARIOS TI-3, F1–F4; EXTENSIONS §2.1):
  * `pnpm db:seed:qa` imports Asia 2027 for Dennis Tester with the fixtures,
- * links Audrey, adds Kai, Eve and Maya (suggester), the F2 trips, the three
- * share links, three expenses and Maya's two suggestions, and writes one
+ * links Audrey, adds Kai, Eve and Maya (suggester), the F2 trips (link
+ * sharing off, at the fixed address `/t/asia-2027`: guests come in with
+ * `openLink`), three expenses and Maya's two suggestions, and writes one
  * storageState per handle. This spec runs it once (desktop project only: the QA seed owns
  * the fixed slug `asia-2027` and the QA accounts, so it can't run in two
  * workers at once) and checks what each person sees.
@@ -15,6 +16,7 @@ import { expect, type Page, test } from "@playwright/test";
 import { TESTID } from "../../../src/lib/testids";
 import { E2E_ROOT, REPO_ROOT, shotPath } from "./_helpers/env";
 import { collectConsole, expectLive } from "./_helpers/page";
+import { openLink } from "./_helpers/link";
 
 const exec = promisify(execFile);
 
@@ -188,7 +190,7 @@ test("EXTENSIONS §2.1: the suggester link makes a guest a suggester", async ({ 
 	test.skip(info.project.name !== "chromium", "desktop only");
 	const ctx = await browser.newContext();
 	const page = await ctx.newPage();
-	await page.goto("/join#t=qa-share-token-suggester-asia-2027");
+	await openLink(page, "asia-2027", "suggester");
 	await expect(page).toHaveURL(/\/t\/asia-2027/, { timeout: 20_000 });
 	await expectLive(page);
 	await expect
@@ -201,7 +203,7 @@ test("F2: the QA viewer link opens the trip for an anonymous guest", async ({ br
 	test.skip(info.project.name !== "chromium", "desktop only");
 	const ctx = await browser.newContext();
 	const page = await ctx.newPage();
-	await page.goto("/join#t=qa-share-token-viewer-asia-2027");
+	await openLink(page, "asia-2027", "viewer");
 	await expect(page).toHaveURL(/\/t\/asia-2027/, { timeout: 20_000 });
 	await expectLive(page);
 	await expect

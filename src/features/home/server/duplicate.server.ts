@@ -21,11 +21,12 @@
 import { sql } from "drizzle-orm";
 import type { Tx } from "@/db/db.server";
 import { daysBetween } from "@/lib/engine/time";
-import { slugify, uniqueSlug } from "@/lib/engine/tree";
 import { newId } from "@/lib/ids";
 import { MENTION_TOKEN_RE } from "@/lib/notes/mentions";
+import { slugBaseFromName } from "@/lib/trip-slug";
 import { fail } from "@/server/authz/session.server";
 import { shiftTimedLegs } from "@/server/legs.server";
+import { freshTripSlug } from "@/server/trip-slug.server";
 
 export type DuplicateInclude = {
 	notes: boolean;
@@ -100,17 +101,6 @@ function replaceAll(text: string, ids: ReadonlyMap<string, string>): string {
 	return out;
 }
 
-async function freeSlug(tx: Tx, name: string): Promise<string> {
-	const base = slugify(name, crypto.randomUUID()).slice(0, 90);
-	const res = await tx.execute(sql`
-		select slug from trips where deleted_at is null
-		   and (slug = ${base} or slug like ${`${base}-%`})`);
-	return uniqueSlug(
-		base,
-		(res.rows as { slug: string }[]).map((r) => r.slug),
-	);
-}
-
 type SourceTrip = {
 	id: string;
 	name: string;
@@ -145,11 +135,15 @@ export async function duplicateTripCore(
 	const delta = src.startDate ? daysBetween(src.startDate, args.startDate) : 0;
 
 	// ---- the trip and its owner -------------------------------------------
-	const slug = await freeSlug(tx, args.name);
 	const tripId = newId();
+	// A new address: the copy's name and its own random tail (`src/lib/trip-slug.ts`).
+	const { slug, slugTail } = await freshTripSlug(
+		tx,
+		slugBaseFromName(args.name, tripId),
+	);
 	await tx.execute(sql`
-		insert into trips (id, slug, name, default_tz, settings, created_by)
-		values (${tripId}, ${slug}, ${args.name}, ${src.defaultTz}, ${JSON.stringify(src.settings ?? {})}::jsonb, ${userId})`);
+		insert into trips (id, slug, slug_tail, name, default_tz, settings, created_by)
+		values (${tripId}, ${slug}, ${slugTail}, ${args.name}, ${src.defaultTz}, ${JSON.stringify(src.settings ?? {})}::jsonb, ${userId})`);
 	const ownerId = newId();
 	await tx.execute(sql`
 		insert into trip_members (id, trip_id, user_id, status, role, color, joined_at)

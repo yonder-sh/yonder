@@ -18,6 +18,7 @@ import { loginViaApi } from "./_helpers/auth";
 import { shotPath } from "./_helpers/env";
 import { cloneFixtureTrip } from "./_helpers/fixture";
 import { collectConsole, expectLive } from "./_helpers/page";
+import { openLink } from "./_helpers/link";
 
 test.describe.configure({ mode: "default" });
 
@@ -254,7 +255,7 @@ test("FB-05: a view-link guest gets no 'Open in Places' link", async ({ browser 
 	await ownerCtx.close();
 	const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
 	const page = await ctx.newPage();
-	await page.goto(`/join#t=${c.shareTokens.viewer}`);
+	await openLink(page, c.slug, "viewer");
 	await expect(page.getByTestId("workspace")).toBeVisible({ timeout: 30_000 });
 	const ideas = page.getByTestId(TESTID.ideasBin).first();
 	await expect(ideas).toBeVisible();

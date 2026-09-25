@@ -51,8 +51,11 @@ import { attachments, expenses, tripMembers, user } from "@/db/schema";
 import { resolveProposal } from "@/functions/proposals.functions";
 import type { AuthUser } from "@/server/auth.server";
 import { errorCode } from "@/server/authz/errors";
-import { redeemShareToken } from "@/server/authz/share-links.server";
-import { cloneDemoTrip, type FixtureClone } from "@/server/fixture.server";
+import {
+	cloneDemoTrip,
+	type FixtureClone,
+	joinTestLink,
+} from "@/server/fixture.server";
 import { closeQueues } from "@/server/live/jobs.server";
 import { closeRedis, redis, redisPrefix } from "@/server/live/redis.server";
 import { quotaBytes, usedBytes } from "@/server/quota.server";
@@ -155,8 +158,8 @@ async function freshTrip(): Promise<FixtureClone> {
 		role: "suggester",
 		color: 6,
 	});
-	await redeemShareToken(c.shareTokens.viewer, U.guestViewer.id);
-	await redeemShareToken(c.shareTokens.editor, U.guestEditor.id);
+	await joinTestLink(getDb(), c, U.guestViewer.id, "viewer");
+	await joinTestLink(getDb(), c, U.guestEditor.id, "editor");
 	return c;
 }
 
@@ -752,7 +755,7 @@ describe("storage quota (ADDENDUM §12: the uploader pays)", () => {
 			role: "editor",
 			color: 4,
 		});
-		await redeemShareToken(a.shareTokens.editor, U.guestEditor.id);
+		await joinTestLink(getDb(), a, U.guestEditor.id, "editor");
 		const photo = await jpeg();
 		const pdf = makePdf(["Guide"]);
 		expect(await usedBytes(getDb(), owner.id)).toBe(0);
@@ -852,7 +855,7 @@ describe("storage quota (ADDENDUM §12: the uploader pays)", () => {
 		sessions.byId.set(owner.id, owner);
 		const a = await cloneDemoTrip(getDb(), owner.id);
 		trips.push(a.tripId);
-		await redeemShareToken(a.shareTokens.editor, U.guestEditor.id);
+		await joinTestLink(getDb(), a, U.guestEditor.id, "editor");
 		expect(await quotaBytes(getDb(), owner.id)).toBe(5 * 1024 * MiB);
 		const photo = await jpeg();
 		await upload(

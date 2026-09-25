@@ -1,7 +1,9 @@
 /**
  * Each spec clones its own trip (SPEC §18.5): `POST /api/test/fixture` makes a
- * fresh copy of the demo trip owned by the caller, under a random slug, with
- * fresh share tokens. Never use the seeded `demo` trip directly.
+ * fresh copy of the demo trip owned by the caller at a fresh address
+ * (`demo-<tail>`), link sharing off: guests come in through the address
+ * with `openLink` / `setTestLink` (`./link.ts`). Never use the seeded `demo`
+ * trip directly.
  */
 import type { APIRequestContext } from "@playwright/test";
 import { APP_URL, assertNotMainStack } from "./env";
@@ -9,7 +11,6 @@ import { APP_URL, assertNotMainStack } from "./env";
 export type FixtureClone = {
 	tripId: string;
 	slug: string;
-	shareTokens: { editor: string; viewer: string };
 	ids: {
 		items: Record<string, string>;
 		days: Record<string, string>;

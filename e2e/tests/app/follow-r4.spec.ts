@@ -42,6 +42,7 @@ import { loginViaApi } from "./_helpers/auth";
 import { shotPath, storageStateOf } from "./_helpers/env";
 import { type FixtureClone, cloneFixtureTrip } from "./_helpers/fixture";
 import { expectLive } from "./_helpers/page";
+import { openLink } from "./_helpers/link";
 
 test.describe.configure({ mode: "serial" });
 
@@ -235,7 +236,7 @@ test("FB-22: the map camera follows at other window sizes; my own move pauses it
 	const phone = await browser.newContext({ ...devices["Pixel 7"] });
 	await loginViaApi(phone.request, `pia-${randomBytes(3).toString("hex")}@example.com`, { first: "Pia", last: "Phone" });
 	const pp = await phone.newPage();
-	await pp.goto(`/join#t=${trip.shareTokens.editor}`);
+	await openLink(pp, trip.slug, "editor");
 	await expect(pp).toHaveURL(new RegExp(`/t/${trip.slug}`), { timeout: 20_000 });
 	await expectLive(pp);
 	await mapUp(pp);
@@ -532,7 +533,7 @@ test("privacy: a guest follower never gets money, private rows, their drags, men
 	const gctx = await browser.newContext({ ...devices["Pixel 7"] });
 	await loginViaApi(gctx.request, `guest-${randomBytes(3).toString("hex")}@example.com`, { first: "Gina", last: "Guest" });
 	const g = await gctx.newPage();
-	await g.goto(`/join#t=${trip.shareTokens.viewer}`);
+	await openLink(g, trip.slug, "viewer");
 	await expect(g).toHaveURL(new RegExp(`/t/${trip.slug}`), { timeout: 20_000 });
 	await expectLive(g);
 	await g.waitForFunction(() => !!(window as { __yonderCursors?: unknown }).__yonderCursors);

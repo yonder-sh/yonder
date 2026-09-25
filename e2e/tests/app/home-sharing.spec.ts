@@ -17,6 +17,7 @@ import {
 	expectLive,
 	expectNoHorizontalOverflow,
 } from "./_helpers/page";
+import { setTestLink } from "./_helpers/link";
 
 // `request` (the fixture clone) runs as the owner.
 test.use({ storageState: storageStateOf("dev") });
@@ -47,6 +48,8 @@ test("the owner invites, changes a role, and sees people, links and guests", asy
 }, info) => {
 	const mobile = info.project.name === "mobile";
 	const c = await cloneFixtureTrip(request);
+	// Link sharing on ("Can view"), as a trip that has been shared.
+	await setTestLink(request, c.slug, "viewer");
 	const ctx = await browser.newContext({
 		storageState: storageStateOf("dev"),
 		...(mobile
@@ -177,15 +180,17 @@ test("FB-13: one link per trip; its role changes everyone who joined with it, an
 	await openShare(page, false);
 	const dialog = page.getByTestId(TESTID.shareDialog);
 	const row = dialog.getByTestId(TESTID.shareLinkRow);
-	// A fresh link, "Can view" (the fixture's clones carry two old links).
-	await row.getByTestId(TESTID.shareLinkReset).click();
-	await dialog.getByTestId(HOME_TESTID.resetConfirm).click();
+	// Link sharing starts off; on, "Can view".
+	await expect(row).toHaveAttribute("data-enabled", "false");
+	await row.getByTestId(TESTID.shareLinkSwitch).click();
+	await expect(row).toHaveAttribute("data-enabled", "true");
 	await row.getByTestId(HOME_TESTID.linkRole).click();
 	await page.getByRole("option", { name: "Can view" }).click();
 	await expect(row).toHaveAttribute("data-role", "viewer");
 	await expect(row).toContainText("They can see the plan.");
+	// The link is the trip's own address.
 	const url = await row.getByTestId(TESTID.shareLinkUrl).inputValue();
-	expect(url).toMatch(/\/join#t=[A-Za-z0-9_-]{43}$/);
+	expect(new URL(url).pathname).toBe(`/t/${c.slug}`);
 	await page.screenshot({
 		path: shotPath("home/share-link-desktop.png"),
 		animations: "disabled",

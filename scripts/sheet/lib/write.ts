@@ -4,7 +4,7 @@
  * leaves no partial trip) and the QA seed can add its fixtures in the same one.
  */
 import { randomBytes } from "node:crypto";
-import { and, eq, isNull } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import type { Tx } from "@/db/db.server";
 import {
 	attachments,
@@ -68,26 +68,44 @@ export async function findOrCreateUser(
 }
 
 /**
- * Without `replace`, refuses when a live trip already has the slug. With it,
- * hard-deletes that trip (everything cascades) and returns its id so the
- * caller can delete its S3 prefix after the commit.
+ * The live trip an import at `slug` would replace: the one at exactly that
+ * address (a seed's fixed `asia-2027`), else the one whose readable part it
+ * is (`asia-2027-k7m2qxw9`: imports get a random tail, `src/lib/trip-slug.ts`)
+ * and that `ownerUserId` made. Several of those refuse: a duplicate named
+ * like the original must never be the one deleted.
+ *
+ * Without `replace`, refuses when there is one. With it, hard-deletes that
+ * trip (everything cascades) and returns its id and address so the caller
+ * can keep the address and delete its S3 prefix after the commit.
  */
 export async function clearSlug(
 	tx: Tx,
 	slug: string,
 	replace: boolean,
-): Promise<string | null> {
-	const [existing] = await tx
-		.select({ id: trips.id })
-		.from(trips)
-		.where(and(eq(trips.slug, slug), isNull(trips.deletedAt)));
+	ownerUserId?: string | null,
+): Promise<{ id: string; slug: string; slugTail: string | null } | null> {
+	const found = (
+		await tx.execute(sql`
+			select id::text as id, slug, slug_tail as "slugTail" from trips
+			 where deleted_at is null
+			   and (slug = ${slug}
+			        or (slug_tail is not null and slug = ${slug} || '-' || slug_tail
+			            and ${ownerUserId ?? null}::text is not null and created_by = ${ownerUserId ?? null}))
+			 order by (slug = ${slug}) desc`)
+	).rows as { id: string; slug: string; slugTail: string | null }[];
+	const exact = found.find((t) => t.slug === slug);
+	if (!exact && found.length > 1)
+		throw new ImportRefused(
+			`${found.length} trips have the address /t/${slug}-…: ${found.map((t) => t.slug).join(", ")}; pass the whole address with --slug`,
+		);
+	const existing = exact ?? found[0];
 	if (!existing) return null;
 	if (!replace)
 		throw new ImportRefused(
-			`a trip with the slug "${slug}" already exists (${existing.id}); run again with --replace to delete and re-import it`,
+			`a trip at /t/${existing.slug} already exists (${existing.id}); run again with --replace to delete and re-import it`,
 		);
 	await hardDeleteTrip(tx, existing.id);
-	return existing.id;
+	return existing;
 }
 
 /**
@@ -163,6 +181,7 @@ export async function writePlan(
 	await tx.insert(trips).values({
 		id: tripId,
 		slug: plan.trip.slug,
+		slugTail: plan.trip.slugTail ?? null,
 		name: plan.trip.name,
 		startDate: plan.trip.startDate,
 		endDate: plan.trip.endDate,

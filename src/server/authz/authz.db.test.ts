@@ -1,7 +1,8 @@
 /**
  * The authz and account SQL against real Postgres: access resolution
  * (memberships, grants, disabled/expired/revoked links, deleted trips),
- * share-link redemption, guest → account migration and invite claiming.
+ * opening a trip through its address (the link), guest → account migration
+ * and invite claiming.
  * Uses its own throwaway database (created, migrated and dropped here).
  */
 import { randomBytes, randomUUID } from "node:crypto";
@@ -15,12 +16,12 @@ import {
 } from "@/db/migrate.server";
 import { shareGrants, shareLinks, tripMembers, trips, user } from "@/db/schema";
 import { seedDemoSkeleton } from "@/db/seed.server";
-import { newShareToken, shareTokenColumns } from "@/db/share-token.server";
 import {
 	claimInvites,
 	migrateGuestToUser,
 } from "@/server/auth/accounts.server";
-import { redeemShareToken } from "./share-links.server";
+import { pinTestLink } from "@/server/fixture.server";
+import { openTripLink, tripLinkIsOpen } from "./share-links.server";
 import { loadTripAccess } from "./trip-access.server";
 
 // .env is loaded by vitest.config.ts (variables already set win).
@@ -77,13 +78,19 @@ async function newLink(
 	role: "viewer" | "editor",
 	extra: Partial<typeof shareLinks.$inferInsert> = {},
 ) {
-	const token = newShareToken();
 	const [row] = await db()
 		.insert(shareLinks)
-		.values({ tripId, role, ...shareTokenColumns(token), ...extra })
+		.values({ tripId, role, ...extra })
 		.returning({ id: shareLinks.id });
 	if (!row) throw new Error("no link");
-	return { token, id: row.id };
+	return { id: row.id };
+}
+
+/** A grant row as it stands (a member who also holds one: old data, a guest promoted). */
+async function grantRow(tripId: string, linkId: string, userId: string) {
+	await db()
+		.insert(shareGrants)
+		.values({ tripId, shareLinkId: linkId, userId, color: 3 });
 }
 
 describe("loadTripAccess", () => {
@@ -111,7 +118,7 @@ describe("loadTripAccess", () => {
 			color: 1,
 		});
 		const link = await newLink(t.tripId, "editor");
-		await redeemShareToken(link.token, kai);
+		await grantRow(t.tripId, link.id, kai);
 		await expect(loadTripAccess(t.tripId, kai)).resolves.toMatchObject({
 			role: "editor",
 			isGuest: false,
@@ -142,13 +149,14 @@ describe("loadTripAccess", () => {
 	});
 });
 
-describe("redeemShareToken", () => {
-	it("grants the link's role to a guest, with a stable colour", async () => {
+describe("openTripLink: the trip's address is its link", () => {
+	it("gives a non-member who opens it the link's role, with a stable colour", async () => {
 		const t = await newTrip();
 		const g = await newUser({ anonymous: true });
 		const link = await newLink(t.tripId, "viewer");
 
-		const first = await redeemShareToken(link.token, g);
+		expect(await tripLinkIsOpen(t.tripSlug)).toBe(true);
+		const first = await openTripLink(t.tripSlug, g);
 		expect(first).toMatchObject({
 			tripId: t.tripId,
 			slug: t.tripSlug,
@@ -162,7 +170,7 @@ describe("redeemShareToken", () => {
 			color: 1,
 		});
 
-		const again = await redeemShareToken(link.token, g);
+		const again = await openTripLink(t.tripSlug, g);
 		expect(again?.color).toBe(1);
 		const [row] = await db()
 			.select()
@@ -172,52 +180,66 @@ describe("redeemShareToken", () => {
 		expect(row?.lastUsedAt).toBeInstanceOf(Date);
 
 		const g2 = await newUser({ anonymous: true });
-		expect((await redeemShareToken(link.token, g2))?.color).toBe(2);
-		// A member keeps their member colour on a grant.
-		const owned = await redeemShareToken(link.token, t.userId);
-		expect(owned?.color).toBe(0);
-		// …and is never turned into a second member row (QA LINK-08).
+		expect((await openTripLink(t.tripSlug, g2))?.color).toBe(2);
+	});
+
+	it("members open it as members: no grant, no second member row (SHARE-04, QA LINK-08)", async () => {
+		const t = await newTrip();
+		await newLink(t.tripId, "editor");
+		expect(await openTripLink(t.tripSlug, t.userId)).toBeNull();
+		const grants = await db()
+			.select()
+			.from(shareGrants)
+			.where(eq(shareGrants.tripId, t.tripId));
+		expect(grants).toHaveLength(0);
 		const members = await db()
 			.select()
 			.from(tripMembers)
 			.where(eq(tripMembers.tripId, t.tripId));
 		expect(members).toHaveLength(1);
+		await expect(loadTripAccess(t.tripId, t.userId)).resolves.toMatchObject({
+			role: "owner",
+		});
 	});
 
-	it("rejects unknown, malformed, disabled, expired and revoked links, and deleted trips", async () => {
-		const t = await newTrip();
+	it("opens nothing for an unknown or malformed address, a link that is off, expired or revoked, or a deleted trip", async () => {
 		const g = await newUser({ anonymous: true });
-		expect(await redeemShareToken(newShareToken(), g)).toBeNull();
-		expect(await redeemShareToken("abc", g)).toBeNull();
+		expect(await openTripLink("no-such-trip-k7m2qxw9", g)).toBeNull();
+		expect(await openTripLink("../etc", g)).toBeNull();
+		expect(await openTripLink("", g)).toBeNull();
 
-		const disabled = await newLink(t.tripId, "viewer", { enabled: false });
-		expect(await redeemShareToken(disabled.token, g)).toBeNull();
+		const off = await newTrip();
+		expect(await openTripLink(off.tripSlug, g)).toBeNull(); // never turned on
+		await newLink(off.tripId, "viewer", { enabled: false });
+		expect(await tripLinkIsOpen(off.tripSlug)).toBe(false);
+		expect(await openTripLink(off.tripSlug, g)).toBeNull();
 
-		const t2 = await newTrip();
-		const expired = await newLink(t2.tripId, "viewer", {
+		const expired = await newTrip();
+		await newLink(expired.tripId, "viewer", {
 			expiresAt: new Date(Date.now() - 1000),
 		});
-		expect(await redeemShareToken(expired.token, g)).toBeNull();
+		expect(await openTripLink(expired.tripSlug, g)).toBeNull();
 
-		const revoked = await newLink(t2.tripId, "editor", {
-			revokedAt: new Date(),
-		});
-		expect(await redeemShareToken(revoked.token, g)).toBeNull();
+		const revoked = await newTrip();
+		await newLink(revoked.tripId, "editor", { revokedAt: new Date() });
+		expect(await openTripLink(revoked.tripSlug, g)).toBeNull();
 
-		const t3 = await newTrip();
-		const live = await newLink(t3.tripId, "viewer");
+		const deleted = await newTrip();
+		await newLink(deleted.tripId, "viewer");
 		await db()
 			.update(trips)
 			.set({ deletedAt: new Date() })
-			.where(eq(trips.id, t3.tripId));
-		expect(await redeemShareToken(live.token, g)).toBeNull();
+			.where(eq(trips.id, deleted.tripId));
+		expect(await tripLinkIsOpen(deleted.tripSlug)).toBe(false);
+		expect(await openTripLink(deleted.tripSlug, g)).toBeNull();
+		expect(await loadTripAccess(deleted.tripId, g)).toBeNull();
 	});
 
-	it("turning a link off or resetting it cuts existing guests off at once (QA LINK-04/05)", async () => {
+	it("turning the link off or resetting it cuts existing guests off at once (QA LINK-04/05)", async () => {
 		const t = await newTrip();
 		const g = await newUser({ anonymous: true });
 		const link = await newLink(t.tripId, "editor");
-		await redeemShareToken(link.token, g);
+		await openTripLink(t.tripSlug, g);
 		await expect(loadTripAccess(t.tripId, g)).resolves.toMatchObject({
 			role: "editor",
 		});
@@ -233,16 +255,32 @@ describe("redeemShareToken", () => {
 			.set({ enabled: true, revokedAt: new Date() })
 			.where(eq(shareLinks.id, link.id));
 		await expect(loadTripAccess(t.tripId, g)).resolves.toBeNull();
-		expect(await redeemShareToken(link.token, g)).toBeNull();
+		expect(await openTripLink(t.tripSlug, g)).toBeNull();
 	});
 
 	it("a grant only reaches its own trip (QA LINK-07)", async () => {
 		const a = await newTrip();
 		const b = await newTrip();
 		const g = await newUser({ anonymous: true });
-		const link = await newLink(a.tripId, "editor");
-		await redeemShareToken(link.token, g);
+		await newLink(a.tripId, "editor");
+		await openTripLink(a.tripSlug, g);
 		await expect(loadTripAccess(b.tripId, g)).resolves.toBeNull();
+	});
+
+	it("test fixtures: `pinTestLink` lets each guest in with the role set when they opened it", async () => {
+		const t = await newTrip();
+		const v = await newUser({ anonymous: true });
+		const e = await newUser({ anonymous: true });
+		await pinTestLink(db(), t.tripId, "viewer");
+		await openTripLink(t.tripSlug, v);
+		await pinTestLink(db(), t.tripId, "editor");
+		await openTripLink(t.tripSlug, e);
+		expect((await loadTripAccess(t.tripId, v))?.role).toBe("viewer");
+		expect((await loadTripAccess(t.tripId, e))?.role).toBe("editor");
+		await pinTestLink(db(), t.tripId, null);
+		expect(await loadTripAccess(t.tripId, v)).toBeNull();
+		expect(await loadTripAccess(t.tripId, e)).toBeNull();
+		expect(await tripLinkIsOpen(t.tripSlug)).toBe(false);
 	});
 });
 
@@ -253,9 +291,9 @@ describe("migrateGuestToUser", () => {
 		const account = await newUser();
 		const viewer = await newLink(t.tripId, "viewer");
 		const editor = await newLink(t.tripId, "editor");
-		await redeemShareToken(viewer.token, anon);
-		await redeemShareToken(editor.token, anon);
-		await redeemShareToken(viewer.token, account); // duplicate after the move
+		await grantRow(t.tripId, viewer.id, anon);
+		await grantRow(t.tripId, editor.id, anon);
+		await grantRow(t.tripId, viewer.id, account); // duplicate after the move
 		await db()
 			.update(trips)
 			.set({ createdBy: anon })

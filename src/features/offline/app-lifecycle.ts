@@ -1,7 +1,7 @@
 /**
  * WP-Home's app-wide mount point (SPEC §16; CONTRACTS §4.9). The root layout
  * (`src/routes/__root.tsx`, F) calls `useHomeLifecycle()` once on every page
- * — /login, /welcome, /join and the workspace included — so the service
+ * — /login, /welcome and the workspace included — so the service
  * worker registers everywhere but the public landing page (`/`), the install
  * prompt is captured early, and WP-Home's sign-out purge always runs.
  * WP-Home owns this file.

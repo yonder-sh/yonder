@@ -1,7 +1,7 @@
 /**
  * QA security verifier (I2 round 2): re-check of "a guest whose link is
- * turned off or reset lands on the sign-in page" with a RESET (new token) on
- * a clone, and that the old token is dead while the new one works.
+ * turned off or reset lands on the sign-in page" with a RESET (a new address
+ * tail) on a clone, and that the old address is dead while the new one works.
  */
 import { writeFileSync } from "node:fs";
 import path from "node:path";
@@ -9,11 +9,12 @@ import { expect, test } from "@playwright/test";
 import { loginViaApi } from "./_helpers/auth";
 import { cloneFixtureTrip } from "./_helpers/fixture";
 import { call, MOD } from "./qa-security-helpers";
+import { openLink } from "./_helpers/link";
 
 test.skip(!process.env.QA_SEC_DIR, "QA security verifier probes: set QA_SEC_DIR (see qa-security-helpers.ts)");
 const DIR = process.env.QA_SEC_DIR ?? "/tmp";
 
-test("reset link: open guest, old token, new token", async ({ browser }) => {
+test("reset link: open guest, old address, new address", async ({ browser }) => {
 	test.setTimeout(200_000);
 	const out: Record<string, unknown> = {};
 	const octx = await browser.newContext();
@@ -23,7 +24,7 @@ test("reset link: open guest, old token, new token", async ({ browser }) => {
 	await op.goto("/login");
 	const g = await browser.newContext();
 	const gp = await g.newPage();
-	await gp.goto(`/join#t=${c.shareTokens.editor}`);
+	await openLink(gp, c.slug, "editor");
 	await expect(gp.getByTestId("workspace")).toBeVisible({ timeout: 30_000 });
 	const r = await call(op, MOD.sharing, "resetShareLink", { tripId: c.tripId, role: "editor" });
 	out.reset = r.ok ? "OK" : r.err;
@@ -37,18 +38,18 @@ test("reset link: open guest, old token, new token", async ({ browser }) => {
 	await gp.screenshot({ path: path.join(DIR, "r2-reset-reload.png") });
 	const g2 = await browser.newContext();
 	const p2 = await g2.newPage();
-	await p2.goto(`/join#t=${c.shareTokens.editor}`);
+	await p2.goto(`/t/${c.slug}`);
 	await p2.waitForTimeout(5000);
-	out.oldToken = { url: p2.url(), text: (await p2.locator("body").innerText()).slice(0, 100).replace(/\s+/g, " ") };
+	out.oldAddress = { url: p2.url(), text: (await p2.locator("body").innerText()).slice(0, 100).replace(/\s+/g, " ") };
 	await p2.goto(newUrl.replace(/^https?:\/\/[^/]+/, ""));
 	await p2.waitForTimeout(6000);
-	out.newTokenSameTab = { url: p2.url().replace(/#t=.*/, "#t=<new>"), text: (await p2.locator("body").innerText()).slice(0, 100).replace(/\s+/g, " ") };
+	out.newAddressSameTab = { url: p2.url(), text: (await p2.locator("body").innerText()).slice(0, 100).replace(/\s+/g, " ") };
 	await p2.screenshot({ path: path.join(DIR, "r2-reset-newtoken-same-tab.png") });
 	const g3 = await browser.newContext();
 	const p3 = await g3.newPage();
 	await p3.goto(newUrl.replace(/^https?:\/\/[^/]+/, ""));
 	await p3.waitForTimeout(6000);
-	out.newTokenFreshTab = { url: p3.url() };
+	out.newAddressFreshTab = { url: p3.url() };
 	await g3.close();
 	writeFileSync(path.join(DIR, "r2-reset.json"), JSON.stringify(out, null, 1));
 	console.log(JSON.stringify(out, null, 1));

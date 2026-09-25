@@ -1,8 +1,9 @@
 /**
  * WP-Home sharing and membership (SPEC §13.6). Signatures are final.
  *
- * The trip link (FB-13: ONE link per trip with a role, on/off, reset; the
- * cores are `src/server/sharing.server.ts`): `getSharing`, `setShareLink`,
+ * The trip link (FB-13 and the 2026-09-25 redesign: the trip's address IS
+ * the link, like Google Drive, with a role, on/off and reset; the cores are
+ * `src/server/sharing.server.ts`): `getSharing`, `setShareLink`,
  * `resetShareLink`, `extendShareLink`, `removeGuest`; and `addPlaceholder`
  * (ADDENDUM §8; every package's pickers need it). The membership functions
  * (invite, placeholders, roles, remove, promote, leave, claim) are WP-Home's,
@@ -13,7 +14,8 @@
  * email…" / "Same person as…") or by "This is me" (FB-14: there are no
  * per-person join links).
  * Authorization comes from MUTATION_POLICY (`requireDirect`).
- * `redeemShareLink` and `renameGuest` live in `src/lib/auth/share.functions.ts`.
+ * `openTripByLink`, `tripLinkOpen` and `renameGuest` live in
+ * `src/lib/auth/share.functions.ts`.
  * Keys: sharing and graph, plus `out.access(userIds)` for revocations.
  */
 import { createServerFn } from "@tanstack/react-start";
@@ -49,11 +51,11 @@ import { requireDirect } from "@/server/proposals/proposable.server";
 import { actorOf } from "@/server/proposals/types";
 import {
 	extendLink,
-	linkUrl,
 	loadSharing,
 	removeGuestGrants,
 	resetLink,
 	setLinkEnabled,
+	tripUrl,
 } from "@/server/sharing.server";
 import { mutationMeta, withTripTx } from "@/server/tx.server";
 import { nameMatchesPerson } from "./claim-match";
@@ -68,6 +70,12 @@ import {
 } from "./server/people.server";
 
 export type SharingDto = {
+	/**
+	 * The trip's address, `https://yonder.sh/t/<slug>`: the one link for
+	 * everyone. Members open it as members; anyone else only while the link
+	 * is on.
+	 */
+	url: string;
 	members: {
 		id: string;
 		userId: string | null;
@@ -87,9 +95,6 @@ export type SharingDto = {
 		/** Everyone who came in through the link has this role. */
 		role: ShareRole;
 		enabled: boolean;
-		/** Null when the sealed copy can't be opened ("Reset link"). */
-		url: string | null;
-		tokenPrefix: string;
 		lastUsedAt: string | null;
 		useCount: number;
 		/** When the link stops working (SECURITY §2); null = never. */
@@ -156,6 +161,7 @@ export const getSharing = createServerFn({ method: "GET" })
 		const iso = (d: Date | string | null) =>
 			d ? new Date(d).toISOString() : null;
 		return {
+			url: tripUrl(rows.slug),
 			members: rows.members.map((m) => ({
 				id: m.id,
 				userId: m.userId,
@@ -169,8 +175,6 @@ export const getSharing = createServerFn({ method: "GET" })
 				? {
 						role: l.role,
 						enabled: l.enabled,
-						url: linkUrl(l.tokenSealed),
-						tokenPrefix: l.tokenPrefix,
 						lastUsedAt: iso(l.lastUsedAt),
 						useCount: l.useCount,
 						expiresAt: iso(l.expiresAt),
@@ -463,12 +467,13 @@ export const removeMember = createServerFn({ method: "POST" })
 	});
 
 /**
- * The trip link's switch and role (FB-13, like Google Docs). `enabled: true`
- * creates the link if there is none (with `role`, else "Can view"); `role`
- * alone changes it for everyone who came in through it (their open sockets
- * re-check; "Can view" withdraws their open suggestions). OFF revokes: its
- * guests' grants are deleted and their sockets closed at once; turning it on
- * again restores nobody (they need the link again).
+ * The trip link's switch and role (FB-13, like Google Drive). `enabled: true`
+ * creates the link if there is none (with `role`, else "Can view") and gives
+ * a tail-less (seeded) address its random tail; `role` alone changes it for
+ * everyone who came in through it (their open sockets re-check; "Can view"
+ * withdraws their open suggestions). OFF revokes: its guests' grants are
+ * deleted and their sockets closed at once; turning it on again restores
+ * nobody (they open the address again).
  */
 export const setShareLink = createServerFn({ method: "POST" })
 	.middleware([withAccount])
@@ -485,7 +490,7 @@ export const setShareLink = createServerFn({ method: "POST" })
 			data.tripId,
 			context.user,
 		);
-		// Turning it on may create the link (a new token); the rest never does.
+		// Turning it on may create the link (and a new address); the rest never does.
 		if (data.enabled === true)
 			await rateLimitPer(
 				`shareLink:${context.user.id}`,
@@ -516,37 +521,41 @@ export const setShareLink = createServerFn({ method: "POST" })
 	});
 
 /**
- * "Reset link": the old address stops working and its guests lose access; a
- * new link with the same role (or `role`) replaces it.
+ * "Reset link": the trip gets a new address tail, so the old address stops
+ * working for everyone, and its link guests lose access at once; a new link
+ * with the same role (or `role`), on or off as before, replaces it.
  */
 export const resetShareLink = createServerFn({ method: "POST" })
 	.middleware([withAccount])
 	.validator(TripId.extend({ role: Role.optional() }).strict())
-	.handler(async ({ data, context }): Promise<{ url: string }> => {
-		const access = await requireDirect(
-			"resetShareLink",
-			data.tripId,
-			context.user,
-		);
-		await rateLimitPer(
-			`shareLink:${context.user.id}`,
-			SHARE_LINK_WRITES_PER_HOUR,
-			3600,
-		);
-		return withTripTx(
-			data.tripId,
-			async (tx, out) => ({
-				url: await resetLink(
-					tx,
-					out,
-					data.tripId,
-					data.role ?? null,
-					context.user.id,
-				),
-			}),
-			mutationMeta(access, context.user),
-		);
-	});
+	.handler(
+		async ({ data, context }): Promise<{ url: string; slug: string }> => {
+			const access = await requireDirect(
+				"resetShareLink",
+				data.tripId,
+				context.user,
+			);
+			await rateLimitPer(
+				`shareLink:${context.user.id}`,
+				SHARE_LINK_WRITES_PER_HOUR,
+				3600,
+			);
+			return withTripTx(
+				data.tripId,
+				async (tx, out) => {
+					const slug = await resetLink(
+						tx,
+						out,
+						data.tripId,
+						data.role ?? null,
+						context.user.id,
+					);
+					return { url: tripUrl(slug), slug };
+				},
+				mutationMeta(access, context.user),
+			);
+		},
+	);
 
 /** "Extend": the link works for another 30 (edit/suggest) or 90 (view) days. */
 export const extendShareLink = createServerFn({ method: "POST" })

@@ -15,6 +15,7 @@ import { TESTID } from "../../../src/lib/testids";
 import { shotPath, storageStateOf } from "./_helpers/env";
 import { cloneFixtureTrip } from "./_helpers/fixture";
 import { collectConsole, expectLive } from "./_helpers/page";
+import { openLink } from "./_helpers/link";
 
 test.use({ storageState: storageStateOf("dev") });
 
@@ -117,7 +118,7 @@ test("a view-link guest lands on the Overview", async ({ browser, page }, info) 
 	// Signed out: `browser.newContext` would otherwise carry the spec's dev login.
 	const guestCtx = await browser.newContext({ viewport: { width: 1440, height: 900 }, storageState: { cookies: [], origins: [] } });
 	const guest = await guestCtx.newPage();
-	await guest.goto(`/join#t=${c.shareTokens.viewer}`);
+	await openLink(guest, c.slug, "viewer");
 	await expect(guest).toHaveURL(new RegExp(`/t/${c.slug}(\\?|$)`), { timeout: 20_000 });
 	await expect(guest.getByTestId(O.page)).toBeVisible();
 	await expect(activeTab(guest)).toHaveAttribute("data-tab", "overview");

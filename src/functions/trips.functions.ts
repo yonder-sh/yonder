@@ -10,11 +10,12 @@
  * which TanStack Start strips from the client bundle (SPEC §0 rule 9).
  */
 import { createServerFn } from "@tanstack/react-start";
-import { and, eq, isNull, like, or, sql } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db/db.server";
 import { tripDays, tripMembers, trips } from "@/db/schema";
-import { slugify, uniqueSlug } from "@/lib/engine/tree";
+import { newId } from "@/lib/ids";
+import { slugBaseFromName } from "@/lib/trip-slug";
 import { logActivity } from "@/server/activity.server";
 import {
 	requireTripCapability,
@@ -44,31 +45,10 @@ import {
 	proposable,
 	requireDirect,
 } from "@/server/proposals/proposable.server";
+import { freshTripSlug } from "@/server/trip-slug.server";
 import { mutationMeta, withTripTx } from "@/server/tx.server";
 
 export type { PreviewTripDatesResult } from "@/server/cores/trips.server";
-
-/** A trip slug from a name, unique among live trips. */
-async function freeTripSlug(
-	name: string,
-	exceptTripId?: string,
-): Promise<string> {
-	const base = slugify(name, crypto.randomUUID()).slice(0, 90);
-	const taken = await db
-		.select({ slug: trips.slug })
-		.from(trips)
-		.where(
-			and(
-				isNull(trips.deletedAt),
-				or(eq(trips.slug, base), like(trips.slug, `${base}-%`)),
-				exceptTripId ? sql`${trips.id} <> ${exceptTripId}` : undefined,
-			),
-		);
-	return uniqueSlug(
-		base,
-		taken.map((t) => t.slug),
-	);
-}
 
 function isUniqueViolation(e: unknown): boolean {
 	return (
@@ -90,8 +70,9 @@ export const CREATE_TRIP_PER_HOUR = 20;
 
 /**
  * A new trip owned by the caller: the trip, the owner member (colour 0), one
- * day per date in the range and a unique slug. Nobody else can be subscribed
- * to a brand-new trip, so nothing is published.
+ * day per date in the range and its address: the name's readable part and
+ * a random tail (`asia-2027-k7m2qxw9`, `src/lib/trip-slug.ts`). Nobody else
+ * can be subscribed to a brand-new trip, so nothing is published.
  */
 export const createTrip = createServerFn({ method: "POST" })
 	.middleware([withAccount])
@@ -109,14 +90,16 @@ export const createTrip = createServerFn({ method: "POST" })
 		if (dates.length > MAX_TRIP_DAYS)
 			return fail("VALIDATION", "A trip can be at most a year long.");
 
+		const base = slugBaseFromName(data.name, newId());
 		for (let attempt = 0; attempt < 3; attempt++) {
-			const slug = await freeTripSlug(data.name);
+			const { slug, slugTail } = await freshTripSlug(db, base);
 			try {
 				return await db.transaction(async (tx) => {
 					const [trip] = await tx
 						.insert(trips)
 						.values({
 							slug,
+							slugTail,
 							name: data.name,
 							startDate: dates[0] ?? null,
 							endDate: dates.at(-1) ?? null,
@@ -141,7 +124,7 @@ export const createTrip = createServerFn({ method: "POST" })
 					return { tripId: trip.id, slug: trip.slug };
 				});
 			} catch (e) {
-				// Two trips with the same name created at once: pick the next slug.
+				// The same address taken at once (astronomically rare): a new tail.
 				if (!isUniqueViolation(e) || attempt === 2) throw e;
 			}
 		}
@@ -174,8 +157,10 @@ export const resolveTripSlug = createServerFn({ method: "GET" })
 // ---------------------------------------------------------------------------
 
 /**
- * Renames the trip, changes its slug (owner only), cover (a live photo or
- * video of this trip) or settings. The example of a direct mutation.
+ * Renames the trip, changes the readable part of its address (owner only:
+ * `slug` is what they type, the tail stays; a tail-less seeded address gets
+ * one), cover (a live photo or video of this trip) or settings. The example
+ * of a direct mutation. Answers the trip's (new) address.
  */
 export const updateTrip = createServerFn({ method: "POST" })
 	.middleware([withNamedUser])

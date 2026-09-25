@@ -1,49 +1,47 @@
 /**
- * Share links and guests (SPEC §11.2–§11.4, §13.6; SECURITY §2; owner
- * feedback FB-13). Tokens are stored hashed (`token_hash`) with a sealed copy
- * for the owner (`token_sealed`, opened with BETTER_AUTH_SECRET) —
- * `src/db/share-token.server.ts`.
+ * The trip's link and its guests (SPEC §11.2–§11.4, §13.6; SECURITY §2;
+ * owner feedback FB-13 and the 2026-09-25 redesign), like Google Drive:
+ * the trip's address `/t/<slug>` IS the link. Members open it as members;
+ * while "Anyone with the link" is on, anyone else who opens it gets its role
+ * (Can view / Can rate / Can suggest / Can edit) through a grant
+ * (`openTripLink` in `./authz/share-links.server.ts`). There are no tokens:
+ * the address's random tail (`src/lib/trip-slug.ts`) is what makes it
+ * unguessable, so turning the link on gives a tail-less (seeded) trip one,
+ * and "Reset link" gives the trip a new one.
  *
- * ONE link per trip, like Google Docs: a role (Can view / Can rate / Can
- * suggest / Can edit), on/off and "Reset link". The role lives on the link row and access
- * is resolved from it on every request, so changing it changes every guest
- * who came in through it at once (their sockets re-check; a downgrade to
- * viewer or rater withdraws their open suggestions). The migration
- * `*_single_trip_link` folded older per-role links into one; every write
- * here also retires any other live row of the trip, so the owner never has a
- * link they can't see. (Test fixtures may still seed a second live row.)
+ * The role lives on the link row and access is resolved from it on every
+ * request, so changing it changes every guest who came in through it at once
+ * (their sockets re-check; a downgrade to viewer or rater withdraws their
+ * open suggestions). Every write here also retires any other live row of the
+ * trip, so the owner never has a link they can't see. (Test fixtures may
+ * still hold one live row per role: `pinTestLink`.)
  *
  * Every change that removes access runs `out.access(grant holders)` so collab
  * closes those sockets, withdraws the holders' open proposals, and emits
  * `sharing` + `graph`.
  *
  * Links expire (SECURITY §2): editor, suggester and rater links after 30
- * days, view links after 90; a role change never leaves a link valid for longer than a
- * new link of that role. Turning the link OFF is a revocation, not a pause:
- * its grants are deleted, so turning it back on never restores anyone
- * without the link.
+ * days, view links after 90; a role change never leaves a link valid for
+ * longer than a new link of that role. Turning the link OFF is a revocation,
+ * not a pause: its grants are deleted, so turning it back on never restores
+ * anyone who doesn't open the address again.
  */
 import { sql } from "drizzle-orm";
 import type { Tx } from "@/db/db.server";
 import { shareLinks } from "@/db/schema";
-import {
-	newShareToken,
-	openShareToken,
-	shareTokenColumns,
-} from "@/db/share-token.server";
 import { can, type ShareRole, type TripRole } from "@/lib/auth/roles";
-import { shareLinkUrl } from "@/lib/auth/share-link";
 import { fail } from "./authz/session.server";
 import { getEnv } from "./env.server";
 import type { SqlExec } from "./graph.server";
 import type { TxOutbox } from "./live/outbox.server";
 import { withdrawAuthorProposals } from "./proposals/withdraw.server";
+import { ensureTripTail, giveTripNewTail } from "./trip-slug.server";
 
 /** Days until a new or extended link expires, per role (SECURITY §2). */
 export const LINK_TTL_DAYS: Record<ShareRole, number> = {
 	editor: 30,
 	suggester: 30,
-	// A rate link makes signed-in joiners members (`redeemShareToken`).
+	// A rate link makes signed-in joiners members (`openTripLink`).
 	rater: 30,
 	viewer: 90,
 };
@@ -56,16 +54,9 @@ export function linkExpiry(role: ShareRole, now = new Date()): Date {
 	return new Date(now.getTime() + LINK_TTL_DAYS[role] * 86_400_000);
 }
 
-function secret(): string | undefined {
-	return process.env.BETTER_AUTH_SECRET || undefined;
-}
-
-/** The absolute `/join#t=<token>` URL of a sealed token, or null when it can't be opened. */
-export function linkUrl(tokenSealed: string | null): string | null {
-	const s = secret();
-	if (!tokenSealed || !s) return null;
-	const token = openShareToken(tokenSealed, s);
-	return token ? shareLinkUrl(getEnv().APP_URL, token) : null;
+/** The absolute address of a trip: its share link (`https://yonder.sh/t/<slug>`). */
+export function tripUrl(slug: string, appUrl = getEnv().APP_URL): string {
+	return new URL(`/t/${encodeURIComponent(slug)}`, appUrl).toString();
 }
 
 type LiveLink = {
@@ -141,20 +132,20 @@ async function createLink(
 	tripId: string,
 	role: ShareRole,
 	userId: string,
-): Promise<{ id: string; token: string }> {
-	const token = newShareToken();
+	enabled = true,
+): Promise<{ id: string }> {
 	const [row] = await tx
 		.insert(shareLinks)
 		.values({
 			tripId,
 			role,
+			enabled,
 			createdBy: userId,
 			expiresAt: linkExpiry(role),
-			...shareTokenColumns(token, secret()),
 		})
 		.returning({ id: shareLinks.id });
 	if (!row) throw new Error("createLink: insert returned no row");
-	return { id: row.id, token };
+	return { id: row.id };
 }
 
 /**
@@ -198,11 +189,13 @@ async function applyRole(
 
 /**
  * The trip link's switch and role (FB-13). ON creates the link if there is
- * none (with `role`, else viewer), renews an expired one's expiry, and
- * applies `role` when given. OFF revokes (`role` is ignored): its grants are
+ * none (with `role`, else viewer), renews an expired one's expiry, applies
+ * `role` when given, and gives a tail-less (seeded) trip a tail first: a
+ * readable-only address like `/t/asia-2027` is guessable, so it never opens
+ * the trip to anyone. OFF revokes (`role` is ignored): its grants are
  * deleted and their sockets closed, so turning it on again restores nobody
- * without the link. `enabled: null` changes only the role (NOT_FOUND without
- * a link).
+ * who doesn't open the address again. `enabled: null` changes only the role
+ * (NOT_FOUND without a link).
  */
 export async function setLinkEnabled(
 	tx: Tx,
@@ -213,6 +206,7 @@ export async function setLinkEnabled(
 	userId: string,
 ): Promise<void> {
 	const link = await theLink(tx, out, tripId);
+	if (enabled) await ensureTripTail(tx, tripId);
 	if (!link) {
 		if (enabled === null) return fail("NOT_FOUND", "link");
 		if (enabled)
@@ -254,9 +248,11 @@ export async function extendLink(
 }
 
 /**
- * "Reset link": the old URL stops working and everyone who came in through it
- * is removed; a new link (same role unless `role` is given, switched on)
- * replaces it. Returns the new URL.
+ * "Reset link": the trip gets a new address tail, so the old address stops
+ * working for everyone (members find the trip on their dashboard, and open
+ * tabs follow the new address), and everyone who came in through the link
+ * is removed. A new link row (same role unless `role` is given, on or off as
+ * before) replaces the old one. Returns the new slug.
  */
 export async function resetLink(
 	tx: Tx,
@@ -267,14 +263,19 @@ export async function resetLink(
 ): Promise<string> {
 	const links = await liveLinks(tx, tripId);
 	await retire(tx, out, tripId, links);
-	const { token } = await createLink(
-		tx,
-		tripId,
-		role ?? links[0]?.role ?? DEFAULT_LINK_ROLE,
-		userId,
-	);
+	const slug = await giveTripNewTail(tx, tripId);
+	const was = links[0];
+	if (was || role)
+		await createLink(
+			tx,
+			tripId,
+			role ?? was?.role ?? DEFAULT_LINK_ROLE,
+			userId,
+			was ? was.enabled : true,
+		);
+	out.emit({ entity: "trip" });
 	out.emit({ keys: ["sharing", "graph"] });
-	return shareLinkUrl(getEnv().APP_URL, token);
+	return slug;
 }
 
 /** Removes a guest's grants on this trip (they keep nothing; a member row is untouched). */
@@ -304,12 +305,12 @@ export type SharingRows = {
 		email: string | null;
 		color: number;
 	}[];
+	/** The trip's address: its share link. */
+	slug: string;
 	/** The trip's one link (FB-13), on or off; null when none was ever made. */
 	link: {
 		role: ShareRole;
 		enabled: boolean;
-		tokenSealed: string | null;
-		tokenPrefix: string;
 		lastUsedAt: Date | null;
 		useCount: number;
 		expiresAt: Date | null;
@@ -337,8 +338,11 @@ export async function loadSharing(
 		  from trip_members m left join "user" u on u.id = m.user_id
 		 where m.trip_id = ${tripId} and m.status::text <> 'removed'
 		 order by (m.role = 'owner') desc, m.created_at, m.id`);
+	const trip = await exec.execute(
+		sql`select slug from trips where id = ${tripId}`,
+	);
 	const links = await exec.execute(sql`
-		select role::text as role, enabled, token_sealed as "tokenSealed", token_prefix as "tokenPrefix",
+		select role::text as role, enabled,
 		       last_used_at as "lastUsedAt", use_count as "useCount", expires_at as "expiresAt",
 		       created_at as "createdAt"
 		  from share_links where trip_id = ${tripId} and revoked_at is null
@@ -356,6 +360,7 @@ export async function loadSharing(
 		 order by max(g.last_seen_at) desc`);
 	const link = links.rows[0] as NonNullable<SharingRows["link"]> | undefined;
 	return {
+		slug: String((trip.rows[0] as { slug?: string } | undefined)?.slug ?? ""),
 		members: (members.rows as SharingRows["members"]).map((m) => ({
 			...m,
 			color: Number(m.color),

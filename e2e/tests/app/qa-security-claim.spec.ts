@@ -6,6 +6,7 @@
 import { writeFileSync } from "node:fs";
 import path from "node:path";
 import { expect, test } from "@playwright/test";
+import { setTestLink } from "./_helpers/link";
 import { call, EMAIL, guestPage, MOD, memberPage, T, TOKEN } from "./qa-security-helpers";
 
 // Probes against the isolated QA-security stack (fixed QA-seed ids, own ports): opt-in only.
@@ -57,8 +58,9 @@ test("a viewer-link guest with an account claims a placeholder", async ({ browse
 	out.ownerSees = sharing.ok
 		? (sharing.r as { members: { id: string; name: string; role: string; status: string; email?: string }[] }).members.find((x) => x.id === kenji)
 		: sharing.err;
-	const on = await call(dennis.page, MOD.sharing, "setShareLink", { tripId: T, role: "viewer", enabled: true });
-	out.linkOnAgain = on.ok ? "OK" : on.err;
+	// On again through the test route: the app would give the seeded address a tail.
+	await setTestLink(dennis.page.request, "asia-2027", "viewer");
+	out.linkOnAgain = "OK";
 	await m.page.goto("/t/asia-2027/money");
 	await m.page.waitForTimeout(4000);
 	await m.page.screenshot({ path: path.join(DIR, "claim-mallory-money.png") });

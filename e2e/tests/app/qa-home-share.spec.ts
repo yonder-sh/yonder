@@ -7,6 +7,7 @@ import { type APIRequestContext, type Browser, type Page, expect, test } from "@
 import { loginViaApi } from "./_helpers/auth";
 import { cloneFixtureTrip } from "./_helpers/fixture";
 import { hydrated } from "./_helpers/page";
+import { openLink } from "./_helpers/link";
 
 test.beforeEach(({}, info) => {
 	test.skip(info.project.name === "mobile", "qa-home specs run on the desktop project");
@@ -35,8 +36,21 @@ async function graphOf(page: Page): Promise<Graph> {
 	return page.evaluate(() => JSON.parse(JSON.stringify((window as unknown as { __yonder: { graph: unknown } }).__yonder.graph)));
 }
 
+/** Whether a server-function URL (`/_serverFn/<base64url of {"file":…}>`) calls into `mod`. */
+function callsModule(url: string, mod: string): boolean {
+	const id = /\/_serverFn\/([^/?]+)/.exec(url)?.[1];
+	if (!id) return false;
+	try {
+		return Buffer.from(id, "base64url").toString("utf8").includes(mod);
+	} catch {
+		return false;
+	}
+}
+
 async function callFn(page: Page, mod: string, fn: string, data: unknown) {
-	const resP = page.waitForResponse((r) => r.url().includes("/_serverFn/"), { timeout: 15_000 }).catch(() => null);
+	// Its own response, not the first server call the page makes meanwhile (a
+	// navigation to the dashboard answers 200 too).
+	const resP = page.waitForResponse((r) => callsModule(r.url(), mod), { timeout: 15_000 }).catch(() => null);
 	const out = await page.evaluate(
 		async ({ mod, fn, data }) => {
 			try {
@@ -302,10 +316,10 @@ test("SHARE-06: editors see members read-only and can't manage; nobody can remov
 		expect.soft(r.ok, k).toBe(false);
 		expect.soft(r.status, k).toBe(403);
 	}
-	// SHARE-08 (editor): no emails, no link URLs
+	// SHARE-08 (editor): no emails, and nothing about the link (on/off, use)
 	const js = JSON.stringify(sharing.value);
 	expect.soft(js, "editor getSharing leaks emails").not.toMatch(/@asia2027\.test/);
-	expect.soft(js, "editor getSharing leaks link tokens").not.toMatch(/qa-share-token/);
+	expect.soft((sharing.value as { link?: unknown } | undefined)?.link ?? null, "editor getSharing leaks the link").toBeNull();
 	// owner self-demotion / removal
 	const d = await userPage(browser, "dennis@asia2027.test", "Dennis", "Tester");
 	await openWorkspace(d.page, "asia-2027");
@@ -383,7 +397,7 @@ test("SHARE-08: member list is informative; viewers and guests never receive mem
 	gp.on("response", async (r) => {
 		if (r.url().includes("/_serverFn/") || r.url().includes("/api/")) gb.push(await r.text().catch(() => ""));
 	});
-	await gp.goto("/join#t=qa-share-token-viewer-asia-2027");
+	await openLink(gp, "asia-2027", "viewer");
 	await expect(gp.getByTestId("workspace")).toBeVisible({ timeout: 30_000 });
 	await gp.waitForTimeout(2500);
 	const gl = gb.filter((b) => /@asia2027\.test/.test(b));

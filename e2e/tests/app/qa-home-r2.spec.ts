@@ -5,6 +5,7 @@
 import { type APIRequestContext, type Browser, type Page, expect, test } from "@playwright/test";
 import { loginViaApi } from "./_helpers/auth";
 import { hydrated } from "./_helpers/page";
+import { openLink, setTestLink } from "./_helpers/link";
 
 test.beforeEach(({}, info) => {
 	test.skip(info.project.name === "mobile", "qa-home specs run on the desktop project");
@@ -70,6 +71,8 @@ test("R2 dashboard hero: a one-day trip says '1 day'", async ({ browser }) => {
 
 test("R2 share dialog: role select fits 'Can suggest'; link rows show a created date", async ({ browser }) => {
 	const { ctx, page } = await userPage(browser, "dennis@asia2027.test");
+	// The QA seed shares no link: turn it on (the test route keeps /t/asia-2027).
+	await setTestLink(ctx.request, "asia-2027", "viewer");
 	await page.goto("/t/asia-2027?tab=plan");
 	await expect(page.getByTestId("workspace")).toBeVisible({ timeout: 30_000 });
 	await (await hydrated(page.getByTestId("share-button").first())).click();
@@ -209,7 +212,7 @@ test("R2 placeholder claim: member prompt, guest hint, role never escalates", as
 	// 2) a signed-in guest named Audrey on the EDIT link sees only a hint (clone 2: Audrey is still a placeholder)
 	const c2 = await cloneFixtureTrip(o.page.request);
 	const g = await userPage(browser, `qa-home-r2cg-${uniq()}@asia2027.test`, "Audrey", "Guest");
-	await g.page.goto(`/join#t=${c2.shareTokens.editor}`);
+	await openLink(g.page, c2.slug, "editor");
 	await expect(g.page.getByTestId("workspace")).toBeVisible({ timeout: 30_000 });
 	const hint = g.page.getByTestId("home-claim-prompt");
 	await expect(hint).toBeVisible({ timeout: 15_000 });

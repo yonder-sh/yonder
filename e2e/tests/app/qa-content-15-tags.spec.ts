@@ -6,6 +6,7 @@ import { type Browser, expect, type Page, test } from "@playwright/test";
 import { PLAN_TESTID } from "../../../src/features/plan/testids";
 import { TESTID } from "../../../src/lib/testids";
 import { expectLive } from "./_helpers/page";
+import { openLink } from "./_helpers/link";
 
 // Needs this verifier's env (QA_AUTH_DIR with qa-* storage states for APP_URL); skipped in a normal `pnpm e2e`.
 test.skip(!process.env.QA_AUTH_DIR, "I2 content verifier spec: set QA_AUTH_DIR");
@@ -53,7 +54,7 @@ async function assignVia(page: Page, itemId: string, names: string[]) {
 test("TAG-01/02 tag members on timeline items; avatars live; filter; guests never", async ({ browser }) => {
 	// Guest-E active in the trip.
 	const ge = await ctxFor(browser, null);
-	await ge.page.goto("/join#t=qa-share-token-editor-asia-2027");
+	await openLink(ge.page, "asia-2027", "editor");
 	await expect(ge.page).toHaveURL(/\/t\/asia-2027/, { timeout: 20_000 });
 	await expectLive(ge.page);
 	const d = await ctxFor(browser, "dennis");
@@ -166,7 +167,7 @@ test("TAG-03 who can tag: Kai and Guest-V can't; Guest-E can (members only)", as
 	for (const who of ["kai", "guest-v", "guest-e"] as const) {
 		const c = await ctxFor(browser, who === "kai" ? "kai" : null);
 		if (who !== "kai") {
-			await c.page.goto(`/join#t=qa-share-token-${who === "guest-v" ? "viewer" : "editor"}-asia-2027`);
+			await openLink(c.page, "asia-2027", who === "guest-v" ? "viewer" : "editor");
 			await expect(c.page).toHaveURL(/\/t\/asia-2027/, { timeout: 20_000 });
 		}
 		await c.page.goto(`/t/asia-2027?sel=i.${golden.id}`);

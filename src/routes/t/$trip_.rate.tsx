@@ -5,7 +5,7 @@ import { requireTripViewer } from "@/lib/auth/guards";
 import { indexGraph } from "@/lib/engine/graph-index";
 import { slugPath } from "@/lib/engine/tree";
 import { errorCode } from "@/lib/errors";
-import { tripGraphQuery, tripSlugQuery } from "@/lib/query/trip-queries";
+import { ensureTripBySlug } from "@/lib/query/open-trip";
 import { FILTER_PARAM_RE } from "@/lib/workspace/filter";
 
 /**
@@ -35,11 +35,9 @@ export const Route = createFileRoute("/t/$trip_/rate")({
 	loader: async ({ context, params, deps }) => {
 		let target: { splat: string; search: Record<string, unknown> };
 		try {
-			const { tripId } = await context.queryClient.ensureQueryData(
-				tripSlugQuery(params.trip),
-			);
-			const graph = await context.queryClient.ensureQueryData(
-				tripGraphQuery(tripId),
+			const { graph } = await ensureTripBySlug(
+				context.queryClient,
+				params.trip,
 			);
 			const ix = indexGraph(graph);
 			const { scopeId, search } = placesFromRate(deps, (id) => ix.node(id));

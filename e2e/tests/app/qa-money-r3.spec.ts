@@ -76,7 +76,6 @@ async function callFnErr(page: Page, fn: string, data: unknown, module = MONEY):
 type Clone = {
 	tripId: string;
 	slug: string;
-	shareTokens: { editor: string; viewer: string };
 	ids: { items: Record<string, string>; days: Record<string, string>; nodes: Record<string, string>; legs: Record<string, string> };
 	members: { owner: string; maya: string | null; audrey: string };
 };

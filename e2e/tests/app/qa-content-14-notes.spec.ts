@@ -7,6 +7,7 @@ import { type Browser, expect, type Page, test } from "@playwright/test";
 import { NOTES_TESTID as NT } from "../../../src/features/notes/testids";
 import { TESTID } from "../../../src/lib/testids";
 import { expectLive } from "./_helpers/page";
+import { openLink } from "./_helpers/link";
 
 // Needs this verifier's env (QA_AUTH_DIR with qa-* storage states for APP_URL); skipped in a normal `pnpm e2e`.
 test.skip(!process.env.QA_AUTH_DIR, "I2 content verifier spec: set QA_AUTH_DIR");
@@ -61,7 +62,7 @@ test("NOTE-01/06 markdown in Golden Gai's notes; Kai and Guest-V read live but c
 	const k = await ctxFor(browser, "kai");
 	const kn = await notesOf(k.page, gg);
 	const gv = await ctxFor(browser, null);
-	await gv.page.goto("/join#t=qa-share-token-viewer-asia-2027");
+	await openLink(gv.page, "asia-2027", "viewer");
 	await expect(gv.page).toHaveURL(/\/t\/asia-2027/, { timeout: 20_000 });
 	const gn = await notesOf(gv.page, gg);
 	// Clear and type the NOTE-01 text.
@@ -127,7 +128,7 @@ test("MENT-01/02/04 mention popup: members only (not guests), chip live and pers
 	const gg = nodeIds["Golden Gai"];
 	// Guest-E present with a live presence.
 	const ge = await ctxFor(browser, null);
-	await ge.page.goto("/join#t=qa-share-token-editor-asia-2027");
+	await openLink(ge.page, "asia-2027", "editor");
 	await expect(ge.page).toHaveURL(/\/t\/asia-2027/, { timeout: 20_000 });
 	await notesOf(ge.page, gg);
 	const d = await ctxFor(browser, "dennis");

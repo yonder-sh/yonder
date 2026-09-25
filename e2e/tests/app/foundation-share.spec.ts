@@ -1,10 +1,11 @@
 /**
- * Foundation check 6: share links end to end.
- * The owner creates a trip, turns on its "Can view" link in the Share dialog;
- * an anonymous browser opens the link, becomes a guest and can view but not
- * edit (the UI guard is disabled, the server refuses the write, the note is
- * read-only); the owner turns the link off and the guest's access ends at
- * once (socket closed, no refetch possible, the trip URL says no access).
+ * Foundation check 6: the trip's link end to end. The trip's address IS its
+ * share link (like Google Drive). The owner creates a trip, turns on "Anyone
+ * with the link" (Can view) in the Share dialog; an anonymous browser opens
+ * the same address, becomes a guest and can view but not edit (the UI guard
+ * is disabled, the server refuses the write); the owner turns the link off
+ * and the guest's access ends at once (socket closed, no refetch possible,
+ * the page says the link is no longer active).
  */
 import { randomBytes } from "node:crypto";
 import { expect, type Page, test } from "@playwright/test";
@@ -33,7 +34,7 @@ test("viewer link: a guest can view, can't edit, and loses access when it's turn
 	const owner = await ownerCtx.newPage();
 	const ownerConsole = collectConsole(owner);
 
-	// A fresh trip: it has no share links yet.
+	// A fresh trip: link sharing is off.
 	await owner.goto("/dashboard");
 	await (await hydrated(owner.getByTestId(TESTID.newTripButton))).click();
 	const tripName = `Share test ${randomBytes(2).toString("hex")}`;
@@ -42,15 +43,18 @@ test("viewer link: a guest can view, can't edit, and loses access when it's turn
 	await expect(owner.getByTestId(TESTID.workspace)).toBeVisible();
 	await owner.keyboard.press("Escape");
 	const tripUrl = new URL(owner.url()).pathname;
+	// Its address: the readable name and an unguessable tail.
+	expect(tripUrl).toMatch(/^\/t\/share-test-[0-9a-f]{4}-[23456789abcdefghjkmnpqrstuvwxyz]{8}$/);
 
-	// Create the viewer link in the Share dialog.
+	// Turn on the viewer link in the Share dialog.
 	await owner.getByTestId(TESTID.shareButton).click();
 	const viewerRow = owner.locator(`[data-testid=${TESTID.shareLinkRow}][data-role=viewer]`);
 	await expect(viewerRow.getByTestId(TESTID.shareLinkSwitch)).not.toBeChecked();
 	await viewerRow.getByTestId(TESTID.shareLinkSwitch).click();
 	await expect(viewerRow.getByTestId(TESTID.shareLinkSwitch)).toBeChecked();
+	// The link is the trip's own address (no token).
 	const urlInput = viewerRow.getByTestId(TESTID.shareLinkUrl);
-	await expect(urlInput).toHaveValue(/\/join#t=[A-Za-z0-9_-]{43}$/);
+	await expect(urlInput).toHaveValue(new RegExp(`${tripUrl}$`));
 	const link = await urlInput.inputValue();
 	// The link expires (SECURITY §2), with an Extend action.
 	await expect(viewerRow.getByTestId(TESTID.shareLinkExpiry)).toContainText("Works until");
@@ -59,7 +63,7 @@ test("viewer link: a guest can view, can't edit, and loses access when it's turn
 	await owner.screenshot({ path: shotPath("foundation/share-dialog.png"), animations: "disabled" });
 	await owner.keyboard.press("Escape");
 
-	// An anonymous browser opens it: guest session, then the trip, read-only.
+	// An anonymous browser opens the address: guest session, then the trip, read-only.
 	const guestCtx = await browser.newContext();
 	const guest = await guestCtx.newPage();
 	const guestConsole = collectConsole(guest, [
@@ -70,8 +74,7 @@ test("viewer link: a guest can view, can't edit, and loses access when it's turn
 	await expect(guest).toHaveURL(new RegExp(`${tripUrl}(/|\\?|$)`), { timeout: 20_000 });
 	await expect(guest.getByTestId(TESTID.tripMenu)).toContainText(tripName);
 	await expectLive(guest);
-	// The token never stays in the address bar.
-	expect(guest.url()).not.toContain("#t=");
+	expect(new URL(guest.url()).pathname).toBe(tripUrl);
 
 	const slug = tripUrl.split("/")[2] ?? "";
 	const resolved = await callFn(guest, "/src/functions/trips.functions.ts", "resolveTripSlug", { slug });
@@ -103,9 +106,9 @@ test("viewer link: a guest can view, can't edit, and loses access when it's turn
 	await viewerRow.getByTestId(TESTID.shareLinkSwitch).click();
 	await expect(viewerRow.getByTestId(TESTID.shareLinkSwitch)).not.toBeChecked();
 	// The collab server closes the guest's socket; the re-auth is refused and the
-	// page says the link no longer works (QA LINK-04), never the sign-in page.
-	await expect(guest).toHaveURL(/\/join$/, { timeout: 10_000 });
-	await expect(guest.getByText("This link no longer works.")).toBeVisible();
+	// page says the link is no longer active (QA LINK-04), never the sign-in page.
+	await expect(guest.getByText("This link is no longer active.")).toBeVisible({ timeout: 10_000 });
+	await expect(guest.getByTestId(TESTID.workspace)).toHaveCount(0);
 	const after = await callFn(guest, "/src/functions/graph.functions.ts", "getTripGraph", { tripId: id });
 	expect(after.ok).toBe(false);
 	expect((after as { error: string }).error).toMatch(/^NOT_FOUND/);

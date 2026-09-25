@@ -7,6 +7,7 @@ import { type Browser, expect, type Page, test } from "@playwright/test";
 import { LISTS_TESTID as L } from "../../../src/features/lists/testids";
 import { TESTID } from "../../../src/lib/testids";
 import { expectLive } from "./_helpers/page";
+import { openLink } from "./_helpers/link";
 
 // Needs this verifier's env (QA_AUTH_DIR with qa-* storage states for APP_URL); skipped in a normal `pnpm e2e`.
 test.skip(!process.env.QA_AUTH_DIR, "I2 content verifier spec: set QA_AUTH_DIR");
@@ -183,7 +184,7 @@ test("LIST-05 For picker offers members only, never a guest", async ({ browser }
 	// Guest-E joins through the edit link first.
 	const gctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
 	const guest = await gctx.newPage();
-	await guest.goto("/join#t=qa-share-token-editor-asia-2027");
+	await openLink(guest, "asia-2027", "editor");
 	await expect(guest).toHaveURL(/\/t\/asia-2027/, { timeout: 20_000 });
 	await expectLive(guest);
 	const a = await ctxFor(browser, "audrey");

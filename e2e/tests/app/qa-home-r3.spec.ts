@@ -4,6 +4,7 @@
  */
 import { type APIRequestContext, type Browser, type Page, expect, test } from "@playwright/test";
 import { loginViaApi } from "./_helpers/auth";
+import { openLink } from "./_helpers/link";
 
 test.beforeEach(({}, info) => {
 	test.skip(info.project.name === "mobile", "qa-home specs run on the desktop project");
@@ -163,7 +164,7 @@ test("R3 overdue: a to-do 1 hour overdue reads the same on the dashboard and in 
 test("R3 LINK-07: an editor-link guest on another trip's URL gets the plain no-access page; the link stays", async ({ browser }) => {
 	const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
 	const page = await ctx.newPage();
-	await page.goto("/join#t=qa-share-token-editor-asia-2027");
+	await openLink(page, "asia-2027", "editor");
 	await expect(page.getByTestId("workspace")).toBeVisible({ timeout: 30_000 });
 	const before = await page.evaluate(() => ({ grants: localStorage.getItem("yonder:grants"), gone: localStorage.getItem("yonder:grants-gone") }));
 	console.log("R3 LINK-07 before:", JSON.stringify(before));

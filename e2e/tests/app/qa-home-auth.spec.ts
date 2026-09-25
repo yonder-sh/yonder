@@ -171,8 +171,11 @@ test("AUTH-04/10: returning user skips the name step; email is case/space-insens
 });
 
 test("AUTH-05: a deep link survives sign-in; an external redirect is ignored", async ({ page, browser }) => {
-	// Dennis of the QA seed owns asia-2027
+	// Dennis of the QA seed owns asia-2027. Signed out, with link sharing off:
+	// the "no access" page (the same for any address), whose Sign in keeps it.
 	await page.goto("/t/asia-2027?days=2027-10-05");
+	await expect(page.getByTestId("trip-no-access")).toBeVisible({ timeout: 30_000 });
+	await page.getByTestId("trip-no-access-sign-in").click();
 	await expect(page).toHaveURL(/\/login\?next=/);
 	await shot(page, "05-login-with-next");
 	await hydrated(page.getByTestId("login-email"));

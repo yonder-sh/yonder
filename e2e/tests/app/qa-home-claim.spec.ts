@@ -7,6 +7,7 @@ import { type APIRequestContext, type Browser, type Page, expect, test } from "@
 import { loginViaApi } from "./_helpers/auth";
 import { cloneFixtureTrip } from "./_helpers/fixture";
 import { hydrated } from "./_helpers/page";
+import { openLink } from "./_helpers/link";
 
 test.beforeEach(({}, info) => {
 	test.skip(info.project.name === "mobile", "qa-home specs run on the desktop project");
@@ -50,7 +51,7 @@ test("A signed-in VIEW-link guest claims a placeholder: what does it unlock?", a
 	s.page.on("response", async (r) => {
 		if (r.url().includes("/_serverFn/")) bodies.push(await r.text().catch(() => ""));
 	});
-	await s.page.goto(`/join#t=${c.shareTokens.viewer}`);
+	await openLink(s.page, c.slug, "viewer");
 	await expect(s.page.getByTestId("workspace")).toBeVisible({ timeout: 30_000 });
 	const before = await graphOf(s.page);
 	const flightBefore = JSON.stringify(before.legs.filter((l: any) => l.details?.kind === "flight").map((l: any) => l.details));
@@ -97,7 +98,7 @@ test("Signed-in guests: owner promotes one as 'Can suggest'", async ({ browser }
 	const o = await userPage(browser, `qa-home-c2o-${uniq()}@asia2027.test`, "Olga", "Owner");
 	const c = await cloneFixtureTrip(o.page.request);
 	const g = await userPage(browser, `qa-home-c2g-${uniq()}@asia2027.test`, "Gina", "Guest");
-	await g.page.goto(`/join#t=${c.shareTokens.editor}`);
+	await openLink(g.page, c.slug, "editor");
 	await expect(g.page.getByTestId("workspace")).toBeVisible({ timeout: 30_000 });
 	await o.page.goto(`/t/${c.slug}?tab=plan`);
 	await expect(o.page.getByTestId("workspace")).toBeVisible({ timeout: 30_000 });

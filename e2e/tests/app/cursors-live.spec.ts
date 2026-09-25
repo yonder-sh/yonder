@@ -30,6 +30,7 @@ import { loginViaApi } from "./_helpers/auth";
 import { shotPath, storageStateOf } from "./_helpers/env";
 import { type FixtureClone, cloneFixtureTrip } from "./_helpers/fixture";
 import { expectLive } from "./_helpers/page";
+import { openLink } from "./_helpers/link";
 
 test.describe.configure({ mode: "serial" });
 
@@ -332,7 +333,7 @@ test("Spotlight: everyone follows the presenter, B breaks away, A ends it", asyn
 	const gctx = await browser.newContext({ ...devices["Pixel 7"] });
 	await loginViaApi(gctx.request, `phone-${randomBytes(3).toString("hex")}@example.com`, { first: "Pia", last: "Phone" });
 	const gpage = await gctx.newPage();
-	await gpage.goto(`/join#t=${trip.shareTokens.editor}`);
+	await openLink(gpage, trip.slug, "editor");
 	await expect(gpage).toHaveURL(new RegExp(`/t/${trip.slug}`), { timeout: 20_000 });
 	await expectLive(gpage);
 	await expect(gpage.getByTestId(S.followBar)).toContainText("Following Dev", { timeout: 8_000 });
@@ -475,7 +476,7 @@ test("a link guest never receives a money anchor; a member does", async ({ brows
 	const gctx = await browser.newContext({ viewport: B_SIZE });
 	await loginViaApi(gctx.request, `guest-${randomBytes(3).toString("hex")}@example.com`, { first: "Gina", last: "Guest" });
 	const gpage = await gctx.newPage();
-	await gpage.goto(`/join#t=${trip.shareTokens.viewer}`);
+	await openLink(gpage, trip.slug, "viewer");
 	await expect(gpage).toHaveURL(new RegExp(`/t/${trip.slug}`), { timeout: 20_000 });
 	await expectLive(gpage);
 	await gpage.waitForFunction(() => !!(window as { __yonderCursors?: unknown }).__yonderCursors);

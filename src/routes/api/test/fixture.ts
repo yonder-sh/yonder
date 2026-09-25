@@ -8,7 +8,8 @@ import { cloneDemoTrip } from "@/server/fixture.server";
 /**
  * `POST /api/test/fixture` (SPEC §12.1, §18.5): clones the fixed-UUID demo
  * trip under a random slug for one e2e test, owned by the caller (cookie or
- * bearer session) → `{ slug, tripId, shareTokens, ids, members }`.
+ * bearer session) → `{ slug, tripId, ids, members }` (link sharing off: let
+ * guests in with `POST /api/test/link`).
  *
  * Optional JSON body: `{ mayaRole?: 'editor' | 'suggester' | 'viewer',
  * proposals?: boolean }`: Maya's role in the clone, and the demo's suggestions

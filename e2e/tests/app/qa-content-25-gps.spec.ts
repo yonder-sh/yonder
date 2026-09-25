@@ -6,6 +6,7 @@ import { MEDIA_TESTID as MT } from "../../../src/features/media/testids";
 import { TESTID } from "../../../src/lib/testids";
 import { E2E_ROOT } from "./_helpers/env";
 import { expectLive } from "./_helpers/page";
+import { openLink } from "./_helpers/link";
 
 // Needs this verifier's env (QA_AUTH_DIR with qa-* storage states for APP_URL); skipped in a normal `pnpm e2e`.
 test.skip(!process.env.QA_AUTH_DIR, "I2 content verifier spec: set QA_AUTH_DIR");
@@ -26,7 +27,7 @@ test("guest-v original keeps GPS", async ({ browser }) => {
 	await expect(dp.locator(`[data-testid=${TESTID.galleryItem}][data-id="${id}"]`)).toHaveAttribute("data-status", "ready", { timeout: 30_000 });
 	const g = await browser.newContext();
 	const gp = await g.newPage();
-	await gp.goto("/join#t=qa-share-token-viewer-asia-2027");
+	await openLink(gp, "asia-2027", "viewer");
 	await expect(gp).toHaveURL(/\/t\/asia-2027/, { timeout: 20_000 });
 	const r = await gp.request.get(`/media/${id}/original`, { maxRedirects: 0 });
 	console.log("guest original:", r.status(), (r.headers().location ?? "").slice(0, 60));

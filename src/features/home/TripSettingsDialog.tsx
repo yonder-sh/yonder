@@ -2,7 +2,9 @@
  * Trip settings (SPEC §12.5 `TripSettingsDialog()`, DESIGN §8.5; EXTENSIONS
  * §1.4), opened with `useUi().setSettingsOpen(true)`.
  *
- * - Name, URL slug (owner), and the plan settings: default day start,
+ * - Name, the address (owner: only its readable part; the random tail that
+ *   keeps it unguessable shows beside it, read-only, `src/lib/trip-slug.ts`),
+ *   and the plan settings: default day start,
  *   capacity per day, **Home currency** (the unit of all money math; the
  *   warning says expenses get re-converted), walking speed, autofill.
  *   Saved together through `updateTrip` (direct, `tripSettings`).
@@ -81,9 +83,15 @@ import {
 import { can } from "@/lib/auth/roles";
 import { errorCode } from "@/lib/errors";
 import { formatDayDate } from "@/lib/format";
-import { meKeys, tripKeys } from "@/lib/query/keys";
+import { meKeys, tripKeys, tripSlugKey } from "@/lib/query/keys";
 import { useFormPresence } from "@/lib/realtime/form-presence";
 import { TESTID } from "@/lib/testids";
+import {
+	cleanSlugBase,
+	SLUG_BASE_MAX,
+	SLUG_BASE_RE,
+	splitTripSlug,
+} from "@/lib/trip-slug";
 import { useUi } from "@/lib/workspace/ui-store";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { currencyName, HOME_CURRENCIES } from "./currencies";
@@ -426,6 +434,8 @@ export function TripSettingsDialog() {
 	const { graph, mode } = useWorkspace();
 	const trip = graph.trip;
 	const s = trip.settings ?? {};
+	// The address is `<readable>-<tail>`: only the readable part is edited.
+	const address = splitTripSlug(trip.slug, trip.slugTail);
 	const ids = {
 		name: useId(),
 		slug: useId(),
@@ -446,7 +456,7 @@ export function TripSettingsDialog() {
 	function initial() {
 		return {
 			name: trip.name,
-			slug: trip.slug,
+			slug: address.base,
 			dayStart: s.defaultDayStart ?? "09:00",
 			capacity: s.dayCapacityMin ?? 750,
 			currency: s.currency ?? "USD",
@@ -483,7 +493,9 @@ export function TripSettingsDialog() {
 				data: {
 					tripId: trip.id,
 					...(form.name.trim() !== trip.name ? { name: form.name.trim() } : {}),
-					...(owner && form.slug !== trip.slug ? { slug: form.slug } : {}),
+					...(owner && form.slug !== address.base
+						? { slug: cleanSlugBase(form.slug) }
+						: {}),
 					settings: {
 						defaultDayStart: form.dayStart,
 						dayCapacityMin: form.capacity,
@@ -506,20 +518,16 @@ export function TripSettingsDialog() {
 			]);
 			setOpen(false);
 			toast.success("Settings saved");
+			// A new address: the workspace follows it (`/t/$trip`), as for everyone.
 			if (slug !== trip.slug)
-				window.history.replaceState(
-					window.history.state,
-					"",
-					window.location.pathname.replace(`/t/${trip.slug}`, `/t/${slug}`) +
-						window.location.search,
-				);
+				qc.setQueryData(tripSlugKey(slug), { tripId: trip.id });
 		},
 	});
 	const { disabled } = useEditGuard(
 		"edit-only",
 		"Suggesters can't change trip settings",
 	);
-	const slugOk = /^[a-z0-9-]{1,100}$/.test(form.slug);
+	const slugOk = SLUG_BASE_RE.test(form.slug) && !!cleanSlugBase(form.slug);
 	const holidayError = holidayDraft ? holidaysDraftError(holidayDraft) : null;
 	const submit = (e: FormEvent) => {
 		e.preventDefault();
@@ -565,7 +573,9 @@ export function TripSettingsDialog() {
 								htmlFor={ids.slug}
 								hint={
 									slugOk
-										? "Old links to the trip stop working when this changes."
+										? address.tail
+											? "The ending keeps the link private. Old links stop working when this changes."
+											: "A private ending is added when you change it. Old links stop working."
 										: "Lowercase letters, numbers and dashes only."
 								}
 							>
@@ -576,7 +586,7 @@ export function TripSettingsDialog() {
 									<Input
 										id={ids.slug}
 										value={form.slug}
-										maxLength={100}
+										maxLength={SLUG_BASE_MAX}
 										disabled={disabled}
 										aria-invalid={!slugOk}
 										data-testid={HOME_TESTID.settingsSlug}
@@ -588,6 +598,15 @@ export function TripSettingsDialog() {
 										}
 										className="min-w-0 border-0 pl-0.5 font-mono text-xs shadow-none focus-visible:ring-0"
 									/>
+									{address.tail ? (
+										<span
+											className="shrink-0 whitespace-nowrap pr-3 font-mono text-xs text-muted-foreground"
+											data-testid={HOME_TESTID.settingsSlugTail}
+											title="The random ending keeps the link private. Reset it from Share."
+										>
+											-{address.tail}
+										</span>
+									) : null}
 								</div>
 							</Row>
 						) : null}

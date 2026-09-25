@@ -30,8 +30,7 @@ import {
 	user,
 	yjsDocuments,
 } from "@/db/schema";
-import { shareTokenColumns } from "@/db/share-token.server";
-import { can } from "@/lib/auth/roles";
+import { can, type ShareRole } from "@/lib/auth/roles";
 import { compareKeys } from "@/lib/engine/graph-index";
 import type { TripGraph } from "@/lib/engine/types";
 import {
@@ -43,6 +42,7 @@ import {
 import { mentionToken } from "@/lib/notes/mentions";
 import { markdownToYdoc } from "@/lib/notes/ydoc.server";
 import { type LegDetails, readLegDetails } from "@/lib/schemas/legs";
+import { newSlugTail, withSlugTail } from "@/lib/trip-slug";
 import type { AuthUser } from "./auth.server";
 import { freshKeys } from "./position.server";
 import { hardDeleteTripsWhere } from "./trip-delete.server";
@@ -53,6 +53,8 @@ import { hardDeleteTripsWhere } from "./trip-delete.server";
 
 export type WriteGraphOptions = {
 	slug: string;
+	/** The slug's random tail (`src/lib/trip-slug.ts`); none for the seed's fixed `demo`. */
+	slugTail?: string | null;
 	name: string;
 	/** The user who becomes the owner member (the fixture's owner row). */
 	ownerUserId: string;
@@ -137,6 +139,7 @@ export async function writeTripGraph(
 	await tx.insert(trips).values({
 		id: tripId,
 		slug: opts.slug,
+		slugTail: opts.slugTail ?? null,
 		name: opts.name,
 		startDate: g.trip.startDate,
 		endDate: g.trip.endDate,
@@ -310,11 +313,6 @@ export const DEMO_USERS = {
 	dev: { email: "dev@example.com", firstName: "Dev", lastName: "User" },
 	maya: { email: "maya@example.com", firstName: "Maya", lastName: "Chen" },
 } as const;
-/** The dev seed's fixed share tokens (§17.1); dev and test databases only. */
-export const DEV_SHARE_TOKENS = {
-	editor: "dev-share-token-editor",
-	viewer: "dev-share-token-viewer",
-} as const;
 
 async function upsertUser(
 	tx: Tx,
@@ -461,28 +459,68 @@ async function writeDemoExtras(
 	}
 }
 
-async function writeShareLinks(
-	tx: Tx,
+/**
+ * Tests only (`POST /api/test/link`, db tests): makes the trip's live link of
+ * `role` the one its address opens (switched on, no expiry, the newest),
+ * creating it if needed, WITHOUT retiring the trip's other live rows or
+ * giving the address a tail. So a test lets a viewer guest in, then an
+ * editor guest, and each keeps the role they came in with, as the old
+ * per-role fixture links did. The app itself keeps one live link per trip
+ * (`setShareLink` and `resetShareLink` retire the others), and a role change
+ * there applies to every guest. `role: null` switches every live row off
+ * and removes their guests, like turning the link off.
+ */
+export async function pinTestLink(
+	exec: Pick<Db, "execute" | "insert">,
 	tripId: string,
-	tokens: { editor: string; viewer: string },
-	createdBy: string,
+	role: ShareRole | null,
+	createdBy: string | null = null,
 ): Promise<void> {
-	const secret = process.env.BETTER_AUTH_SECRET || undefined;
-	for (const role of ["editor", "viewer"] as const) {
-		await tx.insert(shareLinks).values({
-			tripId,
-			role,
-			...shareTokenColumns(tokens[role], secret),
-			createdBy,
-		});
+	if (role === null) {
+		await exec.execute(sql`
+			delete from share_grants g using share_links l
+			 where g.share_link_id = l.id and l.trip_id = ${tripId} and l.revoked_at is null`);
+		await exec.execute(sql`
+			update share_links set enabled = false
+			 where trip_id = ${tripId} and revoked_at is null`);
+		return;
 	}
+	const res = await exec.execute(sql`
+		update share_links
+		   set enabled = true, expires_at = null, created_at = clock_timestamp()
+		 where trip_id = ${tripId} and role = ${role} and revoked_at is null
+		returning id`);
+	if (res.rows.length) return;
+	await exec.insert(shareLinks).values({
+		tripId,
+		role,
+		enabled: true,
+		createdBy,
+		createdAt: sql`clock_timestamp()`,
+	});
+}
+
+/**
+ * Tests only: `userId` opens the trip's address as a link guest of `role`
+ * (`pinTestLink`, then the real `openTripLink`). Throws when they aren't let
+ * in (an active member, a deleted trip).
+ */
+export async function joinTestLink(
+	db: Db,
+	trip: { tripId: string; slug: string },
+	userId: string,
+	role: ShareRole,
+): Promise<void> {
+	await pinTestLink(db, trip.tripId, role);
+	const { openTripLink } = await import("./authz/share-links.server");
+	const opened = await openTripLink(trip.slug, userId);
+	if (!opened) throw new Error(`joinTestLink: ${trip.slug} didn't open`);
 }
 
 export type SeedDevResult = {
 	tripId: string;
 	slug: string;
 	users: { dev: string; maya: string };
-	shareTokens: typeof DEV_SHARE_TOKENS;
 };
 
 /**
@@ -513,21 +551,22 @@ export async function seedDev(db: Db): Promise<SeedDevResult> {
 			mayaMemberId: w.extraMemberIds[0] ?? null,
 			createdBy: dev,
 		});
-		await writeShareLinks(tx, w.tripId, DEV_SHARE_TOKENS, dev);
 		return {
 			tripId: w.tripId,
 			slug: DEMO_SLUG,
 			users: { dev, maya },
-			shareTokens: DEV_SHARE_TOKENS,
 		};
 	});
 }
 
 export type FixtureClone = {
 	tripId: string;
+	/**
+	 * `demo-<tail>`: a real address tail, so turning the link on keeps it.
+	 * The link starts off: tests let guests in with `pinTestLink`
+	 * (`POST /api/test/link`) and the address.
+	 */
 	slug: string;
-	/** Fresh share tokens for this clone (tests redeem them via `/join#t=`). */
-	shareTokens: { editor: string; viewer: string };
 	/** Fixture id → clone id, for the demo's keyed ids (`demo.I.sky` → …). */
 	ids: {
 		items: Record<string, string>;
@@ -569,9 +608,11 @@ export async function cloneDemoTrip(
 			.select({ id: user.id })
 			.from(user)
 			.where(eq(user.email, DEMO_USERS.maya.email));
-		const slug = `demo-${randomBytes(4).toString("hex")}`;
+		const slugTail = newSlugTail();
+		const slug = withSlugTail("demo", slugTail);
 		const w = await writeTripGraph(tx, demo.graph, {
 			slug,
+			slugTail,
 			name: DEMO_NAME,
 			ownerUserId,
 			extraMembers:
@@ -582,17 +623,11 @@ export async function cloneDemoTrip(
 		});
 		const mayaMemberId = w.extraMemberIds[0] ?? null;
 		await writeDemoExtras(tx, w, { mayaMemberId, createdBy: ownerUserId });
-		const shareTokens = {
-			editor: randomBytes(32).toString("base64url"),
-			viewer: randomBytes(32).toString("base64url"),
-		};
-		await writeShareLinks(tx, w.tripId, shareTokens, ownerUserId);
 		const mapKeys = (r: Record<string, string>) =>
 			Object.fromEntries(Object.entries(r).map(([k, v]) => [k, w.id(v)]));
 		const clone: FixtureClone = {
 			tripId: w.tripId,
 			slug,
-			shareTokens,
 			ids: {
 				items: mapKeys(demo.I),
 				days: mapKeys(demo.D),

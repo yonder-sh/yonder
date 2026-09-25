@@ -16,6 +16,7 @@ import { SHELL_TESTID as SH } from "../../../src/features/shell/testids";
 import { TESTID } from "../../../src/lib/testids";
 import { shotPath } from "./_helpers/env";
 import { expectLive } from "./_helpers/page";
+import { openLink } from "./_helpers/link";
 
 const AUTH = process.env.QA_AUTH_DIR ?? path.resolve("e2e/.auth");
 const auth = (h: string) => path.join(AUTH, `${h}.json`);
@@ -36,10 +37,8 @@ async function open(browser: Browser, handle: string | null, url: string, opts: 
 		viewport: { width: 1440, height: 900 },
 	});
 	const page = await ctx.newPage();
-	if (opts.token) {
-		await page.goto(`/join#t=${opts.token}`);
-		await expect(page).toHaveURL(/\/t\//, { timeout: 20_000 });
-	}
+	// `token`: the link role a guest comes in with (the QA trip's address is its link).
+	if (opts.token) await openLink(page, "asia-2027", opts.token);
 	await page.goto(url);
 	await expectLive(page);
 	await page.waitForFunction(() => !!(window as unknown as { __yonder?: { graph?: unknown } }).__yonder?.graph);
@@ -290,7 +289,7 @@ test("ONE inbox review item: Maya's first suggestion is '1 suggestion to review'
 	const d = await open(browser, "dennis", "/t/asia-2027?tab=plan");
 	const m = await open(browser, "maya", TOKYO);
 	const k = await open(browser, "kai", "/t/asia-2027?tab=plan");
-	const guest = await open(browser, null, "/t/asia-2027?tab=plan", { token: "qa-share-token-editor-asia-2027" });
+	const guest = await open(browser, null, "/t/asia-2027?tab=plan", { token: "editor" });
 	const g = await graph(d.page);
 	const T = g.trip.id;
 	const lunch = g.items.find((i) => i.title === "Lunch" && i.dayId);
@@ -725,7 +724,7 @@ test("DEFECT (WP-Media): a suggested link right after another link to the same p
 test("DEFECT (WP-Insights): a link guest's what-if keeps the booked NH 9 under Needs rebooking (it has a ref, just hidden), never 'no booking ref'", async ({
 	browser,
 }) => {
-	const gst = await open(browser, null, TOKYO, { token: "qa-share-token-viewer-asia-2027" });
+	const gst = await open(browser, null, TOKYO, { token: "viewer" });
 	await gst.page.getByTestId(TESTID.tripMenu).click();
 	await gst.page.getByTestId("try-other-dates").click();
 	const dlg = gst.page.getByTestId(TESTID.shiftTripDialog);

@@ -18,6 +18,7 @@ import {
 	setSheetHours,
 	updateItem,
 } from "./insights-helpers";
+import { openLink } from "./_helpers/link";
 
 test.use({ storageState: storageStateOf("dev") });
 
@@ -117,7 +118,7 @@ test("a viewer sees the chips but can't edit (HRS-08)", async ({ page, browser }
 	// An anonymous browser (not the file's signed-in storage state).
 	const guestCtx = await browser.newContext({ storageState: { cookies: [], origins: [] } });
 	const guest = await guestCtx.newPage();
-	await guest.goto(`/join#t=${c.shareTokens.viewer}`);
+	await openLink(guest, c.slug, "viewer");
 	await expect(guest).toHaveURL(new RegExp(`/t/${c.slug}`), { timeout: 20_000 });
 	await openHarness(guest, c, { nodeId: c.ids.nodes.kiyomizu as string });
 	const chip = card(guest, c.ids.items.kiyomizu as string).getByTestId(TESTID.hoursChip);

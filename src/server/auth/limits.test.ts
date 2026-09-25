@@ -81,14 +81,15 @@ describe("auth limits (SECURITY §8, §10)", () => {
 		});
 	});
 
-	it("limits share-link redemptions per IP (10/min)", async () => {
+	it("limits non-member trip opens per IP (30/min)", async () => {
 		const l = memoryAuthLimits();
-		for (let i = 0; i < LIMITS.redeemPerMinute; i++)
-			expect(await l.redeemRetryAfter("203.0.113.9")).toBe(0);
-		expect(await l.redeemRetryAfter("203.0.113.9")).toBeGreaterThanOrEqual(
+		for (let i = 0; i < LIMITS.tripOpensPerMinute; i++)
+			expect(await l.tripOpenRetryAfter("203.0.113.9")).toBe(0);
+		expect(await l.tripOpenRetryAfter("203.0.113.9")).toBeGreaterThanOrEqual(
 			1000,
 		);
-		expect(await l.redeemRetryAfter("198.51.100.1")).toBe(0);
+		expect(await l.tripOpenRetryAfter("198.51.100.1")).toBe(0);
+		expect(LIMITS.tripOpensPerMinute).toBe(30);
 	});
 
 	it("does nothing when disabled (dev, AUTH_RATE_LIMIT=off)", async () => {
@@ -96,7 +97,7 @@ describe("auth limits (SECURITY §8, §10)", () => {
 		for (let i = 0; i < 50; i++) {
 			expect(await l.allowOtpSend("a@b.c")).toBe(true);
 			await l.recordOtpFailure("a@b.c");
-			expect(await l.redeemRetryAfter("1.2.3.4")).toBe(0);
+			expect(await l.tripOpenRetryAfter("1.2.3.4")).toBe(0);
 		}
 		expect(await l.otpLockRemaining("a@b.c")).toBe(0);
 	});

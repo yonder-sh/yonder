@@ -17,6 +17,7 @@ import type { GraphDay } from "@/lib/engine/types";
 import { formatDayDate } from "@/lib/format";
 import { IsoDate, Tz } from "@/lib/schemas/common";
 import { TripSettingsPatch } from "@/lib/schemas/trips";
+import { cleanSlugBase, splitTripSlug, withSlugTail } from "@/lib/trip-slug";
 import { logActivity } from "@/server/activity.server";
 import { fail } from "@/server/authz/session.server";
 import {
@@ -29,6 +30,11 @@ import {
 import { indexTx, reconcileLegs } from "@/server/legs.server";
 import { readTripVersion, type TxOutbox } from "@/server/live/outbox.server";
 import type { CoreCtx } from "@/server/proposals/types";
+import {
+	freshTripSlug,
+	readTripSlug,
+	type TripSlugColumns,
+} from "@/server/trip-slug.server";
 
 export const TripSlug = z.string().regex(/^[a-z0-9-]{1,100}$/);
 export const TripName = z.string().trim().min(1).max(120);
@@ -276,7 +282,8 @@ export async function shiftTripDatesCore(
 }
 
 /**
- * `updateTrip` ({ direct: 'tripSettings' }; the slug needs `changeSlug`).
+ * `updateTrip` ({ direct: 'tripSettings' }; the slug needs `changeSlug`:
+ * the readable part of the address, `src/lib/trip-slug.ts`).
  * The cover must be a live photo or video of THIS trip (no cross-trip media).
  * Keys: graph (trip).
  */
@@ -286,19 +293,32 @@ export async function updateTripCore(
 	data: In<typeof UpdateTripInput>,
 	access: Pick<TripAccess, "role" | "isGuest">,
 ): Promise<{ slug: string }> {
-	if (data.slug) {
-		const [clash] = await tx
-			.select({ id: trips.id })
-			.from(trips)
-			.where(
-				and(
-					eq(trips.slug, data.slug),
-					isNull(trips.deletedAt),
-					sql`${trips.id} <> ${data.tripId}`,
-				),
-			)
-			.limit(1);
-		if (clash) return fail("CONFLICT", "That link is already taken.");
+	// `slug` is the readable part the owner typed; the tail stays (a tail-less
+	// seeded address gets one), so the address stays unguessable.
+	let address: TripSlugColumns | null = null;
+	if (data.slug !== undefined) {
+		const base = cleanSlugBase(data.slug);
+		if (!base)
+			return fail("VALIDATION", "Use lowercase letters, numbers and dashes.");
+		const cur = await readTripSlug(tx, data.tripId);
+		if (!cur) return fail("NOT_FOUND");
+		if (base !== splitTripSlug(cur.slug, cur.slugTail).base) {
+			address = cur.slugTail
+				? { slug: withSlugTail(base, cur.slugTail), slugTail: cur.slugTail }
+				: await freshTripSlug(tx, base, data.tripId);
+			const [clash] = await tx
+				.select({ id: trips.id })
+				.from(trips)
+				.where(
+					and(
+						eq(trips.slug, address.slug),
+						isNull(trips.deletedAt),
+						sql`${trips.id} <> ${data.tripId}`,
+					),
+				)
+				.limit(1);
+			if (clash) return fail("CONFLICT", "That address is already taken.");
+		}
 	}
 	if (data.coverAttachmentId) {
 		const cover = await tx.execute(sql`
@@ -311,7 +331,10 @@ export async function updateTripCore(
 		updatedAt: new Date(),
 	};
 	if (data.name !== undefined) patch.name = data.name;
-	if (data.slug !== undefined) patch.slug = data.slug;
+	if (address) {
+		patch.slug = address.slug;
+		patch.slugTail = address.slugTail;
+	}
 	if (data.coverAttachmentId !== undefined)
 		patch.coverAttachmentId = data.coverAttachmentId;
 	let rehome = false;

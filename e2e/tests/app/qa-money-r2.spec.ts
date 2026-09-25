@@ -9,6 +9,7 @@
 import { type APIRequestContext, type Browser, expect, type Page, test } from "@playwright/test";
 import { MONEY_TESTID as M } from "../../../src/features/money/testids";
 import { TESTID } from "../../../src/lib/testids";
+import { openLink } from "./_helpers/link";
 
 const BASE = process.env.APP_URL ?? "http://localhost:5350";
 const SHOTS = process.env.QA_SHOTS ?? "/tmp/qa-money-shots";
@@ -73,7 +74,6 @@ async function callFnErr(page: Page, fn: string, data: unknown, module = MONEY):
 type Clone = {
 	tripId: string;
 	slug: string;
-	shareTokens: { editor: string; viewer: string };
 	ids: { items: Record<string, string>; days: Record<string, string>; nodes: Record<string, string>; legs: Record<string, string> };
 	members: { owner: string; maya: string | null; audrey: string };
 };
@@ -163,7 +163,7 @@ test("R1 re-verify: a signed-in VIEW-link guest can't claim a placeholder into m
 	});
 	// A stranger named Audrey (so the first-name match can't be the only guard)
 	const s = await userPage(browser, `qa-money-r2-s1-${uniq()}@example.com`, "Audrey", "Stranger");
-	await s.page.goto(`/join#t=${c.shareTokens.viewer}`);
+	await openLink(s.page, c.slug, "viewer");
 	await s.page.waitForURL(/\/t\//, { timeout: 30_000 });
 	await waitLive(s.page);
 	out.tabsBefore = await s.page.getByRole("tab").allInnerTexts();
@@ -177,7 +177,7 @@ test("R1 re-verify: a signed-in VIEW-link guest can't claim a placeholder into m
 	await s.page.screenshot({ path: `${SHOTS}/r2-stranger-after-claim.png` });
 	// the same through the edit link
 	const s2 = await userPage(browser, `qa-money-r2-s2-${uniq()}@example.com`, "Audrey", "Other");
-	await s2.page.goto(`/join#t=${c.shareTokens.editor}`);
+	await openLink(s2.page, c.slug, "editor");
 	await s2.page.waitForURL(/\/t\//, { timeout: 30_000 });
 	await waitLive(s2.page);
 	out.claimEditLink = await callFnErr(s2.page, "claimPlaceholder", { tripId: c.tripId, memberId: c.members.audrey }, SHARING);
@@ -200,7 +200,7 @@ test("R1 re-verify: a promoted guest demoted to 'Can view' loses money writes (o
 	await openMoney(o.page, c.slug);
 	const gEmail = `qa-money-r2-g-${uniq()}@example.com`;
 	const g = await userPage(browser, gEmail, "Gina", "Guest");
-	await g.page.goto(`/join#t=${c.shareTokens.editor}`);
+	await openLink(g.page, c.slug, "editor");
 	await g.page.waitForURL(/\/t\//, { timeout: 30_000 });
 	await waitLive(g.page);
 	const gUser = await g.page.evaluate(async () => (await (await fetch("/api/auth/get-session")).json()).user.id as string);
@@ -565,7 +565,7 @@ test("signed-in link guest: no money in digest, counts, inbox, Plan cards, item 
 	const { owner } = c.members;
 	const maya = c.members.maya as string;
 	const g = await userPage(browser, `qa-money-r2-g7-${uniq()}@example.com`, "Gus", "Guest");
-	await g.page.goto(`/join#t=${c.shareTokens.editor}`);
+	await openLink(g.page, c.slug, "editor");
 	await g.page.waitForURL(/\/t\//, { timeout: 30_000 });
 	await waitLive(g.page);
 	const d0 = await callFn<{ currentVersion: number }>(g.page, "getDigest", { tripId: c.tripId }, ACT).catch((e) => ({ err: String(e), currentVersion: 0 }));

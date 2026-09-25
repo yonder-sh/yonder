@@ -17,13 +17,14 @@ import { SUGGEST_TESTID as S } from "../../../src/features/suggest/testids";
 import { TESTID } from "../../../src/lib/testids";
 import { shotPath } from "./_helpers/env";
 import { expectLive } from "./_helpers/page";
+import { openLink } from "./_helpers/link";
 
 const AUTH = process.env.QA_AUTH_DIR ?? path.resolve("e2e/.auth");
 const auth = (h: string) => path.join(AUTH, `${h}.json`);
 const shot = (n: string) =>
 	process.env.QA_SHOTS_DIR ? path.join(process.env.QA_SHOTS_DIR, `${n}.png`) : shotPath(`qa-collab/${n}.png`);
 const TOKYO = "/t/asia-2027/japan/tokyo";
-const SUGGEST_TOKEN = "qa-share-token-suggester-asia-2027";
+const SUGGEST_TOKEN = "suggester";
 
 async function open(
 	browser: Browser,
@@ -37,10 +38,8 @@ async function open(
 		...(opts.mobile ? { isMobile: true, hasTouch: true, deviceScaleFactor: 2.625 } : {}),
 	});
 	const page = await ctx.newPage();
-	if (opts.token) {
-		await page.goto(`/join#t=${opts.token}`);
-		await expect(page).toHaveURL(/\/t\//, { timeout: 20_000 });
-	}
+	// `token`: the link role a guest comes in with (the QA trip's address is its link).
+	if (opts.token) await openLink(page, "asia-2027", opts.token);
 	await page.goto(url);
 	await expectLive(page);
 	await page.waitForFunction(() => !!(window as unknown as { __yonder?: { graph?: unknown } }).__yonder?.graph);
@@ -1164,7 +1163,7 @@ test("DIG-07: Eve (who already has a digest row as a signed-in link guest) opens
 	browser,
 }) => {
 	test.setTimeout(180_000);
-	const EDIT = "qa-share-token-editor-asia-2027";
+	const EDIT = "editor";
 	// 1. Eve, signed in, through the link: her own trip_seen row.
 	const e1 = await open(browser, "eve", "/t/asia-2027?tab=plan", { token: EDIT });
 	const g = await graph(e1.page);

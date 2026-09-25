@@ -15,6 +15,7 @@ import { shotPath, storageStateOf } from "./_helpers/env";
 import { cloneFixtureTrip } from "./_helpers/fixture";
 import { clearToasts } from "./media-helpers";
 import { collectConsole, expectLive } from "./_helpers/page";
+import { openLink } from "./_helpers/link";
 
 test.use({ storageState: storageStateOf("dev") });
 
@@ -161,7 +162,7 @@ test("a guest editor can upload; a guest viewer can't (MED-11)", async ({ page, 
 	for (const role of ["editor", "viewer"] as const) {
 		const ctx = await browser.newContext({ storageState: { cookies: [], origins: [] } });
 		const guest = await ctx.newPage();
-		await guest.goto(`/join#t=${c.shareTokens[role]}`);
+		await openLink(guest, c.slug, role);
 		await expect(guest).toHaveURL(new RegExp(`/t/${c.slug}`), { timeout: 20_000 });
 		await openMedia(guest, c.slug);
 		const add = guest.getByTestId(MEDIA_TESTID.addButton).first();

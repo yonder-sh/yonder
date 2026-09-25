@@ -14,6 +14,7 @@ import { TESTID } from "../../../src/lib/testids";
 import { APP_URL, shotPath, storageStateOf } from "./_helpers/env";
 import { cloneFixtureTrip } from "./_helpers/fixture";
 import { collectConsole, expectLive, expectNoHorizontalOverflow } from "./_helpers/page";
+import { openLink } from "./_helpers/link";
 
 test.use({ storageState: storageStateOf("dev") });
 
@@ -235,7 +236,7 @@ test("a reserved departure pins the leg; a link guest sees the booking masked", 
 	guest.on("response", async (r) => {
 		if (r.url().includes("/_serverFn/")) bodies.push(await r.text().catch(() => ""));
 	});
-	await guest.goto(`${APP_URL}/join#t=${c.shareTokens.editor}`);
+	await openLink(guest, c.slug, "editor");
 	await expect(guest).toHaveURL(new RegExp(`/t/${c.slug}`), { timeout: 20_000 });
 	await guest.goto(`/t/${c.slug}?sel=l.${I.itoya}.${I.dropBags}`);
 	await expectLive(guest);

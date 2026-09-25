@@ -12,6 +12,7 @@ import { expect, test } from "@playwright/test";
 import { loginViaApi } from "./_helpers/auth";
 import { cloneFixtureTrip } from "./_helpers/fixture";
 import { call, MEMBER, MOD, T, TOKEN } from "./qa-security-helpers";
+import { openLink } from "./_helpers/link";
 
 test.skip(!process.env.QA_SEC_DIR, "QA security verifier probes: set QA_SEC_DIR (see qa-security-helpers.ts)");
 const DIR = process.env.QA_SEC_DIR ?? "/tmp";
@@ -35,7 +36,7 @@ test("payload ids from another trip are refused", async ({ browser }) => {
 	await loginViaApi(ctx.request, `qa-sec-xavier-${stamp}@example.com`, { first: "Xavier", last: "Attacker" });
 	const page = await ctx.newPage();
 	const X = await cloneFixtureTrip(page.request);
-	await page.goto(`/join#t=${TOKEN.editor}`);
+	await openLink(page, "asia-2027", TOKEN.editor);
 	await page.waitForURL(/\/t\/asia-2027/, { timeout: 30_000 });
 	const tg = await call(page, MOD.graph, "getTripGraph", { tripId: T });
 	const xg = await call(page, MOD.graph, "getTripGraph", { tripId: X.tripId });

@@ -9,6 +9,7 @@ import { HOME_TESTID } from "../../../src/features/home/testids";
 import { LISTS_TESTID as L } from "../../../src/features/lists/testids";
 import { TESTID } from "../../../src/lib/testids";
 import { expectLive } from "./_helpers/page";
+import { openLink } from "./_helpers/link";
 
 test.skip(!process.env.QA_AUTH_DIR, "I2 content verifier spec: set QA_AUTH_DIR");
 const AUTH = process.env.QA_AUTH_DIR ?? "";
@@ -21,7 +22,7 @@ const graphOf = (p: Page) => p.evaluate(() => (window as unknown as { __yonder: 
 test("LINK-07: a working guest link on another trip's URL says 'no access', not 'link no longer active'", async ({ browser }) => {
 	const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
 	const p = await ctx.newPage();
-	await p.goto("/join#t=qa-share-token-editor-asia-2027");
+	await openLink(p, "asia-2027", "editor");
 	await expect(p.getByTestId("workspace")).toBeVisible({ timeout: 30_000 });
 	await p.goto("/t/phu-quoc-detour?tab=plan");
 	await p.waitForTimeout(2500);
@@ -105,7 +106,7 @@ test("a link guest never gets another member's private to-do (list, counts, List
 	);
 	const gc = await browser.newContext({ viewport: { width: 1440, height: 900 } });
 	const gp = await gc.newPage();
-	await gp.goto("/join#t=qa-share-token-editor-asia-2027");
+	await openLink(gp, "asia-2027", "editor");
 	await expect(gp.getByTestId("workspace")).toBeVisible({ timeout: 30_000 });
 	await gp.goto("/t/asia-2027?tab=lists");
 	await expectLive(gp);

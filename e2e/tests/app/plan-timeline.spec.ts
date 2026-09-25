@@ -20,6 +20,7 @@ import { TESTID } from "../../../src/lib/testids";
 import { shotPath, storageStateOf } from "./_helpers/env";
 import { cloneFixtureTrip } from "./_helpers/fixture";
 import { collectConsole, expectLive, expectNoHorizontalOverflow } from "./_helpers/page";
+import { openLink } from "./_helpers/link";
 
 test.use({ storageState: storageStateOf("dev") });
 
@@ -428,7 +429,7 @@ test("a viewer link sees the plan without edit affordances", async ({ browser },
 	// A fresh, signed-out browser (test.use's storageState would otherwise apply).
 	const guestCtx = await browser.newContext({ storageState: { cookies: [], origins: [] } });
 	const guest = await guestCtx.newPage();
-	await guest.goto(`/join#t=${c.shareTokens.viewer}`);
+	await openLink(guest, c.slug, "viewer");
 	await expect(guest.getByTestId(TESTID.workspace)).toBeVisible({ timeout: 20_000 });
 	await guest.goto(`${new URL(guest.url()).pathname}?lens=place`);
 	await expect(guest.getByTestId(TESTID.timelineItem).first()).toBeVisible();

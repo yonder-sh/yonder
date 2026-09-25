@@ -6,6 +6,7 @@ import { execFileSync } from "node:child_process";
 import { type Browser, type BrowserContext, type Page, expect, test } from "@playwright/test";
 import { loginViaApi } from "./_helpers/auth";
 import { APP_URL } from "./_helpers/env";
+import { openLink } from "./_helpers/link";
 
 test.beforeEach(({}, info) => {
 	test.skip(info.project.name === "mobile", "qa-home specs run on the desktop project");
@@ -115,10 +116,10 @@ for (const live of [true, false]) {
 		const op = await o.newPage();
 		const res = await op.request.post("/api/test/fixture", { headers: { Origin: APP_URL } });
 		expect(res.ok(), await res.text()).toBe(true);
-		const c = (await res.json()) as { slug: string; shareTokens: { editor: string } };
+		const c = (await res.json()) as { slug: string };
 		const g = await browser.newContext({ baseURL: APP_URL, viewport: { width: 1440, height: 900 } });
 		let gp = await g.newPage();
-		await gp.goto(`/join#t=${c.shareTokens.editor}`);
+		await openLink(gp, c.slug, "editor");
 		await expect(gp.getByTestId("workspace")).toBeVisible({ timeout: 30_000 });
 		await swControls(gp);
 		await gp.reload();

@@ -197,19 +197,10 @@ beforeAll(async () => {
 			import("@/lib/realtime/collab-client"),
 			import("@/lib/realtime/trip-live"),
 			import("@/db/schema"),
-			import("@/db/share-token.server"),
 		]),
 	]);
-	const [
-		app,
-		auth,
-		collabDbMod,
-		jobsMod,
-		clientMod,
-		tripLive,
-		schema,
-		shareToken,
-	] = collabMod;
+	const [app, auth, collabDbMod, jobsMod, clientMod, tripLive, schema] =
+		collabMod;
 	mod = {
 		CollabClient: clientMod.CollabClient,
 		TripLiveController: tripLive.TripLiveController,
@@ -302,21 +293,10 @@ beforeAll(async () => {
 	const [lv, le, ls] = await db
 		.insert(schema.shareLinks)
 		.values([
-			{
-				tripId: ids.t1,
-				role: "viewer",
-				...shareToken.shareTokenColumns(shareToken.newShareToken()),
-			},
-			{
-				tripId: ids.t1,
-				role: "editor",
-				...shareToken.shareTokenColumns(shareToken.newShareToken()),
-			},
-			{
-				tripId: ids.t1,
-				role: "suggester",
-				...shareToken.shareTokenColumns(shareToken.newShareToken()),
-			},
+			// One live row per role, as test fixtures may hold (`pinTestLink`).
+			{ tripId: ids.t1, role: "viewer" },
+			{ tripId: ids.t1, role: "editor" },
+			{ tripId: ids.t1, role: "suggester" },
 		])
 		.returning({ id: schema.shareLinks.id });
 	if (!lv || !le || !ls) throw new Error("seed links");

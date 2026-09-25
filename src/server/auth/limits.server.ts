@@ -24,7 +24,9 @@ import { authEnv } from "./env.server";
  *   So an attacker gets 10 guesses, then at most one per hour: ≤ ~33 a day
  *   per email with rotating IPs (a single limiter with `blockDuration` would
  *   replace its 24 h window with the 1 h block and reset the count hourly).
- * - Share-link redemptions per IP: 10 per minute.
+ * - Non-member trip opens per IP: 30 per minute. Opening a trip's address
+ *   (`/t/<slug>`) as a non-member is how its link is used, so this caps
+ *   guessing addresses; over the cap the answer is the same not-found.
  *
  * Emails are hashed before they become Redis keys (no PII in the keyspace).
  * The limits are active in production builds unless AUTH_RATE_LIMIT=off on
@@ -36,7 +38,7 @@ export const LIMITS = {
 	otpSendPerDay: 20,
 	otpFailuresPerDay: 10,
 	otpLockSeconds: 3600,
-	redeemPerMinute: 10,
+	tripOpensPerMinute: 30,
 } as const;
 
 /** Normalizes an email the way Better Auth does, plus trimming. */
@@ -58,8 +60,8 @@ export interface AuthLimits {
 	otpLockRemaining(email: string): Promise<number>;
 	recordOtpFailure(email: string): Promise<void>;
 	clearOtpFailures(email: string): Promise<void>;
-	/** Consumes one redemption for the IP; returns ms to wait, or 0 if allowed. */
-	redeemRetryAfter(ip: string): Promise<number>;
+	/** Consumes one non-member trip open for the IP; returns ms to wait, or 0 if allowed. */
+	tripOpenRetryAfter(ip: string): Promise<number>;
 }
 
 type Factory = (o: {
@@ -97,9 +99,9 @@ export function createAuthLimits(opts: {
 		points: 1,
 		duration: LIMITS.otpLockSeconds,
 	});
-	const redeem = make({
-		keyPrefix: "redeem-ip",
-		points: LIMITS.redeemPerMinute,
+	const tripOpen = make({
+		keyPrefix: "trip-open-ip",
+		points: LIMITS.tripOpensPerMinute,
 		duration: 60,
 	});
 
@@ -143,9 +145,9 @@ export function createAuthLimits(opts: {
 			const key = hashEmail(email);
 			await Promise.all([failures.delete(key), lock.delete(key)]);
 		},
-		async redeemRetryAfter(ip) {
+		async tripOpenRetryAfter(ip) {
 			if (!enabled) return 0;
-			const over = await consumed(redeem, ip || "unknown");
+			const over = await consumed(tripOpen, ip || "unknown");
 			return over ? Math.max(over.msBeforeNext, 1000) : 0;
 		},
 	};

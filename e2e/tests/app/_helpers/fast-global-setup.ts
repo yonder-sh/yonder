@@ -29,7 +29,8 @@ const WARM_DESKTOP = [
 	"/share",
 ];
 const WARM_PHONE = ["/t/asia-2027?tab=plan", "/dashboard"];
-const WARM_GUEST = ["/login", "/join#t=qa-share-token-viewer-asia-2027"];
+// A signed-out visitor at a trip whose link is off: the "no access" page.
+const WARM_GUEST = ["/login", "/t/asia-2027"];
 
 async function checkEnv(e: FastEnvEntry): Promise<void> {
 	assertNotMainStack(e.appUrl);

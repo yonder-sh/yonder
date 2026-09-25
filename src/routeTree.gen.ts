@@ -11,7 +11,6 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthedRouteImport } from './routes/_authed'
-import { Route as authJoinRouteImport } from './routes/(auth)/join'
 import { Route as authLoginRouteImport } from './routes/(auth)/login'
 import { Route as authWelcomeRouteImport } from './routes/(auth)/welcome'
 import { Route as AuthedDashboardRouteImport } from './routes/_authed/dashboard'
@@ -19,10 +18,10 @@ import { Route as AuthedShareRouteImport } from './routes/_authed/share'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as DevFixtureRouteImport } from './routes/dev/fixture'
 import { Route as TTripRouteImport } from './routes/t/$trip'
-import { Route as authSTokenRouteImport } from './routes/(auth)/s/$token'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as ApiAvatarUserIdRouteImport } from './routes/api/avatar/$userId'
 import { Route as ApiTestFixtureRouteImport } from './routes/api/test/fixture'
+import { Route as ApiTestLinkRouteImport } from './routes/api/test/link'
 import { Route as DevFixtureIndexRouteImport } from './routes/dev/fixture/index'
 import { Route as DevFixtureSplatRouteImport } from './routes/dev/fixture/$'
 import { Route as MediaIdVariantRouteImport } from './routes/media/$id/$variant'
@@ -39,11 +38,6 @@ const IndexRoute = IndexRouteImport.update({
 } as any)
 const AuthedRoute = AuthedRouteImport.update({
   id: '/_authed',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const authJoinRoute = authJoinRouteImport.update({
-  id: '/(auth)/join',
-  path: '/join',
   getParentRoute: () => rootRouteImport,
 } as any)
 const authLoginRoute = authLoginRouteImport.update({
@@ -81,11 +75,6 @@ const TTripRoute = TTripRouteImport.update({
   path: '/t/$trip',
   getParentRoute: () => rootRouteImport,
 } as any)
-const authSTokenRoute = authSTokenRouteImport.update({
-  id: '/(auth)/s/$token',
-  path: '/s/$token',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
@@ -99,6 +88,11 @@ const ApiAvatarUserIdRoute = ApiAvatarUserIdRouteImport.update({
 const ApiTestFixtureRoute = ApiTestFixtureRouteImport.update({
   id: '/api/test/fixture',
   path: '/api/test/fixture',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiTestLinkRoute = ApiTestLinkRouteImport.update({
+  id: '/api/test/link',
+  path: '/api/test/link',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DevFixtureIndexRoute = DevFixtureIndexRouteImport.update({
@@ -144,7 +138,6 @@ const ApiPlacesPhotoSplatRoute = ApiPlacesPhotoSplatRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/join': typeof authJoinRoute
   '/login': typeof authLoginRoute
   '/welcome': typeof authWelcomeRoute
   '/dashboard': typeof AuthedDashboardRoute
@@ -152,10 +145,10 @@ export interface FileRoutesByFullPath {
   '/api/health': typeof ApiHealthRoute
   '/dev/fixture': typeof DevFixtureRouteWithChildren
   '/t/$trip': typeof TTripRouteWithChildren
-  '/s/$token': typeof authSTokenRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/avatar/$userId': typeof ApiAvatarUserIdRoute
   '/api/test/fixture': typeof ApiTestFixtureRoute
+  '/api/test/link': typeof ApiTestLinkRoute
   '/dev/fixture/$': typeof DevFixtureSplatRoute
   '/media/$id/$variant': typeof MediaIdVariantRoute
   '/t/$trip/$': typeof TTripSplatRoute
@@ -167,16 +160,15 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/join': typeof authJoinRoute
   '/login': typeof authLoginRoute
   '/welcome': typeof authWelcomeRoute
   '/dashboard': typeof AuthedDashboardRoute
   '/share': typeof AuthedShareRoute
   '/api/health': typeof ApiHealthRoute
-  '/s/$token': typeof authSTokenRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/avatar/$userId': typeof ApiAvatarUserIdRoute
   '/api/test/fixture': typeof ApiTestFixtureRoute
+  '/api/test/link': typeof ApiTestLinkRoute
   '/dev/fixture/$': typeof DevFixtureSplatRoute
   '/media/$id/$variant': typeof MediaIdVariantRoute
   '/t/$trip/$': typeof TTripSplatRoute
@@ -190,7 +182,6 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authed': typeof AuthedRouteWithChildren
-  '/(auth)/join': typeof authJoinRoute
   '/(auth)/login': typeof authLoginRoute
   '/(auth)/welcome': typeof authWelcomeRoute
   '/_authed/dashboard': typeof AuthedDashboardRoute
@@ -198,10 +189,10 @@ export interface FileRoutesById {
   '/api/health': typeof ApiHealthRoute
   '/dev/fixture': typeof DevFixtureRouteWithChildren
   '/t/$trip': typeof TTripRouteWithChildren
-  '/(auth)/s/$token': typeof authSTokenRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/avatar/$userId': typeof ApiAvatarUserIdRoute
   '/api/test/fixture': typeof ApiTestFixtureRoute
+  '/api/test/link': typeof ApiTestLinkRoute
   '/dev/fixture/$': typeof DevFixtureSplatRoute
   '/media/$id/$variant': typeof MediaIdVariantRoute
   '/t/$trip/$': typeof TTripSplatRoute
@@ -215,7 +206,6 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/join'
     | '/login'
     | '/welcome'
     | '/dashboard'
@@ -223,10 +213,10 @@ export interface FileRouteTypes {
     | '/api/health'
     | '/dev/fixture'
     | '/t/$trip'
-    | '/s/$token'
     | '/api/auth/$'
     | '/api/avatar/$userId'
     | '/api/test/fixture'
+    | '/api/test/link'
     | '/dev/fixture/$'
     | '/media/$id/$variant'
     | '/t/$trip/$'
@@ -238,16 +228,15 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/join'
     | '/login'
     | '/welcome'
     | '/dashboard'
     | '/share'
     | '/api/health'
-    | '/s/$token'
     | '/api/auth/$'
     | '/api/avatar/$userId'
     | '/api/test/fixture'
+    | '/api/test/link'
     | '/dev/fixture/$'
     | '/media/$id/$variant'
     | '/t/$trip/$'
@@ -260,7 +249,6 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authed'
-    | '/(auth)/join'
     | '/(auth)/login'
     | '/(auth)/welcome'
     | '/_authed/dashboard'
@@ -268,10 +256,10 @@ export interface FileRouteTypes {
     | '/api/health'
     | '/dev/fixture'
     | '/t/$trip'
-    | '/(auth)/s/$token'
     | '/api/auth/$'
     | '/api/avatar/$userId'
     | '/api/test/fixture'
+    | '/api/test/link'
     | '/dev/fixture/$'
     | '/media/$id/$variant'
     | '/t/$trip/$'
@@ -285,16 +273,15 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthedRoute: typeof AuthedRouteWithChildren
-  authJoinRoute: typeof authJoinRoute
   authLoginRoute: typeof authLoginRoute
   authWelcomeRoute: typeof authWelcomeRoute
   ApiHealthRoute: typeof ApiHealthRoute
   DevFixtureRoute: typeof DevFixtureRouteWithChildren
   TTripRoute: typeof TTripRouteWithChildren
-  authSTokenRoute: typeof authSTokenRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiAvatarUserIdRoute: typeof ApiAvatarUserIdRoute
   ApiTestFixtureRoute: typeof ApiTestFixtureRoute
+  ApiTestLinkRoute: typeof ApiTestLinkRoute
   MediaIdVariantRoute: typeof MediaIdVariantRoute
   TTripRateRoute: typeof TTripRateRoute
   TTripShareCardDotpngRoute: typeof TTripShareCardDotpngRoute
@@ -315,13 +302,6 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: '/'
       preLoaderRoute: typeof AuthedRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/(auth)/join': {
-      id: '/(auth)/join'
-      path: '/join'
-      fullPath: '/join'
-      preLoaderRoute: typeof authJoinRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/(auth)/login': {
@@ -373,13 +353,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TTripRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/(auth)/s/$token': {
-      id: '/(auth)/s/$token'
-      path: '/s/$token'
-      fullPath: '/s/$token'
-      preLoaderRoute: typeof authSTokenRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/auth/$': {
       id: '/api/auth/$'
       path: '/api/auth/$'
@@ -399,6 +372,13 @@ declare module '@tanstack/react-router' {
       path: '/api/test/fixture'
       fullPath: '/api/test/fixture'
       preLoaderRoute: typeof ApiTestFixtureRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/test/link': {
+      id: '/api/test/link'
+      path: '/api/test/link'
+      fullPath: '/api/test/link'
+      preLoaderRoute: typeof ApiTestLinkRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dev/fixture/': {
@@ -502,16 +482,15 @@ const TTripRouteWithChildren = TTripRoute._addFileChildren(TTripRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthedRoute: AuthedRouteWithChildren,
-  authJoinRoute: authJoinRoute,
   authLoginRoute: authLoginRoute,
   authWelcomeRoute: authWelcomeRoute,
   ApiHealthRoute: ApiHealthRoute,
   DevFixtureRoute: DevFixtureRouteWithChildren,
   TTripRoute: TTripRouteWithChildren,
-  authSTokenRoute: authSTokenRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiAvatarUserIdRoute: ApiAvatarUserIdRoute,
   ApiTestFixtureRoute: ApiTestFixtureRoute,
+  ApiTestLinkRoute: ApiTestLinkRoute,
   MediaIdVariantRoute: MediaIdVariantRoute,
   TTripRateRoute: TTripRateRoute,
   TTripShareCardDotpngRoute: TTripShareCardDotpngRoute,
@@ -520,6 +499,7 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
 
 import type { getRouter } from './router.tsx'
 import type { startInstance } from './start.ts'

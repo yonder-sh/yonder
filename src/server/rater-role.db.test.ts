@@ -42,12 +42,11 @@ import {
 } from "@/db/migrate.server";
 import { user } from "@/db/schema";
 import { setNodePriority, updateNode } from "@/functions/nodes.functions";
-import { parseShareFragment } from "@/lib/auth/share-link";
 import { isProposed } from "@/lib/schemas/proposals";
 import { migrateGuestToUser } from "@/server/auth/accounts.server";
 import type { AuthUser } from "@/server/auth.server";
 import { errorCode } from "@/server/authz/errors";
-import { redeemShareToken } from "@/server/authz/share-links.server";
+import { openTripLink } from "@/server/authz/share-links.server";
 import { loadTripAccess } from "@/server/authz/trip-access.server";
 import { cloneDemoTrip, type FixtureClone } from "@/server/fixture.server";
 import { closeQueues } from "@/server/live/jobs.server";
@@ -255,12 +254,12 @@ describe("setNodePriority by role (PLACES §1c)", () => {
 });
 
 describe('the "Can rate" link (PLACES §1c)', () => {
+	/** "Reset link" as a rate link: the trip's new address. */
 	async function rateLink(): Promise<string> {
 		const out = new TxOutbox(c.tripId);
-		const url = await db().transaction((tx) =>
+		return db().transaction((tx) =>
 			resetLink(tx, out, c.tripId, "rater", owner.id),
 		);
-		return parseShareFragment(new URL(url).hash) ?? "(no token)";
 	}
 	const memberRow = async (userId: string) =>
 		(
@@ -276,9 +275,9 @@ describe('the "Can rate" link (PLACES §1c)', () => {
 		)[0]?.n ?? 0;
 
 	it("a signed-in account who opens it becomes a rater member and can rate", async () => {
-		const token = await rateLink();
+		const slug = await rateLink();
 		const kim = await newUser("Kim");
-		expect((await redeemShareToken(token, kim.id))?.role).toBe("rater");
+		expect((await openTripLink(slug, kim.id))?.role).toBe("rater");
 		const row = await memberRow(kim.id);
 		expect(row).toMatchObject({ role: "rater", status: "active" });
 		// The membership is their one source of access (no grant on top).
@@ -298,15 +297,15 @@ describe('the "Can rate" link (PLACES §1c)', () => {
 				}),
 			),
 		).toBe("ok");
-		// Opening it again changes nothing.
-		await redeemShareToken(token, kim.id);
+		// Opening it again changes nothing: they are a member now.
+		expect(await openTripLink(slug, kim.id)).toBeNull();
 		expect((await memberRow(kim.id))?.id).toBe(row?.id);
 	});
 
 	it("an anonymous guest stays a view-only guest until they sign in", async () => {
-		const token = await rateLink();
+		const slug = await rateLink();
 		const anon = await newUser("Heron", true);
-		expect((await redeemShareToken(token, anon.id))?.role).toBe("rater");
+		expect((await openTripLink(slug, anon.id))?.role).toBe("rater");
 		expect(await memberRow(anon.id)).toBeNull();
 		const access = await loadTripAccess(c.tripId, anon.id);
 		expect(access).toMatchObject({
@@ -336,12 +335,11 @@ describe('the "Can rate" link (PLACES §1c)', () => {
 
 	it("a view link still never makes anyone a member (QA LINK-08)", async () => {
 		const out = new TxOutbox(c.tripId);
-		const url = await db().transaction((tx) =>
+		const slug = await db().transaction((tx) =>
 			resetLink(tx, out, c.tripId, "viewer", owner.id),
 		);
-		const token = parseShareFragment(new URL(url).hash) ?? "";
 		const eve = await newUser("Eve");
-		expect((await redeemShareToken(token, eve.id))?.role).toBe("viewer");
+		expect((await openTripLink(slug, eve.id))?.role).toBe("viewer");
 		expect(await memberRow(eve.id)).toBeNull();
 	});
 });

@@ -70,12 +70,15 @@ type Y = {
 const yonder = (page: Page) =>
 	page.evaluate(() => (window as unknown as { __yonder?: Y }).__yonder ?? null);
 
+/** `--slug`: the readable part; imports get a random tail (`slug` is the whole address). */
+let base = "";
 let slug = "";
+const TAIL = "[23456789abcdefghjkmnpqrstuvwxyz]{8}";
 const baseArgs = (project: string) => [
 	"--owner",
 	"dev@example.com",
 	"--slug",
-	slug,
+	base,
 	"--name",
 	"Asia 2027 (e2e)",
 	"--no-autofill",
@@ -87,9 +90,11 @@ const baseArgs = (project: string) => [
 
 test.beforeAll(async ({ browserName: _b }, info) => {
 	test.setTimeout(240_000);
-	slug = `asia-e2e-${randomBytes(3).toString("hex")}`;
+	base = `asia-e2e-${randomBytes(3).toString("hex")}`;
 	const out = await importer(baseArgs(info.project.name));
-	expect(out).toContain(`committed trip ${slug}`);
+	// The trip's address: the readable part and an unguessable tail (it is the share link).
+	slug = new RegExp(`committed trip (${base}-${TAIL}) `).exec(out)?.[1] ?? "";
+	expect(slug, out).not.toBe("");
 	expect(out).toContain("0 geocode fallbacks, 0 unmatched");
 });
 
@@ -211,10 +216,12 @@ test("SEED-10/13: a second run refuses, --replace replaces, bad input leaves not
 	test.skip(info.project.name !== "chromium", "one run is enough");
 	test.setTimeout(240_000);
 	const refused = await importerFails(baseArgs("mobile"));
-	expect(refused).toContain(`a trip with the slug "${slug}" already exists`);
+	expect(refused).toContain(`a trip at /t/${slug} already exists`);
 
+	// A re-import keeps the trip's address.
 	const out = await importer([...baseArgs("mobile"), "--replace"]);
 	expect(out).toMatch(/replacing [0-9a-f-]{36}/);
+	expect(out).toContain(`committed trip ${slug} `);
 	await page.goto(`/t/${slug}?tab=plan`);
 	await expectLive(page);
 	await expect.poll(async () => (await yonder(page))?.graph.nodes.length).toBe(191);
@@ -227,7 +234,7 @@ test("SEED-10/13: a second run refuses, --replace replaces, bad input leaves not
 		const bad = JSON.parse(readFileSync(f, "utf8"));
 		bad.headers = bad.headers.map((h: string) => (h === "City" ? "Town" : h));
 		writeFileSync(f, JSON.stringify(bad));
-		const badSlug = `${slug}-bad`;
+		const badSlug = `${base}-bad`;
 		const msg = await importerFails(["--owner", "dev@example.com", "--slug", badSlug, "--no-media", "--no-autofill", "--report", "-", "--data-dir", dir]);
 		expect(msg).toMatch(/places\.json: .*missing column "City"/);
 		await page.goto(`/t/${badSlug}?tab=plan`);

@@ -6,13 +6,16 @@
  */
 import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
+import { sql } from "drizzle-orm";
 import { type Db, getDb, type Tx } from "@/db/db.server";
 import { indexGraph } from "@/lib/engine/graph-index";
 import { suggestPair } from "@/lib/engine/suggest";
 import type { LegTarget } from "@/lib/schemas/targets";
+import { cleanSlugBase } from "@/lib/trip-slug";
 import { loadGraphForServer } from "@/server/graph.server";
 import { enqueue } from "@/server/live/jobs.server";
 import { autofillDedupeId } from "@/server/live/outbox.server";
+import { freshTripSlug } from "@/server/trip-slug.server";
 import { tzAt } from "@/server/tz.server";
 import type { ImportArgs } from "./args";
 import { describeArgs } from "./args";
@@ -41,6 +44,13 @@ export type ImportHooks = {
 		ctx: { plan: ImportPlan; ownerUserId: string },
 	) => Promise<void>;
 	log?: (line: string) => void;
+	/**
+	 * Keep `--slug` as the whole address, with no random tail: the QA seed's
+	 * fixed `asia-2027`, which the e2e specs open. Every other import gets an
+	 * unguessable address (`asia-2027-k7m2qxw9`, `src/lib/trip-slug.ts`), and
+	 * a re-import (`--replace`) keeps the replaced trip's.
+	 */
+	fixedSlug?: boolean;
 };
 
 export type ImportResult = {
@@ -179,7 +189,15 @@ export async function runImport(
 			});
 			ownerUserId = owner.id;
 			ownerCreated = owner.created;
-			replacedTripId = await clearSlug(tx, a.slug, a.replace);
+			const replaced = await clearSlug(tx, a.slug, a.replace, ownerUserId);
+			replacedTripId = replaced?.id ?? null;
+			if (!hooks.fixedSlug) {
+				const address = replaced?.slugTail
+					? { slug: replaced.slug, slugTail: replaced.slugTail }
+					: await freshTripSlug(tx, cleanSlugBase(a.slug) || "trip");
+				plan.trip.slug = address.slug;
+				plan.trip.slugTail = address.slugTail;
+			}
 			const memberUsers = (await hooks.memberUsers?.(tx)) ?? {};
 			await writePlan(tx, plan, { ownerUserId, photos, memberUsers });
 			await hooks.extend?.(tx, { plan, ownerUserId });
@@ -189,7 +207,7 @@ export async function runImport(
 		throw e;
 	}
 	log(
-		`committed trip ${a.slug} (${plan.trip.id})${replacedTripId ? `, replacing ${replacedTripId}` : ""}`,
+		`committed trip ${plan.trip.slug} (${plan.trip.id})${replacedTripId ? `, replacing ${replacedTripId}` : ""}`,
 	);
 	if (replacedTripId) {
 		const n = await deleteTripObjects(replacedTripId).catch(() => 0);
@@ -213,7 +231,7 @@ export async function runImport(
 	const facts: RunFacts = {
 		owner: { email: a.owner, created: ownerCreated },
 		tripId: plan.trip.id,
-		slug: a.slug,
+		slug: plan.trip.slug,
 		replacedTripId,
 		photosUploaded: photos.size,
 		geocodeFallbacks: fallbacks,
@@ -226,7 +244,7 @@ export async function runImport(
 	writeReport(a.report, report);
 	return {
 		tripId: plan.trip.id,
-		slug: a.slug,
+		slug: plan.trip.slug,
 		ownerUserId,
 		replacedTripId,
 		plan,
@@ -236,16 +254,28 @@ export async function runImport(
 }
 
 /**
- * `--remove`: hard-deletes the live trip with `slug` (everything cascades) and
- * its S3 prefix. Returns the removed trip id, or null when there was none.
+ * `--remove`: hard-deletes the live trip at `slug` (everything cascades) and
+ * its S3 prefix: the whole address, or its readable part for a trip that
+ * `ownerEmail` imported (`clearSlug`). Returns the removed trip id, or null
+ * when there was none.
  */
 export async function removeImport(
 	slug: string,
 	db: Db = getDb(),
+	ownerEmail?: string,
 ): Promise<string | null> {
-	const id = await db.transaction((tx) => clearSlug(tx, slug, true));
-	if (id) await deleteTripObjects(id).catch(() => 0);
-	return id;
+	const trip = await db.transaction(async (tx) => {
+		const owner = ownerEmail
+			? ((
+					await tx.execute(
+						sql`select id from "user" where email = ${ownerEmail.toLowerCase()}`,
+					)
+				).rows[0] as { id: string } | undefined)
+			: undefined;
+		return clearSlug(tx, slug, true, owner?.id ?? null);
+	});
+	if (trip) await deleteTripObjects(trip.id).catch(() => 0);
+	return trip?.id ?? null;
 }
 
 function writeReport(file: string | null, text: string): void {

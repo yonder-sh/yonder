@@ -92,10 +92,12 @@ const count = async (table: string, tripId: string) =>
 
 describe("sheet:import", () => {
 	let tripId = "";
+	let slug = "";
 
 	it("writes the whole trip in one go", async () => {
 		const r = await runImport(args({ dumpGraph: graphFile }), quiet, getDb());
 		tripId = r.tripId;
+		slug = r.slug;
 		expect(await count("nodes", tripId)).toBe(191);
 		expect(await count("items", tripId)).toBe(62);
 		expect(await count("legs", tripId)).toBe(3);
@@ -108,18 +110,24 @@ describe("sheet:import", () => {
 		expect(await count("trip_days", tripId)).toBe(37);
 		const [trip] = await q<{
 			slug: string;
+			slug_tail: string;
 			start_date: string;
 			end_date: string;
 			default_tz: string;
 		}>(
-			sql`select slug, start_date::text, end_date::text, default_tz from trips where id = ${tripId}`,
+			sql`select slug, slug_tail, start_date::text, end_date::text, default_tz from trips where id = ${tripId}`,
 		);
+		// The address is the share link: the readable part and a random tail.
 		expect(trip).toEqual({
-			slug: "asia-2027",
+			slug: `asia-2027-${trip?.slug_tail}`,
+			slug_tail: expect.stringMatching(
+				/^[23456789abcdefghjkmnpqrstuvwxyz]{8}$/,
+			),
 			start_date: "2027-10-02",
 			end_date: "2027-11-07",
 			default_tz: "Asia/Tokyo",
 		});
+		expect(r.slug).toBe(trip?.slug);
 		const members = await q<{
 			status: string;
 			role: string;
@@ -196,6 +204,8 @@ describe("sheet:import", () => {
 	it("replaces the trip with --replace, with the same counts", async () => {
 		const r = await runImport(args({ replace: true }), quiet, getDb());
 		expect(r.replacedTripId).toBe(tripId);
+		// `--slug asia-2027` found it by its readable part; the address stays.
+		expect(r.slug).toBe(slug);
 		expect(await count("nodes", tripId)).toBe(0);
 		expect(await count("nodes", r.tripId)).toBe(191);
 		expect(await count("list_items", r.tripId)).toBe(59);
@@ -218,9 +228,9 @@ describe("sheet:import", () => {
 		} finally {
 			rmSync(dir, { recursive: true, force: true });
 		}
-		expect(await q(sql`select id from trips where slug = 'asia-bad'`)).toEqual(
-			[],
-		);
+		expect(
+			await q(sql`select id from trips where slug like 'asia-bad%'`),
+		).toEqual([]);
 	});
 
 	it("rolls back a failure inside the transaction", async () => {
@@ -237,7 +247,7 @@ describe("sheet:import", () => {
 			),
 		).rejects.toThrow("boom");
 		expect(
-			await q(sql`select id from trips where slug = 'asia-rollback'`),
+			await q(sql`select id from trips where slug like 'asia-rollback%'`),
 		).toEqual([]);
 	});
 
@@ -253,6 +263,8 @@ describe("sheet:import", () => {
 	/** The QA seed's in-transaction additions that matter to a replace: money. */
 	const qaHooks: ImportHooks = {
 		...quiet,
+		// Like `pnpm db:seed:qa`: the fixed address, no random tail.
+		fixedSlug: true,
 		patchPlan: (plan) => applyQaFixtures(plan, airports),
 		extend: async (tx, ctx) => {
 			const m = qaMoney(ctx.plan, { createdBy: ctx.ownerUserId });
@@ -365,5 +377,11 @@ describe("sheet:import", () => {
 			[],
 		);
 		expect(await removeImport("asia-qa", getDb())).toBeNull();
+		// The tailed import: its readable part finds it, for its owner only.
+		expect(await removeImport("asia-2027", getDb())).toBeNull();
+		expect(
+			await removeImport("asia-2027", getDb(), "dennis@dennispham.me"),
+		).toBe(tripId);
+		expect(await q(sql`select id from trips where slug = ${slug}`)).toEqual([]);
 	});
 });

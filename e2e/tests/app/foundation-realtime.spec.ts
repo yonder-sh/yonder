@@ -17,6 +17,7 @@ import { loginViaApi } from "./_helpers/auth";
 import { shotPath, storageStateOf } from "./_helpers/env";
 import { cloneFixtureTrip } from "./_helpers/fixture";
 import { expectLive } from "./_helpers/page";
+import { openLink } from "./_helpers/link";
 
 type Probe = {
 	write(text: string): void;
@@ -78,7 +79,7 @@ test("notes sync, viewers are read-only, mutations reach the other browser", asy
 	const a = await open(browser, "dev", url);
 	const b = await open(browser, "maya", url);
 	const vPage = await viewerCtx.newPage();
-	await vPage.goto(`/join#t=${trip.shareTokens.viewer}`);
+	await openLink(vPage, trip.slug, "viewer");
 	await expect(vPage).toHaveURL(new RegExp(`/t/${trip.slug}`), { timeout: 20_000 });
 	await expectLive(vPage);
 

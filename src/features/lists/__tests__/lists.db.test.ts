@@ -50,8 +50,11 @@ import { mentionToken } from "@/lib/notes/mentions";
 import { isProposed, type ProposalDto } from "@/lib/schemas/proposals";
 import type { AuthUser } from "@/server/auth.server";
 import { errorCode } from "@/server/authz/errors";
-import { redeemShareToken } from "@/server/authz/share-links.server";
-import { cloneDemoTrip, type FixtureClone } from "@/server/fixture.server";
+import {
+	cloneDemoTrip,
+	type FixtureClone,
+	joinTestLink,
+} from "@/server/fixture.server";
 import { loadInbox } from "@/server/inbox.server";
 import { closeQueues } from "@/server/live/jobs.server";
 import { TxOutbox } from "@/server/live/outbox.server";
@@ -172,8 +175,8 @@ async function freshTrip(): Promise<Trip> {
 			color: 6,
 		})
 		.returning({ id: tripMembers.id });
-	await redeemShareToken(c.shareTokens.editor, U.guestEditor.id);
-	await redeemShareToken(c.shareTokens.viewer, U.guestViewer.id);
+	await joinTestLink(getDb(), c, U.guestEditor.id, "editor");
+	await joinTestLink(getDb(), c, U.guestViewer.id, "viewer");
 	return {
 		...c,
 		suggesterMemberId: sugg?.id as string,

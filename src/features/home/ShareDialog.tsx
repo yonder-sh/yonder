@@ -13,12 +13,14 @@
  * email invite or through the trip link. "+ Add a person without an
  * account" for everyone who can tag people. On phones the role sits under
  * the name (QA MOB-01).
- * LINK (owner; FB-13, like Google Docs): ONE link per trip — "Anyone with
- * the link" on/off, what they can do (Can view / Can rate / Can suggest /
- * Can edit; changing it changes everyone who joined with it; a signed-in
- * joiner of a "Can rate" link becomes a rater member), the address, when it
- * was made, expiry + Extend, and "Reset link" with an inline "The old link
- * stops working" confirmation (QA SHARE-08).
+ * LINK (owner; FB-13, like Google Drive): the trip's address IS its link,
+ * one URL for everyone — "Anyone with the link" on/off, what they can do
+ * (Can view / Can rate / Can suggest / Can edit; changing it changes
+ * everyone who joined with it; a signed-in joiner of a "Can rate" link
+ * becomes a rater member), the address with "Copy link", when the link was
+ * made, expiry + Extend, and "Reset link" (a new address tail: the old
+ * address stops working and link guests are removed) with an inline
+ * confirmation (QA SHARE-08). Everyone else sees the same address to copy.
  * GUESTS (owner): signed-in guests can be promoted (a placeholder with their
  * name merges in, and the menu says so); any guest removed.
  */
@@ -659,6 +661,30 @@ const LINK_BLURB: Record<ShareRole, string> = {
 	editor: "They can change the plan.",
 };
 
+/** The trip's address with "Copy link": the one link for everyone. */
+function AddressRow({ url }: { url: string }) {
+	return (
+		<div className="flex gap-2">
+			<Input
+				readOnly
+				value={url}
+				onFocus={(e) => e.currentTarget.select()}
+				className="h-8 min-w-0 font-mono text-xs"
+				aria-label="Trip address"
+				data-testid={TESTID.shareLinkUrl}
+			/>
+			<Button
+				variant="outline"
+				size="sm"
+				onClick={() => copy(url)}
+				data-testid={TESTID.shareLinkCopy}
+			>
+				<Copy /> Copy link
+			</Button>
+		</div>
+	);
+}
+
 function TripLink({ tripId, data }: { tripId: string; data: SharingDto }) {
 	const act = useShareAction(tripId);
 	const [confirm, setConfirm] = useState(false);
@@ -729,52 +755,30 @@ function TripLink({ tripId, data }: { tripId: string; data: SharingDto }) {
 						</span>
 					) : null}
 				</div>
-				{on && link?.url ? (
-					<div className="flex gap-2">
-						<Input
-							readOnly
-							value={link.url}
-							onFocus={(e) => e.currentTarget.select()}
-							className="h-8 min-w-0 font-mono text-xs"
-							aria-label="Link address"
-							data-testid={TESTID.shareLinkUrl}
-						/>
-						<Button
-							variant="outline"
-							size="sm"
-							onClick={() => copy(link.url ?? "")}
-						>
-							<Copy /> Copy link
-						</Button>
-					</div>
-				) : on ? (
-					<p className="text-[13px] text-muted-foreground">
-						This link can't be shown again. Reset it to get a new one.
-					</p>
-				) : null}
-				{on && link && !confirm ? (
+				<AddressRow url={data.url} />
+				{!confirm ? (
 					<div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
 						<p
 							className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground"
 							data-testid={TESTID.shareLinkExpiry}
 						>
-							{link.createdAt ? (
+							{on && link?.createdAt ? (
 								<span data-testid={HOME_TESTID.linkCreated}>
 									Created {formatLocalDay(link.createdAt)}
 								</span>
 							) : null}
-							{link.expiresAt ? (
+							{on && link?.expiresAt ? (
 								<span>
 									{link.createdAt ? "· " : null}
 									Works until {formatLocalDay(link.expiresAt)}
 								</span>
 							) : null}
-							{link.useCount ? (
+							{on && link?.useCount ? (
 								<span className="font-mono tnum">
 									· opened {link.useCount}×
 								</span>
 							) : null}
-							{link.expiresAt ? (
+							{on && link?.expiresAt ? (
 								<Button
 									variant="link"
 									size="sm"
@@ -800,12 +804,12 @@ function TripLink({ tripId, data }: { tripId: string; data: SharingDto }) {
 							<RotateCcw /> Reset link
 						</Button>
 					</div>
-				) : null}
-				{confirm ? (
+				) : (
 					<div className="flex flex-wrap items-center gap-2 rounded-lg bg-muted/60 px-3 py-2 text-[13px]">
 						<span className="flex-1">
-							The old link stops working and everyone who joined with it is
-							removed. Reset?
+							{on
+								? "The trip gets a new address: the old one stops working, and everyone who joined with the link is removed. Reset?"
+								: "The trip gets a new address: the old one stops working. Reset?"}
 						</span>
 						<Button
 							size="sm"
@@ -813,6 +817,7 @@ function TripLink({ tripId, data }: { tripId: string; data: SharingDto }) {
 							data-testid={HOME_TESTID.resetConfirm}
 							onClick={() =>
 								act.mutate(() => resetShareLink({ data: { tripId } }), {
+									onSuccess: () => toast.success("The trip has a new address"),
 									onSettled: () => setConfirm(false),
 								})
 							}
@@ -823,12 +828,12 @@ function TripLink({ tripId, data }: { tripId: string; data: SharingDto }) {
 							Cancel
 						</Button>
 					</div>
-				) : null}
+				)}
 			</div>
 			<p className="text-xs text-muted-foreground">
 				{on
-					? "Changing what they can do changes it for everyone who joined with the link. Turning it off removes them."
-					: "Turn it on to share the trip with anyone, no account needed."}
+					? "People on the trip open it at this address too. Changing what anyone with the link can do changes it for everyone who joined with it; turning it off removes them."
+					: "People on the trip open it at this address. Turn the link on to share the trip with anyone, no account needed."}
 			</p>
 		</Section>
 	);
@@ -936,6 +941,8 @@ function Guests({ tripId, data }: { tripId: string; data: SharingDto }) {
 							size="sm"
 							variant="ghost"
 							disabled={disabled}
+							// The address is the link: while it's on they can open it again.
+							title="Removes them now. While the link is on, they can open it again; Reset link keeps them out."
 							data-testid={HOME_TESTID.guestRemove}
 							onClick={() =>
 								act.mutate(() =>
@@ -990,7 +997,7 @@ export function ShareDialog() {
 					name: session.data.name,
 					firstName: session.data.firstName,
 				})));
-	const url =
+	const fallbackUrl =
 		typeof window === "undefined"
 			? ""
 			: `${window.location.origin}/t/${graph.trip.slug}`;
@@ -1052,27 +1059,16 @@ export function ShareDialog() {
 				</Section>
 				{owner && data ? <TripLink tripId={tripId} data={data} /> : null}
 				{owner && data ? <Guests tripId={tripId} data={data} /> : null}
-				<div className="grid gap-1.5 border-t pt-4">
-					<span className="text-xs text-muted-foreground">
-						Members open the trip at this address after signing in.
-					</span>
-					<div className="flex gap-2">
-						<Input
-							readOnly
-							value={url}
-							onFocus={(e) => e.currentTarget.select()}
-							className="h-8 min-w-0 font-mono text-xs"
-							aria-label="Trip address"
-						/>
-						<Button
-							variant="outline"
-							size="sm"
-							onClick={() => copy(url, "Copied")}
-						>
-							<Copy /> Copy
-						</Button>
+				{owner && data ? null : (
+					// Everyone else: the same address (they can't see whether the
+					// link is on, QA LINK-03), for other people on the trip.
+					<div className="grid gap-1.5 border-t pt-4">
+						<span className="text-xs text-muted-foreground">
+							People on the trip open it at this address.
+						</span>
+						<AddressRow url={data?.url ?? fallbackUrl} />
 					</div>
-				</div>
+				)}
 			</DialogContent>
 		</Dialog>
 	);
