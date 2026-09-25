@@ -30,6 +30,7 @@ import {
 } from "lucide-react";
 import { useReducedMotion } from "motion/react";
 import {
+	type HTMLAttributeReferrerPolicy,
 	type ReactNode,
 	useCallback,
 	useEffect,
@@ -108,6 +109,51 @@ function autoplaySrc(src: string, provider: string): string {
 	return src;
 }
 
+/**
+ * Media fits whole (never cropped); the space around it is a blurred copy of
+ * the same picture, like stories and reels do for non-portrait media.
+ */
+function Fitted({
+	backdrop,
+	children,
+}: {
+	backdrop: ReactNode;
+	children: ReactNode;
+}) {
+	return (
+		<div className="relative size-full overflow-hidden bg-black">
+			<div
+				aria-hidden
+				className="absolute inset-0 scale-110 opacity-60 blur-2xl [&_img]:size-full [&_img]:object-cover"
+			>
+				{backdrop}
+			</div>
+			<div className="relative size-full">{children}</div>
+		</div>
+	);
+}
+
+function FittedImg({
+	src,
+	alt,
+	referrerPolicy,
+}: {
+	src: string;
+	alt: string;
+	referrerPolicy?: HTMLAttributeReferrerPolicy;
+}) {
+	return (
+		<Fitted backdrop={<img src={src} alt="" referrerPolicy={referrerPolicy} />}>
+			<img
+				src={src}
+				alt={alt}
+				referrerPolicy={referrerPolicy}
+				className="size-full object-contain"
+			/>
+		</Fitted>
+	);
+}
+
 function SlideFill({
 	s,
 	active,
@@ -120,32 +166,41 @@ function SlideFill({
 	switch (s.kind) {
 		case "photo":
 			return (
-				<ThumbhashImage
-					hash={s.m.thumbhash}
-					src={mediaUrl(s.m.id, "display")}
-					alt={s.m.caption ?? title}
-					className="size-full [&_img]:object-cover"
-				/>
+				<Fitted
+					backdrop={
+						<ThumbhashImage
+							hash={s.m.thumbhash}
+							src={mediaUrl(s.m.id, "display")}
+							alt=""
+							className="size-full"
+						/>
+					}
+				>
+					<ThumbhashImage
+						hash={s.m.thumbhash}
+						src={mediaUrl(s.m.id, "display")}
+						alt={s.m.caption ?? title}
+						className="size-full [&_img]:object-contain"
+					/>
+				</Fitted>
 			);
 		case "video":
 			return active ? (
-				<video
-					key={s.m.id}
-					autoPlay
-					muted
-					loop
-					playsInline
-					preload="metadata"
-					poster={mediaUrl(s.m.id, "poster")}
-					src={mediaUrl(s.m.id, "original")}
-					className="size-full bg-black object-cover"
-				/>
+				<Fitted backdrop={<img src={mediaUrl(s.m.id, "poster")} alt="" />}>
+					<video
+						key={s.m.id}
+						autoPlay
+						muted
+						loop
+						playsInline
+						preload="metadata"
+						poster={mediaUrl(s.m.id, "poster")}
+						src={mediaUrl(s.m.id, "original")}
+						className="size-full object-contain"
+					/>
+				</Fitted>
 			) : (
-				<img
-					src={mediaUrl(s.m.id, "poster")}
-					alt=""
-					className="size-full object-cover"
-				/>
+				<FittedImg src={mediaUrl(s.m.id, "poster")} alt="" />
 			);
 		case "embed":
 			return active ? (
@@ -166,21 +221,16 @@ function SlideFill({
 					/>
 				</div>
 			) : s.m.hasImage ? (
-				<img
-					src={mediaUrl(s.m.id, "image")}
-					alt=""
-					className="size-full object-cover"
-				/>
+				<FittedImg src={mediaUrl(s.m.id, "image")} alt="" />
 			) : (
 				<div className="size-full bg-neutral-900" />
 			);
 		case "google":
 			return (
-				<img
+				<FittedImg
 					src={`/api/places/photo/n?nodeId=${encodeURIComponent(s.nodeId)}&idx=${s.photo.idx}&w=1200`}
 					alt={title}
 					referrerPolicy="no-referrer"
-					className="size-full object-cover"
 				/>
 			);
 	}
