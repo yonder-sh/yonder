@@ -151,6 +151,7 @@ export const countryLabel = (
 	(row.countryCode && SHORT_COUNTRY[row.countryCode]) || row.countryName;
 
 const REP_TYPES = ["city", "region", "area"] as const;
+const HOME_RADIUS_KM = 150;
 const NOT_PLANNED = new Set(["lodging", "airport", "station", "port"]);
 
 /** A node's city: nearest `city` ancestor-or-self, else `region`, else `area`, else itself. */
@@ -267,8 +268,16 @@ export function tripRoute(ix: GraphIndex): TripRoute {
 	}
 
 	// ---- colours ------------------------------------------------------------
+	// By the stays' countries; a trip with no stays yet (just a flight) goes by
+	// the cities it visits instead, so its route isn't all grey.
+	const visited: RoutePlace[] = [];
+	for (const it of ix.located) {
+		const c = it.nodeId ? cityOf(ix, it.nodeId) : null;
+		if (c && !visited.some((v) => v.id === c.id)) visited.push(c);
+	}
+	const basis: RoutePlace[] = stays.length ? stays : visited;
 	const colors: Record<string, string> = {};
-	for (const s of stays)
+	for (const s of basis)
 		if (!(s.countryKey in colors))
 			colors[s.countryKey] =
 				ROUTE_PALETTE[Object.keys(colors).length % ROUTE_PALETTE.length] ??
@@ -321,7 +330,15 @@ export function tripRoute(ix: GraphIndex): TripRoute {
 	const final = located.at(-1)?.nodeId;
 	const start = first ? cityOf(ix, first) : null;
 	const end = final ? cityOf(ix, final) : null;
-	const endsHome = !!start && !!end && start.countryKey === end.countryKey;
+	// Home: back in the start's city or near it (out of JFK, back into EWR),
+	// not merely the same country (Philadelphia → San Francisco isn't home).
+	const endsHome =
+		!!start &&
+		!!end &&
+		(start.id === end.id ||
+			(!!start.coord &&
+				!!end.coord &&
+				haversineKm(start.coord, end.coord) <= HOME_RADIUS_KM));
 	// The way home: the cities strictly inside the flight chain that ends the
 	// trip (TPE → IST → EWR: Istanbul), never every city after the last stay
 	// (a trip with few nights set would list half of it).
@@ -402,13 +419,13 @@ export function tripRoute(ix: GraphIndex): TripRoute {
 		colors,
 		stats: {
 			days: ix.days.length,
-			countries: new Set(stays.map((s) => s.countryKey)).size,
-			cities: new Set(stays.map((s) => s.id)).size,
+			countries: new Set(basis.map((s) => s.countryKey)).size,
+			cities: new Set(basis.map((s) => s.id)).size,
 			km: Math.round(km / 10) * 10,
 			flights,
 			airHours: Math.round(airHours),
 			placesPlanned,
 		},
-		view: routeView(stays.flatMap((s) => (s.coord ? [s.coord] : []))),
+		view: routeView(basis.flatMap((s) => (s.coord ? [s.coord] : []))),
 	};
 }

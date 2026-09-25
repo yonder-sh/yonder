@@ -184,8 +184,7 @@ function prepare(route: TripRoute): { hops: Hop[]; dots: Dot[] } {
 			name: p.name,
 			coord: p.coord,
 			nights: n,
-			color:
-				n > 0 ? (route.colors[p.countryKey] ?? ROUTE_NEUTRAL) : ROUTE_NEUTRAL,
+			color: route.colors[p.countryKey] ?? ROUTE_NEUTRAL,
 			countryKey: p.countryKey,
 			at,
 			stay: stayOf.get(p.id) ?? -1,

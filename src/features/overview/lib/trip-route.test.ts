@@ -278,6 +278,66 @@ describe("tripRoute", () => {
 	});
 });
 
+describe("a trip with a flight and no stays yet", () => {
+	const flight = buildScenario({
+		nodes: [
+			{
+				key: "phlCity",
+				parent: "usa",
+				type: "city",
+				name: "Philadelphia",
+				at: [39.95, -75.17],
+			},
+			{
+				key: "phl",
+				parent: "phlCity",
+				type: "place",
+				category: "airport",
+				name: "PHL",
+				at: [39.87, -75.24],
+			},
+			{
+				key: "sfoCity",
+				parent: "usa",
+				type: "city",
+				name: "San Francisco",
+				at: [37.77, -122.42],
+			},
+			{
+				key: "sfo",
+				parent: "sfoCity",
+				type: "place",
+				category: "airport",
+				name: "SFO",
+				at: [37.62, -122.38],
+			},
+		],
+		days: [
+			{
+				items: [
+					{ k: "phl", node: "phl" },
+					{ k: "sfo", node: "sfo" },
+				],
+			},
+		],
+		legs: [{ from: "phl", to: "sfo", mode: "flight" }],
+	});
+	const r = tripRoute(indexGraph(flight.graph));
+
+	it("colours, counts and frames the cities it visits", () => {
+		expect(r.stays).toEqual([]);
+		expect(r.colors).toEqual({ US: ROUTE_PALETTE[0] });
+		expect(r.stats).toMatchObject({ countries: 1, cities: 2, flights: 1 });
+		expect(r.view.kind).toBe("globe");
+		if (r.view.kind === "globe") expect(r.view.center[0]).toBeLessThan(-80);
+	});
+
+	it("ends in San Francisco, not home", () => {
+		expect(r.endsHome).toBe(false);
+		expect(r.end?.name).toBe("San Francisco");
+	});
+});
+
 describe("routeView", () => {
 	it("uses a flat map when the stays are spread across the world, seam in the widest gap", () => {
 		const v = routeView([
