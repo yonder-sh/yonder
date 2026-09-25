@@ -176,11 +176,11 @@ test("FB-16: avatar upload, private route, and circles everywhere", async ({ bro
 	// Maya gets a picture too (JPEG).
 	await uploadAvatar(mp, { w: 400, h: 400, color: "#b4539a", type: "image/jpeg" });
 
-	// In the trip: the owner's own account avatar, the People list and Maya's
-	// presence avatar show pictures, clipped to circles.
-	await op.goto(`/t/${c.slug}?sel=root`);
+	// In the trip: the owner's own account avatar, the Overview's People list
+	// and Maya's presence avatar show pictures, clipped to circles.
+	await op.goto(`/t/${c.slug}?tab=overview`);
 	await expectLive(op);
-	await mp.goto(`/t/${c.slug}?sel=root`);
+	await mp.goto(`/t/${c.slug}?tab=overview`);
 	await expectLive(mp);
 	const pictures = op.locator('[data-avatar-image] img[data-slot="avatar-image"]');
 	await expect(pictures.first()).toBeVisible({ timeout: 15_000 });

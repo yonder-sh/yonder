@@ -111,8 +111,9 @@ test("Rate guard: every member's progress has the same, rateable-only denominato
 });
 
 test("Deadline guard: every timed deadline chip names its zone", async ({ page }) => {
-	await openTrip(page, `/t/${TRIP}?sel=root`);
-	const text = await page.getByText(/^Upcoming deadlines$/i).locator("..").innerText();
+	// The deadlines live on the Overview page (docs/OVERVIEW.md §7).
+	await openTrip(page, `/t/${TRIP}?tab=overview`);
+	const text = await page.getByTestId("overview").getByTestId("trip-deadlines").innerText();
 	const timed = text.match(/(?:Opens|Due) [A-Z][a-z]{2} \d{1,2} [A-Z][a-z]{2} · \d{2}:\d{2}[^\n]*/g) ?? [];
 	expect(timed.length).toBeGreaterThan(0);
 	for (const chip of timed) expect(chip, chip).toMatch(/\d{2}:\d{2} [A-Z]{3,4}\b/);
