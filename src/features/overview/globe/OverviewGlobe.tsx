@@ -53,7 +53,7 @@ import {
 
 const GlobeMap = lazy(() => import("./GlobeMap"));
 
-type View = { center: LngLat; zoom: number };
+export type View = { center: LngLat; zoom: number };
 
 const DRAW_MS = 3000;
 const FLY_MS = 700;
@@ -210,8 +210,11 @@ const dotRadius = (nights: number) =>
 
 // ---- the camera ----------------------------------------------------------------
 
+/** How far from the stays the trip's start and end still count (the same side of the planet). */
+const SAME_SIDE_DEG = 70;
+
 /** The whole-route view for a `w × h` hero. */
-function finalView(
+export function finalView(
 	route: TripRoute,
 	fallback: LngLat[],
 	w: number,
@@ -229,7 +232,15 @@ function finalView(
 					(arcAngle(p, core.center) * 180) / Math.PI < core.radius + 25),
 		),
 	);
-	const pts = [...stays, ...near];
+	// Where the trip starts and ends (home) counts when it's on the stays' side
+	// of the planet (Philadelphia for San Francisco), never over the horizon
+	// (New York for Tokyo).
+	const ends = [route.start?.coord, route.end?.coord].filter(
+		(p): p is LngLat =>
+			!!p &&
+			(!core || (arcAngle(p, core.center) * 180) / Math.PI < SAME_SIDE_DEG),
+	);
+	const pts = [...stays, ...near, ...ends];
 	const all = pts.length ? pts : fallback;
 	const cap = sphericalCap(all);
 	const pad = Math.max(24, Math.min(w, h) * 0.08);
