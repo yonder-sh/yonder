@@ -7,7 +7,8 @@
  * A row is a city, or a non-place node with planned days and no city inside
  * it (the sheet lists "Kawaguchiko" under a region with no city). Each trip
  * day belongs to at most one row: the row holding the most scheduled minutes
- * that day, else the row of that night's stay.
+ * that day, else the row of that night's stay, else (the trip's last day, the
+ * day you leave) the row of the night before.
  */
 import type { GraphIndex } from "@/lib/engine/graph-index";
 import type { GraphNode, ScheduleResult } from "@/lib/engine/types";
@@ -100,6 +101,7 @@ export function cityDayTable(
 
 	const daysByRow = new Map<string, string[]>();
 	const unassigned: string[] = [];
+	const lastDay = ix.days.at(-1);
 	for (const day of ix.days) {
 		const minutes = new Map<string, number>();
 		for (const it of ix.itemsByDay.get(day.id) ?? []) {
@@ -119,6 +121,8 @@ export function cityDayTable(
 				pick = id;
 			}
 		pick ??= rowOf(day.nightNodeId)?.id;
+		if (!pick && day === lastDay)
+			pick = rowOf(ix.prevDay(day.id)?.nightNodeId)?.id;
 		if (!pick) {
 			unassigned.push(day.id);
 			continue;

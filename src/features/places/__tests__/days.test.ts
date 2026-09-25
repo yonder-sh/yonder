@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { indexGraph } from "@/lib/engine/graph-index";
 import { computeSchedule } from "@/lib/engine/schedule";
 import type { TripGraph } from "@/lib/engine/types";
-import { demoGraph, N } from "@/lib/fixtures/demo";
+import { demoGraph, N, scenario } from "@/lib/fixtures/demo";
 import { cityDayTable, cityRowNodes, formatDays, parseDays } from "../lib/days";
 import {
 	openListCounts,
@@ -76,6 +76,28 @@ describe("days per city (ADDENDUM §10)", () => {
 		// Mt. Fuji is on the plan, so it (the outermost) stands in; not both.
 		expect(rows).toContain("Mt. Fuji");
 		expect(rows).not.toContain("Kawaguchiko");
+	});
+	it("the trip's last day, empty and with no stay, is in the city of the night before", () => {
+		const s = scenario({
+			days: [
+				{ night: "tokyo", items: [] },
+				{ night: "kyoto", items: [] },
+				{ items: [] },
+			],
+		});
+		const t = cityDayTable(indexGraph(s.graph), null);
+		const days = Object.fromEntries(t.rows.map((r) => [r.name, r.dayIds]));
+		expect(days.Tokyo).toEqual([s.D.d1]);
+		expect(days.Kyoto).toEqual([s.D.d2, s.D.d3]);
+		expect(t.unassignedDayIds).toEqual([]);
+		// Only the last day: an empty day in the middle stays unassigned.
+		const gap = scenario({
+			days: [{ night: "tokyo", items: [] }, { items: [] }, { items: [] }],
+		});
+		expect(cityDayTable(indexGraph(gap.graph), null).unassignedDayIds).toEqual([
+			gap.D.d2,
+			gap.D.d3,
+		]);
 	});
 	it("formats and parses day counts", () => {
 		expect(formatDays(2)).toBe("2");
