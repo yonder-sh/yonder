@@ -112,7 +112,12 @@ export function LandingGlobe({ className }: { className?: string }) {
 							"--dur": ms((h.e - h.s) * DRAW_MS),
 						} as CSSProperties;
 						return (
-							<g key={h.key} style={style}>
+							<g
+								key={h.key}
+								style={style}
+								// The flights home end at the horizon, never over the page.
+								clipPath={h.home ? "url(#lg-disc)" : undefined}
+							>
 								<path
 									className="lg-draw"
 									pathLength={1}
