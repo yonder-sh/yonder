@@ -131,7 +131,8 @@ function Chevron({
 	row: Pick<NodeRow, "id" | "hasChildren" | "open">;
 	toggle: RowContext["toggle"];
 }) {
-	if (!row.hasChildren) return <span className="w-3 shrink-0" />;
+	// The chevron's own width (20px less its −4px margin), so leaves line up with their siblings.
+	if (!row.hasChildren) return <span className="w-4 shrink-0" />;
 	return (
 		<button
 			type="button"
