@@ -129,12 +129,6 @@ function Hero() {
 						style={{ "--delay": "260ms" } as CSSProperties}
 					>
 						<PrimaryCta />
-						<Link
-							to={SIGN_IN}
-							className="inline-flex h-12 items-center rounded-full border border-white/15 px-6 text-[15px] font-medium text-white/90 transition-colors hover:border-white/30 hover:bg-white/6 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-						>
-							Sign in
-						</Link>
 					</div>
 				</div>
 				<div className="relative -mx-5 sm:mx-auto sm:w-[min(100%,40rem)] lg:mx-0 lg:-my-10 lg:w-auto">
@@ -666,7 +660,7 @@ function Footer() {
 				</div>
 				<nav
 					aria-label="Footer"
-					className="grid gap-x-12 gap-y-6 sm:grid-cols-3"
+					className="grid gap-x-12 gap-y-6 sm:grid-cols-2"
 				>
 					<div>
 						<p className="font-mono text-[11px] tracking-[0.12em] text-foreground/70 uppercase">
@@ -693,22 +687,6 @@ function Footer() {
 							>
 								GitHub
 							</a>
-						</p>
-					</div>
-					<div>
-						<p className="font-mono text-[11px] tracking-[0.12em] text-foreground/70 uppercase">
-							Credits
-						</p>
-						<p className="mt-2 max-w-[16rem] leading-[1.55]">
-							Parkinsans, Commissioner and Atkinson Hyperlegible Mono, under the
-							SIL Open Font License (
-							<a
-								href="/licenses/fonts.txt"
-								className="text-foreground underline-offset-4 hover:underline"
-							>
-								licences
-							</a>
-							). Map data © OpenStreetMap contributors.
 						</p>
 					</div>
 				</nav>
@@ -767,11 +745,11 @@ function PhoneFrame({
 	return (
 		<div
 			className={cn(
-				"rounded-[16%/7.4%] bg-[#0b0c10] p-[3.2%] shadow-[0_0_0_1px_rgb(255_255_255/.08)_inset,0_30px_60px_-18px_rgb(24_29_47/.5),0_0_0_1px_rgb(24_29_47/.12)] dark:shadow-[0_0_0_1px_rgb(255_255_255/.1)_inset,0_30px_60px_-18px_rgb(0_0_0/.85)]",
+				"rounded-[15%/6.9%] bg-[#0b0c10] p-[1.4%] shadow-[0_0_0_1px_rgb(255_255_255/.08)_inset,0_30px_60px_-18px_rgb(24_29_47/.5),0_0_0_1px_rgb(24_29_47/.12)] dark:shadow-[0_0_0_1px_rgb(255_255_255/.1)_inset,0_30px_60px_-18px_rgb(0_0_0/.85)]",
 				className,
 			)}
 		>
-			<div className="relative overflow-hidden rounded-[13%/6%]">
+			<div className="relative overflow-hidden rounded-[13.6%/6.3%]">
 				{children}
 			</div>
 		</div>
