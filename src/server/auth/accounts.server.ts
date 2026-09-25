@@ -139,11 +139,12 @@ export async function migrateGuestToUser(
 
 		// E6: digest cursors merge, the furthest "seen" wins (EXTENSIONS §9).
 		await tx.execute(sql`
-			insert into trip_seen (trip_id, user_id, seen_version, seen_at)
-			select trip_id, ${userId}, seen_version, seen_at from trip_seen where user_id = ${anonId}
+			insert into trip_seen (trip_id, user_id, seen_version, seen_at, welcome_seen_at)
+			select trip_id, ${userId}, seen_version, seen_at, welcome_seen_at from trip_seen where user_id = ${anonId}
 			on conflict (trip_id, user_id) do update
 			  set seen_version = greatest(trip_seen.seen_version, excluded.seen_version),
-			      seen_at = greatest(trip_seen.seen_at, excluded.seen_at)`);
+			      seen_at = greatest(trip_seen.seen_at, excluded.seen_at),
+			      welcome_seen_at = coalesce(trip_seen.welcome_seen_at, excluded.welcome_seen_at)`);
 		await tx.execute(sql`delete from trip_seen where user_id = ${anonId}`);
 		// One inbox read state (ADDENDUM §10): union, the account's rows win.
 		await tx.execute(sql`

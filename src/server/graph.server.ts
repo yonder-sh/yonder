@@ -153,7 +153,7 @@ export async function loadTripGraph(
 			rows(sql`
 				select m.id, m.user_id as "userId", m.status::text as status, m.role::text as role,
 				       m.color, m.display_name as "displayName", split_part(m.email, '@', 1) as "emailName",
-				       m.merged_into_id as "mergedIntoId",
+				       m.merged_into_id as "mergedIntoId", m.ratings_counted as "ratingsCounted",
 				       u.name as "userName", u.first_name as "firstName", u.image
 				  from trip_members m
 				  left join "user" u on u.id = m.user_id
@@ -250,6 +250,7 @@ export async function loadTripGraph(
 		image: str(m.image),
 		color: Number(m.color ?? 0),
 		...(m.mergedIntoId ? { mergedIntoId: String(m.mergedIntoId) } : {}),
+		...(m.ratingsCounted === false ? { ratingsCounted: false } : {}),
 	}));
 
 	const days: GraphDay[] = dayRows.map((d) => ({

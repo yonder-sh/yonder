@@ -13,6 +13,18 @@ export const Holiday = z.object({
 });
 export type Holiday = z.infer<typeof Holiday>;
 
+/**
+ * The shortlist's per-person level (the group score it needs is this × the
+ * people rating): Want, halfway to Really want, or Really want.
+ */
+export const SHORTLIST_LEVELS = [1, 1.5, 2] as const;
+export const ShortlistLevel = z.union([
+	z.literal(1),
+	z.literal(1.5),
+	z.literal(2),
+]);
+export type ShortlistLevel = z.infer<typeof ShortlistLevel>;
+
 export const TripSettings = z
 	.object({
 		defaultDayStart: HHmm.default("09:00"),
@@ -30,10 +42,12 @@ export const TripSettings = z
 		/** E1 (EXTENSIONS §2.2): public holidays that count as hours day 7. */
 		holidays: z.array(Holiday).max(100),
 		/**
-		 * docs/PLACES.md §3: a place is a suggested shortlist pick at this group
-		 * score or more (default 3: one Must, or Really want + Want).
+		 * The old fixed shortlist score (default 3). Still read as a fallback
+		 * (`shortlistLevel` wins); 0017 turned it into a level.
 		 */
 		shortlistMinScore: z.number().int().min(-20).max(60).default(3),
+		/** The shortlist's per-person level (default 1.5), see `shortlistBar`. */
+		shortlistLevel: ShortlistLevel.default(1.5),
 	})
 	.partial();
 export type TripSettings = z.infer<typeof TripSettings>;
@@ -53,6 +67,7 @@ export const TripSettingsPatch = z
 		dayCapacityMin: z.number().int().min(60).max(1440),
 		holidays: z.array(Holiday).max(100),
 		shortlistMinScore: z.number().int().min(-20).max(60),
+		shortlistLevel: ShortlistLevel,
 	})
 	.partial();
 export type TripSettingsPatch = z.infer<typeof TripSettingsPatch>;

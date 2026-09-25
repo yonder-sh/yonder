@@ -110,6 +110,12 @@ export const tripMembers = pgTable(
 		joinedAt: timestamp({ withTimezone: true }),
 		/** ADDENDUM §7.1: this member's budget lines show as "private" to others. */
 		budgetPrivate: boolean().notNull().default(false),
+		/** Their ratings add to group scores (off: left out, never deleted). */
+		ratingsCounted: boolean().notNull().default(true),
+		/** The inviter's one-line note, shown on the welcome. */
+		inviteNote: text(),
+		/** Came in through the trip link (a "Can rate" join, a promoted guest). */
+		joinedByLink: boolean().notNull().default(false),
 		/**
 		 * ADDENDUM §10 merge: a placeholder merged into an existing member keeps
 		 * its row as `removed` with this pointer, so old ids (mention tokens in
@@ -163,6 +169,10 @@ export const tripMembers = pgTable(
 		),
 		check("trip_members_email_lower_ck", sql`${t.email} = lower(${t.email})`),
 		check("trip_members_color_ck", sql`${t.color} between 0 and 7`),
+		check(
+			"trip_members_invite_note_ck",
+			sql`char_length(${t.inviteNote}) <= 140`,
+		),
 	],
 );
 
@@ -191,9 +201,12 @@ export const shareLinks = pgTable(
 		createdBy: text().references(() => user.id, { onDelete: "set null" }),
 		createdAt: createdAt(),
 		revokedAt: timestamp({ withTimezone: true }),
+		/** The owner's one-line note for people who join, shown on the welcome. */
+		note: text(),
 	},
 	(t) => [
 		unique("share_links_trip_id_id_uq").on(t.tripId, t.id),
+		check("share_links_note_ck", sql`char_length(${t.note}) <= 140`),
 		uniqueIndex("share_links_live_role_uq")
 			.on(t.tripId, t.role)
 			.where(sql`${t.revokedAt} is null`),

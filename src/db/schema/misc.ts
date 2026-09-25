@@ -8,7 +8,9 @@ import { sql } from "drizzle-orm";
 import {
 	bigint,
 	check,
+	foreignKey,
 	index,
+	integer,
 	jsonb,
 	pgTable,
 	primaryKey,
@@ -21,7 +23,7 @@ import {
 import type { ActivityMeta, UserPrefs } from "../../lib/schemas/misc";
 import { createdAt, pk, updatedAt } from "./_columns";
 import { user } from "./auth";
-import { tripRef } from "./trips";
+import { tripMembers, tripRef } from "./trips";
 
 export const activityLog = pgTable(
 	"activity_log",
@@ -68,6 +70,8 @@ export const tripSeen = pgTable(
 			.references(() => user.id, { onDelete: "cascade" }),
 		seenVersion: bigint({ mode: "number" }).notNull().default(0),
 		seenAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+		/** When they closed the welcome (shown once to people who didn't create the trip). */
+		welcomeSeenAt: timestamp({ withTimezone: true }),
 	},
 	(t) => [
 		primaryKey({ columns: [t.tripId, t.userId] }),
@@ -137,3 +141,33 @@ export const userPrefs = pgTable("user_prefs", {
 	prefs: jsonb().$type<UserPrefs>().notNull().default({}),
 	updatedAt: updatedAt(),
 });
+
+/**
+ * "Remind" on the rating progress: a push to a member with places left to
+ * rate, at most once per member and trip every 12 hours. The row is also
+ * the recipient's in-app line until they close it (`seen_at`).
+ */
+export const rateReminders = pgTable(
+	"rate_reminders",
+	{
+		id: pk(),
+		tripId: tripRef(),
+		memberId: uuid().notNull(),
+		byUserId: text().references(() => user.id, { onDelete: "set null" }),
+		/** The sender's first name when they sent it. */
+		byName: text().notNull(),
+		/** Places they had left to rate. */
+		places: integer().notNull(),
+		createdAt: createdAt(),
+		seenAt: timestamp({ withTimezone: true }),
+	},
+	(t) => [
+		foreignKey({
+			name: "rate_reminders_member_fk",
+			columns: [t.tripId, t.memberId],
+			foreignColumns: [tripMembers.tripId, tripMembers.id],
+		}).onDelete("cascade"),
+		index("rate_reminders_member_idx").on(t.tripId, t.memberId, t.createdAt),
+		check("rate_reminders_places_ck", sql`${t.places} >= 0`),
+	],
+);

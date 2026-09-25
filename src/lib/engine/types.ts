@@ -100,6 +100,8 @@ export interface GraphMember {
 	 * resolve through it: show the member it points at, not "(former member)".
 	 */
 	mergedIntoId?: string;
+	/** False: their ratings are left out of group scores (absent = counted). */
+	ratingsCounted?: boolean;
 }
 
 export interface GraphDay {
