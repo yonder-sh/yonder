@@ -18,6 +18,7 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
+import { TabPurpose } from "@/features/shell/TabPurpose";
 import { can } from "@/lib/auth/roles";
 import { humanError } from "@/lib/errors";
 import { formatDateRange } from "@/lib/format";
@@ -111,6 +112,7 @@ export function MoneyTab() {
 			{empty ? (
 				<EmptyState
 					className="py-8"
+					lead={<TabPurpose tab="money" />}
 					line={`No expenses in ${only && scope ? `${scope.name} itself` : scopeName} yet.`}
 					action={
 						writer ? (

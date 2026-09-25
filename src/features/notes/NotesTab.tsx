@@ -17,6 +17,7 @@ import {
 	CollapsibleContent,
 	CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { TabPurpose } from "@/features/shell/TabPurpose";
 import { noteDocName } from "@/lib/realtime/protocol";
 import type { BundleTarget } from "@/lib/schemas/targets";
 import { TESTID } from "@/lib/testids";
@@ -136,6 +137,7 @@ export function NotesTab() {
 		<div data-testid={TESTID.notesTab} className="px-4 pt-3 pb-16">
 			{empty && !writing ? (
 				<EmptyState
+					lead={<TabPurpose tab="notes" />}
 					line={`No notes for ${where}.`}
 					action={
 						sharedWrite || canPrivate ? (

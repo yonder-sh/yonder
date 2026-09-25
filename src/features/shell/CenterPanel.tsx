@@ -35,6 +35,7 @@ import { hasChildNodes } from "./bundle-target";
 import { ElsewhereChips } from "./cursors/presence-ui";
 import { DigestBanner } from "./DigestBanner";
 import { scopeCounts } from "./scope-counts";
+import { TAB_PURPOSE } from "./TabPurpose";
 import { SHELL_TESTID } from "./testids";
 
 const TAB_LABEL: Record<Tab, string> = {
@@ -123,6 +124,8 @@ export function CenterTabBar({
 						role="tab"
 						aria-selected={selected}
 						data-tab={t}
+						// What the tab is for (its empty state leads with it too).
+						title={TAB_PURPOSE[t]}
 						data-cursor-anchor={`tab:${t}`}
 						data-cursor-vis={t === "money" ? "members" : undefined}
 						onClick={() => ws.nav.setTab(t)}

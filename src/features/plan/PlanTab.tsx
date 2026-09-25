@@ -44,6 +44,7 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useMoneyCounts } from "@/features/money/use-money-counts";
+import { TabPurpose } from "@/features/shell/TabPurpose";
 import { indexGraph } from "@/lib/engine/graph-index";
 import { formatDateRange, formatDuration, formatTime } from "@/lib/format";
 import { userPrefsQuery } from "@/lib/query/trip-queries";
@@ -430,6 +431,7 @@ function PlanTabBody() {
 		return (
 			<div data-testid={TESTID.planTab}>
 				<EmptyState
+					lead={<TabPurpose tab="plan" />}
 					line={
 						graph.nodes.length
 							? "Set the trip dates to plan your days."

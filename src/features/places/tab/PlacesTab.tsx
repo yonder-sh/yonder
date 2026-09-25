@@ -37,6 +37,7 @@ import {
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { PlaceFilterSummary } from "@/features/outline/FilterMenu";
+import { TabPurpose } from "@/features/shell/TabPurpose";
 import { useViewPrefs } from "@/features/shell/view-prefs";
 import { canRateOwn } from "@/lib/auth/roles";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
@@ -102,6 +103,7 @@ function FlowEmpty() {
 			className="grid flex-1 place-items-center overflow-y-auto p-6"
 		>
 			<div className="flex max-w-md flex-col items-start gap-4">
+				<TabPurpose tab="places" className="text-[15px] text-foreground" />
 				<div className="flex flex-col gap-1">
 					<p className="font-display text-[17px] leading-6 font-medium text-balance">
 						No places in {where} yet.
