@@ -142,6 +142,28 @@ describe("fieldRows for opening hours (node.hours)", () => {
 	});
 });
 
+describe("fieldRows for holiday closures (OSM `PH off`)", () => {
+	it("names a holiday closure on the week's line", () => {
+		const g = withNodeHours({ ...benfiddich, exceptions: [] });
+		expect(
+			rowsOf(
+				hoursProposal({
+					...benfiddich,
+					exceptions: [],
+					closedOnHolidays: true,
+				}),
+				g,
+			),
+		).toEqual([
+			[
+				"Opening hours",
+				"Mon–Sat 19:00–02:00 · Closed Sun",
+				"Mon–Sat 19:00–02:00 · Closed Sun · Closed on holidays",
+			],
+		]);
+	});
+});
+
 describe("fieldRows for a flight (flight.save)", () => {
 	const save = (flight: Record<string, unknown>): ProposalDto => ({
 		...flightSave,

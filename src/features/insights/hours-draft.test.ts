@@ -48,6 +48,18 @@ describe("hours draft: every OpeningHours field round-trips", () => {
 			{ source: "manual", alwaysOpen: true, periods: [], updatedAt: AT },
 		],
 		[
+			"closed on public holidays (OSM `PH off`)",
+			{
+				source: "manual",
+				periods: [
+					{ day: 2, open: "10:00", close: "17:00" },
+					{ day: 3, open: "10:00", close: "17:00" },
+				],
+				closedOnHolidays: true,
+				updatedAt: AT,
+			},
+		],
+		[
 			"closures known without hours",
 			{
 				source: "manual",
@@ -60,6 +72,47 @@ describe("hours draft: every OpeningHours field round-trips", () => {
 	];
 	it.each(cases)("%s", (_name, h) => {
 		expect(roundTrip(h)).toEqual(h);
+	});
+
+	it("turns OpenStreetMap hours into manual ones", () => {
+		const out = roundTrip({
+			source: "osm",
+			periods: [{ day: 1, open: "18:00", close: "02:00" }],
+			closedOnHolidays: true,
+			note: "cash only",
+			updatedAt: AT,
+		});
+		expect(out).toEqual({
+			source: "manual",
+			periods: [{ day: 1, open: "18:00", close: "02:00" }],
+			closedOnHolidays: true,
+			note: "cash only",
+			updatedAt: AT,
+		});
+	});
+
+	it("holidays are like that weekday, own hours or closed", () => {
+		const d = toDraft({
+			source: "manual",
+			periods: [{ day: 1, open: "10:00", close: "19:00" }],
+			updatedAt: AT,
+		});
+		expect(d.holiday).toMatchObject({ on: false, closed: false });
+		d.holiday.closed = true;
+		expect(fromDraft(d, AT)).toMatchObject({
+			ok: true,
+			hours: { closedOnHolidays: true },
+		});
+		d.holiday.closed = false;
+		d.holiday.on = true;
+		d.holiday.ranges = [{ open: "11:00", close: "15:00", lastEntry: "" }];
+		const own = fromDraft(d, AT);
+		expect(own.ok && own.hours.closedOnHolidays).toBeFalsy();
+		expect(own.ok && own.hours.periods.at(-1)).toEqual({
+			day: 7,
+			open: "11:00",
+			close: "15:00",
+		});
 	});
 
 	it("turns Google or sheet hours into manual ones", () => {

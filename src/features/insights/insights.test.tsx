@@ -12,6 +12,7 @@ import { DateImpactList } from "./DateImpactList";
 import { DayHoursBadge } from "./DayHoursBadge";
 import { DaySun } from "./DaySun";
 import { HoursChip } from "./HoursChip";
+import { HoursEditorDialog } from "./HoursEditorDialog";
 import { HoursTable } from "./HoursTable";
 import { INSIGHTS_TESTID } from "./testids";
 import { WhatIfChip } from "./WhatIfChip";
@@ -231,6 +232,159 @@ describe("HoursTable suggestion preview (COLLAB-R2-08)", () => {
 		expect(
 			within(block).getByRole("button").getAttribute("aria-description"),
 		).toMatch(/: Closed Tue 5 Oct 2027$/);
+	});
+});
+
+describe("OpenStreetMap hours", () => {
+	/** Itoya with hours read from OSM node 123 (closed Mondays and holidays). */
+	function osmGraph(role: "owner" | "viewer" = "owner"): TripGraph {
+		const g = graph(role);
+		const itoya = g.nodes.find((n) => n.id === demo.N.itoya);
+		if (!itoya) throw new Error("no itoya");
+		itoya.osmRef = "N123";
+		itoya.details = {
+			openingHours: {
+				source: "osm",
+				periods: [0, 2, 3, 4, 5, 6].map((day) => ({
+					day,
+					open: "10:00",
+					close: "20:00",
+				})),
+				closedOnHolidays: true,
+				updatedAt: "2026-09-03T04:00:00.000Z",
+			},
+			openingHoursFetchedAt: "2026-09-20T04:00:00.000Z",
+			openingHoursRef: "N123",
+		};
+		return g;
+	}
+
+	it("the week grid says where the hours come from, with the ODbL attribution", () => {
+		renderWithWorkspace(<HoursTable nodeId={demo.N.itoya ?? ""} />, {
+			graph: osmGraph("viewer"),
+		});
+		const table = screen.getByTestId(TESTID.hoursTable);
+		expect(table).toHaveAttribute("data-source", "osm");
+		const rows = within(table).getAllByTestId(INSIGHTS_TESTID.hoursTableRow);
+		expect(rows.at(-1)).toHaveTextContent("HolidaysClosed");
+		const source = within(table).getByTestId(INSIGHTS_TESTID.hoursSource);
+		expect(source).toHaveTextContent(
+			"From OpenStreetMap · 3 Sep · © OpenStreetMap contributors",
+		);
+		expect(
+			within(source).getByTestId(INSIGHTS_TESTID.hoursOsmLink),
+		).toHaveAttribute("href", "https://www.openstreetmap.org/node/123");
+		expect(
+			within(source).getByRole("link", {
+				name: "© OpenStreetMap contributors",
+			}),
+		).toHaveAttribute("href", "https://www.openstreetmap.org/copyright");
+	});
+
+	it("a tag the app can't read shows as OpenStreetMap's words, under Hours unknown", () => {
+		const g = osmGraph();
+		const itoya = g.nodes.find((n) => n.id === demo.N.itoya);
+		if (!itoya) throw new Error("no itoya");
+		itoya.details = {
+			openingHours: {
+				source: "osm",
+				periods: [],
+				note: "Mo-Fr 10:00-20:00; SH off",
+				updatedAt: "2026-09-03T04:00:00.000Z",
+			},
+			openingHoursRef: "W77",
+		};
+		renderWithWorkspace(<HoursTable nodeId={demo.N.itoya ?? ""} />, {
+			graph: g,
+		});
+		const table = screen.getByTestId(TESTID.hoursTable);
+		expect(table).toHaveTextContent("Hours unknown.");
+		expect(
+			within(table).queryAllByTestId(INSIGHTS_TESTID.hoursTableRow),
+		).toEqual([]);
+		expect(
+			within(table).getByTestId(INSIGHTS_TESTID.hoursSource),
+		).toHaveTextContent(
+			"From OpenStreetMap: “Mo-Fr 10:00-20:00; SH off” · © OpenStreetMap contributors",
+		);
+		expect(
+			within(table).getByTestId(INSIGHTS_TESTID.hoursOsmLink),
+		).toHaveAttribute("href", "https://www.openstreetmap.org/way/77");
+		expect(
+			within(table).getByTestId(INSIGHTS_TESTID.hoursTableAdd),
+		).toBeTruthy();
+	});
+
+	it("the hours chip's popover links the OSM object too", () => {
+		renderWithWorkspace(<HoursChip itemId={demo.I.itoya ?? ""} />, {
+			graph: osmGraph(),
+		});
+		const chip = screen.getByTestId(TESTID.hoursChip);
+		expect(chip).toHaveTextContent("Closed Mon");
+		fireEvent.click(chip);
+		const pop = screen.getByTestId(INSIGHTS_TESTID.hoursPopover);
+		expect(
+			within(pop).getByTestId(INSIGHTS_TESTID.hoursSource),
+		).toHaveTextContent(
+			"From OpenStreetMap · 3 Sep · © OpenStreetMap contributors",
+		);
+		expect(
+			within(pop).getByTestId(INSIGHTS_TESTID.hoursOsmLink),
+		).toHaveAttribute("href", "https://www.openstreetmap.org/node/123");
+	});
+
+	it("the editor prefills OSM hours with their source; holidays show Closed", () => {
+		renderWithWorkspace(<HoursEditorDialog />, { graph: osmGraph() });
+		act(() => useUi.getState().openHoursEditor({ nodeId: demo.N.itoya ?? "" }));
+		const banner = screen.getByTestId(INSIGHTS_TESTID.hoursEditorBanner);
+		expect(banner).toHaveTextContent(
+			"From OpenStreetMap · 3 Sep. Saving makes them yours.",
+		);
+		expect(
+			within(banner).getByRole("link", {
+				name: "© OpenStreetMap contributors",
+			}),
+		).toHaveAttribute("href", "https://www.openstreetmap.org/copyright");
+		expect(
+			within(banner).getByTestId(INSIGHTS_TESTID.hoursOsmLink),
+		).toHaveAttribute("href", "https://www.openstreetmap.org/node/123");
+		const holiday = screen.getByTestId(INSIGHTS_TESTID.hoursEditorHoliday);
+		expect(
+			within(holiday).getByRole("radio", { name: "Closed" }),
+		).toHaveAttribute("aria-checked", "true");
+	});
+});
+
+describe("OpenStreetMap hours in the editor, unread", () => {
+	it("shows the raw tag in the banner and starts from an empty week", () => {
+		const g = graph();
+		const itoya = g.nodes.find((n) => n.id === demo.N.itoya);
+		if (!itoya) throw new Error("no itoya");
+		itoya.osmRef = "N9";
+		itoya.details = {
+			openingHours: {
+				source: "osm",
+				periods: [],
+				note: "Mo-Fr 10:00-20:00; SH off",
+				updatedAt: "2026-09-03T04:00:00.000Z",
+			},
+		};
+		renderWithWorkspace(<HoursEditorDialog />, { graph: g });
+		act(() => useUi.getState().openHoursEditor({ nodeId: demo.N.itoya ?? "" }));
+		const banner = screen.getByTestId(INSIGHTS_TESTID.hoursEditorBanner);
+		expect(banner).toHaveTextContent(
+			"OpenStreetMap says (not read)“Mo-Fr 10:00-20:00; SH off”© OpenStreetMap contributors",
+		);
+		expect(
+			within(banner).getByTestId(INSIGHTS_TESTID.hoursOsmLink),
+		).toHaveAttribute("href", "https://www.openstreetmap.org/node/9");
+		expect(
+			within(screen.getByTestId(INSIGHTS_TESTID.hoursEditorMode)).getByRole(
+				"radio",
+				{ name: "Weekly hours" },
+			),
+		).toHaveAttribute("aria-checked", "true");
+		expect(screen.getByTestId(INSIGHTS_TESTID.hoursEditorNote)).toHaveValue("");
 	});
 });
 

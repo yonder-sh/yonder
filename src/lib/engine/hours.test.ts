@@ -388,7 +388,86 @@ describe("hoursIssues", () => {
 	});
 });
 
+describe("effectiveHours", () => {
+	const node = (details: GraphNode["details"]) => ({ details }) as GraphNode;
+	const noteOnly: OpeningHours = {
+		source: "osm",
+		periods: [],
+		note: "Mo-Fr 09:00-18:00; SH off",
+		updatedAt: AT,
+	};
+	it("stored OSM hours beat the sheet, like Google's", () => {
+		const osm = { ...noteOnly, periods: daily("09:00", "18:00") };
+		expect(
+			effectiveHours(
+				node({ openingHours: osm, openHoursText: "10:00–20:00" }),
+				{},
+			),
+		).toMatchObject({ source: "osm", hours: osm });
+	});
+	it("a note-only OSM record (a tag the model can't say) gives way to the sheet", () => {
+		expect(
+			effectiveHours(
+				node({ openingHours: noteOnly, openHoursText: "10:00–20:00" }),
+				{},
+			)?.source,
+		).toBe("sheet");
+		expect(effectiveHours(node({ openingHours: noteOnly }), {})).toMatchObject({
+			source: "osm",
+			hours: noteOnly,
+		});
+		expect(
+			effectiveHours(
+				node({ openingHours: noteOnly, openHoursText: "ask at the desk" }),
+				{},
+			)?.source,
+		).toBe("osm");
+	});
+});
+
 describe("hoursOnDate", () => {
+	it("closes on holidays with closedOnHolidays (OSM `PH off`), after exceptions", () => {
+		const holiday: Holiday = { date: "2027-10-11", name: "Sports Day" };
+		const h = manual({
+			source: "osm",
+			periods: daily("10:00", "19:00"),
+			closedOnHolidays: true,
+		});
+		expect(hoursOnDate(h, "2027-10-11", holiday)).toEqual({
+			state: "closed",
+			label: "Closed · Sports Day",
+			why: "holiday",
+		});
+		expect(hoursOnDate(h, "2027-10-12", null)).toMatchObject({
+			state: "open",
+		});
+		// A 24h place can close on holidays too.
+		expect(
+			hoursOnDate(
+				manual({ alwaysOpen: true, closedOnHolidays: true }),
+				"2027-10-11",
+				holiday,
+			),
+		).toMatchObject({ state: "closed", why: "holiday" });
+		// A special date still wins.
+		expect(
+			hoursOnDate(
+				{
+					...h,
+					exceptions: [
+						{
+							date: "2027-10-11",
+							closed: false,
+							periods: [{ open: "12:00", close: "15:00" }],
+						},
+					],
+				},
+				"2027-10-11",
+				holiday,
+			),
+		).toMatchObject({ state: "open" });
+	});
+
 	it("orders exceptions > closedNth > closed days > weekday periods", () => {
 		const h = manual({
 			periods: daily("10:00", "19:00"),

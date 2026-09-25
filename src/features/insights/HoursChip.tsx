@@ -3,8 +3,9 @@
  * chip). Nothing when there is no issue. Info → a 12px muted clock glyph;
  * warn → an amber chip with the label (a closure is a real conflict,
  * ADDENDUM §10). Hover or tap shows every issue with its reason, the source
- * line ("From the sheet: '~10–17, many closed Sun' · Check hours") and up to
- * two fixes (EXTENSIONS §4.3).
+ * line ("From the sheet: '~10–17, many closed Sun' · Check hours"; OSM hours
+ * link their OpenStreetMap object, with the attribution) and up to two
+ * fixes (EXTENSIONS §4.3).
  */
 import { cn } from "cn";
 import { Clock, MoonStar, PencilLine } from "lucide-react";
@@ -27,6 +28,7 @@ import { TESTID } from "@/lib/testids";
 import { useUi } from "@/lib/workspace/ui-store";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { issueSentence, sourceLabel, WEEKDAY_LONG } from "./hours-format";
+import { OsmHoursSource } from "./OsmHoursSource";
 import { INSIGHTS_TESTID } from "./testids";
 import { HoverPopover } from "./ui";
 import { useHoursIssues } from "./use-hours-issues";
@@ -253,7 +255,13 @@ function IssueDetails({
 						className="min-w-0 flex-1"
 						data-testid={INSIGHTS_TESTID.hoursSource}
 					>
-						{eh ? sourceLabel(eh) : "No hours"}
+						{eh?.source === "osm" && node ? (
+							<OsmHoursSource node={node} updatedAt={eh.hours.updatedAt} />
+						) : eh ? (
+							sourceLabel(eh)
+						) : (
+							"No hours"
+						)}
 						{eh?.raw ? (
 							<span className="text-muted-foreground/90">
 								: “<span className="italic">{eh.raw}</span>”

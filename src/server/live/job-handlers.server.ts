@@ -1,5 +1,9 @@
 import { climateForCell } from "@/features/insights/server/climate.server";
 import {
+	osmHoursForTrip,
+	osmHoursRefresh,
+} from "@/features/insights/server/osm-hours-sync.server";
+import {
 	linkPreview,
 	mediaPoster,
 	mediaVariants,
@@ -72,7 +76,8 @@ const ping = async (
 /**
  * The handler table. The bodies belong to the feature packages (WP-Transit:
  * `autofillLeg`; WP-Media: `mediaVariants`, `mediaPoster`, `linkPreview`;
- * WP-Money: `fxDaily`, `fxRehome`; WP-Insights: `climateForCell`; Web Push:
+ * WP-Money: `fxDaily`, `fxRehome`; WP-Insights: `climateForCell`,
+ * `osmHoursForTrip`, `osmHoursRefresh`; Web Push:
  * `src/server/push/handlers.server.ts`); this file
  * only routes queue/job names to them, so a package never edits it.
  */
@@ -133,4 +138,26 @@ export const jobHandlers: JobHandlers = {
 		},
 		"test.ping": ping,
 	},
+	hours: {
+		// Both announce their own changes (`graph`, per trip, after COMMIT).
+		"hours.osm": async (data, ctx) => {
+			const r = await osmHoursForTrip(data.tripId, { log: ctx.log });
+			if (r.looked) ctx.log(osmSummary(r));
+			return {};
+		},
+		"hours.osmRefresh": async (_data, ctx) => {
+			const r = await osmHoursRefresh({ log: ctx.log });
+			if (r.looked) ctx.log(osmSummary(r));
+			return {};
+		},
+		"test.ping": ping,
+	},
 };
+
+function osmSummary(r: {
+	looked: number;
+	stamped: number;
+	changed: string[];
+}): string {
+	return `OSM hours: ${r.looked} objects, ${r.stamped} places stamped, ${r.changed.length} changed`;
+}

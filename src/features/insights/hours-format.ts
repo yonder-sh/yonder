@@ -64,13 +64,20 @@ export type WeekRow = {
 	lastEntry?: string;
 };
 
-/** One row per weekday (Mon first) plus a holidays row when day 7 has hours. */
+/**
+ * One row per weekday (Mon first) plus a holidays row when day 7 has hours
+ * or holidays are closed.
+ */
 export function weekRows(h: OpeningHours): WeekRow[] {
 	const rows: WeekRow[] = [];
 	const days: number[] = [...WEEK_ORDER];
-	if (h.periods.some((p) => p.day === 7)) days.push(7);
+	if (h.closedOnHolidays || h.periods.some((p) => p.day === 7)) days.push(7);
 	for (const day of days) {
 		const label = day === 7 ? "Holidays" : (WEEKDAY_SHORT[day] ?? "");
+		if (day === 7 && h.closedOnHolidays) {
+			rows.push({ day, label, text: "Closed", state: "closed" });
+			continue;
+		}
 		if (h.alwaysOpen) {
 			rows.push({ day, label, text: "Open 24h", state: "always" });
 			continue;
@@ -283,11 +290,21 @@ export function shortIsoDay(iso: string): string {
 	return `${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]}`;
 }
 
-/** The source line under the hours: "Manual · 3 Sep", "Google · 3 Sep", "From the sheet". */
+const SOURCE_NAME = {
+	google: "Google",
+	manual: "Manual",
+	osm: "OpenStreetMap",
+} as const;
+
+/**
+ * The source line under the hours: "Manual · 3 Sep", "Google · 3 Sep",
+ * "OpenStreetMap · 3 Sep", "From the sheet". (OSM hours show it with their
+ * links and attribution: `OsmHoursSource`.)
+ */
 export function sourceLabel(eh: EffectiveHours): string {
 	if (eh.source === "sheet") return "From the sheet";
 	const day = shortIsoDay(eh.hours.updatedAt);
-	return `${eh.source === "google" ? "Google" : "Manual"}${day ? ` · ${day}` : ""}`;
+	return `${SOURCE_NAME[eh.source]}${day ? ` · ${day}` : ""}`;
 }
 
 /** The sentence a tooltip shows for one issue. */

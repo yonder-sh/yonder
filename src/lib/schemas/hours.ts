@@ -1,7 +1,10 @@
 /**
  * E1 opening hours (EXTENSIONS §4.1), stored in `nodes.details.openingHours`
- * with `source: 'google' | 'manual'`. Hours parsed from the sheet's
- * `openHoursText` are derived (`effectiveHours`, WP-Insights), never stored.
+ * with `source: 'google' | 'manual' | 'osm'` (`osm`: converted from the
+ * OpenStreetMap `opening_hours` tag of `nodes.osm_ref`; see
+ * `features/insights/server/osm-hours.server.ts`). Hours parsed from the
+ * sheet's `openHoursText` are derived (`effectiveHours`, WP-Insights), never
+ * stored.
  */
 import { z } from "zod";
 import { HHmm, IsoDate } from "./common";
@@ -28,9 +31,14 @@ export const HoursException = z.object({
 export type HoursException = z.infer<typeof HoursException>;
 
 export const OpeningHours = z.object({
-	source: z.enum(["google", "manual"]),
+	source: z.enum(["google", "manual", "osm"]),
 	alwaysOpen: z.boolean().optional(),
 	periods: z.array(HoursPeriod).max(40),
+	/**
+	 * Closed on public holidays (`settings.holidays`) whatever the weekday
+	 * (OSM `PH off`). Day-7 periods are the other holiday rule: own hours.
+	 */
+	closedOnHolidays: z.boolean().optional(),
 	/** Closures known without hours. */
 	closedDays: z.array(z.number().int().min(0).max(6)).max(7).optional(),
 	closedNth: z

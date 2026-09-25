@@ -22,9 +22,18 @@ const NODE_DETAILS_SHAPE = {
 			weekdayDescriptions: z.array(z.string().max(200)).max(14),
 		})
 		.optional(),
-	/** E1: manual or Google hours (never over manual). */
+	/** E1: manual, Google or OpenStreetMap hours (never over manual). */
 	openingHours: OpeningHours.optional(),
 	openingHoursFetchedAt: z.iso.datetime().optional(),
+	/**
+	 * The OSM object (`N123`) the last OpenStreetMap hours fetch read, with or
+	 * without hours: a changed `osm_ref` is fetched again, and the hours'
+	 * attribution links to it.
+	 */
+	openingHoursRef: z
+		.string()
+		.regex(/^[NWR]\d{1,15}$/)
+		.optional(),
 	website: HttpUrl.max(2000).optional(),
 	phone: z.string().max(60).optional(),
 	rating: z.number().min(0).max(5).optional(),

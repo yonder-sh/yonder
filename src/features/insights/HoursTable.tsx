@@ -3,8 +3,10 @@
  * mono (the visit's weekdays bold, today with a dot), holidays, exceptions,
  * the rules in words ("Closed 2nd Tue · Last entry 60 min before close"), the
  * source line and Edit. Sheet hours offer "Confirm" (opens the editor
- * prefilled; saving stores them as manual). Empty: "Hours unknown." + Add
- * hours (+ Fetch with a Google key). Open `node.hours` suggestions show above
+ * prefilled; saving stores them as manual). OpenStreetMap hours say so,
+ * with a link to the OSM object and the ODbL attribution. Empty: "Hours
+ * unknown." + Add hours (+ Fetch with a Google key); an OSM tag the model
+ * couldn't read shows there, quoted. Open `node.hours` suggestions show above
  * the grid as dashed rows in the author's colour, naming what changes (the
  * week only when it differs, plus special dates, rules and the note:
  * "Closed Tue 5 Oct 2027"); reviewing them is WP-Suggest's `ProposalBar`; a
@@ -21,7 +23,12 @@ import { useEditGuard } from "@/components/common/edit-guard";
 import { MemberAvatar, presenceColor } from "@/components/common/member";
 import { useTripMutation } from "@/components/common/use-trip-mutation";
 import { Button } from "@/components/ui/button";
-import { effectiveHours, shortDate, weekdayOf } from "@/lib/engine/hours";
+import {
+	effectiveHours,
+	isNoteOnlyHours,
+	shortDate,
+	weekdayOf,
+} from "@/lib/engine/hours";
 import { localDateOf } from "@/lib/engine/time";
 import { todayIn } from "@/lib/format";
 import { tripKeys } from "@/lib/query/keys";
@@ -39,6 +46,7 @@ import {
 	weekRows,
 } from "./hours-format";
 import { fetchOpeningHours } from "./insights.functions";
+import { OsmHoursSource } from "./OsmHoursSource";
 import { INSIGHTS_TESTID } from "./testids";
 import { Overline } from "./ui";
 
@@ -59,10 +67,16 @@ export function HoursTable({ nodeId }: { nodeId: string }) {
 	);
 	const node = ix.node(nodeId);
 	if (!node) return null;
-	const eh = effectiveHours(node, graph.trip.settings);
+	const found = effectiveHours(node, graph.trip.settings);
+	// OSM hours that are only the raw tag say nothing about any day.
+	const osmNote =
+		found?.source === "osm" && isNoteOnlyHours(found.hours)
+			? found.hours
+			: null;
+	const eh = osmNote ? null : found;
 	const raw = node.details?.openHoursText?.trim() || null;
 	// Only places (and anything that carries hours) get a table.
-	if (!eh && !raw && node.type !== "place") return null;
+	if (!eh && !raw && !osmNote && node.type !== "place") return null;
 
 	const tz = ix.tzOf(node.id);
 	const today = weekdayOf(todayIn(tz));
@@ -86,7 +100,7 @@ export function HoursTable({ nodeId }: { nodeId: string }) {
 		<section
 			data-testid={TESTID.hoursTable}
 			data-nodeid={nodeId}
-			data-source={eh?.source ?? "none"}
+			data-source={found?.source ?? "none"}
 			className="grid gap-2"
 		>
 			<div className="flex items-center justify-between gap-2">
@@ -290,7 +304,13 @@ export function HoursTable({ nodeId }: { nodeId: string }) {
 						</p>
 					) : null}
 					<SourceLine
-						label={sourceLabel(eh)}
+						label={
+							eh.source === "osm" ? (
+								<OsmHoursSource node={node} updatedAt={eh.hours.updatedAt} />
+							) : (
+								sourceLabel(eh)
+							)
+						}
 						raw={eh.source === "sheet" ? (eh.raw ?? null) : null}
 						medium={eh.confidence === "medium"}
 						action={
@@ -328,6 +348,14 @@ export function HoursTable({ nodeId }: { nodeId: string }) {
 						<SourceLine
 							label="From the sheet"
 							raw={raw}
+							medium={false}
+							action={null}
+						/>
+					) : null}
+					{osmNote ? (
+						<SourceLine
+							label={<OsmHoursSource node={node} quote={osmNote.note} />}
+							raw={null}
 							medium={false}
 							action={null}
 						/>
@@ -379,7 +407,7 @@ function SourceLine({
 	medium,
 	action,
 }: {
-	label: string;
+	label: React.ReactNode;
 	raw: string | null;
 	medium: boolean;
 	action: React.ReactNode;

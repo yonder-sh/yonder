@@ -1,9 +1,9 @@
 /**
  * The HoursEditorDialog's form model (EXTENSIONS §4.5): every `OpeningHours`
  * field round-trips through `toDraft` → `fromDraft` (weekday ranges with
- * their last entry, 24h days, closed days, holidays as day 7, `alwaysOpen`,
- * `closedDays` alone, `closedNth` incl. "last", `lastEntryBeforeCloseMin`,
- * exceptions and the note). Pure.
+ * their last entry, 24h days, closed days, holidays as day 7 or closed
+ * (`closedOnHolidays`), `alwaysOpen`, `closedDays` alone, `closedNth` incl.
+ * "last", `lastEntryBeforeCloseMin`, exceptions and the note). Pure.
  */
 import type { HoursPeriod, OpeningHours } from "@/lib/schemas/hours";
 
@@ -16,8 +16,11 @@ export type HoursDraft = {
 	mode: HoursMode;
 	/** Index 0 Sun … 6 Sat. */
 	days: DayDraft[];
-	/** Day 7: own hours on public holidays (off = like that weekday). */
-	holiday: { on: boolean; ranges: RangeDraft[] };
+	/**
+	 * Public holidays: `on` = own hours (day 7), `closed` = closed
+	 * (`closedOnHolidays`), neither = like that weekday.
+	 */
+	holiday: { on: boolean; closed: boolean; ranges: RangeDraft[] };
 	closedDays: number[];
 	closedNth: { day: number; nth: number }[];
 	lastEntryMin: string;
@@ -73,7 +76,8 @@ export function toDraft(h: OpeningHours | null): HoursDraft {
 					: "closedOnly",
 		days,
 		holiday: {
-			on: hol.length > 0,
+			on: hol.length > 0 && !h?.closedOnHolidays,
+			closed: !!h?.closedOnHolidays,
 			ranges: hol.length ? hol.map(toRange) : [emptyRange()],
 		},
 		closedDays: [...(h?.closedDays ?? [])],
@@ -176,7 +180,8 @@ export function fromDraft(d: HoursDraft, updatedAt: string): DraftResult {
 				ok: false,
 				error: "Closed every day? Choose “Only closed days” instead.",
 			};
-		if (d.holiday.on) {
+		if (d.holiday.closed) hours.closedOnHolidays = true;
+		else if (d.holiday.on) {
 			const r = periodsOf(d.holiday.ranges, "Holidays");
 			if (!r.ok) return r;
 			for (const p of r.list) hours.periods.push({ day: 7, ...p });

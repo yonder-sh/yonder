@@ -30,12 +30,15 @@ import { key, redis, redisForBull } from "./redis.server";
  *   climate   `climate.cell`    fetch one 0.25° cell's climate normals once (WP-Insights)
  *   push      `push.events`, `push.flush`, `push.sync`, `push.remind`, `push.sweep`:
  *             Web Push notifications (`src/lib/push/jobs.ts`, `src/server/push`)
+ *   hours     `hours.osm`       OSM opening hours of a trip's new or re-linked places (WP-Insights)
+ *             `hours.osmRefresh` the next places whose OSM hours are 30+ days old, all trips
+ *                               (hourly, by `scheduleRecurringJobs`)
  *   (any)     `test.ping`       a no-op sample job: smoke tests and ops checks
  *
  * Trip jobs carry `tripId`: the worker reports per-trip progress (`job` events)
- * and invalidates the trip's queries after it. `money` and `climate` are
- * SILENT queues: no progress toasts (their jobs may have no trip), but a
- * trip job's reported keys are still invalidated. `push` is silent too.
+ * and invalidates the trip's queries after it. `money`, `climate`, `hours` and
+ * `push` are SILENT queues: no progress toasts (their jobs may have no trip),
+ * but a trip job's reported keys are still invalidated.
  */
 
 const TripId = z.string().refine(isUuid, "tripId must be a UUID");
@@ -66,6 +69,10 @@ export const ClimateCellJob = z.object({
 	/** The trip whose node asked for it (its ClimateCard refetches). */
 	tripId: TripId.optional(),
 });
+/** `hours.osm`: the trip's places still missing OSM hours for their `osm_ref`. */
+export const OsmHoursJob = z.object({ tripId: TripId });
+/** `hours.osmRefresh`: no payload (all trips). */
+export const OsmHoursRefreshJob = z.object({});
 export const PingJob = z.object({
 	tripId: TripId,
 	/** TripKeys the worker should invalidate after the job (tests use this). */
@@ -97,10 +104,15 @@ export const JOB_SCHEMAS = {
 		"push.sweep": PushSweepJob,
 		"test.ping": PingJob,
 	},
+	hours: {
+		"hours.osm": OsmHoursJob,
+		"hours.osmRefresh": OsmHoursRefreshJob,
+		"test.ping": PingJob,
+	},
 } as const satisfies Record<JobKind | SilentQueue, Record<string, z.ZodType>>;
 
 /** Queues without progress events (no toasts; jobs may have no trip). */
-export const SILENT_QUEUES = ["money", "climate", "push"] as const;
+export const SILENT_QUEUES = ["money", "climate", "hours", "push"] as const;
 export type SilentQueue = (typeof SILENT_QUEUES)[number];
 export function isSilentQueue(q: string): q is SilentQueue {
 	return (SILENT_QUEUES as readonly string[]).includes(q);
@@ -123,6 +135,8 @@ export const QUEUE_CONCURRENCY: Record<QueueName, number> = {
 	money: 1,
 	climate: 2,
 	push: 4,
+	// Overpass is paced to 1 request/s anyway.
+	hours: 1,
 };
 
 /** Default options of every job (SPEC §10.9). */
@@ -255,6 +269,9 @@ export const FX_DAILY_SCHEDULE = {
 	tz: "Europe/Berlin",
 } as const;
 
+/** When the OSM hours refresh runs: hourly, at an odd minute (not on the hour). */
+export const OSM_HOURS_REFRESH_SCHEDULE = { pattern: "23 * * * *" } as const;
+
 /**
  * Web Push: every trip that may still plan a reminder is synced hourly, so
  * reminders beyond the 48 h scheduling horizon are picked up in time.
@@ -263,12 +280,34 @@ export const PUSH_SWEEP_SCHEDULE = { pattern: "7 * * * *" } as const;
 
 /**
  * Registers the repeating jobs (idempotent: an upsert by scheduler id), from
- * every worker process at start: `money.fxDaily` at 16:30 Europe/Berlin and,
- * while push is on, `push.sweep` hourly (plus one sweep right away, so a
- * restart never leaves a gap). Never throws (a Redis hiccup must not stop
- * the worker).
+ * every worker process at start: `money.fxDaily` at 16:30 Europe/Berlin,
+ * `hours.osmRefresh` hourly and, while push is on, `push.sweep` hourly (plus
+ * one sweep right away, so a restart never leaves a gap). Never throws (a
+ * Redis hiccup must not stop the worker).
  */
 export async function scheduleRecurringJobs(): Promise<void> {
+	try {
+		await getQueue("hours").upsertJobScheduler(
+			"hours.osmRefresh",
+			OSM_HOURS_REFRESH_SCHEDULE,
+			{
+				name: "hours.osmRefresh",
+				data: {},
+				opts: {
+					// The next run is an hour away: one retry is plenty.
+					attempts: 2,
+					backoff: DEFAULT_JOB_OPTIONS.backoff,
+					removeOnComplete: DEFAULT_JOB_OPTIONS.removeOnComplete,
+					removeOnFail: DEFAULT_JOB_OPTIONS.removeOnFail,
+				},
+			},
+		);
+	} catch (e) {
+		console.error(
+			"[jobs] scheduling hours.osmRefresh failed:",
+			e instanceof Error ? e.message : e,
+		);
+	}
 	try {
 		await getQueue("money").upsertJobScheduler(
 			"money.fxDaily",

@@ -10,6 +10,8 @@ export const INSIGHTS_TESTID = {
 	hoursFix: "hours-fix",
 	hoursEditHours: "hours-edit-hours",
 	hoursSource: "hours-source",
+	hoursOsmSource: "hours-osm-source",
+	hoursOsmLink: "hours-osm-link",
 	dayHoursRow: "day-hours-row",
 	hoursFetch: "hours-fetch",
 	hoursTableRow: "hours-table-row",

@@ -4,8 +4,9 @@
  * `OpeningHours` field round-trips (`hours-draft.ts`): per weekday Closed /
  * 24h / ranges with a last entry, "Copy Mon to weekdays", Open 24h, "Also
  * closed: 2nd Tue", "Last entry 60 min before close", closed days alone
- * ("Hours unknown, closed on…"), holidays, special dates and a note. Sheet or
- * Google hours prefill it ("Parsed from the sheet — confirm or fix"); Save
+ * ("Hours unknown, closed on…"), holidays (own hours or closed), special
+ * dates and a note. Sheet, Google or OpenStreetMap hours prefill it ("Parsed
+ * from the sheet — confirm or fix"; OSM with its link and attribution); Save
  * stores them as manual through `setOpeningHours` (proposable `node.hours`).
  */
 import { cn } from "cn";
@@ -31,7 +32,11 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { effectiveHours, WEEKDAY_SHORT } from "@/lib/engine/hours";
+import {
+	effectiveHours,
+	isNoteOnlyHours,
+	WEEKDAY_SHORT,
+} from "@/lib/engine/hours";
 import { tripKeys } from "@/lib/query/keys";
 import { useFormPresence } from "@/lib/realtime/form-presence";
 import type { OpeningHours } from "@/lib/schemas/hours";
@@ -51,6 +56,7 @@ import {
 import { shortIsoDay, WEEK_ORDER } from "./hours-format";
 import { setOpeningHours } from "./insights.functions";
 import { useLatestMount } from "./latest-mount";
+import { OsmAttribution, OsmObjectLink } from "./OsmHoursSource";
 import { INSIGHTS_TESTID } from "./testids";
 import { DateField, Overline, Segmented, SHEET_ON_MOBILE } from "./ui";
 
@@ -113,8 +119,11 @@ function EditorBody({
 	const tripId = ws?.graph.trip.id ?? "";
 	const eh = node && ws ? effectiveHours(node, ws.graph.trip.settings) : null;
 	const stored = node?.details?.openingHours ?? null;
+	// An OSM tag the model couldn't read: shown in the banner, not prefilled.
+	const osmNote =
+		eh?.source === "osm" && isNoteOnlyHours(eh.hours) ? eh.hours : null;
 	const [draft, setDraft] = useState<HoursDraft>(() =>
-		toDraft(eh?.hours ?? null),
+		toDraft(osmNote ? null : (eh?.hours ?? null)),
 	);
 	const [error, setError] = useState<string | null>(null);
 	// Per-range last entries stay out of the way unless the hours have some.
@@ -182,7 +191,14 @@ function EditorBody({
 		);
 	};
 
-	const banner =
+	const day = eh ? shortIsoDay(eh.hours.updatedAt) : "";
+	const banner: {
+		title: React.ReactNode;
+		raw: string | null;
+		rest: string | null;
+		/** OSM hours: the ODbL attribution under the banner. */
+		osm?: true;
+	} | null =
 		eh?.source === "sheet"
 			? {
 					title: "Parsed from the sheet — confirm or fix",
@@ -191,17 +207,43 @@ function EditorBody({
 				}
 			: eh?.source === "google"
 				? {
-						title: `From Google${shortIsoDay(eh.hours.updatedAt) ? ` · ${shortIsoDay(eh.hours.updatedAt)}` : ""}. Saving makes them yours.`,
+						title: `From Google${day ? ` · ${day}` : ""}. Saving makes them yours.`,
 						raw: null,
 						rest: null,
 					}
-				: !eh && node.details?.openHoursText
+				: osmNote
 					? {
-							title: "The sheet says",
-							raw: node.details.openHoursText,
+							title: (
+								<>
+									<OsmObjectLink node={node}>OpenStreetMap</OsmObjectLink> says
+									(not read)
+								</>
+							),
+							raw: osmNote.note ?? null,
 							rest: null,
+							osm: true,
 						}
-					: null;
+					: eh?.source === "osm"
+						? {
+								title: (
+									<>
+										<OsmObjectLink node={node}>
+											From OpenStreetMap
+										</OsmObjectLink>
+										{day ? ` · ${day}` : ""}. Saving makes them yours.
+									</>
+								),
+								raw: null,
+								rest: null,
+								osm: true,
+							}
+						: !eh && node.details?.openHoursText
+							? {
+									title: "The sheet says",
+									raw: node.details.openHoursText,
+									rest: null,
+								}
+							: null;
 
 	return (
 		<ShowLastEntry.Provider value={showLast}>
@@ -225,6 +267,11 @@ function EditorBody({
 						) : null}
 						{banner.rest ? (
 							<p className="text-muted-foreground">Not read: {banner.rest}</p>
+						) : null}
+						{banner.osm ? (
+							<p className="text-[11px] text-muted-foreground">
+								<OsmAttribution />
+							</p>
 						) : null}
 					</div>
 				) : null}
@@ -516,17 +563,25 @@ function WeeklyEditor({
 				<div className="grid gap-1.5">
 					<Segmented
 						label="Holiday hours"
-						value={draft.holiday.on ? "own" : "same"}
+						value={
+							draft.holiday.closed
+								? "closed"
+								: draft.holiday.on
+									? "own"
+									: "same"
+						}
 						onChange={(v) =>
 							update((d) => {
 								d.holiday.on = v === "own";
+								d.holiday.closed = v === "closed";
 							})
 						}
 						options={[
 							{ value: "same", label: "Like that weekday" },
 							{ value: "own", label: "Own hours" },
+							{ value: "closed", label: "Closed" },
 						]}
-						className="w-fit"
+						className="w-fit max-w-full overflow-x-auto"
 					/>
 					{draft.holiday.on ? (
 						<Ranges

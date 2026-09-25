@@ -212,6 +212,9 @@ importers:
       open-graph-scraper:
         specifier: 6.12.0
         version: 6.12.0
+      opening_hours:
+        specifier: 3.14.0
+        version: 3.14.0(typescript@7.0.2)
       pg:
         specifier: 8.23.0
         version: 8.23.0
@@ -5642,6 +5645,14 @@ packages:
   httpxy@0.5.5:
     resolution: {integrity: sha512-uDjmnPyp1q4Sgzf3w+J/Fc6UqcCEj0x4Wjp7OqK5dGhNeDgpyrAmnS6ey8QWrX3SWDon2DMKf9sBa5X9+CVyMA==}
 
+  i18next@26.4.2:
+    resolution: {integrity: sha512-RX+R0VLg13IbvRuJSxnqykUFS9vQZTl8wYpWPCIUDWVrSGjsQywB5Y+pjzrkboxGAuYfJZVH1InFTdgBdxq6ug==}
+    peerDependencies:
+      typescript: ^5 || ^6 || ^7
+    peerDependenciesMeta:
+      typescript:
+        optional: true
+
   iconv-lite@0.6.3:
     resolution: {integrity: sha512-4fCk79wshMdzMp2rH06qWrJE4iolqLhCUH+OiuIgU++RB0+94NlDL81atO7GX55uUKueo0txHNtvEyI6D7WdMw==}
     engines: {node: '>=0.10.0'}
@@ -6462,6 +6473,10 @@ packages:
     resolution: {integrity: sha512-++Zlftm0kVLPmzC06t6epuWmcRMDbI4z5P3NNX979WA/k23+NtSOynEGzsVfZwguKw2mi5umVgnBlJQMwRz4Pg==}
     engines: {node: '>=20'}
 
+  opening_hours@3.14.0:
+    resolution: {integrity: sha512-pgddpSgUJlbbel2Kk9Y8uYv3cw//fiuM/BNUO7VhtdlHMpaUo3U8uG0jF5DJxsCzIpyeVygNjQJso6T6okiT8g==}
+    engines: {node: '>=12'}
+
   orderedmap@2.1.1:
     resolution: {integrity: sha512-TvAWxi0nDe1j/rtMcWcIj94+Ffe6n7zhow33h40SKxmsmozs6dz/e+EajymfoFcHd7sxNn8yHM8839uixMOV6g==}
 
@@ -7267,6 +7282,9 @@ packages:
 
   suncalc@1.9.0:
     resolution: {integrity: sha512-vMJ8Byp1uIPoj+wb9c1AdK4jpkSKVAywgHX0lqY7zt6+EWRRC3Z+0Ucfjy/0yxTVO1hwwchZe4uoFNqrIC24+A==}
+
+  suncalc@2.0.2:
+    resolution: {integrity: sha512-cedP91TuhxggoERke/jLkUVr/VMUifEMz1OkxfBZezvOFQdk8LSe9CFv7/Ov0Frn2tc2YUs+44oSrXeNEyTyGQ==}
 
   super-regex@1.1.0:
     resolution: {integrity: sha512-WHkws2ZflZe41zj6AolvvmaTrWds/VuyeYr9iPVv/oQeaIoVxMKaushfFWpOGDT+GuBrM/sVqF8KUCYQlSSTdQ==}
@@ -13012,6 +13030,10 @@ snapshots:
 
   httpxy@0.5.5: {}
 
+  i18next@26.4.2(typescript@7.0.2):
+    optionalDependencies:
+      typescript: 7.0.2
+
   iconv-lite@0.6.3:
     dependencies:
       safer-buffer: 2.1.2
@@ -13956,6 +13978,13 @@ snapshots:
       is-inside-container: 1.0.0
       powershell-utils: 0.2.1
       wsl-utils: 1.0.0
+
+  opening_hours@3.14.0(typescript@7.0.2):
+    dependencies:
+      i18next: 26.4.2(typescript@7.0.2)
+      suncalc: 2.0.2
+    transitivePeerDependencies:
+      - typescript
 
   orderedmap@2.1.1: {}
 
@@ -14973,6 +15002,8 @@ snapshots:
       inline-style-parser: 0.2.7
 
   suncalc@1.9.0: {}
+
+  suncalc@2.0.2: {}
 
   super-regex@1.1.0:
     dependencies:

@@ -12,6 +12,7 @@ import { v7 as uuidv7 } from "uuid";
 import { z } from "zod";
 import type { Tx } from "@/db/db.server";
 import { nodePriorities, nodes } from "@/db/schema";
+import { enqueueOsmHours } from "@/features/insights/server/osm-hours-queue.server";
 import { lifecycleSet } from "@/lib/domain/places-lifecycle";
 import type { GraphIndex } from "@/lib/engine/graph-index";
 import { RANK } from "@/lib/engine/lens";
@@ -289,6 +290,7 @@ export async function createNodeCore(
 	const ix = await indexTx(tx, tripId);
 	const row = await insertNode(tx, ix, tripId, input, ctx.user.id);
 	enqueueClimateCell(out, input);
+	enqueueOsmHours(out, input);
 	await logActivity(tx, out, {
 		tripId,
 		actor: ctx.actor,
@@ -333,6 +335,7 @@ export async function createNodePathCore(
 				ctx.user.id,
 			);
 			enqueueClimateCell(out, link);
+			enqueueOsmHours(out, link);
 			ids.push(row.id);
 			parentId = row.id;
 			ix = await indexTx(tx, data.tripId);
@@ -409,6 +412,11 @@ export async function updateNodeCore(
 	if (p.googlePlaceId !== undefined)
 		set.googlePlaceId = p.googlePlaceId || null;
 	if (p.osmRef !== undefined) set.osmRef = p.osmRef || null;
+	// A place newly linked to an OSM object: fetch its opening hours.
+	const nextType = p.type ?? node.type;
+	const nextRef = set.osmRef !== undefined ? set.osmRef : (node.osmRef ?? null);
+	if (nextRef !== (node.osmRef ?? null) || nextType !== node.type)
+		enqueueOsmHours(out, { type: nextType, osmRef: nextRef });
 	if (p.countryCode !== undefined) set.countryCode = p.countryCode;
 	if (p.bbox !== undefined) set.bbox = p.bbox;
 	if (p.timeNeededMin !== undefined) set.timeNeededMin = p.timeNeededMin;

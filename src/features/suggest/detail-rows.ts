@@ -128,6 +128,7 @@ function weekText(h: OpeningHours): string {
 		? []
 		: h.periods.filter((p) => p.day === 7).map((p) => `${p.open}–${p.close}`);
 	const week = weekSummary(h);
+	if (h.closedOnHolidays) return `${week} · Closed on holidays`;
 	return holiday.length ? `${week} · Holidays ${holiday.join(", ")}` : week;
 }
 

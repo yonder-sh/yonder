@@ -71,10 +71,12 @@ const Schema = z.object({
 	NAVITIME_URL: url("https://navitime-route-totalnavi.p.rapidapi.com"),
 	OSRM_FOOT_URL: url("https://routing.openstreetmap.de/routed-foot"),
 	PHOTON_URL: url("https://photon.komoot.io"),
+	/** Overpass API interpreter: OSM `opening_hours` of places (E1, WP-Insights). */
+	OVERPASS_URL: url("https://overpass-api.de/api/interpreter"),
 	/**
 	 * An email or URL the deployer controls, sent in the User-Agent to the
-	 * FOSSGIS/Photon services (their usage policy). Required in production:
-	 * `osmUserAgent()` refuses without it.
+	 * FOSSGIS/Photon/Overpass services (their usage policies). Required in
+	 * production: `osmUserAgent()` refuses without it.
 	 */
 	OSM_CONTACT: opt,
 	ODPT_CONSUMER_KEY: opt,
@@ -182,8 +184,8 @@ export function testRouteGuard(
 }
 
 /**
- * The User-Agent for Photon and FOSSGIS OSRM (their usage policies want a
- * contact). Throws in production when OSM_CONTACT is unset, so providers fail
+ * The User-Agent for Photon, FOSSGIS OSRM and Overpass (their usage policies
+ * want a contact). Throws in production when OSM_CONTACT is unset, so providers fail
  * visibly instead of being blocked upstream.
  */
 export function osmUserAgent(env: AppEnv = getEnv()): string {

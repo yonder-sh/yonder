@@ -3,6 +3,8 @@ import type { OpeningHours } from "@/lib/schemas/hours";
 import {
 	hoursDiff,
 	hoursDiffText,
+	sourceLabel,
+	weekRows,
 	weekRunRows,
 	weekSummary,
 } from "./hours-format";
@@ -137,5 +139,42 @@ describe("hoursDiff (COLLAB-R2-08: a suggestion names what it changes)", () => {
 		// Confirming the same hours (sheet → manual): the whole week.
 		expect(hoursDiff(after, { ...after }).week).toEqual(weekRunRows(after));
 		expect(hoursDiff(after, { ...after }).changes).toEqual([]);
+	});
+});
+
+describe("holidays closed and the OpenStreetMap source", () => {
+	it("shows a Closed holidays row (OSM `PH off`), also next to 24h days", () => {
+		const rows = weekRows(
+			h({
+				periods: days([1, 2, 3, 4, 5], "09:00", "18:00"),
+				closedOnHolidays: true,
+			}),
+		);
+		expect(rows.at(-1)).toEqual({
+			day: 7,
+			label: "Holidays",
+			text: "Closed",
+			state: "closed",
+		});
+		expect(
+			weekRows(h({ alwaysOpen: true, closedOnHolidays: true })).at(-1),
+		).toMatchObject({ day: 7, text: "Closed" });
+		expect(weekRows(h({ periods: days([1], "09:00", "18:00") }))).toHaveLength(
+			7,
+		);
+	});
+
+	it("names OpenStreetMap hours in the source line", () => {
+		const hours = h({ source: "osm", periods: days([1], "09:00", "18:00") });
+		expect(sourceLabel({ hours, source: "osm", confidence: "high" })).toBe(
+			"OpenStreetMap · 1 Sep",
+		);
+	});
+
+	it("a suggestion that closes on holidays says so", () => {
+		const before = h({ periods: days([1, 2, 3, 4, 5], "09:00", "18:00") });
+		const d = hoursDiff(before, { ...before, closedOnHolidays: true });
+		expect(d.week).toBeNull();
+		expect(d.changes).toEqual([{ text: "Holidays Closed" }]);
 	});
 });

@@ -1,6 +1,6 @@
 /**
  * Background-job worker entry (SPEC §10.9, D16; ADDENDUM §2): BullMQ workers for
- * the `autofill`, `media`, `links`, `money`, `climate` and `push` (Web Push,
+ * the `autofill`, `media`, `links`, `money`, `climate`, `hours` and `push` (Web Push,
  * `src/server/push`) queues. Handlers live in
  * `src/server/live/job-handlers.server.ts`; progress (`job` events) and gated
  * invalidations are published on the trip's Redis channel.
@@ -35,7 +35,8 @@ const workers = startJobWorkers({
 	publish: publishTripChange,
 });
 await workers.ready;
-// The daily FX job (money.fxDaily, 16:30 Europe/Berlin); an idempotent upsert.
+// The daily FX job (money.fxDaily, 16:30 Europe/Berlin) and the hourly OSM
+// hours refresh (hours.osmRefresh); idempotent upserts.
 await scheduleRecurringJobs();
 console.log(
 	`[worker] consuming ${workers.workers.map((w) => w.name).join(", ")} (prefix ${bullPrefix()})`,

@@ -1,11 +1,12 @@
 /**
  * E1 hours issues (EXTENSIONS §4.1, §4.3), WP-Insights. Pure.
  *
- * - `effectiveHours`: manual > google > the sheet's `openHoursText`, parsed
- *   (memoised, never stored).
+ * - `effectiveHours`: the stored hours (manual, google or osm) > the sheet's
+ *   `openHoursText`, parsed (memoised, never stored). OSM hours that are only
+ *   a note (a tag the model can't express) give way to the sheet.
  * - `hoursOnDate`: what a place does on one local date: exceptions >
- *   `closedNth` > closed weekdays > weekday periods (holidays use day 7 when
- *   it has periods).
+ *   `closedOnHolidays` > `closedNth` > closed weekdays > weekday periods
+ *   (holidays use day 7 when it has periods).
  * - `hoursIssues`: every scheduled visit checked in the NODE's zone. Past-
  *   midnight periods cover the early hours of the next day. Warn: `closed`,
  *   `after_close` (start ≥ close, or after the last entry), `closes_during`
@@ -30,7 +31,7 @@ import type {
 	TripSettings,
 } from "./types";
 
-export type HoursSource = "manual" | "google" | "sheet";
+export type HoursSource = "manual" | "google" | "osm" | "sheet";
 export type HoursConfidence = "high" | "medium" | "low";
 
 export type EffectiveHours = {
@@ -173,17 +174,36 @@ export function parseSheetHours(text: string): ParsedHours {
 	return hit;
 }
 
-/** manual > google > parsed sheet text (`details.openHoursText`). */
+/**
+ * Hours that say nothing about any day: OSM hours kept only as a note (the
+ * raw tag), because the model can't express the tag faithfully.
+ */
+export function isNoteOnlyHours(h: OpeningHours): boolean {
+	return (
+		!h.alwaysOpen &&
+		!h.periods.length &&
+		!h.closedDays?.length &&
+		!h.closedNth?.length &&
+		!h.closedOnHolidays &&
+		!h.exceptions?.length
+	);
+}
+
+/** Stored hours (manual, google, osm) > parsed sheet text (`details.openHoursText`). */
 export function effectiveHours(
 	node: GraphNode,
 	_settings: TripSettings,
 ): EffectiveHours | null {
 	const h = node.details?.openingHours;
-	if (h) return { hours: h, source: h.source, confidence: "high" };
+	const stored: EffectiveHours | null = h
+		? { hours: h, source: h.source, confidence: "high" }
+		: null;
 	const text = node.details?.openHoursText;
-	if (!text?.trim()) return null;
+	// A note-only OSM record gives way to hours the sheet can say.
+	if (stored && !(h?.source === "osm" && isNoteOnlyHours(h))) return stored;
+	if (!text?.trim()) return stored;
 	const p = parseSheetHours(text);
-	if (!p.hours) return null;
+	if (!p.hours) return stored;
 	return {
 		hours: p.hours,
 		source: "sheet",
@@ -212,7 +232,7 @@ export type DayHours =
 			state: "closed";
 			label: string;
 			/** `weekday`: no period that weekday; the others are explicit closures. */
-			why: "exception" | "nth" | "closedDays" | "weekday";
+			why: "exception" | "holiday" | "nth" | "closedDays" | "weekday";
 	  }
 	| {
 			state: "open";
@@ -272,6 +292,12 @@ export function hoursOnDate(
 			...(ex.label ? { exception: ex.label } : {}),
 		};
 	}
+	if (holiday && h.closedOnHolidays)
+		return {
+			state: "closed",
+			label: `Closed · ${holiday.name}`,
+			why: "holiday",
+		};
 	if (h.alwaysOpen) return { state: "always" };
 	const wd = weekdayOf(date);
 	for (const n of h.closedNth ?? [])
