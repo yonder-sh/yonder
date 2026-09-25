@@ -9,6 +9,10 @@ on:
 
 permissions: {}
 
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build-app:
     name: Build Yonder
