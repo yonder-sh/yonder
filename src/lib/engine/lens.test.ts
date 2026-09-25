@@ -1,6 +1,6 @@
 import "./__fixtures__/host-tz";
 import { describe, expect, it } from "vitest";
-import { demo, N } from "./__fixtures__/demo";
+import { demo, N, scenario } from "./__fixtures__/demo";
 import { indexGraph } from "./graph-index";
 import {
 	defaultLens,
@@ -109,6 +109,21 @@ describe("lens options", () => {
 		expect(enabled(N.asakusa as string)).toEqual(["area", "place"]);
 		expect(enabled(N.hands as string)).toEqual(["place"]);
 		expect(enabled(N.southKorea as string)).toEqual(["city", "area", "place"]); // no region in Korea
+	});
+
+	it("a trip that stays in one country opens at its cities", () => {
+		const japanOnly = indexGraph(
+			scenario({
+				days: [
+					{ items: [{ k: "sensoji", node: "sensoji" }] },
+					{ night: "ryokan", items: [{ k: "kiyomizu", node: "kiyomizu" }] },
+				],
+			}).graph,
+		);
+		expect(defaultLens(japanOnly, null)).toBe("city");
+		expect(defaultLens(japanOnly, N.japan as string)).toBe("region");
+		// The demo goes to Japan and Korea: countries, as before.
+		expect(defaultLens(ix, null)).toBe("country");
 	});
 
 	it("defaults to the first usable level finer than the scope", () => {

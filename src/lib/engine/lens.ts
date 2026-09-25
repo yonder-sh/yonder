@@ -99,11 +99,25 @@ export function lensOptions(
 const usable = (opts: readonly LensOption[], lens: Lens) =>
 	opts.some((o) => o.lens === lens && o.enabled && o.visible);
 
-/** The first enabled, visible level finer than the scope: `country` at the root, `place` for a place scope. */
+/** Countries the itinerary goes to: those holding scheduled items or stays. */
+function itineraryCountries(ix: GraphIndex): number {
+	let n = 0;
+	for (const id of ix.scheduledNodeIds)
+		if (ix.node(id)?.type === "country") n++;
+	return n;
+}
+
+/**
+ * The first enabled, visible level finer than the scope: `country` at the
+ * root, `place` for a place scope. A trip whose itinerary stays in one
+ * country opens at its cities instead (a single country dot says nothing).
+ */
 export function defaultLens(ix: GraphIndex, scopeId: string | null): Lens {
 	const scope = scopeId ? ix.node(scopeId) : undefined;
 	const floor = scope ? RANK[scope.type] : -1;
 	const opts = lensOptions(ix, scopeId);
+	if (!scope && itineraryCountries(ix) === 1 && usable(opts, "city"))
+		return "city";
 	return (
 		opts.find((o) => o.enabled && o.visible && RANK[o.lens] > floor)?.lens ??
 		"place"
