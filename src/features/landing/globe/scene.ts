@@ -22,7 +22,7 @@ import {
 } from "@/features/overview/globe/projection";
 import { ROUTE_NEUTRAL } from "@/features/overview/lib/trip-route";
 import type { LngLat } from "@/lib/engine/geo";
-import { countryOf, DEMO_STAYS, type DemoStay } from "../demo-route";
+import { countryOf, DEMO_HOME, DEMO_STAYS, type DemoStay } from "../demo-route";
 
 /** The viewBox (a square; the page scales it). */
 export const SIZE = 1000;
@@ -38,7 +38,7 @@ export const OFFSET = { x: 170, y: 90 } as const;
 /** The land layer's box: the disc overflows the viewBox, so it's bigger. */
 export const LAND_BOX = { x: -200, y: -200, size: SIZE + 400 } as const;
 /** How long the route takes to draw, and when it starts (ms). */
-export const DRAW_MS = 3400;
+export const DRAW_MS = 3900;
 export const DRAW_DELAY_MS = 350;
 
 /** Flights are a light neutral, as on the Overview. */
@@ -73,6 +73,8 @@ export interface SceneHop {
 	d: string;
 	color: string;
 	flight: boolean;
+	/** Out of New York or back: fainter, and low over the planet. */
+	home: boolean;
 	/** Draw window on the 0–1 timeline. */
 	s: number;
 	e: number;
@@ -112,24 +114,43 @@ type Leg = {
 	from: LngLat;
 	to: LngLat;
 	flight: boolean;
+	home: boolean;
 	color: string;
 	key: string;
 };
 
+/**
+ * The flights home stay low (a full-height arc would leave the frame) and
+ * take a fixed share of the timeline (most of their length is out of view).
+ */
+const HOME_LIFT = 0.06;
+const HOME_WEIGHT = 2.5;
+
+/** Out of New York, every stay in order, and back (home is over the horizon). */
 function legs(): Leg[] {
 	const out: Leg[] = [];
 	DEMO_STAYS.forEach((s, i) => {
-		const prev = DEMO_STAYS[i - 1];
-		if (!prev) return;
+		const prev = DEMO_STAYS[i - 1] ?? DEMO_HOME;
 		const flight = s.modeIn === "flight";
 		out.push({
 			from: prev.at,
 			to: s.at,
 			flight,
+			home: prev === DEMO_HOME,
 			color: flight ? FLIGHT_INK : countryOf(s.country).color,
 			key: `${prev.id}>${s.id}`,
 		});
 	});
+	const last = DEMO_STAYS.at(-1);
+	if (last)
+		out.push({
+			from: last.at,
+			to: DEMO_HOME.at,
+			flight: true,
+			home: true,
+			color: FLIGHT_INK,
+			key: `${last.id}>${DEMO_HOME.id}`,
+		});
 	return out;
 }
 
@@ -137,8 +158,8 @@ export function buildScene(proj: Projector = sceneProjector()): Scene {
 	const raw = legs();
 	// Each hop's share of the timeline: longer hops take a little longer
 	// (the Overview's weighting).
-	const weight = raw.map(
-		(l) => 1 + Math.sqrt((arcAngle(l.from, l.to) * 6371) / 600),
+	const weight = raw.map((l) =>
+		l.home ? HOME_WEIGHT : 1 + Math.sqrt((arcAngle(l.from, l.to) * 6371) / 600),
 	);
 	const total = weight.reduce((a, b) => a + b, 0);
 	let acc = 0;
@@ -150,7 +171,11 @@ export function buildScene(proj: Projector = sceneProjector()): Scene {
 		const d = pathOf(
 			arcPoints(l.from, l.to),
 			proj,
-			l.flight ? (t) => liftAt(t, angle) : null,
+			l.home
+				? (t) => Math.sin(Math.PI * t) * HOME_LIFT
+				: l.flight
+					? (t) => liftAt(t, angle)
+					: null,
 		);
 		if (!d) continue;
 		hops.push({
@@ -158,6 +183,7 @@ export function buildScene(proj: Projector = sceneProjector()): Scene {
 			d: round(d),
 			color: l.color,
 			flight: l.flight,
+			home: l.home,
 			s,
 			e: acc / total,
 		});

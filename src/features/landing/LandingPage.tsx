@@ -30,6 +30,7 @@ import { YonderLockup } from "@/routes/(auth)/-components/yonder-lockup";
 import {
 	countryOf,
 	DEMO_COUNTRIES,
+	DEMO_HOME,
 	DEMO_STAYS,
 	DEMO_TRIP,
 	type DemoCountry,
@@ -175,9 +176,9 @@ function PrimaryCta({ className }: { className?: string }) {
 const STAY_AT = new Map(buildScene().dots.map((d) => [d.id, d.at]));
 
 /**
- * The demo trip as the Overview's route strip: every stay, sized by its
- * nights, grouped by country. Phones get it as a vertical route instead
- * (`RouteList`).
+ * The demo trip as the Overview's route strip: from New York, every stay
+ * sized by its nights, grouped by country, and home. Phones get it as a
+ * vertical route instead (`RouteList`).
  */
 function RouteStrip() {
 	const groups = DEMO_COUNTRIES.map((c) => ({
@@ -198,6 +199,7 @@ function RouteStrip() {
 			</figcaption>
 			<RouteList groups={groups} />
 			<ol className="hidden gap-3 sm:flex">
+				<HomeEnd label="From" />
 				{groups.map((g) => (
 					<li
 						key={g.country.key}
@@ -234,6 +236,7 @@ function RouteStrip() {
 						</ol>
 					</li>
 				))}
+				<HomeEnd label="Home" />
 			</ol>
 		</figure>
 	);
@@ -245,24 +248,47 @@ type RouteGroup = {
 	nights: number;
 };
 
+/** The route list's connector down to the next row (the flights are dashed). */
+function Connector() {
+	return (
+		<span
+			aria-hidden="true"
+			className="absolute top-[1.4rem] bottom-0.5 left-[calc(0.375rem-0.5px)] border-l border-dashed border-white/25"
+		/>
+	);
+}
+
+/** New York at either end of the route list: a ring, as it has no nights. */
+function HomeRow({ label, last = false }: { label: string; last?: boolean }) {
+	return (
+		<li className="relative grid grid-cols-[0.75rem_minmax(0,1fr)_auto] items-baseline gap-x-3.5 pb-5 last:pb-0">
+			{last ? null : <Connector />}
+			<span
+				aria-hidden="true"
+				className="size-3 self-center rounded-full border-2 border-white/45"
+			/>
+			<p className="truncate text-[15px] font-medium text-white/90">
+				{DEMO_HOME.name}
+			</p>
+			<p className="font-mono text-[11px] text-white/55">{label}</p>
+		</li>
+	);
+}
+
 /**
- * Phones: the route top to bottom, a country a stop (its cities in order
- * under it), joined by the flights between them as on the globe.
+ * Phones: the route top to bottom, from New York and back, a country a stop
+ * (its cities in order under it), joined by the flights as on the globe.
  */
 function RouteList({ groups }: { groups: readonly RouteGroup[] }) {
 	return (
 		<ol className="sm:hidden">
-			{groups.map((g, i) => (
+			<HomeRow label="Start" />
+			{groups.map((g) => (
 				<li
 					key={g.country.key}
-					className="relative grid grid-cols-[0.75rem_minmax(0,1fr)_auto] items-baseline gap-x-3.5 pb-5 last:pb-0"
+					className="relative grid grid-cols-[0.75rem_minmax(0,1fr)_auto] items-baseline gap-x-3.5 pb-5"
 				>
-					{i < groups.length - 1 ? (
-						<span
-							aria-hidden="true"
-							className="absolute top-[1.4rem] bottom-0.5 left-[calc(0.375rem-0.5px)] border-l border-dashed border-white/25"
-						/>
-					) : null}
+					<Connector />
 					<span
 						aria-hidden="true"
 						className="lg-pop size-3 self-center rounded-full"
@@ -294,7 +320,26 @@ function RouteList({ groups }: { groups: readonly RouteGroup[] }) {
 					</p>
 				</li>
 			))}
+			<HomeRow label="Home" last />
 		</ol>
+	);
+}
+
+/** The strip's ends: New York, reached by a (dashed) flight. */
+function HomeEnd({ label }: { label: string }) {
+	return (
+		<li className="w-24 shrink-0">
+			<p className="truncate font-mono text-[11px] tracking-[0.08em] text-white/55 uppercase">
+				{label}
+			</p>
+			<span aria-hidden="true" className="mt-2 flex h-1.5 items-center">
+				<span className="w-full border-t border-dashed border-white/35" />
+			</span>
+			<span className="mt-2 block truncate text-[13.5px] font-medium text-white/85">
+				{DEMO_HOME.name}
+			</span>
+			<span className="block font-mono text-[11px] text-white/55">Flight</span>
+		</li>
 	);
 }
 

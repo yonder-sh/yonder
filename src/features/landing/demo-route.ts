@@ -1,6 +1,7 @@
 /**
  * The landing page's demo trip: four countries in East Asia, in the order
- * they're visited. The hero globe draws it, the route strip under the hero
+ * they're visited, flying out of New York and back. The hero globe draws it
+ * (New York is over the horizon), the route strip under the hero
  * lists it, and the showcase trip the product screenshots are taken of
  * (`scripts/landing/showcase.ts`) follows the same route, so the page shows
  * one trip throughout. Invented, like everything in the screenshots.
@@ -25,7 +26,7 @@ export type DemoStay = {
 	/** `[lng, lat]`. */
 	at: LngLat;
 	nights: number;
-	/** How you arrive from the stay before (the first has none). */
+	/** How you arrive from the stay before (the first: from home). */
 	modeIn: "ground" | "flight";
 	/** Where the globe puts the label. */
 	label: "right" | "left" | "above" | "below";
@@ -111,10 +112,17 @@ export const DEMO_STAYS: readonly DemoStay[] = [
 		country: "VN",
 		at: [106.7009, 10.7769],
 		nights: 2,
-		modeIn: "flight",
+		modeIn: "ground",
 		label: "left",
 	},
 ];
+
+/** Where the trip starts and ends: flights out and back. */
+export const DEMO_HOME = {
+	id: "home",
+	name: "New York",
+	at: [-73.9857, 40.7484] as LngLat,
+} as const;
 
 export const DEMO_TRIP = {
 	name: "East Asia in autumn",

@@ -16,8 +16,9 @@ export type NodeRow = [
 	category?: GraphNode["category"],
 ];
 
-/** The demo tree's Japan, Tokyo, Kyoto, Osaka, South Korea, Seoul, Taiwan, Taipei (and a few places) are reused. */
+/** The demo tree's USA, Japan, Tokyo, Kyoto, Osaka, South Korea, Seoul, Taiwan, Taipei (and a few places) are reused. */
 export const REUSE = [
+	"usa",
 	"japan",
 	"tokyo",
 	"sensoji",
@@ -41,9 +42,10 @@ export const REUSE = [
 /** Zones and codes for the countries the demo tree lacks. */
 export const COUNTRY_EXTRA: Record<
 	string,
-	{ tz: string; countryCode: string }
+	{ tz: string; countryCode?: string }
 > = {
 	vietnam: { tz: "Asia/Ho_Chi_Minh", countryCode: "VN" },
+	newYork: { tz: "America/New_York" },
 };
 
 // biome-ignore format: a table, one place per line
@@ -103,9 +105,11 @@ export const NODES: NodeRow[] = [
 	["anBang", "hoian", "place", "An Bang Beach", 15.9142, 108.3413, "beach"],
 	["goldenBridge", "hoian", "place", "Golden Bridge, Bà Nà Hills", 15.995, 107.9966, "sight"],
 	["cooking", "hoian", "place", "Cooking class in Cẩm Thanh", 15.8723, 108.3616, "activity"],
-	["dad", "hoian", "place", "Da Nang Airport (DAD)", 16.0439, 108.1994, "airport"],
 	["saigon", "vietnam", "city", "Saigon", 10.7769, 106.7009],
 	["sgn", "saigon", "place", "Tan Son Nhat Airport (SGN)", 10.8188, 106.6519, "airport"],
+	["saigonSt", "saigon", "place", "Saigon Station", 10.7822, 106.6772, "station"],
+	["newYork", "usa", "city", "New York", 40.7128, -74.006],
+	["jfk", "newYork", "place", "JFK Airport", 40.6413, -73.7781, "airport"],
 	["postOffice", "saigon", "place", "Saigon Central Post Office", 10.7799, 106.6999, "sight"],
 	["benThanh", "saigon", "place", "Ben Thanh Market", 10.7725, 106.698, "market"],
 	["warMuseum", "saigon", "place", "War Remnants Museum", 10.7795, 106.692, "museum"],
@@ -156,10 +160,12 @@ export type ItemRow = [
 ];
 export type DayRow = { night?: string; start?: string; items: ItemRow[] };
 
-export const FIRST_DATE = "2026-10-17";
+export const FIRST_DATE = "2026-10-16";
 
 // biome-ignore format: a table, one day per line
 export const DAYS: DayRow[] = [
+	// Fri 16 Oct: out of New York (the night is on the plane)
+	{ start: "08:30", items: [["jfk1", "jfk", 150, "09:00"]] },
 	// Tokyo: Sat 17 Oct – Wed 21 Oct
 	{ night: "tokyo", start: "14:00", items: [["hnd1", "hnd", 60, "14:30"], ["gyoen", "shinjukuGyoen", 90], ["omoide1", "omoide", 90, "19:00"]] },
 	{ night: "tokyo", start: "07:30", items: [["tsukiji1", "tsukiji", 90, "08:00"], ["teamlab1", "teamlab", 120], ["sky1", "shibuyaSky", 90, "17:00"]] },
@@ -192,10 +198,10 @@ export const DAYS: DayRow[] = [
 	{ night: "hoian", start: "08:00", items: [["cooking1", "cooking", 240, "08:30"], ["anbang1", "anBang", 150]] },
 	{ night: "hoian", start: "07:00", items: [["golden1", "goldenBridge", 300, "08:00"]] },
 	// Saigon: Tue 10 – Wed 11 Nov
-	{ night: "saigon", start: "07:00", items: [["dad1", "dad", 90, "08:00"], ["sgn1", "sgn", 60], ["post1", "postOffice", 60], ["benthanh1", "benThanh", 90]] },
-	{ night: "saigon", start: "07:30", items: [["cuchi1", "cuChi", 300, "08:00"], ["war1", "warMuseum", 90]] },
-	// Thu 12 Nov: home
-	{ start: "08:30", items: [["benthanh2", "benThanh", 60, "09:00"], ["sgn2", "sgn", 150, "13:00"]] },
+	{ night: "saigon", start: "05:15", items: [["danangSt2", "danangSt", 30, "06:00"], ["saigonSt1", "saigonSt", 30]] },
+	{ night: "saigon", start: "07:30", items: [["cuchi1", "cuChi", 300, "08:00"], ["war1", "warMuseum", 90], ["post1", "postOffice", 60]] },
+	// Thu 12 Nov: home to New York
+	{ start: "08:30", items: [["benthanh2", "benThanh", 60, "09:00"], ["sgn2", "sgn", 150, "13:00"], ["jfk2", "jfk", 30]] },
 ];
 
 type Airport = readonly [
@@ -208,10 +214,11 @@ type Airport = readonly [
 /** Flights between the day's airport items (local times). */
 // biome-ignore format: a table
 export const FLIGHTS: readonly { from: string; to: string; number: string; a: Airport; b: Airport; dep: string; arr: string }[] = [
+	{ from: "jfk1", to: "hnd1", number: "NH 109", a: ["JFK", "America/New_York", "US", [40.6413, -73.7781]], b: ["HND", "Asia/Tokyo", "JP", [35.5494, 139.7798]], dep: "2026-10-16T11:30", arr: "2026-10-17T14:30" },
 	{ from: "kix1", to: "icn1", number: "KE 722", a: ["KIX", "Asia/Tokyo", "JP", [34.432, 135.2304]], b: ["ICN", "Asia/Seoul", "KR", [37.4602, 126.4407]], dep: "2026-10-26T10:40", arr: "2026-10-26T12:45" },
 	{ from: "pus1", to: "tpe1", number: "BR 169", a: ["PUS", "Asia/Seoul", "KR", [35.1795, 128.9382]], b: ["TPE", "Asia/Taipei", "TW", [25.0797, 121.2342]], dep: "2026-11-01T13:20", arr: "2026-11-01T15:05" },
 	{ from: "tpe2", to: "han1", number: "CI 791", a: ["TPE", "Asia/Taipei", "TW", [25.0797, 121.2342]], b: ["HAN", "Asia/Ho_Chi_Minh", "VN", [21.2187, 105.8042]], dep: "2026-11-04T08:10", arr: "2026-11-04T10:15" },
-	{ from: "dad1", to: "sgn1", number: "VN 117", a: ["DAD", "Asia/Ho_Chi_Minh", "VN", [16.0439, 108.1994]], b: ["SGN", "Asia/Ho_Chi_Minh", "VN", [10.8188, 106.6519]], dep: "2026-11-10T09:30", arr: "2026-11-10T10:55" },
+	{ from: "sgn2", to: "jfk2", number: "VN 98", a: ["SGN", "Asia/Ho_Chi_Minh", "VN", [10.8188, 106.6519]], b: ["JFK", "America/New_York", "US", [40.6413, -73.7781]], dep: "2026-11-12T15:30", arr: "2026-11-12T20:30" },
 ];
 
 /** Trains between cities (the rest the app estimates). */
@@ -220,6 +227,7 @@ export const GROUND = [
 	{ from: "tokyoSt1", to: "kyotoSt1", mode: "transit", min: 135 },
 	{ from: "seoulSt1", to: "busanSt1", mode: "transit", min: 163 },
 	{ from: "hanoiSt1", to: "danangSt1", mode: "transit", min: 990 },
+	{ from: "danangSt2", to: "saigonSt1", mode: "transit", min: 1000 },
 ] as const;
 
 /** Public domain (CC0) photos from `seed/media`: [node key, file, caption]. */

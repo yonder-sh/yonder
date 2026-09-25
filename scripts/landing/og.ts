@@ -47,8 +47,8 @@ export function renderOgSvg(o: {
 	const hops = scene.hops
 		.map(
 			(h) =>
-				`<path d="${h.d}" fill="none" stroke="${h.color}" stroke-opacity="0.16" stroke-width="${h.flight ? 9 : 12}" stroke-linecap="round" stroke-linejoin="round"/>` +
-				`<path d="${h.d}" fill="none" stroke="${h.color}" stroke-opacity="${h.flight ? 0.85 : 1}" stroke-width="${h.flight ? 2.6 : 4.4}" stroke-linecap="round" stroke-linejoin="round"/>`,
+				`<path d="${h.d}" fill="none" stroke="${h.color}" stroke-opacity="${h.home ? 0.07 : 0.16}" stroke-width="${h.flight ? 9 : 12}" stroke-linecap="round" stroke-linejoin="round"/>` +
+				`<path d="${h.d}" fill="none" stroke="${h.color}" stroke-opacity="${h.home ? 0.4 : h.flight ? 0.85 : 1}" stroke-width="${h.flight ? 2.6 : 4.4}" stroke-linecap="round" stroke-linejoin="round"/>`,
 		)
 		.join("");
 	const dots = scene.dots

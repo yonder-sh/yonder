@@ -38,9 +38,9 @@ export function LandingGlobe({ className }: { className?: string }) {
 			className={cn("landing-globe block h-auto w-full", className)}
 		>
 			<title id="landing-globe-title">
-				A globe with an example trip drawn on it: Tokyo and Kyoto in Japan,
-				Seoul and Busan in South Korea, Taipei in Taiwan, then Hanoi, Hội An and
-				Saigon in Vietnam.
+				A globe with an example trip drawn on it: from New York to Tokyo and
+				Kyoto in Japan, Seoul and Busan in South Korea, Taipei in Taiwan, then
+				Hanoi, Hội An and Saigon in Vietnam, and back to New York.
 			</title>
 			<defs>
 				<radialGradient
@@ -119,7 +119,7 @@ export function LandingGlobe({ className }: { className?: string }) {
 									d={h.d}
 									fill="none"
 									stroke={h.color}
-									strokeOpacity={0.16}
+									strokeOpacity={h.home ? 0.07 : 0.16}
 									strokeWidth={h.flight ? 9 : 12}
 									strokeLinecap="round"
 									strokeLinejoin="round"
@@ -130,7 +130,7 @@ export function LandingGlobe({ className }: { className?: string }) {
 									d={h.d}
 									fill="none"
 									stroke={h.color}
-									strokeOpacity={h.flight ? 0.85 : 1}
+									strokeOpacity={h.home ? 0.4 : h.flight ? 0.85 : 1}
 									strokeWidth={h.flight ? 2.4 : 4}
 									strokeLinecap="round"
 									strokeLinejoin="round"
