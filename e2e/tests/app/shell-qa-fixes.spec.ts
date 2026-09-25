@@ -218,6 +218,11 @@ test.describe("phone", () => {
 			)),
 			...(await boxes(
 				page,
+				"your trips",
+				'[data-testid="mobile-pills"] [aria-label="Your trips"]',
+			)),
+			...(await boxes(
+				page,
 				"zoom out",
 				'[data-testid="mobile-pills"] [aria-label="Zoom out"]',
 			)),

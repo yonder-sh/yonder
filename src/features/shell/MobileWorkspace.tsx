@@ -6,6 +6,7 @@
  * the tabs; a selection or a `?tab=` link opens it at half, the Overview at
  * 92%), the inspector as a drawer over it, and the (+) FAB.
  */
+import { Link } from "@tanstack/react-router";
 import { cn } from "cn";
 import {
 	ChevronDown,
@@ -20,6 +21,7 @@ import { Dialog as DialogPrimitive } from "radix-ui";
 import { useEffect, useState } from "react";
 import { Drawer as Vaul } from "vaul";
 import { EditGuard, useEditGuard } from "@/components/common/edit-guard";
+import { YonderMark } from "@/components/common/yonder-mark";
 import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
@@ -110,15 +112,25 @@ function MobilePills() {
 		>
 			<div className="flex items-center justify-between gap-2">
 				<div className={`${PILL} min-w-0 pr-3`}>
-					<button
-						type="button"
-						onClick={() => nav.zoomOut()}
-						disabled={!scope}
-						aria-label="Zoom out"
-						className="flex size-11 shrink-0 items-center justify-center rounded-full disabled:opacity-40"
+					{/* Home to your trips, as on the desktop top bar. */}
+					<Link
+						to="/"
+						aria-label="Your trips"
+						className="flex size-11 shrink-0 items-center justify-center rounded-full text-primary"
 					>
-						<ChevronLeft className="size-5" />
-					</button>
+						<YonderMark className="size-5" />
+					</Link>
+					{/* Inside a place: one level up (Tokyo → Japan → the trip). */}
+					{scope ? (
+						<button
+							type="button"
+							onClick={() => nav.zoomOut()}
+							aria-label="Zoom out"
+							className="-ml-1 flex size-11 shrink-0 items-center justify-center"
+						>
+							<ChevronLeft className="size-5 text-muted-foreground" />
+						</button>
+					) : null}
 					<button
 						type="button"
 						onClick={() => setOutlineOpen(true)}
