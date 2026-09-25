@@ -1,17 +1,15 @@
 /**
  * The flow in the UI (owner, 2026-09-25): the Places tab's three steps with
  * their counts and the dot, the step Places picks (and writes into the URL)
- * when none is named, the Overview's next-step card and the phone's Rate
- * pill (shown only when you have places to rate, never over the feed).
+ * when none is named, and the phone's Rate pill (shown only when you have
+ * places to rate, never over the feed).
  */
 import { fireEvent, screen, within } from "@testing-library/react";
 import { beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { isRateable } from "@/features/places/lib/rate";
 import type { TripGraph } from "@/lib/engine/types";
 import { DEMO_MEMBERS, demoGraph, N } from "@/lib/fixtures/demo";
-import { useUi } from "@/lib/workspace/ui-store";
 import { renderWithWorkspace } from "@/test/render-workspace";
-import { NextStepCard } from "../NextStepCard";
 import { PlacesTab } from "../PlacesTab";
 import { RatePill } from "../RatePill";
 import { PLACES_TAB_TESTID as T } from "../testids";
@@ -55,10 +53,6 @@ const asViewer: TripGraph = {
 		m.id === DEMO_MEMBERS.dennis ? { ...m, role: "viewer" } : m,
 	),
 };
-
-function parts(href: string | null) {
-	return Object.fromEntries(new URL(href ?? "", "http://x").searchParams);
-}
 
 describe("the Places tab's steps", () => {
 	it("1 Rate · 2 Review · 3 Schedule with their counts; the dot on Rate", () => {
@@ -156,45 +150,6 @@ describe("the Places tab's steps", () => {
 			.find((s) => s.dataset.step === "rate");
 		expect(rate).toHaveTextContent("View only");
 		expect(screen.queryByTestId(T.stepDot)).toBeNull();
-	});
-});
-
-describe("the Overview's next-step card", () => {
-	it("places to rate → Start rating, into the Rate step on the whole trip", () => {
-		renderWithWorkspace(<NextStepCard />, { splat: "japan/tokyo" });
-		const card = screen.getByTestId(T.nextStep);
-		expect(card).toHaveAttribute("data-step", "rate");
-		expect(card).toHaveTextContent(`${rateable} places to rate`);
-		const link = within(card).getByRole("link", { name: "Start rating" });
-		expect(parts(link.getAttribute("href"))).toMatchObject({
-			tab: "places",
-			pv: "rate",
-		});
-		expect(new URL(link.getAttribute("href") ?? "", "http://x").pathname).toBe(
-			`/t/${demoGraph.trip.slug}/`,
-		);
-	});
-	it("nothing to rate or schedule: add places (editors); a viewer gets nothing", () => {
-		const a = renderWithWorkspace(<NextStepCard />, { graph: allRated });
-		expect(screen.getByTestId(T.nextStep)).toHaveAttribute("data-step", "add");
-		// Adding is no step: Review, with the add dialog open.
-		fireEvent.click(screen.getByRole("link", { name: "Add places" }));
-		expect(a.navigations.at(-1)?.search).toMatchObject({ pv: "table" });
-		expect(useUi.getState().addPlace).toEqual({ mode: "search" });
-		useUi.getState().resetUi();
-		a.unmount();
-		const b = renderWithWorkspace(
-			<NextStepCard steps={["rate", "schedule"]} />,
-			{
-				graph: allRated,
-			},
-		);
-		expect(screen.queryByTestId(T.nextStep)).toBeNull();
-		b.unmount();
-		renderWithWorkspace(<NextStepCard />, {
-			graph: { ...asViewer, nodes: allRated.nodes },
-		});
-		expect(screen.queryByTestId(T.nextStep)).toBeNull();
 	});
 });
 

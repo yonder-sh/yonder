@@ -189,28 +189,6 @@ test.describe("desktop", () => {
 		await expect(page.getByTestId(T.scheduleDone)).toBeVisible();
 		await expect(countOf(page, "schedule")).toHaveText(/shortlisted · all on a day$/);
 	});
-
-	test("the Overview's next-step card links into the Rate step", async ({ page }) => {
-		const c = await cloneFixtureTrip(page.request);
-		await page.goto(`/t/${c.slug}`);
-		await expectLive(page);
-		const card = page.getByTestId(T.nextStep);
-		await expect(card).toBeVisible({ timeout: 30_000 });
-		await expect(card).toHaveAttribute("data-step", "rate");
-		await expect(card).toContainText(/^\d+ places to rate/);
-		await card.scrollIntoViewIfNeeded();
-		await page.waitForTimeout(500);
-		await page.screenshot({ path: shot("desktop-overview-card"), animations: "disabled" });
-		const link = card.getByRole("link", { name: "Start rating" });
-		const href = new URL((await link.getAttribute("href")) ?? "", page.url());
-		expect(href.pathname).toBe(`/t/${c.slug}`);
-		expect(href.searchParams.get("tab")).toBe("places");
-		expect(href.searchParams.get("pv")).toBe("rate");
-		await link.click();
-		await expect(page).toHaveURL(/tab=places/);
-		await expect(page).toHaveURL(/pv=rate/);
-		await expect(page.getByTestId(T.feed)).toBeVisible({ timeout: 20_000 });
-	});
 });
 
 test("phone: the ★ Rate pill floats above the sheet and opens the feed", async ({ page, isMobile }) => {

@@ -270,7 +270,8 @@ export function cityOf(ix: GraphIndex, nodeId: string | null): string | null {
 	return null;
 }
 
-function nightsWithoutStay(ix: GraphIndex): StillToPlan["nights"] {
+/** Nights with no stay, or only a town (no hotel yet); a night flight covers its night. */
+export function nightsWithoutStay(ix: GraphIndex): StillToPlan["nights"] {
 	const days = ix.days;
 	const covered = new Set<string>();
 	// A timed leg that departs one day and lands on a later one covers that night.

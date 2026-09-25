@@ -25,7 +25,6 @@ import {
 import { useEditGuard } from "@/components/common/edit-guard";
 import { Button } from "@/components/ui/button";
 import { ClimateCard } from "@/features/insights/ClimateCard";
-import { NextStepCard } from "@/features/places/tab/NextStepCard";
 import { useCovers } from "@/features/places/tab/PlacesBoard";
 import { StillToPlan } from "@/features/shell/StillToPlan";
 import type { LngLat } from "@/lib/engine/geo";
@@ -51,6 +50,8 @@ import { ShareButton } from "./share/ShareButton";
 import { Deadlines, People, Recent } from "./TripSections";
 import { OVERVIEW_TESTID } from "./testids";
 import { type OverviewData, useOverview } from "./use-overview";
+import { useStanding } from "./use-standing";
+import { WhereThingsStand } from "./WhereThingsStand";
 
 /** Below this width the page stacks (the phone sheet, a narrow panel). */
 const WIDE_PX = 860;
@@ -281,6 +282,7 @@ function Header({
 	const openAddPlace = useUi((s) => s.openAddPlace);
 	const setSettingsOpen = useUi((s) => s.setSettingsOpen);
 	const { route, phase } = data;
+	const standing = useStanding();
 	const name = graph.trip.name;
 	const size = wide ? "hero" : "phone";
 	const chipRow = (
@@ -393,8 +395,10 @@ function Header({
 					</div>
 				</div>
 				{!noDays && wide ? <Stats data={data} cols={3} after={false} /> : null}
-				{/* The places flow's next step (the card above already offers adding). */}
-				<NextStepCard steps={["rate", "schedule"]} />
+				{/* The card above already offers adding: the checklist once there are places. */}
+				{standing.places || !noDays ? (
+					<WhereThingsStand standing={standing} tone="hero" />
+				) : null}
 			</div>
 		);
 	}
@@ -512,8 +516,8 @@ function Header({
 			<CountryChips route={route} />
 			{wide ? <Stats data={data} cols={3} after={false} /> : null}
 			<PlanningLine data={data} />
-			{/* The places flow's next step: rate → review → schedule. */}
-			<NextStepCard />
+			{/* Where things stand, the first open line being what's next. */}
+			<WhereThingsStand standing={standing} tone="hero" />
 			{buttons(openPlan, seePlaces)}
 		</div>
 	);
