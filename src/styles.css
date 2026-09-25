@@ -214,6 +214,17 @@
 		font-size: 14px;
 		line-height: 20px;
 	}
+	/*
+	 * The phone trip screen is an app screen: the page itself never scrolls or
+	 * rubber-bands, so dragging the sheet moves only the sheet (MobileWorkspace
+	 * sets the class while it's open).
+	 */
+	html.app-locked,
+	html.app-locked body {
+		height: 100%;
+		overflow: hidden;
+		overscroll-behavior: none;
+	}
 	/* 2px ring with a 2px offset on every focusable element (§13). */
 	:focus-visible {
 		outline: 2px solid var(--ring);

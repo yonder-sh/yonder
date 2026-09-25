@@ -469,6 +469,12 @@ function Fab() {
 }
 
 export function MobileWorkspace() {
+	// Lock the page while the trip is open on a phone (see `app-locked`).
+	useEffect(() => {
+		const root = document.documentElement;
+		root.classList.add("app-locked");
+		return () => root.classList.remove("app-locked");
+	}, []);
 	return (
 		<div className="relative h-svh overflow-hidden bg-basemap-land">
 			<div className="absolute inset-0">
