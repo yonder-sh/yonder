@@ -22,7 +22,12 @@ import { humanError } from "@/lib/errors";
 import { newId } from "@/lib/ids";
 import type { Priority } from "@/lib/schemas/enums";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
-import { useCreateItem, useSetPriority, useUpdateNode } from "../mutations";
+import {
+	useCreateItem,
+	useMoveItem,
+	useSetPriority,
+	useUpdateNode,
+} from "../mutations";
 import { mayRate } from "../ui/member-ratings";
 import { toggleDrop, toggleShortlist } from "./lifecycle";
 import type { PlaceRow } from "./model";
@@ -57,11 +62,12 @@ export function useCanRateOwn(): {
 }
 
 function usePlaceActionsValue() {
-	const { graph, access } = useWorkspace();
+	const { graph, access, ix } = useWorkspace();
 	const tripId = graph.trip.id;
 	const setPriority = useSetPriority(tripId);
 	const update = useUpdateNode(tripId);
 	const createItem = useCreateItem(tripId);
+	const moveItem = useMoveItem(tripId);
 	const guard = useEditGuard();
 	const own = useCanRateOwn();
 
@@ -173,7 +179,11 @@ function usePlaceActionsValue() {
 		[guard.disabled, update],
 	);
 
-	/** Put it on a day: at the end, or at a spot (`bestSpot`: after / before a stop). */
+	/**
+	 * Put it on a day: at the end, or at a spot (`bestSpot`: after / before a
+	 * stop). Its stop in Unscheduled (a place a day change sent back) moves
+	 * there instead of a second one being made.
+	 */
 	const addToDay = useCallback(
 		async (
 			row: PlaceRow,
@@ -187,15 +197,26 @@ function usePlaceActionsValue() {
 						nodeId: row.id,
 						patch: { status: "active" },
 					});
+				const where = {
+					...(at?.afterItemId ? { afterItemId: at.afterItemId } : {}),
+					...(at?.beforeItemId && !at.afterItemId
+						? { beforeItemId: at.beforeItemId }
+						: {}),
+				};
+				const spare = ix.unscheduled.find((it) => it.nodeId === row.id);
+				if (spare) {
+					await moveItem.mutateAsync({ itemId: spare.id, dayId, ...where });
+					undoToast(`${row.name} · ${label}`, async () => {
+						await moveItem.mutateAsync({ itemId: spare.id, dayId: null });
+					});
+					return;
+				}
 				const id = newId();
 				await createItem.mutateAsync({
 					id,
 					dayId,
 					nodeId: row.id,
-					...(at?.afterItemId ? { afterItemId: at.afterItemId } : {}),
-					...(at?.beforeItemId && !at.afterItemId
-						? { beforeItemId: at.beforeItemId }
-						: {}),
+					...where,
 				});
 				undoToast(`${row.name} · ${label}`, async () => {
 					await deleteItem({ data: { itemId: id } });
@@ -204,7 +225,7 @@ function usePlaceActionsValue() {
 				toast.error(humanError(e));
 			}
 		},
-		[update, createItem],
+		[update, createItem, moveItem, ix],
 	);
 
 	return useMemo(

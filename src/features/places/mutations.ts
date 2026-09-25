@@ -6,7 +6,9 @@
  */
 import type { QueryClient } from "@tanstack/react-query";
 import { useTripMutation } from "@/components/common/use-trip-mutation";
-import { createItem } from "@/functions/items.functions";
+import { optimisticMove } from "@/features/plan/use-plan-actions";
+import { setDayStay } from "@/functions/days.functions";
+import { createItem, moveItem } from "@/functions/items.functions";
 import {
 	createNodePath,
 	moveNode,
@@ -159,4 +161,53 @@ export function useMoveNode(tripId: string) {
 				})),
 		},
 	);
+}
+
+export type MoveItemVars = {
+	itemId: string;
+	/** null: off its day (Unscheduled). */
+	dayId: string | null;
+	afterItemId?: string;
+	beforeItemId?: string;
+};
+
+export function useMoveItem(tripId: string) {
+	return useTripMutation((v: MoveItemVars) => moveItem({ data: v }), {
+		keys: [tripKeys.graph(tripId)],
+		tripId,
+		optimistic: (qc, v) =>
+			qc.setQueryData(tripKeys.graph(tripId), (g?: TripGraph) =>
+				g ? optimisticMove(g, v) : g,
+			),
+	});
+}
+
+export type DayStayVars = {
+	fromDayId: string;
+	toDayId?: string;
+	/** A hotel, or a town before one is picked (the day split); null clears. */
+	nodeId: string | null;
+};
+
+/** The night's stay for a range of days (`day.stay`). */
+export function useSetDayStay(tripId: string) {
+	return useTripMutation((v: DayStayVars) => setDayStay({ data: v }), {
+		keys: [tripKeys.graph(tripId)],
+		tripId,
+		optimistic: (qc, v) =>
+			qc.setQueryData(tripKeys.graph(tripId), (g?: TripGraph) => {
+				const date = (id: string) => g?.days.find((d) => d.id === id)?.date;
+				const from = date(v.fromDayId);
+				const to = date(v.toDayId ?? v.fromDayId);
+				if (!g || !from || !to) return g;
+				return {
+					...g,
+					days: g.days.map((d) =>
+						d.date >= from && d.date <= to
+							? { ...d, nightNodeId: v.nodeId }
+							: d,
+					),
+				};
+			}),
+	});
 }
