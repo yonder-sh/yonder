@@ -106,8 +106,10 @@ export function CenterTabBar({
 			data-testid={TESTID.centerTabs}
 			className={cn(
 				"relative flex h-[var(--tabbar-h)] shrink-0 items-end gap-4 overflow-x-auto border-b px-4 [scrollbar-width:none]",
-				// 44px tabs inside the 1px bottom border.
-				touch && "h-[45px] gap-2",
+				// 44px tabs inside the 1px bottom border. Sideways only: a vertical
+				// drag moves the sheet (like the day chips), never wobbles the bar.
+				touch &&
+					"h-[45px] touch-pan-x gap-2 overflow-y-hidden overscroll-x-contain",
 				className,
 			)}
 		>

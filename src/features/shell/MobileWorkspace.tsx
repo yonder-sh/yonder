@@ -224,13 +224,6 @@ function MobilePills() {
 	);
 }
 
-/** The sheet's height for a snap point (px), for the map's fit padding. */
-export function sheetHeight(snap: string | number | null, viewport: number) {
-	if (typeof snap === "number") return Math.round(snap * viewport);
-	const px = typeof snap === "string" ? Number.parseFloat(snap) : Number.NaN;
-	return Number.isFinite(px) ? px : 120;
-}
-
 /** Room the floating pills (44) + lens control (46) take at the top of the map. */
 const PILLS_H = 120;
 
@@ -263,14 +256,20 @@ function MobileSheet() {
 		}
 		if (useUi.getState().sheetSnap === SNAPS[0]) setSnap(SNAPS[1] ?? null);
 	}, [tabKey, setSnap]);
-	// The map fits what's visible: below the pills, above the sheet.
+	// The map fits what's visible: below the pills, above the half sheet. One
+	// padding for every snap, so dragging the sheet never moves the map.
 	useEffect(() => {
-		const bottom = Math.min(
-			sheetHeight(snap, window.innerHeight),
-			Math.round(window.innerHeight * 0.5),
-		);
-		setMapPadding({ top: PILLS_H, right: 16, bottom: bottom + 16, left: 16 });
-	}, [snap, setMapPadding]);
+		const apply = () =>
+			setMapPadding({
+				top: PILLS_H,
+				right: 16,
+				bottom: Math.round(window.innerHeight * 0.5) + 16,
+				left: 16,
+			});
+		apply();
+		window.addEventListener("resize", apply);
+		return () => window.removeEventListener("resize", apply);
+	}, [setMapPadding]);
 	// At the 120px peek only the day chips and Now/Next fit: the tab bar would be
 	// cut in half at the screen edge, so it (and the tab content) fade in from
 	// the half snap up.
