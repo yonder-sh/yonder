@@ -1,7 +1,8 @@
 /**
- * `redirectSignedInToDashboard`, the landing page's guard (`/`): accounts go
- * to the dashboard, everyone else sees the landing, and a failed session
- * lookup never breaks the public page.
+ * `landingViewer`, the landing page's guard (`/`): everyone sees the landing
+ * (an account's links lead to the dashboard), only an installed app's
+ * `?source=pwa` start forwards there, and a failed session lookup never
+ * breaks the public page.
  */
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -12,7 +13,7 @@ vi.mock("./share.functions", () => ({ redeemShareLink: vi.fn() }));
 vi.mock("./auth-client", () => ({ authClient: {} }));
 vi.mock("@/lib/query/persister", () => ({ queryPersister: {} }));
 
-import { redirectSignedInToDashboard } from "./guards";
+import { landingViewer } from "./guards";
 import type { Viewer } from "./viewer";
 
 const viewer = (over: Partial<Viewer> = {}): Viewer => ({
@@ -27,11 +28,12 @@ const viewer = (over: Partial<Viewer> = {}): Viewer => ({
 	...over,
 });
 
-/** The redirect's href, or null when the guard lets the page render. */
-async function outcome(p: Promise<void>): Promise<string | null> {
+/** The redirect's href, else whether the page renders signed in. */
+async function outcome(
+	p: Promise<{ signedIn: boolean }>,
+): Promise<string | boolean> {
 	try {
-		await p;
-		return null;
+		return (await p).signedIn;
 	} catch (e) {
 		const r = e as { options?: { href?: string }; href?: string };
 		if (r.options?.href ?? r.href) return (r.options?.href ?? r.href) as string;
@@ -41,36 +43,33 @@ async function outcome(p: Promise<void>): Promise<string | null> {
 
 beforeEach(() => vi.clearAllMocks());
 
-describe("redirectSignedInToDashboard (the landing page)", () => {
+describe("landingViewer (the landing page)", () => {
 	it("shows the landing when signed out", async () => {
 		m.session.mockResolvedValue(null);
-		expect(await outcome(redirectSignedInToDashboard())).toBeNull();
+		expect(await outcome(landingViewer())).toBe(false);
 	});
 
 	it("shows the landing to a link guest (no account yet)", async () => {
 		m.session.mockResolvedValue(viewer({ isAnonymous: true, email: null }));
-		expect(await outcome(redirectSignedInToDashboard())).toBeNull();
+		expect(await outcome(landingViewer())).toBe(false);
 	});
 
-	it("sends an account to the dashboard", async () => {
+	it("shows an account the landing too, signed in", async () => {
 		m.session.mockResolvedValue(viewer());
-		expect(await outcome(redirectSignedInToDashboard())).toBe("/dashboard");
+		expect(await outcome(landingViewer())).toBe(true);
 	});
 
-	it("keeps the query (an older install's /?source=pwa)", async () => {
+	it("sends an older install's /?source=pwa start to the dashboard", async () => {
 		m.session.mockResolvedValue(viewer());
-		expect(await outcome(redirectSignedInToDashboard("?source=pwa"))).toBe(
+		expect(await outcome(landingViewer("?source=pwa"))).toBe(
 			"/dashboard?source=pwa",
 		);
-	});
-
-	it("sends an account without names to the dashboard too (its guard asks for them)", async () => {
-		m.session.mockResolvedValue(viewer({ named: false, lastName: "" }));
-		expect(await outcome(redirectSignedInToDashboard())).toBe("/dashboard");
+		m.session.mockResolvedValue(null);
+		expect(await outcome(landingViewer("?source=pwa"))).toBe(false);
 	});
 
 	it("still shows the landing when the session can't be read", async () => {
 		m.session.mockRejectedValue(new Error("ECONNREFUSED"));
-		expect(await outcome(redirectSignedInToDashboard())).toBeNull();
+		expect(await outcome(landingViewer())).toBe(false);
 	});
 });

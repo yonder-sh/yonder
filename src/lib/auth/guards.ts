@@ -157,24 +157,25 @@ export async function requireAccountViewer(
 }
 
 /**
- * The landing page's guard (`/`): a signed-in account goes straight to the
- * dashboard, keeping the query (`/?source=pwa` from an older install). On a
- * first load this runs on the server, so it's a redirect response and the
- * landing never flashes. Signed-out visitors and link guests stay on the
- * landing, and so does anyone when the session can't be read (the page
- * needs no data, so it still renders with the database down).
+ * The landing page's guard (`/`): whether an account is signed in (the page
+ * then leads to the dashboard instead of sign-in). Only an installed app
+ * opening at `/?source=pwa` (an install from before the dashboard moved to
+ * `/dashboard`) still goes straight there. Never throws otherwise: the page
+ * needs no data, so it renders when the session can't be read.
  */
-export async function redirectSignedInToDashboard(
+export async function landingViewer(
 	searchStr = "",
-): Promise<void> {
+): Promise<{ signedIn: boolean }> {
 	let viewer: Viewer | null;
 	try {
 		viewer = await getSessionFn();
 	} catch {
-		return;
+		return { signedIn: false };
 	}
-	if (viewer && !viewer.isAnonymous)
+	const signedIn = !!viewer && !viewer.isAnonymous;
+	if (signedIn && new URLSearchParams(searchStr).get("source") === "pwa")
 		throw redirect({ href: `${DASHBOARD_PATH}${searchStr}` });
+	return { signedIn };
 }
 
 /**

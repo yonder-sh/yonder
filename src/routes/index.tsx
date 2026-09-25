@@ -3,16 +3,16 @@ import { createFileRoute } from "@tanstack/react-router";
 import { LandingPage } from "@/features/landing/LandingPage";
 import { LANDING_META } from "@/features/landing/meta";
 import { siteOrigin } from "@/features/landing/site-origin";
-import { redirectSignedInToDashboard } from "@/lib/auth/guards";
+import { landingViewer } from "@/lib/auth/guards";
 
 /**
- * `/` — the public landing page. Signed in, it forwards to `/dashboard`
- * before anything renders (a server redirect on a first load). Indexable,
- * unlike the app's trip pages; the canonical and Open Graph URLs are
- * absolute, from this deployment's APP_URL.
+ * `/` — the public landing page, for everyone: signed in, its links lead to
+ * the dashboard instead of sign-in (only an installed app's `?source=pwa`
+ * start forwards there). Indexable, unlike the app's trip pages; the
+ * canonical and Open Graph URLs are absolute, from this deployment's APP_URL.
  */
 export const Route = createFileRoute("/")({
-	beforeLoad: ({ location }) => redirectSignedInToDashboard(location.searchStr),
+	beforeLoad: ({ location }) => landingViewer(location.searchStr),
 	loader: () => ({ origin: siteOrigin() }),
 	head: ({ loaderData }) => {
 		const origin = loaderData?.origin ?? "";
@@ -68,5 +68,10 @@ export const Route = createFileRoute("/")({
 			],
 		};
 	},
-	component: LandingPage,
+	component: Landing,
 });
+
+function Landing() {
+	const { signedIn } = Route.useRouteContext();
+	return <LandingPage signedIn={signedIn} />;
+}

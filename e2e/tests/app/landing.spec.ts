@@ -4,8 +4,8 @@
  *   tags, the globe and every section, every screenshot loads, nothing
  *   scrolls sideways, no console errors or warnings, and the CTA leads to
  *   sign-in;
- * - signed in, `/` is a redirect to `/dashboard` straight from the server
- *   (the landing never paints), keeping `?source=pwa` from older installs;
+ * - signed in, `/` is the landing too, its links leading to `/dashboard`;
+ *   only an older install's `/?source=pwa` start forwards there;
  * - the installed app starts on the dashboard (`/dashboard?source=pwa`).
  */
 import { expect, test } from "@playwright/test";
@@ -90,18 +90,21 @@ test.describe("signed out", () => {
 test.describe("signed in", () => {
 	test.use({ storageState: storageStateOf("dev") });
 
-	test("/ goes straight to /dashboard, from the server", async ({ page }) => {
+	test("/ is the landing, leading to /dashboard; an older install's start forwards", async ({ page }) => {
 		const res = await page.request.get("/", { maxRedirects: 0 });
-		expect(res.status()).toBeGreaterThanOrEqual(300);
-		expect(res.status()).toBeLessThan(400);
-		expect(res.headers().location).toMatch(/\/dashboard$/);
-		expect(await res.text()).not.toContain("Plan trips together.");
+		expect(res.status()).toBe(200);
+		expect(await res.text()).toContain("Plan trips together.");
 		const pwa = await page.request.get("/?source=pwa", { maxRedirects: 0 });
 		expect(pwa.headers().location).toMatch(/\/dashboard\?source=pwa$/);
 
 		await page.goto("/");
+		await expect(page.getByRole("link", { name: "Sign in" })).toHaveCount(0);
+		await (await hydrated(page.getByRole("link", { name: "Your trips", exact: true }))).click();
 		await expect(page).toHaveURL(/\/dashboard$/);
 		await expect(page.getByTestId(TESTID.dashboard)).toBeVisible();
+		await page.goBack();
+		await page.getByRole("link", { name: /Go to your trips/ }).first().click();
+		await expect(page).toHaveURL(/\/dashboard$/);
 	});
 
 	test("the installed app starts on the dashboard", async ({ page }) => {

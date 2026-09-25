@@ -24,7 +24,13 @@ import {
 	Wallet,
 	WifiOff,
 } from "lucide-react";
-import { type CSSProperties, Fragment, type ReactNode } from "react";
+import {
+	type CSSProperties,
+	createContext,
+	Fragment,
+	type ReactNode,
+	useContext,
+} from "react";
 import { PRIORITIES, PRIORITY_ORDER } from "@/lib/domain/taxonomy";
 import { YonderLockup } from "@/routes/(auth)/-components/yonder-lockup";
 import {
@@ -42,6 +48,7 @@ import { GITHUB_URL, SUPPORT_EMAIL } from "./meta";
 import { SHOTS, type Shot, type ShotTheme, shotSrc } from "./shots";
 
 const SIGN_IN = "/login";
+const DASHBOARD = "/dashboard";
 const CONTAINER = "mx-auto w-full max-w-[1200px] px-5 sm:px-8";
 
 /** One accent per part of the app: the demo route's country colours, in order. */
@@ -52,7 +59,18 @@ const ACCENT = {
 	together: DEMO_COUNTRIES[3]?.color ?? "#56d6a8",
 } as const;
 
-export function LandingPage() {
+/** Signed in: the header and the calls to action lead to the dashboard. */
+const SignedIn = createContext(false);
+
+export function LandingPage({ signedIn = false }: { signedIn?: boolean }) {
+	return (
+		<SignedIn.Provider value={signedIn}>
+			<LandingBody />
+		</SignedIn.Provider>
+	);
+}
+
+function LandingBody() {
 	return (
 		<div className="min-h-svh bg-background text-foreground">
 			<a
@@ -89,20 +107,13 @@ function Hero() {
 			<header
 				className={cn(
 					CONTAINER,
-					"flex h-16 items-center justify-between sm:h-20",
+					"relative z-10 flex h-16 items-center justify-between sm:h-20",
 				)}
 			>
 				<Link to="/" aria-label="Yonder" className="rounded-md">
 					<YonderLockup className="h-7 sm:h-8" />
 				</Link>
-				<nav aria-label="Account">
-					<Link
-						to={SIGN_IN}
-						className="rounded-full px-4 py-2 text-sm font-medium text-white/80 transition-colors hover:bg-white/8 hover:text-white"
-					>
-						Sign in
-					</Link>
-				</nav>
+				<AccountLink />
 			</header>
 			<section
 				aria-labelledby="hero-title"
@@ -154,16 +165,31 @@ function Hero() {
 	);
 }
 
+function AccountLink() {
+	const signedIn = useContext(SignedIn);
+	return (
+		<nav aria-label="Account">
+			<Link
+				to={signedIn ? DASHBOARD : SIGN_IN}
+				className="rounded-full px-4 py-2 text-sm font-medium text-white/80 transition-colors hover:bg-white/8 hover:text-white"
+			>
+				{signedIn ? "Your trips" : "Sign in"}
+			</Link>
+		</nav>
+	);
+}
+
 function PrimaryCta({ className }: { className?: string }) {
+	const signedIn = useContext(SignedIn);
 	return (
 		<Link
-			to={SIGN_IN}
+			to={signedIn ? DASHBOARD : SIGN_IN}
 			className={cn(
 				"group inline-flex h-12 items-center gap-2 rounded-full bg-glow px-6 text-[15px] font-semibold text-glow-foreground shadow-[0_0_0_1px_rgb(248_176_93/.35),0_12px_40px_-12px_rgb(248_176_93/.7)] transition-[filter,box-shadow] hover:brightness-105 hover:shadow-[0_0_0_1px_rgb(248_176_93/.5),0_14px_48px_-10px_rgb(248_176_93/.85)] focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-glow",
 				className,
 			)}
 		>
-			Start planning today
+			{signedIn ? "Go to your trips" : "Start planning today"}
 			<ArrowRight
 				aria-hidden="true"
 				className="size-4 transition-transform group-hover:translate-x-0.5"
