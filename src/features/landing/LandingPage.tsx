@@ -24,10 +24,17 @@ import {
 	Wallet,
 	WifiOff,
 } from "lucide-react";
-import type { CSSProperties, ReactNode } from "react";
+import { type CSSProperties, Fragment, type ReactNode } from "react";
 import { PRIORITIES, PRIORITY_ORDER } from "@/lib/domain/taxonomy";
 import { YonderLockup } from "@/routes/(auth)/-components/yonder-lockup";
-import { countryOf, DEMO_COUNTRIES, DEMO_STAYS, DEMO_TRIP } from "./demo-route";
+import {
+	countryOf,
+	DEMO_COUNTRIES,
+	DEMO_STAYS,
+	DEMO_TRIP,
+	type DemoCountry,
+	type DemoStay,
+} from "./demo-route";
 import { LandingGlobe } from "./globe/LandingGlobe";
 import { buildScene, DRAW_DELAY_MS, DRAW_MS } from "./globe/scene";
 import { GITHUB_URL, SUPPORT_EMAIL } from "./meta";
@@ -103,7 +110,8 @@ function Hero() {
 					"grid grid-cols-1 items-center gap-2 pt-6 pb-4 sm:pt-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.08fr)] lg:gap-6 lg:pt-8 lg:pb-6",
 				)}
 			>
-				<div className="max-w-[34rem]">
+				{/* Above the globe, which reaches up to the button on phones. */}
+				<div className="relative z-10 max-w-[34rem]">
 					<p
 						className="landing-rise font-mono text-[12px] font-medium tracking-[0.14em] text-white/55 uppercase"
 						style={{ "--delay": "0ms" } as CSSProperties}
@@ -168,7 +176,8 @@ const STAY_AT = new Map(buildScene().dots.map((d) => [d.id, d.at]));
 
 /**
  * The demo trip as the Overview's route strip: every stay, sized by its
- * nights, grouped by country. On phones only the countries.
+ * nights, grouped by country. Phones get it as a vertical route instead
+ * (`RouteList`).
  */
 function RouteStrip() {
 	const groups = DEMO_COUNTRIES.map((c) => ({
@@ -187,18 +196,16 @@ function RouteStrip() {
 					{DEMO_TRIP.cities} cities
 				</span>
 			</figcaption>
-			<ol className="grid grid-cols-2 gap-x-4 gap-y-4 sm:flex sm:gap-3">
+			<RouteList groups={groups} />
+			<ol className="hidden gap-3 sm:flex">
 				{groups.map((g) => (
 					<li
 						key={g.country.key}
-						className="min-w-0 sm:grow-(--nights) sm:basis-0"
+						className="min-w-0 grow-(--nights) basis-0"
 						style={{ "--nights": g.nights } as CSSProperties}
 					>
-						<p className="truncate text-[13px] font-medium text-white/85 sm:font-mono sm:text-[11px] sm:tracking-[0.08em] sm:text-white/55 sm:uppercase">
+						<p className="truncate font-mono text-[11px] tracking-[0.08em] text-white/55 uppercase">
 							{g.country.name}
-							<span className="ml-1.5 font-mono text-[11px] text-white/55 sm:hidden">
-								{g.nights}
-							</span>
 						</p>
 						<ol className="mt-2 flex gap-1">
 							{g.stays.map((s) => (
@@ -216,10 +223,10 @@ function RouteStrip() {
 											} as CSSProperties
 										}
 									/>
-									<span className="mt-2 hidden truncate text-[13.5px] font-medium text-white/85 sm:block">
+									<span className="mt-2 block truncate text-[13.5px] font-medium text-white/85">
 										{s.name}
 									</span>
-									<span className="hidden font-mono text-[11px] text-white/55 sm:block">
+									<span className="block font-mono text-[11px] text-white/55">
 										{s.nights} nights
 									</span>
 								</li>
@@ -229,6 +236,65 @@ function RouteStrip() {
 				))}
 			</ol>
 		</figure>
+	);
+}
+
+type RouteGroup = {
+	country: DemoCountry;
+	stays: DemoStay[];
+	nights: number;
+};
+
+/**
+ * Phones: the route top to bottom, a country a stop (its cities in order
+ * under it), joined by the flights between them as on the globe.
+ */
+function RouteList({ groups }: { groups: readonly RouteGroup[] }) {
+	return (
+		<ol className="sm:hidden">
+			{groups.map((g, i) => (
+				<li
+					key={g.country.key}
+					className="relative grid grid-cols-[0.75rem_minmax(0,1fr)_auto] items-baseline gap-x-3.5 pb-5 last:pb-0"
+				>
+					{i < groups.length - 1 ? (
+						<span
+							aria-hidden="true"
+							className="absolute top-[1.4rem] bottom-0.5 left-[calc(0.375rem-0.5px)] border-l border-dashed border-white/25"
+						/>
+					) : null}
+					<span
+						aria-hidden="true"
+						className="lg-pop size-3 self-center rounded-full"
+						style={
+							{
+								background: g.country.color,
+								boxShadow: `0 0 0 4px ${g.country.color}2e`,
+								"--delay": `${Math.round(DRAW_DELAY_MS + (STAY_AT.get(g.stays[0]?.id ?? "") ?? 1) * DRAW_MS - 80)}ms`,
+							} as CSSProperties
+						}
+					/>
+					<p className="truncate text-[15px] font-medium text-white/90">
+						{g.country.name}
+					</p>
+					<p className="font-mono text-[11px] text-white/55 tnum">
+						{g.nights} nights
+					</p>
+					<p className="col-start-2 col-end-4 mt-0.5 text-[13px] text-white/55">
+						{g.stays.map((s, j) => (
+							<Fragment key={s.id}>
+								{j ? (
+									<span aria-hidden="true" className="px-1.5 text-white/30">
+										→
+									</span>
+								) : null}
+								{s.name}
+							</Fragment>
+						))}
+					</p>
+				</li>
+			))}
+		</ol>
 	);
 }
 
