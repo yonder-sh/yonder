@@ -147,7 +147,9 @@ export function OverviewTab({ phone = false }: { phone?: boolean }) {
 			data-testid={OVERVIEW_TESTID.page}
 			data-phase={phase.kind}
 			data-layout={wide ? "wide" : "stacked"}
-			className="min-h-full bg-background"
+			// `relative`: the sr-only title below is absolute; without a positioned
+			// ancestor it escaped the tab's scroll box and made the page scroll too.
+			className="relative min-h-full bg-background"
 		>
 			{/* The hero band: dark in both themes (tokens inside read dark). */}
 			<div
