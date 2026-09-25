@@ -476,7 +476,8 @@ test("a link guest never receives a money anchor; a member does", async ({ brows
 	const gctx = await browser.newContext({ viewport: B_SIZE });
 	await loginViaApi(gctx.request, `guest-${randomBytes(3).toString("hex")}@example.com`, { first: "Gina", last: "Guest" });
 	const gpage = await gctx.newPage();
-	await openLink(gpage, trip.slug, "viewer");
+	// On the Plan: a bare trip address opens the Overview, which has no cards.
+	await openLink(gpage, trip.slug, "viewer", "?tab=plan");
 	await expect(gpage).toHaveURL(new RegExp(`/t/${trip.slug}`), { timeout: 20_000 });
 	await expectLive(gpage);
 	await gpage.waitForFunction(() => !!(window as { __yonderCursors?: unknown }).__yonderCursors);
