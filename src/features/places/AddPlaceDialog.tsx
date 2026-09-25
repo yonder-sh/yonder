@@ -672,8 +672,7 @@ function Palette({
 					</button>
 				</div>
 				{showMap ? (
-					<div
-						role="group"
+					<fieldset
 						aria-label="Show results as"
 						className="flex gap-1 border-b px-3 py-1.5 sm:hidden"
 					>
@@ -696,7 +695,7 @@ function Palette({
 								</button>
 							);
 						})}
-					</div>
+					</fieldset>
 				) : null}
 				<div className="flex min-h-0 flex-1">
 					<CommandList
