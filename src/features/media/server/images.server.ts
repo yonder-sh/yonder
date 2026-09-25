@@ -33,6 +33,9 @@ export async function orientedSize(buf: Buffer): Promise<Sized> {
 		: { width: w, height: h };
 }
 
+/** Thumbs fill tiles up to ~480 CSS px wide: 960 keeps them sharp on 2× screens. */
+export const THUMB_PX = 960;
+
 /** A WebP that fits in `max` × `max` (never enlarged). */
 export async function webpInside(
 	buf: Buffer,
@@ -46,14 +49,14 @@ export async function webpInside(
 		.toBuffer();
 }
 
-/** Photo upload → thumb (480, q75), display (1920, q80), size and thumbhash. */
+/** Photo upload → thumb (960, q80: sharp at 2× in tiles), display (2560, q82), size and thumbhash. */
 export async function photoVariants(
 	buf: Buffer,
 ): Promise<Sized & { thumb: Buffer; display: Buffer; thumbhash: string }> {
 	const size = await orientedSize(buf);
 	const [thumb, display, thumbhash] = await Promise.all([
-		webpInside(buf, 480, 75),
-		webpInside(buf, 1920, 80),
+		webpInside(buf, THUMB_PX, 80),
+		webpInside(buf, 2560, 82),
 		thumbhashOf(buf),
 	]);
 	return { ...size, thumb, display, thumbhash };
@@ -65,7 +68,7 @@ export async function thumbFrom(
 ): Promise<Sized & { thumb: Buffer; thumbhash: string }> {
 	const size = await orientedSize(buf);
 	const [thumb, thumbhash] = await Promise.all([
-		webpInside(buf, 480, 75),
+		webpInside(buf, THUMB_PX, 80),
 		thumbhashOf(buf),
 	]);
 	return { ...size, thumb, thumbhash };
