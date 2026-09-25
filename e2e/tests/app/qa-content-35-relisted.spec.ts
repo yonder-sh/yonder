@@ -10,7 +10,7 @@ import { PLACES_TESTID as P } from "../../../src/features/places/testids";
 import { PLAN_TESTID as PL } from "../../../src/features/plan/testids";
 import { TESTID } from "../../../src/lib/testids";
 import { expectLive } from "./_helpers/page";
-import { openLink } from "./_helpers/link";
+import { openLink, setTestLink } from "./_helpers/link";
 
 test.skip(!process.env.QA_AUTH_DIR, "I2 content verifier spec: set QA_AUTH_DIR");
 const AUTH = process.env.QA_AUTH_DIR ?? "";
@@ -39,6 +39,8 @@ test("trip settings: one 'Public holidays' heading", async ({ browser }) => {
 
 test("share dialog: link rows show when created; role selects don't clip", async ({ browser }) => {
 	const d = await ctxFor(browser, "dennis");
+	// The QA seed shares no link: turn it on (the test route keeps /t/asia-2027).
+	await setTestLink(d.ctx.request, "asia-2027", "viewer");
 	await d.page.goto("/t/asia-2027?tab=plan");
 	await expectLive(d.page);
 	await d.page.getByTestId("share-button").first().click();
