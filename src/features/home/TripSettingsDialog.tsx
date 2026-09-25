@@ -570,7 +570,7 @@ export function TripSettingsDialog() {
 								}
 							>
 								<div className="flex items-center rounded-md border border-input focus-within:ring-2 focus-within:ring-ring/50">
-									<span className="pl-3 font-mono text-xs text-muted-foreground">
+									<span className="shrink-0 whitespace-nowrap pl-3 font-mono text-xs text-muted-foreground">
 										/t/
 									</span>
 									<Input
@@ -586,7 +586,7 @@ export function TripSettingsDialog() {
 												slug: e.target.value.toLowerCase().replace(/\s+/g, "-"),
 											})
 										}
-										className="border-0 pl-0.5 font-mono text-xs shadow-none focus-visible:ring-0"
+										className="min-w-0 border-0 pl-0.5 font-mono text-xs shadow-none focus-visible:ring-0"
 									/>
 								</div>
 							</Row>
