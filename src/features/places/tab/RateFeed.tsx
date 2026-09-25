@@ -236,25 +236,66 @@ function SlideFill({
 	}
 }
 
-function FeedMedia({
+export function FeedMedia({
 	row,
 	active,
 	near,
+	wide = false,
 	className,
 }: {
 	row: PlaceRow;
-	/** The card in view (videos play). */
+	/** The card in view (videos play, ← / → change the photo). */
 	active: boolean;
 	/** In view or next to it (worth loading). */
 	near: boolean;
+	/** Beside the details (desktop), not full-bleed under the feed's header. */
+	wide?: boolean;
 	className?: string;
 }) {
 	const { slides } = usePlaceMedia(row.node);
+	const n = slides.length;
 	const [i, setI] = useState(0);
-	const s = slides[Math.min(i, slides.length - 1)];
+	const at = Math.min(i, Math.max(n - 1, 0));
+	const s = slides[at];
 	const node = row.node;
+	const go = useCallback(
+		(d: 1 | -1) => setI((i) => (Math.min(i, n - 1) + d + n) % n),
+		[n],
+	);
+	// ← / → on the card in view (↑ / ↓ move between places).
+	useEffect(() => {
+		if (!active || n < 2) return;
+		const onKey = (e: KeyboardEvent) => {
+			if (e.metaKey || e.ctrlKey || e.altKey || ownsKeys(e.target)) return;
+			if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+			e.preventDefault();
+			go(e.key === "ArrowRight" ? 1 : -1);
+		};
+		window.addEventListener("keydown", onKey, true);
+		return () => window.removeEventListener("keydown", onKey, true);
+	}, [active, n, go]);
+	// A sideways swipe changes the photo (the feed itself scrolls up and down).
+	const touch = useRef<{ x: number; y: number } | null>(null);
 	return (
-		<div className={cn("relative overflow-hidden bg-neutral-900", className)}>
+		<div
+			data-testid={PLACES_TESTID.feedMedia}
+			data-slide={n ? at : undefined}
+			className={cn("relative overflow-hidden bg-neutral-900", className)}
+			onTouchStart={(e) => {
+				const t = e.touches[0];
+				touch.current = t && n > 1 ? { x: t.clientX, y: t.clientY } : null;
+			}}
+			onTouchEnd={(e) => {
+				const a = touch.current;
+				const t = e.changedTouches[0];
+				touch.current = null;
+				if (!a || !t) return;
+				const dx = t.clientX - a.x;
+				const dy = t.clientY - a.y;
+				if (Math.abs(dx) > 40 && Math.abs(dx) > 1.5 * Math.abs(dy))
+					go(dx < 0 ? 1 : -1);
+			}}
+		>
 			{!near ? null : s ? (
 				<SlideFill s={s} active={active} title={node.name} />
 			) : node.lat !== null && node.lng !== null ? (
@@ -271,24 +312,62 @@ function FeedMedia({
 			) : (
 				<CoverPlaceholder row={row} className="size-full" />
 			)}
-			{slides.length > 1 || (near && s?.from) ? (
-				<div className="absolute top-14 left-4 z-[3] flex max-w-[calc(100%-10rem)] items-center gap-1.5">
-					{slides.length > 1 ? (
-						<button
-							type="button"
-							onClick={() => setI((i + 1) % slides.length)}
-							className="inline-flex h-[22px] shrink-0 cursor-pointer items-center rounded-full bg-white/15 px-2 font-mono text-xs text-white backdrop-blur-sm tnum"
-							aria-label="Next photo"
+			{near && n > 1 ? (
+				// Like stories: the left third goes back, the rest forward (over a
+				// video player only its edges, so its own controls still work).
+				<>
+					<button
+						type="button"
+						aria-label="Previous photo"
+						onClick={() => go(-1)}
+						className={cn(
+							"absolute inset-y-0 left-0 z-[1] cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-inset",
+							s?.kind === "embed" ? "w-[12%]" : "w-1/3",
+						)}
+					/>
+					<button
+						type="button"
+						aria-label="Next photo"
+						onClick={() => go(1)}
+						className={cn(
+							"absolute inset-y-0 right-0 z-[1] cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-inset",
+							s?.kind === "embed" ? "w-[12%]" : "w-2/3",
+						)}
+					/>
+				</>
+			) : null}
+			{n > 1 || (near && s?.from) ? (
+				<div
+					className={cn(
+						"pointer-events-none absolute inset-x-4 z-[3] flex flex-col items-start gap-2",
+						wide ? "top-3" : "top-12",
+					)}
+				>
+					{n > 1 ? (
+						<div
+							data-testid={PLACES_TESTID.rateMediaBars}
+							role="img"
+							aria-label={`Photo ${at + 1} of ${n}`}
+							className="flex w-full gap-1"
 						>
-							{Math.min(i, slides.length - 1) + 1} / {slides.length}
-						</button>
+							{slides.map((_, j) => (
+								<span
+									// biome-ignore lint/suspicious/noArrayIndexKey: one bar per slide, in order
+									key={j}
+									className={cn(
+										"h-[3px] flex-1 rounded-full shadow-[0_0_2px_rgb(0_0_0/.35)] transition-colors",
+										j <= at ? "bg-white" : "bg-white/35",
+									)}
+								/>
+							))}
+						</div>
 					) : null}
 					{/* An area with no photos of its own (Shinjuku) shows its places', labelled. */}
 					{near && s?.from ? (
 						<span
 							data-testid={PLACES_TESTID.rateMediaFrom}
 							title={`Photo from ${s.from.name}`}
-							className="inline-flex h-[22px] min-w-0 items-center gap-1 rounded-full bg-black/55 px-2 text-[11px] font-medium text-white backdrop-blur-sm"
+							className="inline-flex h-[22px] max-w-[calc(100%-10rem)] min-w-0 items-center gap-1 rounded-full bg-black/55 px-2 text-[11px] font-medium text-white backdrop-blur-sm"
 						>
 							<MapPin className="size-3 shrink-0" strokeWidth={2} />
 							<span className="truncate">{s.from.name}</span>
@@ -541,6 +620,7 @@ function PlaceCard({
 						row={row}
 						active={active}
 						near={near}
+						wide
 						className="h-full rounded-2xl"
 					/>
 					<div className="flex min-h-0 flex-col gap-5 overflow-y-auto rounded-2xl bg-neutral-950 p-5 ring-1 ring-white/10">

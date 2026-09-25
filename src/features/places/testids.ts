@@ -71,6 +71,8 @@ export const PLACES_TESTID = {
 	rateIdeas: "rate-ideas",
 	rateMedia: "rate-media",
 	rateMediaFrom: "rate-media-from",
+	feedMedia: "rate-feed-media",
+	rateMediaBars: "rate-media-bars",
 	rateMediaEmpty: "rate-media-empty",
 	rateAddPhoto: "rate-add-photo",
 	rateAddPhotoInput: "rate-add-photo-input",
