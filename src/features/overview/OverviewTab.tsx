@@ -512,7 +512,7 @@ function Header({
 			<CountryChips route={route} />
 			{wide ? <Stats data={data} cols={3} after={false} /> : null}
 			<PlanningLine data={data} />
-			{/* The places flow's next step: add → rate → schedule. */}
+			{/* The places flow's next step: rate → review → schedule. */}
 			<NextStepCard />
 			{buttons(openPlan, seePlaces)}
 		</div>

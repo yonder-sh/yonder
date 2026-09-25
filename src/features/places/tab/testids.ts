@@ -61,7 +61,7 @@ export const PLACES_TAB_TESTID = {
 	feedOrder: "places-feed-order",
 	feedInvite: "places-feed-invite",
 	feedShortlist: "places-feed-shortlist",
-	// the flow: add → rate → schedule (owner, 2026-09-25)
+	// the flow: rate → review → schedule (owner, 2026-09-25)
 	steps: "places-steps",
 	step: "places-step",
 	stepCount: "places-step-count",

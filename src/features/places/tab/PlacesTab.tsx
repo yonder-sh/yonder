@@ -1,13 +1,14 @@
 /**
  * The Places tab (docs/PLACES.md §1–§4): every place in the scope, led by
- * the planning flow (owner, 2026-09-25) as three steps — **1 Add · 2 Rate ·
- * 3 Schedule** — each with its count:
- * - Add: one filtered set in three views (Table, Board, Map) with grouping,
- *   sort and filters shared by all of them (and kept in the URL, so they
- *   deep-link and follow), "Add a place" up front and an empty state that
- *   teaches the flow;
+ * the planning flow (owner, 2026-09-25) as three steps — **1 Rate · 2
+ * Review · 3 Schedule** — each with its count, and "Add a place" at the end
+ * of the steps' bar on every step:
  * - Rate: the endless feed, full height;
+ * - Review: one filtered set in three views (Table, Board, Map) with
+ *   grouping, sort and filters shared by all of them (and kept in the URL,
+ *   so they deep-link and follow);
  * - Schedule: "Schedule next" (per stay window, with fit hints).
+ * With no places yet, every step shows the empty state that teaches the flow.
  * The step is the URL's view (`pv`); with none the tab picks the most useful
  * one (`pickStep`) and writes it in. Opening a place docks its details
  * beside the table, board or schedule (the content narrows and keeps
@@ -56,7 +57,7 @@ import { ScheduleNext } from "./ScheduleNext";
 import { PLACES_TAB_TESTID } from "./testids";
 import { PlaceActionsProvider } from "./use-place-actions";
 import {
-	lastAddView,
+	lastReviewView,
 	type PlacesData,
 	usePlaces,
 	usePlacesState,
@@ -85,16 +86,13 @@ export function usePlacesTakesMap(): boolean {
 	return tab === "places" && (wide || search.pv === "map");
 }
 
-/** No places yet: the flow in three lines, and the way in. */
+/** No places yet: adding, the flow in three lines, and the way in. */
 function FlowEmpty() {
 	const { scope, graph } = useWorkspace();
 	const where = scope?.name ?? graph.trip.name;
 	const steps = [
-		[
-			"Add",
-			"every place anyone wants to go: search, or paste links and TikToks.",
-		],
-		["Rate", "them together, Must to Nah. The favourites make the shortlist."],
+		["Rate", "them together, Must to Nah."],
+		["Review", "the group's scores. The favourites make the shortlist."],
 		["Schedule", "the shortlist onto the days you're in each city."],
 	] as const;
 	return (
@@ -103,9 +101,15 @@ function FlowEmpty() {
 			className="grid flex-1 place-items-center overflow-y-auto p-6"
 		>
 			<div className="flex max-w-md flex-col items-start gap-4">
-				<p className="font-display text-[17px] leading-6 font-medium text-balance">
-					No places in {where} yet.
-				</p>
+				<div className="flex flex-col gap-1">
+					<p className="font-display text-[17px] leading-6 font-medium text-balance">
+						No places in {where} yet.
+					</p>
+					<p className="text-sm text-muted-foreground">
+						Add every place anyone wants to go: search, or paste links and
+						TikToks. Then:
+					</p>
+				</div>
 				<ol className="flex flex-col gap-2 text-sm text-muted-foreground">
 					{steps.map(([step, text], i) => (
 						<li key={step} className="flex items-baseline gap-2.5">
@@ -182,8 +186,9 @@ function Body({
 	const { sel, nav } = useWorkspace();
 	const view = data.state.view;
 	const row = sel?.kind === "node" ? data.byId.get(sel.id) : undefined;
+	if (data.rows.length === 0) return <FlowEmpty />;
 	if (step === "rate") return <RateStep data={data} phone={phone} />;
-	if (step === "add" && view === "map")
+	if (step === "review" && view === "map")
 		return (
 			<Suspense fallback={<div className="flex-1 bg-basemap-land" />}>
 				<PlacesMap data={data} />
@@ -263,7 +268,7 @@ function WideToggle({
 
 export function PlacesTab({ phone = false }: { phone?: boolean }) {
 	const [q, setQ] = useState("");
-	// The search belongs to the Add step's list; the feed and the schedule are the whole scope.
+	// The search belongs to the Review step's list; the feed and the schedule are the whole scope.
 	const urlStep = usePlacesState().step;
 	const data = usePlaces(urlStep === "rate" || urlStep === "schedule" ? "" : q);
 	const { access, ix, sel, search, nav } = useWorkspace();
@@ -291,19 +296,19 @@ export function PlacesTab({ phone = false }: { phone?: boolean }) {
 		});
 	const pv = search.pv;
 	useEffect(() => {
-		if (!pv) nav.setPlaces({ pv: viewOfStep(step, lastAddView.current) });
+		if (!pv) nav.setPlaces({ pv: viewOfStep(step, lastReviewView.current) });
 	}, [pv, step, nav]);
-	if (step === "add") lastAddView.current = data.state.view;
+	if (step === "review") lastReviewView.current = data.state.view;
 	const onStep = (s: FlowStep) => {
 		if (s === step) return;
-		// The Rate feed and the schedule are the whole scope: the Add step's
-		// status pills and "Talk about it" stay with it.
+		// The Rate feed and the schedule are the whole scope: the Review
+		// step's status pills and "Talk about it" stay with it.
 		nav.setPlaces({
-			pv: viewOfStep(s, lastAddView.current),
-			...(s === "add" ? {} : { pst: undefined, talk: undefined }),
+			pv: viewOfStep(s, lastReviewView.current),
+			...(s === "review" ? {} : { pst: undefined, talk: undefined }),
 		});
 	};
-	const mapView = step === "add" && data.state.view === "map";
+	const mapView = step === "review" && data.state.view === "map";
 	return (
 		<PlaceActionsProvider>
 			<div
@@ -319,12 +324,14 @@ export function PlacesTab({ phone = false }: { phone?: boolean }) {
 					onStep={onStep}
 					phone={phone}
 				>
+					{/* Adding is an action on every step, not a step of its own. */}
+					<AddPlaceButton iconOnly={phone || !takesMap} />
 					{/* The Map view always takes the map's space (one map at a time). */}
 					{phone || mapView ? null : (
 						<WideToggle wide={wide} onWide={setWide} />
 					)}
 				</PlacesSteps>
-				{step === "add" ? (
+				{step === "review" && data.rows.length > 0 ? (
 					<PlacesToolbar
 						data={data}
 						q={q}

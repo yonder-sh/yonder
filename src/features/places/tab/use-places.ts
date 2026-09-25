@@ -15,7 +15,12 @@ import type { GraphMember } from "@/lib/engine/types";
 import { filterContextOf } from "@/lib/workspace/filter-match";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import type { FeedOrder } from "./feed";
-import { type AddView, addViewOf, type FlowStep, stepOfView } from "./flow";
+import {
+	type FlowStep,
+	type ReviewView,
+	reviewViewOf,
+	stepOfView,
+} from "./flow";
 import { type GroupBy, groupPlaces, type SortBy } from "./grouping";
 import { type PlaceStatus, shortlistThreshold } from "./lifecycle";
 import {
@@ -28,8 +33,8 @@ import {
 } from "./model";
 
 export type PlacesState = {
-	/** The Add step's view (table, board or map; table when `pv` names another step). */
-	view: AddView;
+	/** The Review step's view (table, board or map; table when `pv` names another step). */
+	view: ReviewView;
 	/** The step the URL names (null: none yet, the tab picks one). */
 	step: FlowStep | null;
 	group: GroupBy;
@@ -39,13 +44,13 @@ export type PlacesState = {
 	order: FeedOrder;
 };
 
-/** The Add view last shown (the Add step reopens on it this session). */
-export const lastAddView: { current: AddView } = { current: "table" };
+/** The Review view last shown (the Review step reopens on it this session). */
+export const lastReviewView: { current: ReviewView } = { current: "table" };
 
 export function usePlacesState(): PlacesState {
 	const { search } = useWorkspace();
 	return {
-		view: addViewOf(search.pv, lastAddView.current),
+		view: reviewViewOf(search.pv, lastReviewView.current),
 		step: stepOfView(search.pv),
 		group: search.pg ?? "city",
 		sort: search.ps ?? "priority",

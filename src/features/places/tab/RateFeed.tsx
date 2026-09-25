@@ -90,7 +90,7 @@ import { formatScore } from "./score";
 import { PLACES_TAB_TESTID } from "./testids";
 import { ScoreChip } from "./ui";
 import { usePlaceActions } from "./use-place-actions";
-import { lastAddView, type PlacesData } from "./use-places";
+import { lastReviewView, type PlacesData } from "./use-places";
 
 const UUID_RE =
 	/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
@@ -1112,7 +1112,7 @@ export default function RateFeed({ data }: { data: PlacesData }) {
 						variant="ghost"
 						className="pointer-events-auto size-8 text-white"
 						aria-label="Close the feed"
-						onClick={() => nav.setPlaces({ pv: lastAddView.current })}
+						onClick={() => nav.setPlaces({ pv: lastReviewView.current })}
 					>
 						<X />
 					</Button>

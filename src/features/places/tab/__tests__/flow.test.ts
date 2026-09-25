@@ -1,5 +1,5 @@
 /**
- * The planning flow (owner, 2026-09-25): add → rate → schedule. The step a
+ * The planning flow (owner, 2026-09-25): rate → review → schedule. The step a
  * URL names and the one Places picks without it, the counts on the steps,
  * the Overview's next-step card, and Schedule next (docs/PLACES.md §4):
  * stay windows, fit hints (closed days, free time, distance), can't-fit
@@ -15,12 +15,12 @@ import type { GraphNode, Priority, TripGraph } from "@/lib/engine/types";
 import { DEMO_MEMBERS } from "@/lib/fixtures/demo";
 import type { OpeningHours } from "@/lib/schemas/hours";
 import {
-	addViewOf,
 	type FlowTally,
 	flowTally,
 	nextStep,
 	nextStepCard,
 	pickStep,
+	reviewViewOf,
 	stepCounts,
 	stepOfView,
 	viewOfStep,
@@ -39,19 +39,19 @@ const D = DEMO_MEMBERS.dennis;
 const A = DEMO_MEMBERS.audrey;
 
 describe("the step in the URL", () => {
-	it("table / board / map are Add, rate is Rate, schedule is Schedule, none is picked", () => {
-		expect(stepOfView("table")).toBe("add");
-		expect(stepOfView("board")).toBe("add");
-		expect(stepOfView("map")).toBe("add");
+	it("table / board / map are Review, rate is Rate, schedule is Schedule, none is picked", () => {
+		expect(stepOfView("table")).toBe("review");
+		expect(stepOfView("board")).toBe("review");
+		expect(stepOfView("map")).toBe("review");
 		expect(stepOfView("rate")).toBe("rate");
 		expect(stepOfView("schedule")).toBe("schedule");
 		expect(stepOfView(undefined)).toBeNull();
 	});
-	it("the Add step keeps its view; other steps open theirs", () => {
-		expect(addViewOf("board")).toBe("board");
-		expect(addViewOf("rate", "map")).toBe("map");
-		expect(addViewOf(undefined)).toBe("table");
-		expect(viewOfStep("add", "board")).toBe("board");
+	it("the Review step keeps its view; other steps open theirs", () => {
+		expect(reviewViewOf("board")).toBe("board");
+		expect(reviewViewOf("rate", "map")).toBe("map");
+		expect(reviewViewOf(undefined)).toBe("table");
+		expect(viewOfStep("review", "board")).toBe("board");
 		expect(viewOfStep("rate", "board")).toBe("rate");
 		expect(viewOfStep("schedule")).toBe("schedule");
 	});
@@ -76,40 +76,37 @@ describe("which step Places opens on", () => {
 	});
 	it("then Schedule for shortlisted places not on a day (editors, with days)", () => {
 		expect(at({ toRate: 0, notOnDay: 2 })).toBe("schedule");
-		expect(at({ notOnDay: 2 }, { canEdit: false })).toBe("add");
-		expect(at({ notOnDay: 2 }, { hasDays: false })).toBe("add");
+		expect(at({ notOnDay: 2 }, { canEdit: false })).toBe("review");
+		expect(at({ notOnDay: 2 }, { hasDays: false })).toBe("review");
 	});
-	it("else Add (nothing to rate, an empty trip, a viewer)", () => {
-		expect(at({})).toBe("add");
-		expect(at({ ideas: 0, toRate: 0 })).toBe("add");
-		expect(at({ toRate: null })).toBe("add");
+	it("else Review (nothing to rate, an empty trip, a viewer)", () => {
+		expect(at({})).toBe("review");
+		expect(at({ ideas: 0, toRate: 0 })).toBe("review");
+		expect(at({ toRate: null })).toBe("review");
 	});
 	it("a link to one place or a status filter opens the list", () => {
-		expect(at({ toRate: 4 }, { focus: true })).toBe("add");
+		expect(at({ toRate: 4 }, { focus: true })).toBe("review");
 	});
 	it("a phone never opens the full-screen feed by itself", () => {
-		expect(at({ toRate: 4 }, { phone: true })).toBe("add");
+		expect(at({ toRate: 4 }, { phone: true })).toBe("review");
 		expect(at({ toRate: 4, notOnDay: 1 }, { phone: true })).toBe("schedule");
 	});
-	it("the dot: the step with work waiting for you", () => {
+	it("the dot: the step with work waiting for you (never Review)", () => {
 		expect(nextStep(tally({ toRate: 3, notOnDay: 2 }), EDIT)).toBe("rate");
 		expect(nextStep(tally({ notOnDay: 2 }), EDIT)).toBe("schedule");
-		expect(nextStep(tally({ ideas: 0 }), EDIT)).toBe("add");
+		expect(nextStep(tally({ ideas: 0 }), EDIT)).toBeNull();
 		expect(nextStep(tally({}), EDIT)).toBeNull();
-		expect(
-			nextStep(tally({ ideas: 0 }), { ...EDIT, canEdit: false }),
-		).toBeNull();
 	});
 });
 
 describe("the steps' counts", () => {
-	it('"48 ideas", "12 to rate", "9 shortlisted · 4 not on a day"', () => {
+	it('"12 to rate", "48 places", "9 shortlisted · 4 not on a day"', () => {
 		const c = stepCounts(
 			tally({ ideas: 48, toRate: 12, shortlisted: 9, notOnDay: 4 }),
 		);
 		expect(c).toEqual({
-			add: "48 ideas",
 			rate: "12 to rate",
+			review: "48 places",
 			schedule: "9 shortlisted · 4 not on a day",
 		});
 		expect(
@@ -118,10 +115,10 @@ describe("the steps' counts", () => {
 		).toBe("4 not on a day");
 	});
 	it("edge cases read as words", () => {
-		expect(stepCounts(tally({ ideas: 1 })).add).toBe("1 idea");
+		expect(stepCounts(tally({ ideas: 1 })).review).toBe("1 place");
 		expect(stepCounts(tally({ ideas: 0 }))).toEqual({
-			add: "No ideas yet",
 			rate: "Nothing to rate",
+			review: "No places yet",
 			schedule: "Nothing shortlisted",
 		});
 		expect(stepCounts(tally({ toRate: null })).rate).toBe("View only");

@@ -9,12 +9,13 @@ import { beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { isRateable } from "@/features/places/lib/rate";
 import type { TripGraph } from "@/lib/engine/types";
 import { DEMO_MEMBERS, demoGraph, N } from "@/lib/fixtures/demo";
+import { useUi } from "@/lib/workspace/ui-store";
 import { renderWithWorkspace } from "@/test/render-workspace";
 import { NextStepCard } from "../NextStepCard";
 import { PlacesTab } from "../PlacesTab";
 import { RatePill } from "../RatePill";
 import { PLACES_TAB_TESTID as T } from "../testids";
-import { lastAddView } from "../use-places";
+import { lastReviewView } from "../use-places";
 
 beforeAll(() => {
 	// The feed and the table measure and observe; happy-dom has neither.
@@ -33,7 +34,7 @@ beforeAll(() => {
 
 // The Add view is remembered for the session: each test starts on the table.
 beforeEach(() => {
-	lastAddView.current = "table";
+	lastReviewView.current = "table";
 });
 
 const rateable = demoGraph.nodes.filter((n) => isRateable(n)).length;
@@ -60,34 +61,36 @@ function parts(href: string | null) {
 }
 
 describe("the Places tab's steps", () => {
-	it("1 Add · 2 Rate · 3 Schedule with their counts; the dot on Rate", () => {
+	it("1 Rate · 2 Review · 3 Schedule with their counts; the dot on Rate", () => {
 		renderWithWorkspace(<PlacesTab />, {
 			search: { tab: "places", pv: "table" },
 		});
 		const bar = screen.getByTestId(T.steps);
-		expect(bar).toHaveAttribute("data-step", "add");
+		expect(bar).toHaveAttribute("data-step", "review");
 		const steps = within(bar).getAllByTestId(T.step);
 		expect(steps.map((s) => s.dataset.step)).toEqual([
-			"add",
 			"rate",
+			"review",
 			"schedule",
 		]);
-		expect(steps[0]).toHaveAttribute("aria-current", "step");
+		expect(steps[1]).toHaveAttribute("aria-current", "step");
 		const counts = within(bar)
 			.getAllByTestId(T.stepCount)
 			.map((c) => c.textContent);
 		// Every demo place is on a day (scheduled counts as shortlisted).
 		expect(counts).toEqual([
-			`${rateable} ideas`,
 			`${rateable} to rate`,
+			`${rateable} places`,
 			`${rateable} shortlisted · all on a day`,
 		]);
-		expect(steps[1]).toHaveAttribute("data-next", "true");
+		expect(steps[0]).toHaveAttribute("data-next", "true");
 		expect(
-			within(steps[1] as HTMLElement).getByTestId(T.stepDot),
+			within(steps[0] as HTMLElement).getByTestId(T.stepDot),
 		).toBeInTheDocument();
-		// Adding comes first in the Add step.
-		expect(screen.getByTestId(T.addPlace)).toHaveTextContent("Add a place");
+		// Adding sits at the end of the steps' bar, on every step.
+		expect(within(bar).getByTestId(T.addPlace)).toHaveAccessibleName(
+			"Add a place",
+		);
 	});
 
 	it("a step click changes the view in the URL; Rate and Schedule drop the status pill", () => {
@@ -105,11 +108,11 @@ describe("the Places tab's steps", () => {
 		});
 		expect(navigations.at(-1)?.search.pst).toBeUndefined();
 		expect(screen.getByTestId(T.schedule)).toHaveAttribute("data-waiting", "0");
-		// Back to Add: the board it was on.
+		// Back to Review: the board it was on.
 		fireEvent.click(
 			screen
 				.getAllByTestId(T.step)
-				.find((s) => s.dataset.step === "add") as HTMLElement,
+				.find((s) => s.dataset.step === "review") as HTMLElement,
 		);
 		expect(navigations.at(-1)?.search.pv).toBe("board");
 	});
@@ -125,7 +128,7 @@ describe("the Places tab's steps", () => {
 		expect(screen.getByTestId(T.tab)).toHaveAttribute("data-step", "rate");
 	});
 
-	it("…else Add; a link to one place opens the list; a phone never opens the feed by itself", () => {
+	it("…else Review; a link to one place opens the list; a phone never opens the feed by itself", () => {
 		const done = renderWithWorkspace(<PlacesTab />, {
 			graph: allRated,
 			search: { tab: "places" },
@@ -174,6 +177,11 @@ describe("the Overview's next-step card", () => {
 	it("nothing to rate or schedule: add places (editors); a viewer gets nothing", () => {
 		const a = renderWithWorkspace(<NextStepCard />, { graph: allRated });
 		expect(screen.getByTestId(T.nextStep)).toHaveAttribute("data-step", "add");
+		// Adding is no step: Review, with the add dialog open.
+		fireEvent.click(screen.getByRole("link", { name: "Add places" }));
+		expect(a.navigations.at(-1)?.search).toMatchObject({ pv: "table" });
+		expect(useUi.getState().addPlace).toEqual({ mode: "search" });
+		useUi.getState().resetUi();
 		a.unmount();
 		const b = renderWithWorkspace(
 			<NextStepCard steps={["rate", "schedule"]} />,

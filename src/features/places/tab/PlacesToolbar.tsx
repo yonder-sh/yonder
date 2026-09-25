@@ -1,11 +1,12 @@
 /**
- * The Add step's header (docs/PLACES.md §1; the flow, owner 2026-09-25):
- * "Add a place" up front, the view switch (Table · Board · Map), Group by,
+ * The Review step's header (docs/PLACES.md §1; the flow, owner 2026-09-25):
+ * the view switch (Table · Board · Map), Group by,
  * Sort, search and the shared filter; under it the status pills (All ·
  * Shortlist · Ideas · Scheduled · Dropped · Talk about it) and per-member
  * rating progress ("Audrey 42/78 · rate her unrated"). Everything but the
  * search lives in the URL and is shared by every view. Rate and Schedule
- * are the tab's steps (`PlacesSteps`), wide mode sits on the steps' bar.
+ * are the tab's steps (`PlacesSteps`); "Add a place" and wide mode sit on
+ * the steps' bar.
  */
 import { cn } from "cn";
 import {
@@ -43,7 +44,7 @@ import { tripKeys } from "@/lib/query/keys";
 import { useUi } from "@/lib/workspace/ui-store";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { unratedFilter } from "./entry";
-import type { AddView } from "./flow";
+import type { ReviewView } from "./flow";
 import {
 	GROUP_BYS,
 	GROUP_LABEL,
@@ -57,7 +58,7 @@ import { formatScore } from "./score";
 import { PLACES_TAB_TESTID } from "./testids";
 import type { PlacesData } from "./use-places";
 
-const VIEWS: { v: AddView; label: string; icon: typeof Sheet }[] = [
+const VIEWS: { v: ReviewView; label: string; icon: typeof Sheet }[] = [
 	{ v: "table", label: "Table", icon: Sheet },
 	{ v: "board", label: "Board", icon: LayoutGrid },
 	{ v: "map", label: "Map", icon: MapIcon },
@@ -67,28 +68,38 @@ const VIEWS: { v: AddView; label: string; icon: typeof Sheet }[] = [
 export function AddPlaceButton({
 	className,
 	label = "Add a place",
+	iconOnly = false,
 }: {
 	className?: string;
 	label?: string;
+	/** A narrow bar: the plus alone (the label becomes its name). */
+	iconOnly?: boolean;
 }) {
 	const { access } = useWorkspace();
 	const openAddPlace = useUi((s) => s.openAddPlace);
 	return (
 		<Button
-			size="sm"
-			className={cn("h-8", className)}
+			size={iconOnly ? "icon" : "sm"}
+			className={cn(iconOnly ? "size-8" : "h-8", className)}
 			data-testid={PLACES_TAB_TESTID.addPlace}
 			onClick={() => openAddPlace({ mode: "search" })}
 			disabled={!access.canEdit}
-			title={access.canEdit ? undefined : (access.reason ?? undefined)}
+			aria-label={iconOnly ? label : undefined}
+			title={
+				access.canEdit
+					? iconOnly
+						? label
+						: undefined
+					: (access.reason ?? undefined)
+			}
 		>
 			<Plus />
-			{label}
+			{iconOnly ? null : label}
 		</Button>
 	);
 }
 
-/** "Rated: You 12/48 · Audrey 30/48 their unrated" (the Add and Rate steps). */
+/** "Rated: You 12/48 · Audrey 30/48 their unrated" (the Rate and Review steps). */
 export function RatingProgress({ data }: { data: PlacesData }) {
 	const { nav, access } = useWorkspace();
 	const me = access.memberId;
@@ -280,14 +291,12 @@ export function PlacesToolbar({
 	return (
 		<div className="flex shrink-0 flex-col gap-2 border-b px-4 pt-3 pb-2.5">
 			<div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-				{/* Adding comes first: step 1 of the flow. */}
-				<AddPlaceButton />
 				<ToggleGroup
 					type="single"
 					size="sm"
 					variant="outline"
 					value={state.view}
-					onValueChange={(v) => v && nav.setPlaces({ pv: v as AddView })}
+					onValueChange={(v) => v && nav.setPlaces({ pv: v as ReviewView })}
 					aria-label="View"
 					data-testid={PLACES_TAB_TESTID.viewSwitch}
 				>

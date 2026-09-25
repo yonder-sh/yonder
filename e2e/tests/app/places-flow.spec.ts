@@ -91,7 +91,7 @@ async function toRate(page: Page): Promise<number> {
 test.describe("desktop", () => {
 	test.skip(({ isMobile }) => isMobile, "desktop layout (the phone has its own test)");
 
-	test("the step bar: 1 Add · 2 Rate · 3 Schedule with their counts; Places opens on Rate", async ({ page }) => {
+	test("the step bar: 1 Rate · 2 Review · 3 Schedule with their counts; Places opens on Rate", async ({ page }) => {
 		const c = await cloneFixtureTrip(page.request);
 		await page.goto(`/t/${c.slug}?tab=plan`);
 		await expectLive(page);
@@ -103,25 +103,27 @@ test.describe("desktop", () => {
 		await expect(page).toHaveURL(/pv=rate/);
 		await expect(page.getByTestId(T.steps)).toHaveAttribute("data-step", "rate");
 		await expect(page.getByTestId(T.feed)).toBeVisible();
-		await expect(countOf(page, "add")).toHaveText(/^\d+ ideas$/);
+		await expect(countOf(page, "review")).toHaveText(/^\d+ places$/);
 		await expect(countOf(page, "rate")).toHaveText(/^\d+ to rate$/);
 		// Tokyo Tower, Yasaka Shrine, the museum and Tōdai-ji wait for a day.
 		await expect(countOf(page, "schedule")).toHaveText(/^\d+ shortlisted · 4 not on a day$/);
 		// Rating is what's waiting for you: the dot.
 		await expect(step(page, "rate")).toHaveAttribute("data-next", "true");
 		await expect(step(page, "rate").getByTestId(T.stepDot)).toBeVisible();
-		// Every idea but Tōdai-ji is yours to rate in a fresh clone.
-		const ideas = Number(/^\d+/.exec((await countOf(page, "add").textContent()) ?? "")?.[0]);
+		// Every place but Tōdai-ji is yours to rate in a fresh clone.
+		const ideas = Number(/^\d+/.exec((await countOf(page, "review").textContent()) ?? "")?.[0]);
 		expect(await toRate(page)).toBe(ideas - 1);
 		await page.waitForTimeout(500);
 		await page.screenshot({ path: shot("desktop-2-rate"), animations: "disabled" });
 
-		// Add: the list with "Add a place" up front.
-		await step(page, "add").click();
+		// "Add a place" sits on the steps' bar, on every step.
+		await expect(page.getByTestId(T.steps).getByTestId(T.addPlace)).toBeVisible();
+
+		// Review: the list.
+		await step(page, "review").click();
 		await expect(page).toHaveURL(/pv=table/);
 		await expect(page.getByTestId(T.table)).toBeVisible();
-		await expect(page.getByTestId(T.addPlace)).toBeVisible();
-		await page.screenshot({ path: shot("desktop-1-add"), animations: "disabled" });
+		await page.screenshot({ path: shot("desktop-2b-review"), animations: "disabled" });
 
 		// Schedule: Tokyo Tower in Tokyo's window, Yasaka Shrine under Gion in
 		// Kyoto's; the museum (closed on the Kyoto day) and Tōdai-ji (Nara has

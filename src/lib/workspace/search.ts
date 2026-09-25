@@ -32,7 +32,7 @@ export type Tab = (typeof TABS)[number];
 
 /**
  * The Places tab's views (docs/PLACES.md §1: `pv`), which also name its step
- * (add → rate → schedule, owner 2026-09-25): table, board and map are Add,
+ * (rate → review → schedule, owner 2026-09-25): table, board and map are Review,
  * rate is Rate, schedule is Schedule. Absent = the tab picks the step.
  */
 export const PLACES_VIEWS = [

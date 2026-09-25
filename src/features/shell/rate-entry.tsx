@@ -44,7 +44,7 @@ export function useRateTarget(): RateTarget {
 				: null;
 		const opts = {
 			scopeId: inScope?.id ?? null,
-			// The whole pile: the Add step's status pills stay with it.
+			// The whole pile: the Review step's status pills stay with it.
 			patch: { pv: "rate" as const, pst: undefined, talk: undefined },
 		};
 		return {

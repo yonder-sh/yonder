@@ -1,6 +1,6 @@
 /**
- * The Places tab's three steps (owner, 2026-09-25): **1 Add · 2 Rate ·
- * 3 Schedule**, each with its count ("48 ideas", "12 to rate", "9
+ * The Places tab's three steps (owner, 2026-09-25): **1 Rate · 2 Review ·
+ * 3 Schedule**, each with its count ("12 to rate", "48 places", "9
  * shortlisted · 4 not on a day"). The step with work waiting for you has
  * the apricot "next" dot (DESIGN §1: now / next). The step is the URL's
  * view (`pv`), so it deep-links and follows like the rest of the tab.
@@ -31,7 +31,7 @@ export function PlacesSteps({
 	next: FlowStep | null;
 	onStep: (s: FlowStep) => void;
 	phone?: boolean;
-	/** Extra controls at the end of the bar (desktop: wide mode). */
+	/** Extra controls at the end of the bar ("Add a place", wide mode). */
 	children?: ReactNode;
 }) {
 	const counts = stepCounts(tally, { short: phone });

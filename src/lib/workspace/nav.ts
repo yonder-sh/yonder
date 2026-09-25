@@ -253,7 +253,7 @@ export type PlacesPatch = Partial<
 	>
 >;
 
-// No `pv` default: without it the tab picks its step (add → rate → schedule).
+// No `pv` default: without it the tab picks its step (rate → review → schedule).
 const PLACES_DEFAULTS = {
 	pg: "city",
 	ps: "priority",
