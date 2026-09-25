@@ -1,6 +1,7 @@
 /**
  * Background-job worker entry (SPEC §10.9, D16; ADDENDUM §2): BullMQ workers for
- * the `autofill`, `media`, `links`, `money` and `climate` queues. Handlers live in
+ * the `autofill`, `media`, `links`, `money`, `climate` and `push` (Web Push,
+ * `src/server/push`) queues. Handlers live in
  * `src/server/live/job-handlers.server.ts`; progress (`job` events) and gated
  * invalidations are published on the trip's Redis channel.
  *

@@ -27,6 +27,10 @@
  *   says the same (never the browser's error page).
  * - Updates wait for the page's "Reload" (SKIP_WAITING); on activate the
  *   `pages` cache is dropped and pages are told to re-warm their saved trip.
+ * - Web Push (`src/server/push`): a `push` shows the payload's title (the
+ *   trip name first), body, app icon and badge; a click focuses an open
+ *   Yonder window and navigates it in-app (`push-open`, `usePushBridge`),
+ *   else opens one. Only same-origin paths are ever opened.
  *
  * No DOM-only code here. The app's TS program includes the DOM lib, so the
  * worker scope is typed locally below instead of with `lib: ["webworker"]`.
@@ -53,21 +57,52 @@ type FetchEvent = ExtendableEvent & {
 	respondWith(r: Response | Promise<Response>): void;
 };
 type MessageEventLike = ExtendableEvent & { data: unknown };
-type WorkerClient = { postMessage(msg: unknown): void };
+type WorkerClient = {
+	postMessage(msg: unknown): void;
+	url?: string;
+	focus?(): Promise<WorkerClient>;
+	navigate?(url: string): Promise<WorkerClient | null>;
+};
+type PushEventLike = ExtendableEvent & {
+	data: { json(): unknown; text(): string } | null;
+};
+type NotificationClickEvent = ExtendableEvent & {
+	notification: { data: unknown; close(): void };
+};
+type SubscriptionChangeEvent = ExtendableEvent & {
+	oldSubscription?: { options?: PushSubscriptionOptionsInit } | null;
+};
 type Scope = {
 	__SW_MANIFEST: (PrecacheEntry | string)[] | undefined;
 	location: Location;
+	registration: {
+		showNotification(
+			title: string,
+			options?: NotificationOptions & { timestamp?: number },
+		): Promise<void>;
+		pushManager: PushManager;
+	};
 	clients: {
 		matchAll(o?: {
 			type?: "window" | "all";
 			includeUncontrolled?: boolean;
 		}): Promise<WorkerClient[]>;
+		openWindow(url: string): Promise<WorkerClient | null>;
 		claim(): Promise<void>;
 	};
 	skipWaiting(): Promise<void>;
 	addEventListener(type: "fetch", fn: (e: FetchEvent) => void): void;
 	addEventListener(type: "message", fn: (e: MessageEventLike) => void): void;
 	addEventListener(type: "activate", fn: (e: ExtendableEvent) => void): void;
+	addEventListener(type: "push", fn: (e: PushEventLike) => void): void;
+	addEventListener(
+		type: "notificationclick",
+		fn: (e: NotificationClickEvent) => void,
+	): void;
+	addEventListener(
+		type: "pushsubscriptionchange",
+		fn: (e: SubscriptionChangeEvent) => void,
+	): void;
 };
 declare const self: Scope;
 
@@ -331,6 +366,99 @@ self.addEventListener("fetch", (event) => {
 		url.pathname === "/share"
 	)
 		event.respondWith(receiveShare(event.request));
+});
+
+// ---- Web Push ------------------------------------------------------------------------
+/** A same-origin path, or "/" (never another origin, whatever the payload says). */
+function pushPath(url: unknown): string {
+	return typeof url === "string" && /^\/(?!\/)[^\s\\]*$/.test(url) ? url : "/";
+}
+
+self.addEventListener("push", (event) => {
+	let p: {
+		title?: unknown;
+		body?: unknown;
+		url?: unknown;
+		tag?: unknown;
+		ts?: unknown;
+	} = {};
+	try {
+		p = (event.data?.json() ?? {}) as typeof p;
+	} catch {
+		p = { body: event.data?.text() };
+	}
+	const title = typeof p.title === "string" && p.title ? p.title : "Yonder";
+	event.waitUntil(
+		self.registration.showNotification(title, {
+			body: typeof p.body === "string" ? p.body : "",
+			icon: "/icons/icon-192.png",
+			badge: "/icons/badge-96.png",
+			...(typeof p.tag === "string" && p.tag ? { tag: p.tag } : {}),
+			...(typeof p.ts === "number" ? { timestamp: p.ts } : {}),
+			data: { url: pushPath(p.url) },
+		}),
+	);
+});
+
+self.addEventListener("notificationclick", (event) => {
+	event.notification.close();
+	const path = pushPath(
+		(event.notification.data as { url?: unknown } | null)?.url,
+	);
+	event.waitUntil(
+		(async () => {
+			const windows = await self.clients.matchAll({
+				type: "window",
+				includeUncontrolled: true,
+			});
+			const own = windows.filter((c) => {
+				try {
+					return new URL(c.url ?? "").origin === self.location.origin;
+				} catch {
+					return false;
+				}
+			});
+			// Prefer a window already on that trip, else any Yonder window.
+			const trip = path.split("?")[0]?.split("/").slice(0, 3).join("/");
+			const target =
+				own.find(
+					(c) =>
+						trip &&
+						trip !== "/" &&
+						new URL(c.url ?? "").pathname.startsWith(trip),
+				) ?? own[0];
+			if (target?.focus) {
+				await target.focus();
+				// The app routes in place (usePushBridge); the offline page just loads it.
+				if (
+					new URL(target.url ?? "").pathname === OFFLINE_URL &&
+					target.navigate
+				)
+					await target.navigate(path);
+				else target.postMessage({ type: "push-open", url: path });
+				return;
+			}
+			await self.clients.openWindow(path);
+		})(),
+	);
+});
+
+// The browser rotated the subscription: subscribe again with the same key.
+// The page stores it on its next visit (`syncPushSubscription`).
+self.addEventListener("pushsubscriptionchange", (event) => {
+	const options = event.oldSubscription?.options;
+	if (!options?.applicationServerKey) return;
+	event.waitUntil(
+		self.registration.pushManager
+			.subscribe({
+				userVisibleOnly: true,
+				applicationServerKey: options.applicationServerKey,
+			})
+			.then(
+				() => undefined,
+				() => undefined,
+			),
+	);
 });
 
 // ---- Lifecycle ----------------------------------------------------------------------

@@ -763,5 +763,7 @@ export async function proposeChange(
 		meta: { proposalId: id },
 	});
 	out.emit({ keys: ["proposals", "activity"] });
+	// Web Push: "Maya made a suggestion" to the people who can review it.
+	out.notify({ kind: "review", proposalId: id });
 	return { proposed: { id, summary } };
 }

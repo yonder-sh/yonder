@@ -35,6 +35,10 @@ import { OfflineBanner } from "@/features/offline/OfflineBanner";
 import { Outline } from "@/features/outline/Outline";
 import { DayChips } from "@/features/plan/DayChips";
 import { NowNext } from "@/features/plan/NowNext";
+import { MuteTripMenuItem } from "@/features/push/MuteTripMenuItem";
+import { NotificationsDialog } from "@/features/push/NotificationsDialog";
+import { PUSH_TESTID } from "@/features/push/testids";
+import { useHasAccount } from "@/features/push/use-push";
 import {
 	SuggestModeControl,
 	SuggestModeMenuItem,
@@ -105,6 +109,9 @@ function MobilePills() {
 	const setProfileOpen = useUi((s) => s.setProfileOpen);
 	const openShiftTrip = useUi((s) => s.openShiftTrip);
 	const setViewSettingsOpen = useShell((s) => s.setViewSettingsOpen);
+	// Web Push settings (the desktop has them in the account menu).
+	const account = useHasAccount(mode === "live");
+	const [notificationsOpen, setNotificationsOpen] = useState(false);
 	return (
 		<div
 			data-testid={TESTID.mobilePills}
@@ -177,6 +184,7 @@ function MobilePills() {
 							<RateMenuItem />
 							{/* FB-17b: Spotlight. */}
 							<SpotlightMenuItem />
+							<MuteTripMenuItem iconless />
 							<DropdownMenuItem
 								onSelect={() => setViewSettingsOpen(true)}
 								data-testid={SHELL_TESTID.viewSettingsButton}
@@ -187,6 +195,14 @@ function MobilePills() {
 							<DropdownMenuItem onSelect={() => setProfileOpen(true)}>
 								Profile
 							</DropdownMenuItem>
+							{account ? (
+								<DropdownMenuItem
+									onSelect={() => setNotificationsOpen(true)}
+									data-testid={PUSH_TESTID.accountItem}
+								>
+									Notifications
+								</DropdownMenuItem>
+							) : null}
 							<DropdownMenuItem onSelect={() => void signOut()}>
 								Sign out
 							</DropdownMenuItem>
@@ -219,6 +235,12 @@ function MobilePills() {
 			>
 				<WhatIfChip />
 			</div>
+			{account ? (
+				<NotificationsDialog
+					open={notificationsOpen}
+					onOpenChange={setNotificationsOpen}
+				/>
+			) : null}
 			<Vaul.Root open={outlineOpen} onOpenChange={setOutlineOpen}>
 				<Vaul.Portal>
 					<Vaul.Overlay className="fixed inset-0 z-50 bg-black/40" />

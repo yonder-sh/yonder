@@ -14,6 +14,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useHomeLifecycle } from "@/features/offline/app-lifecycle";
+import { usePushBridge } from "@/features/push/use-push";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { onSignOut } from "@/lib/auth/sign-out";
 import { BRAND } from "@/lib/brand";
@@ -82,6 +83,8 @@ function RootDocument({ children }: { children: ReactNode }) {
 	const toastPosition = useIsMobile() ? "bottom-center" : "bottom-right";
 	// WP-Home's mount point: service-worker registration + its sign-out purge.
 	useHomeLifecycle();
+	// Web Push: a notification click navigates this window; sign-out drops the device.
+	usePushBridge();
 	// The CJK @font-face rules, after first paint (QA VIS2-10 / PERF-05).
 	useEffect(() => {
 		void loadCjkFonts();

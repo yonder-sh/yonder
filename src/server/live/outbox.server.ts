@@ -1,4 +1,5 @@
 import { type SQL, sql } from "drizzle-orm";
+import type { PushEvent } from "@/lib/push/jobs";
 import type { TripKey } from "@/lib/query/keys";
 import {
 	type AccessEvent,
@@ -10,6 +11,10 @@ import {
 	type TripEvent,
 } from "@/lib/realtime/protocol";
 import type { LegTarget } from "@/lib/schemas/targets";
+import {
+	enqueuePushEvents,
+	requestPushSync,
+} from "@/server/push/redis-state.server";
 import {
 	type EnqueueOptions,
 	enqueue,
@@ -41,6 +46,11 @@ import {
  * publishes ONE `invalidate` (all `emit` calls merged) with that version, the
  * `access`/`mention` events, and adds the jobs. If the transaction throws, nothing
  * is published or enqueued. Publishing failures are logged, never thrown.
+ *
+ * Web Push rides along (src/server/push): `out.notify(...)` (and every
+ * `out.mention(...)`) becomes one `push.events` job, and a change to the
+ * plan or lists asks for a `push.sync` (reminders, "changes that affect
+ * you"). Both are no-ops while push is off.
  */
 
 /** Anything that runs a drizzle `sql` query: a drizzle db or transaction (pg or postgres-js). */
@@ -145,6 +155,16 @@ export type OutboxDeps = {
 		data: unknown,
 		opts?: EnqueueOptions,
 	) => Promise<unknown>;
+	/** Web Push hand-off (absent = none, e.g. in tests). */
+	push?: {
+		events: (job: {
+			tripId: string;
+			actor: { userId: string; name: string } | null;
+			at: number;
+			events: PushEvent[];
+		}) => Promise<unknown>;
+		sync: (tripId: string, actorUserId: string | null) => Promise<unknown>;
+	};
 };
 
 const defaultDeps: OutboxDeps = {
@@ -159,7 +179,11 @@ const defaultDeps: OutboxDeps = {
 				o?: EnqueueOptions,
 			) => Promise<unknown>
 		)(queue, name, data, opts),
+	push: { events: enqueuePushEvents, sync: requestPushSync },
 };
+
+/** Changes under these keys can move reminders or what someone is assigned to. */
+const PUSH_SYNC_KEYS: readonly TripKey[] = ["graph", "lists"];
 
 /** Collects what a transaction wants published / enqueued, until after COMMIT. */
 export class TxOutbox {
@@ -172,6 +196,7 @@ export class TxOutbox {
 	private readonly goneDocs = new Set<string>();
 	private readonly movedDocs = new Map<string, string>();
 	private readonly jobs: PendingJob[] = [];
+	private readonly pushEvents: PushEvent[] = [];
 	private flushed = false;
 
 	constructor(
@@ -204,9 +229,17 @@ export class TxOutbox {
 		return this;
 	}
 
-	/** Members newly @mentioned: their mention bells refetch. */
+	/** Members newly @mentioned: their mention bells refetch (and a push goes out). */
 	mention(memberIds: readonly string[]): this {
 		for (const m of memberIds) this.mentions.add(m);
+		if (memberIds.length)
+			this.notify({ kind: "mention", memberIds: [...memberIds].slice(0, 200) });
+		return this;
+	}
+
+	/** Something people should hear about by push, after COMMIT (src/server/push). */
+	notify(event: PushEvent): this {
+		if (this.pushEvents.length < 100) this.pushEvents.push(event);
 		return this;
 	}
 
@@ -304,6 +337,27 @@ export class TxOutbox {
 					err,
 				);
 			}
+		}
+		if (deps.push) await this.flushPush(deps.push);
+	}
+
+	private async flushPush(push: NonNullable<OutboxDeps["push"]>) {
+		const actor = this.meta.actor
+			? { userId: this.meta.actor.userId, name: this.meta.actor.name }
+			: null;
+		try {
+			if (this.pushEvents.length)
+				await push.events({
+					tripId: this.tripId,
+					actor,
+					at: Date.now(),
+					events: this.pushEvents,
+				});
+			// A private note's own change (an audience) moves nobody's plans.
+			if (!this.meta.audience && PUSH_SYNC_KEYS.some((k) => this.keys.has(k)))
+				await push.sync(this.tripId, actor?.userId ?? null);
+		} catch (err) {
+			console.error("[live] outbox push hand-off failed:", err);
 		}
 	}
 }

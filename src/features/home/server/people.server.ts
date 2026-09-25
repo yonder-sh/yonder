@@ -173,6 +173,12 @@ export async function inviteCore(
 		// Invited as "Can view": an old edit-link grant doesn't outrank it.
 		await dropLinkGrants(tx, out, args.tripId, account.id);
 		out.access([account.id]);
+		out.notify({
+			kind: "membership",
+			change: "added",
+			userId: account.id,
+			role: args.role,
+		});
 	}
 	out.emit({ entity: "member", keys: ["graph", "sharing"] });
 	return {

@@ -20,6 +20,7 @@ import { ShiftTripDialog } from "@/features/insights/ShiftTripDialog";
 import { FollowedMedia } from "@/features/media/media-follow";
 import { AddExpenseDialog } from "@/features/money/AddExpenseDialog";
 import { AddPlaceDialog } from "@/features/places/AddPlaceDialog";
+import { PushPromptCard } from "@/features/push/PushPromptCard";
 import { ReviewDrawer } from "@/features/suggest/ReviewDrawer";
 import { AddFlightDialog } from "@/features/transit/AddFlightDialog";
 import { mustRedact } from "@/lib/auth/roles";
@@ -101,6 +102,8 @@ export function Workspace() {
 			<ActivityDialog />
 			<ShortcutsDialog />
 			<ViewSettingsDialog />
+			{/* Web Push: "Turn on notifications", the first time on a device. */}
+			{live ? <PushPromptCard /> : null}
 		</WorkspaceDnd>
 	);
 }

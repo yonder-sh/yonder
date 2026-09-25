@@ -1,12 +1,22 @@
 /**
  * The account menu (SPEC §12.5 `AccountMenu()`, DESIGN §10.5): the 28px
- * avatar at the far right — Profile, theme, Install app, Sign out. Link
+ * avatar at the far right — Profile, Notifications (Web Push settings),
+ * theme, Install app, Sign out. Link
  * guests get "Sign in to keep this trip" (and "Change your name") instead of
  * Profile.
  */
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "@tanstack/react-router";
-import { LogIn, LogOut, Monitor, Moon, Sun, UserRound } from "lucide-react";
+import {
+	Bell,
+	LogIn,
+	LogOut,
+	Monitor,
+	Moon,
+	Sun,
+	UserRound,
+} from "lucide-react";
+import { useState } from "react";
 import { MemberAvatar } from "@/components/common/member";
 import { type Theme, useTheme } from "@/components/theme-provider";
 import {
@@ -20,6 +30,8 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { InstallButton } from "@/features/offline/InstallButton";
+import { NotificationsDialog } from "@/features/push/NotificationsDialog";
+import { PUSH_TESTID } from "@/features/push/testids";
 import { signOut } from "@/lib/auth/sign-out";
 import type { Viewer } from "@/lib/auth/viewer";
 import { sessionQuery } from "@/lib/query/trip-queries";
@@ -51,6 +63,7 @@ export function AccountMenu({
 	const color = ws?.graph.me.color ?? 0;
 	const guest = me?.isAnonymous ?? false;
 	const next = `${location.pathname}${location.searchStr ?? ""}`;
+	const [notificationsOpen, setNotificationsOpen] = useState(false);
 	return (
 		<DropdownMenu>
 			<DropdownMenuTrigger
@@ -86,6 +99,14 @@ export function AccountMenu({
 				<DropdownMenuItem onSelect={() => setProfileOpen(true)}>
 					<UserRound /> {guest ? "Change your name" : "Profile"}
 				</DropdownMenuItem>
+				{guest ? null : (
+					<DropdownMenuItem
+						onSelect={() => setNotificationsOpen(true)}
+						data-testid={PUSH_TESTID.accountItem}
+					>
+						<Bell /> Notifications
+					</DropdownMenuItem>
+				)}
 				<InstallButton />
 				<DropdownMenuSeparator />
 				<DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
@@ -110,6 +131,13 @@ export function AccountMenu({
 					<LogOut /> Sign out
 				</DropdownMenuItem>
 			</DropdownMenuContent>
+			{/* Outside the content, so it stays open after the menu closes. */}
+			{guest ? null : (
+				<NotificationsDialog
+					open={notificationsOpen}
+					onOpenChange={setNotificationsOpen}
+				/>
+			)}
 		</DropdownMenu>
 	);
 }

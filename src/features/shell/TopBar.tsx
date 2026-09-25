@@ -34,6 +34,7 @@ import {
 import { AccountMenu } from "@/features/home/AccountMenu";
 import { WhatIfChip } from "@/features/insights/WhatIfChip";
 import { OutlinePopover } from "@/features/outline/OutlinePopover";
+import { MuteTripMenuItem } from "@/features/push/MuteTripMenuItem";
 import {
 	SuggestModeControl,
 	SuggestModeMenuItem,
@@ -82,6 +83,8 @@ export function TripMenuItems() {
 			<RateMenuItem />
 			{/* FB-17b: Spotlight, "Ask everyone to follow me". */}
 			<SpotlightMenuItem />
+			{/* Web Push: this trip's notifications off for me. */}
+			<MuteTripMenuItem />
 			<DropdownMenuSeparator />
 			<DropdownMenuItem
 				onSelect={() => setViewSettingsOpen(true)}

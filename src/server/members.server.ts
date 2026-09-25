@@ -58,6 +58,8 @@ export async function retireMember(
 		if (row.userId) {
 			out.access([row.userId]);
 			await withdrawAuthorProposals(tx, out, tripId, [row.userId]);
+			// Web Push: "You were removed from …" (never to whoever left on their own).
+			out.notify({ kind: "membership", change: "removed", userId: row.userId });
 		}
 		out.emit({ entity: "member", keys: ["graph", "sharing", "money"] });
 	}
@@ -100,6 +102,12 @@ export async function changeMemberRole(
 		 where id = ${memberId} and trip_id = ${tripId}`);
 	if (row.userId) {
 		out.access([row.userId]);
+		out.notify({
+			kind: "membership",
+			change: "role",
+			userId: row.userId,
+			role,
+		});
 		// Viewers and raters can't propose (PLACES §1c).
 		if (!can({ role, isGuest: false }, "propose"))
 			await withdrawAuthorProposals(tx, out, tripId, [row.userId]);
@@ -467,6 +475,7 @@ export async function claimPlaceholderRow(
 		 where id = ${memberId} and trip_id = ${tripId}`);
 	if (out) {
 		out.access([userId]);
+		out.notify({ kind: "membership", change: "added", userId, role });
 		out.emit({ entity: "member", keys: ["graph", "sharing", "money"] });
 	}
 	return { memberId, merged: false };

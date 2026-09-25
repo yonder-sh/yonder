@@ -1,9 +1,17 @@
 import { type JobsOptions, Queue } from "bullmq";
 import { v7 as uuidv7 } from "uuid";
 import { z } from "zod";
+import {
+	PushEventsJob,
+	PushFlushJob,
+	PushRemindJob,
+	PushSweepJob,
+	PushSyncJob,
+} from "@/lib/push/jobs";
 import { TRIP_KEYS } from "@/lib/query/keys";
 import { isUuid, type JobKind } from "@/lib/realtime/protocol";
 import { LegTarget } from "@/lib/schemas/targets";
+import { pushEnabled } from "@/server/push/env.server";
 import { key, redis, redisForBull } from "./redis.server";
 
 /**
@@ -20,12 +28,14 @@ import { key, redis, redisForBull } from "./redis.server";
  *                               repeated at 16:30 Europe/Berlin by `scheduleRecurringJobs`)
  *             `money.fxRehome`  re-convert a trip after its home currency changed (WP-Money)
  *   climate   `climate.cell`    fetch one 0.25° cell's climate normals once (WP-Insights)
+ *   push      `push.events`, `push.flush`, `push.sync`, `push.remind`, `push.sweep`:
+ *             Web Push notifications (`src/lib/push/jobs.ts`, `src/server/push`)
  *   (any)     `test.ping`       a no-op sample job: smoke tests and ops checks
  *
  * Trip jobs carry `tripId`: the worker reports per-trip progress (`job` events)
  * and invalidates the trip's queries after it. `money` and `climate` are
  * SILENT queues: no progress toasts (their jobs may have no trip), but a
- * trip job's reported keys are still invalidated.
+ * trip job's reported keys are still invalidated. `push` is silent too.
  */
 
 const TripId = z.string().refine(isUuid, "tripId must be a UUID");
@@ -79,10 +89,18 @@ export const JOB_SCHEMAS = {
 		"test.ping": PingJob,
 	},
 	climate: { "climate.cell": ClimateCellJob, "test.ping": PingJob },
+	push: {
+		"push.events": PushEventsJob,
+		"push.flush": PushFlushJob,
+		"push.sync": PushSyncJob,
+		"push.remind": PushRemindJob,
+		"push.sweep": PushSweepJob,
+		"test.ping": PingJob,
+	},
 } as const satisfies Record<JobKind | SilentQueue, Record<string, z.ZodType>>;
 
 /** Queues without progress events (no toasts; jobs may have no trip). */
-export const SILENT_QUEUES = ["money", "climate"] as const;
+export const SILENT_QUEUES = ["money", "climate", "push"] as const;
 export type SilentQueue = (typeof SILENT_QUEUES)[number];
 export function isSilentQueue(q: string): q is SilentQueue {
 	return (SILENT_QUEUES as readonly string[]).includes(q);
@@ -104,6 +122,7 @@ export const QUEUE_CONCURRENCY: Record<QueueName, number> = {
 	links: 4,
 	money: 1,
 	climate: 2,
+	push: 4,
 };
 
 /** Default options of every job (SPEC §10.9). */
@@ -157,6 +176,13 @@ export async function closeQueues(): Promise<void> {
 export type EnqueueOptions = {
 	/** Jobs with the same id are not added again while one is waiting or running. */
 	dedupeId?: string;
+	/**
+	 * With `dedupeId`: an add while that job is RUNNING queues one follow-up
+	 * run (BullMQ `keepLastIfActive`), so a change made mid-run is never missed.
+	 */
+	dedupeKeepLast?: boolean;
+	/** A fixed job id (an add is a no-op while a job with it exists). No ':'. */
+	jobId?: string;
 	/** Run no earlier than this many ms from now. */
 	delay?: number;
 	/** Override retries (tests). */
@@ -183,7 +209,7 @@ export async function enqueue<Q extends QueueName, N extends JobName<Q>>(
 	const schema = (JOB_SCHEMAS[queue] as Record<string, z.ZodType>)[name];
 	if (!schema) throw new Error(`unknown job ${queue}/${name}`);
 	const payload = schema.parse(data) as { tripId?: string };
-	const jobId = uuidv7();
+	const jobId = opts.jobId ?? uuidv7();
 	try {
 		const job = await getQueue(queue).add(name, payload, {
 			...DEFAULT_JOB_OPTIONS,
@@ -193,7 +219,14 @@ export async function enqueue<Q extends QueueName, N extends JobName<Q>>(
 				: {}),
 			jobId,
 			...(opts.delay ? { delay: opts.delay } : {}),
-			...(opts.dedupeId ? { deduplication: { id: opts.dedupeId } } : {}),
+			...(opts.dedupeId
+				? {
+						deduplication: {
+							id: opts.dedupeId,
+							...(opts.dedupeKeepLast ? { keepLastIfActive: true } : {}),
+						},
+					}
+				: {}),
 		});
 		// A deduplicated add returns the job that already exists.
 		const added = job.id === jobId;
@@ -223,9 +256,17 @@ export const FX_DAILY_SCHEDULE = {
 } as const;
 
 /**
+ * Web Push: every trip that may still plan a reminder is synced hourly, so
+ * reminders beyond the 48 h scheduling horizon are picked up in time.
+ */
+export const PUSH_SWEEP_SCHEDULE = { pattern: "7 * * * *" } as const;
+
+/**
  * Registers the repeating jobs (idempotent: an upsert by scheduler id), from
- * every worker process at start: `money.fxDaily` at 16:30 Europe/Berlin.
- * Never throws (a Redis hiccup must not stop the worker).
+ * every worker process at start: `money.fxDaily` at 16:30 Europe/Berlin and,
+ * while push is on, `push.sweep` hourly (plus one sweep right away, so a
+ * restart never leaves a gap). Never throws (a Redis hiccup must not stop
+ * the worker).
  */
 export async function scheduleRecurringJobs(): Promise<void> {
 	try {
@@ -246,6 +287,26 @@ export async function scheduleRecurringJobs(): Promise<void> {
 	} catch (e) {
 		console.error(
 			"[jobs] scheduling money.fxDaily failed:",
+			e instanceof Error ? e.message : e,
+		);
+	}
+	try {
+		const push = getQueue("push");
+		if (pushEnabled()) {
+			await push.upsertJobScheduler("push.sweep", PUSH_SWEEP_SCHEDULE, {
+				name: "push.sweep",
+				data: {},
+				opts: {
+					attempts: 2,
+					removeOnComplete: { age: 24 * 3600 },
+					removeOnFail: DEFAULT_JOB_OPTIONS.removeOnFail,
+				},
+			});
+			await enqueue("push", "push.sweep", {}, { dedupeId: "push-sweep-start" });
+		} else await push.removeJobScheduler("push.sweep");
+	} catch (e) {
+		console.error(
+			"[jobs] scheduling push.sweep failed:",
 			e instanceof Error ? e.message : e,
 		);
 	}

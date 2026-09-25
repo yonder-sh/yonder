@@ -225,6 +225,7 @@ async function acceptOne(
 		update proposals set status = 'accepted', reviewed_by = ${a.user.id}, reviewed_at = now(),
 		       last_error = null, updated_at = now()
 		 where id = ${p.id}`);
+	out.notify({ kind: "result", proposalId: p.id, decision: "accepted" });
 	await logActivity(tx, out, {
 		tripId: p.tripId,
 		actor: { userId: a.user.id, name: a.user.name },
@@ -288,6 +289,7 @@ export async function resolveProposalById(
 					       reviewed_by = ${user.id}, reviewed_at = now(), updated_at = now()
 					 where id = ${p.id}`);
 				await closeDependants(tx, p.tripId, [p.id], "rejected");
+				out.notify({ kind: "result", proposalId: p.id, decision: "rejected" });
 				await logActivity(tx, out, {
 					tripId: p.tripId,
 					actor: { userId: user.id, name: user.name },

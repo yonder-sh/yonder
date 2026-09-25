@@ -7,6 +7,13 @@ import {
 import { fxDaily, fxRehome } from "@/features/money/server/fx.server";
 import { autofillLeg } from "@/features/transit/server/autofill.server";
 import type { TripKey } from "@/lib/query/keys";
+import {
+	handlePushEvents,
+	handlePushFlush,
+	handlePushRemind,
+	handlePushSweep,
+	handlePushSync,
+} from "@/server/push/handlers.server";
 import type { JobData, JobName, QueueName } from "./jobs.server";
 
 /**
@@ -65,7 +72,8 @@ const ping = async (
 /**
  * The handler table. The bodies belong to the feature packages (WP-Transit:
  * `autofillLeg`; WP-Media: `mediaVariants`, `mediaPoster`, `linkPreview`;
- * WP-Money: `fxDaily`, `fxRehome`; WP-Insights: `climateForCell`); this file
+ * WP-Money: `fxDaily`, `fxRehome`; WP-Insights: `climateForCell`; Web Push:
+ * `src/server/push/handlers.server.ts`); this file
  * only routes queue/job names to them, so a package never edits it.
  */
 export const jobHandlers: JobHandlers = {
@@ -97,6 +105,30 @@ export const jobHandlers: JobHandlers = {
 		"climate.cell": async (data) => {
 			await climateForCell(data.cell);
 			// The node's ClimateCard reads it through `getClimate` (not a trip key).
+			return {};
+		},
+		"test.ping": ping,
+	},
+	// Web Push: nothing to invalidate (a notification changes no trip data).
+	push: {
+		"push.events": async (data) => {
+			await handlePushEvents(data);
+			return {};
+		},
+		"push.flush": async (data) => {
+			await handlePushFlush(data);
+			return {};
+		},
+		"push.sync": async (data) => {
+			await handlePushSync(data);
+			return {};
+		},
+		"push.remind": async (data) => {
+			await handlePushRemind(data);
+			return {};
+		},
+		"push.sweep": async () => {
+			await handlePushSweep();
 			return {};
 		},
 		"test.ping": ping,
