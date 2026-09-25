@@ -48,7 +48,8 @@ export function placesFromRate(
 			: s.f;
 	const search: WorkspaceSearch = {
 		tab: "places",
-		...(table ? {} : { pv: "rate" as const }),
+		// The table names its view: without one the tab would pick a step.
+		pv: table ? ("table" as const) : ("rate" as const),
 		...(f ? { f } : {}),
 		...(s.set === "ideas" ? { pst: "idea" as const } : {}),
 		...(focus ? { sel: `n.${focus}` } : {}),

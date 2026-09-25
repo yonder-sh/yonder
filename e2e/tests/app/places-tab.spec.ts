@@ -28,7 +28,9 @@ const ratingOf = (page: Page, nodeId: string, memberId: string) =>
 	);
 
 async function openPlaces(page: Page, c: FixtureClone, search = "") {
-	await page.goto(`/t/${c.slug}?tab=places${search}`);
+	// The table by name: without a view the tab picks its step (Rate, with places to rate).
+	const view = search.includes("pv=") ? "" : "&pv=table";
+	await page.goto(`/t/${c.slug}?tab=places${view}${search}`);
 	await expect(page.getByTestId(T.tab)).toBeVisible({ timeout: 30_000 });
 }
 

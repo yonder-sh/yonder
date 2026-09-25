@@ -90,7 +90,7 @@ import { formatScore } from "./score";
 import { PLACES_TAB_TESTID } from "./testids";
 import { ScoreChip } from "./ui";
 import { usePlaceActions } from "./use-place-actions";
-import type { PlacesData } from "./use-places";
+import { lastAddView, type PlacesData } from "./use-places";
 
 const UUID_RE =
 	/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
@@ -814,11 +814,12 @@ function EndCard({
 				size="lg"
 				className="h-12 rounded-xl"
 				data-testid={PLACES_TAB_TESTID.feedShortlist}
+				// The flow's next step (owner, 2026-09-25): the shortlist onto days.
 				onClick={() =>
-					nav.setPlaces({ pv: "table", pst: "shortlist", talk: undefined })
+					nav.setPlaces({ pv: "schedule", pst: undefined, talk: undefined })
 				}
 			>
-				See the shortlist
+				Next: schedule the shortlist
 			</Button>
 		</Slate>
 	);
@@ -1111,7 +1112,7 @@ export default function RateFeed({ data }: { data: PlacesData }) {
 						variant="ghost"
 						className="pointer-events-auto size-8 text-white"
 						aria-label="Close the feed"
-						onClick={() => nav.setPlaces({ pv: "table" })}
+						onClick={() => nav.setPlaces({ pv: lastAddView.current })}
 					>
 						<X />
 					</Button>

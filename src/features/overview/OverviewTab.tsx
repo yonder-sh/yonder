@@ -25,6 +25,7 @@ import {
 import { useEditGuard } from "@/components/common/edit-guard";
 import { Button } from "@/components/ui/button";
 import { ClimateCard } from "@/features/insights/ClimateCard";
+import { NextStepCard } from "@/features/places/tab/NextStepCard";
 import { useCovers } from "@/features/places/tab/PlacesBoard";
 import { StillToPlan } from "@/features/shell/StillToPlan";
 import type { LngLat } from "@/lib/engine/geo";
@@ -392,6 +393,8 @@ function Header({
 					</div>
 				</div>
 				{!noDays && wide ? <Stats data={data} cols={3} after={false} /> : null}
+				{/* The places flow's next step (the card above already offers adding). */}
+				<NextStepCard steps={["rate", "schedule"]} />
 			</div>
 		);
 	}
@@ -509,6 +512,8 @@ function Header({
 			<CountryChips route={route} />
 			{wide ? <Stats data={data} cols={3} after={false} /> : null}
 			<PlanningLine data={data} />
+			{/* The places flow's next step: add → rate → schedule. */}
+			<NextStepCard />
 			{buttons(openPlan, seePlaces)}
 		</div>
 	);

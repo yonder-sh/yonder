@@ -1,29 +1,66 @@
 /**
- * The Places tab (docs/PLACES.md §1–§3): every place in the scope, one
- * filtered set in four views — Table, Board, Map and Rate — with grouping,
- * sort and filters shared by all of them (and kept in the URL, so they
- * deep-link and follow). Opening a place docks its details beside the table
- * or board (the content narrows and keeps scrolling; nothing is covered).
+ * The Places tab (docs/PLACES.md §1–§4): every place in the scope, led by
+ * the planning flow (owner, 2026-09-25) as three steps — **1 Add · 2 Rate ·
+ * 3 Schedule** — each with its count:
+ * - Add: one filtered set in three views (Table, Board, Map) with grouping,
+ *   sort and filters shared by all of them (and kept in the URL, so they
+ *   deep-link and follow), "Add a place" up front and an empty state that
+ *   teaches the flow;
+ * - Rate: the endless feed, full height;
+ * - Schedule: "Schedule next" (per stay window, with fit hints).
+ * The step is the URL's view (`pv`); with none the tab picks the most useful
+ * one (`pickStep`) and writes it in. Opening a place docks its details
+ * beside the table, board or schedule (the content narrows and keeps
+ * scrolling; nothing is covered).
  *
  * Wide mode (the tab takes the map's space) is the shell's layout; with the
  * map showing, the details open over the map instead (the shell's floating
  * inspector slot shows the same `PlaceDetails`).
  */
 import { cn } from "cn";
-import { lazy, type ReactNode, Suspense, useMemo, useState } from "react";
+import { Maximize2, Minimize2 } from "lucide-react";
+import {
+	lazy,
+	type ReactNode,
+	Suspense,
+	useEffect,
+	useMemo,
+	useState,
+} from "react";
 import { EmptyState } from "@/components/common/empty-state";
+import { Button } from "@/components/ui/button";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { PlaceFilterSummary } from "@/features/outline/FilterMenu";
 import { useViewPrefs } from "@/features/shell/view-prefs";
+import { canRateOwn } from "@/lib/auth/roles";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { isRateable } from "../lib/rate";
+import {
+	type FlowStep,
+	flowTally,
+	nextStep,
+	pickStep,
+	viewOfStep,
+} from "./flow";
 import { PlaceDetails } from "./PlaceDetails";
 import { PlacesBoard } from "./PlacesBoard";
 import { PlacesList } from "./PlacesList";
+import { PlacesSteps } from "./PlacesSteps";
 import { PlacesTable } from "./PlacesTable";
-import { PlacesToolbar } from "./PlacesToolbar";
+import { AddPlaceButton, PlacesToolbar, RatingProgress } from "./PlacesToolbar";
+import { ScheduleNext } from "./ScheduleNext";
 import { PLACES_TAB_TESTID } from "./testids";
 import { PlaceActionsProvider } from "./use-place-actions";
-import { type PlacesData, usePlaces } from "./use-places";
+import {
+	lastAddView,
+	type PlacesData,
+	usePlaces,
+	usePlacesState,
+} from "./use-places";
 
 const PlacesMap = lazy(() => import("./PlacesMap"));
 const RateFeed = lazy(() => import("./RateFeed"));
@@ -48,53 +85,105 @@ export function usePlacesTakesMap(): boolean {
 	return tab === "places" && (wide || search.pv === "map");
 }
 
-function Empty({ data }: { data: PlacesData }) {
-	const { scope, graph, nav } = useWorkspace();
+/** No places yet: the flow in three lines, and the way in. */
+function FlowEmpty() {
+	const { scope, graph } = useWorkspace();
 	const where = scope?.name ?? graph.trip.name;
-	const none = data.rows.length === 0;
+	const steps = [
+		[
+			"Add",
+			"every place anyone wants to go: search, or paste links and TikToks.",
+		],
+		["Rate", "them together, Must to Nah. The favourites make the shortlist."],
+		["Schedule", "the shortlist onto the days you're in each city."],
+	] as const;
+	return (
+		<div
+			data-testid={PLACES_TAB_TESTID.flowEmpty}
+			className="grid flex-1 place-items-center overflow-y-auto p-6"
+		>
+			<div className="flex max-w-md flex-col items-start gap-4">
+				<p className="font-display text-[17px] leading-6 font-medium text-balance">
+					No places in {where} yet.
+				</p>
+				<ol className="flex flex-col gap-2 text-sm text-muted-foreground">
+					{steps.map(([step, text], i) => (
+						<li key={step} className="flex items-baseline gap-2.5">
+							<span className="grid size-5 shrink-0 translate-y-0.5 place-items-center rounded-full border font-mono text-[11px] font-semibold text-foreground tnum">
+								{i + 1}
+							</span>
+							<span>
+								<span className="font-medium text-foreground">{step}</span>{" "}
+								{text}
+							</span>
+						</li>
+					))}
+				</ol>
+				<AddPlaceButton label="Add the first place" />
+			</div>
+		</div>
+	);
+}
+
+function Empty({ data }: { data: PlacesData }) {
+	const { nav } = useWorkspace();
+	if (data.rows.length === 0) return <FlowEmpty />;
 	return (
 		<div className="grid flex-1 place-items-center p-6">
 			<EmptyState
-				line={
-					none ? `No places in ${where} yet.` : "No places match these filters."
-				}
+				line="No places match these filters."
 				action={
-					none ? null : (
-						<button
-							type="button"
-							className="cursor-pointer text-sm text-primary hover:underline"
-							onClick={() =>
-								nav.setPlaces({ pst: undefined, talk: undefined, f: undefined })
-							}
-						>
-							Show every place
-						</button>
-					)
+					<button
+						type="button"
+						className="cursor-pointer text-sm text-primary hover:underline"
+						onClick={() =>
+							nav.setPlaces({ pst: undefined, talk: undefined, f: undefined })
+						}
+					>
+						Show every place
+					</button>
 				}
 			/>
 		</div>
 	);
 }
 
+/** Rate: the feed, full height (desktop: under the group's progress). */
+function RateStep({ data, phone }: { data: PlacesData; phone: boolean }) {
+	return (
+		<div className="flex min-h-0 flex-1 flex-col">
+			{phone ? null : (
+				<div className="flex shrink-0 items-center border-b px-4 py-1.5">
+					<RatingProgress data={data} />
+				</div>
+			)}
+			<Suspense fallback={<div className="flex-1 bg-black" />}>
+				<RateFeed data={data} />
+			</Suspense>
+		</div>
+	);
+}
+
 function Body({
 	data,
+	step,
 	wide,
 	phone,
+	onStep,
+	tally,
 }: {
 	data: PlacesData;
+	step: FlowStep;
 	wide: boolean;
 	phone: boolean;
+	onStep: (s: FlowStep) => void;
+	tally: ReturnType<typeof flowTally>;
 }) {
 	const { sel, nav } = useWorkspace();
 	const view = data.state.view;
 	const row = sel?.kind === "node" ? data.byId.get(sel.id) : undefined;
-	if (view === "rate")
-		return (
-			<Suspense fallback={<div className="flex-1 bg-black" />}>
-				<RateFeed data={data} />
-			</Suspense>
-		);
-	if (view === "map")
+	if (step === "rate") return <RateStep data={data} phone={phone} />;
+	if (step === "add" && view === "map")
 		return (
 			<Suspense fallback={<div className="flex-1 bg-basemap-land" />}>
 				<PlacesMap data={data} />
@@ -104,7 +193,13 @@ function Body({
 	return (
 		<div className="flex min-h-0 flex-1">
 			<div className="flex min-w-0 flex-1 flex-col">
-				{empty ? (
+				{step === "schedule" ? (
+					<ScheduleNext
+						data={data}
+						tally={tally}
+						onRate={() => onStep("rate")}
+					/>
+				) : empty ? (
 					<Empty data={data} />
 				) : view === "board" ? (
 					<PlacesBoard data={data} />
@@ -132,28 +227,122 @@ function Body({
 	);
 }
 
+/** Wide mode's toggle (the Map view always takes the map's space). */
+function WideToggle({
+	wide,
+	onWide,
+}: {
+	wide: boolean;
+	onWide: (v: boolean) => void;
+}) {
+	return (
+		<Tooltip>
+			<TooltipTrigger asChild>
+				<Button
+					variant="ghost"
+					size="icon"
+					className="size-8"
+					aria-pressed={wide}
+					aria-label={wide ? "Show the map" : "Wide: hide the map"}
+					data-testid={PLACES_TAB_TESTID.wide}
+					onClick={() => onWide(!wide)}
+				>
+					{wide ? (
+						<Minimize2 className="size-4" strokeWidth={1.5} />
+					) : (
+						<Maximize2 className="size-4" strokeWidth={1.5} />
+					)}
+				</Button>
+			</TooltipTrigger>
+			<TooltipContent>
+				{wide ? "Show the map" : "Wide: hide the map"}
+			</TooltipContent>
+		</Tooltip>
+	);
+}
+
 export function PlacesTab({ phone = false }: { phone?: boolean }) {
 	const [q, setQ] = useState("");
-	const data = usePlaces(q);
+	// The search belongs to the Add step's list; the feed and the schedule are the whole scope.
+	const urlStep = usePlacesState().step;
+	const data = usePlaces(urlStep === "rate" || urlStep === "schedule" ? "" : q);
+	const { access, ix, sel, search, nav } = useWorkspace();
 	const [wide, setWide] = usePlacesWide();
 	const takesMap = usePlacesTakesMap();
+	const tally = useMemo(
+		() =>
+			flowTally(data.rows, {
+				me: access.memberId,
+				canRate: canRateOwn(access),
+			}),
+		[data.rows, access],
+	);
+	const ctx = { canEdit: access.mode !== "read", hasDays: ix.days.length > 0 };
+	const next = nextStep(tally, ctx);
+	// No step in the URL: the most useful one, written in right away (so it
+	// holds while the counts change, deep-links and follows).
+	const step =
+		data.state.step ??
+		pickStep(tally, {
+			...ctx,
+			phone,
+			focus:
+				sel?.kind === "node" || !!search.pst || !!search.talk || !!search.f,
+		});
+	const pv = search.pv;
+	useEffect(() => {
+		if (!pv) nav.setPlaces({ pv: viewOfStep(step, lastAddView.current) });
+	}, [pv, step, nav]);
+	if (step === "add") lastAddView.current = data.state.view;
+	const onStep = (s: FlowStep) => {
+		if (s === step) return;
+		// The Rate feed and the schedule are the whole scope: the Add step's
+		// status pills and "Talk about it" stay with it.
+		nav.setPlaces({
+			pv: viewOfStep(s, lastAddView.current),
+			...(s === "add" ? {} : { pst: undefined, talk: undefined }),
+		});
+	};
+	const mapView = step === "add" && data.state.view === "map";
 	return (
 		<PlaceActionsProvider>
 			<div
 				data-testid={PLACES_TAB_TESTID.tab}
-				data-view={data.state.view}
+				data-view={viewOfStep(step, data.state.view)}
+				data-step={step}
 				className={cn("flex h-full min-h-0 flex-col")}
 			>
-				<PlacesToolbar
+				<PlacesSteps
+					step={step}
+					tally={tally}
+					next={next}
+					onStep={onStep}
+					phone={phone}
+				>
+					{/* The Map view always takes the map's space (one map at a time). */}
+					{phone || mapView ? null : (
+						<WideToggle wide={wide} onWide={setWide} />
+					)}
+				</PlacesSteps>
+				{step === "add" ? (
+					<PlacesToolbar
+						data={data}
+						q={q}
+						onQ={setQ}
+						compact={phone || !takesMap}
+					/>
+				) : null}
+				{step === "schedule" ? null : (
+					<PlaceFilterSummary count={data.visible.length} />
+				)}
+				<Body
 					data={data}
-					q={q}
-					onQ={setQ}
-					wide={phone ? null : wide}
-					onWide={setWide}
-					compact={phone || !takesMap}
+					step={step}
+					wide={takesMap && !phone}
+					phone={phone}
+					onStep={onStep}
+					tally={tally}
 				/>
-				<PlaceFilterSummary count={data.visible.length} />
-				<Body data={data} wide={takesMap && !phone} phone={phone} />
 			</div>
 		</PlaceActionsProvider>
 	);

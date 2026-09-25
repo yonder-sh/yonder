@@ -30,8 +30,18 @@ export const TABS = [
 ] as const;
 export type Tab = (typeof TABS)[number];
 
-/** The Places tab's views (docs/PLACES.md §1: `pv`); absent = table. */
-export const PLACES_VIEWS = ["table", "board", "map", "rate"] as const;
+/**
+ * The Places tab's views (docs/PLACES.md §1: `pv`), which also name its step
+ * (add → rate → schedule, owner 2026-09-25): table, board and map are Add,
+ * rate is Rate, schedule is Schedule. Absent = the tab picks the step.
+ */
+export const PLACES_VIEWS = [
+	"table",
+	"board",
+	"map",
+	"rate",
+	"schedule",
+] as const;
 export type PlacesView = (typeof PLACES_VIEWS)[number];
 /** Group by (`pg`); absent = city. */
 export const PLACES_GROUP_PARAM = [

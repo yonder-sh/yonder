@@ -8,13 +8,16 @@
  * - ⌘K "Rate places" is WP-Places' palette (`AddPlaceDialog`, same target).
  *
  * Inside a scope that has places to rate it opens on that scope ("Rate places
- * in Tokyo"), else on the whole trip.
+ * in Tokyo"), else on the whole trip. The top bar's Rate shows how many are
+ * left for you there (the flow, owner 2026-09-25); the phone has the Places
+ * tab's floating Rate pill instead.
  */
 import { Star } from "lucide-react";
 import { type MouseEvent, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { rateableNodes } from "@/features/places/lib/rate";
+import { useFlowTally } from "@/features/places/tab/use-flow";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { SHELL_TESTID } from "./testids";
 
@@ -41,7 +44,8 @@ export function useRateTarget(): RateTarget {
 				: null;
 		const opts = {
 			scopeId: inScope?.id ?? null,
-			patch: { pv: "rate" as const },
+			// The whole pile: the Add step's status pills stay with it.
+			patch: { pv: "rate" as const, pst: undefined, talk: undefined },
 		};
 		return {
 			scopeId: opts.scopeId,
@@ -65,6 +69,7 @@ function onLink(go: () => void) {
 /** The top bar's "Rate" (a ghost button, like ⌘K; `compact` keeps the icon only). */
 export function RateButton({ compact = false }: { compact?: boolean }) {
 	const t = useRateTarget();
+	const left = useFlowTally(t.scopeId).toRate ?? 0;
 	return (
 		<Button variant="ghost" size="sm" asChild>
 			<a
@@ -72,9 +77,18 @@ export function RateButton({ compact = false }: { compact?: boolean }) {
 				onClick={onLink(t.go)}
 				title={t.label}
 				data-testid={SHELL_TESTID.rateButton}
+				data-count={left}
 			>
 				<Star />
 				<span className={compact ? "sr-only" : undefined}>Rate</span>
+				{left ? (
+					<span
+						className="font-mono text-xs text-muted-foreground tnum"
+						title={`${left} to rate`}
+					>
+						{left}
+					</span>
+				) : null}
 			</a>
 		</Button>
 	);

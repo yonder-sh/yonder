@@ -33,6 +33,7 @@ import {
 import { WhatIfChip } from "@/features/insights/WhatIfChip";
 import { OfflineBanner } from "@/features/offline/OfflineBanner";
 import { Outline } from "@/features/outline/Outline";
+import { RatePill } from "@/features/places/tab/RatePill";
 import { DayChips } from "@/features/plan/DayChips";
 import { NowNext } from "@/features/plan/NowNext";
 import { MuteTripMenuItem } from "@/features/push/MuteTripMenuItem";
@@ -507,6 +508,8 @@ export function MobileWorkspace() {
 				<OfflineBanner />
 			</div>
 			<MobileSheet />
+			{/* The flow (owner, 2026-09-25): "★ Rate 12" above the sheet. */}
+			<RatePill />
 			<Fab />
 			<MobileInspector />
 		</div>

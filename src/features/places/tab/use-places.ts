@@ -13,9 +13,9 @@ import { raters } from "@/features/places/lib/rate";
 import { useViewPrefs } from "@/features/shell/view-prefs";
 import type { GraphMember } from "@/lib/engine/types";
 import { filterContextOf } from "@/lib/workspace/filter-match";
-import type { PlacesView } from "@/lib/workspace/search";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import type { FeedOrder } from "./feed";
+import { type AddView, addViewOf, type FlowStep, stepOfView } from "./flow";
 import { type GroupBy, groupPlaces, type SortBy } from "./grouping";
 import { type PlaceStatus, shortlistThreshold } from "./lifecycle";
 import {
@@ -28,7 +28,10 @@ import {
 } from "./model";
 
 export type PlacesState = {
-	view: PlacesView;
+	/** The Add step's view (table, board or map; table when `pv` names another step). */
+	view: AddView;
+	/** The step the URL names (null: none yet, the tab picks one). */
+	step: FlowStep | null;
 	group: GroupBy;
 	sort: SortBy;
 	status: PlaceStatus | null;
@@ -36,10 +39,14 @@ export type PlacesState = {
 	order: FeedOrder;
 };
 
+/** The Add view last shown (the Add step reopens on it this session). */
+export const lastAddView: { current: AddView } = { current: "table" };
+
 export function usePlacesState(): PlacesState {
 	const { search } = useWorkspace();
 	return {
-		view: search.pv ?? "table",
+		view: addViewOf(search.pv, lastAddView.current),
+		step: stepOfView(search.pv),
 		group: search.pg ?? "city",
 		sort: search.ps ?? "priority",
 		status: search.pst ?? null,

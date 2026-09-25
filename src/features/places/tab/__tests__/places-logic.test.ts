@@ -606,6 +606,7 @@ describe("/t/<trip>/rate → the Places tab", () => {
 	it("table / compare open the table; n and a place's own link open on it", () => {
 		expect(placesFromRate({ view: "compare" }, parentOf).search).toEqual({
 			tab: "places",
+			pv: "table",
 		});
 		expect(placesFromRate({ in: "place" }, parentOf)).toEqual({
 			scopeId: "city",

@@ -173,8 +173,14 @@ function usePlaceActionsValue() {
 		[guard.disabled, update],
 	);
 
+	/** Put it on a day: at the end, or at a spot (`bestSpot`: after / before a stop). */
 	const addToDay = useCallback(
-		async (row: PlaceRow, dayId: string, label: string) => {
+		async (
+			row: PlaceRow,
+			dayId: string,
+			label: string,
+			at?: { afterItemId?: string; beforeItemId?: string },
+		) => {
 			try {
 				if (row.droppedByHand)
 					await update.mutateAsync({
@@ -182,7 +188,15 @@ function usePlaceActionsValue() {
 						patch: { status: "active" },
 					});
 				const id = newId();
-				await createItem.mutateAsync({ id, dayId, nodeId: row.id });
+				await createItem.mutateAsync({
+					id,
+					dayId,
+					nodeId: row.id,
+					...(at?.afterItemId ? { afterItemId: at.afterItemId } : {}),
+					...(at?.beforeItemId && !at.afterItemId
+						? { beforeItemId: at.beforeItemId }
+						: {}),
+				});
 				undoToast(`${row.name} · ${label}`, async () => {
 					await deleteItem({ data: { itemId: id } });
 				});

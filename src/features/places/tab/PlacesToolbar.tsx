@@ -1,19 +1,17 @@
 /**
- * The Places tab's header (docs/PLACES.md §1): the view switch (Table ·
- * Board · Map · Rate), Group by, Sort, search, the shared filter, wide mode
- * and "Add places"; under it the status pills (All · Shortlist · Ideas ·
- * Scheduled · Dropped · Talk about it) and per-member rating progress
- * ("Audrey 42/78 · rate her unrated"). Everything but the search lives in
- * the URL and is shared by every view.
+ * The Add step's header (docs/PLACES.md §1; the flow, owner 2026-09-25):
+ * "Add a place" up front, the view switch (Table · Board · Map), Group by,
+ * Sort, search and the shared filter; under it the status pills (All ·
+ * Shortlist · Ideas · Scheduled · Dropped · Talk about it) and per-member
+ * rating progress ("Audrey 42/78 · rate her unrated"). Everything but the
+ * search lives in the URL and is shared by every view. Rate and Schedule
+ * are the tab's steps (`PlacesSteps`), wide mode sits on the steps' bar.
  */
 import { cn } from "cn";
 import {
 	Columns3,
-	GalleryVerticalEnd,
 	LayoutGrid,
 	Map as MapIcon,
-	Maximize2,
-	Minimize2,
 	Plus,
 	Search,
 	Settings2,
@@ -37,20 +35,15 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import {
-	Tooltip,
-	TooltipContent,
-	TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { PlaceFilterButton } from "@/features/outline/FilterMenu";
 import { updateTrip } from "@/functions/trips.functions";
 import { can } from "@/lib/auth/roles";
 import type { TripGraph } from "@/lib/engine/types";
 import { tripKeys } from "@/lib/query/keys";
-import type { PlacesView } from "@/lib/workspace/search";
 import { useUi } from "@/lib/workspace/ui-store";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { unratedFilter } from "./entry";
+import type { AddView } from "./flow";
 import {
 	GROUP_BYS,
 	GROUP_LABEL,
@@ -64,12 +57,86 @@ import { formatScore } from "./score";
 import { PLACES_TAB_TESTID } from "./testids";
 import type { PlacesData } from "./use-places";
 
-const VIEWS: { v: PlacesView; label: string; icon: typeof Sheet }[] = [
+const VIEWS: { v: AddView; label: string; icon: typeof Sheet }[] = [
 	{ v: "table", label: "Table", icon: Sheet },
 	{ v: "board", label: "Board", icon: LayoutGrid },
 	{ v: "map", label: "Map", icon: MapIcon },
-	{ v: "rate", label: "Rate", icon: GalleryVerticalEnd },
 ];
+
+/** "Add a place": the existing add flow (search, links, paste). */
+export function AddPlaceButton({
+	className,
+	label = "Add a place",
+}: {
+	className?: string;
+	label?: string;
+}) {
+	const { access } = useWorkspace();
+	const openAddPlace = useUi((s) => s.openAddPlace);
+	return (
+		<Button
+			size="sm"
+			className={cn("h-8", className)}
+			data-testid={PLACES_TAB_TESTID.addPlace}
+			onClick={() => openAddPlace({ mode: "search" })}
+			disabled={!access.canEdit}
+			title={access.canEdit ? undefined : (access.reason ?? undefined)}
+		>
+			<Plus />
+			{label}
+		</Button>
+	);
+}
+
+/** "Rated: You 12/48 · Audrey 30/48 their unrated" (the Add and Rate steps). */
+export function RatingProgress({ data }: { data: PlacesData }) {
+	const { nav, access } = useWorkspace();
+	const me = access.memberId;
+	if (!data.progress.length) return null;
+	return (
+		<div
+			className="flex min-w-0 items-center gap-3 overflow-x-auto text-xs whitespace-nowrap text-muted-foreground [scrollbar-width:none] md:ml-auto"
+			data-testid={PLACES_TAB_TESTID.progress}
+		>
+			<span>Rated:</span>
+			{data.progress.map((p) => {
+				const mine = p.member.id === me;
+				const behind = p.rated < p.total;
+				return (
+					<span
+						key={p.member.id}
+						className="inline-flex items-center gap-1"
+						data-member={p.member.id}
+					>
+						<MemberAvatar memberId={p.member.id} size={16} ring={false} />
+						<span className="text-foreground">
+							{mine ? "You" : (p.member.firstName ?? p.member.name)}
+						</span>
+						<span className="font-mono tnum">
+							{p.rated}/{p.total}
+						</span>
+						{behind ? (
+							<button
+								type="button"
+								className="cursor-pointer text-primary underline-offset-2 hover:underline"
+								onClick={() =>
+									nav.setPlaces({
+										pv: "rate",
+										pst: undefined,
+										talk: undefined,
+										f: unratedFilter(mine ? "me" : p.member.id),
+									})
+								}
+							>
+								{mine ? "rate yours" : "their unrated"}
+							</button>
+						) : null}
+					</span>
+				);
+			})}
+		</div>
+	);
+}
 
 const PILLS: { k: PlaceStatus | null; label: string }[] = [
 	{ k: null, label: "All" },
@@ -200,32 +267,27 @@ export function PlacesToolbar({
 	data,
 	q,
 	onQ,
-	wide,
-	onWide,
 	compact,
 }: {
 	data: PlacesData;
 	q: string;
 	onQ: (q: string) => void;
-	/** Wide mode (null: not offered here, e.g. on a phone). */
-	wide: boolean | null;
-	onWide: (v: boolean) => void;
 	/** A narrow panel: labels shrink to icons. */
 	compact: boolean;
 }) {
-	const { nav, access } = useWorkspace();
-	const openAddPlace = useUi((s) => s.openAddPlace);
-	const { state, counts, progress, threshold } = data;
-	const me = access.memberId;
+	const { nav } = useWorkspace();
+	const { state, counts, threshold } = data;
 	return (
 		<div className="flex shrink-0 flex-col gap-2 border-b px-4 pt-3 pb-2.5">
 			<div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+				{/* Adding comes first: step 1 of the flow. */}
+				<AddPlaceButton />
 				<ToggleGroup
 					type="single"
 					size="sm"
 					variant="outline"
 					value={state.view}
-					onValueChange={(v) => v && nav.setPlaces({ pv: v as PlacesView })}
+					onValueChange={(v) => v && nav.setPlaces({ pv: v as AddView })}
 					aria-label="View"
 					data-testid={PLACES_TAB_TESTID.viewSwitch}
 				>
@@ -242,7 +304,7 @@ export function PlacesToolbar({
 						</ToggleGroupItem>
 					))}
 				</ToggleGroup>
-				{state.view === "rate" || state.view === "map" ? null : (
+				{state.view === "map" ? null : (
 					<>
 						<div className="flex items-center gap-1.5 text-xs text-muted-foreground">
 							<span className={compact ? "sr-only" : undefined}>Group</span>
@@ -313,40 +375,6 @@ export function PlacesToolbar({
 					</div>
 					<PlaceFilterButton align="end" className="size-8" />
 					<ThresholdControl threshold={threshold} />
-					{/* The Map view always takes the map's space (one map at a time). */}
-					{wide !== null && state.view !== "map" ? (
-						<Tooltip>
-							<TooltipTrigger asChild>
-								<Button
-									variant="ghost"
-									size="icon"
-									className="size-8"
-									aria-pressed={wide}
-									aria-label={wide ? "Show the map" : "Wide: hide the map"}
-									data-testid={PLACES_TAB_TESTID.wide}
-									onClick={() => onWide(!wide)}
-								>
-									{wide ? (
-										<Minimize2 className="size-4" strokeWidth={1.5} />
-									) : (
-										<Maximize2 className="size-4" strokeWidth={1.5} />
-									)}
-								</Button>
-							</TooltipTrigger>
-							<TooltipContent>
-								{wide ? "Show the map" : "Wide: hide the map"}
-							</TooltipContent>
-						</Tooltip>
-					) : null}
-					<Button
-						size="sm"
-						className="h-8"
-						onClick={() => openAddPlace({ mode: "search" })}
-						disabled={!access.canEdit}
-					>
-						<Plus />
-						<span className={compact ? "sr-only" : undefined}>Add places</span>
-					</Button>
 				</div>
 			</div>
 			<div className="flex items-center gap-x-3 gap-y-2 max-md:flex-col max-md:items-stretch md:flex-wrap">
@@ -377,47 +405,7 @@ export function PlacesToolbar({
 						</span>
 					</Pill>
 				</div>
-				{progress.length ? (
-					<div
-						className="flex min-w-0 items-center gap-3 overflow-x-auto text-xs whitespace-nowrap text-muted-foreground [scrollbar-width:none] md:ml-auto"
-						data-testid={PLACES_TAB_TESTID.progress}
-					>
-						<span>Rated:</span>
-						{progress.map((p) => {
-							const mine = p.member.id === me;
-							const behind = p.rated < p.total;
-							return (
-								<span
-									key={p.member.id}
-									className="inline-flex items-center gap-1"
-									data-member={p.member.id}
-								>
-									<MemberAvatar memberId={p.member.id} size={16} ring={false} />
-									<span className="text-foreground">
-										{mine ? "You" : (p.member.firstName ?? p.member.name)}
-									</span>
-									<span className="font-mono tnum">
-										{p.rated}/{p.total}
-									</span>
-									{behind ? (
-										<button
-											type="button"
-											className="cursor-pointer text-primary underline-offset-2 hover:underline"
-											onClick={() =>
-												nav.setPlaces({
-													pv: "rate",
-													f: unratedFilter(mine ? "me" : p.member.id),
-												})
-											}
-										>
-											{mine ? "rate yours" : "their unrated"}
-										</button>
-									) : null}
-								</span>
-							);
-						})}
-					</div>
-				) : null}
+				<RatingProgress data={data} />
 			</div>
 		</div>
 	);

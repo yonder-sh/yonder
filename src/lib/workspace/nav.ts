@@ -253,14 +253,14 @@ export type PlacesPatch = Partial<
 	>
 >;
 
+// No `pv` default: without it the tab picks its step (add → rate → schedule).
 const PLACES_DEFAULTS = {
-	pv: "table",
 	pg: "city",
 	ps: "priority",
 	po: "mixed",
 } as const;
 
-/** Defaults are left out of the URL (`?tab=places`, not `&pv=table&pg=city`). */
+/** Defaults are left out of the URL (`?tab=places&pv=table`, not `&pg=city`). */
 function placesSearch(patch: PlacesPatch): PlacesPatch {
 	const out: PlacesPatch = { ...patch };
 	for (const [k, d] of Object.entries(PLACES_DEFAULTS))
