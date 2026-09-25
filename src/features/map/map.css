@@ -345,6 +345,40 @@
 	color: var(--mode-other);
 }
 
+/* The stops in order while the days per city change: "1 · 4d" over each. */
+.yonder-split-stop {
+	display: flex;
+	gap: 3px;
+	pointer-events: none;
+}
+.yonder-split-stop > span {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	height: 20px;
+	padding: 0 6px 0 2px;
+	border-radius: 9999px;
+	background: var(--card);
+	color: var(--foreground);
+	box-shadow:
+		0 0 0 1px var(--border),
+		0 1px 3px rgb(0 0 0 / 0.18);
+	font-family: var(--font-mono);
+	font-size: 11px;
+	line-height: 1;
+	white-space: nowrap;
+}
+.yonder-split-stop b {
+	display: grid;
+	place-items: center;
+	min-width: 16px;
+	height: 16px;
+	border-radius: 9999px;
+	background: var(--primary);
+	color: var(--primary-foreground);
+	font-weight: 600;
+}
+
 .yonder-spider line {
 	stroke: var(--muted-foreground);
 	stroke-width: 1;

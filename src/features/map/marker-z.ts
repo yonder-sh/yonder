@@ -7,8 +7,8 @@ import type { PinView } from "./map-data";
  * Marker stacking. Always integers: CSS drops a fractional `z-index`
  * ("10.99"), which left every visited pin under the hollow ideas, so a click
  * on Tokyo opened Urayasu. Order from the bottom: ideas, edge chips, spider
- * legs, visited pins (lower numbers on top), cluster chips, the hovered pin,
- * the selected pin. The map container isolates them (`map.css`), so none of
+ * legs, visited pins (lower numbers on top), cluster chips, the route's
+ * stops while the days per city change, the hovered pin, the selected pin. The map container isolates them (`map.css`), so none of
  * them climbs over the map chips or the inspector.
  */
 export const MARKER_Z = {
@@ -17,6 +17,7 @@ export const MARKER_Z = {
 	spider: 9,
 	visited: 10,
 	cluster: 1200,
+	splitStop: 1250,
 	hovered: 1300,
 	selected: 1400,
 } as const;

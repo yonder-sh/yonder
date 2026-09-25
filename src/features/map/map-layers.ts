@@ -1,6 +1,6 @@
 /**
- * MapLibre layer specs for edges, ghost stubs, the route preview and the pin
- * probe (DESIGN §2.3 and §9.3). One GeoJSON source per kind; one line layer per
+ * MapLibre layer specs for edges, ghost stubs, the route preview, the stops'
+ * order while the days per city change, and the pin probe (DESIGN §2.3 and §9.3). One GeoJSON source per kind; one line layer per
  * style so each keeps its own width, dash and cap (MapLibre dashes are in
  * multiples of the line width).
  *
@@ -25,6 +25,7 @@ export const EDGE_SOURCE = "yonder-edges";
 export const GHOST_SOURCE = "yonder-ghosts";
 export const GHOST_LABEL_SOURCE = "yonder-ghost-labels";
 export const PREVIEW_SOURCE = "yonder-preview";
+export const SPLIT_ROUTE_SOURCE = "yonder-split-route";
 export const PIN_SOURCE = "yonder-pins";
 export const EDGE_HIT = "yonder-edges-hit";
 export const GHOST_HIT = "yonder-ghosts-hit";
@@ -406,6 +407,21 @@ export function previewLayer(p: LinePalette): LayerProps {
 			"line-color": ["to-color", ["get", "color"], p.transit],
 			"line-width": 4,
 			"line-opacity": 0.9,
+		},
+	};
+}
+
+/** The stops in order while the days per city change (the Plan's "How long in each city?"). */
+export function splitRouteLayer(p: LinePalette): LayerProps {
+	return {
+		id: "yonder-split-route",
+		type: "line",
+		source: SPLIT_ROUTE_SOURCE,
+		layout: { "line-join": "round", "line-cap": "round" },
+		paint: {
+			"line-color": p.primary,
+			"line-width": 3,
+			"line-opacity": 0.85,
 		},
 	};
 }

@@ -37,4 +37,6 @@ export const MAP_TESTID = {
 	tilesError: "map-tiles-error",
 	/** QA A11Y-03: the ordered "Stops" list (the map's text alternative). */
 	stops: "map-stops",
+	/** "1 · 4d" over a city while the days per city change (the Plan). */
+	splitStop: "map-split-stop",
 } as const;

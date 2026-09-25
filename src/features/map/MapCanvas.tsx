@@ -12,6 +12,8 @@
  * - Pins are HTML markers (`PinMarker`), clustered under 28px at the place and
  *   area lens; edges, ghost stubs and the route preview are GeoJSON layers with
  *   `promoteId: 'fid'` for hover/selection feature-state.
+ * - While the Plan's days per city change (`splitRoute`, desktop), the stops
+ *   in that order: numbered "1 · 4d" badges over the cities, joined by lines.
  * - Everything is clickable: pins select (`n.`), double-click zooms in; edges
  *   select `l.` / `s.` / `e.`; ghost stubs select their boundary leg and
  *   double-click zooms out to the common parent. Background click clears.
@@ -133,6 +135,8 @@ import {
 	PREVIEW_SOURCE,
 	pinProbeLayer,
 	previewLayer,
+	SPLIT_ROUTE_SOURCE,
+	splitRouteLayer,
 } from "./map-layers";
 import {
 	ClusterMarker,
@@ -140,6 +144,7 @@ import {
 	type LabelSide,
 	PinMarker,
 	SpiderLegs,
+	SplitStopMarker,
 } from "./PinMarker";
 import { LINES, type MapStyle, mapTone } from "./palette";
 import {
@@ -546,6 +551,9 @@ export default function MapCanvas({
 	const hover = useUi((s) => s.hover);
 	const setHover = useUi((s) => s.setHover);
 	const previewRoute = useUi((s) => s.previewRoute);
+	const splitRoute = useUi((s) => s.splitRoute);
+	// The phone's sheet covers its map: the route shows beside the Plan only.
+	const route = variant === "desktop" && splitRoute?.length ? splitRoute : null;
 	const padding = useUi((s) => s.mapPadding);
 	const sheetSnap = useUi((s) => s.sheetSnap);
 	const setMapZoom = useUi((s) => s.setMapZoom);
@@ -1523,7 +1531,7 @@ export default function MapCanvas({
 
 	// Edges fade in with the gesture and dim to 40% under a route preview.
 	const edgeFade =
-		Math.round((previewRoute ? 0.4 : 1) * motion.progress * 20) / 20;
+		Math.round((previewRoute || route ? 0.4 : 1) * motion.progress * 20) / 20;
 	const layers = useMemo(
 		() => edgeLayers(palette, edgeFade),
 		[palette, edgeFade],
@@ -1577,6 +1585,34 @@ export default function MapCanvas({
 		() => ({ type: "FeatureCollection", features: previewRoute ?? [] }),
 		[previewRoute],
 	);
+	const routeLines = useMemo<FeatureCollection<LineString>>(
+		() => ({
+			type: "FeatureCollection",
+			features: (route ?? []).slice(1).map((s, i) => {
+				const a = route?.[i] ?? s;
+				return {
+					type: "Feature",
+					properties: {},
+					geometry: {
+						type: "LineString",
+						coordinates: [
+							[a.lng, a.lat],
+							[s.lng, s.lat],
+						],
+					},
+				};
+			}),
+		}),
+		[route],
+	);
+	const routeLayerProps = useMemo(() => splitRouteLayer(palette), [palette]);
+	// One badge per city (a city the route comes back to lists both stops).
+	const routeStops = useMemo(() => {
+		const by = new Map<string, NonNullable<typeof route>>();
+		for (const s of route ?? [])
+			by.set(s.cityId, [...(by.get(s.cityId) ?? []), s]);
+		return [...by.values()];
+	}, [route]);
 
 	const isMobile = variant === "mobile";
 	const controlStyle: CSSProperties = isMobile
@@ -1686,6 +1722,9 @@ export default function MapCanvas({
 					<Source id={PREVIEW_SOURCE} type="geojson" data={preview}>
 						<Layer {...previewLayerProps} />
 					</Source>
+					<Source id={SPLIT_ROUTE_SOURCE} type="geojson" data={routeLines}>
+						<Layer {...routeLayerProps} />
+					</Source>
 					<Source id={PIN_SOURCE} type="geojson" data={pinFC}>
 						<Layer {...PIN_PROBE} />
 					</Source>
@@ -1719,6 +1758,9 @@ export default function MapCanvas({
 						);
 					})}
 					{clusterMarkers}
+					{routeStops.map((stops) => (
+						<SplitStopMarker key={stops[0]?.cityId} stops={stops} />
+					))}
 				</MapGL>
 			</div>
 

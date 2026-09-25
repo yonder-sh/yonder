@@ -15,6 +15,7 @@ import { PLACE_CATEGORIES, pinStyle } from "@/lib/domain/taxonomy";
 import { flagEmoji } from "@/lib/format";
 import type { PlaceCategory } from "@/lib/schemas/enums";
 import { TESTID } from "@/lib/testids";
+import type { SplitStop } from "@/lib/workspace/ui-store";
 import type { PinView } from "./map-data";
 import { MARKER_Z, pinZIndex } from "./marker-z";
 import { MAP_TESTID } from "./testids";
@@ -345,6 +346,42 @@ export function EdgeChipMarker({
 					count
 				)}
 			</button>
+		</Marker>
+	);
+}
+
+/** A city's stop(s) on the route while the days per city change: "1 · 4d" over it. */
+export function SplitStopMarker({ stops }: { stops: readonly SplitStop[] }) {
+	const s = stops[0];
+	if (!s) return null;
+	return (
+		<Marker
+			longitude={s.lng}
+			latitude={s.lat}
+			anchor="bottom"
+			offset={[0, -18]}
+			style={{ zIndex: MARKER_Z.splitStop }}
+		>
+			<div
+				role="img"
+				data-testid={MAP_TESTID.splitStop}
+				data-city={s.cityId}
+				data-stop={stops.map((x) => x.stop).join(",")}
+				aria-label={stops
+					.map(
+						(x) =>
+							`${x.stop}. ${x.name}, ${x.days} ${x.days === 1 ? "day" : "days"}`,
+					)
+					.join("; ")}
+				className="yonder-split-stop"
+			>
+				{stops.map((x) => (
+					<span key={x.stop}>
+						<b>{x.stop}</b>
+						{x.days}d
+					</span>
+				))}
+			</div>
 		</Marker>
 	);
 }
