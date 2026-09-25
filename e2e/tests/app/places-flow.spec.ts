@@ -1,7 +1,7 @@
 /**
- * The planning flow (owner, 2026-09-25): add places → rate places →
- * schedule places. The Places tab's step bar and its counts (and the step it
- * opens on), rating from the Rate step lowering the count, Schedule next
+ * The planning flow (owner, 2026-09-25): add places → rate places → add
+ * them to days. The Places tab's step bar and its counts (and the step it
+ * opens on), rating from the Rate step lowering the count, Add to days
  * putting a shortlisted place on a day, the phone's "★ Rate N" pill opening
  * the feed.
  * Screenshots land in `.data/flow-shots/`.
@@ -91,7 +91,7 @@ async function toRate(page: Page): Promise<number> {
 test.describe("desktop", () => {
 	test.skip(({ isMobile }) => isMobile, "desktop layout (the phone has its own test)");
 
-	test("the step bar: 1 Rate · 2 Review · 3 Schedule with their counts; Places opens on Rate", async ({ page }) => {
+	test("the step bar: 1 Rate · 2 Review · 3 Add to days with their counts; Places opens on Rate", async ({ page }) => {
 		const c = await cloneFixtureTrip(page.request);
 		await page.goto(`/t/${c.slug}?tab=plan`);
 		await expectLive(page);
@@ -105,6 +105,7 @@ test.describe("desktop", () => {
 		await expect(page.getByTestId(T.feed)).toBeVisible();
 		await expect(countOf(page, "review")).toHaveText(/^\d+ places$/);
 		await expect(countOf(page, "rate")).toHaveText(/^\d+ to rate$/);
+		await expect(step(page, "schedule")).toContainText("Add to days");
 		// Tokyo Tower, Yasaka Shrine, the museum and Tōdai-ji wait for a day.
 		await expect(countOf(page, "schedule")).toHaveText(/^\d+ shortlisted · 4 not on a day$/);
 		// Rating is what's waiting for you: the dot.
@@ -125,7 +126,7 @@ test.describe("desktop", () => {
 		await expect(page.getByTestId(T.table)).toBeVisible();
 		await page.screenshot({ path: shot("desktop-2b-review"), animations: "disabled" });
 
-		// Schedule: Tokyo Tower in Tokyo's window, Yasaka Shrine under Gion in
+		// Add to days: Tokyo Tower in Tokyo's window, Yasaka Shrine under Gion in
 		// Kyoto's; the museum (closed on the Kyoto day) and Tōdai-ji (Nara has
 		// no days) can't fit; Nara is a city with no days yet.
 		await step(page, "schedule").click();
@@ -162,7 +163,7 @@ test.describe("desktop", () => {
 		await expect(page.getByTestId("rate-button")).toHaveAttribute("data-count", String(before - 1));
 	});
 
-	test("Schedule adds a shortlisted place to a day", async ({ page }) => {
+	test("Add to days puts a shortlisted place on a day", async ({ page }) => {
 		const c = await cloneFixtureTrip(page.request);
 		await page.goto(`/t/${c.slug}?tab=plan`);
 		await expectLive(page);
