@@ -3,7 +3,7 @@
  * schedule places. The Places tab's step bar and its counts (and the step it
  * opens on), rating from the Rate step lowering the count, Schedule next
  * putting a shortlisted place on a day, the phone's "★ Rate N" pill opening
- * the feed, and the Overview's next-step card linking into the Rate step.
+ * the feed.
  * Screenshots land in `.data/flow-shots/`.
  */
 import { randomUUID } from "node:crypto";
