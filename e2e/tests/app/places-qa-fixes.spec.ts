@@ -13,7 +13,7 @@
  *   and neighbourhoods, not the importer's wards (Fujinomiya, Haneda,
  *   Setagaya…).
  * - A11Y-02 (VIS-23): choosing or closing a ⌘K result never drops focus to <body>.
- * - A11Y-01 (VIS-08, VIS-21): the place inspector's selects are named; the
+ * - A11Y-01 (VIS-08, VIS-21): the place panel's controls are named; the
  *   Rate feed card's mini-map has nothing focusable inside role="img" and
  *   logs no style warnings (the Yonder basemap, PLAN-I2-16).
  *
@@ -191,9 +191,9 @@ test("A11Y-01: named selects in the place inspector; a clean, image-only mini-ma
 	await openTrip(page, `/t/${TRIP}?tab=plan`);
 	const gg = await nodeId(page, "Golden Gai");
 	await openTrip(page, `/t/${TRIP}/japan/tokyo/shinjuku?lens=place&sel=n.${gg}`);
-	const overview = page.getByTestId(TESTID.nodeOverview);
-	await expect(overview.getByRole("combobox", { name: "Category" })).toBeVisible();
-	await expect(overview.getByRole("combobox", { name: "Time needed" })).toBeVisible();
+	// The category in the place's header; the time needed (a button named by its value) in its About.
+	await expect(page.getByTestId(TESTID.inspector).getByRole("combobox", { name: "Category" })).toBeVisible();
+	await expect(page.getByTestId(TESTID.nodeOverview).getByTestId(PT.timeCell)).toBeVisible();
 	if (src) {
 		const hits = await axeIds(page, src, '[data-testid="inspector"]');
 		expect(hits.filter((h) => h.id === "button-name")).toEqual([]);

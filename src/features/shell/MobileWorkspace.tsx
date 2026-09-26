@@ -68,7 +68,6 @@ import { InspectorBody } from "./InspectorBody";
 import { LensControl } from "./LensControl";
 import { MapRegion } from "./MapRegion";
 import { PresenceAvatars } from "./PresenceAvatars";
-import { PlacesDetailsOr } from "./places-details";
 import { RateMenuItem } from "./rate-entry";
 import { useShell } from "./shell-store";
 import { SHELL_TESTID } from "./testids";
@@ -421,7 +420,7 @@ function EmptyPeek() {
 }
 
 function MobileInspector() {
-	const { sel, nav, tab } = useWorkspace();
+	const { sel, nav } = useWorkspace();
 	return (
 		<Vaul.Root
 			open={sel !== null}
@@ -436,12 +435,7 @@ function MobileInspector() {
 				>
 					<Vaul.Title className="sr-only">Details</Vaul.Title>
 					<div className="mx-auto mt-2 h-1 w-9 shrink-0 rounded-full bg-muted-foreground/30" />
-					{/* docs/PLACES.md §2: a place picked in the Places tab opens its details. */}
-					{tab === "places" ? (
-						<PlacesDetailsOr onClose={() => nav.select(null)} />
-					) : (
-						<InspectorBody onClose={() => nav.select(null)} />
-					)}
+					<InspectorBody onClose={() => nav.select(null)} />
 				</Vaul.Content>
 			</Vaul.Portal>
 		</Vaul.Root>

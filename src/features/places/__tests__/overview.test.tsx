@@ -4,6 +4,7 @@
  */
 import { fireEvent, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
+import { InspectorBody } from "@/features/shell/InspectorBody";
 import type { TripGraph } from "@/lib/engine/types";
 import { DEMO_MEMBERS, demoGraph, N } from "@/lib/fixtures/demo";
 import { TESTID } from "@/lib/testids";
@@ -56,9 +57,27 @@ describe("NodeOverview", () => {
 			"data-nodeid",
 			N.itoya as string,
 		);
-		expect(within(o).getByTestId(PLACES_TESTID.openInMaps)).toHaveAttribute(
+	});
+
+	it("a place's panel: category and Google Maps in its header, ratings first, then About", () => {
+		renderWithWorkspace(<InspectorBody />, {
+			graph: rated,
+			search: { sel: `n.${N.itoya}` },
+		});
+		expect(
+			screen.getByRole("combobox", { name: "Category" }),
+		).toBeInTheDocument();
+		expect(screen.getByTestId(PLACES_TESTID.openInMaps)).toHaveAttribute(
 			"href",
 			expect.stringContaining("google.com/maps"),
+		);
+		const o = screen.getByTestId(TESTID.nodeOverview);
+		const sections = [...o.querySelectorAll("section")].map(
+			(s) => s.querySelector("h3")?.textContent,
+		);
+		expect(sections.slice(0, 3)).toEqual(["Ratings", "Where it fits", "About"]);
+		expect(within(o).getByTestId(PLACES_TESTID.about)).toHaveTextContent(
+			"Twelve floors of stationery.",
 		);
 	});
 

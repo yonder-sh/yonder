@@ -5,11 +5,13 @@
  */
 import { fireEvent, screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { InspectorBody } from "@/features/shell/InspectorBody";
 import type { TripGraph } from "@/lib/engine/types";
 import { demoGraph, N } from "@/lib/fixtures/demo";
 import { TESTID } from "@/lib/testids";
 import { renderWithWorkspace } from "@/test/render-workspace";
 import { NodeOverview } from "../NodeOverview";
+import { PLACES_TAB_TESTID } from "../tab/testids";
 import { PLACES_TESTID } from "../testids";
 import { offsetLabel, timeZoneNames, tripOffsetLabel } from "../ui/zone-picker";
 
@@ -30,14 +32,19 @@ beforeEach(() => {
 
 describe("NodeOverview controls", () => {
 	it("VIS-08: the Category and Time needed selects have accessible names", () => {
-		renderWithWorkspace(<NodeOverview nodeId={N.itoya as string} />);
-		const o = screen.getByTestId(TESTID.nodeOverview);
+		// Category in the place's header, Time needed in its About.
+		renderWithWorkspace(<InspectorBody />, {
+			search: { sel: `n.${N.itoya}` },
+		});
 		expect(
-			within(o).getByRole("combobox", { name: "Category" }),
+			screen.getByRole("combobox", { name: "Category" }),
 		).toBeInTheDocument();
+		// The time is a button named by its value, titled for what it sets.
 		expect(
-			within(o).getByRole("combobox", { name: "Time needed" }),
-		).toBeInTheDocument();
+			within(screen.getByTestId(TESTID.nodeOverview)).getByTestId(
+				PLACES_TAB_TESTID.timeCell,
+			),
+		).toHaveAttribute("title");
 	});
 
 	it("TZ-08: an editor overrides the zone, and can go back to Automatic", async () => {

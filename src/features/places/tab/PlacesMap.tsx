@@ -24,11 +24,11 @@ import {
 import { EmptyState } from "@/components/common/empty-state";
 import { PriorityDot } from "@/components/common/priority-dot";
 import { Button } from "@/components/ui/button";
+import { InspectorBody } from "@/features/shell/InspectorBody";
 import { PRIORITIES } from "@/lib/domain/taxonomy";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { isNetworkError, useDark, useYonderStyle } from "../ui/mini-map.impl";
 import type { PlaceRow } from "./model";
-import { PlaceDetails } from "./PlaceDetails";
 import { formatScore, scoreTier } from "./score";
 import { PLACES_TAB_TESTID } from "./testids";
 import { ScoreChip } from "./ui";
@@ -280,9 +280,7 @@ export default function PlacesMap({ data }: { data: PlacesData }) {
 				style={{ maxWidth: PANEL_W + 40 }}
 			>
 				{selected ? (
-					<PlaceDetails
-						row={selected}
-						data={data}
+					<InspectorBody
 						className="h-full"
 						top={
 							<div

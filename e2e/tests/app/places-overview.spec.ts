@@ -4,6 +4,7 @@
  * days-per-city table edits planned days (ADDENDUM §10).
  */
 import { expect, type Page, test } from "@playwright/test";
+import { PLACES_TAB_TESTID as PT } from "../../../src/features/places/tab/testids";
 import { PLACES_TESTID as P } from "../../../src/features/places/testids";
 import { TESTID } from "../../../src/lib/testids";
 import { shotPath, storageStateOf } from "./_helpers/env";
@@ -38,7 +39,8 @@ test("priorities persist per member, with a comment", async ({ page }, info) => 
 	await page.goto(`/t/${c.slug}?sel=n.${itoya}`);
 	await expectLive(page);
 	const overview = page.getByTestId(TESTID.nodeOverview);
-	const mine = overview.locator(`[data-testid=${P.priorityRow}][data-member="${c.members.owner}"]`);
+	// The place's ratings, as on every tab: a picker where you may set one.
+	const mine = overview.locator(`[data-testid=${PT.ratingRow}][data-member="${c.members.owner}"]`);
 	await mine.getByRole("button", { name: /your rating for Itoya Ginza/i }).click();
 	await page.getByRole("menuitem", { name: /^Really want/ }).click();
 	await mine.getByRole("button", { name: "Add a comment" }).click();
@@ -47,7 +49,7 @@ test("priorities persist per member, with a comment", async ({ page }, info) => 
 	await editor.getByTestId(TESTID.mentionInput).fill("Pens for Mom");
 	await editor.getByRole("button", { name: "Save" }).click();
 	// Audrey (a placeholder) can be rated by an editor.
-	const audrey = overview.locator(`[data-testid=${P.priorityRow}][data-member="${c.members.audrey}"]`);
+	const audrey = overview.locator(`[data-testid=${PT.ratingRow}][data-member="${c.members.audrey}"]`);
 	await audrey.getByRole("button", { name: /Audrey's rating for Itoya Ginza/ }).click();
 	await page.getByRole("menuitem", { name: /^Must/ }).click();
 
@@ -111,7 +113,7 @@ test("on a phone the overview is a sheet: a place, then a city, without sideways
 	await expectLive(page);
 	const overview = page.getByTestId(TESTID.nodeOverview);
 	await expect(overview).toHaveAttribute("data-type", "place");
-	await expect(overview.getByTestId(P.priorityRow).first()).toBeVisible();
+	await expect(overview.getByTestId(PT.ratingRow).first()).toBeVisible();
 	await expectNoHorizontalOverflow(page);
 	await page.screenshot({ path: shotPath("places/overview-place-390.png"), animations: "disabled" });
 

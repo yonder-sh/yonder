@@ -3,8 +3,15 @@
  * the suggestion strip (`ProposalBar`, E7), tabs Overview · Media 6 · Lists 2
  * · Notes · Money, scrollable content, and the recent-activity footer. The
  * Overview dispatches on `sel` to the owning package's component (SPEC §12.5).
- * Used inside the floating panel (xl/lg), the right Sheet (md) and the nested
- * mobile drawer (sm).
+ * Used inside the floating panel (xl/lg), the right Sheet (md), the nested
+ * mobile drawer (sm) and, the same panel on every tab (owner, 2026-09-26),
+ * the Places tab's docked details and its map's side panel.
+ *
+ * A place (or a rateable area) gets the Places parts (`PlacePanel`): its
+ * header names it with its local name, where it's filed and its category,
+ * then status, score and the reason, and Pin · Add to day… · Drop · Google
+ * Maps; its Overview leads with the ratings and where it fits. Keys 1–6 rate
+ * it while the panel has focus.
  *
  * Bundle rules (SPEC §8.4): a node shows "Everything inside"; a located item
  * gets its place's bundle; the trip, legs, days and unlocated blocks their
@@ -18,7 +25,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "cn";
 import { X } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { Crumbs } from "@/components/common/crumbs";
 import { TypeGlyph } from "@/components/common/glyphs";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -27,7 +34,16 @@ import { CoverStrip } from "@/features/media/CoverStrip";
 import { MediaPanel } from "@/features/media/MediaPanel";
 import { MoneyPanel } from "@/features/money/MoneyPanel";
 import { NotesPanel } from "@/features/notes/NotesPanel";
+import { isRateable } from "@/features/places/lib/rate";
 import { NodeOverview } from "@/features/places/NodeOverview";
+import {
+	PlaceHeadActions,
+	PlaceHeadStatus,
+	PlacePanelProvider,
+	usePlaceKeys,
+} from "@/features/places/tab/PlacePanel";
+import { PLACES_TAB_TESTID } from "@/features/places/tab/testids";
+import { CategorySelect } from "@/features/places/ui/category-select";
 import { DayOverview } from "@/features/plan/DayOverview";
 import { ItemOverview } from "@/features/plan/ItemOverview";
 import { ProposalBar } from "@/features/suggest/ProposalBar";
@@ -35,6 +51,9 @@ import { ProposalOverview } from "@/features/suggest/ProposalOverview";
 import { EdgeOverview } from "@/features/transit/EdgeOverview";
 import { LegOverview } from "@/features/transit/LegOverview";
 import { mustRedact } from "@/lib/auth/roles";
+import { NODE_TYPES } from "@/lib/domain/taxonomy";
+import type { GraphNode } from "@/lib/engine/types";
+import { langFor } from "@/lib/format";
 import { type ActivityTarget, activityQuery } from "@/lib/query/trip-queries";
 import type { BundleTarget } from "@/lib/schemas/targets";
 import { TESTID } from "@/lib/testids";
@@ -105,13 +124,66 @@ function TabCount({ n }: { n: number }) {
 	);
 }
 
-export function InspectorBody({
-	onClose,
-	className,
-}: {
+type InspectorProps = {
 	onClose?: () => void;
 	className?: string;
-}) {
+	/** A bar above everything (the Places map's "← All places"). */
+	top?: ReactNode;
+};
+
+export function InspectorBody(props: InspectorProps) {
+	const { sel, ix } = useWorkspace();
+	const node = sel?.kind === "node" ? ix.node(sel.id) : undefined;
+	if (node && (node.type === "place" || isRateable(node)))
+		return (
+			<PlacePanelProvider nodeId={node.id}>
+				<Body {...props} place={node} />
+			</PlacePanelProvider>
+		);
+	return <Body {...props} />;
+}
+
+/** A place's header: its name, local name, where it's filed and category, then the Places parts. */
+function PlaceHeader({ node }: { node: GraphNode }) {
+	const { ix } = useWorkspace();
+	return (
+		<>
+			<h2 className="font-display text-[22px] leading-7 font-semibold text-balance">
+				{node.name}
+			</h2>
+			{node.localName ? (
+				<p
+					className="text-sm text-muted-foreground"
+					lang={langFor(
+						node.countryCode ??
+							ix.path(node.id).find((n) => n.countryCode)?.countryCode,
+					)}
+				>
+					{node.localName}
+				</p>
+			) : null}
+			<div className="mt-0.5 flex min-w-0 flex-wrap items-center gap-x-1.5 text-[13px] text-muted-foreground">
+				{node.parentId ? <Crumbs nodeIds={node.parentId} /> : null}
+				{node.parentId ? <span aria-hidden>·</span> : null}
+				{node.type === "place" ? (
+					<CategorySelect
+						node={node}
+						className="-ml-1.5 h-6 text-[13px] text-muted-foreground"
+					/>
+				) : (
+					<span>{NODE_TYPES[node.type].label}</span>
+				)}
+			</div>
+		</>
+	);
+}
+
+function Body({
+	onClose,
+	className,
+	top,
+	place,
+}: InspectorProps & { place?: GraphNode }) {
 	const ws = useWorkspace();
 	const { sel, ix, graph } = ws;
 	const header = inspectorHeader(ws);
@@ -125,45 +197,58 @@ export function InspectorBody({
 	const node = sel?.kind === "node" ? ix.node(sel.id) : undefined;
 	const counts = useInspectorCounts(target);
 	const [tab, setTab] = useInspectorTab(sel, bundleTabs, showMoney);
+	const placeKeys = usePlaceKeys();
 	return (
+		// biome-ignore lint/a11y/noStaticElementInteractions: a place's rating buttons are the keyboard entry; 1–6 are a shortcut
 		<div
-			className={cn("flex min-h-0 flex-1 flex-col", className)}
+			className={cn("flex min-h-0 flex-1 flex-col outline-none", className)}
 			// FB-17: people looking at the same selection share cursors in here.
 			data-cursor-anchor={`insp:${serializeSel(sel) ?? "none"}`}
+			data-testid={place ? PLACES_TAB_TESTID.drawer : undefined}
+			data-place={place?.id}
+			onKeyDown={placeKeys}
+			tabIndex={place ? -1 : undefined}
 		>
+			{top}
 			{target?.kind === "node" ? <CoverStrip target={target} /> : null}
 			<div className="flex items-start gap-2 px-4 pt-4">
 				<div className="min-w-0 flex-1">
-					<h2
-						className={cn(
-							"text-[22px] leading-7 font-semibold text-balance",
-							header.display && "font-display",
-						)}
-					>
-						{header.title}
-					</h2>
-					<div className="mt-1 flex min-w-0 flex-wrap items-center gap-2">
-						{header.chip ? (
-							<span
+					{place ? (
+						<PlaceHeader node={place} />
+					) : (
+						<>
+							<h2
 								className={cn(
-									"inline-flex h-[22px] items-center gap-1 rounded-full bg-muted px-2 text-xs text-muted-foreground",
-									// A place's type is a word; times and dates are data (DESIGN §2.6).
-									node ? "capitalize" : "font-mono tnum",
+									"text-[22px] leading-7 font-semibold text-balance",
+									header.display && "font-display",
 								)}
 							>
-								{node ? (
-									<TypeGlyph type={node.type} category={node.category} />
+								{header.title}
+							</h2>
+							<div className="mt-1 flex min-w-0 flex-wrap items-center gap-2">
+								{header.chip ? (
+									<span
+										className={cn(
+											"inline-flex h-[22px] items-center gap-1 rounded-full bg-muted px-2 text-xs text-muted-foreground",
+											// A place's type is a word; times and dates are data (DESIGN §2.6).
+											node ? "capitalize" : "font-mono tnum",
+										)}
+									>
+										{node ? (
+											<TypeGlyph type={node.type} category={node.category} />
+										) : null}
+										{header.chip}
+									</span>
 								) : null}
-								{header.chip}
-							</span>
-						) : null}
-						{node?.parentId ? <Crumbs nodeIds={node.parentId} /> : null}
-						{node?.localName ? (
-							<span className="text-xs text-muted-foreground">
-								{node.localName}
-							</span>
-						) : null}
-					</div>
+								{node?.parentId ? <Crumbs nodeIds={node.parentId} /> : null}
+								{node?.localName ? (
+									<span className="text-xs text-muted-foreground">
+										{node.localName}
+									</span>
+								) : null}
+							</div>
+						</>
+					)}
 					{/* FB-24: someone has an editor open on this. */}
 					<InspectorFormChips
 						sel={sel}
@@ -182,6 +267,12 @@ export function InspectorBody({
 					</button>
 				) : null}
 			</div>
+			{place ? (
+				<div className="grid gap-2 px-4 pt-2">
+					<PlaceHeadStatus />
+					<PlaceHeadActions node={place} />
+				</div>
+			) : null}
 			<div className="mt-3 empty:hidden">
 				<ProposalBar sel={sel} />
 			</div>

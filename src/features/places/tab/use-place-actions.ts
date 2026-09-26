@@ -268,6 +268,11 @@ export function PlaceActionsProvider({ children }: { children: ReactNode }) {
 	return createElement(PlaceActionsContext.Provider, { value }, children);
 }
 
+/** The actions when a provider is above (a place's panel), else null. */
+export function usePlaceActionsOptional(): PlaceActions | null {
+	return useContext(PlaceActionsContext);
+}
+
 export function usePlaceActions(): PlaceActions {
 	const v = useContext(PlaceActionsContext);
 	if (!v)

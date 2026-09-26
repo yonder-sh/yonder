@@ -1,17 +1,19 @@
 /**
- * A place's media can be deleted from its details: a photo from the viewer
- * (which moves on to the next one), a PDF from its viewer, a link from its
- * row. The media list is seeded in the cache; the server calls are mocked.
+ * A place's media can be deleted from its panel: a photo from the viewer the
+ * photo strip opens (which moves on to the next one), a PDF from its viewer
+ * and a link from its ⋯ menu in the Media tab. The media list is seeded in
+ * the cache; the server calls are mocked.
  */
 import { QueryClient } from "@tanstack/react-query";
-import { fireEvent, screen, waitFor } from "@testing-library/react";
+import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { MediaDto } from "@/features/media/media.functions";
 import { MEDIA_TESTID } from "@/features/media/testids";
+import { InspectorBody } from "@/features/shell/InspectorBody";
 import { demoGraph, N } from "@/lib/fixtures/demo";
 import { tripKeys } from "@/lib/query/keys";
+import { TESTID } from "@/lib/testids";
 import { renderWithWorkspace } from "@/test/render-workspace";
-import { PlacesSelectionDetails } from "../tab/PlacesTab";
 
 const calls = vi.hoisted(() => ({ deleted: [] as string[] }));
 vi.mock("@/features/media/media.functions", async (orig) => ({
@@ -85,7 +87,7 @@ const map = media({
 	hasImage: false,
 });
 
-function render() {
+function render(itab?: "media") {
 	const queryClient = new QueryClient({
 		defaultOptions: { queries: { retry: false } },
 	});
@@ -95,9 +97,14 @@ function render() {
 		guide,
 		map,
 	]);
-	return renderWithWorkspace(<PlacesSelectionDetails onClose={() => {}} />, {
+	return renderWithWorkspace(<InspectorBody onClose={() => {}} />, {
 		queryClient,
-		search: { tab: "places", pv: "table", sel: `n.${N.sensoji}` },
+		search: {
+			tab: "places",
+			pv: "table",
+			sel: `n.${N.sensoji}`,
+			...(itab ? { itab } : {}),
+		},
 	});
 }
 
@@ -105,7 +112,7 @@ describe("deleting a place's media", () => {
 	it("a photo from the viewer, which shows the next one", async () => {
 		render();
 		fireEvent.click(
-			await screen.findByRole("button", { name: "Open photo 1" }),
+			await screen.findByRole("button", { name: "Open The gate" }),
 		);
 		fireEvent.click(
 			await screen.findByTestId(
@@ -117,23 +124,29 @@ describe("deleting a place's media", () => {
 		await waitFor(() => expect(calls.deleted).toEqual([gate.id]));
 		// Still open, on the hall; the gate is gone from the strip.
 		expect(screen.getByTestId(MEDIA_TESTID.lightbox)).toBeInTheDocument();
-		expect(screen.queryByRole("button", { name: "Open photo 2" })).toBeNull();
+		expect(screen.queryByRole("button", { name: "Open The gate" })).toBeNull();
 	});
 
 	it("a PDF from its viewer", async () => {
-		render();
-		fireEvent.click(await screen.findByText("Asakusa walking map"));
+		render("media");
+		fireEvent.click(
+			await screen.findByRole("button", { name: "Open Asakusa walking map" }),
+		);
 		fireEvent.click(await screen.findByTestId(MEDIA_TESTID.pdfDelete));
 		await waitFor(() => expect(calls.deleted).toEqual([map.id]));
 		expect(screen.queryByTestId(MEDIA_TESTID.pdfViewer)).toBeNull();
 	});
 
-	it("a link from its row", async () => {
-		render();
-		fireEvent.click(
-			await screen.findByRole("button", { name: "Delete link Sensoji Temple" }),
-		);
+	it("a link from its ⋯ menu", async () => {
+		render("media");
+		const tile = (await screen.findAllByTestId(TESTID.galleryItem)).find(
+			(t) => t.getAttribute("data-id") === guide.id,
+		) as HTMLElement;
+		fireEvent.pointerDown(within(tile).getByTestId(MEDIA_TESTID.tileMenu), {
+			button: 0,
+			pointerType: "mouse",
+		});
+		fireEvent.click(await screen.findByRole("menuitem", { name: /Delete/ }));
 		await waitFor(() => expect(calls.deleted).toEqual([guide.id]));
-		expect(screen.queryByText("Sensoji Temple")).toBeNull();
 	});
 });

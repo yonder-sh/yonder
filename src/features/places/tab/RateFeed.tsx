@@ -90,7 +90,7 @@ import {
 	startSession,
 } from "./feed";
 import type { PlaceRow } from "./model";
-import { fitsText } from "./PlaceDetails";
+import { fitsText } from "./PlacePanel";
 import { CoverPlaceholder } from "./PlacesBoard";
 import { categoryLabel, ownsKeys } from "./PlacesTable";
 import { RatingButtons } from "./RatingButtons";

@@ -10,8 +10,8 @@
  *   to the Places list; "unrated by <my id>" links read "Unrated by me" and
  *   agree with the progress; ⌘K "rate" opens the Rate view.
  * - The Shinjuku gap: an area with no photos of its own shows its places'
- *   photos, labelled, in the Rate feed and the drawer, which offers "Add
- *   photo" / "Add link" (on a demo clone: the QA seed has no photos).
+ *   photos, labelled in the Rate feed and along its panel's top (its Media
+ *   tab adds its own; on a demo clone: the QA seed has no photos).
  * - VIS3-06: the ratings list shows full names and every avatar is a circle
  *   (the drawer's Ratings; the rate card's "Others" list became the reveal).
  * - PLAN-R3-03: a comment with two mentions saves at ~240 visible
@@ -23,6 +23,7 @@
  *   APP_URL=http://localhost:<port> DEV_FIXED_OTP=000000 N pnpm e2e -- tests/app/places-fb-r4.spec.ts --project chromium
  */
 import { expect, type Page, test } from "@playwright/test";
+import { MEDIA_TESTID as MT } from "../../../src/features/media/testids";
 import { OUTLINE_TESTID } from "../../../src/features/outline/testids";
 import { PLACES_TAB_TESTID as PT } from "../../../src/features/places/tab/testids";
 import { PLACES_TESTID as P } from "../../../src/features/places/testids";
@@ -197,7 +198,7 @@ test.describe("the Shinjuku gap", () => {
 
 	// The QA seed has no photos (`db:seed:qa --no-media`): on a demo clone, Shibuya
 	// (an area) has none of its own, and a photo goes on Shibuya Sky inside it.
-	test("an area with no photos of its own shows its places' photos, labelled, with Add photo / Add link", async ({ page }) => {
+	test("an area with no photos of its own shows its places' photos: labelled in the Rate feed, along its panel's top", async ({ page }) => {
 		const c = await cloneFixtureTrip(page.request);
 		const N = c.ids.nodes as Record<string, string>;
 		await openTrip(page, `/t/${c.slug}?tab=plan`);
@@ -207,10 +208,10 @@ test.describe("the Shinjuku gap", () => {
 			const m = await import("/src/functions/nodes.functions.ts");
 			await m.updateNode({ data: { nodeId, patch: { description: "Scramble crossing, shops and Shibuya Sky." } } });
 		}, N.shibuya as string);
-		await openTrip(page, `/t/${c.slug}?tab=places&sel=n.${N.shibuyaSky}`);
+		await openTrip(page, `/t/${c.slug}?tab=places&sel=n.${N.shibuyaSky}&itab=media`);
 		const drawer = page.getByTestId(PT.drawer);
 		await expect(drawer).toHaveAttribute("data-place", N.shibuyaSky as string, { timeout: 30_000 });
-		// Shibuya Sky gets a photo through its drawer's "Add photo".
+		// Shibuya Sky gets a photo through its panel's Media tab.
 		const jpeg = Buffer.from(
 			await page.evaluate(async () => {
 				const c = document.createElement("canvas");
@@ -228,8 +229,8 @@ test.describe("the Shinjuku gap", () => {
 			}),
 			"base64",
 		);
-		await drawer.getByTestId(P.rateAddPhotoInput).setInputFiles({ name: "sky.jpg", mimeType: "image/jpeg", buffer: jpeg });
-		await expect(drawer.locator("button img").first()).toBeVisible({ timeout: 60_000 });
+		await drawer.getByTestId(MT.fileInput).setInputFiles({ name: "sky.jpg", mimeType: "image/jpeg", buffer: jpeg });
+		await expect(drawer.getByTestId(TESTID.galleryItem).locator("img").first()).toBeVisible({ timeout: 60_000 });
 		// Shibuya (the area) in the Rate feed: its place's photo, labelled with the place.
 		await page.goto(`/t/${c.slug}/rate?n=${N.shibuya}`);
 		const card = activeCard(page);
@@ -237,14 +238,11 @@ test.describe("the Shinjuku gap", () => {
 		await expect(card.getByTestId(P.rateMediaFrom)).toHaveText("Shibuya Sky", { timeout: 30_000 });
 		await expect(card.locator("img").first()).toBeVisible();
 		await page.screenshot({ path: shotPath("places/shinjuku-rate-1440.png"), animations: "disabled" });
-		// Its drawer: the same photo, said to be its places', and a way to add its own.
+		// Its panel: the same photo along the top (everything inside it), and its
+		// Media tab to add its own.
 		await openTrip(page, `/t/${c.slug}?tab=places&sel=n.${N.shibuya}`);
 		await expect(drawer).toHaveAttribute("data-place", N.shibuya as string, { timeout: 30_000 });
-		await expect(drawer).toContainText("Photos from places in Shibuya.");
-		await expect(drawer.getByTestId(P.rateMediaFrom).first()).toHaveText("Shibuya Sky");
-		await expect(drawer.locator("img").first()).toBeVisible();
-		await expect(drawer.getByTestId(P.rateAddPhoto)).toBeEnabled();
-		await expect(drawer.getByTestId(P.rateAddLink)).toBeEnabled();
+		await expect(drawer.getByTestId(TESTID.coverStrip).locator("img").first()).toBeVisible({ timeout: 30_000 });
 		await page.screenshot({ path: shotPath("places/shinjuku-drawer-1440.png"), animations: "disabled" });
 	});
 });

@@ -10,7 +10,6 @@ import { makePdf } from "../../../src/features/media/__tests__/make-pdf";
 import { MEDIA_TESTID as MT } from "../../../src/features/media/testids";
 import { NOTES_TESTID as NT } from "../../../src/features/notes/testids";
 import { PLACES_TAB_TESTID as PT } from "../../../src/features/places/tab/testids";
-import { PLACES_TESTID as P } from "../../../src/features/places/testids";
 import { SHELL_TESTID as S } from "../../../src/features/shell/testids";
 import { TESTID } from "../../../src/lib/testids";
 import { expectLive } from "./_helpers/page";
@@ -44,7 +43,7 @@ async function uploadPdf(page: Page, target: Record<string, string>, name: strin
 	);
 }
 
-test("Places drawer: a PDF opens the in-app viewer, not a new tab", async ({ browser }) => {
+test("Places panel: a PDF in its Media tab opens the in-app viewer, not a new tab", async ({ browser }) => {
 	test.setTimeout(180_000);
 	const d = await ctxFor(browser, "dennis");
 	await d.page.goto("/t/asia-2027?tab=plan");
@@ -54,10 +53,11 @@ test("Places drawer: a PDF opens the in-app viewer, not a new tab", async ({ bro
 	if (!sky) throw new Error("no Shibuya Sky");
 	const up = await uploadPdf(d.page, { kind: "node", nodeId: sky.id }, "Shibuya Sky tickets.pdf");
 	console.log("upload", JSON.stringify(up));
-	await d.page.goto(`/t/asia-2027?tab=places&sel=n.${sky.id}`);
+	// The place's panel, the same on every tab: its PDFs are in the Media tab.
+	await d.page.goto(`/t/asia-2027?tab=places&sel=n.${sky.id}&itab=media`);
 	const card = d.page.getByTestId(PT.drawer);
 	await expect(card).toHaveAttribute("data-place", sky.id, { timeout: 30_000 });
-	const pdf = card.getByTestId(P.ratePdf).filter({ hasText: "Shibuya Sky tickets" });
+	const pdf = card.locator(`[data-testid=${TESTID.galleryItem}][data-kind=pdf]`).filter({ hasText: "Shibuya Sky tickets" }).getByRole("button").first();
 	await expect(pdf).toBeVisible({ timeout: 30_000 });
 	await shot(d.page, "30-rate-card-pdf");
 	const popup = d.ctx.waitForEvent("page", { timeout: 3_000 }).catch(() => null);

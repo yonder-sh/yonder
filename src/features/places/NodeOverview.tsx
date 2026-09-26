@@ -2,15 +2,18 @@
  * The inspector Overview of a node (SPEC §12.5 `NodeOverview({ nodeId })`,
  * DESIGN §4.4, SPEC §18.3 WP-Places).
  *
- * - **Place:** an editable description, the details list (address, hours via
- *   WP-Insights' `HoursTable`, rating, website and phone as selectable text,
- *   time needed, local time), Open in Google Maps and More details, per-member
- *   ratings with comments, scheduled occurrences and stay nights, the parent
- *   with Re-file, and travel in and out.
+ * - **Place:** in the Places data (`usePlacePanel`), everyone's ratings and
+ *   yours, where it fits and nearby ideas (else each member's rating); About:
+ *   an editable description, the details list (time needed, address, rating,
+ *   website and phone as selectable text, local time), the hours via
+ *   WP-Insights' `HoursTable` and More details; then scheduled occurrences and
+ *   stay nights, travel in and out, and where it's filed with Re-file. The
+ *   name, category, status and actions are the panel's header (InspectorBody).
  * - **Country, region, city, area:** visits ("12–18 Apr · 6 nights · 23
  *   stops" with day links), planned vs scheduled days, place and idea counts,
  *   children, local time, open todos and shopping, `ClimateCard` (WP-Insights),
- *   the days-per-city table for countries and regions, Rate…, and Zoom in.
+ *   the days-per-city table for countries and regions, Rate…, and Zoom in;
+ *   a rateable one (an area) leads with its ratings and where it fits.
  */
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "cn";
@@ -19,7 +22,6 @@ import {
 	Check,
 	ChevronRight,
 	Copy,
-	ExternalLink,
 	FolderInput,
 	MapPin,
 	Sparkles,
@@ -58,7 +60,6 @@ import {
 	formatDayDate,
 	formatDuration,
 	formatTime,
-	langFor,
 } from "@/lib/format";
 import { tripKeys } from "@/lib/query/keys";
 import { capabilitiesQuery } from "@/lib/query/trip-queries";
@@ -77,17 +78,22 @@ import {
 	unscheduledOf,
 	visitsOf,
 } from "./lib/node-facts";
-import { googleMapsLink } from "./lib/providers";
 import { rateableNodes } from "./lib/rate";
 import { useMoveNode, useUpdateNode } from "./mutations";
 import { getPlaceMoreDetails } from "./places.functions";
+import {
+	PlaceFits,
+	PlaceRatings,
+	PlaceTimeNeeded,
+	usePlacePanel,
+} from "./tab/PlacePanel";
 import { PLACES_TESTID } from "./testids";
-import { CategorySelect } from "./ui/category-select";
 import { MemberRatings } from "./ui/member-ratings";
 import { ZonePicker } from "./ui/zone-picker";
 
 export function NodeOverview({ nodeId }: { nodeId: string }) {
 	const { ix } = useWorkspace();
+	const panel = usePlacePanel();
 	const node = ix.node(nodeId);
 	if (!node)
 		return (
@@ -102,7 +108,15 @@ export function NodeOverview({ nodeId }: { nodeId: string }) {
 			{node.type === "place" ? (
 				<PlaceOverview node={node} />
 			) : (
-				<CoarseOverview node={node} />
+				<>
+					{panel ? (
+						<>
+							<PlaceRatings />
+							<PlaceFits />
+						</>
+					) : null}
+					<CoarseOverview node={node} />
+				</>
 			)}
 		</div>
 	);
@@ -377,6 +391,7 @@ function MoreDetails({ node }: { node: GraphNode }) {
 function PlaceOverview({ node }: { node: GraphNode }) {
 	const ws = useWorkspace();
 	const { ix, schedule, nav, graph } = ws;
+	const panel = usePlacePanel();
 	const guard = useEditGuard();
 	const openAddPlace = useUi((s) => s.openAddPlace);
 	const move = useMoveNode(graph.trip.id);
@@ -385,13 +400,6 @@ function PlaceOverview({ node }: { node: GraphNode }) {
 	const unscheduled = unscheduledOf(ix, node.id);
 	const nights = stayNightsOf(ix, node.id);
 	const d = node.details;
-	const mapsHref = googleMapsLink({
-		name: node.name,
-		lat: node.lat,
-		lng: node.lng,
-		googlePlaceId: node.googlePlaceId,
-		googleMapsUri: d.googleMapsUri,
-	});
 	const first = occurrences[0];
 	const travel = first ? travelOf(ix, schedule, first.id) : [];
 	const rating =
@@ -400,105 +408,87 @@ function PlaceOverview({ node }: { node: GraphNode }) {
 			: null;
 	return (
 		<>
-			{node.localName ? (
-				<p
-					lang={langFor(
-						node.countryCode ??
-							ix.path(node.id).find((n) => n.countryCode)?.countryCode,
-					)}
-					className="-mt-3 text-[13px] text-muted-foreground"
-				>
-					{node.localName}
-				</p>
-			) : null}
-			<Description node={node} />
+			{panel ? (
+				<>
+					<PlaceRatings />
+					<PlaceFits />
+				</>
+			) : (
+				<Section title="Priority">
+					<MemberRatings node={node} />
+				</Section>
+			)}
 
-			<dl className="grid grid-cols-[88px_1fr] items-baseline gap-x-3 gap-y-2">
-				<Row label="Category">
-					<span className="-ml-1.5 inline-flex">
-						<CategorySelect node={node} />
-					</span>
-				</Row>
-				<Row label="Time needed">
-					<span className="-ml-1.5 inline-flex">
-						<TimeNeededSelect node={node} />
-					</span>
-				</Row>
-				{node.address ? (
-					<Row label="Address">
-						<CopyText text={node.address} />
+			<Section title="About" testId={PLACES_TESTID.about}>
+				<Description node={node} />
+				<dl className="mt-1 grid grid-cols-[88px_1fr] items-baseline gap-x-3 gap-y-2">
+					<Row label="Time needed">
+						{panel ? (
+							<PlaceTimeNeeded />
+						) : (
+							<span className="-ml-1.5 inline-flex">
+								<TimeNeededSelect node={node} />
+							</span>
+						)}
 					</Row>
-				) : null}
-				{node.lat === null || node.lng === null ? (
-					<Row label="Location">
-						<EditGuard>
-							<Button
-								size="xs"
-								variant="outline"
-								data-testid={PLACES_TESTID.setLocation}
-								onClick={() =>
-									openAddPlace({ mode: "locate", nodeId: node.id })
-								}
-							>
-								<MapPin />
-								Set location…
-							</Button>
-						</EditGuard>
+					{node.address ? (
+						<Row label="Address">
+							<CopyText text={node.address} />
+						</Row>
+					) : null}
+					{node.lat === null || node.lng === null ? (
+						<Row label="Location">
+							<EditGuard>
+								<Button
+									size="xs"
+									variant="outline"
+									data-testid={PLACES_TESTID.setLocation}
+									onClick={() =>
+										openAddPlace({ mode: "locate", nodeId: node.id })
+									}
+								>
+									<MapPin />
+									Set location…
+								</Button>
+							</EditGuard>
+						</Row>
+					) : null}
+					{rating ? (
+						<Row label="Rating">
+							<span className="font-mono text-xs tnum">{rating}</span>
+						</Row>
+					) : null}
+					{d.website ? (
+						<Row label="Website">
+							<CopyText
+								text={d.website
+									.replace(/^https?:\/\/(www\.)?/, "")
+									.replace(/\/$/, "")}
+								href={d.website}
+							/>
+						</Row>
+					) : null}
+					{d.phone ? (
+						<Row label="Phone">
+							<CopyText text={d.phone} />
+						</Row>
+					) : null}
+					{d.priceLevel ? (
+						<Row label="Price">
+							<span className="text-xs">{priceLabel(d.priceLevel)}</span>
+						</Row>
+					) : null}
+					<Row label="Local time">
+						<LocalTime tz={tz} node={node} />
 					</Row>
-				) : null}
-				{rating ? (
-					<Row label="Rating">
-						<span className="font-mono text-xs tnum">{rating}</span>
-					</Row>
-				) : null}
-				{d.website ? (
-					<Row label="Website">
-						<CopyText
-							text={d.website
-								.replace(/^https?:\/\/(www\.)?/, "")
-								.replace(/\/$/, "")}
-							href={d.website}
-						/>
-					</Row>
-				) : null}
-				{d.phone ? (
-					<Row label="Phone">
-						<CopyText text={d.phone} />
-					</Row>
-				) : null}
-				{d.priceLevel ? (
-					<Row label="Price">
-						<span className="text-xs">{priceLabel(d.priceLevel)}</span>
-					</Row>
-				) : null}
-				<Row label="Local time">
-					<LocalTime tz={tz} node={node} />
-				</Row>
-			</dl>
+				</dl>
 
-			{/* WP-Insights' week grid carries its own heading, source line
+				{/* WP-Insights' week grid carries its own heading, source line
 			    ("From the sheet: …", "Google · 3 Sep") and Edit/Confirm. */}
-			<HoursTable nodeId={node.id} />
-
-			<div className="flex flex-wrap items-center gap-2">
-				{mapsHref ? (
-					<Button size="xs" variant="outline" asChild>
-						<a
-							href={mapsHref}
-							target="_blank"
-							rel="noopener noreferrer"
-							data-testid={PLACES_TESTID.openInMaps}
-						>
-							<ExternalLink />
-							Open in Google Maps
-						</a>
-					</Button>
-				) : null}
+				<div className="mt-3">
+					<HoursTable nodeId={node.id} />
+				</div>
 				<MoreDetails node={node} />
-			</div>
-
-			<Section title="Priority">
-				<MemberRatings node={node} />
 			</Section>
 
 			{occurrences.length || unscheduled.length || nights.length ? (
@@ -613,7 +603,7 @@ function PlaceOverview({ node }: { node: GraphNode }) {
 				</Section>
 			) : null}
 
-			<Section title="Parent">
+			<Section title="Filed under">
 				<div className="flex min-w-0 items-center gap-2">
 					<span className="min-w-0 flex-1 truncate text-[13px]">
 						{ancestorsOf(ix, node.id)

@@ -142,7 +142,7 @@ test.describe("desktop 1440", () => {
 		expect(onBody, "focus fell to <body> after Delete").toBe(false);
 	});
 
-	test("Rate guard: a PDF in a place's drawer (the old Rate card) opens in the in-app viewer", async ({ page, context }) => {
+	test("Rate guard: a PDF in a place's panel (the old Rate card) opens in the in-app viewer", async ({ page, context }) => {
 		await signInDennis(page);
 		await openTrip(page, `/t/${TRIP}?tab=plan`);
 		const nodeId = await page.evaluate(
@@ -169,10 +169,11 @@ test.describe("desktop 1440", () => {
 			{ nodeId: nodeId as string, b64 },
 		);
 		expect(up).not.toHaveProperty("error");
-		await page.goto(`/t/${TRIP}?tab=places&sel=n.${nodeId}`);
+		// Its panel's Media tab, as on every tab.
+		await page.goto(`/t/${TRIP}?tab=places&sel=n.${nodeId}&itab=media`);
 		const drawer = page.getByTestId("places-drawer");
 		await expect(drawer).toHaveAttribute("data-place", nodeId as string, { timeout: 30_000 });
-		const pdf = drawer.getByTestId("rate-pdf").filter({ hasText: "Shibuya Sky tickets" }).first();
+		const pdf = drawer.locator('[data-testid="gallery-item"][data-kind="pdf"]').filter({ hasText: "Shibuya Sky tickets" }).getByRole("button").first();
 		await expect(pdf).toBeVisible({ timeout: 15_000 });
 		const pages = context.pages().length;
 		await pdf.click();

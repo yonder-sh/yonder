@@ -22,16 +22,10 @@
  * map's space (beside the map, the feed was a narrow column).
  */
 import { cn } from "cn";
-import {
-	lazy,
-	type ReactNode,
-	Suspense,
-	useEffect,
-	useMemo,
-	useState,
-} from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { EmptyState } from "@/components/common/empty-state";
 import { PlaceFilterSummary } from "@/features/outline/FilterMenu";
+import { InspectorBody } from "@/features/shell/InspectorBody";
 import { useShell } from "@/features/shell/shell-store";
 import { TabPurpose } from "@/features/shell/TabPurpose";
 import { useBreakpoint } from "@/features/shell/use-breakpoint";
@@ -45,7 +39,6 @@ import {
 	pickStep,
 	viewOfStep,
 } from "./flow";
-import { PlaceDetails } from "./PlaceDetails";
 import { PlacesBoard } from "./PlacesBoard";
 import { PlacesSteps } from "./PlacesSteps";
 import { PlacesTable } from "./PlacesTable";
@@ -224,12 +217,7 @@ function Body({
 					aria-label="Place details"
 					className="flex w-[min(400px,45%)] shrink-0 flex-col border-l bg-card animate-in fade-in-0 slide-in-from-right-2 duration-150 motion-reduce:animate-none"
 				>
-					<PlaceDetails
-						row={row}
-						data={data}
-						onClose={() => nav.select(null)}
-						className="h-full"
-					/>
+					<InspectorBody onClose={() => nav.select(null)} className="h-full" />
 				</aside>
 			) : null}
 		</div>
@@ -315,35 +303,6 @@ export function PlacesTab({ phone = false }: { phone?: boolean }) {
 					tally={tally}
 				/>
 			</div>
-		</PlaceActionsProvider>
-	);
-}
-
-/**
- * The details where the shell shows a selection when the Places tab doesn't
- * dock them itself (the map-side inspector, the tablet sheet, the phone's
- * drawer). `children` (the usual inspector) when the selection isn't one of
- * the tab's places.
- */
-export function PlacesSelectionDetails({
-	onClose,
-	children,
-}: {
-	onClose: () => void;
-	children?: ReactNode;
-}) {
-	const data = usePlaces("");
-	const { sel } = useWorkspace();
-	const row = sel?.kind === "node" ? data.byId.get(sel.id) : undefined;
-	if (!row) return <>{children}</>;
-	return (
-		<PlaceActionsProvider>
-			<PlaceDetails
-				row={row}
-				data={data}
-				onClose={onClose}
-				className="min-h-0 flex-1"
-			/>
 		</PlaceActionsProvider>
 	);
 }

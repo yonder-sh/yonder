@@ -4,9 +4,10 @@
  */
 import { fireEvent, screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { InspectorBody } from "@/features/shell/InspectorBody";
 import { N } from "@/lib/fixtures/demo";
 import { renderWithWorkspace } from "@/test/render-workspace";
-import { PlacesSelectionDetails, PlacesTab } from "../tab/PlacesTab";
+import { PlacesTab } from "../tab/PlacesTab";
 import { PLACES_TAB_TESTID as T } from "../tab/testids";
 
 const calls = vi.hoisted(() => ({ updateNode: [] as unknown[] }));
@@ -48,9 +49,9 @@ describe("the category in the Places tab", () => {
 		expect(ws().sel).toBeNull();
 	});
 
-	it("changes in the place's details", async () => {
-		// The details the shell shows beside the map (the tab docks the same one when wide).
-		renderWithWorkspace(<PlacesSelectionDetails onClose={() => {}} />, {
+	it("changes in the place's panel", async () => {
+		// The panel the shell shows beside the map (the tab docks the same one when wide).
+		renderWithWorkspace(<InspectorBody onClose={() => {}} />, {
 			search: { tab: "places", pv: "table", sel: `n.${N.sensoji}` },
 		});
 		await pick(

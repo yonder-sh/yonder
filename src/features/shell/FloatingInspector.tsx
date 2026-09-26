@@ -9,10 +9,9 @@ import { TESTID } from "@/lib/testids";
 import { useUi } from "@/lib/workspace/ui-store";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { InspectorBody } from "./InspectorBody";
-import { PlacesDetailsOr } from "./places-details";
 
 export function FloatingInspector({ width = 420 }: { width?: number }) {
-	const { sel, nav, tab } = useWorkspace();
+	const { sel, nav } = useWorkspace();
 	const setMapPadding = useUi((s) => s.setMapPadding);
 	const open = sel !== null;
 	useEffect(() => {
@@ -31,12 +30,7 @@ export function FloatingInspector({ width = 420 }: { width?: number }) {
 			className="absolute top-3 right-3 bottom-3 z-30 flex flex-col overflow-hidden rounded-2xl bg-card shadow-float animate-in fade-in-0 slide-in-from-right-2 duration-150"
 			style={{ width }}
 		>
-			{/* docs/PLACES.md §2: with the map showing, a place's details open here. */}
-			{tab === "places" ? (
-				<PlacesDetailsOr onClose={() => nav.select(null)} />
-			) : (
-				<InspectorBody onClose={() => nav.select(null)} />
-			)}
+			<InspectorBody onClose={() => nav.select(null)} />
 		</aside>
 	);
 }

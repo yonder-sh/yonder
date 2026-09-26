@@ -29,7 +29,6 @@ export const PLACES_TAB_TESTID = {
 	card: "places-card",
 	// drawer / details
 	drawer: "places-drawer",
-	drawerClose: "places-drawer-close",
 	pinButton: "places-pin",
 	dropButton: "places-drop",
 	addToDay: "places-add-to-day",

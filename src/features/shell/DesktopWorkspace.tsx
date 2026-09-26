@@ -38,7 +38,6 @@ import { InspectorBody } from "./InspectorBody";
 import { MapRegion } from "./MapRegion";
 import { MapRail, OutlineHideButton, OutlineRail } from "./PanelToggles";
 import { pixelLayoutStorage } from "./pane-layout";
-import { PlacesDetailsOr } from "./places-details";
 import { useShell } from "./shell-store";
 import { TopBar } from "./TopBar";
 import { SHELL_TESTID } from "./testids";
@@ -90,12 +89,7 @@ export function InspectorSheet({
 				data-testid={TESTID.inspector}
 			>
 				<SheetTitle className="sr-only">Details</SheetTitle>
-				{/* docs/PLACES.md §2: the Places tab's details for its places. */}
-				{places ? (
-					<PlacesDetailsOr onClose={() => nav.select(null)} />
-				) : (
-					<InspectorBody onClose={() => nav.select(null)} />
-				)}
+				<InspectorBody onClose={() => nav.select(null)} />
 			</SheetContent>
 		</Sheet>
 	);
@@ -117,11 +111,7 @@ function DockedInspector({ width }: { width: number }) {
 			className="flex shrink-0 flex-col overflow-hidden border-l bg-card animate-in fade-in-0 slide-in-from-right-2 duration-150 motion-reduce:animate-none"
 			style={{ width }}
 		>
-			{places ? (
-				<PlacesDetailsOr onClose={() => nav.select(null)} />
-			) : (
-				<InspectorBody onClose={() => nav.select(null)} />
-			)}
+			<InspectorBody onClose={() => nav.select(null)} />
 		</aside>
 	);
 }

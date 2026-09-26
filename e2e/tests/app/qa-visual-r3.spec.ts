@@ -168,7 +168,7 @@ test.describe("desktop 1440", () => {
 		);
 		// The old Rate screen's link: the Places tab, whose header has each member's progress.
 		await page.goto(`/t/${TRIP}/rate`);
-		const progress = page.getByTestId("places-progress").locator(`[data-member="${audrey}"]`);
+		const progress = page.getByTestId("places-progress").locator(`[data-member="${audrey}"][data-counted]`);
 		await expect(progress).toBeVisible({ timeout: 30_000 });
 		const header = (await progress.innerText()).replace(/\s+/g, " ");
 		const rate = /(\d+)\/(\d+)/.exec(header);

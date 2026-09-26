@@ -36,6 +36,7 @@ export const PLACES_TESTID = {
 	zoomIn: "places-zoom-in",
 	moreDetails: "places-more-details",
 	openInMaps: "places-open-in-maps",
+	about: "places-about",
 	setLocation: "places-set-location",
 	rateLink: "places-rate-link",
 	tzPicker: "places-tz-picker",
