@@ -37,7 +37,7 @@ import {
 	useState,
 } from "react";
 import { useEditGuard } from "@/components/common/edit-guard";
-import { CategoryDot } from "@/components/common/glyphs";
+import { CategoryIcon } from "@/components/common/glyphs";
 import { MarkdownText } from "@/components/common/markdown-text";
 import { MemberAvatar, presenceColor } from "@/components/common/member";
 import { ProposalGhost } from "@/components/common/proposal-ghost";
@@ -89,6 +89,7 @@ import { TESTID } from "@/lib/testids";
 import { useFlash, useUi } from "@/lib/workspace/ui-store";
 import { useProposalMarks } from "@/lib/workspace/use-proposals";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
+import { cardTone } from "./card-tone";
 import { useMenuHandoff } from "./menu-handoff";
 import { PlanUiContext } from "./plan-context";
 import { type DropPlan, planStep } from "./plan-drop";
@@ -804,6 +805,7 @@ export function ItemCard({
 	);
 	const title = itemName(ix, item);
 	const unlocated = !node;
+	const tone = cardTone(node);
 	const booked = isBooked(item);
 	const cat =
 		node?.type === "place" && node.category
@@ -837,8 +839,11 @@ export function ItemCard({
 			}
 			onMouseEnter={() => setPlanHover({ kind: "item", id: item.id }, true)}
 			onMouseLeave={() => setPlanHover({ kind: "item", id: item.id }, false)}
+			data-family={tone}
 			className={cn(
 				"group/card relative flex min-w-0 flex-1 cursor-pointer touch-manipulation items-center gap-3 rounded-lg border bg-card px-3 text-left transition-[border-color,box-shadow] select-none",
+				// The family's bar and tint (plan.css); a block of time stays neutral.
+				tone !== "none" && "plan-tone pl-3.5",
 				"hover:border-foreground/20 has-[[data-card-main]:focus-visible]:ring-2 has-[[data-card-main]:focus-visible]:ring-ring",
 				compact || unlocated ? "min-h-10 py-1.5" : "min-h-14 py-2",
 				// A block of time: quieter, not dashed (dashes mean estimates, ADDENDUM §10).
@@ -858,8 +863,11 @@ export function ItemCard({
 								"--glow-color": `color-mix(in oklab, ${presenceColor(flash.color)} 35%, transparent)`,
 							}
 						: {}),
+					// The editing peer's rule covers the family bar while they edit.
 					...(peer
-						? { boxShadow: `inset 2px 0 0 ${presenceColor(peer.user.color)}` }
+						? {
+								boxShadow: `inset ${tone === "none" ? 2 : 4}px 0 0 ${presenceColor(peer.user.color)}`,
+							}
 						: {}),
 				} as CSSProperties
 			}
@@ -894,7 +902,10 @@ export function ItemCard({
 					) : null}
 					{cat && node?.category ? (
 						<span className="hidden shrink-0 items-center gap-1 @md:inline-flex">
-							<CategoryDot category={node.category} />
+							<CategoryIcon
+								category={node.category}
+								className="plan-tone-ink size-3.5"
+							/>
 							{!compact ? (
 								<span className="text-xs text-muted-foreground">
 									{cat.label}

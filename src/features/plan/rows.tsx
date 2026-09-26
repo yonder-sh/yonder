@@ -496,7 +496,11 @@ export function BandCard({
 			data-cursor-anchor={`sec:band.${anchorKey(visit.key)}`}
 			className="px-3 pt-3 pb-1"
 		>
-			<div className="flex min-h-16 items-center gap-3 rounded-lg border border-l-4 border-l-muted-foreground/25 bg-card px-3 py-2">
+			{/* The muted bar of an area or city card (plan.css), inside the outline. */}
+			<div
+				data-family="area"
+				className="plan-tone flex min-h-16 items-center gap-3 rounded-lg border bg-card py-2 pr-3 pl-3.5"
+			>
 				<button
 					type="button"
 					aria-expanded={open}

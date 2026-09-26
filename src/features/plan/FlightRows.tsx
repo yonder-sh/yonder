@@ -239,10 +239,12 @@ export function FlightRows({
 						data-testid={PLAN_TESTID.flightStub}
 						onClick={select}
 						data-untimed={t.untimed ? "" : undefined}
+						// The flight's own colour, like a place card's family (plan.css).
+						data-family="flight"
 						aria-label={`${name ? `Flight ${name}` : "Flight"} ${f.from.iata} to ${f.to.iata}${t.untimed ? ", times to be decided" : ""}`}
 						style={{ "--stub-split": "62%" } as CSSProperties}
 						className={cn(
-							"plan-stub relative grid min-h-[72px] w-full grid-cols-[62%_38%] rounded-lg border bg-card text-left outline-none hover:border-foreground/20 focus-visible:ring-2 focus-visible:ring-ring",
+							"plan-stub plan-tone relative grid min-h-[72px] w-full grid-cols-[62%_38%] rounded-lg border bg-card text-left outline-none hover:border-foreground/20 focus-visible:ring-2 focus-visible:ring-ring",
 							selected && "outline-2 outline-primary",
 						)}
 					>

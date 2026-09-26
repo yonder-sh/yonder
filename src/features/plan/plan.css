@@ -149,6 +149,77 @@
 	background: var(--glow);
 }
 
+/* ---- Card colour (card-tone.ts): a 4px bar and a faint tint in the pin's
+   family, inside the neutral outline (rings, dashes and chips keep theirs). ---- */
+.plan-tone {
+	--tone-mix: 6%;
+	background-color: color-mix(
+		in oklab,
+		var(--tone) var(--tone-mix),
+		var(--card)
+	);
+	background-image: linear-gradient(to right, var(--tone) 4px, transparent 4px);
+	background-clip: padding-box;
+}
+.dark .plan-tone {
+	--tone-mix: 10%;
+}
+.plan-tone-ink {
+	color: var(--tone);
+}
+.plan-tone[data-family="culture"] {
+	--tone: var(--fam-culture);
+}
+.plan-tone[data-family="food"] {
+	--tone: var(--fam-food);
+}
+.plan-tone[data-family="nature"] {
+	--tone: var(--fam-nature);
+}
+.plan-tone[data-family="water"] {
+	--tone: var(--fam-water);
+}
+.plan-tone[data-family="activity"] {
+	--tone: var(--fam-activity);
+}
+.plan-tone[data-family="shopping"] {
+	--tone: var(--fam-shopping);
+}
+.plan-tone[data-family="nightlife"] {
+	--tone: var(--fam-nightlife);
+}
+.plan-tone[data-family="lodging"] {
+	--tone: var(--fam-lodging);
+}
+.plan-tone[data-family="transit"] {
+	--tone: var(--fam-transit);
+}
+.plan-tone[data-family="flight"] {
+	--tone: var(--mode-flight);
+}
+.plan-tone[data-family="rail"] {
+	--tone: var(--mode-transit);
+}
+.plan-tone[data-family="ferry"] {
+	--tone: var(--mode-other);
+}
+/* An area or a city: a quiet bar, no tint. */
+.plan-tone[data-family="area"] {
+	--tone: color-mix(in oklab, var(--muted-foreground) 45%, var(--card));
+	--tone-mix: 0%;
+}
+/* The three near-black families vanish on a dark card: raised toward white,
+   as presence colours are (§2.2). */
+.dark .plan-tone[data-family="lodging"] {
+	--tone: color-mix(in oklab, var(--fam-lodging) 55%, white);
+}
+.dark .plan-tone[data-family="nightlife"] {
+	--tone: color-mix(in oklab, var(--fam-nightlife) 65%, white);
+}
+.dark .plan-tone[data-family="transit"] {
+	--tone: color-mix(in oklab, var(--fam-transit) 65%, white);
+}
+
 /* Cards glow once when someone else changes them (DESIGN §7.1, §11). */
 .plan-glow {
 	animation: glow 1.2s ease-out 1;

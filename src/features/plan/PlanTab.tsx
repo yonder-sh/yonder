@@ -56,6 +56,7 @@ import { useFollowedUi, usePublishViewUi } from "@/lib/realtime/view-ui";
 import { TESTID } from "@/lib/testids";
 import { useUi } from "@/lib/workspace/ui-store";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
+import { cardTone } from "./card-tone";
 import { DaySection } from "./DaySection";
 import { PlanSplit } from "./day-split/DaySplit";
 import {
@@ -229,8 +230,15 @@ function OverlayCard({ itemId }: { itemId: string }) {
 	const item = ix.item(itemId);
 	if (!item) return null;
 	const s = schedule.items[itemId];
+	const tone = cardTone(ix.node(item.nodeId));
 	return (
-		<div className="flex w-[min(24rem,85vw)] scale-[1.02] items-center gap-3 rounded-lg border bg-card px-3 py-2 shadow-float">
+		<div
+			data-family={tone}
+			className={cn(
+				"flex w-[min(24rem,85vw)] scale-[1.02] items-center gap-3 rounded-lg border bg-card px-3 py-2 shadow-float",
+				tone !== "none" && "plan-tone pl-3.5",
+			)}
+		>
 			<span className="w-11 shrink-0 font-mono text-xs text-muted-foreground tnum">
 				{s ? formatTime(s.start, s.tz) : "—"}
 			</span>
