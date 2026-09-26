@@ -3,7 +3,8 @@
  * (`src/routes/__root.tsx`, F) calls `useHomeLifecycle()` once on every page
  * — /login, /welcome and the workspace included — so the service
  * worker registers everywhere but the public landing page (`/`), the install
- * prompt is captured early, and WP-Home's sign-out purge always runs.
+ * prompt is captured early, a tab left on an older build reloads onto the
+ * new one, and WP-Home's sign-out purge always runs.
  * WP-Home owns this file.
  */
 import { useRouterState } from "@tanstack/react-router";
@@ -12,6 +13,7 @@ import { onSignOut } from "@/lib/auth/sign-out";
 import { watchInstallPrompt } from "./install";
 import { registerServiceWorker } from "./register-sw";
 import { clearSavedTrips } from "./saved-trips";
+import { watchStaleChunks } from "./stale-build";
 
 /** IndexedDB `yonder-share` (E8 entries): gone at sign-out (QA SHR-06). */
 async function clearShareInbox(): Promise<void> {
@@ -63,7 +65,12 @@ export function useHomeLifecycle(): void {
 	});
 	useEffect(() => {
 		watchInstallPrompt();
-		return onSignOut(() => homeSignOutCleanup());
+		const offStale = watchStaleChunks();
+		const offSignOut = onSignOut(() => homeSignOutCleanup());
+		return () => {
+			offStale();
+			offSignOut();
+		};
 	}, []);
 	useEffect(() => {
 		if (!onLanding) void registerServiceWorker();
