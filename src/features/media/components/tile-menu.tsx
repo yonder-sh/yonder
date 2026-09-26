@@ -1,9 +1,13 @@
 /**
- * The tile ⋯ menu (DESIGN §7.2): Edit caption, Move to…, Set as cover, Hide
- * from guests, Download, Refresh preview, Delete (with Undo). Every edit
+ * The tile ⋯ menu (DESIGN §7.2): Edit caption, Move to…, Show first / Move
+ * earlier / Move later (the order, as the Rate feed shows it), Set as cover,
+ * Hide from guests, Download, Refresh preview, Delete (with Undo). Every edit
  * item goes through `useEditGuard` (disabled with the reason, never hidden).
  */
 import {
+	ArrowLeft,
+	ArrowRight,
+	ArrowUpToLine,
 	Download,
 	FolderInput,
 	ImageUp,
@@ -42,6 +46,8 @@ import type { AttachmentTarget } from "@/lib/schemas/targets";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { targetName } from "../labels";
 import { UPLOAD_EDIT_ONLY_REASON } from "../media-kinds";
+import { type Reorder, reorderMoves, siblingsOf } from "../order";
+import { useTripMedia } from "../queries";
 import { MEDIA_TESTID } from "../testids";
 import type { MediaDto } from "../types";
 import type { useMediaActions } from "../use-media-actions";
@@ -61,6 +67,13 @@ export function TileMenu({
 	const edit = useEditGuard();
 	const editOnly = useEditGuard("edit-only", UPLOAD_EDIT_ONLY_REASON);
 	const vis = useVisibilityGuard();
+	// Reordering is an editor's (a suggestion of it would say nothing useful).
+	const order = useEditGuard("edit-only");
+	const { data: all } = useTripMedia();
+	const moves = reorderMoves(siblingsOf(all, item), item.id);
+	const reorder = (v: Reorder | null) =>
+		v &&
+		actions.reorder.mutate(v, { onError: (e) => toast.error(humanError(e)) });
 	const [dialog, setDialog] = useState<"caption" | "move" | null>(null);
 	const [draft, setDraft] = useState(item.caption ?? "");
 	const [dest, setDest] = useState<string | null>(
@@ -123,6 +136,31 @@ export function TileMenu({
 						>
 							<FolderInput /> Move to…
 						</DropdownMenuItem>
+					) : null}
+					{moves.front || moves.later ? (
+						<>
+							<DropdownMenuItem
+								disabled={!moves.front || order.disabled}
+								title={reason(order)}
+								onSelect={() => reorder(moves.front)}
+							>
+								<ArrowUpToLine /> Show first
+							</DropdownMenuItem>
+							<DropdownMenuItem
+								disabled={!moves.earlier || order.disabled}
+								title={reason(order)}
+								onSelect={() => reorder(moves.earlier)}
+							>
+								<ArrowLeft /> Move earlier
+							</DropdownMenuItem>
+							<DropdownMenuItem
+								disabled={!moves.later || order.disabled}
+								title={reason(order)}
+								onSelect={() => reorder(moves.later)}
+							>
+								<ArrowRight /> Move later
+							</DropdownMenuItem>
+						</>
 					) : null}
 					{canCover ? (
 						<DropdownMenuItem

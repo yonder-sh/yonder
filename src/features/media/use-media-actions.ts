@@ -22,6 +22,7 @@ import {
 	setAttachmentVisibility,
 	updateAttachment,
 } from "./media.functions";
+import { applyReorder, type Reorder } from "./order";
 
 /**
  * `addLink` outside a hook (drops on Outline rows and pins): adds the new
@@ -158,6 +159,19 @@ export function useMediaActions(tripId: string) {
 		},
 	);
 
+	// Its place in the order (the Rate feed's photo order), shown at once.
+	const reorder = useTripMutation(
+		(v: Reorder) => updateAttachment({ data: v }),
+		{
+			keys: [media],
+			tripId,
+			optimistic: (_qc, v) =>
+				qc.setQueryData(media, (xs?: MediaDto[]) =>
+					xs ? applyReorder(xs, v) : xs,
+				),
+		},
+	);
+
 	const refresh = useTripMutation(
 		(v: { id: string }) => refreshLinkMeta({ data: v }),
 		{
@@ -178,10 +192,11 @@ export function useMediaActions(tripId: string) {
 					{ id: m.id, kind: m.kind },
 					{ onError: (e) => toast.error(humanError(e)) },
 				),
+			reorder,
 			visibility,
 			cover,
 			refresh,
 		}),
-		[link, caption, move, remove, visibility, cover, refresh],
+		[link, caption, move, remove, reorder, visibility, cover, refresh],
 	);
 }

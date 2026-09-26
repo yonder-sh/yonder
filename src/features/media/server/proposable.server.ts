@@ -54,6 +54,8 @@ export const UpdateAttachmentInput = z
 		caption: z.string().max(2000).nullable().optional(),
 		target: AttachmentTarget.optional(),
 		afterId: z.uuid().optional(),
+		/** Reorder: right before this sibling (the front: before the first). */
+		beforeId: z.uuid().optional(),
 		expectedUpdatedAt: z.string().optional(),
 	})
 	.strict();
@@ -218,7 +220,7 @@ export const defs = {
 				);
 				// A receipt always hides from guests (they never see money anyway).
 				if (data.target.kind === "expense") patch.visibility = "members";
-			} else if (data.afterId !== undefined) {
+			} else if (data.afterId !== undefined || data.beforeId !== undefined) {
 				patch.position = await positionFor(
 					tx,
 					{
@@ -226,7 +228,7 @@ export const defs = {
 						tripId,
 						target: attachmentTargetOf(row),
 					},
-					{ afterId: data.afterId, exclude: [row.id] },
+					{ afterId: data.afterId, beforeId: data.beforeId, exclude: [row.id] },
 				);
 			}
 			const [updated] = await tx
