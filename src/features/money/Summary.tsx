@@ -301,6 +301,7 @@ export function PeopleTable({
 									key={id}
 									data-testid={MONEY_TESTID.personRow}
 									data-member-id={id}
+									data-cursor-anchor={`money:p.${id}`}
 									className="border-t"
 								>
 									<td className="w-full max-w-0 py-1.5">

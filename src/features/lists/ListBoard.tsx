@@ -44,10 +44,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useHoursIssues } from "@/features/insights/use-hours-issues";
 import { MentionInput } from "@/features/notes/MentionInput";
 import { dueCtxOf, dueState, effectiveDue } from "@/lib/engine/due";
+import { anchorKey } from "@/lib/realtime/cursor-protocol";
 import {
 	bool,
 	oneOf,
 	useFollowState,
+	useFollowToggle,
 	useFollowValue,
 } from "@/lib/realtime/view-ui";
 import type { ListKind } from "@/lib/schemas/enums";
@@ -501,6 +503,7 @@ export function ListBoard(props: BoardProps) {
 						actions={actions}
 						showDone={showDone}
 						setShowDone={setShowDone}
+						doneKey={`lists.${part}${k}done`}
 					/>
 				))}
 				{doneOnly.length ? (
@@ -516,6 +519,7 @@ export function ListBoard(props: BoardProps) {
 						actions={actions}
 						showDone={showDone}
 						setShowDone={setShowDone}
+						doneKey={`lists.${part}${k}done`}
 					/>
 				) : null}
 			</div>
@@ -560,6 +564,7 @@ function GroupBlock({
 	actions,
 	showDone,
 	setShowDone,
+	doneKey,
 }: {
 	boardId: string;
 	group: ListGroup;
@@ -572,11 +577,17 @@ function GroupBlock({
 	/** The remembered "done rows open" choice (QA ROLL-08); each fold starts from it. */
 	showDone: boolean;
 	setShowDone: (v: boolean) => void;
+	/** Where the open "N done" folds travel (a follower's opens with mine). */
+	doneKey: `${string}.${string}`;
 }) {
 	const ws = useWorkspace();
-	const [doneOpen, setDoneOpenState] = useState(showDone);
+	const [doneOpen, setDoneOpenState] = useFollowToggle(
+		doneKey,
+		group.key,
+		showDone,
+	);
 	// The account's choice can arrive after the first render (another device).
-	useEffect(() => setDoneOpenState(showDone), [showDone]);
+	useEffect(() => setDoneOpenState(showDone), [showDone, setDoneOpenState]);
 	const setDoneOpen = (v: boolean) => {
 		setDoneOpenState(v);
 		setShowDone(v);
@@ -629,6 +640,7 @@ function GroupBlock({
 		<div
 			data-testid={LISTS_TESTID.group}
 			data-group={group.key}
+			data-cursor-anchor={`sec:lists.${kind}.${anchorKey(group.key)}`}
 			className="group/group"
 		>
 			{isDoneGroup ? null : (

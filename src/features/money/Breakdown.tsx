@@ -12,6 +12,7 @@ import {
 	originalAmounts,
 } from "@/lib/engine/money";
 import { formatDayDate } from "@/lib/format";
+import { anchorKey } from "@/lib/realtime/cursor-protocol";
 import { oneOf, useFollowState } from "@/lib/realtime/view-ui";
 import {
 	EXPENSE_CATEGORY_VALUES,
@@ -210,7 +211,11 @@ export function Breakdown({
 			</Overline>
 			<ul className="grid gap-2.5">
 				{lines.map((l) => (
-					<li key={l.key} className="grid gap-1">
+					<li
+						key={l.key}
+						data-cursor-anchor={`money:by.${anchorKey(l.key)}`}
+						className="grid gap-1"
+					>
 						<div className="flex items-baseline gap-2 text-[13px]">
 							{l.icon}
 							{by === "place" && ix.node(l.key) ? (

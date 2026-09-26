@@ -463,6 +463,7 @@ function BudgetRow({
 			data-testid={MONEY_TESTID.budgetRow}
 			data-category={c.category ?? "all"}
 			data-source={c.source}
+			data-cursor-anchor={`budget:${c.category ?? "all"}`}
 		>
 			{editable &&
 			(c.source === "custom" ||

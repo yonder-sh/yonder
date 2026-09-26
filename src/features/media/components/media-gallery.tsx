@@ -23,6 +23,7 @@ import type { ProposalMark } from "@/lib/engine/proposals";
 import type { RollupOptions } from "@/lib/engine/rollup";
 import { humanError } from "@/lib/errors";
 import { tripKeys } from "@/lib/query/keys";
+import { anchorKey } from "@/lib/realtime/cursor-protocol";
 import { useProposalMarks } from "@/lib/workspace/use-proposals";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { buildGroups, type Tile } from "../gallery-groups";
@@ -270,6 +271,7 @@ export function MediaGallery({
 					key={g.key}
 					data-testid={MEDIA_TESTID.group}
 					data-group={g.key}
+					data-cursor-anchor={`sec:media.${anchorKey(g.key)}`}
 					aria-label={
 						g.header?.kind === "text"
 							? g.header.text

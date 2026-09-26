@@ -43,6 +43,8 @@ export function ShoppingRow({
 	return (
 		<li
 			data-testid={MONEY_TESTID.shoppingRow}
+			data-cursor-anchor={`list:${li.id}`}
+			data-cursor-vis={li.isPrivate ? "private" : undefined}
 			className="flex items-start gap-3 px-4 py-2.5"
 		>
 			<CategoryGlyph category="shopping" className="mt-0.5" />

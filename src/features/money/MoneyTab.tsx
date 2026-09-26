@@ -22,6 +22,7 @@ import { TabPurpose } from "@/features/shell/TabPurpose";
 import { can } from "@/lib/auth/roles";
 import { humanError } from "@/lib/errors";
 import { formatDateRange } from "@/lib/format";
+import { anchorKey } from "@/lib/realtime/cursor-protocol";
 import { TESTID } from "@/lib/testids";
 import { useUi } from "@/lib/workspace/ui-store";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
@@ -186,7 +187,7 @@ function RowGroup({ title, rows }: { title: string; rows: Row[] }) {
 	const d = useDisplayCurrency();
 	if (!rows.length) return null;
 	return (
-		<div>
+		<div data-cursor-anchor={`money:rows.${anchorKey(title)}`}>
 			<Overline className="sticky top-0 z-20 border-b bg-background/95 px-4 backdrop-blur">
 				{title}{" "}
 				<span className="font-mono font-normal tnum">{rows.length}</span>
