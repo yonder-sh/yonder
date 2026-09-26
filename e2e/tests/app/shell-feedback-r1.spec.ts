@@ -76,7 +76,7 @@ async function expectRateView(page: Page, path: string, extra?: RegExp): Promise
 
 /** "rated/total" for a member in the Places tab's progress. */
 async function progressOf(page: Page, memberId: string): Promise<[number, number]> {
-	const el = page.getByTestId(PT.progress).locator(`[data-member="${memberId}"]`);
+	const el = page.getByTestId(PT.progress).locator(`[data-member="${memberId}"][data-counted]`);
 	await expect(el).toBeVisible({ timeout: 30_000 });
 	const m = /(\d+)\/(\d+)/.exec(await el.innerText());
 	return [Number(m?.[1]), Number(m?.[2])];

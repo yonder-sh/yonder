@@ -55,7 +55,9 @@ test("Trip settings: 'Add holiday' adds a row, Enter and 'Save holidays' save th
 	await page.waitForTimeout(800);
 	await expect(dialog).toBeVisible();
 	await expect(page.getByText("Settings saved")).toHaveCount(0);
-	expect((await tripNow(page))?.version, "no settings save").toBe(before?.version);
+	// The settings, not the trip's version: the Plan's leg autofill may bump
+	// that in the background at any moment.
+	expect((await tripNow(page))?.settings, "no settings save").toEqual(before?.settings);
 
 	// Fill it: date from the calendar, name typed; Enter saves the holidays.
 	const row = editor.getByTestId(T.holidayRow).first();

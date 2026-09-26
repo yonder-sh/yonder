@@ -140,7 +140,7 @@ test.describe("where things stand", () => {
 		await expect(card).toBeVisible();
 		const box = await card.boundingBox();
 		expect(box && box.x >= 0 && box.x + box.width <= PHONE.width).toBe(true);
-		for (const key of ["places", "rating", "cities", "days", "hotels"]) {
+		for (const key of ["places", "rating", "cities", "days", "stays"]) {
 			const b = await line(page, key).boundingBox();
 			expect(b && b.x + b.width <= PHONE.width).toBe(true);
 		}
