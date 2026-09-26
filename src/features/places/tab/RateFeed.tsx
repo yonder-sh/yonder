@@ -23,6 +23,7 @@ import { cn } from "cn";
 import {
 	ArrowDown,
 	Check,
+	ChevronRight,
 	ChevronUp,
 	Eye,
 	MapPin,
@@ -936,6 +937,10 @@ function EndCard({
 	const friends = friendsStats(data, me).sort((a, b) => b.matches - a.matches);
 	const best = friends.find((f) => f.agree.length);
 	const where = scope?.name ?? graph.trip.name;
+	// Someone's keen, someone isn't: the Review step's "Talk about it".
+	const split = data.rows.filter(
+		(r) => r.split && r.status !== "dropped",
+	).length;
 	return (
 		<Slate testid={PLACES_TAB_TESTID.feedEnd} cardKey={cardKey}>
 			<span className="grid size-16 place-items-center rounded-full border-[3px] border-emerald-400 text-emerald-400">
@@ -1028,17 +1033,39 @@ function EndCard({
 						))}
 				</div>
 			) : null}
+			{/* The flow's next step: Review, the group's scores highest first. */}
 			<Button
 				size="lg"
 				className="h-12 rounded-xl"
-				data-testid={PLACES_TAB_TESTID.feedShortlist}
-				// The flow's next step (owner, 2026-09-25): the shortlist onto days.
+				data-testid={PLACES_TAB_TESTID.feedReview}
 				onClick={() =>
-					nav.setPlaces({ pv: "schedule", pst: undefined, talk: undefined })
+					nav.setPlaces({
+						pv: lastReviewView.current,
+						pst: undefined,
+						talk: undefined,
+						ps: undefined,
+					})
 				}
 			>
-				Next: schedule the shortlist
+				Next: review the ratings
 			</Button>
+			{split ? (
+				<button
+					type="button"
+					data-testid={PLACES_TAB_TESTID.feedTalk}
+					onClick={() =>
+						nav.setPlaces({
+							pv: lastReviewView.current,
+							pst: undefined,
+							talk: 1,
+						})
+					}
+					className="inline-flex cursor-pointer items-center justify-center gap-1 text-[15px] text-sky-300 hover:underline"
+				>
+					{split} {split === 1 ? "place" : "places"} the group disagrees on
+					<ChevronRight className="size-4" />
+				</button>
+			) : null}
 		</Slate>
 	);
 }

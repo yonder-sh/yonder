@@ -58,7 +58,8 @@ export const PLACES_TAB_TESTID = {
 	feedEnd: "places-feed-end",
 	feedOrder: "places-feed-order",
 	feedInvite: "places-feed-invite",
-	feedShortlist: "places-feed-shortlist",
+	feedReview: "places-feed-review",
+	feedTalk: "places-feed-talk",
 	/** A narrow card's note line, and its open notes box. */
 	feedStage: "places-feed-stage",
 	feedBar: "places-feed-bar",
