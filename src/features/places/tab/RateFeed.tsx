@@ -25,6 +25,7 @@ import {
 	MessageSquare,
 	Scale,
 	Sparkles,
+	StickyNote,
 	UserPlus,
 	X,
 } from "lucide-react";
@@ -57,6 +58,7 @@ import { formatDuration } from "@/lib/format";
 import { mediaUrl } from "@/lib/media-url";
 import { anchorKey, copyAnchorId } from "@/lib/realtime/cursor-protocol";
 import {
+	bool,
 	ids,
 	int,
 	useFollowState,
@@ -420,6 +422,109 @@ function revealTag(
 	return { text: `Score ${score}`, tone: "plain" };
 }
 
+/** A place's shared note and my private note (never anyone else's), for a card. */
+function useCardNotes(
+	nodeId: string,
+	enabled: boolean,
+): { shared: string | null; mine: string | null } {
+	const { graph, mode } = useWorkspace();
+	const notes = useQuery({
+		...tripNotesQuery(graph.trip.id),
+		enabled: enabled && mode === "live",
+	}).data;
+	const target = { kind: "node" as const, nodeId };
+	const me = graph.me.userId;
+	return {
+		shared: noteFor(notes, target)?.plainText?.trim() || null,
+		mine: me ? noteFor(notes, target, me)?.plainText?.trim() || null : null,
+	};
+}
+
+/**
+ * Phones and the narrow feed: the shared note's first line (tap for the
+ * rest) and "Your note"; open, both in a box that scrolls on its own, just
+ * above the name, so the rating stays in reach.
+ */
+function CardNotes({
+	notes,
+	line,
+	open,
+	onOpen,
+}: {
+	notes: { shared: string | null; mine: string | null };
+	/** The shared note's first line, else a link title or the description. */
+	line: string | null;
+	open: boolean;
+	onOpen: (open: boolean) => void;
+}) {
+	if (open)
+		return (
+			<div
+				data-testid={PLACES_TAB_TESTID.feedNotes}
+				className="grid max-h-[38svh] gap-3 overflow-y-auto overscroll-contain rounded-lg bg-black/60 p-3 text-sm backdrop-blur-sm"
+			>
+				{notes.shared ? (
+					<section className="grid gap-1">
+						<h3 className="text-[11px] font-semibold tracking-[0.06em] text-neutral-400 uppercase">
+							Shared note
+						</h3>
+						<p className="whitespace-pre-line text-neutral-100">
+							{notes.shared}
+						</p>
+					</section>
+				) : null}
+				{notes.mine ? (
+					<section className="grid gap-1">
+						<h3 className="text-[11px] font-semibold tracking-[0.06em] text-neutral-400 uppercase">
+							Your private note
+						</h3>
+						<p className="whitespace-pre-line text-neutral-200">{notes.mine}</p>
+					</section>
+				) : null}
+				<button
+					type="button"
+					onClick={() => onOpen(false)}
+					className="w-fit cursor-pointer text-xs font-medium text-white hover:underline"
+				>
+					Less
+				</button>
+			</div>
+		);
+	const more =
+		!!notes.shared && (notes.shared.includes("\n") || notes.shared.length > 90);
+	return (
+		<div className="flex flex-col items-start gap-1.5">
+			{line ? (
+				notes.shared ? (
+					<button
+						type="button"
+						data-testid={PLACES_TAB_TESTID.feedNote}
+						onClick={() => onOpen(true)}
+						className="cursor-pointer text-left text-sm text-neutral-300"
+					>
+						<span className="line-clamp-2">{line}</span>
+						{more ? (
+							<span className="text-xs font-medium text-white">More</span>
+						) : null}
+					</button>
+				) : (
+					<p className="line-clamp-2 text-sm text-neutral-300">{line}</p>
+				)
+			) : null}
+			{notes.mine ? (
+				<button
+					type="button"
+					onClick={() => onOpen(true)}
+					className="inline-flex h-6 cursor-pointer items-center gap-1 rounded-full bg-white/15 px-2 text-xs font-medium text-white backdrop-blur-sm hover:bg-white/25"
+				>
+					<StickyNote className="size-3" />
+					Your note
+				</button>
+			) : null}
+		</div>
+	);
+}
+
 /**
  * Desktop: decide with the same context as the drawer (docs/PLACES.md §1):
  * the shared note, your private note, where it fits.
@@ -498,6 +603,14 @@ function PlaceCard({
 	const hook = useNotePreview(
 		active ? { kind: "node", nodeId: node.id } : null,
 	);
+	const notes = useCardNotes(node.id, !wide && near);
+	// The notes box on a narrow card; its being open follows (never the text).
+	const [notesOpen, setNotesOpen] = useFollowState(
+		"places.notes",
+		false,
+		bool,
+		{ enabled: active && !wide },
+	);
 	const { links } = usePlaceMedia(node);
 	const line =
 		hook ?? links.find((m) => m.title)?.title ?? node.description ?? null;
@@ -549,7 +662,14 @@ function PlaceCard({
 					{tag.text}
 				</span>
 			) : null}
-			{line ? (
+			{!wide && (notes.shared || notes.mine) ? (
+				<CardNotes
+					notes={notes}
+					line={line}
+					open={notesOpen}
+					onOpen={setNotesOpen}
+				/>
+			) : line ? (
 				<p className="line-clamp-2 text-sm text-neutral-300">{line}</p>
 			) : null}
 			<div className="flex flex-col gap-0.5">
