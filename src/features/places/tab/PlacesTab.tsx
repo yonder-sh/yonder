@@ -11,21 +11,18 @@
  *   any day has a city, what the shortlist needs (decided in the Plan).
  * With no places yet, every step shows the empty state that teaches the flow.
  * The step is the URL's view (`pv`); with none the tab picks the most useful
- * one (`pickStep`) and writes it in. Opening a place docks its details
- * beside the table, board or schedule (the content narrows and keeps
- * scrolling; nothing is covered).
+ * one (`pickStep`) and writes it in. Opening a place opens its panel where
+ * the shell shows any selection (on desktop the details pane at the right
+ * edge; the content narrows and keeps scrolling, nothing is covered).
  *
  * Wide: with the map hidden (the shell's one "Hide the map", for every tab)
- * the tab takes its space and docks the details; with the map showing, the
- * details open over the map instead (the shell's floating inspector slot
- * shows the same `PlaceDetails`). On a tablet the Rate step always takes the
- * map's space (beside the map, the feed was a narrow column).
+ * the tab takes its space. On a tablet the Rate step always takes the map's
+ * space (beside the map, the feed was a narrow column).
  */
 import { cn } from "cn";
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { EmptyState } from "@/components/common/empty-state";
 import { PlaceFilterSummary } from "@/features/outline/FilterMenu";
-import { InspectorBody } from "@/features/shell/InspectorBody";
 import { useShell } from "@/features/shell/shell-store";
 import { TabPurpose } from "@/features/shell/TabPurpose";
 import { useBreakpoint } from "@/features/shell/use-breakpoint";
@@ -168,21 +165,17 @@ function RateStep({ data, phone }: { data: PlacesData; phone: boolean }) {
 function Body({
 	data,
 	step,
-	wide,
 	phone,
 	onStep,
 	tally,
 }: {
 	data: PlacesData;
 	step: FlowStep;
-	wide: boolean;
 	phone: boolean;
 	onStep: (s: FlowStep) => void;
 	tally: ReturnType<typeof flowTally>;
 }) {
-	const { sel, nav } = useWorkspace();
 	const view = data.state.view;
-	const row = sel?.kind === "node" ? data.byId.get(sel.id) : undefined;
 	if (data.rows.length === 0) return <FlowEmpty />;
 	if (step === "rate") return <RateStep data={data} phone={phone} />;
 	if (step === "review" && view === "map")
@@ -211,15 +204,6 @@ function Body({
 					<PlacesTable data={data} narrow={phone} />
 				)}
 			</div>
-			{/* Docked, never over the columns; with the map showing it opens there. */}
-			{row && wide ? (
-				<aside
-					aria-label="Place details"
-					className="flex w-[min(400px,45%)] shrink-0 flex-col border-l bg-card animate-in fade-in-0 slide-in-from-right-2 duration-150 motion-reduce:animate-none"
-				>
-					<InspectorBody onClose={() => nav.select(null)} className="h-full" />
-				</aside>
-			) : null}
 		</div>
 	);
 }
@@ -297,7 +281,6 @@ export function PlacesTab({ phone = false }: { phone?: boolean }) {
 				<Body
 					data={data}
 					step={step}
-					wide={takesMap && !phone}
 					phone={phone}
 					onStep={onStep}
 					tally={tally}

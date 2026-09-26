@@ -24,7 +24,7 @@
  */
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "cn";
-import { X } from "lucide-react";
+import { PanelRightClose, X } from "lucide-react";
 import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { Crumbs } from "@/components/common/crumbs";
 import { TypeGlyph } from "@/components/common/glyphs";
@@ -126,6 +126,8 @@ function TabCount({ n }: { n: number }) {
 
 type InspectorProps = {
 	onClose?: () => void;
+	/** Docked (DetailsPane): fold it to its rail, keeping the selection. */
+	onCollapse?: () => void;
 	className?: string;
 	/** A bar above everything (the Places map's "← All places"). */
 	top?: ReactNode;
@@ -180,6 +182,7 @@ function PlaceHeader({ node }: { node: GraphNode }) {
 
 function Body({
 	onClose,
+	onCollapse,
 	className,
 	top,
 	place,
@@ -255,6 +258,18 @@ function Body({
 						title={typeof header.title === "string" ? header.title : null}
 					/>
 				</div>
+				{onCollapse ? (
+					<button
+						type="button"
+						onClick={onCollapse}
+						aria-label="Fold the details"
+						title="Fold the details"
+						data-testid={SHELL_TESTID.detailsCollapse}
+						className="-mt-0.5 rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
+					>
+						<PanelRightClose className="size-4" />
+					</button>
+				) : null}
 				{onClose ? (
 					<button
 						type="button"

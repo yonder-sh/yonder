@@ -1,22 +1,18 @@
 /**
  * The map pane: WP-Map's lazily loaded `TripMap` (maplibre is big and
- * client-only), with the floating inspector over it on xl/lg and, on the
- * desktop, "Hide the map" in its top-left corner.
+ * client-only), with, on the desktop, "Hide the map" in its top-left corner.
+ * The details are beside it, never over it (`DetailsPane`).
  */
 import { lazy, Suspense } from "react";
-import { FloatingInspector } from "./FloatingInspector";
 import { MapHideButton } from "./PanelToggles";
 
 const TripMap = lazy(() => import("@/features/map/TripMap"));
 
 export function MapRegion({
 	variant,
-	inspector,
 	hideable = false,
 }: {
 	variant: "desktop" | "mobile";
-	/** Floating inspector width, or null when the inspector lives elsewhere (md Sheet, mobile drawer). */
-	inspector: number | null;
 	/** The desktop map can be hidden (`useShell().toggleMap`). */
 	hideable?: boolean;
 }) {
@@ -33,7 +29,6 @@ export function MapRegion({
 				<TripMap variant={variant} />
 			</Suspense>
 			{hideable ? <MapHideButton /> : null}
-			{inspector ? <FloatingInspector width={inspector} /> : null}
 		</div>
 	);
 }

@@ -121,8 +121,11 @@ function Rail({
 	);
 }
 
-/** xl, the Outline hidden: its rail at the left edge. */
-export function OutlineRail() {
+/**
+ * xl, the Outline hidden: its rail at the left edge. `onShow` when it's
+ * folded for the details pane (showing it folds the pane instead).
+ */
+export function OutlineRail({ onShow }: { onShow?: () => void } = {}) {
 	const toggle = useShell((s) => s.toggleOutline);
 	return (
 		<Rail
@@ -131,15 +134,18 @@ export function OutlineRail() {
 			word="Outline"
 			icon={<PanelLeftOpen className="size-4" />}
 			keys={[MOD, "\\"]}
-			onShow={toggle}
+			onShow={onShow ?? toggle}
 			testId={SHELL_TESTID.outlineRail}
 			buttonTestId={SHELL_TESTID.outlineShow}
 		/>
 	);
 }
 
-/** The map hidden: its rail at the right edge. */
-export function MapRail() {
+/**
+ * The map hidden: its rail at the right edge. `onShow` when it's folded for
+ * the details pane (showing it folds the pane instead).
+ */
+export function MapRail({ onShow }: { onShow?: () => void } = {}) {
 	const toggle = useShell((s) => s.toggleMap);
 	return (
 		<Rail
@@ -148,7 +154,7 @@ export function MapRail() {
 			word="Map"
 			icon={<PanelRightOpen className="size-4" />}
 			keys={[MOD, SHIFT, "\\"]}
-			onShow={toggle}
+			onShow={onShow ?? toggle}
 			testId={SHELL_TESTID.mapRail}
 			buttonTestId={SHELL_TESTID.mapShow}
 		/>

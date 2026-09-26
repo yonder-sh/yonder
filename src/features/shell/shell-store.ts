@@ -3,14 +3,25 @@
  * feature state stays in `useUi()` (F); this store is for chrome only the
  * shell renders, so no other package needs to know about it.
  *
- * The Outline collapse (⌘\, DESIGN §4.2) and the hidden map (⌘⇧\) are
- * personal layout: remembered per device in localStorage, like the pane
- * sizes, and never followed.
+ * The Outline collapse (⌘\, DESIGN §4.2), the hidden map (⌘⇧\) and the
+ * details pane's width are personal layout: remembered per device in
+ * localStorage, like the pane sizes, and never followed. The details pane
+ * folded to its rail lasts until the next selection.
  */
 import { create } from "zustand";
 
 export const OUTLINE_KEY = "yonder:outline-collapsed";
 export const MAP_HIDDEN_KEY = "yonder:map-hidden";
+export const DETAILS_WIDTH_KEY = "yonder:details-width";
+
+function readWidth(): number | null {
+	try {
+		const n = Number(globalThis.localStorage?.getItem(DETAILS_WIDTH_KEY));
+		return n > 0 ? n : null;
+	} catch {
+		return null;
+	}
+}
 
 function readFlag(key: string): boolean {
 	try {
@@ -36,6 +47,15 @@ export type ShellState = {
 	/** The map hidden (md and up, ⌘⇧\): the centre takes its width. */
 	mapHidden: boolean;
 	toggleMap(): void;
+	/** The docked details pane's width (lg/xl), or null for the default. */
+	detailsWidth: number | null;
+	setDetailsWidth(w: number): void;
+	/**
+	 * The selection (serialized) whose details pane is folded to its rail;
+	 * any other selection shows it unfolded.
+	 */
+	detailsFoldedFor: string | null;
+	foldDetails(sel: string | null): void;
 	/** The `?` shortcuts sheet. */
 	shortcutsOpen: boolean;
 	setShortcutsOpen(v: boolean): void;
@@ -83,6 +103,20 @@ export const useShell = create<ShellState>()((set, get) => ({
 		writeFlag(MAP_HIDDEN_KEY, next);
 		set({ mapHidden: next });
 	},
+	detailsWidth: readWidth(),
+	setDetailsWidth: (w) => {
+		try {
+			globalThis.localStorage?.setItem(
+				DETAILS_WIDTH_KEY,
+				String(Math.round(w)),
+			);
+		} catch {
+			// storage unavailable: the width just isn't remembered
+		}
+		set({ detailsWidth: w });
+	},
+	detailsFoldedFor: null,
+	foldDetails: (detailsFoldedFor) => set({ detailsFoldedFor }),
 	shortcutsOpen: false,
 	setShortcutsOpen: (shortcutsOpen) => set({ shortcutsOpen }),
 	activityOpen: false,

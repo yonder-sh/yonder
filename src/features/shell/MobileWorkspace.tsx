@@ -519,7 +519,7 @@ export function MobileWorkspace() {
 	return (
 		<div className="relative h-svh overflow-hidden bg-basemap-land">
 			<div className="absolute inset-0">
-				<MapRegion variant="mobile" inspector={null} />
+				<MapRegion variant="mobile" />
 			</div>
 			<MobilePills />
 			<div className="absolute inset-x-3 top-[120px] z-30">

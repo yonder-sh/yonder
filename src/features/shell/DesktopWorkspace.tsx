@@ -1,7 +1,13 @@
 /**
  * DESIGN §5 desktop layouts:
- * - xl ≥ 1280: Outline 264 (hidden to a rail from its header or ⌘\; the popover takes over) | centre 520 (resizable 440–720, persisted) | map with the floating inspector (420)
- * - lg: Outline in a popover (top bar), centre 460, map, floating inspector (380)
+ * - xl ≥ 1280: Outline 264 (hidden to a rail from its header or ⌘\; the popover takes over) | centre 520 (resizable 440–720, persisted) | map | details
+ * - lg: Outline in a popover (top bar), centre 460, map, details
+ * - The details (lg/xl, owner 2026-09-26): a selection's panel docks as a
+ *   pane at the right edge (`DetailsPane`: resizable, folds to a rail), the
+ *   map giving up the width. Without room for the list, the map and the
+ *   pane, the Outline folds to its rail while it's open; still without, the
+ *   map does (its rail's "Show the map" folds the pane instead). Your own
+ *   Outline and map settings stay as they are.
  * - md: centre 55% | map 45%, inspector in a right Sheet (420)
  * - The map hides from its corner or ⌘⇧\ (md and up): the centre takes its
  *   width, a rail at the right edge brings it back, the inspector docks
@@ -11,7 +17,7 @@
  *   inspector's space as one scrolling page, at every width; a selection
  *   shows in the right Sheet.
  */
-import { useMemo } from "react";
+import { useMemo, useRef, useSyncExternalStore } from "react";
 import { useDefaultLayout } from "react-resizable-panels";
 import {
 	ResizableHandle,
@@ -33,6 +39,7 @@ import { TESTID } from "@/lib/testids";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { CenterPanel } from "./CenterPanel";
 import { SpotlightBar } from "./cursors/presence-ui";
+import { DetailsPane, useDetailsFold, useDetailsWidth } from "./DetailsPane";
 import { FollowBar } from "./FollowBar";
 import { InspectorBody } from "./InspectorBody";
 import { MapRegion } from "./MapRegion";
@@ -53,6 +60,22 @@ function useOverviewTakesAll(): boolean {
 const OUTLINE_PX = 264;
 const RAIL_PX = 40;
 const DIVIDER_PX = 1;
+/** The centre's and the map's narrowest (their panels' `minSize`). */
+const CENTER_MIN = 440;
+const MAP_MIN = 320;
+
+function subscribeResize(cb: () => void) {
+	window.addEventListener("resize", cb);
+	return () => window.removeEventListener("resize", cb);
+}
+
+function useWindowWidth(): number {
+	return useSyncExternalStore(
+		subscribeResize,
+		() => window.innerWidth,
+		() => 1440,
+	);
+}
 
 function safeStorage(): Storage | undefined {
 	try {
@@ -68,18 +91,11 @@ function safeStorage(): Storage | undefined {
  * below any cover photo); Radix's corner ✕ would sit on the cover, ink on a
  * dark photo, and vanish (VIS-13).
  */
-export function InspectorSheet({
-	placesDocked = false,
-}: {
-	/** The Places tab docks its own places' details (wide mode). */
-	placesDocked?: boolean;
-} = {}) {
-	const { sel, nav, tab } = useWorkspace();
-	const places = tab === "places" && sel?.kind === "node";
-	const docked = useIsPlacesRow(placesDocked && places ? sel.id : null);
+export function InspectorSheet() {
+	const { sel, nav } = useWorkspace();
 	return (
 		<Sheet
-			open={sel !== null && !docked}
+			open={sel !== null}
 			onOpenChange={(open) => !open && nav.select(null)}
 		>
 			<SheetContent
@@ -95,27 +111,6 @@ export function InspectorSheet({
 	);
 }
 
-/**
- * lg/xl with the map hidden: the inspector docks beside the centre, as the
- * Places tab docks its places' details (those it leaves to the tab).
- */
-function DockedInspector({ width }: { width: number }) {
-	const { sel, nav, tab } = useWorkspace();
-	const places = tab === "places" && sel?.kind === "node";
-	const docked = useIsPlacesRow(places ? sel.id : null);
-	if (!sel || docked) return null;
-	return (
-		<aside
-			data-testid={TESTID.inspector}
-			aria-label="Details"
-			className="flex shrink-0 flex-col overflow-hidden border-l bg-card animate-in fade-in-0 slide-in-from-right-2 duration-150 motion-reduce:animate-none"
-			style={{ width }}
-		>
-			<InspectorBody onClose={() => nav.select(null)} />
-		</aside>
-	);
-}
-
 export function DesktopWorkspace({ bp }: { bp: Exclude<Breakpoint, "sm"> }) {
 	const outlineCollapsed = useShell((s) => s.outlineCollapsed);
 	const mapHidden = useShell((s) => s.mapHidden);
@@ -124,21 +119,47 @@ export function DesktopWorkspace({ bp }: { bp: Exclude<Breakpoint, "sm"> }) {
 	// A tablet's Rate feed takes the map's space too (PlacesTab).
 	const rateFeed = usePlacesRateTakesMap();
 	const overview = useOverviewTakesAll();
+	const { sel } = useWorkspace();
+	const winW = useWindowWidth();
+	const detailsW = useDetailsWidth(bp === "xl" ? "xl" : "lg");
+	const { folded: collapsed, fold } = useDetailsFold();
+	// The Places Map view shows its own place's panel beside its map.
+	const mapPlace = useIsPlacesRow(
+		placesMap && sel?.kind === "node" ? sel.id : null,
+	);
+	const details =
+		(bp === "lg" || bp === "xl") && !overview && sel !== null && !mapPlace;
+	const mapShown = !(mapHidden || placesMap || rateFeed);
+	// What's left for the pane beside a left column this wide, with or without the map.
+	const room = (left: number, map: boolean) =>
+		winW - left - DIVIDER_PX - CENTER_MIN - (map ? MAP_MIN : 0);
+	const outlineW = bp !== "xl" ? 0 : outlineCollapsed ? RAIL_PX : OUTLINE_PX;
+	const paneW = collapsed ? RAIL_PX : detailsW;
+	const tight = details && !collapsed && room(outlineW, mapShown) < paneW;
+	// No room for the list, the map and the pane: the Outline folds first…
+	const foldOutline =
+		tight &&
+		mapShown &&
+		bp === "xl" &&
+		!outlineCollapsed &&
+		room(RAIL_PX, true) >= paneW;
+	// …and without room still, the map.
+	const foldMap = tight && mapShown && !foldOutline;
+	const withMap = mapShown && !foldMap;
+	const left = foldOutline ? RAIL_PX : outlineW;
+	const docked = details;
 	// The centre's width in pixels: the panes share the window less the xl
-	// left column and the divider.
+	// left column, the details and the divider.
+	const shared = useRef({ left, pane: 0 });
+	shared.current = { left, pane: docked ? paneW : 0 };
 	const storage = useMemo(
 		() =>
 			pixelLayoutStorage(safeStorage(), () => {
 				if (typeof window === "undefined") return 0;
-				const left =
-					bp !== "xl"
-						? 0
-						: useShell.getState().outlineCollapsed
-							? RAIL_PX
-							: OUTLINE_PX;
-				return window.innerWidth - left - DIVIDER_PX;
+				const { left, pane } = shared.current;
+				return window.innerWidth - left - pane - DIVIDER_PX;
 			}),
-		[bp],
+		[],
 	);
 	const { defaultLayout, onLayoutChanged } = useDefaultLayout({
 		id: `${BRAND.storage.layout}:${bp}`,
@@ -155,8 +176,9 @@ export function DesktopWorkspace({ bp }: { bp: Exclude<Breakpoint, "sm"> }) {
 			<OfflineBanner />
 			<GuestNudge />
 			<div className="flex min-h-0 flex-1">
-				{bp !== "xl" ? null : outlineCollapsed ? (
-					<OutlineRail />
+				{bp !== "xl" ? null : outlineCollapsed || foldOutline ? (
+					// Folded for the details: showing it folds them instead.
+					<OutlineRail onShow={foldOutline ? fold : undefined} />
 				) : (
 					<aside
 						aria-label="Outline"
@@ -174,19 +196,25 @@ export function DesktopWorkspace({ bp }: { bp: Exclude<Breakpoint, "sm"> }) {
 						</div>
 						<InspectorSheet />
 					</>
-				) : mapHidden || placesMap || rateFeed ? (
+				) : mapHidden || placesMap || rateFeed || foldMap ? (
 					<>
 						<div className="h-full min-w-0 flex-1">
 							<CenterPanel />
 						</div>
 						{bp === "md" ? (
-							<InspectorSheet placesDocked />
-						) : (
-							<DockedInspector width={bp === "xl" ? 420 : 380} />
-						)}
+							<InspectorSheet />
+						) : details ? (
+							<DetailsPane
+								width={detailsW}
+								maxWidth={detailsW + room(left, false)}
+							/>
+						) : null}
 						{/* The Places Map view is the map here, and the Rate feed has
-						    it on a tablet: nothing to bring back. */}
-						{placesMap || rateFeed ? null : <MapRail />}
+						    it on a tablet: nothing to bring back. Folded for the
+						    details, showing it folds them instead. */}
+						{placesMap || rateFeed ? null : (
+							<MapRail onShow={foldMap ? fold : undefined} />
+						)}
 					</>
 				) : bp === "md" ? (
 					// The centre's box matches the hidden-map layout's: hiding keeps its state.
@@ -195,7 +223,7 @@ export function DesktopWorkspace({ bp }: { bp: Exclude<Breakpoint, "sm"> }) {
 							<CenterPanel />
 						</div>
 						<div className="h-full min-w-0 flex-1">
-							<MapRegion variant="desktop" inspector={null} hideable />
+							<MapRegion variant="desktop" hideable />
 						</div>
 						<InspectorSheet />
 					</>
@@ -218,14 +246,16 @@ export function DesktopWorkspace({ bp }: { bp: Exclude<Breakpoint, "sm"> }) {
 						</ResizablePanel>
 						<ResizableHandle className="hover:bg-primary/40 hover:after:w-[3px]" />
 						<ResizablePanel id="map" minSize={320}>
-							<MapRegion
-								variant="desktop"
-								inspector={bp === "xl" ? 420 : 380}
-								hideable
-							/>
+							<MapRegion variant="desktop" hideable />
 						</ResizablePanel>
 					</ResizablePanelGroup>
 				)}
+				{withMap && bp !== "md" && !overview && docked ? (
+					<DetailsPane
+						width={detailsW}
+						maxWidth={detailsW + room(left, true)}
+					/>
+				) : null}
 			</div>
 		</div>
 	);

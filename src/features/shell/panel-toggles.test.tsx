@@ -1,7 +1,9 @@
 /**
  * The desktop side panels (owner, 2026-09-25): the Outline and the map hide
  * to slim rails, by their buttons or ⌘\ / ⌘⇧\, remembered on this device;
- * with the map hidden the centre (and the Places tab) takes its width.
+ * with the map hidden the centre (and the Places tab) takes its width. The
+ * details dock as a pane at the right (2026-09-26), folding the Outline,
+ * then the map, where there's no room.
  */
 import { act, fireEvent, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -176,5 +178,92 @@ describe("shortcuts", () => {
 		const map = SHORTCUTS.find((s) => s.label === "Show or hide the map");
 		expect(map?.keys.at(-1)).toBe("\\");
 		expect(map?.keys).toHaveLength(3);
+	});
+});
+
+describe("the details pane (lg/xl)", () => {
+	const setWidth = (w: number) =>
+		Object.defineProperty(window, "innerWidth", {
+			value: w,
+			configurable: true,
+		});
+	const real = window.innerWidth;
+	afterEach(() => {
+		setWidth(real);
+		act(() =>
+			useShell.setState({ detailsFoldedFor: null, detailsWidth: null }),
+		);
+	});
+	const day = (ws: () => { ix: { days: readonly { id: string }[] } }) =>
+		ws().ix.days[0]?.id ?? "";
+
+	it("docks beside the map (not over it), folds to a rail with its name, and a new selection unfolds it", () => {
+		setWidth(1600);
+		const { ws } = renderWithWorkspace(desktop("xl"), {
+			search: { tab: "plan", lens: "place" },
+		});
+		act(() => ws().nav.select({ kind: "day", id: day(ws) }));
+		const pane = screen.getByTestId(TESTID.inspector);
+		expect(pane.className).not.toContain("absolute");
+		expect(pane.style.width).toBe("400px");
+		expect(screen.getByTestId(SHELL_TESTID.outlineAside)).toBeInTheDocument();
+
+		fireEvent.click(screen.getByTestId(SHELL_TESTID.detailsCollapse));
+		expect(screen.queryByTestId(TESTID.inspector)).toBeNull();
+		const rail = screen.getByTestId(SHELL_TESTID.detailsRail);
+		expect(within(rail).getByRole("button").getAttribute("aria-label")).toMatch(
+			/^Show the details of /,
+		);
+		// The selection stays; another one opens the pane again.
+		expect(ws().sel).not.toBeNull();
+		act(() => ws().nav.select({ kind: "day", id: ws().ix.days[1]?.id ?? "" }));
+		expect(screen.getByTestId(TESTID.inspector)).toBeInTheDocument();
+	});
+
+	it("resizes from its edge (← / →), remembered on this device", () => {
+		setWidth(1600);
+		const { ws } = renderWithWorkspace(desktop("xl"), {
+			search: { tab: "plan", lens: "place" },
+		});
+		act(() => ws().nav.select({ kind: "day", id: day(ws) }));
+		fireEvent.keyDown(screen.getByTestId(SHELL_TESTID.detailsResize), {
+			key: "ArrowLeft",
+		});
+		expect(screen.getByTestId(TESTID.inspector).style.width).toBe("416px");
+		expect(localStorage.getItem("yonder:details-width")).toBe("416");
+	});
+
+	it("at 1280 px the Outline folds while it's open; showing the Outline folds the pane instead", () => {
+		setWidth(1280);
+		const { ws } = renderWithWorkspace(desktop("xl"), {
+			search: { tab: "plan", lens: "place" },
+		});
+		expect(screen.getByTestId(SHELL_TESTID.outlineAside)).toBeInTheDocument();
+		act(() => ws().nav.select({ kind: "day", id: day(ws) }));
+		expect(screen.queryByTestId(SHELL_TESTID.outlineAside)).toBeNull();
+		expect(screen.getByTestId(TESTID.inspector).className).not.toContain(
+			"absolute",
+		);
+		fireEvent.click(screen.getByRole("button", { name: "Show the outline" }));
+		expect(screen.getByTestId(SHELL_TESTID.outlineAside)).toBeInTheDocument();
+		expect(screen.getByTestId(SHELL_TESTID.detailsRail)).toBeInTheDocument();
+		// Your own Outline setting is untouched.
+		expect(localStorage.getItem(OUTLINE_KEY)).toBeNull();
+	});
+
+	it("without room for the list, the map and the pane, the map folds; showing it folds the pane instead", () => {
+		setWidth(1100);
+		const { ws } = renderWithWorkspace(desktop("lg"), {
+			search: { tab: "plan", lens: "place" },
+		});
+		expect(screen.getByRole("button", { name: "Hide the map" })).toBeTruthy();
+		act(() => ws().nav.select({ kind: "day", id: day(ws) }));
+		expect(screen.getByTestId(SHELL_TESTID.mapRail)).toBeInTheDocument();
+		expect(screen.getByTestId(TESTID.inspector).style.width).toBe("380px");
+		fireEvent.click(screen.getByRole("button", { name: "Show the map" }));
+		expect(screen.getByTestId(SHELL_TESTID.detailsRail)).toBeInTheDocument();
+		expect(screen.queryByTestId(SHELL_TESTID.mapRail)).toBeNull();
+		// Your own map setting is untouched.
+		expect(localStorage.getItem(MAP_HIDDEN_KEY)).toBeNull();
 	});
 });
