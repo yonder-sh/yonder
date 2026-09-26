@@ -5,14 +5,17 @@
  *
  * Every piece of view state is either in the URL (linkable: `view.path`) or
  * here, ephemeral, on the trip's channel awareness:
- * - `view.ui` (FB-21a/d): plan folds, the lists/money sub-views, the open
- *   note… Small, low-frequency; it rides with `view` (debounced).
+ * - `view.ui` (FB-21a/d): every screen's view state beyond the URL (plan
+ *   folds, sub-tabs, open sections, groupings, the open note…) as small
+ *   `<part>.<name>` keys. Low-frequency; it rides with `view` (debounced).
  * - `cam` (FB-22): the map camera (center, zoom, bearing, pitch, globe) and
  *   the size of the area it frames, so a follower can FIT the same view.
  * - `media` (FB-21c): the open lightbox / PDF item and video play state.
  * - `drag` (FB-23): what I am dragging and where it would land.
  * - `form` (FB-24): the editor / dialog I have open (never field values).
  * - `menu` (FB-25): my open context / ⋯ menu as plain-text labels.
+ * - `look`: what I see of each scrolling list (its top and bottom items)
+ *   and whether I'm on the map or the panel, so a follower sees the same.
  *
  * The collab server validates each one with these schemas (`collab/cursors.ts`),
  * rate-limits it per connection, drops anything anchored on a private thing
@@ -45,6 +48,8 @@ export const RATES = {
 	form: { burst: 12, perS: 3 },
 	/** `menu`: open, the hovered entry, close. */
 	menu: { burst: 30, perS: 12 },
+	/** `look`: the client sends at most every LOOK_SEND_MS while scrolling. */
+	look: { burst: 16, perS: 6 },
 } as const satisfies Record<string, { burst: number; perS: number }>;
 export type RateField = keyof typeof RATES;
 
@@ -56,7 +61,7 @@ export type RateField = keyof typeof RATES;
 export const UI_KEY_RE = /^[A-Za-z0-9:#._|>-]{1,120}$/;
 /** At most this many keys per fold list (more are dropped by the sender). */
 export const MAX_UI_KEYS = 48;
-/** A serialized `view.ui` above this is dropped whole by the server. */
+/** A serialized `view.ui` is cut to this (the least recently changed keys go). */
 export const MAX_UI_JSON = 3_000;
 
 const Keys = z.array(z.string().regex(UI_KEY_RE)).max(MAX_UI_KEYS);
@@ -79,75 +84,106 @@ export const PlanFolds = z.object({
 });
 export type PlanFolds = z.infer<typeof PlanFolds>;
 
-/** Short enum-like values (sort orders, groupings, sub-views). */
-const Word = z.string().regex(/^[a-z0-9-]{1,24}$/);
-/** At most this many fields in one flat part. */
-export const MAX_UI_FIELDS = 12;
-
 /**
- * A flat part: a few named switches of one screen (`group: "place"`,
- * `near: true`, `who: <memberId>`). Names are short camel-case words; values
- * booleans, short words or uuids — never free text.
+ * Everything else a screen shows beyond the URL, as `<part>.<name>` keys
+ * (`lists.group`, `plan.split.open`) with small values: a boolean, a number,
+ * a short word or id, null, or a short list of ids. Strings never carry
+ * free text (no spaces, no markup), so a typed value can't travel here.
  */
-const Flat = z
-	.record(
-		z.string().regex(/^[a-z][a-zA-Z]{0,15}$/),
-		z.union([z.boolean(), Word, Uuid]),
-	)
-	.refine((r) => Object.keys(r).length <= MAX_UI_FIELDS, "too many fields");
+export const UI_PATH_RE = /^[a-z][a-zA-Z0-9]{0,23}(\.[a-zA-Z0-9-]{1,40}){1,2}$/;
+/** A string value: a word, an id, an anchor id (`list:<id>`) or empty. */
+export const UI_STR_RE = /^[A-Za-z0-9:#._|>-]{0,120}$/;
+/** At most this many keys (the Plan's folds count as one). */
+export const MAX_UI_ENTRIES = 64;
 
-/**
- * Ephemeral view state beyond the URL. Every part is optional: a part is
- * present while the component that owns it is on screen. `money` never
- * reaches a link guest (`guestView`).
- */
-export const ViewUi = z.object({
-	plan: PlanFolds.optional(),
-	/** Lists (FB-21d): the list, grouping, "Near", dropped rows, the inspector's scope. */
-	lists: Flat.optional(),
-	/** Money (FB-21d): the breakdown's grouping, the budget view. Members only. */
-	money: Flat.optional(),
-	/** Media (FB-21d): the inspector's scope and filter. */
-	media: Flat.optional(),
-	/** Notes (FB-21d): the inspector's "This visit only". */
-	notes: Flat.optional(),
-	/** The map (FB-21d): the layer panel, what it shows, the day mode. */
-	map: Flat.optional(),
-	/** The Outline (FB-21d): its level, the Ideas bin and its sort. */
-	outline: Flat.optional(),
-	/** The Places tab (docs/PLACES.md): the Rate feed's card in view. */
-	places: Flat.optional(),
-});
-export type ViewUi = z.infer<typeof ViewUi>;
-/** The flat parts (`<part>.<field>` paths). */
-export type FlatPart = Exclude<keyof ViewUi, "plan">;
-export type FlatValue = boolean | string;
+export type UiValue = boolean | number | string | null | readonly string[];
 
-/** A `view.ui` as it may travel: validated and small, else null. */
-export function cleanViewUi(raw: unknown): ViewUi | null {
-	const r = ViewUi.safeParse(raw);
-	if (!r.success) return null;
-	try {
-		if (JSON.stringify(r.data).length > MAX_UI_JSON) return null;
-	} catch {
-		return null;
-	}
-	return r.data;
+/** One value as it may travel. */
+export const UiValue = z.union([
+	z.boolean(),
+	z.number().finite().min(-1e9).max(1e9),
+	z.string().regex(UI_STR_RE),
+	z.null(),
+	Keys,
+]);
+
+/** `view.ui`: the Plan's folds, and every other key (see UI_PATH_RE). */
+export type ViewUi = { plan?: PlanFolds } & { [path: string]: unknown };
+export const ViewUi = z
+	.object({ plan: PlanFolds.optional() })
+	.catchall(UiValue) as unknown as z.ZodType<ViewUi>;
+
+/** Members only, whoever sends it: the money views (`money.*`). */
+export function isMembersPath(path: string): boolean {
+	return path.startsWith("money.");
 }
 
 /**
- * My `view.ui` for the wire: each part that validates, in a fixed order,
- * as long as the whole stays under MAX_UI_JSON (a part that would overflow
- * it is left out rather than losing everything).
+ * A `view.ui` as it may travel: each key checked on its own (a bad one is
+ * left out, never the whole), then cut from the end to MAX_UI_ENTRIES and
+ * MAX_UI_JSON (the sender puts its most recently changed keys first).
  */
-export function fitViewUi(parts: Record<string, unknown>): ViewUi {
+export function cleanViewUi(raw: unknown): ViewUi {
 	const out: Record<string, unknown> = {};
-	for (const key of Object.keys(ViewUi.shape).sort()) {
-		if (parts[key] === undefined) continue;
-		const next = cleanViewUi({ ...out, [key]: parts[key] });
-		if (next) out[key] = (next as Record<string, unknown>)[key];
+	if (!raw || typeof raw !== "object" || Array.isArray(raw)) return out;
+	let n = 0;
+	for (const [path, value] of Object.entries(raw)) {
+		if (n >= MAX_UI_ENTRIES) break;
+		if (path === "plan") {
+			const f = PlanFolds.safeParse(value);
+			if (!f.success) continue;
+			out.plan = f.data;
+		} else {
+			if (path.length > 64 || !UI_PATH_RE.test(path)) continue;
+			const v = UiValue.safeParse(value);
+			if (!v.success) continue;
+			out[path] = v.data;
+		}
+		n += 1;
 	}
-	return out as ViewUi;
+	return capUi(out);
+}
+
+/** Drops keys from the end until the JSON fits MAX_UI_JSON. */
+function capUi(ui: Record<string, unknown>): ViewUi {
+	let json = JSON.stringify(ui);
+	if (json.length <= MAX_UI_JSON) return ui;
+	const keys = Object.keys(ui);
+	const out = { ...ui };
+	while (keys.length && json.length > MAX_UI_JSON) {
+		const k = keys.pop() as string;
+		delete out[k];
+		json = JSON.stringify(out);
+	}
+	return out;
+}
+
+/**
+ * My `view.ui` for the wire: the most recently changed keys first, each one
+ * that validates, as long as the whole fits (the least recently changed are
+ * left out rather than losing everything).
+ */
+export function fitViewUi(
+	entries: Readonly<Record<string, unknown>>,
+	at: Readonly<Record<string, number>> = {},
+): ViewUi {
+	const keys = Object.keys(entries).sort(
+		(a, b) => (at[b] ?? 0) - (at[a] ?? 0) || (a < b ? -1 : a > b ? 1 : 0),
+	);
+	const out: Record<string, unknown> = {};
+	let size = 2;
+	let n = 0;
+	for (const key of keys) {
+		if (n >= MAX_UI_ENTRIES) break;
+		const one = cleanViewUi({ [key]: entries[key] });
+		if (!(key in one)) continue;
+		const add = JSON.stringify({ [key]: one[key] }).length - 1;
+		if (size + add > MAX_UI_JSON) continue;
+		out[key] = one[key];
+		size += add;
+		n += 1;
+	}
+	return out;
 }
 
 /** Keys for the wire: at most MAX_UI_KEYS valid ones, sorted (stable JSON). */
@@ -326,6 +362,66 @@ export function expectedVideoTime(p: MediaPlay, sinceS: number): number {
 /** True when a follower's video must seek to catch up. */
 export function videoOff(current: number, expected: number): boolean {
 	return Math.abs(current - expected) > VIDEO_DRIFT_S;
+}
+
+// ---------------------------------------------------------------------------
+// look: the part of each scrolling list I see, and map or panel
+// ---------------------------------------------------------------------------
+
+/** The client sends `look` at most this often (ms). */
+export const LOOK_SEND_MS = 200;
+/** At most this many scrolling areas. */
+export const MAX_LOOK_RANGES = 4;
+
+/**
+ * Where my attention is: the map or the panel (a desktop, from my last
+ * click, wheel or touch), or a phone's sheet: at its peek (`map`), half
+ * or full. A phone follower's sheet goes there.
+ */
+export const LOOK_FOCUS = ["map", "panel", "half", "full"] as const;
+export type LookFocus = (typeof LOOK_FOCUS)[number];
+
+/** Anchors that are chrome (a whole pane, a tab, a menu), not an item in a list. */
+const CHROME_KINDS: readonly string[] = ["pane", "tab", "menu", "insp"];
+
+/** True for an item a scroll can aim at (a card, a row, a section). */
+export function isItemAnchor(id: string): boolean {
+	const k = anchorKind(id);
+	return k !== null && !CHROME_KINDS.includes(k);
+}
+
+const ItemAnchorId = z
+	.string()
+	.max(MAX_ANCHOR_ID)
+	.refine(isItemAnchor, "item anchor");
+
+/** An item and how far down it an edge of my view falls (0 = its top). */
+const LookSpot = z.object({
+	id: ItemAnchorId,
+	fy: z.number().finite().min(0).max(1),
+});
+
+/** One scrolling area: the items at the top and bottom edges of what I see. */
+export const LookRange = z.object({
+	t: LookSpot,
+	b: LookSpot,
+	/** Who may see it (server-set). */
+	v: z.enum(CURSOR_VIS).optional(),
+});
+export type LookRange = z.infer<typeof LookRange>;
+
+export const AwarenessLook = z.object({
+	f: z.enum(LOOK_FOCUS),
+	r: z.array(LookRange).max(MAX_LOOK_RANGES),
+});
+export type AwarenessLook = z.infer<typeof AwarenessLook>;
+
+/** True when two looks say the same thing. */
+export function sameLook(
+	a: AwarenessLook | null | undefined,
+	b: AwarenessLook | null | undefined,
+): boolean {
+	return JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
 }
 
 // ---------------------------------------------------------------------------

@@ -46,7 +46,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { isRateable } from "@/features/places/lib/rate";
 import type { GraphNode } from "@/lib/engine/types";
-import { isBool, oneOf, useMirror } from "@/lib/realtime/view-ui";
+import { bool, oneOf, useFollowValue } from "@/lib/realtime/view-ui";
 import { TESTID } from "@/lib/testids";
 import { ratingOf } from "@/lib/workspace/filter-match";
 import { useUi } from "@/lib/workspace/ui-store";
@@ -257,8 +257,8 @@ function IdeasBinInner({ embedded = false }: { embedded?: boolean }) {
 		writePref(SORT_KEY, s);
 	};
 	// FB-21d: the bin's fold and sort travel with my view (not saved as a follower's).
-	useMirror("outline.ideas", open, setOpenState, isBool);
-	useMirror("outline.isort", sort, setSortState, isIdeasSort);
+	useFollowValue("outline.ideas", open, setOpenState, bool);
+	useFollowValue("outline.isort", sort, setSortState, isIdeasSort);
 	const scopeId = scope?.id ?? null;
 	const ghosts = useMemo(
 		() => (proposals.show ? ghostNodes(ix, proposals.list) : []),

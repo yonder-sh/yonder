@@ -23,10 +23,10 @@ import type { CursorGuard } from "./cursors";
  *   belongs to another user.
  * - Channel doc only (FB-17, `sanitizeAwarenessUpdateLive`): the live
  *   `cursor`, `react`, `following` and `spotlight` fields, and FB-21…25's
- *   `cam`, `media`, `drag`, `form` and `menu` (plus a rate limit on `view`)
- *   go through the CursorGuard (validated, rate-limited, private anchors
- *   dropped; see `cursors.ts`). The synchronous `sanitizeAwarenessUpdate`
- *   drops them.
+ *   `cam`, `media`, `drag`, `form`, `menu` and `look` (plus a rate limit
+ *   on `view`, and `view.ui` keys naming private things) go through the
+ *   CursorGuard (validated, rate-limited, private anchors dropped; see
+ *   `cursors.ts`). The synchronous `sanitizeAwarenessUpdate` drops them.
  */
 
 const MAX_CURSOR_JSON = 2_048;
@@ -66,12 +66,13 @@ export function sanitizeState(
 	const clean: Record<string, unknown> = { user: awarenessUser(ctx) };
 	if (ctx.docKind === "channel" && "view" in state) {
 		const raw = state.view as { ui?: unknown } | null | undefined;
-		// FB-21: `view.ui` is validated on its own (and capped in size): a bad
-		// or oversized one is dropped without losing the path.
-		const ui =
+		// FB-21: `view.ui` is validated key by key (and capped in size): a bad
+		// key is dropped without losing the rest, or the path.
+		const cleaned =
 			raw && typeof raw === "object" && "ui" in raw
 				? cleanViewUi(raw.ui)
 				: null;
+		const ui = cleaned && Object.keys(cleaned).length ? cleaned : null;
 		const view = AwarenessView.safeParse(
 			raw && typeof raw === "object" ? { ...raw, ui: undefined } : raw,
 		);

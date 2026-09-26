@@ -15,7 +15,12 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { offersRollupChoice } from "@/features/shell/bundle-target";
 import { defaultLens } from "@/lib/engine/lens";
 import type { RollupOptions } from "@/lib/engine/rollup";
-import { isBool, oneOf, useMirror } from "@/lib/realtime/view-ui";
+import {
+	bool,
+	oneOf,
+	useFollowState,
+	useFollowValue,
+} from "@/lib/realtime/view-ui";
 import type { BundleTarget } from "@/lib/schemas/targets";
 import { TESTID } from "@/lib/testids";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
@@ -46,15 +51,15 @@ export function MediaPanel({ target }: { target: BundleTarget }) {
 	const actions = useMediaActions(graph.trip.id);
 	useDocOfflineSync();
 	useWindowDropGuard();
-	const [scope, setScope] = useState<Scope>(
-		target.kind === "node" || target.kind === "trip" ? "all" : "own",
-	);
-	const [visitOnly, setVisitOnly] = useState(false);
-	const [filter, setFilter] = useState<MediaFilter | null>(null);
 	// FB-21d: the inspector's media scope and filter travel with my view.
-	useMirror("media.scope", scope, setScope, isScope);
-	useMirror("media.visit", visitOnly, setVisitOnly, isBool);
-	useMirror(
+	const [scope, setScope] = useFollowState<Scope>(
+		"media.scope",
+		target.kind === "node" || target.kind === "trip" ? "all" : "own",
+		isScope,
+	);
+	const [visitOnly, setVisitOnly] = useFollowState("media.visit", false, bool);
+	const [filter, setFilter] = useState<MediaFilter | null>(null);
+	useFollowValue(
 		"media.filter",
 		filter ?? "all",
 		(v) => setFilter(v === "all" ? null : v),

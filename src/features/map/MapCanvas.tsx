@@ -55,7 +55,12 @@ import type { Lens } from "@/lib/engine/types";
 import { buildModel } from "@/lib/engine/visits";
 import { todayIn } from "@/lib/format";
 import { usePeers, useTripAwareness } from "@/lib/realtime/presence";
-import { isBool, oneOf, useMirror } from "@/lib/realtime/view-ui";
+import {
+	bool,
+	oneOf,
+	useFollowState,
+	useFollowValue,
+} from "@/lib/realtime/view-ui";
 import { describeFilter } from "@/lib/workspace/filter-match";
 import {
 	notifyMapMoved,
@@ -544,7 +549,7 @@ export default function MapCanvas({
 	const theme = mapTone(mapStyle);
 	const palette = LINES[theme];
 	const basemap = useBasemap(mapStyle);
-	const [show, setShow] = useMapShow();
+	const [show, setShow, viewShow] = useMapShow();
 	useDayModePersistence();
 	const dayMode = useUi((s) => s.dayFilterMode);
 	const setDayMode = useUi((s) => s.setDayFilterMode);
@@ -562,28 +567,28 @@ export default function MapCanvas({
 	const peers = usePeers();
 	// FB-21d: what the map shows travels with my view; a follower mirrors it.
 	const live = ws.mode === "live";
-	useMirror(
+	useFollowValue(
 		"map.ideas",
 		show.ideas,
-		(v) => setShow({ ideas: v }),
-		isBool,
+		(v) => viewShow({ ideas: v }),
+		bool,
 		live,
 	);
-	useMirror(
+	useFollowValue(
 		"map.dropped",
 		show.dropped,
-		(v) => setShow({ dropped: v }),
-		isBool,
+		(v) => viewShow({ dropped: v }),
+		bool,
 		live,
 	);
-	useMirror(
+	useFollowValue(
 		"map.stays",
 		show.stays,
-		(v) => setShow({ stays: v }),
-		isBool,
+		(v) => viewShow({ stays: v }),
+		bool,
 		live,
 	);
-	useMirror("map.days", dayMode, setDayMode, isDayMode, live);
+	useFollowValue("map.days", dayMode, setDayMode, isDayMode, live);
 
 	// ---- basemap health (QA ERR-06) -----------------------------------------
 	const basemapSources = useRef<ReadonlySet<string>>(new Set());
@@ -672,13 +677,13 @@ export default function MapCanvas({
 				: null,
 		[filterCount, filter, access.memberId, ws.graph.members],
 	);
-	const [filterOpen, setFilterOpen] = useState(false);
-	useMirror(
+	const [filterOpen, setFilterOpen] = useFollowState(
 		"map.filter",
-		filterOpen,
-		setFilterOpen,
-		isBool,
-		ws.mode === "live",
+		false,
+		bool,
+		{
+			enabled: ws.mode === "live",
+		},
 	);
 	const hint = useMemo(
 		() => oneRepHint(pins, edges, { lens, scopeId, days }),

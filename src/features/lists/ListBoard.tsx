@@ -44,7 +44,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useHoursIssues } from "@/features/insights/use-hours-issues";
 import { MentionInput } from "@/features/notes/MentionInput";
 import { dueCtxOf, dueState, effectiveDue } from "@/lib/engine/due";
-import { isBool, oneOf, useMirror } from "@/lib/realtime/view-ui";
+import {
+	bool,
+	oneOf,
+	useFollowState,
+	useFollowValue,
+} from "@/lib/realtime/view-ui";
 import type { ListKind } from "@/lib/schemas/enums";
 import type { BundleTarget } from "@/lib/schemas/targets";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
@@ -85,7 +90,7 @@ export function useListsView(
 	kind: ListKind,
 	atRoot: boolean,
 	storageScope: string,
-): [ListsView, (v: ListsView) => void] {
+): [ListsView, (v: ListsView) => void, (v: ListsView) => void] {
 	const { graph } = useWorkspace();
 	const key = `yonder:lists:${graph.trip.id}:${storageScope}:${kind}`;
 	const fallback = defaultView(kind, atRoot);
@@ -109,7 +114,8 @@ export function useListsView(
 		},
 		[key],
 	);
-	return [view, set];
+	// The third: show a View without remembering it (a followed one).
+	return [view, set, setView];
 }
 
 export type BoardProps = {
@@ -159,18 +165,19 @@ export function ListBoard(props: BoardProps) {
 	const actions = useListActions();
 	const now = useNow();
 	const hours = useHoursIssues();
-	const [view, setView] = useListsView(
+	const [view, setView, showView] = useListsView(
 		kind,
 		scope.scopeId === null && scope.includeDescendants !== false,
 		storageScope,
 	);
-	const [nearOn, setNearOn] = useState(false);
 	// FB-21d: the grouping and "Near" travel with my view; a follower mirrors
 	// them (the inspector's board separately from the tab's).
 	const part = compact ? "p" : "";
 	const k = kind === "shopping" ? "s" : "t";
-	useMirror(`lists.${part}${k}group`, view, setView, VIEW_OF[kind]);
-	useMirror("lists.snear", nearOn, setNearOn, isBool, !compact && k === "s");
+	const [nearOn, setNearOn] = useFollowState("lists.snear", false, bool, {
+		enabled: !compact && k === "s",
+	});
+	useFollowValue(`lists.${part}${k}group`, view, showView, VIEW_OF[kind]);
 	const [lingering, setLingering] = useState<Record<string, true>>({});
 	const timers = useRef(new Map<string, ReturnType<typeof setTimeout>>());
 	useEffect(
@@ -200,8 +207,11 @@ export function ListBoard(props: BoardProps) {
 	const nearActive = nearOn && !!near;
 
 	// Rows on dropped places stay out unless asked for (QA ROLL-12), with a trace.
-	const [showDropped, setShowDropped] = useState(false);
-	useMirror(`lists.${k}dropped`, showDropped, setShowDropped, isBool, !compact);
+	const [showDropped, setShowDropped] = useFollowState(
+		`lists.${part}${k}dropped`,
+		false,
+		bool,
+	);
 	const kindRows = useMemo(
 		() => items.filter((r) => r.list === kind),
 		[items, kind],

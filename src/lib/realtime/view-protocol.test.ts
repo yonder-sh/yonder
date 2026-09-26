@@ -3,6 +3,7 @@ import {
 	AwarenessCam,
 	AwarenessDrag,
 	AwarenessForm,
+	AwarenessLook,
 	AwarenessMedia,
 	AwarenessMenu,
 	cleanLabel,
@@ -14,6 +15,10 @@ import {
 	expectedVideoTime,
 	fitViewUi,
 	followZoom,
+	isItemAnchor,
+	isMembersPath,
+	MAX_UI_ENTRIES,
+	MAX_UI_JSON,
 	MAX_UI_KEYS,
 	MENU_LABEL_MAX,
 	MENU_MAX_ITEMS,
@@ -127,40 +132,116 @@ describe("plan folds on the wire (FB-21a)", () => {
 		expect(wireKeys(["ok:1", "<img src=x>", "a b", ""])).toEqual(["ok:1"]);
 		const many = Array.from({ length: 80 }, (_, i) => `fold:${i}`);
 		expect(wireKeys(many)).toHaveLength(MAX_UI_KEYS);
-		expect(cleanViewUi({ plan: { of: ["<script>"] } })).toBeNull();
-		expect(cleanViewUi({ plan: { of: many } })).toBeNull();
+		// A bad fold list is left out; the rest of the view stays.
+		expect(
+			cleanViewUi({ plan: { of: ["<script>"] }, "lists.group": "place" }),
+		).toEqual({ "lists.group": "place" });
+		expect(cleanViewUi({ plan: { of: many } })).toEqual({});
 	});
 });
 
-describe("view.ui (FB-21d)", () => {
-	it("accepts short switches, never free text", () => {
+describe("view.ui keys (follow everything)", () => {
+	it("accepts small values under `<part>.<name>` keys, never free text", () => {
+		const ui = {
+			"lists.group": "place",
+			"lists.near": true,
+			"lists.pwho": ID,
+			"map.days": "dim",
+			"places.slide": 3,
+			"plan.split.open": [ID, `${DAY}:2`],
+			"notes.live": "",
+			"leg.mode": null,
+		};
+		expect(cleanViewUi(ui)).toEqual(ui);
+		// Each bad key goes on its own; the others stay.
 		expect(
 			cleanViewUi({
-				lists: { group: "place", near: true, pwho: ID },
-				map: { layers: true, days: "dim" },
+				"lists.group": "Shibuya Sky!",
+				"lists.near": true,
+				"bad key.x": true,
+				"lists.n": { deep: 1 },
+				"lists.big": "x".repeat(121),
+				"lists.many": Array.from({ length: 49 }, (_, i) => `k${i}`),
+				"lists.inf": Number.POSITIVE_INFINITY,
+				nodot: true,
+				"lists.html": ["<img src=x>"],
 			}),
-		).toEqual({
-			lists: { group: "place", near: true, pwho: ID },
-			map: { layers: true, days: "dim" },
-		});
-		expect(cleanViewUi({ lists: { group: "Shibuya Sky!" } })).toBeNull();
-		expect(cleanViewUi({ lists: { "bad key": true } })).toBeNull();
-		expect(cleanViewUi({ lists: { n: 3 } })).toBeNull();
-		const wide = Object.fromEntries(
-			Array.from({ length: 13 }, (_, i) => [`k${"abcdefghijklm"[i]}`, true]),
-		);
-		expect(cleanViewUi({ lists: wide })).toBeNull();
-		// Unknown parts are stripped.
-		expect(cleanViewUi({ secret: { a: true } })).toEqual({});
+		).toEqual({ "lists.near": true });
+		expect(cleanViewUi("x")).toEqual({});
+		expect(cleanViewUi(null)).toEqual({});
+		expect(cleanViewUi([1])).toEqual({});
 	});
-	it("fits what it can: a bad part is left out, the rest travels", () => {
+	it("caps the count and the size by dropping from the end", () => {
+		const many = Object.fromEntries(
+			Array.from({ length: MAX_UI_ENTRIES + 10 }, (_, i) => [`a.k${i}`, i]),
+		);
+		const out = cleanViewUi(many);
+		expect(Object.keys(out)).toHaveLength(MAX_UI_ENTRIES);
+		expect(out["a.k0"]).toBe(0);
+		const big = Object.fromEntries(
+			Array.from({ length: 40 }, (_, i) => [`a.k${i}`, [ID, DAY]]),
+		);
+		const cut = cleanViewUi(big);
+		expect(JSON.stringify(cut).length).toBeLessThanOrEqual(MAX_UI_JSON);
+		// The first keys (the most recently changed, as sent) stay.
+		expect(cut["a.k0"]).toEqual([ID, DAY]);
+		expect(cut["a.k39"]).toBeUndefined();
+	});
+	it("fits the most recently changed keys first; a bad one is left out", () => {
 		expect(
-			fitViewUi({
-				lists: { group: "place" },
-				money: { by: "NOT OK" },
-				outline: { level: "city" },
-			}),
-		).toEqual({ lists: { group: "place" }, outline: { level: "city" } });
+			fitViewUi(
+				{
+					"lists.group": "place",
+					"money.by": "NOT OK",
+					"outline.level": "city",
+				},
+				{ "lists.group": 1, "outline.level": 2 },
+			),
+		).toEqual({ "outline.level": "city", "lists.group": "place" });
+		expect(
+			Object.keys(
+				fitViewUi({ "a.old": 1, "a.new": 2 }, { "a.old": 10, "a.new": 20 }),
+			),
+		).toEqual(["a.new", "a.old"]);
+		// Over the budget: the least recently changed go, never everything.
+		const entries: Record<string, unknown> = {};
+		const at: Record<string, number> = {};
+		for (let i = 0; i < 40; i++) {
+			entries[`a.k${i}`] = [ID, DAY];
+			at[`a.k${i}`] = i;
+		}
+		const fit = fitViewUi(entries, at);
+		expect(JSON.stringify(fit).length).toBeLessThanOrEqual(MAX_UI_JSON);
+		expect(fit["a.k39"]).toBeDefined();
+		expect(fit["a.k0"]).toBeUndefined();
+		expect(Object.keys(fit).length).toBeGreaterThan(20);
+	});
+	it("money keys are members-only", () => {
+		expect(isMembersPath("money.by")).toBe(true);
+		expect(isMembersPath("lists.group")).toBe(false);
+	});
+});
+
+describe("look (follow the view)", () => {
+	it("validates ranges by item anchors and the focus", () => {
+		const look = {
+			f: "panel",
+			r: [
+				{ t: { id: `item:${ID}`, fy: 0.25 }, b: { id: `day:${DAY}`, fy: 1 } },
+			],
+		};
+		expect(AwarenessLook.safeParse(look).success).toBe(true);
+		for (const bad of [
+			{ ...look, f: "sheet" },
+			{ ...look, r: [{ t: { id: "pane:plan", fy: 0 }, b: look.r[0]?.b }] },
+			{ ...look, r: [{ t: { id: "nope:1", fy: 0 }, b: look.r[0]?.b }] },
+			{ ...look, r: [{ t: { id: `item:${ID}`, fy: 2 }, b: look.r[0]?.b }] },
+			{ ...look, r: Array(5).fill(look.r[0]) },
+		])
+			expect(AwarenessLook.safeParse(bad).success).toBe(false);
+		expect(isItemAnchor(`sec:ov.climate`)).toBe(true);
+		expect(isItemAnchor("tab:plan")).toBe(false);
+		expect(isItemAnchor("insp:i.x")).toBe(false);
 	});
 });
 

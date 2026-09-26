@@ -8,19 +8,20 @@ import { useMemo } from "react";
 import { useMyAwarenessSync } from "@/lib/realtime/presence";
 import type { AwarenessView } from "@/lib/realtime/protocol";
 import { fitViewUi } from "@/lib/realtime/view-protocol";
-import { composeViewUi, useMyViewUi } from "@/lib/realtime/view-ui";
+import { useMyViewUi } from "@/lib/realtime/view-ui";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 
 export function LivePresence() {
 	const { graph, scope, scopePath, lens, tab, search } = useWorkspace();
-	const parts = useMyViewUi((s) => s.parts);
+	const values = useMyViewUi((s) => s.values);
+	const at = useMyViewUi((s) => s.at);
 	const view = useMemo<AwarenessView>(() => {
 		const qs = new URLSearchParams();
 		for (const [k, v] of Object.entries(search))
 			if (v !== undefined) qs.set(k, String(v));
 		const tail = scopePath.map((n) => n.slug).join("/");
 		const q = qs.toString();
-		const ui = fitViewUi(composeViewUi(parts));
+		const ui = fitViewUi(values, at);
 		return {
 			scopeId: scope?.id ?? null,
 			scopeName: scope?.name ?? graph.trip.name,
@@ -39,7 +40,8 @@ export function LivePresence() {
 		lens,
 		tab,
 		search,
-		parts,
+		values,
+		at,
 	]);
 	useMyAwarenessSync(view);
 	return null;

@@ -18,7 +18,7 @@ import {
 	Undo2,
 	X,
 } from "lucide-react";
-import { type ReactNode, useState, useSyncExternalStore } from "react";
+import { type ReactNode, useSyncExternalStore } from "react";
 import { EditGuard } from "@/components/common/edit-guard";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -50,7 +50,7 @@ import {
 	PRIORITY_ORDER,
 } from "@/lib/domain/taxonomy";
 import type { GraphMember } from "@/lib/engine/types";
-import { isBool, useMirror } from "@/lib/realtime/view-ui";
+import { bool, useFollowState } from "@/lib/realtime/view-ui";
 import type { Priority } from "@/lib/schemas/enums";
 import {
 	EMPTY_FILTER,
@@ -123,8 +123,7 @@ export type MapControlsProps = {
 export function MapControls(p: MapControlsProps) {
 	const filtered = isActiveFilter(p.filter, p.meMemberId);
 	// FB-21d: the layer panel being open travels with my view.
-	const [layersOpen, setLayersOpen] = useState(false);
-	useMirror("map.layers", layersOpen, setLayersOpen, isBool);
+	const [layersOpen, setLayersOpen] = useFollowState("map.layers", false, bool);
 	return (
 		<div
 			className={cn(

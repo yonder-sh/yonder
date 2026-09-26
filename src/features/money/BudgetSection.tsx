@@ -57,7 +57,7 @@ import {
 import { budgetTree, expenseAnchor } from "@/lib/engine/money-scope";
 import { humanError } from "@/lib/errors";
 import { useFormPresence } from "@/lib/realtime/form-presence";
-import { oneOf, useMirror } from "@/lib/realtime/view-ui";
+import { oneOf, useFollowState } from "@/lib/realtime/view-ui";
 import {
 	EXPENSE_CATEGORY_VALUES,
 	type ExpenseCategory,
@@ -150,9 +150,12 @@ export function BudgetSection({
 	const { scope, ix, access, graph } = useWorkspace();
 	const guard = useEditGuard();
 	const input = useBudgetInput(data, meId);
-	const [mode, setMode] = useState<Mode>(meId ? "me" : "group");
 	// FB-21d: "Me" / "Group" travels (a follower's "Me" is their own budget).
-	useMirror("money.budget", mode, setMode, meId ? isMode : isGroup);
+	const [mode, setMode] = useFollowState<Mode>(
+		"money.budget",
+		meId ? "me" : "group",
+		meId ? isMode : isGroup,
+	);
 	const nodeId = nodeIdProp !== undefined ? nodeIdProp : (scope?.id ?? null);
 	const hidden = useMemo(
 		() => new Set(data.privateBudgetMemberIds),

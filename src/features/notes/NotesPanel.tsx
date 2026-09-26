@@ -5,9 +5,8 @@
  * with "This visit only" for the visit's own note (DESIGN §4.4; QA NOTE-02:
  * the Bar Benfiddich ITEM has its own note, separate from the place's).
  */
-import { useState } from "react";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { isBool, useMirror } from "@/lib/realtime/view-ui";
+import { bool, useFollowState } from "@/lib/realtime/view-ui";
 import type { BundleTarget } from "@/lib/schemas/targets";
 import { TESTID } from "@/lib/testids";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
@@ -19,9 +18,8 @@ export function NotesPanel({ target }: { target: BundleTarget }) {
 	const { ix, graph, sel } = useWorkspace();
 	const visitId =
 		sel?.kind === "item" && target.kind === "node" ? sel.id : null;
-	const [visitOnly, setVisitOnly] = useState(false);
 	// FB-21d: "This visit only" travels with my view.
-	useMirror("notes.visit", visitOnly, setVisitOnly, isBool);
+	const [visitOnly, setVisitOnly] = useFollowState("notes.visit", false, bool);
 	const shown: BundleTarget =
 		visitId && visitOnly ? { kind: "item", itemId: visitId } : target;
 	const name = shown.kind === "trip" ? graph.trip.name : targetLabel(ix, shown);

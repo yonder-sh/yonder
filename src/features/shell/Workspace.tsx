@@ -25,6 +25,7 @@ import { ReviewDrawer } from "@/features/suggest/ReviewDrawer";
 import { AddFlightDialog } from "@/features/transit/AddFlightDialog";
 import { WelcomeGate } from "@/features/welcome/WelcomeDialog";
 import { mustRedact } from "@/lib/auth/roles";
+import { useFollowedSync } from "@/lib/realtime/view-ui";
 import { TESTID } from "@/lib/testids";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { ActivityDialog } from "./ActivityDialog";
@@ -44,6 +45,7 @@ import { useViewPrefs } from "./view-prefs";
 /** Live-only behaviour: Follow, Spotlight, live cursors and publishing where I am. */
 function LiveChrome() {
 	useFollow();
+	useFollowedSync();
 	useFollowAwareness();
 	useSpotlight();
 	return (

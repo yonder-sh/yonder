@@ -3,6 +3,7 @@ import {
 	AwarenessFollowing,
 	AwarenessReact,
 	AwarenessSpotlight,
+	anchorKind,
 	anchorPolicy,
 	CHAT_PER_MIN,
 	CURSOR_BURST,
@@ -19,12 +20,14 @@ import {
 	AwarenessCam,
 	AwarenessDrag,
 	AwarenessForm,
+	AwarenessLook,
 	AwarenessMedia,
 	AwarenessMenu,
 	cleanLabel,
 	cleanMenuItems,
 	dropMoneyParams,
 	FORM_FIELD_MAX,
+	isMembersPath,
 	MONEY_FORMS,
 	RATES,
 	type RateField,
@@ -46,7 +49,9 @@ import type { CollabContext } from "./auth";
  *   list rows, media tiles and expenses are looked up (cached): a PRIVATE
  *   to-do or expense never travels (the anchor, its chat and a reaction on it
  *   are dropped: nobody else can see that element), receipts and "Hide from
- *   guests" media are members-only.
+ *   guests" media are members-only. The same goes for `look` ranges and for
+ *   `view.ui` keys whose values name such a thing (`list:<id>`): a private
+ *   one drops the key, a members-only one too unless the key is `money.*`.
  *
  * Outbound (`installGuestAwarenessFilter`): every awareness message a LINK
  * GUEST's channel connection is about to receive is rewritten without
@@ -297,12 +302,31 @@ export class CursorGuard {
 			const s = AwarenessSpotlight.safeParse(state.spotlight);
 			if (s.success) clean.spotlight = s.data;
 		}
+		// `view.ui` keys that name something private (or members-only outside `money.*`).
+		if (clean.view && typeof clean.view === "object") {
+			const v = clean.view as { ui?: Record<string, unknown> };
+			if (v.ui) {
+				const ui = await this.cleanUiAnchors(ctx.tripId, v.ui);
+				if (Object.keys(ui).length) clean.view = { ...v, ui };
+				else {
+					const { ui: _drop, ...rest } = v;
+					clean.view = rest;
+				}
+			}
+		}
 		// FB-21: a view that changes faster than RATES.view keeps the previous one.
 		if (clean.view !== undefined && prev?.view !== undefined) {
 			const changed = JSON.stringify(clean.view) !== JSON.stringify(prev.view);
 			if (changed && !this.takeField(key, "view")) clean.view = prev.view;
 		}
-		for (const field of ["cam", "media", "drag", "form", "menu"] as const) {
+		for (const field of [
+			"cam",
+			"media",
+			"drag",
+			"form",
+			"menu",
+			"look",
+		] as const) {
 			if (!(field in state)) continue;
 			const v = await this.cleanField(
 				field,
@@ -316,14 +340,48 @@ export class CursorGuard {
 	}
 
 	/**
-	 * FB-21c…25: one of `cam`, `media`, `drag`, `form`, `menu`. Null clears
-	 * it; a malformed value clears it; an unchanged one passes (no token);
+	 * `view.ui` without the keys that name something a viewer of my view may
+	 * not see: a private row drops its key; a members-only thing does too,
+	 * unless the key is a members-only one (`money.*`).
+	 */
+	private async cleanUiAnchors(
+		tripId: string,
+		ui: Record<string, unknown>,
+	): Promise<Record<string, unknown>> {
+		const out: Record<string, unknown> = {};
+		for (const [path, value] of Object.entries(ui)) {
+			if (path === "plan") {
+				out[path] = value;
+				continue;
+			}
+			const strs = Array.isArray(value)
+				? value
+				: typeof value === "string"
+					? [value]
+					: [];
+			let ok = true;
+			for (const s of strs) {
+				if (typeof s !== "string" || anchorKind(s) === null) continue;
+				const vis = await this.idVis(tripId, s);
+				if (vis === null || (vis === "members" && !isMembersPath(path))) {
+					ok = false;
+					break;
+				}
+			}
+			if (ok) out[path] = value;
+		}
+		return out;
+	}
+
+	/**
+	 * FB-21c…25: one of `cam`, `media`, `drag`, `form`, `menu`, `look`. Null
+	 * clears it; a malformed value clears it; an unchanged one passes (no token);
 	 * over the field's rate the previous value stays; anything anchored on a
 	 * private thing is dropped whole (the FB-17a lookups), members-only
 	 * anchors and money forms are marked `v: "members"` (guests never get them).
 	 */
 	private async cleanField(
-		field: "cam" | "media" | "drag" | "form" | "menu",
+		field: "cam" | "media" | "drag" | "form" | "menu" | "look",
 		raw: unknown,
 		prevRaw: unknown,
 		ctx: Pick<CollabContext, "tripId">,
@@ -343,7 +401,7 @@ export class CursorGuard {
 	}
 
 	private async parseField(
-		field: "cam" | "media" | "drag" | "form" | "menu",
+		field: "cam" | "media" | "drag" | "form" | "menu" | "look",
 		raw: unknown,
 		ctx: Pick<CollabContext, "tripId">,
 	): Promise<Record<string, unknown> | null> {
@@ -388,6 +446,24 @@ export class CursorGuard {
 					...(label ? { f: label } : {}),
 					v: stricterVis(f.data.v, vis),
 				};
+			}
+			case "look": {
+				const l = AwarenessLook.safeParse(raw);
+				if (!l.success) return null;
+				// Each range stands alone: one on a private row is left out.
+				const r = [];
+				for (const range of l.data.r) {
+					const t = await this.idVis(ctx.tripId, range.t.id);
+					const b =
+						t === null ? null : await this.idVis(ctx.tripId, range.b.id);
+					if (t === null || b === null) continue;
+					r.push({
+						t: range.t,
+						b: range.b,
+						v: stricterVis(range.v ?? "all", stricterVis(t, b)),
+					});
+				}
+				return { f: l.data.f, r };
 			}
 			case "menu": {
 				const m = AwarenessMenu.safeParse(raw);
@@ -469,7 +545,8 @@ export class CursorGuard {
 
 /**
  * A state as a link guest may see it: no members-only cursor, reaction,
- * media, drag, form or menu (FB-21…25), no Money tab or money sub-view.
+ * media, drag, form or menu (FB-21…25), no members-only `look` range, no
+ * Money tab or money view keys.
  */
 export function guestView(state: State): State {
 	let out = state;
@@ -497,12 +574,23 @@ export function guestView(state: State): State {
 		if (view.tab === "money") v = { ...v, tab: "plan" };
 		if (typeof view.path === "string" && /[?&]i?tab=money/.test(view.path))
 			v = { ...v, path: dropMoneyParams(view.path) };
-		const ui = view.ui as { money?: unknown } | undefined;
-		if (ui && typeof ui === "object" && "money" in ui) {
-			const { money: _m, ...rest } = ui;
-			v = { ...v, ui: rest };
+		const ui = view.ui as Record<string, unknown> | undefined;
+		if (ui && typeof ui === "object") {
+			const keys = Object.keys(ui);
+			if (keys.some(isMembersPath)) {
+				const rest: Record<string, unknown> = {};
+				for (const k of keys) if (!isMembersPath(k)) rest[k] = ui[k];
+				v = { ...v, ui: rest };
+			}
 		}
 		if (v !== view) out = { ...out, view: v };
+	}
+	const look = state.look as { r?: unknown } | null | undefined;
+	if (look && typeof look === "object" && Array.isArray(look.r)) {
+		const r = look.r.filter(
+			(x) => x && typeof x === "object" && (x as { v?: unknown }).v === "all",
+		);
+		if (r.length !== look.r.length) out = { ...out, look: { ...look, r } };
 	}
 	return out;
 }

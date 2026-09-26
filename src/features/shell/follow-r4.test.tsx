@@ -1,6 +1,6 @@
 /**
  * FEEDBACK-4 client pieces that don't need a server: form presence texts and
- * matching, the view.ui composition, drag drop targets, menu reading, and the
+ * matching, drag drop targets, menu reading, and the
  * layer's ghosts (drag, menu, form chip) drawn from anchors.
  */
 import { afterEach, describe, expect, it } from "vitest";
@@ -9,7 +9,6 @@ import {
 	formBannerText,
 	formChipText,
 } from "@/lib/realtime/form-presence";
-import { composeViewUi } from "@/lib/realtime/view-ui";
 import { dropTargetOf } from "./cursors/drag-presence";
 import { Ghosts } from "./cursors/ghosts";
 import { readMenu } from "./cursors/menu-presence";
@@ -58,23 +57,6 @@ describe("form presence (FB-24)", () => {
 		expect(formTargetsSel(null, { kind: "item", id: ITEM })).toBe(false);
 		expect(bundleAnchor({ kind: "item", itemId: ITEM })).toBe(`item:${ITEM}`);
 		expect(bundleAnchor({ kind: "trip" })).toBeNull();
-	});
-});
-
-describe("view.ui composition (FB-21d)", () => {
-	it("folds `<part>.<field>` paths into parts", () => {
-		expect(
-			composeViewUi({
-				plan: { of: ["fold:1"] },
-				"lists.group": "place",
-				"lists.near": true,
-				"map.layers": false,
-			}),
-		).toEqual({
-			plan: { of: ["fold:1"] },
-			lists: { group: "place", near: true },
-			map: { layers: false },
-		});
 	});
 });
 

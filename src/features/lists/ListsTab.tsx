@@ -8,7 +8,7 @@
  */
 import { cn } from "cn";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { oneOf, useMirror } from "@/lib/realtime/view-ui";
+import { oneOf, useFollowValue } from "@/lib/realtime/view-ui";
 import type { ListKind } from "@/lib/schemas/enums";
 import type { BundleTarget } from "@/lib/schemas/targets";
 import { TESTID } from "@/lib/testids";
@@ -41,7 +41,7 @@ export function ListsTab() {
 	}, []);
 	const kind: ListKind = search.list ?? stored;
 	// FB-21d: a follower opens the same list even when it isn't in the URL.
-	useMirror("lists.kind", kind, setStored, isListKind);
+	useFollowValue("lists.kind", kind, setStored, isListKind);
 	const pickKind = (k: ListKind) => {
 		setStored(k);
 		try {

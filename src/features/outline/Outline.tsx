@@ -55,7 +55,12 @@ import {
 import type { ProposalMark } from "@/lib/engine/proposals";
 import { formatDayDate } from "@/lib/format";
 import { usePresence } from "@/lib/realtime/presence";
-import { isBool, oneOf, useMirror } from "@/lib/realtime/view-ui";
+import {
+	bool,
+	oneOf,
+	useFollowState,
+	useFollowValue,
+} from "@/lib/realtime/view-ui";
 import { TESTID } from "@/lib/testids";
 import { matchesFilter } from "@/lib/workspace/filter-match";
 import { useUi } from "@/lib/workspace/ui-store";
@@ -178,11 +183,14 @@ function OutlineInner() {
 			// ignore
 		}
 	};
-	const [droppedOpen, setDroppedOpen] = useState(false);
 	// FB-21d: the level and the "Dropped" fold travel with my view; a
 	// follower mirrors them (without saving the leader's level as theirs).
-	useMirror("outline.level", level, setLevelState, isLevel);
-	useMirror("outline.dropped", droppedOpen, setDroppedOpen, isBool);
+	useFollowValue("outline.level", level, setLevelState, isLevel);
+	const [droppedOpen, setDroppedOpen] = useFollowState(
+		"outline.dropped",
+		false,
+		bool,
+	);
 
 	// -- expand state ----------------------------------------------------------
 	const autoOpen = useMemo(() => {

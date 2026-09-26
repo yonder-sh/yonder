@@ -420,7 +420,7 @@ export const AwarenessView = z.object({
 	path: z.string().max(600),
 	/**
 	 * FB-21: ephemeral view state beyond the URL (plan folds, sub-views…),
-	 * `view-protocol.ts`. The server re-validates it and caps its size.
+	 * `view-protocol.ts`. The server re-validates each key and caps its size.
 	 */
 	ui: ViewUi.optional(),
 });
@@ -462,6 +462,8 @@ export type AwarenessState = {
 	form?: unknown;
 	/** Channel doc (FB-25): my open menu (`AwarenessMenu`). */
 	menu?: unknown;
+	/** Channel doc: what I see of each list, map or panel (`AwarenessLook`). */
+	look?: unknown;
 };
 
 /** A peer as the UI sees it: one per user (several tabs collapse into one). */

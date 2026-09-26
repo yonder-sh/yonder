@@ -4,7 +4,7 @@
  * items count as planned Shopping costs (ADDENDUM §6), as in the summary, so
  * the rows add up to its Planned total.
  */
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
 	EXPENSE_CATEGORY_LABEL,
@@ -12,7 +12,7 @@ import {
 	originalAmounts,
 } from "@/lib/engine/money";
 import { formatDayDate } from "@/lib/format";
-import { oneOf, useMirror } from "@/lib/realtime/view-ui";
+import { oneOf, useFollowState } from "@/lib/realtime/view-ui";
 import {
 	EXPENSE_CATEGORY_VALUES,
 	type ExpenseCategory,
@@ -97,9 +97,8 @@ export function Breakdown({
 	display: Display;
 }) {
 	const { ix, scope, nav } = useWorkspace();
-	const [by, setBy] = useState<By>("category");
 	// FB-21d: the grouping travels with my view (members only: never to guests).
-	useMirror("money.by", by, setBy, isBy);
+	const [by, setBy] = useFollowState<By>("money.by", "category", isBy);
 	const lines = useMemo((): Line[] => {
 		const pub = breakdownParts(rows, shopping);
 		const acc = new Map<string, Line>();

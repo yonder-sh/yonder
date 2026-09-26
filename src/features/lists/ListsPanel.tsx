@@ -10,11 +10,11 @@
  */
 import { cn } from "cn";
 import { useMemo, useState } from "react";
+import { z } from "zod";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { offersRollupChoice } from "@/features/shell/bundle-target";
 import type { Lens } from "@/lib/engine/types";
-import type { FlatValue } from "@/lib/realtime/view-protocol";
-import { isBool, oneOf, useMirror } from "@/lib/realtime/view-ui";
+import { bool, oneOf, useFollowValue, uuid } from "@/lib/realtime/view-ui";
 import type { ListKind } from "@/lib/schemas/enums";
 import type { BundleTarget } from "@/lib/schemas/targets";
 import { TESTID } from "@/lib/testids";
@@ -26,8 +26,7 @@ import { LISTS_TESTID } from "./testids";
 
 const LENSES: Lens[] = ["country", "region", "city", "area", "place"];
 const isListKind = oneOf<ListKind>(["todo", "shopping"]);
-const isWho = (v: FlatValue): v is string =>
-	typeof v === "string" && (v === "all" || /^[0-9a-f-]{36}$/.test(v));
+const isWho = z.union([z.literal("all"), uuid]);
 const finer = (l: Lens): Lens =>
 	LENSES[Math.min(LENSES.indexOf(l) + 1, LENSES.length - 1)] ?? "place";
 
@@ -62,9 +61,9 @@ export function ListsPanel({ target }: { target: BundleTarget }) {
 	const isWide = day ? dayWide : wide;
 	const setIsWide = day ? setDayWide : setWide;
 	// FB-21d: the inspector's list, scope and person travel with my view.
-	useMirror("lists.pkind", kind, setKind, isListKind);
-	useMirror("lists.pwide", isWide, setIsWide, isBool);
-	useMirror(
+	useFollowValue("lists.pkind", kind, setKind, isListKind);
+	useFollowValue("lists.pwide", isWide, setIsWide, bool);
+	useFollowValue(
 		"lists.pwho",
 		who ?? "all",
 		(v) => setWho(v === "all" ? null : v),

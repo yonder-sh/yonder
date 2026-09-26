@@ -1,6 +1,6 @@
 /**
  * FEEDBACK-4 (FB-21…25) on the collab server: the awareness sanitizer's new
- * fields (`view.ui`, `cam`, `media`, `drag`, `form`, `menu`): validation,
+ * fields (`view.ui`, `cam`, `media`, `drag`, `form`, `menu`, `look`): validation,
  * caps, per-connection rate limits, private anchors dropped, money marked
  * members-only, and what a link guest receives.
  */
@@ -83,18 +83,28 @@ describe("view.ui (FB-21)", () => {
 		const ok = sanitizeState(
 			{
 				view: view({
-					ui: { plan: { of: [`fold:${DAY}`] }, lists: { near: true } },
+					ui: { plan: { of: [`fold:${DAY}`] }, "lists.near": true },
 				}),
 			},
 			ctx,
 		);
 		expect(ok.view).toMatchObject({
 			path: "/t/asia-2027",
-			ui: { plan: { of: [`fold:${DAY}`] }, lists: { near: true } },
+			ui: { plan: { of: [`fold:${DAY}`] }, "lists.near": true },
 		});
+		// A bad key goes alone.
+		const some = sanitizeState(
+			{
+				view: view({
+					ui: { "lists.group": "free text here", "lists.near": true },
+				}),
+			},
+			ctx,
+		);
+		expect((some.view as { ui?: unknown }).ui).toEqual({ "lists.near": true });
 		for (const bad of [
 			{ plan: { of: ["<img src=x onerror=alert(1)>"] } },
-			{ lists: { group: "free text here" } },
+			{ "lists.group": "free text here" },
 			{ plan: { of: Array.from({ length: 200 }, (_, i) => `fold:${i}`) } },
 			"x",
 		]) {
@@ -321,15 +331,94 @@ describe("what a link guest receives (FB-17a on FB-21)", () => {
 		const s = guestView({
 			view: view({
 				path: "/t/asia-2027?sel=root&itab=money",
-				ui: { money: { by: "day" }, lists: { near: true } },
+				ui: { "money.by": "day", "lists.near": true },
 			}),
 		});
 		expect(s.view).toMatchObject({
 			path: "/t/asia-2027?sel=root",
-			ui: { lists: { near: true } },
+			ui: { "lists.near": true },
 		});
 		expect(
-			(s.view as { ui: Record<string, unknown> }).ui.money,
+			(s.view as { ui: Record<string, unknown> }).ui["money.by"],
 		).toBeUndefined();
+	});
+});
+
+describe("view.ui keys naming things (follow everything)", () => {
+	it("drops a key naming a private row; a members-only thing only under money.*", async () => {
+		const out = await run(guard(), {
+			view: view({
+				ui: {
+					"lists.note": [`list:${PUBLIC_TODO}`],
+					"lists.gift": [`list:${PRIVATE_TODO}`],
+					"media.pick": `media:${HIDDEN_PHOTO}`,
+					"money.open": [`exp:${EXPENSE}`],
+					"money.secret": [`exp:${PRIVATE_EXPENSE}`],
+					"plan.split.open": [ITEM],
+				},
+			}),
+		});
+		expect((out.view as { ui: unknown }).ui).toEqual({
+			"lists.note": [`list:${PUBLIC_TODO}`],
+			"money.open": [`exp:${EXPENSE}`],
+			"plan.split.open": [ITEM],
+		});
+		// …and a guest never gets the money one.
+		expect((guestView(out).view as { ui: unknown }).ui).toEqual({
+			"lists.note": [`list:${PUBLIC_TODO}`],
+			"plan.split.open": [ITEM],
+		});
+	});
+});
+
+describe("look (follow the view)", () => {
+	const range = (t: string, b: string) => ({
+		t: { id: t, fy: 0.5 },
+		b: { id: b, fy: 1 },
+	});
+	it("keeps valid ranges, drops private ones, marks members-only ones", async () => {
+		const out = await run(guard(), {
+			look: {
+				f: "panel",
+				r: [
+					range(`item:${ITEM}`, `day:${DAY}`),
+					range(`list:${PUBLIC_TODO}`, `list:${PRIVATE_TODO}`),
+					range(`exp:${EXPENSE}`, "money:summary"),
+				],
+			},
+		});
+		expect(out.look).toEqual({
+			f: "panel",
+			r: [
+				{ ...range(`item:${ITEM}`, `day:${DAY}`), v: "all" },
+				{ ...range(`exp:${EXPENSE}`, "money:summary"), v: "members" },
+			],
+		});
+		// A guest gets the public range only.
+		expect(guestView(out).look).toEqual({
+			f: "panel",
+			r: [{ ...range(`item:${ITEM}`, `day:${DAY}`), v: "all" }],
+		});
+	});
+	it("drops a malformed look and rate-limits changes", async () => {
+		const g = guard();
+		const bad = await run(g, {
+			look: { f: "panel", r: [range("pane:plan", "pane:plan")] },
+		});
+		expect(bad.look).toBeNull();
+		const key = {};
+		let prev: Record<string, unknown> | undefined;
+		let kept = 0;
+		for (let i = 0; i < RATES.look.burst + 6; i++) {
+			const out = await run(
+				g,
+				{ look: { f: i % 2 ? "map" : "panel", r: [] } },
+				{ prev, key },
+			);
+			if (prev && JSON.stringify(out.look) === JSON.stringify(prev.look))
+				kept += 1;
+			prev = out;
+		}
+		expect(kept).toBeGreaterThan(0);
 	});
 });

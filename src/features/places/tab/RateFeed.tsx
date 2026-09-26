@@ -55,8 +55,7 @@ import { useNotePreview } from "@/features/notes/use-note-preview";
 import { useBreakpoint } from "@/features/shell/use-breakpoint";
 import { formatDuration } from "@/lib/format";
 import { mediaUrl } from "@/lib/media-url";
-import type { FlatValue } from "@/lib/realtime/view-protocol";
-import { useMirror } from "@/lib/realtime/view-ui";
+import { useFollowValue, uuid } from "@/lib/realtime/view-ui";
 import type { Priority } from "@/lib/schemas/enums";
 import { useUi } from "@/lib/workspace/ui-store";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
@@ -92,11 +91,6 @@ import { PLACES_TAB_TESTID } from "./testids";
 import { ScoreChip } from "./ui";
 import { usePlaceActions } from "./use-place-actions";
 import { lastReviewView, type PlacesData } from "./use-places";
-
-const UUID_RE =
-	/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
-const isUuid = (v: FlatValue): v is string =>
-	typeof v === "string" && UUID_RE.test(v);
 
 // ---------------------------------------------------------------------------
 // Media
@@ -1086,11 +1080,11 @@ export default function RateFeed({ data }: { data: PlacesData }) {
 		},
 		[data.byId, items, current, scrollToKey],
 	);
-	useMirror(
+	useFollowValue(
 		"places.card",
 		currentItem?.kind === "place" ? currentItem.id : undefined,
 		focusPlace,
-		isUuid,
+		uuid,
 		mode === "live",
 	);
 

@@ -81,7 +81,11 @@ export function useMapStyle(): [MapStyle, (satellite: boolean) => void] {
 }
 
 /** Layer menu "Show: Ideas · Dropped · Stays" (DESIGN §5.1). */
-export function useMapShow(): [MapShow, (patch: Partial<MapShow>) => void] {
+export function useMapShow(): [
+	MapShow,
+	(patch: Partial<MapShow>) => void,
+	(patch: Partial<MapShow>) => void,
+] {
 	const [show, setShow] = useState<MapShow>(() => ({
 		...DEFAULT_SHOW,
 		...(typeof window === "undefined"
@@ -95,7 +99,11 @@ export function useMapShow(): [MapShow, (patch: Partial<MapShow>) => void] {
 			return next;
 		});
 	}, []);
-	return [show, update];
+	// A followed switch shows without being remembered.
+	const view = useCallback((patch: Partial<MapShow>) => {
+		setShow((s) => ({ ...s, ...patch }));
+	}, []);
+	return [show, update, view];
 }
 
 /** "Selected days: Only · Dim others" lives in `useUi`; WP-Map persists it. */
