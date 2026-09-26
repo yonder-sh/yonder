@@ -118,6 +118,91 @@ function autoplaySrc(src: string, provider: string): string {
 	return src;
 }
 
+/** Loaded ahead, paused: YouTube and TikTok take a "play" message later. */
+function aheadSrc(src: string, provider: string): string {
+	const join = src.includes("?") ? "&" : "?";
+	if (provider === "youtube") return `${src}${join}enablejsapi=1&mute=1&loop=1`;
+	if (provider === "tiktok") return `${src}${join}loop=1`;
+	return src;
+}
+
+const PLAYER_ORIGIN: Record<string, string> = {
+	youtube: "https://www.youtube-nocookie.com",
+	tiktok: "https://www.tiktok.com",
+};
+
+/** Starts a player loaded ahead (muted: browsers only start sound on a tap). */
+function startPlayer(frame: HTMLIFrameElement | null, provider: string) {
+	const win = frame?.contentWindow;
+	const origin = PLAYER_ORIGIN[provider];
+	if (!win || !origin) return;
+	if (provider === "tiktok") {
+		win.postMessage({ type: "mute", "x-tiktok-player": true }, origin);
+		win.postMessage({ type: "play", "x-tiktok-player": true }, origin);
+	} else
+		win.postMessage(
+			JSON.stringify({ event: "command", func: "playVideo", args: [] }),
+			origin,
+		);
+}
+
+/**
+ * A reel, TikTok or YouTube video. The next place's loads while you rate
+ * this one (paused), so it's ready when you get there: YouTube and TikTok
+ * start then, Instagram (which never starts by itself) takes one tap.
+ */
+function EmbedPlayer({
+	s,
+	play,
+}: {
+	s: Extract<Slide, { kind: "embed" }>;
+	play: boolean;
+}) {
+	const frame = useRef<HTMLIFrameElement>(null);
+	const provider = s.embed.provider;
+	// Fixed when it mounts: another address would load the player again.
+	const [ahead] = useState(!play);
+	const [src] = useState(() =>
+		ahead
+			? aheadSrc(s.embed.src, provider)
+			: autoplaySrc(s.embed.src, provider),
+	);
+	useEffect(() => {
+		if (!play || !ahead) return;
+		const start = () => startPlayer(frame.current, provider);
+		start();
+		// The player may still be starting up: again shortly, and when TikTok says it's ready.
+		const timers = [300, 1000].map((ms) => window.setTimeout(start, ms));
+		const onMessage = (e: MessageEvent) => {
+			if (e.source !== frame.current?.contentWindow) return;
+			const d = e.data as { type?: string } | null;
+			if (d && typeof d === "object" && d.type === "onPlayerReady") start();
+		};
+		window.addEventListener("message", onMessage);
+		return () => {
+			for (const t of timers) window.clearTimeout(t);
+			window.removeEventListener("message", onMessage);
+		};
+	}, [play, ahead, provider]);
+	return (
+		<div className="grid size-full place-items-center bg-black">
+			<iframe
+				ref={frame}
+				title={s.m.title ?? `${provider} video`}
+				src={src}
+				sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"
+				allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+				referrerPolicy="strict-origin-when-cross-origin"
+				data-ahead={ahead || undefined}
+				className={cn(
+					"h-full max-w-full border-0",
+					s.embed.aspect === "9/16" ? "aspect-[9/16]" : "aspect-video w-full",
+				)}
+			/>
+		</div>
+	);
+}
+
 /**
  * Media fits whole (never cropped); the space around it is a blurred copy of
  * the same picture, like stories and reels do for non-portrait media.
@@ -166,10 +251,14 @@ function FittedImg({
 function SlideFill({
 	s,
 	active,
+	ahead = false,
 	title,
 }: {
 	s: Slide;
+	/** On screen: videos play. */
 	active: boolean;
+	/** Next up: a reel or TikTok loads now, paused. */
+	ahead?: boolean;
 	title: string;
 }) {
 	switch (s.kind) {
@@ -212,23 +301,8 @@ function SlideFill({
 				<FittedImg src={mediaUrl(s.m.id, "poster")} alt="" />
 			);
 		case "embed":
-			return active ? (
-				<div className="grid size-full place-items-center bg-black">
-					<iframe
-						key={s.m.id}
-						title={s.m.title ?? `${s.embed.provider} video`}
-						src={autoplaySrc(s.embed.src, s.embed.provider)}
-						sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"
-						allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
-						referrerPolicy="strict-origin-when-cross-origin"
-						className={cn(
-							"h-full max-w-full border-0",
-							s.embed.aspect === "9/16"
-								? "aspect-[9/16]"
-								: "aspect-video w-full",
-						)}
-					/>
-				</div>
+			return active || ahead ? (
+				<EmbedPlayer key={s.m.id} s={s} play={active} />
 			) : s.m.hasImage ? (
 				<FittedImg src={mediaUrl(s.m.id, "image")} alt="" />
 			) : (
@@ -270,6 +344,7 @@ export function FeedMedia({
 	row,
 	active,
 	near,
+	ahead = false,
 	className,
 }: {
 	row: PlaceRow;
@@ -277,6 +352,8 @@ export function FeedMedia({
 	active: boolean;
 	/** In view or next to it (worth loading). */
 	near: boolean;
+	/** The next card: its reel or TikTok loads now, ready when it's in view. */
+	ahead?: boolean;
 	className?: string;
 }) {
 	const { slides } = usePlaceMedia(row.node);
@@ -366,6 +443,7 @@ export function FeedMedia({
 								<SlideFill
 									s={sl}
 									active={active && j === at}
+									ahead={ahead && j === at}
 									title={node.name}
 								/>
 							) : null}
@@ -373,7 +451,7 @@ export function FeedMedia({
 					))}
 				</div>
 			) : !near ? null : s ? (
-				<SlideFill s={s} active={active} title={node.name} />
+				<SlideFill s={s} active={active} ahead={ahead} title={node.name} />
 			) : (
 				fallback
 			)}
@@ -525,6 +603,7 @@ function PlaceCard({
 	cardKey,
 	active,
 	near,
+	ahead,
 	peeked,
 	onPeek,
 	onRate,
@@ -536,6 +615,8 @@ function PlaceCard({
 	cardKey: string;
 	active: boolean;
 	near: boolean;
+	/** The next card: its reel or TikTok loads ahead. */
+	ahead: boolean;
 	peeked: boolean;
 	onPeek: () => void;
 	onRate: (p: Priority | null) => void;
@@ -716,6 +797,7 @@ function PlaceCard({
 						row={row}
 						active={active}
 						near={near}
+						ahead={ahead}
 						className="h-full rounded-2xl"
 					/>
 					<div className="flex min-h-0 flex-col gap-5 overflow-y-auto rounded-2xl bg-neutral-950 p-5 ring-1 ring-white/10">
@@ -736,6 +818,7 @@ function PlaceCard({
 							row={row}
 							active={active}
 							near={near}
+							ahead={ahead}
 							className="min-h-0 w-full flex-1"
 						/>
 						<button
@@ -1409,6 +1492,7 @@ export default function RateFeed({ data }: { data: PlacesData }) {
 								cardKey={it.key}
 								active={i === currentIndex}
 								near={near}
+								ahead={i === currentIndex + 1}
 								peeked={peeked.has(it.key)}
 								onPeek={() =>
 									setPeeked((s) =>

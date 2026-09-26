@@ -6,7 +6,15 @@
  */
 import { QueryClient } from "@tanstack/react-query";
 import { act, fireEvent, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import {
+	afterAll,
+	afterEach,
+	beforeAll,
+	describe,
+	expect,
+	it,
+	vi,
+} from "vitest";
 import type { MediaDto } from "@/features/media/media.functions";
 import type { GraphNode } from "@/lib/engine/types";
 import { demoGraph, N } from "@/lib/fixtures/demo";
@@ -47,6 +55,7 @@ function render(photos: number, active = true) {
 }
 
 const dots = () => screen.getByTestId(PLACES_TESTID.rateMediaDots);
+const box = () => screen.getByTestId(PLACES_TESTID.feedMedia);
 const realMatchMedia = window.matchMedia;
 afterEach(() => {
 	vi.unstubAllGlobals();
@@ -119,5 +128,69 @@ describe("the rate card's photos", () => {
 		expect(screen.queryByTestId(PLACES_TESTID.rateMediaDots)).toBeNull();
 		expect(screen.queryByTestId(PLACES_TESTID.rateMediaTrack)).toBeNull();
 		expect(screen.queryByRole("button", { name: "Next photo" })).toBeNull();
+	});
+});
+
+describe("a TikTok on the next card", () => {
+	// The player never loads here (happy-dom would fetch it from TikTok).
+	const happyDOM = (
+		window as unknown as {
+			happyDOM?: { settings: { disableIframePageLoading: boolean } };
+		}
+	).happyDOM;
+	beforeAll(() => {
+		if (happyDOM) happyDOM.settings.disableIframePageLoading = true;
+	});
+	afterAll(() => {
+		if (happyDOM) happyDOM.settings.disableIframePageLoading = false;
+	});
+	const tiktok = {
+		...photo(9),
+		kind: "embed",
+		provider: "tiktok",
+		embedId: "7300000000000000001",
+		url: "https://www.tiktok.com/@nightowl/video/7300000000000000001",
+		title: "Golden Gai",
+	} as unknown as MediaDto;
+
+	it("loads paused while you rate this one, then the same player starts", () => {
+		const posted: unknown[] = [];
+		vi.spyOn(
+			HTMLIFrameElement.prototype,
+			"contentWindow",
+			"get",
+		).mockReturnValue({
+			postMessage: (m: unknown) => posted.push(m),
+		} as unknown as Window);
+		const queryClient = new QueryClient({
+			defaultOptions: { queries: { retry: false } },
+		});
+		queryClient.setQueryData(tripKeys.media(demoGraph.trip.id), [tiktok]);
+		const row = { node: sensoji } as PlaceRow;
+		const r = renderWithWorkspace(
+			<FeedMedia row={row} active={false} near ahead />,
+			{ queryClient },
+		);
+		const frame = box().querySelector("iframe") as HTMLIFrameElement;
+		expect(frame.getAttribute("src")).toContain("loop=1");
+		expect(frame.getAttribute("src")).not.toContain("autoplay=1");
+		expect(posted).toEqual([]);
+
+		r.rerender(<FeedMedia row={row} active near />);
+		expect(box().querySelector("iframe")).toBe(frame);
+		expect(posted).toContainEqual({ type: "play", "x-tiktok-player": true });
+		vi.restoreAllMocks();
+	});
+
+	it("a card further on shows only its picture", () => {
+		const queryClient = new QueryClient({
+			defaultOptions: { queries: { retry: false } },
+		});
+		queryClient.setQueryData(tripKeys.media(demoGraph.trip.id), [tiktok]);
+		renderWithWorkspace(
+			<FeedMedia row={{ node: sensoji } as PlaceRow} active={false} near />,
+			{ queryClient },
+		);
+		expect(box().querySelector("iframe")).toBeNull();
 	});
 });
