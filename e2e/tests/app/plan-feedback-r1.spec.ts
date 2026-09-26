@@ -311,7 +311,7 @@ test("GMAPS2: the item Overview's Travel rows open Google Maps (JAL Sky Museum)"
 test.describe("1100 (lg)", () => {
 	test.use({ viewport: { width: 1100, height: 900 } });
 
-	test("VIS3-02: a three-line transit row keeps whole chips, one 'est.', and Google Maps under the chips", async ({
+	test("VIS3-02: a three-line transit row keeps whole chips and one 'est.'; Google Maps waits in its details", async ({
 		page,
 	}) => {
 		await openTrip(page, `/t/${TRIP}?days=2027-10-03&lens=place`);
@@ -331,8 +331,8 @@ test.describe("1100 (lg)", () => {
 				wrapped,
 				minutesOneLine: !!minutes && minutes.getBoundingClientRect().height < 20,
 				ests: (el.textContent?.match(/est\./g) ?? []).length,
-				chipX: Math.round(chips[0]?.getBoundingClientRect().left ?? 0),
-				linkX: Math.round(link?.getBoundingClientRect().left ?? -1),
+				// The Plan's calm rows (owner, 2026-09-25): the link is in the hover details.
+				linkInDetails: !!link?.closest('[data-testid="plan-leg-more"]'),
 			};
 		});
 		await leg.screenshot({ path: shot("vis3-02-leg-1100") });
@@ -340,7 +340,7 @@ test.describe("1100 (lg)", () => {
 		expect(r.wrapped).toEqual([]);
 		expect(r.minutesOneLine).toBe(true);
 		expect(r.ests).toBe(1);
-		expect(Math.abs(r.linkX - r.chipX), JSON.stringify(r)).toBeLessThanOrEqual(3);
+		expect(r.linkInDetails, JSON.stringify(r)).toBe(true);
 	});
 });
 
