@@ -355,6 +355,8 @@ export function ScheduleNext({
 			data-waiting={plan.waiting}
 			data-mode={mode}
 			className="min-h-0 flex-1 overflow-y-auto"
+			// The phone's sheet never drags from the list: a swipe here scrolls it.
+			data-vaul-no-drag=""
 		>
 			<div className="mx-auto flex max-w-4xl flex-col gap-8 px-4 pt-4 pb-10 md:px-6">
 				{children}

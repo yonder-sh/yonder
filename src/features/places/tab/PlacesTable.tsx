@@ -432,6 +432,8 @@ export function PlacesTable({
 			className="min-h-0 flex-1 overflow-auto [container-type:inline-size]"
 			data-testid={PLACES_TAB_TESTID.tableScroll}
 			data-scroll-y=""
+			// The phone's sheet never drags from the rows: a swipe here scrolls them.
+			data-vaul-no-drag=""
 		>
 			<table
 				data-testid={PLACES_TAB_TESTID.table}
