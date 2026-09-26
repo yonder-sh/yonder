@@ -2,8 +2,8 @@
  * Workspace keyboard shortcuts (DESIGN §13; the `?` sheet lists them): `[` /
  * `]` lens, the Esc chain, Enter zooms into the selected node, D selects the
  * selection's day, J / K step through the plan's stops, ⌘K opens the palette,
- * ⌘\ toggles the Outline, `?` shows the shortcuts. Ignored while typing in
- * inputs (react-hotkeys-hook default), except ⌘K.
+ * ⌘\ toggles the Outline, ⌘⇧\ the map, `?` shows the shortcuts. Ignored
+ * while typing in inputs (react-hotkeys-hook default), except ⌘K.
  */
 import { useCallback, useRef } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
@@ -68,6 +68,7 @@ export function useWorkspaceHotkeys() {
 	const { nav, sel, ix, scope, days } = useWorkspace();
 	const openAddPlace = useUi((s) => s.openAddPlace);
 	const toggleOutline = useShell((s) => s.toggleOutline);
+	const toggleMap = useShell((s) => s.toggleMap);
 	const setShortcutsOpen = useShell((s) => s.setShortcutsOpen);
 	// Read the latest state when a key fires (a quick J, J must not reuse the old selection).
 	const latest = useRef({ nav, sel, ix, scope, days });
@@ -126,6 +127,16 @@ export function useWorkspaceHotkeys() {
 		},
 		OPTS,
 		[toggleOutline],
+	);
+	// Shift makes it a different chord: ⌘\ alone never fires this one.
+	useHotkeys(
+		"mod+shift+backslash",
+		(e) => {
+			e.preventDefault();
+			toggleMap();
+		},
+		OPTS,
+		[toggleMap],
 	);
 	useHotkeys("shift+slash", () => setShortcutsOpen(true), OPTS, [
 		setShortcutsOpen,

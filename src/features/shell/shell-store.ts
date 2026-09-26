@@ -1,36 +1,41 @@
 /**
- * WP-Shell's own ephemeral UI state (dialogs and the Outline collapse). Cross-
+ * WP-Shell's own ephemeral UI state (dialogs and the side panels). Cross-
  * feature state stays in `useUi()` (F); this store is for chrome only the
  * shell renders, so no other package needs to know about it.
  *
- * The Outline collapse (⌘\, DESIGN §4.2) is remembered per device in
- * localStorage, like the pane sizes.
+ * The Outline collapse (⌘\, DESIGN §4.2) and the hidden map (⌘⇧\) are
+ * personal layout: remembered per device in localStorage, like the pane
+ * sizes, and never followed.
  */
 import { create } from "zustand";
 
-const OUTLINE_KEY = "yonder:outline-collapsed";
+export const OUTLINE_KEY = "yonder:outline-collapsed";
+export const MAP_HIDDEN_KEY = "yonder:map-hidden";
 
-function readCollapsed(): boolean {
+function readFlag(key: string): boolean {
 	try {
-		return globalThis.localStorage?.getItem(OUTLINE_KEY) === "1";
+		return globalThis.localStorage?.getItem(key) === "1";
 	} catch {
 		return false;
 	}
 }
 
-function writeCollapsed(v: boolean): void {
+function writeFlag(key: string, v: boolean): void {
 	try {
-		if (v) globalThis.localStorage?.setItem(OUTLINE_KEY, "1");
-		else globalThis.localStorage?.removeItem(OUTLINE_KEY);
+		if (v) globalThis.localStorage?.setItem(key, "1");
+		else globalThis.localStorage?.removeItem(key);
 	} catch {
-		// storage unavailable (private mode): the collapse just isn't remembered
+		// storage unavailable (private mode): the layout just isn't remembered
 	}
 }
 
 export type ShellState = {
-	/** xl Outline collapsed to 0 (⌘\). */
+	/** xl Outline collapsed to a rail (⌘\). */
 	outlineCollapsed: boolean;
 	toggleOutline(): void;
+	/** The map hidden (md and up, ⌘⇧\): the centre takes its width. */
+	mapHidden: boolean;
+	toggleMap(): void;
 	/** The `?` shortcuts sheet. */
 	shortcutsOpen: boolean;
 	setShortcutsOpen(v: boolean): void;
@@ -66,11 +71,17 @@ export type InspectorTab = "overview" | "media" | "lists" | "notes" | "money";
 export const INSPECTOR_TAB_TTL_MS = 10_000;
 
 export const useShell = create<ShellState>()((set, get) => ({
-	outlineCollapsed: readCollapsed(),
+	outlineCollapsed: readFlag(OUTLINE_KEY),
 	toggleOutline: () => {
 		const next = !get().outlineCollapsed;
-		writeCollapsed(next);
+		writeFlag(OUTLINE_KEY, next);
 		set({ outlineCollapsed: next });
+	},
+	mapHidden: readFlag(MAP_HIDDEN_KEY),
+	toggleMap: () => {
+		const next = !get().mapHidden;
+		writeFlag(MAP_HIDDEN_KEY, next);
+		set({ mapHidden: next });
 	},
 	shortcutsOpen: false,
 	setShortcutsOpen: (shortcutsOpen) => set({ shortcutsOpen }),

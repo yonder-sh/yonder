@@ -38,6 +38,13 @@ export const SHELL_TESTID = {
 	fabPlace: "fab-place",
 	fabExpense: "fab-expense",
 	outlineAside: "outline-aside",
+	// The side panels' hide and show controls (desktop)
+	outlineHide: "outline-hide",
+	outlineRail: "outline-rail",
+	outlineShow: "outline-show",
+	mapHide: "map-hide",
+	mapRail: "map-rail",
+	mapShow: "map-show",
 	crumbOverflow: "crumb-overflow",
 	suggestRule: "suggest-rule",
 	// FB-05: the ways into the Rate screen

@@ -10,7 +10,6 @@ export const PLACES_TAB_TESTID = {
 	statusPill: "places-status",
 	talkPill: "places-talk",
 	search: "places-search",
-	wide: "places-wide",
 	progress: "places-progress",
 	threshold: "places-threshold",
 	// table

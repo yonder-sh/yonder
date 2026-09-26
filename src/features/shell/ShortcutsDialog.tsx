@@ -15,11 +15,13 @@ import { SHELL_TESTID } from "./testids";
 const IS_MAC =
 	typeof navigator !== "undefined" &&
 	/Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
-const MOD = IS_MAC ? "⌘" : "Ctrl";
+export const MOD = IS_MAC ? "⌘" : "Ctrl";
+export const SHIFT = IS_MAC ? "⇧" : "Shift";
 
 export const SHORTCUTS: { keys: string[]; label: string }[] = [
 	{ keys: [MOD, "K"], label: "Search, add or jump" },
-	{ keys: [MOD, "\\"], label: "Show or hide the Outline" },
+	{ keys: [MOD, "\\"], label: "Show or hide the outline" },
+	{ keys: [MOD, SHIFT, "\\"], label: "Show or hide the map" },
 	{ keys: ["["], label: "Coarser lens" },
 	{ keys: ["]"], label: "Finer lens" },
 	{ keys: ["Enter"], label: "Zoom into the selection" },

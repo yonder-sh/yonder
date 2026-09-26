@@ -1825,7 +1825,8 @@ export default function MapCanvas({
 									? "calc(env(safe-area-inset-top, 0px) + 176px)"
 									: 48
 								: chipTop,
-						left: 12,
+						// The desktop map's top-left corner holds "Hide the map" (WP-Shell).
+						left: isMobile ? 12 : 52,
 						maxWidth: isMobile ? "calc(100% - 80px)" : 420,
 					}}
 				/>

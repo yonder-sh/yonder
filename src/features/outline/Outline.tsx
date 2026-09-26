@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 import {
 	type KeyboardEvent,
+	type ReactNode,
 	useCallback,
 	useEffect,
 	useId,
@@ -156,7 +157,7 @@ function DroppedHeader({
 	);
 }
 
-function OutlineInner() {
+function OutlineInner({ headerEnd }: OutlineProps) {
 	const { ix, scope, sel, graph, proposals, counts, nav } = useWorkspace();
 	const instance = useId();
 	const small = useIsSmall();
@@ -636,6 +637,7 @@ function OutlineInner() {
 							</DropdownMenuItem>
 						</DropdownMenuContent>
 					</DropdownMenu>
+					{headerEnd}
 				</div>
 				<PlaceFilterSummary count={matchedCount} />
 				{level !== "all" ? (
@@ -707,14 +709,19 @@ function OutlineInner() {
 	);
 }
 
-export function Outline() {
+type OutlineProps = {
+	/** The end of the header row (the xl column's "Hide the outline"). */
+	headerEnd?: ReactNode;
+};
+
+export function Outline(props: OutlineProps = {}) {
 	// The workspace mounts one `WorkspaceDnd`; stand-alone renders get their own.
 	const { inContext } = useDnd();
 	return inContext ? (
-		<OutlineInner />
+		<OutlineInner {...props} />
 	) : (
 		<WorkspaceDnd>
-			<OutlineInner />
+			<OutlineInner {...props} />
 		</WorkspaceDnd>
 	);
 }

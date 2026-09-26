@@ -15,12 +15,12 @@
  * beside the table, board or schedule (the content narrows and keeps
  * scrolling; nothing is covered).
  *
- * Wide mode (the tab takes the map's space) is the shell's layout; with the
- * map showing, the details open over the map instead (the shell's floating
- * inspector slot shows the same `PlaceDetails`).
+ * Wide: with the map hidden (the shell's one "Hide the map", for every tab)
+ * the tab takes its space and docks the details; with the map showing, the
+ * details open over the map instead (the shell's floating inspector slot
+ * shows the same `PlaceDetails`).
  */
 import { cn } from "cn";
-import { Maximize2, Minimize2 } from "lucide-react";
 import {
 	lazy,
 	type ReactNode,
@@ -30,15 +30,9 @@ import {
 	useState,
 } from "react";
 import { EmptyState } from "@/components/common/empty-state";
-import { Button } from "@/components/ui/button";
-import {
-	Tooltip,
-	TooltipContent,
-	TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { PlaceFilterSummary } from "@/features/outline/FilterMenu";
+import { useShell } from "@/features/shell/shell-store";
 import { TabPurpose } from "@/features/shell/TabPurpose";
-import { useViewPrefs } from "@/features/shell/view-prefs";
 import { canRateOwn } from "@/lib/auth/roles";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { isRateable } from "../lib/rate";
@@ -68,23 +62,19 @@ const PlacesMap = lazy(() => import("./PlacesMap"));
 const RateFeed = lazy(() => import("./RateFeed"));
 
 /**
- * Wide mode: remembered per person (view prefs), on by default because the
- * table wants the width. The Map view is always wide (one map at a time).
+ * Does the Places tab take the map's space right now? With the map hidden
+ * (one switch, the shell's), and always in the Map view (one map at a time).
  */
-export function usePlacesWide(): [boolean, (v: boolean) => void] {
-	const { mode } = useWorkspace();
-	const { prefs, setPrefs } = useViewPrefs({ enabled: mode === "live" });
-	return [
-		prefs.placesWide ?? true,
-		(v: boolean) => setPrefs({ placesWide: v }),
-	];
-}
-
-/** The shell asks: does the Places tab take the map's space right now? */
 export function usePlacesTakesMap(): boolean {
 	const { tab, search } = useWorkspace();
-	const [wide] = usePlacesWide();
-	return tab === "places" && (wide || search.pv === "map");
+	const mapHidden = useShell((s) => s.mapHidden);
+	return tab === "places" && (mapHidden || search.pv === "map");
+}
+
+/** The Places tab's Map view is on screen: it stands in for the side map. */
+export function usePlacesMapView(): boolean {
+	const { tab, search } = useWorkspace();
+	return tab === "places" && search.pv === "map";
 }
 
 /** No places yet: adding, the flow in three lines, and the way in. */
@@ -234,47 +224,12 @@ function Body({
 	);
 }
 
-/** Wide mode's toggle (the Map view always takes the map's space). */
-function WideToggle({
-	wide,
-	onWide,
-}: {
-	wide: boolean;
-	onWide: (v: boolean) => void;
-}) {
-	return (
-		<Tooltip>
-			<TooltipTrigger asChild>
-				<Button
-					variant="ghost"
-					size="icon"
-					className="size-8"
-					aria-pressed={wide}
-					aria-label={wide ? "Show the map" : "Wide: hide the map"}
-					data-testid={PLACES_TAB_TESTID.wide}
-					onClick={() => onWide(!wide)}
-				>
-					{wide ? (
-						<Minimize2 className="size-4" strokeWidth={1.5} />
-					) : (
-						<Maximize2 className="size-4" strokeWidth={1.5} />
-					)}
-				</Button>
-			</TooltipTrigger>
-			<TooltipContent>
-				{wide ? "Show the map" : "Wide: hide the map"}
-			</TooltipContent>
-		</Tooltip>
-	);
-}
-
 export function PlacesTab({ phone = false }: { phone?: boolean }) {
 	const [q, setQ] = useState("");
 	// The search belongs to the Review step's list; the feed and the schedule are the whole scope.
 	const urlStep = usePlacesState().step;
 	const data = usePlaces(urlStep === "rate" || urlStep === "schedule" ? "" : q);
 	const { access, ix, sel, search, nav } = useWorkspace();
-	const [wide, setWide] = usePlacesWide();
 	const takesMap = usePlacesTakesMap();
 	const tally = useMemo(
 		() =>
@@ -310,7 +265,6 @@ export function PlacesTab({ phone = false }: { phone?: boolean }) {
 			...(s === "review" ? {} : { pst: undefined, talk: undefined }),
 		});
 	};
-	const mapView = step === "review" && data.state.view === "map";
 	return (
 		<PlaceActionsProvider>
 			<div
@@ -328,10 +282,6 @@ export function PlacesTab({ phone = false }: { phone?: boolean }) {
 				>
 					{/* Adding is an action on every step, not a step of its own. */}
 					<AddPlaceButton iconOnly={phone || !takesMap} />
-					{/* The Map view always takes the map's space (one map at a time). */}
-					{phone || mapView ? null : (
-						<WideToggle wide={wide} onWide={setWide} />
-					)}
 				</PlacesSteps>
 				{step === "review" && data.rows.length > 0 ? (
 					<PlacesToolbar

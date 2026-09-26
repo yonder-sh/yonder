@@ -69,11 +69,6 @@ export const UserPrefs = z
 		 * is always shared (owner decision: no "hide my cursor").
 		 */
 		hideCursors: z.boolean(),
-		/**
-		 * docs/PLACES.md §1: the Places tab takes the map's space ("wide"),
-		 * remembered per person.
-		 */
-		placesWide: z.boolean(),
 		/** docs/PLACES.md §1: the city groups this person split by area (node ids). */
 		placesSplit: z.array(Id).max(200),
 	})
