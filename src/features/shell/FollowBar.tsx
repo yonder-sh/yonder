@@ -7,6 +7,7 @@
 import { presenceColor } from "@/components/common/member";
 import { usePeers } from "@/lib/realtime/presence";
 import { useUi } from "@/lib/workspace/ui-store";
+import { useFollowPause } from "./follow-pause";
 import { FollowFormBanner } from "./form-presence-ui";
 import { SHELL_TESTID } from "./testids";
 
@@ -14,6 +15,9 @@ export function FollowBar() {
 	const following = useUi((s) => s.following);
 	const setFollowing = useUi((s) => s.setFollowing);
 	const peers = usePeers();
+	// My own scroll or sheet drag paused part of it: the way back.
+	const paused = useFollowPause((s) => s.scroll || s.sheet);
+	const resume = useFollowPause((s) => s.resume);
 	if (!following) return null;
 	const peer = peers.find((p) => p.user.id === following);
 	const color = presenceColor(peer?.user.color);
@@ -42,6 +46,21 @@ export function FollowBar() {
 						</span>
 					) : null}
 				</span>
+				{paused ? (
+					<>
+						<span aria-hidden="true" className="text-muted-foreground">
+							·
+						</span>
+						<button
+							type="button"
+							data-testid={SHELL_TESTID.followResume}
+							className="shrink-0 font-medium text-primary underline-offset-2 hover:underline"
+							onClick={resume}
+						>
+							Resume
+						</button>
+					</>
+				) : null}
 				<span aria-hidden="true" className="text-muted-foreground">
 					·
 				</span>

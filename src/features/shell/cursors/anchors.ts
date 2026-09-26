@@ -216,6 +216,50 @@ export function clipOf(el: Element): Box {
 	return box;
 }
 
+const scrollerCache = new WeakMap<Element, Element | null>();
+
+function scrolls(el: Element): boolean {
+	const o = getComputedStyle(el).overflowY;
+	return o === "auto" || o === "scroll" || o === "overlay";
+}
+
+/**
+ * The element `el` scrolls in (the nearest ancestor that scrolls
+ * vertically and has something to scroll), else null.
+ */
+export function scrollerOf(el: Element): Element | null {
+	let s = scrollerCache.get(el);
+	if (s === undefined) {
+		s = null;
+		for (
+			let p = el.parentElement;
+			p && p !== document.body;
+			p = p.parentElement
+		) {
+			if (scrolls(p)) {
+				s = p;
+				break;
+			}
+		}
+		scrollerCache.set(el, s);
+	}
+	// A box that has nothing to scroll now lets its own scroller take over.
+	if (s && s.scrollHeight <= s.clientHeight + 1)
+		return s.isConnected ? scrollerOf(s) : null;
+	return s;
+}
+
+/** The part of scroll box `el` I can see now (its box ∩ its clipping ancestors). */
+export function visibleBox(el: Element): Box {
+	const r = el.getBoundingClientRect();
+	return intersect(clipOf(el), {
+		left: r.left,
+		top: r.top,
+		right: r.right,
+		bottom: r.bottom,
+	});
+}
+
 /** The first of `els` on screen now, else the first rendered one. */
 function firstShown(els: Iterable<Element>): Element | null {
 	let fallback: Element | null = null;

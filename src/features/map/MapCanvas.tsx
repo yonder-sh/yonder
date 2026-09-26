@@ -50,6 +50,7 @@ import {
 	useState,
 } from "react";
 import { presenceColor } from "@/components/common/member";
+import { useFollowPause } from "@/features/shell/follow-pause";
 import { LENS_ZOOM, repAt, suggestsFinerLens } from "@/lib/engine/lens";
 import type { Lens } from "@/lib/engine/types";
 import { buildModel } from "@/lib/engine/visits";
@@ -1450,7 +1451,8 @@ export default function MapCanvas({
 		globe,
 	});
 	const camLeader = useCamFollow((s) => (s.paused ? s.leader : null));
-	const resumeCam = useCamFollow((s) => s.resume);
+	// "Back to …" brings all of Follow back (a paused list or sheet too).
+	const resumeCam = useFollowPause((s) => s.resume);
 
 	// FB-17: live cursors over the map travel as lng/lat (the cursor layer asks
 	// this projector), and re-project whenever the camera moves.

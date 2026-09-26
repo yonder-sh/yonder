@@ -28,6 +28,7 @@ export const SHELL_TESTID = {
 	inspectorTabs: "inspector-tabs",
 	// Chrome
 	followBar: "follow-bar",
+	followResume: "follow-resume",
 	followButton: "follow-button",
 	shortcutsDialog: "shortcuts-dialog",
 	viewSettingsDialog: "view-settings-dialog",

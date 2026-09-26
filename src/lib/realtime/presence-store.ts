@@ -134,7 +134,8 @@ export class PresenceStore {
 /**
  * The parts of a state the presence UI renders: not `cursor`/`react` (20 Hz),
  * `cam`, `drag` or `menu` (the overlay and the map read those straight from
- * the awareness); `media` and `form` change only on open / close / play.
+ * the awareness); `media` and `form` change only on open / close / play;
+ * of `look` only its map-or-panel focus (its ranges change while scrolling).
  */
 function selfKey(s: Partial<AwarenessState>): string {
 	return JSON.stringify([
@@ -144,6 +145,7 @@ function selfKey(s: Partial<AwarenessState>): string {
 		s.spotlight ?? null,
 		s.media ?? null,
 		s.form ?? null,
+		(s.look as { f?: unknown } | null | undefined)?.f ?? null,
 	]);
 }
 

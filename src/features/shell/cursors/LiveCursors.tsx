@@ -7,6 +7,8 @@
  * - emoji reactions: `E` opens the palette at my pointer (1–8 pick); on a
  *   phone, hold a card, row or day and let go for the same palette, and the
  *   emoji lands on that card.
+ * - what I see of each list, and map or panel (`LookSender`), and, while I
+ *   follow someone, my lists showing what they see (`ScrollFollower`).
  * The "Show others' cursors" view setting hides the others' cursors and chat
  * here; mine is always shared (owner decision).
  */
@@ -33,12 +35,16 @@ import { getMapProjector } from "@/lib/workspace/map-projector";
 import { useUi } from "@/lib/workspace/ui-store";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { SHELL_TESTID } from "../testids";
+import { useBreakpoint } from "../use-breakpoint";
 import { inOpenLayer } from "../use-workspace-hotkeys";
 import { useViewPrefs } from "../view-prefs";
 import { useAnchorLabel } from "./anchor-label";
 import { ANCHOR_ATTR, type Encoded, encodeAt } from "./anchors";
+import { LookSender } from "./look";
 import { MenuSender } from "./menu-presence";
 import { CursorOverlay } from "./overlay";
+import { ScrollFollower } from "./scroll-follow";
+import { focusOfSnap, SHEET_SNAPS } from "./scroll-rules";
 import { CursorSender } from "./sender";
 
 const E2E = import.meta.env.VITE_E2E === "1";
@@ -66,6 +72,12 @@ export function LiveCursors() {
 	const [layer, setLayer] = useState<HTMLDivElement | null>(null);
 	const overlay = useRef<CursorOverlay | null>(null);
 	const sender = useRef<CursorSender | null>(null);
+	const scroller = useRef<ScrollFollower | null>(null);
+	const looker = useRef<LookSender | null>(null);
+	const phone = useBreakpoint() === "sm";
+	// A phone: my sheet's snap says whether I look at the map or the panel.
+	const snap = useUi((s) => s.sheetSnap);
+	const phoneFocus = phone ? focusOfSnap(snap, SHEET_SNAPS) : null;
 	const cfg = useRef({
 		selfUserId,
 		scopeId: scope?.id ?? null,
@@ -73,6 +85,7 @@ export function LiveCursors() {
 		following,
 		reduced,
 		labelOf,
+		phoneFocus,
 	});
 	cfg.current = {
 		selfUserId,
@@ -81,6 +94,7 @@ export function LiveCursors() {
 		following,
 		reduced,
 		labelOf,
+		phoneFocus,
 	};
 
 	useEffect(() => {
@@ -91,8 +105,20 @@ export function LiveCursors() {
 		// FB-25: my open menus, for the others' ghosts.
 		const menus = new MenuSender(awareness);
 		menus.start();
+		// What I see (for my followers), and what the one I follow sees.
+		const look = new LookSender(awareness, () => cfg.current.selfUserId);
+		look.setPhoneFocus(cfg.current.phoneFocus);
+		look.start();
+		const follow = new ScrollFollower(awareness);
+		follow.start();
+		follow.configure({
+			leader: cfg.current.following,
+			reduced: cfg.current.reduced,
+		});
 		overlay.current = o;
 		sender.current = s;
+		scroller.current = follow;
+		looker.current = look;
 		if (E2E)
 			// E2E only: what this page received, and the raw awareness (to prove the
 			// server drops what an honest client would never send).
@@ -104,11 +130,15 @@ export function LiveCursors() {
 				map: getMapProjector,
 			};
 		return () => {
+			follow.stop();
+			look.stop();
 			menus.stop();
 			s.stop();
 			o.destroy();
 			overlay.current = null;
 			sender.current = null;
+			scroller.current = null;
+			looker.current = null;
 			if (E2E)
 				delete (window as unknown as { __yonderCursors?: unknown })
 					.__yonderCursors;
@@ -125,7 +155,12 @@ export function LiveCursors() {
 			reduced,
 			labelOf,
 		});
+		scroller.current?.configure({ leader: following, reduced });
 	}, [selfUserId, scopeId, hide, following, reduced, labelOf]);
+
+	useEffect(() => {
+		looker.current?.setPhoneFocus(phoneFocus);
+	}, [phoneFocus]);
 
 	// ---- cursor chat (FB-17c) ------------------------------------------------
 	const [chatOpen, setChatOpen] = useState(false);

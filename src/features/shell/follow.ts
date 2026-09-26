@@ -14,6 +14,7 @@ import { usePeers } from "@/lib/realtime/presence";
 import { VIEW_PATH_RE } from "@/lib/realtime/protocol";
 import { useUi } from "@/lib/workspace/ui-store";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
+import { useFollowPause } from "./follow-pause";
 
 /** The path to navigate to when following, or null when it must be refused. */
 export function safeFollowPath(
@@ -56,6 +57,13 @@ export function useFollow(): void {
 	const name = peer?.user.name;
 	const nameRef = useRef<string | null>(null);
 	if (name) nameRef.current = name;
+
+	// A new leader (or none) starts unpaused; so does the leader going elsewhere.
+	useEffect(() => {
+		void following;
+		void path;
+		useFollowPause.setState({ scroll: false, sheet: false });
+	}, [following, path]);
 
 	useEffect(() => {
 		if (!following || !path) return;

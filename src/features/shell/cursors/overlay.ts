@@ -14,8 +14,9 @@
  *   my screen (another tab, a panel I don't have open), when something covers
  *   it (a dialog, the sheet), or when I turned others' cursors off.
  * - Off-screen (a scrolled timeline, outside the map): an edge arrow with the
- *   name; clicking it scrolls or pans there.
- * - Follow: the followed person's anchor is kept in view (scroll / pan).
+ *   name; clicking it scrolls or pans there (and resumes a paused Follow).
+ * - Follow: a followed cursor over the map is kept in view when their camera
+ *   isn't mirrored; lists follow their view (`scroll-follow.ts`).
  * - Touch peers never hover: a new `tap` shows a ripple. Everyone's selection
  *   gets a presence-coloured ring on its card/row/day (a style sheet, not a
  *   render).
@@ -43,6 +44,7 @@ import {
 	isMapCameraFollowed,
 	onMapMoved,
 } from "@/lib/workspace/map-projector";
+import { useFollowPause } from "../follow-pause";
 import {
 	anchorSelector,
 	pointIn,
@@ -53,6 +55,7 @@ import {
 } from "./anchors";
 import { edgeArrow, inside, Track } from "./geometry";
 import { type GhostPeer, Ghosts, type LabelOf } from "./ghosts";
+import { FOLLOW_EVERY_MS } from "./scroll-rules";
 
 export type OverlayConfig = {
 	selfUserId: string | null;
@@ -126,8 +129,6 @@ const CHEVRON_PATH = "M5 3 L10 8 L5 13";
 const MAX_FLOATERS = 24;
 /** How often a visible cursor re-checks what covers it (ms). */
 const COVER_CHECK_MS = 180;
-/** Follow: at most one scroll/pan per this long (ms). */
-const FOLLOW_EVERY_MS = 650;
 
 function svg(path: string, fill: boolean): SVGSVGElement {
 	const s = document.createElementNS(SVG_NS, "svg");
@@ -478,6 +479,7 @@ export class CursorOverlay {
 		const r = this.remotes.get(userId);
 		const a = r?.cursor?.a;
 		if (!r || !a) return;
+		if (this.cfg.following === userId) useFollowPause.getState().resume();
 		if (a.k === "map") getMapProjector()?.easeTo(a.lng, a.lat);
 		else {
 			const res = resolveAnchor(a, r.anchorEl);
@@ -717,14 +719,13 @@ export class CursorOverlay {
 		return moving;
 	}
 
-	/** Follow mode (FB-17a): keep the followed person's anchor in view. */
+	/** Follow mode (FB-17a): keep the followed person's cursor on the map in view. */
 	private follow(r: Remote, res: Resolved, a: CursorAnchor, now: number) {
+		// Lists follow the view (`scroll-follow.ts`); FB-22: the map mirrors their camera.
+		if (a.k !== "map" || isMapCameraFollowed()) return;
 		if (inside(res, res.clip, -24)) return;
 		if (now - r.followAt < FOLLOW_EVERY_MS) return;
 		r.followAt = now;
-		if (a.k === "map") {
-			// FB-22: the map mirrors their camera instead (or I paused it).
-			if (!isMapCameraFollowed()) getMapProjector()?.easeTo(a.lng, a.lat);
-		} else if (res.el) scrollAnchorIntoView(res.el, this.cfg.reduced, "center");
+		getMapProjector()?.easeTo(a.lng, a.lat);
 	}
 }
