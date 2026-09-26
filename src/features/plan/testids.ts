@@ -31,6 +31,8 @@ export const PLAN_TESTID = {
 	legFix: "plan-leg-fix",
 	legStale: "plan-leg-stale",
 	legBundles: "plan-leg-bundles",
+	/** A leg row's details, shown on hover, focus or selection. */
+	legMore: "plan-leg-more",
 	timedDuration: "plan-timed-duration",
 	stayLeg: "plan-stay-leg",
 	overnight: "plan-overnight",

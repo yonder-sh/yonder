@@ -220,6 +220,24 @@
 	--tone: color-mix(in oklab, var(--fam-transit) 65%, white);
 }
 
+/* ---- Leg rows (LegRow.tsx): mode and time; the rest on hover, on focus
+   or while the leg is selected. It floats, so the row never changes height. ---- */
+.plan-leg-more {
+	opacity: 0;
+	transition: opacity 120ms ease-out;
+}
+.plan-leg:hover .plan-leg-more,
+.plan-leg:focus-within .plan-leg-more,
+.plan-leg[data-selected] .plan-leg-more {
+	opacity: 1;
+}
+/* Touch has no hover: an unseen control never takes the tap (a tap selects the leg). */
+@media (hover: none) {
+	.plan-leg:not([data-selected], :focus-within) .plan-leg-more {
+		pointer-events: none;
+	}
+}
+
 /* Cards glow once when someone else changes them (DESIGN §7.1, §11). */
 .plan-glow {
 	animation: glow 1.2s ease-out 1;

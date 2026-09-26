@@ -65,11 +65,14 @@ export function LegSummary({
 	leg,
 	schedule,
 	compact,
+	distance = true,
 	className,
 }: {
 	leg: GraphLeg | null;
 	schedule?: ScheduledLeg | null;
 	compact?: boolean;
+	/** false: the caller shows the distance itself (the Plan's leg rows, on hover). */
+	distance?: boolean;
 	className?: string;
 }) {
 	const details = leg ? readLegDetails(leg.details) : null;
@@ -120,7 +123,7 @@ export function LegSummary({
 				</span>
 			) : null}
 			{!unset && !compact && flight?.untimed ? <span>times TBD</span> : null}
-			{!unset && !compact && leg?.distanceM ? (
+			{!unset && !compact && distance && leg?.distanceM ? (
 				<span className="font-mono tnum">{formatDistance(leg.distanceM)}</span>
 			) : null}
 		</span>

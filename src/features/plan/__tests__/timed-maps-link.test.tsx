@@ -1,7 +1,7 @@
 /**
  * FB-03 (QA re-check): the overnight reserved train's Plan row (`TimedLegRow`,
  * e.g. "SP3 night train · Hanoi Station → Lao Cai Station dep 22:00 →
- * 06:00+1") offers "Google Maps ↗" in transit mode, like every same-day
+ * 06:00+1") offers Google Maps ↗ in transit mode, like every same-day
  * reserved row (`LegRow`) does. Clicking it leaves the row unselected.
  */
 import { fireEvent, screen, within } from "@testing-library/react";
@@ -12,6 +12,7 @@ import { demo, demoGraph } from "@/lib/fixtures/demo";
 import { TESTID } from "@/lib/testids";
 import { renderWithWorkspace } from "@/test/render-workspace";
 import { PlanTab } from "../PlanTab";
+import { PLAN_TESTID } from "../testids";
 
 /** The demo's Fuji Excursion (Itoya → Kawaguchiko) as a reserved train. */
 function reserved(
@@ -80,7 +81,8 @@ describe("reserved overnight train row (FB-03)", () => {
 		expect(url.searchParams.get("destination")).toBe("35.51,138.76");
 		expect(a.getAttribute("aria-label")).toBe("Open in Google Maps");
 		expect(a.getAttribute("target")).toBe("_blank");
-		expect(a.textContent).toContain("Google Maps");
+		// An icon in the row's details (shown on hover, focus or selection).
+		expect(a.closest(`[data-testid="${PLAN_TESTID.legMore}"]`)).toBeTruthy();
 	});
 
 	it("opening the link doesn't select the row", () => {

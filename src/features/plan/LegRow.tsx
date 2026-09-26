@@ -1,11 +1,16 @@
 /**
  * Leg rows between cards (DESIGN §7.1 "Leg row", SPEC §9): the rail in the
  * time column in the mode's pattern, the mode glyph and a one-line label,
- * travellers on the right. Unset legs show their estimate with "est." and
- * one-click accept chips; late legs get the amber fill, the label and up to
- * three fixes; reserved transit shows "◆ dep 08:30 → 10:26" and its booking
- * line (masked for link guests). Stay legs, overnight connectors and the
- * "continued" row of an overnight flight share the same frame.
+ * travellers on the right. Unset legs show their estimate with "est."; late
+ * legs get the amber fill, the label and up to three fixes; reserved transit
+ * shows "◆ dep 08:30 → 10:26" and its booking line (masked for link guests).
+ * Stay legs, overnight connectors and the "continued" row of an overnight
+ * flight share the same frame.
+ *
+ * Calm by default (owner, 2026-09-25): the mode, the time and the line chips
+ * (a reserved ride keeps its booking, like a flight's ticket). The distance,
+ * Google Maps and the accept chips float in on hover, focus or while the leg
+ * is selected (`LegMore`, plan.css), so the row never changes height.
  */
 import { cn } from "cn";
 import { BedDouble, Lock, Moon } from "lucide-react";
@@ -28,7 +33,7 @@ import { timedLegName } from "@/lib/engine/schedule";
 import { conflictFixes } from "@/lib/engine/suggest";
 import { localDateTimeToEpoch } from "@/lib/engine/time";
 import type { GraphLeg, ScheduledLeg } from "@/lib/engine/types";
-import { formatDuration, formatTime } from "@/lib/format";
+import { formatDistance, formatDuration, formatTime } from "@/lib/format";
 import type { LegMode } from "@/lib/schemas/enums";
 import type { LegTarget } from "@/lib/schemas/targets";
 import { TESTID } from "@/lib/testids";
@@ -121,6 +126,7 @@ export function RowFrame({
 	railSlot,
 	hover,
 	anchor,
+	selected,
 }: {
 	rail: ReactNode;
 	children: ReactNode;
@@ -135,6 +141,8 @@ export function RowFrame({
 	hover?: HoverTarget | null;
 	/** FB-17: the live-cursor anchor id (`leg:<sel>`). */
 	anchor?: string;
+	/** The inspector is open on this row (a leg row then shows its details). */
+	selected?: boolean;
 }) {
 	const inner = (
 		<>
@@ -158,6 +166,7 @@ export function RowFrame({
 			<div
 				data-testid={testId}
 				data-cursor-anchor={anchor}
+				data-selected={selected || undefined}
 				{...hoverProps}
 				className={cn("relative flex items-center", height, className)}
 			>
@@ -174,6 +183,7 @@ export function RowFrame({
 		<div
 			data-testid={testId}
 			data-cursor-anchor={anchor}
+			data-selected={selected || undefined}
 			onClick={onClick}
 			{...hoverProps}
 			className={cn(
@@ -221,6 +231,23 @@ function Travellers({ ids }: { ids: readonly string[] }) {
 			{ids.slice(0, 3).map((id) => (
 				<MemberAvatar key={id} memberId={id} size={16} />
 			))}
+		</span>
+	);
+}
+
+/**
+ * A leg row's details, shown on hover, on focus or while the leg is
+ * selected (plan.css): a small pill that floats at the row's end, left of the
+ * travellers, so revealing it never moves or grows the row. Always in the
+ * accessibility tree and the tab order (focusing it shows it).
+ */
+function LegMore({ children }: { children: ReactNode }) {
+	return (
+		<span
+			data-testid={PLAN_TESTID.legMore}
+			className="plan-leg-more absolute top-1/2 right-full z-10 mr-1.5 flex -translate-y-1/2 items-center gap-2 rounded-full border bg-card px-2 py-0.5 text-xs whitespace-nowrap text-muted-foreground shadow-xs empty:hidden"
+		>
+			{children}
 		</span>
 	);
 }
@@ -363,9 +390,9 @@ function TimedLine({ leg }: { leg: GraphLeg }) {
 	const seats = (b?.seats ?? []).map((s) => s.seat).filter(Boolean);
 	const minutes = timedMinutes(d.fixed);
 	return (
-		// Claims the row next to the glyph (a Google Maps link wraps below it);
-		// booking details that don't fit wrap under the name and times rather
-		// than being cut, so the class and berths always show (QA TR-11).
+		// Claims the row next to the glyph; booking details that don't fit wrap
+		// under the name and times rather than being cut, so the class and
+		// berths always show (QA TR-11), as a flight's ticket shows its seats.
 		<span className="flex min-w-0 flex-1 basis-72 flex-wrap items-center gap-x-1.5 text-xs [&>*]:whitespace-nowrap">
 			<span className="max-w-full truncate font-medium text-foreground">
 				{timedLegName(ix, leg)}
@@ -460,6 +487,7 @@ export function LegRow({
 						: `Travel${stayName ? ` ${stay?.end === "start" ? "from" : "to"} ${stayName}` : ""}`
 				}
 				height={late ? "min-h-7 py-1" : "min-h-7"}
+				selected={selected}
 				onClick={() => nav.select({ kind: "leg", target })}
 				hover={
 					target.kind === "pair"
@@ -469,7 +497,11 @@ export function LegRow({
 							}
 						: null
 				}
-				className={cn(late && "bg-warning-wash", selected && "bg-primary/5")}
+				className={cn(
+					"plan-leg",
+					late && "bg-warning-wash",
+					selected && "bg-primary/5",
+				)}
 				rail={
 					<Rail
 						mode={stay && unset ? "stay" : rail}
@@ -490,8 +522,8 @@ export function LegRow({
 				}
 			>
 				{/* A hanging indent (QA VIS3-02): the first part (the mode glyph, the
-				    stay's bed) starts the line, and whatever wraps (line chips,
-				    "Google Maps", the bundle icons) lines up after it. */}
+				    stay's bed) starts the line, and whatever wraps (line chips, the
+				    late label) lines up after it. */}
 				<span className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-0.5 pl-5 [&>:first-child]:-ml-5">
 					{stay ? (
 						<span className="flex min-w-0 items-center gap-1 text-xs text-muted-foreground">
@@ -544,6 +576,7 @@ export function LegRow({
 							<LegSummary
 								leg={leg}
 								schedule={s ?? null}
+								distance={false}
 								className="min-w-0 pl-5 [&>*]:whitespace-nowrap [&>:first-child]:-ml-5"
 							/>
 							<span data-testid={TESTID.legDuration} className="sr-only">
@@ -554,11 +587,6 @@ export function LegRow({
 					{s?.stale ? (
 						<StaleLink target={target} mode={leg?.mode ?? null} />
 					) : null}
-					{/* ADDENDUM §5: every Japan transit row links to Google Maps. */}
-					<JapanTransitLink target={target} compact />
-					{/* QA LIST-02: the leg's own todos, media, notes and costs (they
-					    wrap with the link below a long reserved line). */}
-					<LegBundleIcons legId={leg?.id} />
 					{late ? (
 						<span
 							className="w-full text-xs font-semibold text-warning"
@@ -570,9 +598,22 @@ export function LegRow({
 						</span>
 					) : null}
 				</span>
-				{unset ? <AcceptChips target={target} s={s} /> : null}
-				{late ? <LegFixes legKey={legKey} /> : null}
-				<Travellers ids={leg?.assigneeIds ?? []} />
+				<span className="relative ml-auto flex shrink-0 items-center gap-2">
+					<LegMore>
+						{!unset && leg?.distanceM ? (
+							<span className="font-mono tnum">
+								{formatDistance(leg.distanceM)}
+							</span>
+						) : null}
+						{unset ? <AcceptChips target={target} s={s} /> : null}
+						{/* ADDENDUM §5 / FB-03: every leg with two located ends links to Google Maps. */}
+						<JapanTransitLink target={target} iconOnly />
+					</LegMore>
+					{/* QA LIST-02: the leg's own todos, media, notes and costs. */}
+					<LegBundleIcons legId={leg?.id} />
+					{late ? <LegFixes legKey={legKey} /> : null}
+					<Travellers ids={leg?.assigneeIds ?? []} />
+				</span>
 			</RowFrame>
 		</LegMarks>
 	);
@@ -651,19 +692,26 @@ export function TimedLegRow({
 	/** The arrival day's "continued" row. */
 	continued?: boolean;
 }) {
-	const { ix, schedule, nav } = useWorkspace();
+	const { ix, schedule, nav, sel } = useWorkspace();
 	const leg = ix.legByPair.get(pairKey(fromItemId, toItemId)) ?? null;
 	const s = schedule.legs[legKey];
 	if (!leg) return null;
 	const d = ix.legDetails(leg);
 	if (d.kind === "flight") return null;
 	const tz = s ? ix.tzOf(ix.item(toItemId)?.nodeId) : null;
+	const selected =
+		sel?.kind === "leg" &&
+		sel.target.kind === "pair" &&
+		sel.target.fromItemId === fromItemId &&
+		sel.target.toItemId === toItemId;
 	return (
 		<RowFrame
 			testId={continued ? PLAN_TESTID.flightContinued : TESTID.leg}
 			label={`${timedLegName(ix, leg)}${continued ? " continued" : ""}`}
 			height="min-h-7"
+			selected={selected}
 			className={cn(
+				"plan-leg",
 				continued && "plan-hatch",
 				s?.late && !continued && "bg-warning-wash",
 			)}
@@ -688,12 +736,6 @@ export function TimedLegRow({
 			) : (
 				<span className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5">
 					<TimedLine leg={leg} />
-					{/* FB-03: the overnight train links to Google Maps (transit) like
-					    every same-day reserved row; it wraps below a long line. */}
-					<JapanTransitLink
-						target={{ kind: "pair", fromItemId, toItemId }}
-						compact
-					/>
 					{s?.late ? (
 						<span
 							className="w-full text-xs font-semibold text-warning"
@@ -704,7 +746,17 @@ export function TimedLegRow({
 					) : null}
 				</span>
 			)}
-			<span className="ml-auto flex shrink-0 items-center gap-2 empty:hidden">
+			<span className="relative ml-auto flex shrink-0 items-center gap-2">
+				{continued ? null : (
+					<LegMore>
+						{/* FB-03: the overnight train links to Google Maps (transit) like
+						    every same-day reserved row. */}
+						<JapanTransitLink
+							target={{ kind: "pair", fromItemId, toItemId }}
+							iconOnly
+						/>
+					</LegMore>
+				)}
 				<LegBundleIcons legId={leg.id} />
 				<Travellers ids={leg.assigneeIds} />
 			</span>
