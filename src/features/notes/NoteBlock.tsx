@@ -14,6 +14,7 @@ import { NoteSuggestions } from "@/features/suggest/NoteSuggestions";
 import { can } from "@/lib/auth/roles";
 import { noteDocName } from "@/lib/realtime/protocol";
 import type { BundleTarget } from "@/lib/schemas/targets";
+import { useUi } from "@/lib/workspace/ui-store";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { NoteEditor } from "./NoteEditor";
 import { hasText, noteFor, tripNotesQuery } from "./queries";
@@ -74,15 +75,21 @@ export function NoteBlock({
 	const { sharedWrite, sharedReason, canPrivate } = useNoteAccess();
 	const [layer, setLayer] = useState<"shared" | "private">("shared");
 	useEffect(() => setLayer(readLayer()), []);
+	// While I follow someone the shared note shows (theirs never travels, and
+	// mine isn't what they see), until I pick a layer myself.
+	const following = useUi((s) => s.following);
+	const [shown, setShown] = useState<"shared" | "private" | null>(null);
+	useEffect(() => setShown(following ? "shared" : null), [following]);
 	const pick = (l: "shared" | "private") => {
 		setLayer(l);
+		setShown((s) => (s === null ? null : l));
 		try {
 			localStorage.setItem(PRIVATE_KEY, l);
 		} catch {
 			// private mode / blocked storage: the choice lasts this session
 		}
 	};
-	const showPrivate = canPrivate && layer === "private";
+	const showPrivate = canPrivate && (shown ?? layer) === "private";
 	const shared = noteFor(q.data, target);
 	const mine = canPrivate
 		? noteFor(q.data, target, graph.me.userId)

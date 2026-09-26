@@ -18,7 +18,13 @@ import {
 	CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { TabPurpose } from "@/features/shell/TabPurpose";
+import { anchorKey } from "@/lib/realtime/cursor-protocol";
 import { noteDocName } from "@/lib/realtime/protocol";
+import {
+	idOrNone,
+	useFollowToggle,
+	useFollowValue,
+} from "@/lib/realtime/view-ui";
 import type { BundleTarget } from "@/lib/schemas/targets";
 import { TESTID } from "@/lib/testids";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
@@ -50,6 +56,8 @@ export function NotesTab() {
 		: { kind: "trip" };
 	const where = scope?.name ?? graph.trip.name;
 	const [editing, setEditing] = useState<string | null>(null);
+	// Opened by the one I follow: no focus grab.
+	const [followed, setFollowed] = useState(false);
 	const [writing, setWriting] = useState(false);
 
 	const sections = useMemo<Section[]>(() => {
@@ -122,6 +130,23 @@ export function NotesTab() {
 		}
 	}, [q.data, only, ix, scope, lens, days, model, graph.trip.name, own]);
 
+	// Which shared note is open live (their carets show) travels with my view.
+	const live = sections.find(
+		(s) => s.note.name === editing && !s.note.ownerUserId,
+	);
+	useFollowValue(
+		"notes.live",
+		live ? anchorKey(live.note.name) : "",
+		(v) => {
+			const s = sections.find(
+				(x) => !x.note.ownerUserId && anchorKey(x.note.name) === v,
+			);
+			setEditing(s ? s.note.name : null);
+			setFollowed(true);
+		},
+		idOrNone,
+	);
+
 	const ownShared = noteFor(q.data, own);
 	const ownPrivate = canPrivate
 		? noteFor(q.data, own, graph.me.userId)
@@ -162,7 +187,11 @@ export function NotesTab() {
 							key={s.note.name}
 							section={s}
 							editing={editing === s.note.name}
-							onEdit={() => setEditing(s.note.name)}
+							focus={!followed}
+							onEdit={() => {
+								setEditing(s.note.name);
+								setFollowed(false);
+							}}
 							onDone={() => setEditing(null)}
 							canEdit={s.note.ownerUserId ? canPrivate : sharedWrite}
 						/>
@@ -176,19 +205,30 @@ export function NotesTab() {
 function NoteSection({
 	section,
 	editing,
+	focus,
 	onEdit,
 	onDone,
 	canEdit,
 }: {
 	section: Section;
 	editing: boolean;
+	/** Focus the editor when it opens (not when a leader opened it). */
+	focus: boolean;
 	onEdit: () => void;
 	onDone: () => void;
 	canEdit: boolean;
 }) {
 	const { graph } = useWorkspace();
-	const [open, setOpen] = useState(true);
 	const priv = !!section.note.ownerUserId;
+	// Folded sections travel with my view (never my private ones).
+	const [closed, setClosed] = useFollowToggle(
+		"notes.closed",
+		anchorKey(section.note.name),
+		false,
+		{ enabled: !priv },
+	);
+	const open = !closed;
+	const setOpen = (v: boolean) => setClosed(!v);
 	const docName = noteDocName(
 		graph.trip.id,
 		section.target,
@@ -200,6 +240,9 @@ function NoteSection({
 				data-testid={NOTES_TESTID.section}
 				data-target={docName}
 				data-cursor-vis={priv ? "private" : undefined}
+				data-cursor-anchor={
+					priv ? undefined : `note:${anchorKey(section.note.name)}`
+				}
 				className="group/section rounded-lg py-2"
 			>
 				<div className="flex items-center gap-2">
@@ -250,7 +293,7 @@ function NoteSection({
 							savedJson={section.note.json}
 							allowWrite={canEdit}
 							label={`Notes for ${section.title}`}
-							autoFocus
+							autoFocus={focus}
 						/>
 					) : (
 						<StaticNote json={section.note.json} />

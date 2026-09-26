@@ -4,18 +4,26 @@
  * VIS3-08 / SPEC §19 PERF-05): Collaboration on the note's Yjs document,
  * named carets in presence colours, the members-only @-mention popup,
  * Markdown shortcuts and Markdown paste. See `NoteEditor` for the rules.
+ * While I follow someone, their caret is kept in view (`useFollowCaret`).
  */
 import type { HocuspocusProvider } from "@hocuspocus/provider";
 import { Extension } from "@tiptap/core";
 import Collaboration from "@tiptap/extension-collaboration";
 import { Placeholder } from "@tiptap/extensions";
-import { EditorContent, useEditor } from "@tiptap/react";
+import { type Editor, EditorContent, useEditor } from "@tiptap/react";
 import { yCursorPlugin } from "@tiptap/y-tiptap";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type * as Y from "yjs";
 import { presenceColor, useAddPerson } from "@/components/common/member";
+import { scrollerOf, visibleBox } from "@/features/shell/cursors/anchors";
+import {
+	FOLLOW_EVERY_MS,
+	followScroll,
+} from "@/features/shell/cursors/scroll-rules";
+import { useFollowPause } from "@/features/shell/follow-pause";
 import { NOTE_FIELD } from "@/lib/notes/extensions.shared";
 import { usePeers, useSetEditing } from "@/lib/realtime/presence";
+import { useUi } from "@/lib/workspace/ui-store";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import type { MentionCtx } from "./mention-suggestion";
 import type { NoteEditorProps } from "./NoteEditor";
@@ -80,6 +88,7 @@ const NoteCarets = Extension.create<{
 					caret.classList.add("collaboration-carets__caret");
 					caret.style.setProperty("--caret", colorOf(user));
 					caret.setAttribute("data-testid", "remote-cursor");
+					caret.dataset.userId = String(user.id ?? "");
 					const tag = document.createElement("div");
 					tag.classList.add("collaboration-carets__label");
 					tag.textContent = String(user.name ?? "Someone");
@@ -95,6 +104,56 @@ const NoteCarets = Extension.create<{
 		];
 	},
 });
+
+/**
+ * Follow: the followed person's caret stays in view as they type or move
+ * it (at most one smooth scroll per FOLLOW_EVERY_MS; not while I scrolled
+ * away myself).
+ */
+function useFollowCaret(
+	editor: Editor | null,
+	awareness: HocuspocusProvider["awareness"],
+): void {
+	const following = useUi((s) => s.following);
+	useEffect(() => {
+		if (!editor || !awareness || !following) return;
+		let raf = 0;
+		let lastAt = 0;
+		const check = () => {
+			raf = 0;
+			if (editor.isDestroyed || useFollowPause.getState().scroll) return;
+			const caret = editor.view.dom.querySelector(
+				`.collaboration-carets__caret[data-user-id="${CSS.escape(following)}"]`,
+			);
+			const scroller = caret ? scrollerOf(caret) : null;
+			if (!caret || !scroller) return;
+			const r = caret.getBoundingClientRect();
+			const box = visibleBox(scroller);
+			const dy = followScroll({
+				view: { top: box.top, bottom: box.bottom },
+				pointer: (r.top + r.bottom) / 2,
+				range: null,
+			});
+			const now = performance.now();
+			if (!dy || now - lastAt < FOLLOW_EVERY_MS) return;
+			lastAt = now;
+			const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+			scroller.scrollBy({ top: dy, behavior: reduce ? "auto" : "smooth" });
+		};
+		// The caret is redrawn after the awareness change: look on the next frame.
+		const kick = () => {
+			if (!raf) raf = requestAnimationFrame(check);
+		};
+		awareness.on("change", kick);
+		editor.on("update", kick);
+		kick();
+		return () => {
+			awareness.off("change", kick);
+			editor.off("update", kick);
+			if (raf) cancelAnimationFrame(raf);
+		};
+	}, [editor, awareness, following]);
+}
 
 function hashColor(id: string): number {
 	let h = 0;
@@ -210,6 +269,7 @@ export default function LiveNote({
 		onEditor?.(editor ?? null);
 		return () => onEditor?.(null);
 	}, [editor, onEditor]);
+	useFollowCaret(editor, provider.awareness);
 
 	// Once per editor: a reconnect must not throw the caret to the end.
 	const autoFocused = useRef<unknown>(null);
