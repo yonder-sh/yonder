@@ -1,8 +1,11 @@
 /**
  * Rate as an endless feed (docs/PLACES.md §1b): one place per screen, you
- * just scroll. Phone first (full-bleed media, six big buttons in the thumb
- * zone), the same feed on desktop (media beside the details, keys 1–6 and
- * ↑/↓).
+ * just scroll. Narrow (phones, a tablet upright): each place is two stops,
+ * its media full-screen under a thin bar, then one swipe up its details
+ * with the six buttons at the bottom, in the thumb zone; nothing covers the
+ * photo, reel or TikTok. Wide (desktop): the media beside the details, keys
+ * 1–6 and ↑/↓. Sideways swipes (and, with a mouse, clicks on its sides)
+ * change a place's photo.
  *
  * - Nothing says next or skip, and a rating doesn't move the feed: scrolling
  *   past a place without rating it skips it; skipped places come back at the
@@ -20,12 +23,12 @@ import { cn } from "cn";
 import {
 	ArrowDown,
 	Check,
+	ChevronUp,
 	Eye,
 	MapPin,
 	MessageSquare,
 	Scale,
 	Sparkles,
-	StickyNote,
 	UserPlus,
 	X,
 } from "lucide-react";
@@ -39,6 +42,7 @@ import {
 	useMemo,
 	useRef,
 	useState,
+	useSyncExternalStore,
 } from "react";
 import { createPortal } from "react-dom";
 import { MemberAvatar } from "@/components/common/member";
@@ -58,7 +62,6 @@ import { formatDuration } from "@/lib/format";
 import { mediaUrl } from "@/lib/media-url";
 import { anchorKey, copyAnchorId } from "@/lib/realtime/cursor-protocol";
 import {
-	bool,
 	ids,
 	int,
 	useFollowState,
@@ -73,6 +76,7 @@ import { type Slide, usePlaceMedia } from "../rate/PlaceMedia";
 import { PLACES_TESTID } from "../testids";
 import { RatingCommentEditor } from "../ui/member-ratings";
 import { MiniMap } from "../ui/mini-map";
+import { PriorityBadge } from "../ui/priority";
 import {
 	FEED_ORDER_LABEL,
 	FEED_ORDERS,
@@ -240,11 +244,25 @@ function SlideFill({
 	}
 }
 
+const COARSE = "(pointer: coarse)";
+
+/** A touch screen (no mouse): sideways swipes change the photo, not taps. */
+function useCoarsePointer(): boolean {
+	return useSyncExternalStore(
+		(cb) => {
+			const m = window.matchMedia?.(COARSE);
+			m?.addEventListener("change", cb);
+			return () => m?.removeEventListener("change", cb);
+		},
+		() => window.matchMedia?.(COARSE).matches ?? false,
+		() => false,
+	);
+}
+
 export function FeedMedia({
 	row,
 	active,
 	near,
-	wide = false,
 	className,
 }: {
 	row: PlaceRow;
@@ -252,8 +270,6 @@ export function FeedMedia({
 	active: boolean;
 	/** In view or next to it (worth loading). */
 	near: boolean;
-	/** Beside the details (desktop), not full-bleed under the feed's header. */
-	wide?: boolean;
 	className?: string;
 }) {
 	const { slides } = usePlaceMedia(row.node);
@@ -283,6 +299,7 @@ export function FeedMedia({
 	}, [active, n, go]);
 	// A sideways swipe changes the photo (the feed itself scrolls up and down).
 	const touch = useRef<{ x: number; y: number } | null>(null);
+	const coarse = useCoarsePointer();
 	return (
 		<div
 			data-testid={PLACES_TESTID.feedMedia}
@@ -319,9 +336,10 @@ export function FeedMedia({
 			) : (
 				<CoverPlaceholder row={row} className="size-full" />
 			)}
-			{near && n > 1 ? (
-				// Like stories: the left third goes back, the rest forward (over a
-				// video player only its edges, so its own controls still work).
+			{near && n > 1 && !coarse ? (
+				// With a mouse, like stories: the left third goes back, the rest
+				// forward (over a video player only its edges, so its own controls
+				// still work). Touch swipes instead.
 				<>
 					<button
 						type="button"
@@ -346,8 +364,7 @@ export function FeedMedia({
 			{n > 1 || (near && s?.from) ? (
 				<div
 					className={cn(
-						"pointer-events-none absolute inset-x-4 z-[3] flex flex-col items-start gap-2",
-						wide ? "top-3" : "top-12",
+						"pointer-events-none absolute inset-x-4 top-3 z-[3] flex flex-col items-start gap-2",
 					)}
 				>
 					{n > 1 ? (
@@ -422,112 +439,9 @@ function revealTag(
 	return { text: `Score ${score}`, tone: "plain" };
 }
 
-/** A place's shared note and my private note (never anyone else's), for a card. */
-function useCardNotes(
-	nodeId: string,
-	enabled: boolean,
-): { shared: string | null; mine: string | null } {
-	const { graph, mode } = useWorkspace();
-	const notes = useQuery({
-		...tripNotesQuery(graph.trip.id),
-		enabled: enabled && mode === "live",
-	}).data;
-	const target = { kind: "node" as const, nodeId };
-	const me = graph.me.userId;
-	return {
-		shared: noteFor(notes, target)?.plainText?.trim() || null,
-		mine: me ? noteFor(notes, target, me)?.plainText?.trim() || null : null,
-	};
-}
-
 /**
- * Phones and the narrow feed: the shared note's first line (tap for the
- * rest) and "Your note"; open, both in a box that scrolls on its own, just
- * above the name, so the rating stays in reach.
- */
-function CardNotes({
-	notes,
-	line,
-	open,
-	onOpen,
-}: {
-	notes: { shared: string | null; mine: string | null };
-	/** The shared note's first line, else a link title or the description. */
-	line: string | null;
-	open: boolean;
-	onOpen: (open: boolean) => void;
-}) {
-	if (open)
-		return (
-			<div
-				data-testid={PLACES_TAB_TESTID.feedNotes}
-				className="grid max-h-[38svh] gap-3 overflow-y-auto overscroll-contain rounded-lg bg-black/60 p-3 text-sm backdrop-blur-sm"
-			>
-				{notes.shared ? (
-					<section className="grid gap-1">
-						<h3 className="text-[11px] font-semibold tracking-[0.06em] text-neutral-400 uppercase">
-							Shared note
-						</h3>
-						<p className="whitespace-pre-line text-neutral-100">
-							{notes.shared}
-						</p>
-					</section>
-				) : null}
-				{notes.mine ? (
-					<section className="grid gap-1">
-						<h3 className="text-[11px] font-semibold tracking-[0.06em] text-neutral-400 uppercase">
-							Your private note
-						</h3>
-						<p className="whitespace-pre-line text-neutral-200">{notes.mine}</p>
-					</section>
-				) : null}
-				<button
-					type="button"
-					onClick={() => onOpen(false)}
-					className="w-fit cursor-pointer text-xs font-medium text-white hover:underline"
-				>
-					Less
-				</button>
-			</div>
-		);
-	const more =
-		!!notes.shared && (notes.shared.includes("\n") || notes.shared.length > 90);
-	return (
-		<div className="flex flex-col items-start gap-1.5">
-			{line ? (
-				notes.shared ? (
-					<button
-						type="button"
-						data-testid={PLACES_TAB_TESTID.feedNote}
-						onClick={() => onOpen(true)}
-						className="cursor-pointer text-left text-sm text-neutral-300"
-					>
-						<span className="line-clamp-2">{line}</span>
-						{more ? (
-							<span className="text-xs font-medium text-white">More</span>
-						) : null}
-					</button>
-				) : (
-					<p className="line-clamp-2 text-sm text-neutral-300">{line}</p>
-				)
-			) : null}
-			{notes.mine ? (
-				<button
-					type="button"
-					onClick={() => onOpen(true)}
-					className="inline-flex h-6 cursor-pointer items-center gap-1 rounded-full bg-white/15 px-2 text-xs font-medium text-white backdrop-blur-sm hover:bg-white/25"
-				>
-					<StickyNote className="size-3" />
-					Your note
-				</button>
-			) : null}
-		</div>
-	);
-}
-
-/**
- * Desktop: decide with the same context as the drawer (docs/PLACES.md §1):
- * the shared note, your private note, where it fits.
+ * Decide with the same context as the place's panel (docs/PLACES.md §1): where
+ * it fits, the shared note and your private note, in full.
  */
 function CardContext({ row }: { row: PlaceRow }) {
 	const { graph, ix, mode } = useWorkspace();
@@ -603,14 +517,8 @@ function PlaceCard({
 	const hook = useNotePreview(
 		active ? { kind: "node", nodeId: node.id } : null,
 	);
-	const notes = useCardNotes(node.id, !wide && near);
-	// The notes box on a narrow card; its being open follows (never the text).
-	const [notesOpen, setNotesOpen] = useFollowState(
-		"places.notes",
-		false,
-		bool,
-		{ enabled: active && !wide },
-	);
+	const info = useRef<HTMLDivElement>(null);
+	const reduce = useReducedMotion();
 	const { links } = usePlaceMedia(node);
 	const line =
 		hook ?? links.find((m) => m.title)?.title ?? node.description ?? null;
@@ -641,52 +549,61 @@ function PlaceCard({
 		.filter(Boolean)
 		.join(" · ");
 
-	const details = (
-		<div className="flex flex-col gap-3">
-			{tag ? (
-				<span
-					data-testid={PLACES_TAB_TESTID.feedTag}
-					data-tone={tag.tone}
-					className={cn(
-						"inline-flex h-[30px] w-fit items-center gap-1.5 rounded-full px-3 text-[13px] font-semibold animate-in fade-in-0 zoom-in-95 duration-200 motion-reduce:animate-none",
-						tag.tone === "split"
-							? "bg-warning text-black"
-							: "bg-white text-neutral-900",
-					)}
-				>
-					{tag.tone === "split" ? (
-						<Scale className="size-3.5" />
-					) : tag.tone === "match" ? (
-						<Sparkles className="size-3.5" />
-					) : null}
-					{tag.text}
-				</span>
+	const tagChip = tag ? (
+		<span
+			data-testid={PLACES_TAB_TESTID.feedTag}
+			data-tone={tag.tone}
+			className={cn(
+				"inline-flex h-[30px] w-fit items-center gap-1.5 rounded-full px-3 text-[13px] font-semibold animate-in fade-in-0 zoom-in-95 duration-200 motion-reduce:animate-none",
+				tag.tone === "split"
+					? "bg-warning text-black"
+					: "bg-white text-neutral-900",
+			)}
+		>
+			{tag.tone === "split" ? (
+				<Scale className="size-3.5" />
+			) : tag.tone === "match" ? (
+				<Sparkles className="size-3.5" />
 			) : null}
-			{!wide && (notes.shared || notes.mine) ? (
-				<CardNotes
-					notes={notes}
-					line={line}
-					open={notesOpen}
-					onOpen={setNotesOpen}
-				/>
-			) : line ? (
-				<p className="line-clamp-2 text-sm text-neutral-300">{line}</p>
-			) : null}
-			<div className="flex flex-col gap-0.5">
-				<h2 className="font-display text-[26px] leading-tight font-semibold text-white">
-					{node.name}
-				</h2>
-				<p className="text-[13px] text-neutral-400">{meta}</p>
-			</div>
-			<RatingButtons
-				variant="filled"
-				value={mine}
-				reveal={reveal}
-				disabled={!act.canRate}
-				reason={act.rateReason}
-				keys={!phone}
-				onRate={onRate}
-			/>
+			{tag.text}
+		</span>
+	) : null;
+	const title = (
+		<div className="flex flex-col gap-0.5">
+			<h2 className="font-display text-[26px] leading-tight font-semibold text-white">
+				{node.name}
+			</h2>
+			<p className="text-[13px] text-neutral-400">{meta}</p>
+		</div>
+	);
+	const buttons = (
+		<RatingButtons
+			variant="filled"
+			value={mine}
+			reveal={reveal}
+			disabled={!act.canRate}
+			reason={act.rateReason}
+			keys={!phone}
+			onRate={onRate}
+		/>
+	);
+	const peek =
+		!mine && !peeked && others.length ? (
+			<button
+				type="button"
+				data-testid={PLACES_TAB_TESTID.feedPeek}
+				onClick={onPeek}
+				className={cn(
+					"z-[3] inline-flex h-8 w-fit cursor-pointer items-center gap-1.5 rounded-full border border-white/25 bg-black/55 px-3 text-xs font-medium text-white backdrop-blur-sm hover:bg-black/70",
+					wide && "absolute top-14 right-4",
+				)}
+			>
+				<Eye className="size-3.5" />
+				Peek at {others.length} {others.length === 1 ? "rating" : "ratings"}
+			</button>
+		) : null;
+	const commentRow = (
+		<>
 			<div className="flex min-h-7 flex-wrap items-center gap-2 text-xs text-neutral-400">
 				{shown && others.length === 0 && !mine ? (
 					<span>Nobody else has rated it yet.</span>
@@ -725,6 +642,18 @@ function PlaceCard({
 					/>
 				</div>
 			) : null}
+		</>
+	);
+
+	const details = (
+		<div className="flex flex-col gap-3">
+			{tagChip}
+			{line ? (
+				<p className="line-clamp-2 text-sm text-neutral-300">{line}</p>
+			) : null}
+			{title}
+			{buttons}
+			{commentRow}
 		</div>
 	);
 
@@ -741,7 +670,11 @@ function PlaceCard({
 			data-rated={mine ?? undefined}
 			data-active={active || undefined}
 			aria-label={node.name}
-			className="relative h-full w-full shrink-0 snap-start snap-always overflow-hidden"
+			className={cn(
+				"relative w-full shrink-0",
+				// Narrow: two stops (the media, then the details), not one.
+				wide && "h-full snap-start snap-always overflow-hidden",
+			)}
 		>
 			{wide ? (
 				// Wide: the media beside the details.
@@ -750,7 +683,6 @@ function PlaceCard({
 						row={row}
 						active={active}
 						near={near}
-						wide
 						className="h-full rounded-2xl"
 					/>
 					<div className="flex min-h-0 flex-col gap-5 overflow-y-auto rounded-2xl bg-neutral-950 p-5 ring-1 ring-white/10">
@@ -759,30 +691,65 @@ function PlaceCard({
 					</div>
 				</div>
 			) : (
-				// Phone and narrow: full-bleed media, the details over it.
-				<div className="absolute inset-0">
-					<FeedMedia
-						row={row}
-						active={active}
-						near={near}
-						className="size-full"
-					/>
-					<div className="absolute inset-x-0 bottom-0 z-[2] bg-gradient-to-b from-transparent to-black/90 to-40% px-4 pt-16 pb-[max(18px,env(safe-area-inset-bottom))]">
-						{details}
+				// Narrow: the media full-screen (a thin bar at its foot), then, one
+				// swipe up, the details with the buttons last, in the thumb zone.
+				<>
+					<div
+						// Under the feed's header, over the thin bar: nothing covers the media.
+						className="flex h-[100cqh] snap-start snap-always flex-col bg-black pt-[calc(max(12px,env(safe-area-inset-top))+32px)]"
+						data-testid={PLACES_TAB_TESTID.feedStage}
+					>
+						<FeedMedia
+							row={row}
+							active={active}
+							near={near}
+							className="min-h-0 w-full flex-1"
+						/>
+						<button
+							type="button"
+							data-testid={PLACES_TAB_TESTID.feedBar}
+							onClick={() =>
+								info.current?.scrollIntoView({
+									behavior: reduce ? "auto" : "smooth",
+									block: "end",
+								})
+							}
+							className="flex shrink-0 cursor-pointer items-center gap-3 px-4 pt-2.5 pb-[max(12px,env(safe-area-inset-bottom))] text-left"
+						>
+							<span className="min-w-0 flex-1">
+								<span className="block truncate font-display text-[19px] leading-tight font-semibold text-white">
+									{node.name}
+								</span>
+								<span className="block truncate text-xs text-neutral-300">
+									{meta}
+								</span>
+							</span>
+							{mine ? (
+								<PriorityBadge priority={mine} className="shrink-0" />
+							) : (
+								<span className="inline-flex h-7 shrink-0 items-center gap-1 rounded-full bg-white/15 px-2.5 text-xs font-medium text-white backdrop-blur-sm">
+									<ChevronUp className="size-3.5" />
+									Rate
+								</span>
+							)}
+						</button>
 					</div>
-				</div>
+					<div
+						ref={info}
+						data-testid={PLACES_TAB_TESTID.feedInfo}
+						className="flex snap-end snap-always flex-col gap-4 border-t border-white/10 bg-neutral-950 px-4 pt-5 pb-[max(18px,env(safe-area-inset-bottom))]"
+					>
+						{/* The bar just above names it. */}
+						{line ? <p className="text-sm text-neutral-300">{line}</p> : null}
+						{active || near ? <CardContext row={row} /> : null}
+						{tagChip}
+						{commentRow}
+						{peek}
+						{buttons}
+					</div>
+				</>
 			)}
-			{!mine && !peeked && others.length ? (
-				<button
-					type="button"
-					data-testid={PLACES_TAB_TESTID.feedPeek}
-					onClick={onPeek}
-					className="absolute top-14 right-4 z-[3] inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-full border border-white/25 bg-black/55 px-3 text-xs font-medium text-white backdrop-blur-sm hover:bg-black/70"
-				>
-					<Eye className="size-3.5" />
-					Peek at {others.length} {others.length === 1 ? "rating" : "ratings"}
-				</button>
-			) : null}
+			{wide ? peek : null}
 		</article>
 	);
 }
@@ -1143,24 +1110,40 @@ export default function RateFeed({ data }: { data: PlacesData }) {
 	const currentPlace =
 		currentItem?.kind === "place" ? data.byId.get(currentItem.id) : undefined;
 
-	// Which card is in view: the one mostly on screen (observed again when the cards change).
-	// biome-ignore lint/correctness/useExhaustiveDependencies: `items` re-renders the cards to observe
+	// Which card is in view: the one under the middle of the screen (a narrow
+	// card is taller than it: its media, then its details), read on every
+	// scroll frame and resize, so a card moving up the pile (rated) or a
+	// scroll cut short by another never leaves the wrong one current.
+	// biome-ignore lint/correctness/useExhaustiveDependencies: `items` re-renders the cards to measure
 	useEffect(() => {
 		const el = root.current;
 		if (!el) return;
-		const io = new IntersectionObserver(
-			(entries) => {
-				for (const e of entries)
-					if (e.isIntersecting && e.intersectionRatio >= 0.6) {
-						const k = (e.target as HTMLElement).dataset.key;
-						if (k) setCurrent(k);
-					}
-			},
-			{ root: el, threshold: [0.6] },
-		);
-		for (const c of el.querySelectorAll<HTMLElement>("[data-key]"))
-			io.observe(c);
-		return () => io.disconnect();
+		let raf = 0;
+		const pick = () => {
+			raf = 0;
+			const r = el.getBoundingClientRect();
+			const mid = r.top + r.height / 2;
+			for (const c of el.querySelectorAll<HTMLElement>(":scope > [data-key]")) {
+				const b = c.getBoundingClientRect();
+				if (b.top <= mid && b.bottom > mid) {
+					const k = c.dataset.key;
+					if (k) setCurrent(k);
+					return;
+				}
+			}
+		};
+		const later = () => {
+			if (!raf) raf = requestAnimationFrame(pick);
+		};
+		pick();
+		el.addEventListener("scroll", later, { passive: true });
+		const ro = new ResizeObserver(later);
+		ro.observe(el);
+		return () => {
+			el.removeEventListener("scroll", later);
+			ro.disconnect();
+			cancelAnimationFrame(raf);
+		};
 	}, [items]);
 
 	// The end of the pile: skipped places come back, once.
@@ -1351,7 +1334,8 @@ export default function RateFeed({ data }: { data: PlacesData }) {
 			</div>
 			<div
 				ref={root}
-				className="min-h-0 flex-1 snap-y snap-mandatory overflow-y-auto overscroll-contain [scrollbar-width:none]"
+				// A size container: a narrow card's media is one screen tall (100cqh).
+				className="min-h-0 flex-1 snap-y snap-mandatory overflow-y-auto overscroll-contain [container-type:size] [scrollbar-width:none]"
 			>
 				{items.map((it, i) => {
 					const near = Math.abs(i - currentIndex) <= 1;

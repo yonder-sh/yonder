@@ -1,11 +1,10 @@
 /**
- * The phone's Rate feed shows a place's notes like the desktop does: the
- * shared note's first line (tap for the rest, "More"), "Your note" for my
- * private one, and both in a box above the name that "Less" closes; the
- * rating buttons stay in the card.
+ * The phone's Rate feed: each place's media full-screen under a thin bar,
+ * then its details (the shared note and my private one in full, like the
+ * desktop), the rating buttons last, in the thumb zone.
  */
 import { QueryClient } from "@tanstack/react-query";
-import { fireEvent, screen, within } from "@testing-library/react";
+import { screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import type { NoteDto } from "@/features/notes/notes.functions";
 import { demoGraph } from "@/lib/fixtures/demo";
@@ -51,29 +50,32 @@ async function activeCard(): Promise<HTMLElement> {
 		cards[0]) as HTMLElement;
 }
 
-describe("notes on the phone's Rate feed", () => {
-	it("the first line with More and Your note; open, both in full; Less closes", async () => {
+describe("the phone's Rate feed", () => {
+	it("the media under a thin bar; below it the notes in full and the buttons last", async () => {
 		render();
 		const card = await activeCard();
-		const teaser = within(card).getByTestId(T.feedNote);
-		expect(teaser).toHaveTextContent("Go early, before the tour buses.");
-		expect(teaser).toHaveTextContent("More");
+		// The media's own stop: only the name and "Rate" over it.
+		const bar = within(card).getByTestId(T.feedBar);
+		expect(bar).toHaveTextContent("Rate");
 		expect(
-			within(card).getByRole("button", { name: /Your note/ }),
-		).toBeInTheDocument();
+			within(within(card).getByTestId(T.feedStage)).queryByRole("button", {
+				name: /Must/,
+			}),
+		).toBeNull();
 
-		fireEvent.click(teaser);
-		const box = within(card).getByTestId(T.feedNotes);
-		expect(box).toHaveTextContent("Shared note");
-		expect(box).toHaveTextContent("Closed on Mondays.");
-		expect(box).toHaveTextContent("Your private note");
-		expect(box).toHaveTextContent("Ask Audrey about tickets");
-		// The rating stays in reach.
+		// One swipe up: the details, both notes in full, the buttons at the bottom.
+		const info = within(card).getByTestId(T.feedInfo);
+		await within(info).findByText("Shared note");
+		expect(info).toHaveTextContent("Go early, before the tour buses.");
+		expect(info).toHaveTextContent("Closed on Mondays.");
+		expect(info).toHaveTextContent("Your private note");
+		expect(info).toHaveTextContent("Ask Audrey about tickets");
+		const must = within(info).getAllByRole("button", {
+			name: /Must/,
+		})[0] as HTMLElement;
+		const note = within(info).getByText("Shared note");
 		expect(
-			within(card).getAllByRole("button", { name: /Must/ }).length,
-		).toBeGreaterThan(0);
-
-		fireEvent.click(within(box).getByRole("button", { name: "Less" }));
-		expect(within(card).queryByTestId(T.feedNotes)).toBeNull();
+			note.compareDocumentPosition(must) & Node.DOCUMENT_POSITION_FOLLOWING,
+		).toBeTruthy();
 	});
 });

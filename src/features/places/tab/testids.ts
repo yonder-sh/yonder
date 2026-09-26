@@ -60,8 +60,9 @@ export const PLACES_TAB_TESTID = {
 	feedInvite: "places-feed-invite",
 	feedShortlist: "places-feed-shortlist",
 	/** A narrow card's note line, and its open notes box. */
-	feedNote: "places-feed-note",
-	feedNotes: "places-feed-notes",
+	feedStage: "places-feed-stage",
+	feedBar: "places-feed-bar",
+	feedInfo: "places-feed-info",
 	// the flow: rate → review → schedule (owner, 2026-09-25)
 	steps: "places-steps",
 	step: "places-step",

@@ -1,11 +1,12 @@
 /**
  * The rate card's media with more than one photo, like stories: bars along
- * the top, the left third goes back and the rest forward, a sideways swipe,
- * and ← / → on the card in view.
+ * the top, with a mouse the left third goes back and the rest forward, a
+ * sideways swipe (the only way on a touch screen), and ← / → on the card in
+ * view.
  */
 import { QueryClient } from "@tanstack/react-query";
 import { fireEvent, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import type { MediaDto } from "@/features/media/media.functions";
 import type { GraphNode } from "@/lib/engine/types";
 import { demoGraph, N } from "@/lib/fixtures/demo";
@@ -46,6 +47,11 @@ function render(photos: number, active = true) {
 }
 
 const bars = () => screen.getByTestId(PLACES_TESTID.rateMediaBars);
+const realMatchMedia = window.matchMedia;
+afterEach(() => {
+	vi.unstubAllGlobals();
+	window.matchMedia = realMatchMedia;
+});
 const box = () => screen.getByTestId(PLACES_TESTID.feedMedia);
 
 describe("the rate card's photos", () => {
@@ -86,6 +92,25 @@ describe("the rate card's photos", () => {
 		render(3, false);
 		fireEvent.keyDown(document.body, { key: "ArrowRight" });
 		expect(bars()).toHaveAccessibleName("Photo 1 of 3");
+	});
+
+	it("on a touch screen, swipes only: no tap zones", () => {
+		const coarse = (q: string) => ({
+			matches: q === "(pointer: coarse)",
+			media: q,
+			addEventListener: () => {},
+			removeEventListener: () => {},
+		});
+		vi.stubGlobal("matchMedia", coarse);
+		window.matchMedia = coarse as unknown as typeof window.matchMedia;
+		render(3);
+		expect(screen.queryByRole("button", { name: "Next photo" })).toBeNull();
+		expect(screen.queryByRole("button", { name: "Previous photo" })).toBeNull();
+		fireEvent.touchStart(box(), { touches: [{ clientX: 200, clientY: 300 }] });
+		fireEvent.touchEnd(box(), {
+			changedTouches: [{ clientX: 110, clientY: 305 }],
+		});
+		expect(bars()).toHaveAccessibleName("Photo 2 of 3");
 	});
 
 	it("has no bars or tap zones for a single photo", () => {
