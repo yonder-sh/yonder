@@ -1,23 +1,49 @@
 #!/usr/bin/env node
 // The public services the app's server calls, stubbed for e2e: runs never
-// spend Open-Meteo's free daily quota or load Overpass, and never depend on
-// what they answer that day. `pnpm e2e:fast` starts it and points
-// OPEN_METEO_ARCHIVE_URL and OVERPASS_URL here; it can also run on its own:
+// spend Open-Meteo's free daily quota or load Overpass or the FOSSGIS OSRM
+// server, and never depend on what they answer that day. `pnpm e2e:fast`
+// starts it and points OPEN_METEO_ARCHIVE_URL, OVERPASS_URL and OSRM_FOOT_URL
+// here; it can also run on its own:
 //
 //   node e2e/stubs/services-stub.mjs [--port 7099]
 //   OPEN_METEO_ARCHIVE_URL=http://127.0.0.1:7099 \
-//   OVERPASS_URL=http://127.0.0.1:7099/api/interpreter pnpm dev
+//   OVERPASS_URL=http://127.0.0.1:7099/api/interpreter \
+//   OSRM_FOOT_URL=http://127.0.0.1:7099 pnpm dev
 //
 // GET /v1/archive?latitude&longitude&start_date&end_date: every day in the
 //   range, made up but plausible: warmer towards the equator, summer in July
 //   north of it and January south, a few wet days a month.
 // POST /api/interpreter (Overpass): no elements, so no place has OSM hours
 //   and the hours sync changes nothing.
+// GET /route/v1/foot/<lng>,<lat>;<lng>,<lat> (OSRM): one walk, the straight
+//   line × 1.3 at 1.25 m/s, drawn as a straight line (as routes-stub.mjs).
 // GET /__stub/calls → { total }
 import { createServer } from "node:http";
 import { pathToFileURL } from "node:url";
 
 const DAY_MS = 86_400_000;
+
+/** OSRM's answer for a walk between two points: the straight line × 1.3 at 1.25 m/s. */
+export function osrmFoot(coords) {
+	const pts = coords.split(";").map((p) => p.split(",").map(Number));
+	if (pts.length !== 2 || pts.some((p) => p.length !== 2 || p.some((n) => !Number.isFinite(n)))) return null;
+	const [[lng1, lat1], [lng2, lat2]] = pts;
+	const rad = Math.PI / 180;
+	const s =
+		Math.sin(((lat2 - lat1) * rad) / 2) ** 2 +
+		Math.cos(lat1 * rad) * Math.cos(lat2 * rad) * Math.sin(((lng2 - lng1) * rad) / 2) ** 2;
+	const distance = Math.round(2 * 6_371_008.8 * Math.asin(Math.min(1, Math.sqrt(s))) * 1.3);
+	return {
+		code: "Ok",
+		routes: [
+			{
+				distance,
+				duration: Math.max(60, Math.round(distance / 1.25)),
+				geometry: { type: "LineString", coordinates: [[lng1, lat1], [lng2, lat2]] },
+			},
+		],
+	};
+}
 
 /** The made-up history of one place: Open-Meteo's `daily` shape. */
 export function archiveDaily(lat, startDate, endDate) {
@@ -59,6 +85,11 @@ export function startWeatherStub(port) {
 			res.end(JSON.stringify(body));
 		};
 		if (url.pathname === "/__stub/calls") return json(200, { total });
+		if (req.method === "GET" && url.pathname.startsWith("/route/v1/foot/")) {
+			total++;
+			const r = osrmFoot(decodeURIComponent(url.pathname.slice("/route/v1/foot/".length)));
+			return r ? json(200, r) : json(400, { code: "InvalidQuery" });
+		}
 		if (req.method === "POST" && url.pathname === "/api/interpreter") {
 			total++;
 			req.resume();
