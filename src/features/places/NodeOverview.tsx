@@ -28,7 +28,7 @@ import {
 import { type ReactNode, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { EditGuard, useEditGuard } from "@/components/common/edit-guard";
-import { CategoryDot, ModeGlyph, TypeGlyph } from "@/components/common/glyphs";
+import { ModeGlyph, TypeGlyph } from "@/components/common/glyphs";
 import { MarkdownText } from "@/components/common/markdown-text";
 import { TreePicker } from "@/components/common/tree-picker";
 import { useTripMutation } from "@/components/common/use-trip-mutation";
@@ -45,7 +45,6 @@ import { ClimateCard } from "@/features/insights/ClimateCard";
 import { HoursTable } from "@/features/insights/HoursTable";
 import {
 	NODE_TYPES,
-	PLACE_CATEGORIES,
 	TIME_NEEDED,
 	type TimeNeeded,
 	timeNeededOf,
@@ -83,6 +82,7 @@ import { rateableNodes } from "./lib/rate";
 import { useMoveNode, useUpdateNode } from "./mutations";
 import { getPlaceMoreDetails } from "./places.functions";
 import { PLACES_TESTID } from "./testids";
+import { CategorySelect } from "./ui/category-select";
 import { MemberRatings } from "./ui/member-ratings";
 import { ZonePicker } from "./ui/zone-picker";
 
@@ -298,44 +298,6 @@ function Description({ node }: { node: GraphNode }) {
 				</button>
 			)}
 		</div>
-	);
-}
-
-function CategorySelect({ node }: { node: GraphNode }) {
-	const { graph } = useWorkspace();
-	const guard = useEditGuard();
-	const update = useUpdateNode(graph.trip.id);
-	const value = node.category ?? "other";
-	return (
-		<Select
-			value={value}
-			disabled={guard.disabled}
-			onValueChange={(v) =>
-				update.mutate(
-					{
-						nodeId: node.id,
-						patch: { category: v as NonNullable<GraphNode["category"]> },
-					},
-					{ onError: (e) => toast.error(humanError(e)) },
-				)
-			}
-		>
-			<SelectTrigger
-				size="sm"
-				aria-label="Category"
-				className="h-7 w-fit gap-1.5 border-none px-1.5 shadow-none"
-			>
-				<SelectValue />
-			</SelectTrigger>
-			<SelectContent>
-				{Object.entries(PLACE_CATEGORIES).map(([k, c]) => (
-					<SelectItem key={k} value={k}>
-						<CategoryDot category={k as NonNullable<GraphNode["category"]>} />
-						{c.label}
-					</SelectItem>
-				))}
-			</SelectContent>
-		</Select>
 	);
 }
 

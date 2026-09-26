@@ -20,7 +20,6 @@ import {
 	useState,
 } from "react";
 import { EditGuard } from "@/components/common/edit-guard";
-import { CategoryDot } from "@/components/common/glyphs";
 import { MemberAvatar } from "@/components/common/member";
 import { PriorityDot } from "@/components/common/priority-dot";
 import { NODE_TYPES, PLACE_CATEGORIES } from "@/lib/domain/taxonomy";
@@ -29,6 +28,7 @@ import { anchorKey } from "@/lib/realtime/cursor-protocol";
 import { ids, useFollowState } from "@/lib/realtime/view-ui";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { priorityForKey, ratingsCount } from "../lib/rate";
+import { CategorySelect } from "../ui/category-select";
 import { mayRate } from "../ui/member-ratings";
 import { PriorityPicker } from "../ui/priority";
 import { rowReason } from "./bar";
@@ -351,14 +351,23 @@ export function PlacesTable({
 						{r.split ? <SplitMark /> : null}
 					</div>
 				</td>
-				<td className="px-3 text-muted-foreground">
-					<span className="inline-flex max-w-full items-center gap-1.5 truncate">
-						{r.node.type === "place" ? (
-							<CategoryDot category={r.node.category ?? "other"} />
-						) : null}
-						<span className="truncate">{categoryLabel(r)}</span>
-					</span>
-				</td>
+				{r.node.type === "place" ? (
+					// Changeable in place; the row keeps its own click and keys.
+					<td
+						className="px-1.5 text-muted-foreground"
+						onClick={(e) => e.stopPropagation()}
+						onKeyDown={(e) => e.stopPropagation()}
+					>
+						<CategorySelect
+							node={r.node}
+							className="max-w-full text-[13px] text-muted-foreground"
+						/>
+					</td>
+				) : (
+					<td className="truncate px-3 text-muted-foreground">
+						{categoryLabel(r)}
+					</td>
+				)}
 				{members.map((m) => (
 					<td key={m.id} className="px-2">
 						<RatingCell row={r} member={m} />

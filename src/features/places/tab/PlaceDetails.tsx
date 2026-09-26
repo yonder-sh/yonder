@@ -62,12 +62,13 @@ import {
 	usePlaceMedia,
 } from "../rate/PlaceMedia";
 import { PLACES_TESTID } from "../testids";
+import { CategorySelect } from "../ui/category-select";
 import { mayRate, RatingCommentEditor } from "../ui/member-ratings";
 import { PriorityBadge } from "../ui/priority";
 import { SchedulePicker } from "../ui/schedule-picker";
 import { rowReason } from "./bar";
 import { formatDayNumbers, type PlaceRow } from "./model";
-import { categoryLabel, ownsKeys } from "./PlacesTable";
+import { ownsKeys } from "./PlacesTable";
 import { RatingButtons } from "./RatingButtons";
 import { RATING_TESTID } from "./rating-testids";
 import { formatScore, RATING_WEIGHT } from "./score";
@@ -507,16 +508,18 @@ export function PlaceDetails({
 									{node.localName}
 								</p>
 							) : null}
-							<p className="mt-0.5 text-[13px] text-muted-foreground">
-								{[
-									path,
-									node.type === "place"
-										? categoryLabel(row)
-										: NODE_TYPES[node.type].label,
-								]
-									.filter(Boolean)
-									.join(" · ")}
-							</p>
+							<div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-[13px] text-muted-foreground">
+								{path ? <span>{path}</span> : null}
+								{path ? <span aria-hidden>·</span> : null}
+								{node.type === "place" ? (
+									<CategorySelect
+										node={node}
+										className="-ml-1.5 h-6 text-[13px] text-muted-foreground"
+									/>
+								) : (
+									<span>{NODE_TYPES[node.type].label}</span>
+								)}
+							</div>
 						</div>
 						{onClose ? (
 							<Button
