@@ -14,7 +14,13 @@
  *   follower's banner; a private to-do's editor shows nothing;
  * - FB-25 an open menu's ghost with the hovered entry and A's cursor on it;
  * - privacy: a guest follower never receives money, private rows, their
- *   drags, menus or editors.
+ *   drags, menus or editors;
+ * - follow the view (a desktop leader, a 390 px phone follower): the card
+ *   the leader points at deep in the Overview comes into the phone's view;
+ *   a list scrolled with no pointer moves the phone's; map or panel moves
+ *   its sheet (its own drag pauses that); satellite follows, never saved as
+ *   the phone's; the day split's panel and an opened city follow; a form's
+ *   typed value never reaches it.
  * Awareness and what each page received are exposed under VITE_E2E=1
  * (`window.__yonderCursors`, LiveCursors; `window.__tripMap`, MapCanvas).
  */
@@ -34,6 +40,8 @@ import {
 } from "@playwright/test";
 import { MAP_TESTID } from "../../../src/features/map/testids";
 import { MEDIA_TESTID } from "../../../src/features/media/testids";
+import { PLACES_TESTID } from "../../../src/features/places/testids";
+import { SPLIT_TESTID as T } from "../../../src/features/plan/day-split/testids";
 import { PLAN_TESTID } from "../../../src/features/plan/testids";
 import { SHELL_TESTID as S } from "../../../src/features/shell/testids";
 import { TRANSIT_TESTID } from "../../../src/features/transit/testids";
@@ -48,6 +56,7 @@ test.describe.configure({ mode: "serial" });
 
 const A_SIZE = { width: 1440, height: 900 };
 const B_SIZE = { width: 1120, height: 720 };
+const PHONE = { width: 390, height: 844 };
 
 type Cam = { c: [number, number]; z: number; w: number; h: number; g: boolean };
 type W = {
@@ -77,7 +86,9 @@ async function open(
 ): Promise<{ ctx: BrowserContext; page: Page }> {
 	const ctx = await browser.newContext({
 		storageState: storageStateOf(who),
-		...(opts.phone ? devices["Pixel 7"] : { viewport: opts.viewport ?? A_SIZE }),
+		...(opts.phone
+			? { ...devices["Pixel 7"], ...(opts.viewport ? { viewport: opts.viewport } : {}) }
+			: { viewport: opts.viewport ?? A_SIZE }),
 	});
 	const page = await ctx.newPage();
 	await page.goto(url);
@@ -198,7 +209,7 @@ test("FB-21a/b/d: folds, the inspector tab and view switches follow", async ({ b
 	await a.page.getByRole("option", { name: /Person/ }).click();
 	await expect(b.page.getByTestId("lists-view").first()).toContainText(/Person/, { timeout: 8_000 });
 	await expect
-		.poll(async () => ((await localState(b.page))?.view as { ui?: { lists?: { tgroup?: string } } })?.ui?.lists?.tgroup)
+		.poll(async () => ((await localState(b.page))?.view as { ui?: Record<string, unknown> })?.ui?.["lists.tgroup"])
 		.toBe("person");
 	await b.page.screenshot({ path: shotPath("follow-r4/b-lists-view-follow.png") });
 	// …and the map's layer panel.
@@ -586,7 +597,7 @@ test("privacy: a guest follower never gets money, private rows, their drags, men
 		};
 		return JSON.stringify([...aw.getStates().values()]);
 	});
-	expect(gstate).not.toMatch(/"k":"expense"|tab=money|itab=money|"money":\{/);
+	expect(gstate).not.toMatch(/"k":"expense"|tab=money|itab=money|"money":\{|"money\./);
 	expect(gstate).not.toContain(gift.id);
 	await g.screenshot({ path: shotPath("follow-r4/guest-follower-no-money.png") });
 	await b.page.screenshot({ path: shotPath("follow-r4/member-follower-money.png") });
@@ -595,4 +606,228 @@ test("privacy: a guest follower never gets money, private rows, their drags, men
 	await gctx.close();
 	await a.ctx.close();
 	await b.ctx.close();
+});
+
+// ---------------------------------------------------------------------------
+// Follow the view: a desktop leader, a 390 px phone follower
+// ---------------------------------------------------------------------------
+
+/** How much of `selector` the person sees: inside the window and every box that clips it. */
+function shows(p: Page, selector: string): Promise<boolean> {
+	return p.evaluate((sel) => {
+		const el = document.querySelector(sel);
+		if (!el) return false;
+		const r = el.getBoundingClientRect();
+		let top = 0;
+		let bottom = window.innerHeight;
+		for (let a = el.parentElement; a; a = a.parentElement) {
+			const o = getComputedStyle(a).overflowY;
+			if (o === "visible") continue;
+			const b = a.getBoundingClientRect();
+			top = Math.max(top, b.top);
+			bottom = Math.min(bottom, b.bottom);
+		}
+		const seen = Math.min(r.bottom, bottom) - Math.max(r.top, top);
+		return seen >= Math.min(40, r.height * 0.5);
+	}, selector);
+}
+
+/** The top of the phone's sheet, as a fraction of its window (peek ≈ 0.86, half 0.5). */
+async function sheetAt(p: Page): Promise<number> {
+	const box = await p.getByTestId(TESTID.mobileSheet).boundingBox();
+	return box ? Math.round((box.y / PHONE.height) * 100) / 100 : 1;
+}
+
+/** Dev leads on a desktop at `url`; Maya's 390 px phone follows through Spotlight. */
+async function leadWithPhone(browser: Browser, url: string) {
+	const a = await open(browser, "dev", url);
+	const p = await open(browser, "maya", `/t/${trip.slug}`, { phone: true, viewport: PHONE });
+	await spotlight(a.page, [p.page]);
+	return { a, p };
+}
+
+test("follow the view on a phone: the Overview card the leader points at comes into view", async ({ browser }) => {
+	const { a, p } = await leadWithPhone(browser, `/t/${trip.slug}?tab=overview`);
+	await expect(p.page).toHaveURL(/tab=overview/, { timeout: 10_000 });
+	const card = '[data-cursor-anchor="sec:ov.people"]';
+	await expect(p.page.locator(card)).toBeAttached({ timeout: 10_000 });
+	// Deep in the page on the phone (one column: the days come first).
+	expect(await shows(p.page, card)).toBe(false);
+	// The leader scrolls down and points at it (the second column on a desktop).
+	await a.page.locator(card).scrollIntoViewIfNeeded();
+	const box = await a.page.locator(card).boundingBox();
+	if (!box) throw new Error("no card");
+	await a.page.mouse.move(box.x + box.width / 2, box.y + 10, { steps: 5 });
+	await expect.poll(() => shows(p.page, card), { timeout: 10_000 }).toBe(true);
+	await a.page.screenshot({ path: shotPath("follow-view/a-overview-card.png") });
+	await p.page.screenshot({ path: shotPath("follow-view/phone-overview-card.png") });
+	// A day further up: the phone goes back up to it.
+	const day = a.page.locator('[data-testid="overview-day"]').nth(2);
+	const dayId = await day.getAttribute("data-cursor-anchor");
+	await day.scrollIntoViewIfNeeded();
+	const dbox = await day.boundingBox();
+	if (!dbox || !dayId) throw new Error("no day");
+	await a.page.mouse.move(dbox.x + 40, dbox.y + dbox.height / 2, { steps: 5 });
+	await expect.poll(() => shows(p.page, `[data-cursor-anchor="${dayId}"]`), { timeout: 10_000 }).toBe(true);
+	await a.page.getByTestId(S.spotlightEnd).click();
+	await a.ctx.close();
+	await p.ctx.close();
+});
+
+test("follow the view on a phone: a list scrolled with no pointer, map or panel, satellite", async ({ browser }) => {
+	test.setTimeout(150_000);
+	const { a, p } = await leadWithPhone(browser, `/t/${trip.slug}?tab=plan`);
+	await expect(p.page).toHaveURL(/tab=plan/, { timeout: 10_000 });
+	const mapA = a.page.getByTestId(MAP_TESTID.canvas);
+	const paneA = a.page.locator('[data-cursor-anchor="pane:plan"]');
+	await expect(mapA).toBeVisible({ timeout: 30_000 });
+
+	// Map or panel: the leader's wheel over the map → the phone's sheet down to its peek…
+	const mb = await mapA.boundingBox();
+	if (!mb) throw new Error("no map");
+	await a.page.mouse.move(mb.x + mb.width / 2, mb.y + mb.height / 2);
+	await a.page.mouse.wheel(0, -120);
+	await expect.poll(() => sheetAt(p.page), { timeout: 10_000 }).toBeGreaterThan(0.8);
+	await p.page.screenshot({ path: shotPath("follow-view/phone-sheet-map.png") });
+	// …over the plan → up to its half.
+	const pb = await paneA.boundingBox();
+	if (!pb) throw new Error("no plan");
+	await a.page.mouse.move(pb.x + pb.width / 2, pb.y + pb.height / 2);
+	await a.page.mouse.wheel(0, 120);
+	await expect.poll(() => sheetAt(p.page), { timeout: 10_000 }).toBeLessThan(0.6);
+	await p.page.screenshot({ path: shotPath("follow-view/phone-sheet-panel.png") });
+
+	// A long list scrolled with no pointer (a trackpad, a phone): the phone's plan follows.
+	await a.page.evaluate(() =>
+		document.dispatchEvent(new MouseEvent("mouseout", { bubbles: true, relatedTarget: null })),
+	);
+	await expect.poll(async () => ((await localState(a.page))?.cursor as { a?: unknown } | null)?.a ?? null).toBeNull();
+	await paneA.evaluate((el) => el.scrollTo(0, el.scrollHeight * 0.55));
+	const middle = await a.page.evaluate(() => {
+		const pane = document.querySelector('[data-cursor-anchor="pane:plan"]') as Element;
+		const r = pane.getBoundingClientRect();
+		const mid = (r.top + r.bottom) / 2;
+		return [...pane.querySelectorAll('[data-cursor-anchor^="item:"],[data-cursor-anchor^="dayh:"]')]
+			.filter((el) => {
+				const b = el.getBoundingClientRect();
+				return b.bottom > mid - 120 && b.top < mid + 120;
+			})
+			.map((el) => el.getAttribute("data-cursor-anchor") as string);
+	});
+	expect(middle.length).toBeGreaterThan(0);
+	await expect
+		.poll(
+			async () => {
+				for (const id of middle) if (await shows(p.page, `[data-cursor-anchor="${id}"]`)) return true;
+				return false;
+			},
+			{ timeout: 10_000 },
+		)
+		.toBe(true);
+	await p.page.screenshot({ path: shotPath("follow-view/phone-plan-scrolled.png") });
+
+	// Don't fight the follower: the phone drags its sheet itself → the sheet stops following.
+	const sheet = p.page.getByTestId(TESTID.mobileSheet);
+	const sb = await sheet.boundingBox();
+	if (!sb) throw new Error("no sheet");
+	await p.page.mouse.move(PHONE.width / 2, sb.y + 8);
+	await p.page.mouse.down();
+	await p.page.mouse.move(PHONE.width / 2, sb.y + 260, { steps: 12 });
+	await p.page.mouse.up();
+	await expect(p.page.getByTestId(S.followResume)).toBeVisible({ timeout: 5_000 });
+	const held = await sheetAt(p.page);
+	await a.page.mouse.move(mb.x + mb.width / 2, mb.y + mb.height / 2);
+	await a.page.mouse.wheel(0, -120);
+	await a.page.mouse.move(pb.x + pb.width / 2, pb.y + pb.height / 2);
+	await a.page.mouse.wheel(0, 60);
+	await p.page.waitForTimeout(1_200);
+	expect(Math.abs((await sheetAt(p.page)) - held)).toBeLessThan(0.05);
+	// Resume: it follows again (the leader is on the panel: half).
+	await p.page.getByTestId(S.followResume).click();
+	await expect(p.page.getByTestId(S.followResume)).toBeHidden();
+
+	// Satellite: the phone shows the leader's basemap, never saved as its own.
+	const mapP = p.page.getByTestId(MAP_TESTID.canvas);
+	const own = await mapP.getAttribute("data-map-style");
+	expect(own).not.toBe("satellite");
+	await a.page.getByTestId(MAP_TESTID.satellite).click();
+	await expect(mapA).toHaveAttribute("data-map-style", "satellite");
+	await expect(mapP).toHaveAttribute("data-map-style", "satellite", { timeout: 10_000 });
+	await p.page.screenshot({ path: shotPath("follow-view/phone-satellite.png") });
+	await a.page.getByTestId(MAP_TESTID.satellite).click();
+	await expect(mapP).toHaveAttribute("data-map-style", own as string, { timeout: 10_000 });
+	await a.page.getByTestId(MAP_TESTID.satellite).click();
+	await expect(mapP).toHaveAttribute("data-map-style", "satellite", { timeout: 10_000 });
+	// Stop: the phone's own comes back, and stays after a reload (nothing saved as theirs).
+	await p.page.getByTestId(S.followBar).getByRole("button", { name: "Stop" }).click();
+	await expect(mapP).toHaveAttribute("data-map-style", own as string, { timeout: 10_000 });
+	// (A reload mid-spotlight would join it again: end it first.)
+	await a.page.getByTestId(S.spotlightEnd).click();
+	await p.page.reload();
+	await expectLive(p.page);
+	await expect(p.page.getByTestId(MAP_TESTID.canvas)).toHaveAttribute("data-map-style", own as string, {
+		timeout: 30_000,
+	});
+	await a.page.getByTestId(MAP_TESTID.satellite).click();
+	await expect(mapA).not.toHaveAttribute("data-map-style", "satellite");
+	await a.ctx.close();
+	await p.ctx.close();
+});
+
+test("follow the view on a phone: the day split's panel and an opened city follow; typed values never do", async ({
+	browser,
+}) => {
+	test.setTimeout(120_000);
+	const { a, p } = await leadWithPhone(browser, `/t/${trip.slug}?tab=plan`);
+	await expect(p.page).toHaveURL(/tab=plan/, { timeout: 10_000 });
+
+	// How long in each city: Change opens the panel; a city opened to its places.
+	await a.page.getByTestId(T.splitChange).click();
+	await expect(a.page.getByTestId(T.splitApply)).toBeVisible();
+	await expect(p.page.getByTestId(T.splitApply)).toBeAttached({ timeout: 8_000 });
+	const expand = a.page.getByTestId(T.splitExpand).first();
+	const city = await expand.evaluate((el) => el.closest("[data-city]")?.getAttribute("data-city") ?? "");
+	expect(city).not.toBe("");
+	await expand.click();
+	const opened = (pg: Page) =>
+		pg.locator(`[data-testid="${T.splitRow}"][data-city="${city}"] [data-testid="${T.splitPlaces}"]`);
+	await expect(opened(a.page)).toBeVisible();
+	await expect(opened(p.page)).toBeAttached({ timeout: 8_000 });
+	await expect.poll(() => shows(p.page, `[data-testid="${T.splitRow}"][data-city="${city}"]`), { timeout: 10_000 }).toBe(true);
+	await p.page.screenshot({ path: shotPath("follow-view/phone-split-city.png") });
+	await a.page.getByTestId(T.splitExpand).first().click();
+	await expect(opened(p.page)).toHaveCount(0, { timeout: 8_000 });
+	await a.page.getByTestId(T.splitCancel).click();
+	await expect(p.page.getByTestId(T.splitApply)).toHaveCount(0, { timeout: 8_000 });
+
+	// A form's typed value never reaches the follower: the search box…
+	const secret = `Omakase${randomBytes(3).toString("hex")}`;
+	await a.page.keyboard.press("ControlOrMeta+k");
+	const search = a.page.getByTestId(PLACES_TESTID.paletteInput);
+	await expect(search).toBeVisible();
+	await search.fill(`${secret}x`);
+	await a.page.waitForTimeout(800);
+	expect(JSON.stringify(await localState(a.page))).not.toContain(secret);
+	await a.page.keyboard.press("Escape");
+	if (await search.isVisible()) await a.page.keyboard.press("Escape");
+	await expect(search).toBeHidden();
+	// …nor the expense editor (only "Dev opened ‘Add expense’").
+	await a.page.getByRole("tab", { name: /Money/ }).click();
+	await expect(p.page).toHaveURL(/tab=money/, { timeout: 10_000 });
+	await a.page.getByTestId("money-add").click();
+	await expect(p.page.getByTestId(S.followFormBanner)).toHaveText(/Add expense/, { timeout: 8_000 });
+	await a.page.getByTestId("expense-title").fill(secret);
+	await a.page.waitForTimeout(1_500);
+	await expect(p.page.locator("body")).not.toContainText(secret);
+	const states = await p.page.evaluate(() => {
+		const aw = (window as unknown as W).__yonderCursors.awareness as unknown as {
+			getStates(): Map<number, unknown>;
+		};
+		return JSON.stringify([...aw.getStates().values()]);
+	});
+	expect(states).not.toContain(secret);
+	await a.page.keyboard.press("Escape");
+	await a.page.getByTestId(S.spotlightEnd).click();
+	await a.ctx.close();
+	await p.ctx.close();
 });
