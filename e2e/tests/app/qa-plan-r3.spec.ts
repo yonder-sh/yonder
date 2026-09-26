@@ -311,7 +311,7 @@ test("DEFECT (WP-Shell): Still to plan's unrated count matches the Places tab's 
 	);
 	// The old Rate screen's link: the Places tab, whose header has each member's progress.
 	await page.goto(`/t/${TRIP}/rate`);
-	const mine = page.getByTestId("places-progress").locator(`[data-member="${me}"]`);
+	const mine = page.getByTestId("places-progress").locator(`[data-member="${me}"][data-counted]`);
 	await expect(mine).toBeVisible({ timeout: 30_000 });
 	const [rated, total] = ((await mine.innerText()).match(/(\d+)\/(\d+)/) ?? []).slice(1).map(Number);
 	// Today: "48 unrated · by you", "You 48 of 126" vs Rate "78/125" (47 unrated): Maya's

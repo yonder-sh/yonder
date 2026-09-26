@@ -101,7 +101,7 @@ test("Rate guard: the mini-map uses the Yonder style, never the public OpenFreeM
 test("Rate guard: every member's progress has the same, rateable-only denominator", async ({ page }) => {
 	await page.goto(`/t/${TRIP}/rate`);
 	await expect(activeCard(page)).toBeVisible({ timeout: 30_000 });
-	const totals = (await page.getByTestId("places-progress").locator("[data-member]").allInnerTexts()).map((t) =>
+	const totals = (await page.getByTestId("places-progress").locator("[data-member][data-counted]").allInnerTexts()).map((t) =>
 		Number(/\/(\d+)/.exec(t)?.[1]),
 	);
 	expect(totals.length).toBeGreaterThanOrEqual(3);
