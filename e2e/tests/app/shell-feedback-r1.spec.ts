@@ -334,5 +334,19 @@ test.describe("phone 390", () => {
 		await expect.poll(clear).toBeGreaterThan(0);
 		await settle(page);
 		await page.screenshot({ path: shotPath("shell/vis3-09-phone-empty-half.png"), animations: "disabled" });
+		// A place but no dates: the peek asks how long in each city, and opens the Plan.
+		const tripId = (created as { tripId: string }).tripId;
+		await page.evaluate(async (tripId) => {
+			const m = await import(/* @vite-ignore */ "/src/functions/nodes.functions.ts");
+			await m.createNode({ data: { tripId, id: crypto.randomUUID(), parentId: null, type: "city", name: "Kyoto", lat: 35.01, lng: 135.77 } });
+		}, tripId);
+		await openTrip(page, `/t/${slug}?tab=plan`);
+		await expect(peek).toContainText("How long in each city?", { timeout: 15_000 });
+		await peek.getByRole("button", { name: "Plan the days" }).tap();
+		// The sheet opens full on the Plan, where it asks about how many days.
+		await expect
+			.poll(() => page.getByTestId(TESTID.mobileSheet).evaluate((s) => Math.round(s.getBoundingClientRect().top)))
+			.toBeLessThan(200);
+		await expect(page).toHaveURL(/tab=plan/);
 	});
 });

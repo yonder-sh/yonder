@@ -366,13 +366,13 @@ function MobileSheet() {
 /**
  * VIS3-09 (EMPTY-02): a trip with no days has no day chips and no Now/Next,
  * so the peek says what to do first, as the desktop Plan does: "Where to
- * first?" with Search places, or (places but no dates) the dates to set. At
- * half the Plan tab says the same, so this row is the peek's only.
+ * first?" with Search places, or (places but no dates) how long in each city,
+ * which the Plan tab asks (a number of days, then a start date).
  */
 function EmptyPeek() {
-	const { ix, graph } = useWorkspace();
+	const { ix, graph, nav } = useWorkspace();
 	const openAddPlace = useUi((s) => s.openAddPlace);
-	const setSettingsOpen = useUi((s) => s.setSettingsOpen);
+	const setSnap = useUi((s) => s.setSheetSnap);
 	if (ix.days.length > 0) return null;
 	const first = graph.nodes.length === 0;
 	return (
@@ -381,17 +381,19 @@ function EmptyPeek() {
 			className="flex items-center gap-3 px-4 pb-2"
 		>
 			<p className="min-w-0 flex-1 font-display text-[15px] leading-5 font-medium text-balance">
-				{first ? "Where to first?" : "Set the trip dates to plan your days."}
+				{first ? "Where to first?" : "How long in each city?"}
 			</p>
 			<EditGuard>
 				<Button
 					size="sm"
 					className="h-11 shrink-0 px-4"
-					onClick={() =>
-						first ? openAddPlace({ mode: "first" }) : setSettingsOpen(true)
-					}
+					onClick={() => {
+						if (first) return openAddPlace({ mode: "first" });
+						nav.setTab("plan");
+						setSnap(SNAPS[2] ?? null);
+					}}
 				>
-					{first ? "Search places" : "Set dates"}
+					{first ? "Search places" : "Plan the days"}
 				</Button>
 			</EditGuard>
 		</div>
