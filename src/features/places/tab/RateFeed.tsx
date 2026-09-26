@@ -56,6 +56,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import { EMBED_SANDBOX } from "@/features/media/embeds";
 import { noteFor, tripNotesQuery } from "@/features/notes/queries";
 import { useNotePreview } from "@/features/notes/use-note-preview";
 import { useBreakpoint } from "@/features/shell/use-breakpoint";
@@ -190,7 +191,7 @@ function EmbedPlayer({
 				ref={frame}
 				title={s.m.title ?? `${provider} video`}
 				src={src}
-				sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"
+				sandbox={EMBED_SANDBOX}
 				allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
 				referrerPolicy="strict-origin-when-cross-origin"
 				data-ahead={ahead || undefined}

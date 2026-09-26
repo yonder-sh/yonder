@@ -5,7 +5,7 @@
  * post) — MED-04.
  */
 import { ExternalLink } from "lucide-react";
-import { embedSrc, providerLabel } from "../embeds";
+import { EMBED_SANDBOX, embedSrc, providerLabel } from "../embeds";
 import { MEDIA_TESTID } from "../testids";
 import type { MediaDto } from "../types";
 import { openHref } from "./media-tile";
@@ -46,7 +46,7 @@ export function EmbedFrame({
 						src={src}
 						title={item.title ?? `${label} video`}
 						className="absolute inset-0 size-full border-0"
-						sandbox="allow-scripts allow-same-origin allow-popups allow-presentation"
+						sandbox={EMBED_SANDBOX}
 						allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
 						referrerPolicy="strict-origin-when-cross-origin"
 						loading="lazy"

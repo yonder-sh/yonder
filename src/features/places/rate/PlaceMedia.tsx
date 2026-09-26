@@ -36,6 +36,7 @@ import {
 	PopoverTrigger,
 } from "@/components/ui/popover";
 import { PdfViewer } from "@/features/media/components/pdf-viewer";
+import { EMBED_SANDBOX } from "@/features/media/embeds";
 import type { MediaDto } from "@/features/media/media.functions";
 import {
 	IMAGE_TYPES,
@@ -248,7 +249,7 @@ function SlideView({ s, title }: { s: Slide; title: string }) {
 						title={s.m.title ?? `${s.embed.provider} video`}
 						src={s.embed.src}
 						loading="lazy"
-						sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"
+						sandbox={EMBED_SANDBOX}
 						allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
 						referrerPolicy="strict-origin-when-cross-origin"
 						className={cn(

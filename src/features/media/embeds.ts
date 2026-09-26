@@ -6,6 +6,16 @@
  */
 
 export type SocialProvider = "youtube" | "tiktok" | "instagram";
+
+/**
+ * The providers' players' sandbox (SECURITY §7): their scripts on their own
+ * origin, fullscreen, and new tabs ("Watch on Instagram"), never a
+ * navigation of our page. A tab they open leaves the sandbox: instagram.com
+ * sends Cross-Origin-Opener-Policy, which browsers refuse to load inside
+ * one (Firefox: NS_ERROR_DOM_COOP_FAILED).
+ */
+export const EMBED_SANDBOX =
+	"allow-scripts allow-same-origin allow-presentation allow-popups allow-popups-to-escape-sandbox";
 export type InstagramType = "p" | "reel" | "tv";
 
 export type LinkClass =

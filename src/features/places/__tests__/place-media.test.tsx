@@ -207,6 +207,10 @@ describe("PlaceMedia", () => {
 		expect(frame?.getAttribute("sandbox")).not.toContain(
 			"allow-top-navigation",
 		);
+		// Its "Watch on …" tab leaves the sandbox (Instagram refuses to load in one).
+		expect(frame?.getAttribute("sandbox")).toContain(
+			"allow-popups-to-escape-sandbox",
+		);
 		// A TikTok link is an embed too.
 		fireEvent.click(
 			within(box).getByRole("button", { name: "Show tiktok video" }),
