@@ -47,7 +47,7 @@ import {
 import { WelcomeMenuItem } from "@/features/welcome/WelcomeDialog";
 import { mustRedact } from "@/lib/auth/roles";
 import { signOut } from "@/lib/auth/sign-out";
-import { useFollowedStore } from "@/lib/realtime/view-ui";
+import { bool, useFollowedStore, useFollowState } from "@/lib/realtime/view-ui";
 import { TESTID } from "@/lib/testids";
 import { useUi } from "@/lib/workspace/ui-store";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
@@ -99,7 +99,12 @@ const PILL =
 
 function MobilePills() {
 	const { scope, graph, nav, mode, search } = useWorkspace();
-	const [outlineOpen, setOutlineOpen] = useState(false);
+	// The Outline drawer being open travels with my view.
+	const [outlineOpen, setOutlineOpen] = useFollowState(
+		"outline.drawer",
+		false,
+		bool,
+	);
 	// The Outline drawer closes when a tap in it navigates (a new scope or
 	// selection), not on every click: chevrons, the filter, ⋯ menus and inline
 	// rename all live inside it (WP-Outline CONTRACT_REQUESTS).

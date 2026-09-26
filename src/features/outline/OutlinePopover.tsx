@@ -11,6 +11,7 @@ import {
 	PopoverContent,
 	PopoverTrigger,
 } from "@/components/ui/popover";
+import { bool, useFollowState } from "@/lib/realtime/view-ui";
 import { TESTID } from "@/lib/testids";
 import { IdeasBin } from "./IdeasBin";
 import { Outline } from "./Outline";
@@ -18,8 +19,10 @@ import { usePlaceFilter } from "./use-place-filter";
 
 export function OutlinePopover() {
 	const { active } = usePlaceFilter();
+	// Open or closed travels with my view.
+	const [open, setOpen] = useFollowState("outline.pop", false, bool);
 	return (
-		<Popover>
+		<Popover open={open} onOpenChange={setOpen}>
 			<PopoverTrigger asChild>
 				<Button
 					variant="ghost"

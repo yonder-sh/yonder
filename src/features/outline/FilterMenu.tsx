@@ -39,6 +39,7 @@ import {
 	PRIORITY_ORDER,
 } from "@/lib/domain/taxonomy";
 import type { Priority } from "@/lib/engine/types";
+import { bool, useFollowState } from "@/lib/realtime/view-ui";
 import type { WorkspaceFilter } from "@/lib/workspace/filter";
 import { describeFilter } from "@/lib/workspace/filter-match";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
@@ -269,13 +270,17 @@ export function PlaceFilterPanel() {
 export function PlaceFilterButton({
 	align = "start",
 	className,
+	followPath = "outline.filter",
 }: {
 	align?: "start" | "center" | "end";
 	className?: string;
+	/** Where its being open travels (the Places tab's apart). */
+	followPath?: `${string}.${string}`;
 }) {
 	const { active } = usePlaceFilter();
+	const [open, setOpen] = useFollowState(followPath, false, bool);
 	return (
-		<Popover>
+		<Popover open={open} onOpenChange={setOpen}>
 			<PopoverTrigger asChild>
 				<Button
 					variant="ghost"
