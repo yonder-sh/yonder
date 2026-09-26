@@ -429,6 +429,13 @@
 .yonder-map-controls.is-touch {
 	gap: 8px;
 }
+/* A phone on its side (VIS2-08): four 44px buttons don't fit above the +
+   button, so they line up across the top instead. */
+@media (max-height: 480px) {
+	.yonder-map-controls.is-touch {
+		flex-direction: row;
+	}
+}
 .yonder-map-controls.is-touch .yonder-map-ctl {
 	width: 44px;
 	height: 44px;
