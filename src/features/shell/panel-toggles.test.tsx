@@ -114,6 +114,8 @@ describe("pane sizes", () => {
 		};
 		let width = 1200;
 		const storage = pixelLayoutStorage(base, () => width);
+		storage.setItem("k", JSON.stringify({ center: 50.3, map: 49.7 }));
+		expect(JSON.parse(mem.get("k") ?? "")).toEqual({ centerPx: 603.6 });
 		storage.setItem("k", JSON.stringify({ center: 50, map: 50 }));
 		expect(JSON.parse(mem.get("k") ?? "")).toEqual({ centerPx: 600 });
 		width = 1000;

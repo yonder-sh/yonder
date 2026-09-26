@@ -2,8 +2,8 @@
  * The desktop pane sizes, remembered as the centre's width in pixels. The
  * panel library stores percentages of the group, which drift when the
  * Outline hides or shows (the group changes width), so bringing the map back
- * would find the centre at another size. `groupWidth()` is the group's width
- * now; older percentage layouts are read as they are.
+ * would find the centre at another size. `groupWidth()` is the width the
+ * panes share now; older percentage layouts are read as they are.
  */
 import type { LayoutStorage } from "react-resizable-panels";
 
@@ -45,7 +45,7 @@ export function pixelLayoutStorage(
 			try {
 				base?.setItem(
 					key,
-					JSON.stringify({ centerPx: Math.round((center / 100) * w) }),
+					JSON.stringify({ centerPx: Math.round(center * w) / 100 }),
 				);
 			} catch {
 				// storage unavailable: the sizes just aren't remembered

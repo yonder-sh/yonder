@@ -49,9 +49,10 @@ function useOverviewTakesAll(): boolean {
 	return tab === "overview";
 }
 
-/** `--outline-w` and the hidden Outline's rail (`PanelToggles`, w-10). */
+/** `--outline-w`, the hidden Outline's rail (`PanelToggles`, w-10), the 1px divider. */
 const OUTLINE_PX = 264;
 const RAIL_PX = 40;
+const DIVIDER_PX = 1;
 
 function safeStorage(): Storage | undefined {
 	try {
@@ -130,19 +131,20 @@ export function DesktopWorkspace({ bp }: { bp: Exclude<Breakpoint, "sm"> }) {
 	// docs/PLACES.md §1: the Places tab's Map view stands in for the side map.
 	const placesMap = usePlacesMapView();
 	const overview = useOverviewTakesAll();
-	// The centre's width in pixels: the group is the window less the xl left column.
+	// The centre's width in pixels: the panes share the window less the xl
+	// left column and the divider.
 	const storage = useMemo(
 		() =>
-			pixelLayoutStorage(safeStorage(), () =>
-				typeof window === "undefined"
-					? 0
-					: window.innerWidth -
-						(bp !== "xl"
-							? 0
-							: useShell.getState().outlineCollapsed
-								? RAIL_PX
-								: OUTLINE_PX),
-			),
+			pixelLayoutStorage(safeStorage(), () => {
+				if (typeof window === "undefined") return 0;
+				const left =
+					bp !== "xl"
+						? 0
+						: useShell.getState().outlineCollapsed
+							? RAIL_PX
+							: OUTLINE_PX;
+				return window.innerWidth - left - DIVIDER_PX;
+			}),
 		[bp],
 	);
 	const { defaultLayout, onLayoutChanged } = useDefaultLayout({
