@@ -1,14 +1,18 @@
 #!/usr/bin/env node
-// Open-Meteo archive stub: the climate lines fetch daily history per cell, and
-// every e2e run used up the free tier's daily quota. `pnpm e2e:fast` starts it
-// and points OPEN_METEO_ARCHIVE_URL here; it can also run on its own:
+// The public services the app's server calls, stubbed for e2e: runs never
+// spend Open-Meteo's free daily quota or load Overpass, and never depend on
+// what they answer that day. `pnpm e2e:fast` starts it and points
+// OPEN_METEO_ARCHIVE_URL and OVERPASS_URL here; it can also run on its own:
 //
-//   node e2e/stubs/weather-stub.mjs [--port 7099]
-//   OPEN_METEO_ARCHIVE_URL=http://127.0.0.1:7099 pnpm dev
+//   node e2e/stubs/services-stub.mjs [--port 7099]
+//   OPEN_METEO_ARCHIVE_URL=http://127.0.0.1:7099 \
+//   OVERPASS_URL=http://127.0.0.1:7099/api/interpreter pnpm dev
 //
 // GET /v1/archive?latitude&longitude&start_date&end_date: every day in the
 //   range, made up but plausible: warmer towards the equator, summer in July
 //   north of it and January south, a few wet days a month.
+// POST /api/interpreter (Overpass): no elements, so no place has OSM hours
+//   and the hours sync changes nothing.
 // GET /__stub/calls → { total }
 import { createServer } from "node:http";
 import { pathToFileURL } from "node:url";
@@ -55,6 +59,11 @@ export function startWeatherStub(port) {
 			res.end(JSON.stringify(body));
 		};
 		if (url.pathname === "/__stub/calls") return json(200, { total });
+		if (req.method === "POST" && url.pathname === "/api/interpreter") {
+			total++;
+			req.resume();
+			return json(200, { version: 0.6, elements: [] });
+		}
 		if (req.method !== "GET" || url.pathname !== "/v1/archive")
 			return json(404, { error: true, reason: "not found" });
 		const q = url.searchParams;
@@ -74,7 +83,7 @@ export function startWeatherStub(port) {
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) {
 	const i = process.argv.indexOf("--port");
-	const port = Number(i > 0 ? process.argv[i + 1] : (process.env.WEATHER_STUB_PORT ?? 7099));
+	const port = Number(i > 0 ? process.argv[i + 1] : (process.env.SERVICES_STUB_PORT ?? 7099));
 	await startWeatherStub(port);
-	console.log(`[weather-stub] http://127.0.0.1:${port}`);
+	console.log(`[services-stub] http://127.0.0.1:${port}`);
 }

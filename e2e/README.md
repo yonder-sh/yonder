@@ -16,7 +16,7 @@ It starts several isolated copies of the app (each with its own database cloned 
 
 Flags: `--envs N`, `--rebuild` (refresh the template), `--keep` (leave the envs running), `--baseline <file>` (mark new failures). The HTML report lands in `e2e/playwright-report/fast`, logs in `.data/e2e-fast/`.
 
-Climate comes from a local Open-Meteo stub (`e2e/stubs/weather-stub.mjs`), so runs never spend the free API's daily quota.
+Climate and opening hours come from a local stub (`e2e/stubs/services-stub.mjs`) instead of Open-Meteo and Overpass, so runs never spend their quotas or depend on their answers.
 
 ## Run against one env
 

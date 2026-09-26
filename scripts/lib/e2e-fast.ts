@@ -58,7 +58,7 @@ export const PG_SERVER =
 	process.env.E2E_PG_URL ?? "postgres://trip:trip@localhost:5433";
 export const TEMPLATE_DB = "trip_e2e_tmpl";
 export const PORT_BASE = 7100;
-/** The Open-Meteo archive stub every env's climate asks (e2e/stubs/weather-stub.mjs). */
+/** The public-services stub (Open-Meteo, Overpass) every env asks (e2e/stubs/services-stub.mjs). */
 export const WEATHER_STUB_PORT = PORT_BASE - 1;
 
 /**
@@ -70,7 +70,7 @@ export async function startWeatherStub(): Promise<() => void> {
 	const child = spawn(
 		process.execPath,
 		[
-			path.join(REPO_ROOT, "e2e/stubs/weather-stub.mjs"),
+			path.join(REPO_ROOT, "e2e/stubs/services-stub.mjs"),
 			"--port",
 			String(WEATHER_STUB_PORT),
 		],
@@ -92,7 +92,7 @@ export async function startWeatherStub(): Promise<() => void> {
 		await sleep(100);
 	}
 	stop();
-	throw new Error(`the weather stub didn't start on :${WEATHER_STUB_PORT}`);
+	throw new Error(`the services stub didn't start on :${WEATHER_STUB_PORT}`);
 }
 
 export const pgUrl = (db: string) => `${PG_SERVER.replace(/\/+$/, "")}/${db}`;
@@ -162,8 +162,9 @@ export function fastEnv(index: number, source: Env): FastEnv {
 		VITE_E2E: "1",
 		AUTH_RATE_LIMIT: "off",
 		COLLAB_RUN_WORKER: "1",
-		// Never the real archive: each run would spend its free daily quota.
+		// Never the real services: a run would spend their quotas and depend on their answers.
 		OPEN_METEO_ARCHIVE_URL: `http://127.0.0.1:${WEATHER_STUB_PORT}`,
+		OVERPASS_URL: `http://127.0.0.1:${WEATHER_STUB_PORT}/api/interpreter`,
 		// Read by the e2e helpers (otp.ts, env.ts, the QA specs).
 		E2E_APP_LOG: path.join(dir, "app.log"),
 		E2E_AUTH_DIR: AUTH_DIR,
