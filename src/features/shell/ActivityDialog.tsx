@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dialog";
 import { buildDigest, type DigestLine } from "@/lib/engine/digest";
 import { activityQuery, tripDigestQuery } from "@/lib/query/trip-queries";
+import { bool, useFollowValue } from "@/lib/realtime/view-ui";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { type EntityRefs, selForRefs } from "./activity-sel";
 import { timeAgo } from "./inbox-model";
@@ -50,6 +51,8 @@ function lineKeys(lines: DigestLine[]): [string, DigestLine][] {
 export function ActivityDialog() {
 	const open = useShell((s) => s.activityOpen);
 	const setOpen = useShell((s) => s.setActivityOpen);
+	// Open or closed travels with my view.
+	useFollowValue("shell.activity", open, setOpen, bool);
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
 			<DialogContent

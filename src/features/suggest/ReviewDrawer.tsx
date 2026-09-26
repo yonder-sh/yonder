@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/sheet";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { bool, oneOf, useFollowValue } from "@/lib/realtime/view-ui";
 import type { ProposalDto } from "@/lib/schemas/proposals";
 import { TESTID } from "@/lib/testids";
 import { useUi } from "@/lib/workspace/ui-store";
@@ -45,6 +46,10 @@ import {
 	timeAgo,
 } from "./proposal-view";
 import { type ReviewFilter, useReviewStore } from "./review-store";
+
+/** A review tab a follower may take. */
+const isFilter = oneOf<ReviewFilter>(["open", "mine", "conflicts"]);
+
 import { SUGGEST_TESTID } from "./testids";
 import { useProposalActions } from "./use-proposal-actions";
 
@@ -156,6 +161,7 @@ function ReviewBody({ onAfterShow }: { onAfterShow: () => void }) {
 	const { proposals, graph, access, nav } = useWorkspace();
 	const filter = useReviewStore((s) => s.filter);
 	const setFilter = useReviewStore((s) => s.setFilter);
+	useFollowValue("suggest.filter", filter, setFilter, isFilter);
 	const { show } = useProposalActions();
 	const lists = useReviewLists();
 
@@ -263,6 +269,8 @@ function ReviewBody({ onAfterShow }: { onAfterShow: () => void }) {
 export function ReviewDrawer() {
 	const open = useUi((s) => s.reviewOpen);
 	const setOpen = useUi((s) => s.setReviewOpen);
+	// Open or closed travels with my view.
+	useFollowValue("suggest.review", open, setOpen, bool);
 	const { access } = useWorkspace();
 	const mobile = useIsMobile();
 	const allowed = access.canReview || access.canPropose;

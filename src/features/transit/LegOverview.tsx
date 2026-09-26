@@ -41,7 +41,13 @@ import { setDayStay } from "@/functions/days.functions";
 import { can } from "@/lib/auth/roles";
 import { railEstimateMin } from "@/lib/engine/suggest";
 import { tripKeys } from "@/lib/query/keys";
-import type { LegMode } from "@/lib/schemas/enums";
+import {
+	bool,
+	oneOf,
+	useFollowState,
+	useFollowValue,
+} from "@/lib/realtime/view-ui";
+import { LEG_MODE_VALUES, type LegMode } from "@/lib/schemas/enums";
 import type { LegTarget } from "@/lib/schemas/targets";
 import { TESTID } from "@/lib/testids";
 import { useUi } from "@/lib/workspace/ui-store";
@@ -57,6 +63,9 @@ import { currencyDecimals, fastestRideOf } from "./lib/route-view";
 import { TRANSIT_TESTID } from "./testids";
 import { type LegEditor, useLegEditor } from "./use-leg-editor";
 
+/** A mode a follower may show ("none": no mode yet). */
+const isShownMode = oneOf<LegMode | "none">([...LEG_MODE_VALUES, "none"]);
+
 export function LegOverview({ target }: { target: LegTarget }) {
 	const ed = useLegEditor(target);
 	const { leg, sched, ws } = ed;
@@ -67,8 +76,19 @@ export function LegOverview({ target }: { target: LegTarget }) {
 	const [uiMode, setUiMode] = useState<LegMode | null>(leg?.mode ?? null);
 	// Follow remote changes of the stored mode.
 	useEffect(() => setUiMode(leg?.mode ?? null), [leg?.mode]);
+	// The mode shown (not saved yet: a flight's form) travels with my view.
+	useFollowValue(
+		"leg.mode",
+		uiMode ?? "none",
+		(v) => setUiMode(v === "none" ? null : v),
+		isShownMode,
+	);
 	const guard = useEditGuard();
-	const [addingTransit, setAddingTransit] = useState(false);
+	const [addingTransit, setAddingTransit] = useFollowState(
+		"leg.addTransit",
+		false,
+		bool,
+	);
 
 	const choose = (mode: LegMode) => {
 		setUiMode(mode);

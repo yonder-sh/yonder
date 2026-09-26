@@ -9,6 +9,7 @@
 import { cn } from "cn";
 import { Download, FileText, Minus, Plus, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -18,6 +19,7 @@ import {
 } from "@/components/ui/dialog";
 import { Spinner } from "@/components/ui/spinner";
 import { mediaPageUrl, mediaUrl } from "@/lib/media-url";
+import { useFollowState } from "@/lib/realtime/view-ui";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { formatBytes } from "../media-kinds";
 import { usePublishMedia } from "../media-presence";
@@ -28,6 +30,9 @@ import { useEscapeOwner } from "./use-escape-owner";
 import { VisibilityButton } from "./visibility-button";
 
 const ZOOMS = [0.6, 0.8, 1, 1.25, 1.5, 2] as const;
+const isZoom = z.custom<number>((v) =>
+	(ZOOMS as readonly unknown[]).includes(v),
+);
 
 function Page({
 	item,
@@ -44,6 +49,7 @@ function Page({
 		<figure
 			data-testid={MEDIA_TESTID.pdfPage}
 			data-page={n}
+			data-cursor-anchor={`sec:pdf.${n}`}
 			className="relative w-full overflow-hidden rounded-[3px] bg-white shadow-float"
 			style={{ aspectRatio: aspect }}
 		>
@@ -80,13 +86,12 @@ export function PdfViewer({
 	/** Omitted (a followed viewer, FB-21c): no "Hide from guests" toggle. */
 	onVisibility?: (next: MediaDto["visibility"]) => void;
 }) {
-	const [zoom, setZoom] = useState(1);
+	// The zoom travels with my view (the pages follow my scroll).
+	const [zoom, setZoom] = useFollowState<number>("media.zoom", 1, isZoom);
+	const hidden =
+		item.visibility !== "everyone" || item.target.kind === "expense";
 	// FB-21c: followers open the same document.
-	usePublishMedia({
-		id: item.id,
-		k: "pdf",
-		hidden: item.visibility !== "everyone" || item.target.kind === "expense",
-	});
+	usePublishMedia({ id: item.id, k: "pdf", hidden });
 	useEscapeOwner(onClose);
 	const [page, setPage] = useState(1);
 	const scroller = useRef<HTMLDivElement>(null);
@@ -199,6 +204,7 @@ export function PdfViewer({
 
 				<div
 					ref={scroller}
+					data-cursor-vis={hidden ? "members" : undefined}
 					className="relative min-h-0 flex-1 overflow-auto overscroll-contain"
 				>
 					{pages > 0 ? (

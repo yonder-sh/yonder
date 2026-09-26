@@ -15,7 +15,6 @@ import {
 	useContext,
 	useEffect,
 	useMemo,
-	useState,
 } from "react";
 import { toast } from "sonner";
 import { can, canRateOwn, type EditMode, editModeOf } from "@/lib/auth/roles";
@@ -39,6 +38,7 @@ import type {
 	WorkspaceModel,
 } from "@/lib/engine/types";
 import { buildModel } from "@/lib/engine/visits";
+import { bool, useFollowState } from "@/lib/realtime/view-ui";
 import type { ProposalConflict, ProposalDto } from "@/lib/schemas/proposals";
 import { parseFilter, type WorkspaceFilter } from "./filter";
 import * as N from "./nav";
@@ -224,7 +224,8 @@ export function WorkspaceModelProvider({
 		[graph, connection, suggesting],
 	);
 	const mayProposals = access.canReview || access.canPropose;
-	const [show, setShow] = useState(true);
+	// "Show suggestions" travels with my view.
+	const [show, setShow] = useFollowState("suggest.show", true, bool);
 	const overlay = useMemo(
 		() => applyProposals(graph, mayProposals ? proposals : NO_PROPOSALS),
 		[graph, proposals, mayProposals],
@@ -240,7 +241,7 @@ export function WorkspaceModelProvider({
 				? proposals.filter((p) => p.status === "open").length
 				: 0,
 		}),
-		[mayProposals, proposals, overlay, show],
+		[mayProposals, proposals, overlay, show, setShow],
 	);
 	// EXTENSIONS §3.6: ix, model and schedule come from the overlay (ghosts
 	// simulated) only while suggestions are shown; `graph` stays the server's.
