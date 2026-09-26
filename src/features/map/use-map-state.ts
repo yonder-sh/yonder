@@ -1,11 +1,17 @@
 /**
  * The map's small client state: the basemap style (the account's view
- * setting, FB-04; the app theme until one is chosen), the layer menu's "Show"
- * switches and "Selected days" mode (per browser, localStorage), and the
- * shared place filter (`?f=`, ADDENDUM §10).
+ * setting, FB-04; the app theme until one is chosen; the leader's satellite
+ * while I follow someone), the layer menu's "Show" switches and "Selected
+ * days" mode (per browser, localStorage), and the shared place filter
+ * (`?f=`, ADDENDUM §10).
  */
 import { useCallback, useEffect, useState } from "react";
 import { useViewPrefs } from "@/features/shell/view-prefs";
+import {
+	bool,
+	useFollowedValue,
+	usePublishViewUi,
+} from "@/lib/realtime/view-ui";
 import type { WorkspaceFilter } from "@/lib/workspace/filter";
 import { useUi } from "@/lib/workspace/ui-store";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
@@ -65,16 +71,30 @@ export function useMapTheme(): MapTheme {
  * The basemap: the app theme's light or dark, or satellite when it's on (the
  * map's own button; saved to the account's view prefs, `mapStyle`). The
  * setter switches satellite on or off. Signed-out and fixture pages keep it
- * local.
+ * local. Satellite on or off travels with my view (`map.sat`): while I
+ * follow someone their choice shows, never saved as mine, and mine comes
+ * back when I stop; light or dark stays each person's app theme.
  */
 export function useMapStyle(): [MapStyle, (satellite: boolean) => void] {
 	const { mode } = useWorkspace();
-	const { prefs, setPrefs } = useViewPrefs({ enabled: mode === "live" });
+	const live = mode === "live";
+	const { prefs, setPrefs } = useViewPrefs({ enabled: live });
 	const theme = useMapTheme();
-	const style = effectiveMapStyle(prefs.mapStyle, theme);
+	const following = useUi((s) => s.following);
+	const theirs = useFollowedValue("map.sat", bool);
+	// Theirs when it changes, until I switch it myself (or stop following).
+	const [shown, setShown] = useState<boolean | null>(null);
+	useEffect(() => {
+		setShown(following && theirs !== undefined ? theirs : null);
+	}, [following, theirs]);
+	const sat = shown ?? prefs.mapStyle === "satellite";
+	usePublishViewUi("map.sat", sat, live);
+	const style = effectiveMapStyle(sat ? "satellite" : null, theme);
 	const set = useCallback(
-		(satellite: boolean) =>
-			setPrefs({ mapStyle: satellite ? "satellite" : null }),
+		(satellite: boolean) => {
+			setPrefs({ mapStyle: satellite ? "satellite" : null });
+			setShown((s) => (s === null ? null : satellite));
+		},
 		[setPrefs],
 	);
 	return [style, set];
