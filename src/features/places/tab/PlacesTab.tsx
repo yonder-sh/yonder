@@ -18,7 +18,8 @@
  * Wide: with the map hidden (the shell's one "Hide the map", for every tab)
  * the tab takes its space and docks the details; with the map showing, the
  * details open over the map instead (the shell's floating inspector slot
- * shows the same `PlaceDetails`).
+ * shows the same `PlaceDetails`). On a tablet the Rate step always takes the
+ * map's space (beside the map, the feed was a narrow column).
  */
 import { cn } from "cn";
 import {
@@ -33,6 +34,7 @@ import { EmptyState } from "@/components/common/empty-state";
 import { PlaceFilterSummary } from "@/features/outline/FilterMenu";
 import { useShell } from "@/features/shell/shell-store";
 import { TabPurpose } from "@/features/shell/TabPurpose";
+import { useBreakpoint } from "@/features/shell/use-breakpoint";
 import { canRateOwn } from "@/lib/auth/roles";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { isRateable } from "../lib/rate";
@@ -68,7 +70,17 @@ const RateFeed = lazy(() => import("./RateFeed"));
 export function usePlacesTakesMap(): boolean {
 	const { tab, search } = useWorkspace();
 	const mapHidden = useShell((s) => s.mapHidden);
-	return tab === "places" && (mapHidden || search.pv === "map");
+	const rate = usePlacesRateTakesMap();
+	return tab === "places" && (mapHidden || search.pv === "map" || rate);
+}
+
+/** The Rate step on a tablet (md, lg): the feed takes the map's space. */
+export function usePlacesRateTakesMap(): boolean {
+	const { tab, search } = useWorkspace();
+	const bp = useBreakpoint();
+	return (
+		tab === "places" && search.pv === "rate" && (bp === "md" || bp === "lg")
+	);
 }
 
 /** The Places tab's Map view is on screen: it stands in for the side map. */

@@ -26,6 +26,7 @@ import { Outline } from "@/features/outline/Outline";
 import {
 	useIsPlacesRow,
 	usePlacesMapView,
+	usePlacesRateTakesMap,
 } from "@/features/places/tab/PlacesTab";
 import { BRAND } from "@/lib/brand";
 import { TESTID } from "@/lib/testids";
@@ -130,6 +131,8 @@ export function DesktopWorkspace({ bp }: { bp: Exclude<Breakpoint, "sm"> }) {
 	const mapHidden = useShell((s) => s.mapHidden);
 	// docs/PLACES.md §1: the Places tab's Map view stands in for the side map.
 	const placesMap = usePlacesMapView();
+	// A tablet's Rate feed takes the map's space too (PlacesTab).
+	const rateFeed = usePlacesRateTakesMap();
 	const overview = useOverviewTakesAll();
 	// The centre's width in pixels: the panes share the window less the xl
 	// left column and the divider.
@@ -181,7 +184,7 @@ export function DesktopWorkspace({ bp }: { bp: Exclude<Breakpoint, "sm"> }) {
 						</div>
 						<InspectorSheet />
 					</>
-				) : mapHidden || placesMap ? (
+				) : mapHidden || placesMap || rateFeed ? (
 					<>
 						<div className="h-full min-w-0 flex-1">
 							<CenterPanel />
@@ -191,8 +194,9 @@ export function DesktopWorkspace({ bp }: { bp: Exclude<Breakpoint, "sm"> }) {
 						) : (
 							<DockedInspector width={bp === "xl" ? 420 : 380} />
 						)}
-						{/* The Places Map view is the map here: nothing to bring back. */}
-						{placesMap ? null : <MapRail />}
+						{/* The Places Map view is the map here, and the Rate feed has
+						    it on a tablet: nothing to bring back. */}
+						{placesMap || rateFeed ? null : <MapRail />}
 					</>
 				) : bp === "md" ? (
 					// The centre's box matches the hidden-map layout's: hiding keeps its state.

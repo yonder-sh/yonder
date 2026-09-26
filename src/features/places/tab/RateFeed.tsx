@@ -1063,12 +1063,16 @@ export default function RateFeed({ data }: { data: PlacesData }) {
 	const me = act.me;
 	const order = data.state.order;
 	const root = useRef<HTMLDivElement>(null);
-	// Wide enough (768px) for the media beside the details; one layout at a time.
+	// Wide and landscape enough (960px) for the media beside the details;
+	// narrower or portrait (a tablet upright), the media fills the card.
 	const [wide, setWide] = useState(false);
 	useLayoutEffect(() => {
 		const el = root.current;
 		if (!el) return;
-		const measure = () => setWide(!phone && el.clientWidth >= 768);
+		const measure = () =>
+			setWide(
+				!phone && el.clientWidth >= 960 && el.clientWidth > el.clientHeight,
+			);
 		measure();
 		const ro = new ResizeObserver(measure);
 		ro.observe(el);
