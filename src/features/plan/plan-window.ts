@@ -88,7 +88,7 @@ export function estimateDayHeight(
 	compact: boolean,
 ): number {
 	const n = ix.itemsByDay.get(dayId)?.length ?? 0;
-	return 84 + n * (compact ? 76 : 100) + (n ? 40 : 64);
+	return 100 + n * (compact ? 76 : 100) + (n ? 40 : 64);
 }
 
 /**

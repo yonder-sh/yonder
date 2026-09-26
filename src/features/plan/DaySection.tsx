@@ -336,7 +336,8 @@ export function DaySection(props: DaySectionProps) {
 			aria-label={`Day ${ix.dayNumber(dayId)}`}
 			style={spacer ? { minHeight: spacer } : undefined}
 			className={cn(
-				"relative transition-colors",
+				// A little air after each day, so a day reads as one unit.
+				"relative pb-4 transition-colors",
 				isOver && "bg-primary/[0.03]",
 				muted && "opacity-75",
 			)}
