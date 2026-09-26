@@ -47,6 +47,7 @@ import {
 import { WelcomeMenuItem } from "@/features/welcome/WelcomeDialog";
 import { mustRedact } from "@/lib/auth/roles";
 import { signOut } from "@/lib/auth/sign-out";
+import { useFollowedStore } from "@/lib/realtime/view-ui";
 import { TESTID } from "@/lib/testids";
 import { useUi } from "@/lib/workspace/ui-store";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
@@ -59,7 +60,9 @@ import {
 	SpotlightBar,
 	SpotlightMenuItem,
 } from "./cursors/presence-ui";
+import { SHEET_SNAPS, snapForFocus } from "./cursors/scroll-rules";
 import { FollowBar } from "./FollowBar";
+import { useFollowPause } from "./follow-pause";
 import { InboxBell } from "./InboxBell";
 import { InspectorBody } from "./InspectorBody";
 import { LensControl } from "./LensControl";
@@ -70,7 +73,7 @@ import { RateMenuItem } from "./rate-entry";
 import { useShell } from "./shell-store";
 import { SHELL_TESTID } from "./testids";
 
-const SNAPS: (string | number)[] = ["120px", 0.5, 0.92];
+const SNAPS: (string | number)[] = [...SHEET_SNAPS];
 
 /**
  * Short landscape screens (an iPhone SE on its side, 200% zoom on a laptop:
@@ -293,6 +296,15 @@ function MobileSheet() {
 		}
 		if (useUi.getState().sheetSnap === SNAPS[0]) setSnap(SNAPS[1] ?? null);
 	}, [tabKey, setSnap]);
+	// Follow: the leader on the map or the panel moves my sheet down or up
+	// (my own drag pauses that until Resume).
+	const following = useUi((s) => s.following);
+	const focus = useFollowedStore((s) => s.focus);
+	const sheetPaused = useFollowPause((s) => s.sheet);
+	useEffect(() => {
+		if (!following || !focus || sheetPaused) return;
+		setSnap(snapForFocus(focus, useUi.getState().sheetSnap, SHEET_SNAPS));
+	}, [following, focus, sheetPaused, setSnap]);
 	// The map fits what's visible: below the pills, above the half sheet. One
 	// padding for every snap, so dragging the sheet never moves the map.
 	useEffect(() => {
@@ -322,6 +334,9 @@ function MobileSheet() {
 			snapPoints={SNAPS}
 			activeSnapPoint={snap}
 			setActiveSnapPoint={setSnap}
+			onRelease={() => {
+				if (useUi.getState().following) useFollowPause.getState().pauseSheet();
+			}}
 		>
 			{/* vaul 1.1.2 doesn't hand `modal={false}` to Radix, so its Dialog stays
 			    modal: the always-open sheet would aria-hide the pills, the FAB and the
