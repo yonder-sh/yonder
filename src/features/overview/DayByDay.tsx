@@ -3,12 +3,14 @@
  * night's city with its country's dot · the day's headline places — grouped
  * by stay, the whole trip in two screens. A long trip folds per country
  * (the route's rows); the country you're in (or the first two) stay open.
- * A click opens that day in the Plan.
+ * A click opens that day in the Plan. Which countries are open travels with
+ * my view (a follower's open with mine).
  */
 import { cn } from "cn";
 import { ChevronDown } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { formatDayDate } from "@/lib/format";
+import { ids, useFollowState } from "@/lib/realtime/view-ui";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { type DayLine, type DaySection, daySections } from "./lib/day-lines";
 import { countryLabel, type TripRoute } from "./lib/trip-route";
@@ -16,6 +18,10 @@ import { OVERVIEW_TESTID } from "./testids";
 
 /** Past this many days, each country's days fold. */
 const FOLD_AFTER = 21;
+
+/** A country section's id: its first day. */
+const keyOf = (sec: DaySection, i: number) =>
+	sec.groups[0]?.lines[0]?.dayId ?? `s${i}`;
 
 export function DayByDay({
 	route,
@@ -36,35 +42,46 @@ export function DayByDay({
 				s.groups.some((g) => g.lines.some((l) => l.date === today)),
 			)
 		: -1;
-	const [open, setOpen] = useState<Set<number>>(
-		() => new Set(current >= 0 ? [current] : [0, 1]),
+	const [open, setOpen] = useFollowState<string[]>(
+		"overview.days",
+		() =>
+			(current >= 0 ? [current] : [0, 1]).flatMap((i) => {
+				const sec = sections[i];
+				return sec ? [keyOf(sec, i)] : [];
+			}),
+		ids,
 	);
 	if (!lines.length) return null;
 	return (
-		<section data-testid={OVERVIEW_TESTID.days} className="min-w-0">
+		<section
+			data-testid={OVERVIEW_TESTID.days}
+			data-cursor-anchor="sec:ov.days"
+			className="min-w-0"
+		>
 			<h2 className="mb-3 font-display text-[22px] font-semibold">
 				Day by day
 			</h2>
 			<div className="flex flex-col gap-3">
 				{sections.map((sec, i) => {
-					const isOpen = !fold || open.has(i);
+					const key = keyOf(sec, i);
+					const isOpen = !fold || open.includes(key);
 					return (
 						<div
-							key={`${sec.rowIndex}-${sec.groups[0]?.lines[0]?.dayId ?? i}`}
+							key={`${sec.rowIndex}-${key}`}
 							data-testid={OVERVIEW_TESTID.daySection}
 							data-open={isOpen}
+							data-cursor-anchor={`sec:ov.days.${key}`}
 						>
 							{fold ? (
 								<SectionHeader
 									sec={sec}
 									open={isOpen}
 									onToggle={() =>
-										setOpen((s) => {
-											const next = new Set(s);
-											if (next.has(i)) next.delete(i);
-											else next.add(i);
-											return next;
-										})
+										setOpen((s) =>
+											s.includes(key)
+												? s.filter((k) => k !== key)
+												: [...s, key],
+										)
 									}
 								/>
 							) : null}
@@ -162,6 +179,7 @@ function Line({
 			type="button"
 			data-testid={OVERVIEW_TESTID.day}
 			data-date={l.date}
+			data-cursor-anchor={`day:${l.dayId}`}
 			aria-current={today ? "date" : undefined}
 			onClick={() => nav.setDays({ from: l.date, to: l.date })}
 			className={cn(

@@ -29,20 +29,26 @@ import { useWorkspace } from "@/lib/workspace/use-workspace";
 
 const DAY_MS = 86_400_000;
 
-/** A page section: an overline title and its content. */
+/** A page section: an overline title and its content (`sec:ov.<anchor>` for cursors and Follow). */
 export function Section({
 	title,
 	children,
 	className,
 	testId,
+	anchor,
 }: {
 	title: string;
 	children: ReactNode;
 	className?: string;
 	testId?: string;
+	anchor?: string;
 }) {
 	return (
-		<section data-testid={testId} className={cn("min-w-0", className)}>
+		<section
+			data-testid={testId}
+			data-cursor-anchor={anchor ? `sec:ov.${anchor}` : undefined}
+			className={cn("min-w-0", className)}
+		>
 			<h3 className="mb-2 text-[11px] font-semibold tracking-[.08em] text-muted-foreground uppercase">
 				{title}
 			</h3>
@@ -67,7 +73,11 @@ export function Deadlines({ now: at }: { now?: number } = {}) {
 	}, [items, ix, schedule, now]);
 	if (!rows.length) return null;
 	return (
-		<Section title="Upcoming deadlines" testId={SHELL_TESTID.deadlines}>
+		<Section
+			title="Upcoming deadlines"
+			testId={SHELL_TESTID.deadlines}
+			anchor="deadlines"
+		>
 			<ul className="-mx-2">
 				{rows.map((d) => {
 					const { li, at } = d;
@@ -75,7 +85,11 @@ export function Deadlines({ now: at }: { now?: number } = {}) {
 					const overdue = at < now;
 					const context = todoContext(ix, li.target, li.text);
 					return (
-						<li key={li.id}>
+						<li
+							key={li.id}
+							data-cursor-anchor={`list:${li.id}`}
+							data-cursor-vis={li.isPrivate ? "private" : undefined}
+						>
 							{/* The title first, the chip under it (VIS2-13). Opens the
 							    to-do's own filtered view, like "Still to plan". */}
 							<button
@@ -119,10 +133,14 @@ export function People() {
 	const people = assignableMembers(graph.members);
 	if (!people.length) return null;
 	return (
-		<Section title="People">
+		<Section title="People" anchor="people">
 			<ul className="grid grid-cols-[minmax(0,1fr)] gap-2 text-sm">
 				{people.map((m) => (
-					<li key={m.id} className="flex min-w-0 items-center gap-2">
+					<li
+						key={m.id}
+						data-cursor-anchor={`sec:ov.people.${m.id}`}
+						className="flex min-w-0 items-center gap-2"
+					>
 						<MemberAvatar memberId={m.id} size={20} />
 						<span className="min-w-0 flex-1 truncate">
 							{m.name}
@@ -155,7 +173,7 @@ export function Recent() {
 	const rows = q.data?.slice(0, 4) ?? [];
 	if (!rows.length) return null;
 	return (
-		<Section title="Recent">
+		<Section title="Recent" anchor="recent">
 			<ul
 				data-testid={SHELL_TESTID.recentList}
 				className="grid grid-cols-[minmax(0,1fr)] gap-1.5"
@@ -165,6 +183,7 @@ export function Recent() {
 					return (
 						<li
 							key={a.id}
+							data-cursor-anchor={`sec:ov.recent.${a.id}`}
 							className="flex min-w-0 items-baseline gap-2 text-[13px]"
 						>
 							<button

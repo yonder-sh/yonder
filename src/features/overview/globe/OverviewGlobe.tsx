@@ -437,6 +437,7 @@ export function OverviewGlobe({
 		<div
 			ref={box}
 			data-testid={OVERVIEW_TESTID.globe}
+			data-cursor-anchor="sec:ov.globe"
 			data-drawn={drawn >= 1 ? "done" : "drawing"}
 			data-map={mapReady ? "maplibre" : webgl === false ? "svg" : "loading"}
 			className={className}

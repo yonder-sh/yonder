@@ -20,15 +20,19 @@ import {
 	Ticket,
 } from "lucide-react";
 import {
+	createContext,
 	type MouseEvent,
 	type ReactNode,
 	useCallback,
+	useContext,
 	useId,
 	useMemo,
 	useState,
 } from "react";
 import { MemberAvatar } from "@/components/common/member";
 import { formatDayDate } from "@/lib/format";
+import { anchorKey } from "@/lib/realtime/cursor-protocol";
+import { useFollowToggle } from "@/lib/realtime/view-ui";
 import type { BundleTarget } from "@/lib/schemas/targets";
 import { EMPTY_FILTER, serializeFilter } from "@/lib/workspace/filter";
 import { parseSel } from "@/lib/workspace/search";
@@ -67,7 +71,22 @@ export function useOpenTodo(): (target: BundleTarget) => void {
 	);
 }
 
-export function StillToPlan() {
+/** Where the open rows travel (the Overview's and the inspector's apart). */
+const StillPath = createContext<`${string}.${string}`>("insp.still");
+
+export function StillToPlan({
+	followPath = "insp.still",
+}: {
+	followPath?: `${string}.${string}`;
+} = {}) {
+	return (
+		<StillPath.Provider value={followPath}>
+			<StillToPlanList />
+		</StillPath.Provider>
+	);
+}
+
+function StillToPlanList() {
 	const ws = useWorkspace();
 	const { ix, schedule, graph, nav } = ws;
 	const { items, due } = useTripListItems();
@@ -113,6 +132,7 @@ export function StillToPlan() {
 	return (
 		<section
 			data-testid={SHELL_TESTID.stillToPlan}
+			data-cursor-anchor="sec:still"
 			aria-labelledby="still-to-plan-h"
 		>
 			<h3
@@ -141,6 +161,7 @@ export function StillToPlan() {
 						{s.nights.map((n) => (
 							<SubRow
 								key={n.dayId}
+								anchor={`sec:still.${n.dayId}`}
 								onClick={() => nav.select({ kind: "day", id: n.dayId })}
 							>
 								<span>{formatDayDate(n.date)}</span>
@@ -159,6 +180,7 @@ export function StillToPlan() {
 						{s.toBook.map((b) => (
 							<SubRow
 								key={b.listItemId}
+								anchor={`list:${b.listItemId}`}
 								testId={SHELL_TESTID.stillToPlanItem}
 								title={todoTitle(plainText(b.text), b.context)}
 								onClick={() => openTodo(b.target)}
@@ -193,6 +215,7 @@ export function StillToPlan() {
 						{s.opening.map((o) => (
 							<SubRow
 								key={o.listItemId}
+								anchor={`list:${o.listItemId}`}
 								testId={SHELL_TESTID.stillToPlanItem}
 								title={todoTitle(plainText(o.text), o.context)}
 								onClick={() => openTodo(o.target)}
@@ -265,6 +288,7 @@ export function StillToPlan() {
 						{s.moves.map((m) => (
 							<SubRow
 								key={m.sel}
+								anchor={`sec:still.${anchorKey(m.sel)}`}
 								onClick={() => {
 									const sel = parseSel(m.sel);
 									if (sel) nav.select(sel);
@@ -378,11 +402,15 @@ function Row({
 	onClick?: () => void;
 	children?: ReactNode;
 }) {
-	const [open, setOpen] = useState(false);
+	const [open, setOpen] = useFollowToggle(useContext(StillPath), id);
 	const panelId = useId();
 	const expandable = !!children;
 	return (
-		<li data-testid={SHELL_TESTID.stillToPlanRow} data-row={id}>
+		<li
+			data-testid={SHELL_TESTID.stillToPlanRow}
+			data-row={id}
+			data-cursor-anchor={`sec:still.${id}`}
+		>
 			<button
 				type="button"
 				onClick={expandable ? () => setOpen((v) => !v) : onClick}
@@ -430,16 +458,19 @@ function SubRow({
 	onClick,
 	testId,
 	title,
+	anchor,
 	children,
 }: {
 	onClick(): void;
 	testId?: string;
+	/** Its anchor id, for cursors and Follow. */
+	anchor?: string;
 	/** The full text, for a row the panel's width truncates. */
 	title?: string;
 	children: ReactNode;
 }) {
 	return (
-		<li>
+		<li data-cursor-anchor={anchor}>
 			<button
 				type="button"
 				data-testid={testId}

@@ -94,6 +94,15 @@ export const ANCHOR_KINDS = {
 	insp: "all",
 	/** A note block outside the editor itself (`note:<target>`). */
 	note: "all",
+	/**
+	 * A section or card of a screen (`sec:<screen>.<name>`, e.g. `sec:ov.climate`,
+	 * `sec:still.nights`); its items carry their own anchors.
+	 */
+	sec: "all",
+	/** A place in the Places tab: a row, a card, a feed card (`place:<nodeId>`). */
+	place: "all",
+	/** A city row: the Plan's day split, the days per city, Add to days (`city:<nodeId>`). */
+	city: "all",
 	/** A to-do or shopping row (`list:<listItemId>`); private rows never travel. */
 	list: "lookup",
 	/** A media tile (`media:<attachmentId>`); receipts and hidden-from-guests ones are members-only. */
@@ -134,6 +143,11 @@ export function copyAnchorId(
 	copy: string | null | undefined,
 ): string {
 	return copy ? `${id}${ANCHOR_COPY_SEP}${copy}` : id;
+}
+
+/** A key as the rest of an anchor id (`:`, `#`, `_`, spaces… become `.`). */
+export function anchorKey(key: string): string {
+	return key.replace(/[^A-Za-z0-9.-]/g, ".").slice(0, 100);
 }
 
 /** The plain id of an anchor id (the thing, whichever drawing of it). */

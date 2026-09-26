@@ -114,6 +114,7 @@ export function WhereThingsStand({
 	return (
 		<section
 			data-testid={STANDING_TESTID.card}
+			data-cursor-anchor={hero ? "sec:ov.stand" : "sec:stand"}
 			data-next={standing.next ?? "none"}
 			aria-labelledby={titleId}
 			className={cn(
@@ -175,6 +176,7 @@ function Line({
 		<li
 			data-testid={STANDING_TESTID.line}
 			data-key={line.key}
+			data-cursor-anchor={`sec:stand.${line.key}`}
 			data-done={line.done}
 			data-next={next || undefined}
 			className={cn(

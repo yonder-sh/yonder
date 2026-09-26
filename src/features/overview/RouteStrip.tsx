@@ -90,7 +90,11 @@ export function RouteStrip({
 	const start = route.start?.name;
 	const last = route.stays.at(-1);
 	return (
-		<div data-testid={OVERVIEW_TESTID.strip} className="flex flex-col gap-2">
+		<div
+			data-testid={OVERVIEW_TESTID.strip}
+			data-cursor-anchor="sec:ov.route"
+			className="flex flex-col gap-2"
+		>
 			{compact ? null : (
 				<div className="flex items-baseline justify-between gap-4 text-xs text-white/55">
 					<span className="truncate">

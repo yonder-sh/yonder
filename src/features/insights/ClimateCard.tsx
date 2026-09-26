@@ -147,6 +147,7 @@ export function ClimateCard({ nodeId }: { nodeId: string }) {
 			<section
 				data-testid={TESTID.climateCard}
 				data-nodeid={nodeId}
+				data-cursor-anchor={`sec:climate.${nodeId}`}
 				className="grid gap-2"
 			>
 				<Overline>Climate</Overline>
@@ -178,6 +179,7 @@ export function ClimateCard({ nodeId }: { nodeId: string }) {
 		<section
 			data-testid={TESTID.climateCard}
 			data-nodeid={nodeId}
+			data-cursor-anchor={`sec:climate.${nodeId}`}
 			className="grid gap-2"
 		>
 			<Overline>Climate · typical for your visit</Overline>

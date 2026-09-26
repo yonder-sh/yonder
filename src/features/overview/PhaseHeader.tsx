@@ -209,6 +209,7 @@ export function Stats({
 	return (
 		<div
 			data-testid={OVERVIEW_TESTID.stats}
+			data-cursor-anchor="sec:ov.stats"
 			className={cn("grid gap-2.5", cols === 3 ? "grid-cols-3" : "grid-cols-2")}
 		>
 			{items.map((s) => (
@@ -353,6 +354,7 @@ export function TodayList({
 							<button
 								type="button"
 								data-testid={OVERVIEW_TESTID.todayItem}
+								data-cursor-anchor={`item:${e.id}`}
 								data-done={e.done}
 								onClick={() => nav.select({ kind: "item", id: e.id })}
 								className="flex w-full min-w-0 items-center gap-2.5 text-left text-[15px]"

@@ -9,6 +9,7 @@ import { ThumbhashImage } from "@/components/common/thumbhash-image";
 import type { MediaDto } from "@/features/media/media.functions";
 import { ScoreChip } from "@/features/places/tab/ui";
 import { mediaUrl } from "@/lib/media-url";
+import { copyAnchorId } from "@/lib/realtime/cursor-protocol";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import {
 	favourites,
@@ -35,6 +36,7 @@ export function Highlights({
 	return (
 		<section
 			data-testid={OVERVIEW_TESTID.highlights}
+			data-cursor-anchor="sec:ov.highlights"
 			className={cn("flex min-w-0 flex-col gap-3", className)}
 		>
 			<h2 className="font-display text-[22px] font-semibold">
@@ -57,6 +59,7 @@ export function Highlights({
 								key={h.id}
 								type="button"
 								data-testid={OVERVIEW_TESTID.highlight}
+								data-cursor-anchor={`place:${h.id}`}
 								onClick={() => nav.select({ kind: "node", id: h.id })}
 								className={cn(
 									"group relative block min-w-0 overflow-hidden bg-muted text-left",
@@ -90,6 +93,8 @@ export function Highlights({
 							<li key={f.id}>
 								<button
 									type="button"
+									// A second drawing of a place the tiles may show too.
+									data-cursor-anchor={copyAnchorId(`place:${f.id}`, "fav")}
 									onClick={() => nav.select({ kind: "node", id: f.id })}
 									className="flex w-full min-w-0 items-center gap-3 rounded-md px-1 py-1.5 text-left text-[15px] hover:bg-accent/60"
 								>

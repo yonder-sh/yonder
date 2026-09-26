@@ -165,7 +165,10 @@ export function OverviewTab({ phone = false }: { phone?: boolean }) {
 					<>
 						<div className="grid grid-cols-[minmax(0,1.3fr)_minmax(400px,1fr)] items-stretch gap-2 px-6">
 							{globe}
-							<div className="flex flex-col justify-center py-8 pr-2">
+							<div
+								data-cursor-anchor="sec:ov.head"
+								className="flex flex-col justify-center py-8 pr-2"
+							>
 								{header}
 							</div>
 						</div>
@@ -173,7 +176,9 @@ export function OverviewTab({ phone = false }: { phone?: boolean }) {
 					</>
 				) : (
 					<div className="flex flex-col">
-						<div className="px-4 pt-5 pb-3">{header}</div>
+						<div data-cursor-anchor="sec:ov.head" className="px-4 pt-5 pb-3">
+							{header}
+						</div>
 						{globe}
 						{strip ? <div className="px-4 pt-1 pb-4">{strip}</div> : null}
 						{/* After the trip the recap's numbers lead (the header has them). */}
@@ -246,7 +251,7 @@ function SideColumn({
 			) : null}
 			{after ? null : (
 				<div className="rounded-2xl border bg-card p-4">
-					<StillToPlan />
+					<StillToPlan followPath="overview.still" />
 				</div>
 			)}
 			{after ? null : <Deadlines />}
