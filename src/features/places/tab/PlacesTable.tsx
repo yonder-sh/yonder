@@ -218,7 +218,18 @@ function GroupHeader({
 	);
 }
 
-export function PlacesTable({ data }: { data: PlacesData }) {
+/** The place column on a phone: narrower, so a rating or two shows beside it. */
+const PLACE_W_NARROW = 168;
+
+export function PlacesTable({
+	data,
+	narrow = false,
+}: {
+	data: PlacesData;
+	/** A phone: the same table, scrolled both ways, with a narrower place column. */
+	narrow?: boolean;
+}) {
+	const placeW = narrow ? PLACE_W_NARROW : W.place;
 	const { sel, nav } = useWorkspace();
 	const act = usePlaceActions();
 	const onRowKey = useRowKeys(data.threshold);
@@ -236,7 +247,7 @@ export function PlacesTable({ data }: { data: PlacesData }) {
 	const members = data.allRaters;
 	const cols = 7 + members.length;
 	const width =
-		W.place +
+		placeW +
 		W.category +
 		W.member * members.length +
 		W.score +
@@ -409,7 +420,7 @@ export function PlacesTable({ data }: { data: PlacesData }) {
 				style={{ width: `max(100%, ${width}px)` }}
 			>
 				<colgroup>
-					<col style={{ width: undefined, minWidth: W.place }} />
+					<col style={{ width: undefined, minWidth: placeW }} />
 					<col style={{ width: W.category }} />
 					{members.map((m) => (
 						<col key={m.id} style={{ width: W.member }} />
@@ -425,7 +436,7 @@ export function PlacesTable({ data }: { data: PlacesData }) {
 						<th
 							scope="col"
 							className="sticky left-0 z-[1] border-r border-b bg-background px-3"
-							style={{ minWidth: W.place }}
+							style={{ minWidth: placeW }}
 						>
 							Place
 						</th>

@@ -51,7 +51,6 @@ import {
 } from "./flow";
 import { PlaceDetails } from "./PlaceDetails";
 import { PlacesBoard } from "./PlacesBoard";
-import { PlacesList } from "./PlacesList";
 import { PlacesSteps } from "./PlacesSteps";
 import { PlacesTable } from "./PlacesTable";
 import { AddPlaceButton, PlacesToolbar, RatingProgress } from "./PlacesToolbar";
@@ -211,10 +210,10 @@ function Body({
 					<Empty data={data} />
 				) : view === "board" ? (
 					<PlacesBoard data={data} />
-				) : phone ? (
-					<PlacesList data={data} />
 				) : (
-					<PlacesTable data={data} />
+					// Phones too: the whole table, scrolled both ways, so everyone
+					// sees (and follows) the same rows and columns.
+					<PlacesTable data={data} narrow={phone} />
 				)}
 			</div>
 			{/* Docked, never over the columns; with the map showing it opens there. */}
