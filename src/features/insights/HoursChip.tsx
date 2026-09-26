@@ -80,6 +80,7 @@ function HoursChipView({
 	return (
 		<HoverPopover
 			testId={INSIGHTS_TESTID.hoursPopover}
+			followId={`i.${itemId}`}
 			trigger={
 				<button
 					type="button"

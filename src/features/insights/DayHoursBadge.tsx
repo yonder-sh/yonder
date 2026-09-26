@@ -85,6 +85,7 @@ function DayHoursBadgeView({
 		<HoverPopover
 			align="end"
 			testId={INSIGHTS_TESTID.hoursPopover}
+			followId={`d.${dayId}`}
 			trigger={
 				<button
 					type="button"

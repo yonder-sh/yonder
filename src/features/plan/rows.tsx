@@ -22,6 +22,7 @@ import {
 	formatDuration,
 	formatTime,
 } from "@/lib/format";
+import { anchorKey } from "@/lib/realtime/cursor-protocol";
 import { TESTID } from "@/lib/testids";
 import { useUi } from "@/lib/workspace/ui-store";
 import { useProposalMarks } from "@/lib/workspace/use-proposals";
@@ -135,6 +136,9 @@ export function DaysFoldRow({
 			type="button"
 			data-testid={PLAN_TESTID.fold}
 			data-reason={reason}
+			data-cursor-anchor={
+				dayIds[0] ? `sec:fold.${reason}.${dayIds[0]}` : undefined
+			}
 			aria-expanded={open}
 			title={
 				reason === "scope"
@@ -487,7 +491,11 @@ export function BandCard({
 			: null,
 	].filter(Boolean);
 	return (
-		<div data-testid={PLAN_TESTID.band} className="px-3 pt-3 pb-1">
+		<div
+			data-testid={PLAN_TESTID.band}
+			data-cursor-anchor={`sec:band.${anchorKey(visit.key)}`}
+			className="px-3 pt-3 pb-1"
+		>
 			<div className="flex min-h-16 items-center gap-3 rounded-lg border border-l-4 border-l-muted-foreground/25 bg-card px-3 py-2">
 				<button
 					type="button"

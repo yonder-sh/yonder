@@ -37,6 +37,7 @@ import { humanError } from "@/lib/errors";
 import { formatDayDate } from "@/lib/format";
 import { meKeys, tripKeys } from "@/lib/query/keys";
 import { tripGraphQuery } from "@/lib/query/trip-queries";
+import { bool, useFollowState } from "@/lib/realtime/view-ui";
 import { isProposed } from "@/lib/schemas/proposals";
 import { type SplitStop, useUi } from "@/lib/workspace/ui-store";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
@@ -316,6 +317,7 @@ function SplitSuggestion({
 		<section
 			data-testid={T.split}
 			data-unused={split.unused}
+			data-cursor-anchor="sec:split"
 			className="flex flex-col gap-3"
 		>
 			<header className="flex flex-col gap-1">
@@ -583,7 +585,10 @@ function ChangePanel({
 		if (await apply.apply(plan)) onClose();
 	};
 	return (
-		<div className="flex flex-col gap-3 rounded-xl bg-muted/50 p-3 sm:p-4">
+		<div
+			data-cursor-anchor="sec:split.change"
+			className="flex flex-col gap-3 rounded-xl bg-muted/50 p-3 sm:p-4"
+		>
 			<SplitRows
 				info={info}
 				rows={rows}
@@ -667,7 +672,10 @@ export function PlanSplit({
 	const info = useDaySplit();
 	const { access } = useWorkspace();
 	const apply = useApplySplit();
-	const [open, setOpen] = useState(false);
+	// The Change panel being open travels with my view (its edits don't).
+	const [open, setOpen] = useFollowState("plan.split.change", false, bool, {
+		enabled: access.canEdit,
+	});
 	const cities = info.cities.length > 0;
 	const line = cities && info.hasDays;
 	const current = useMemo(() => runsOf(info.current).entries, [info.current]);

@@ -33,7 +33,7 @@ import {
 	Minus,
 	Plus,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { CategoryIcon } from "@/components/common/glyphs";
 import { Button } from "@/components/ui/button";
 import {
@@ -45,6 +45,8 @@ import {
 import type { PlaceRow } from "@/features/places/tab/model";
 import { ScoreChip } from "@/features/places/tab/ui";
 import { formatDuration } from "@/lib/format";
+import { anchorKey, copyAnchorId } from "@/lib/realtime/cursor-protocol";
+import { ids, useFollowState } from "@/lib/realtime/view-ui";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import type { DaySplitInfo } from "./DaySplit";
 import { headingText, type SplitLine, splitLines } from "./day-split";
@@ -224,6 +226,11 @@ function StopRow({
 			data-testid={T.splitRow}
 			data-city={row.id}
 			data-days={row.days}
+			// A city can come back later in the route: each stop is one drawing of it.
+			data-cursor-anchor={copyAnchorId(
+				`city:${row.id}`,
+				row.key === row.id ? null : anchorKey(row.key.slice(row.id.length + 1)),
+			)}
 			data-stop={line.stop ?? undefined}
 			className={cn(
 				"relative border-t bg-card first:border-t-0",
@@ -387,14 +394,15 @@ export function SplitRows({
 	busy: boolean;
 }) {
 	const { ix } = useWorkspace();
-	const [open, setOpen] = useState<ReadonlySet<string>>(new Set());
+	// The cities opened to their places travel with my view.
+	const [openKeys, setOpen] = useFollowState<string[]>(
+		"plan.split.open",
+		[],
+		ids,
+	);
+	const open = useMemo(() => new Set(openKeys), [openKeys]);
 	const toggle = (id: string) =>
-		setOpen((s) => {
-			const n = new Set(s);
-			if (n.has(id)) n.delete(id);
-			else n.add(id);
-			return n;
-		});
+		setOpen((s) => (s.includes(id) ? s.filter((k) => k !== id) : [...s, id]));
 	const lines = useMemo(() => splitLines(ix, rows), [ix, rows]);
 	const sensors = useSensors(
 		useSensor(MouseSensor, { activationConstraint: { distance: 4 } }),

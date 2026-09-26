@@ -84,6 +84,7 @@ import {
 } from "@/lib/format";
 import { useFormPresence } from "@/lib/realtime/form-presence";
 import { useEditingPeer } from "@/lib/realtime/presence";
+import { useFollowToggle } from "@/lib/realtime/view-ui";
 import { TESTID } from "@/lib/testids";
 import { useFlash, useUi } from "@/lib/workspace/ui-store";
 import { useProposalMarks } from "@/lib/workspace/use-proposals";
@@ -273,6 +274,8 @@ function WarningChip({ item }: { item: GraphItem }) {
 	const hours = (issues.byItem[item.id] ?? []).filter(
 		(i) => i.severity === "warn",
 	);
+	// The list being open travels with my view.
+	const [open, setOpen] = useFollowToggle("plan.late", item.id);
 	if (!late) return <HoursChip itemId={item.id} />;
 	const fixes = conflictFixes(ix, schedule, { kind: "item", itemId: item.id });
 	const lines: string[] = [
@@ -283,7 +286,7 @@ function WarningChip({ item }: { item: GraphItem }) {
 		? `${1 + hours.length} issues`
 		: `${formatDuration(late.minutes, { compact: true })} late`;
 	return (
-		<Popover>
+		<Popover open={open} onOpenChange={setOpen}>
 			<PopoverTriggerChip label={label} />
 			<PopoverContent className="w-72 p-3 text-sm" align="end">
 				<ul className="grid gap-1.5">

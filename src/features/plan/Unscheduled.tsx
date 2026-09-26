@@ -13,8 +13,9 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { cn } from "cn";
 import { ChevronDown, ChevronRight } from "lucide-react";
-import { useContext, useState } from "react";
+import { useContext } from "react";
 import { useEditGuard } from "@/components/common/edit-guard";
+import { bool, useFollowState } from "@/lib/realtime/view-ui";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { DragGrip, ItemCard } from "./ItemCard";
 import { DropIndicatorContext } from "./plan-context";
@@ -90,7 +91,7 @@ export function UnscheduledSection({
 	itemIds: readonly string[];
 }) {
 	const { ix, who } = useWorkspace();
-	const [open, setOpen] = useState(true);
+	const [open, setOpen] = useFollowState("plan.unscheduled", true, bool);
 	const indicator = useContext(DropIndicatorContext);
 	const { setNodeRef, isOver } = useDroppable({
 		id: "plan-unscheduled",

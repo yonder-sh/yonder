@@ -17,12 +17,14 @@ import {
 	PopoverContent,
 	PopoverTrigger,
 } from "@/components/ui/popover";
+import { useFollowToggle } from "@/lib/realtime/view-ui";
 
 /**
  * A popover that opens on hover with a mouse and on tap/click everywhere
  * (DESIGN: tooltips carry the reason; ADDENDUM §10: "tap to see all"). A click
  * pins it open; Esc or a click outside closes it. The trigger's click never
- * reaches the card or row underneath (it would select it).
+ * reaches the card or row underneath (it would select it). With `followId`
+ * a pinned one travels with my view (a follower's opens with mine).
  */
 export function HoverPopover({
 	trigger,
@@ -31,6 +33,7 @@ export function HoverPopover({
 	side = "bottom",
 	align = "start",
 	testId,
+	followId,
 }: {
 	trigger: ReactElement;
 	children: ReactNode;
@@ -38,8 +41,27 @@ export function HoverPopover({
 	side?: "top" | "bottom" | "left" | "right";
 	align?: "start" | "center" | "end";
 	testId?: string;
+	/** What it's about (`i.<itemId>`, `d.<dayId>`), to share a pinned one. */
+	followId?: string;
 }) {
-	const [mode, setMode] = useState<"closed" | "hover" | "pinned">("closed");
+	const [hover, setHover] = useState<"closed" | "hover">("closed");
+	const [pinned, setPinned] = useFollowToggle(
+		"plan.hours",
+		followId ?? "",
+		false,
+		{ enabled: !!followId },
+	);
+	type Mode = "closed" | "hover" | "pinned";
+	const mode: Mode = pinned ? "pinned" : hover;
+	// Timers read the mode when they fire, not when they were set.
+	const modeRef = useRef<Mode>(mode);
+	modeRef.current = mode;
+	const setMode = (next: Mode | ((m: Mode) => Mode)) => {
+		const m = typeof next === "function" ? next(modeRef.current) : next;
+		modeRef.current = m;
+		setPinned(m === "pinned");
+		setHover(m === "hover" ? "hover" : "closed");
+	};
 	const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 	const clear = useCallback(() => {
 		if (timer.current) clearTimeout(timer.current);

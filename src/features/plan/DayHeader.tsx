@@ -54,6 +54,7 @@ import type { GraphDay } from "@/lib/engine/types";
 import { formatDayDate, formatDuration, formatTime } from "@/lib/format";
 import { copyAnchorId } from "@/lib/realtime/cursor-protocol";
 import { useFormPresence } from "@/lib/realtime/form-presence";
+import { useFollowToggle } from "@/lib/realtime/view-ui";
 import { TESTID } from "@/lib/testids";
 import { useUi } from "@/lib/workspace/ui-store";
 import { useProposalMarks } from "@/lib/workspace/use-proposals";
@@ -160,6 +161,8 @@ function IssuesChip({ dayId }: { dayId: string }) {
 	const { nav, schedule } = useWorkspace();
 	const hours = useHoursIssues();
 	const issues = useDayIssues(dayId);
+	// The list being open travels with my view.
+	const [open, setOpen] = useFollowToggle("plan.issues", dayId);
 	const hoursOnly =
 		issues.length > 0 && issues.every((i) => i.key.startsWith("hours:"));
 	if (!issues.length) return null;
@@ -177,7 +180,7 @@ function IssuesChip({ dayId }: { dayId: string }) {
 					? "1 conflict"
 					: "1 issue";
 	return (
-		<Popover>
+		<Popover open={open} onOpenChange={setOpen}>
 			<PopoverTrigger asChild>
 				<button
 					type="button"
