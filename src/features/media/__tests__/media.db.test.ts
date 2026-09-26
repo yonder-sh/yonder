@@ -1156,6 +1156,19 @@ describe("links, captions, moves, delete and restore", () => {
 						<meta property="og:image" content="/g2/2172_01.jpg">
 						<link rel="icon" href="/favicon.png"></head><body></body></html>`),
 				};
+			if (url === "https://www.instagram.com/reel/C0FIXTURE01/")
+				return {
+					status: 200,
+					headers: {},
+					finalUrl: url,
+					contentType: "text/html; charset=utf-8",
+					body: Buffer.from(`<!doctype html><html><head>
+						<meta property="og:title" content="Maz on Instagram: &quot;Chureito at dawn&quot;">
+						<meta property="og:description" content="where.to.find.me on May 2, 2026: &quot;Chureito at dawn&quot;">
+						<meta property="og:image" content="https://scontent.cdninstagram.com/v/fixture.jpg">
+						</head><body></body></html>`),
+				};
+			if (url.includes("cdninstagram.com")) return image(url, poster);
 			if (url === "https://www.japan-guide.com/g2/2172_01.jpg")
 				return image(url, og);
 			if (url === "https://www.japan-guide.com/favicon.png")
@@ -1196,15 +1209,20 @@ describe("links, captions, moves, delete and restore", () => {
 			author: "nightowl",
 		});
 		expect(byId(tiktok.id)?.aspect).toBeCloseTo(9 / 16, 2);
-		// Instagram: no thumbnail exists; the branded card (no fetch at all).
+		// Instagram: the public post page's picture (re-hosted) and caption,
+		// asked for without the tracking parameter.
 		expect(byId(reel.id)).toMatchObject({
 			provider: "instagram",
 			status: "ready",
-			hasImage: false,
+			hasImage: true,
+			title: "Chureito at dawn",
+			author: "where.to.find.me",
 			igType: "reel",
 			url: "https://www.instagram.com/reel/C0FIXTURE01/",
 		});
-		expect(fetched.some((u) => u.includes("instagram.com"))).toBe(false);
+		expect(fetched.filter((u) => u.includes("instagram.com/reel"))).toEqual([
+			"https://www.instagram.com/reel/C0FIXTURE01/",
+		]);
 		// japan-guide: an OG card with the image and the favicon re-hosted.
 		expect(byId(guide.id)).toMatchObject({
 			kind: "link",

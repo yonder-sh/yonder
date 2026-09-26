@@ -194,6 +194,50 @@ describe("link previews (OpenGraph through the safe fetch)", () => {
 		).toMatchObject({ ok: false });
 	});
 
+	it("Instagram: the post page's picture and caption; the login wall keeps the branded card", async () => {
+		const page = (head: string) => async (url: string) => ({
+			status: 200,
+			headers: {},
+			finalUrl: url,
+			contentType: "text/html; charset=utf-8",
+			body: Buffer.from(`<html><head>${head}</head></html>`),
+		});
+		const post = page(
+			'<meta property="og:title" content="Where To Find Me | Maz on Instagram: &quot;6:30pm &#x1f4cd;Shibuya Sky, Tokyo.&quot;">' +
+				'<meta property="og:description" content="1,204 likes, 31 comments - where.to.find.me on September 16, 2026: &quot;6:30pm&quot;">' +
+				'<meta property="og:image" content="https://scontent.cdninstagram.com/v/reel.jpg">',
+		);
+		expect(
+			await linkMeta(
+				"https://www.instagram.com/reel/DdW0LUguVAH/?igsh=abc",
+				post,
+				{ cache: false },
+			),
+		).toMatchObject({
+			ok: true,
+			siteName: "Instagram",
+			embedId: "DdW0LUguVAH",
+			title: "6:30pm 📍Shibuya Sky, Tokyo.",
+			author: "where.to.find.me",
+			imageUrl: "https://scontent.cdninstagram.com/v/reel.jpg",
+		});
+		const wall = page(
+			'<meta property="og:title" content="Instagram">' +
+				'<meta property="og:image" content="https://static.cdninstagram.com/logo.png">',
+		);
+		expect(
+			await linkMeta("https://www.instagram.com/reel/DdW0LUguVAH/", wall, {
+				cache: false,
+			}),
+		).toMatchObject({
+			ok: true,
+			siteName: "Instagram",
+			embedId: "DdW0LUguVAH",
+			title: null,
+			imageUrl: null,
+		});
+	});
+
 	it("YouTube and TikTok use oEmbed JSON (stubbed fetcher)", async () => {
 		const stub = async (url: string) => {
 			const json = url.includes("youtube.com/oembed")

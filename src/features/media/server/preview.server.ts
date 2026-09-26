@@ -1,13 +1,14 @@
 /**
  * Link previews (SPEC §15.3): oEmbed for YouTube and TikTok, OpenGraph for
- * the web, nothing for Instagram (its oEmbed needs a Meta token; the card is
- * branded). Every request — pages, oEmbed JSON, images, favicons — goes
+ * the web and for Instagram's public post page (its oEmbed needs a Meta
+ * token; behind a login wall the card stays branded, without a picture).
+ * Every request — pages, oEmbed JSON, images, favicons — goes
  * through the SSRF-safe fetch, and every image is re-hosted by the caller:
  * the page never loads a remote image URL. Metadata is cached 24 h per URL.
  */
 import { createHash } from "node:crypto";
 import { cacheGet, cacheSet } from "@/server/cache.server";
-import { classifyUrl } from "../embeds";
+import { canonicalLink, classifyUrl } from "../embeds";
 import { decodeEntities } from "./entities";
 import { type SafeFetcher, safeFetch } from "./safe-fetch.server";
 
@@ -154,10 +155,61 @@ async function tiktok(
 	return meta;
 }
 
-async function web(fetcher: SafeFetcher, url: string): Promise<LinkMeta> {
+/**
+ * An Instagram post page's OpenGraph caption and handle:
+ * `Name on Instagram: "caption"` and `[likes, comments - ]handle on date: "…"`.
+ * Null when the page isn't a post (the login wall).
+ */
+export function igPost(
+	title: string | null,
+	description: string | null,
+): { caption: string | null; handle: string | null } | null {
+	const t = title ? /\bon Instagram(?::\s*"(.*?)"?)?$/.exec(title) : null;
+	const d = description
+		? /^(?:.*? - )?([\w.]{1,30}) on [^:"]+: "/.exec(description)
+		: null;
+	if (!t && !d) return null;
+	return { caption: t?.[1]?.trim() || null, handle: d?.[1] ?? null };
+}
+
+async function instagram(
+	fetcher: SafeFetcher,
+	c: { embedId: string; author: string | null; igType: string },
+	url: string,
+): Promise<LinkMeta> {
+	const meta: LinkMeta = {
+		...EMPTY,
+		siteName: "Instagram",
+		author: c.author,
+		embedId: c.embedId,
+		ok: true,
+	};
+	try {
+		// The page is about 1 MB.
+		const page = await web(
+			fetcher,
+			canonicalLink("instagram", c.embedId, url, c.igType) ?? url,
+			3 * 1024 * 1024,
+		);
+		const post = igPost(page.title, page.description);
+		if (!post) return meta;
+		meta.title = post.caption;
+		meta.author = c.author ?? post.handle;
+		meta.imageUrl = page.imageUrl;
+	} catch {
+		// Blocked or down: the branded card.
+	}
+	return meta;
+}
+
+async function web(
+	fetcher: SafeFetcher,
+	url: string,
+	maxBytes = 1024 * 1024,
+): Promise<LinkMeta> {
 	const r = await fetcher(url, {
 		accept: "text/html,application/xhtml+xml;q=0.9,*/*;q=0.1",
-		maxBytes: 1024 * 1024,
+		maxBytes,
 	});
 	const host = new URL(r.finalUrl).hostname.replace(/^www\./, "");
 	if (r.status >= 400) throw new Error(`upstream ${r.status}`);
@@ -219,12 +271,15 @@ export async function linkMeta(
 	fetcher: SafeFetcher = safeFetch,
 	opts: { cache?: boolean } = {},
 ): Promise<LinkMeta> {
+	const c = classifyUrl(url);
+	// Instagram's own namespace: its entries from before it had pictures don't count.
+	const ns =
+		c.kind === "embed" && c.provider === "instagram" ? "link-ig" : "link";
 	const cacheKey = urlCacheKey(url);
 	if (opts.cache !== false) {
-		const hit = await cacheGet<LinkMeta>("link", cacheKey);
+		const hit = await cacheGet<LinkMeta>(ns, cacheKey);
 		if (hit) return hit;
 	}
-	const c = classifyUrl(url);
 	let meta: LinkMeta;
 	try {
 		if (c.kind === "embed" && c.provider === "youtube")
@@ -232,18 +287,12 @@ export async function linkMeta(
 		else if (c.kind === "embed" && c.provider === "tiktok")
 			meta = await tiktok(fetcher, c.embedId, url);
 		else if (c.kind === "embed" && c.provider === "instagram")
-			meta = {
-				...EMPTY,
-				siteName: "Instagram",
-				author: c.author,
-				embedId: c.embedId,
-				ok: true,
-			};
+			meta = await instagram(fetcher, c, url);
 		else meta = await web(fetcher, url);
 	} catch {
 		meta = { ...EMPTY, ok: false };
 	}
 	if (opts.cache !== false)
-		await cacheSet(["link", cacheKey], meta, meta.ok ? 24 * 3600 : 3600);
+		await cacheSet([ns, cacheKey], meta, meta.ok ? 24 * 3600 : 3600);
 	return meta;
 }

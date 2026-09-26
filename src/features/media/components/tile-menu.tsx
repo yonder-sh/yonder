@@ -76,8 +76,10 @@ export function TileMenu({
 	const downloadable =
 		item.kind === "photo" || item.kind === "video" || item.kind === "pdf";
 	const refreshable =
-		(item.kind === "link" || item.kind === "embed") &&
-		(item.fetch === "unfetched" || item.fetch === "failed");
+		((item.kind === "link" || item.kind === "embed") &&
+			(item.fetch === "unfetched" || item.fetch === "failed")) ||
+		// Instagram may have refused the picture (a login wall): try again.
+		(item.provider === "instagram" && !item.hasImage);
 	const hidden = item.visibility === "members";
 	const receipt = item.target.kind === "expense";
 	const reason = (g: { disabled: boolean; reason: string | null }) =>

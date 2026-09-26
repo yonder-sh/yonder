@@ -121,7 +121,7 @@ function SocialPoster({ item }: { item: MediaDto }) {
 					className="absolute inset-0 size-full"
 				/>
 			) : (
-				// No picture (Instagram never has one; a failed fetch): a calm
+				// No picture (Instagram's login wall; a failed fetch): a calm
 				// branded card with the provider's mark.
 				<span
 					role="img"
