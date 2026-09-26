@@ -249,7 +249,7 @@ test("PLAN-I2-07: the Places tab lists places and neighbourhoods, not structural
 	}
 	const progress = await page
 		.getByTestId(PT.progress)
-		.locator("[data-member]")
+		.locator("[data-member][data-counted]")
 		.evaluateAll((els) => els.map((e) => e.textContent ?? ""));
 	const totals = progress.map((t) => Number(/\d+\/(\d+)/.exec(t)?.[1]));
 	expect(totals.length).toBeGreaterThan(0);

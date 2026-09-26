@@ -137,7 +137,7 @@ test.describe("FB-05: arriving in the Rate view", () => {
 		const text = (await summary.innerText()).replace(/\s+/g, " ");
 		const shown = /(\d+) places?/.exec(text);
 		expect(shown, text).not.toBeNull();
-		const mine = page.getByTestId(PT.progress).locator(`[data-member="${me}"]`);
+		const mine = page.getByTestId(PT.progress).locator(`[data-member="${me}"][data-counted]`);
 		const [rated, total] = ((await mine.innerText()).match(/(\d+)\/(\d+)/)?.slice(1) ?? []).map(Number);
 		expect(total).toBeGreaterThan(0);
 		expect(Number(shown?.[1])).toBe((total as number) - (rated as number));
