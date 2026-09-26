@@ -443,7 +443,7 @@ describe("settings", () => {
 			walkSpeedKmh: 4.5,
 			compact: false,
 			autofillLegs: true,
-			dayCapacityMin: 750,
+			dayCapacityMin: 840,
 		});
 	});
 });

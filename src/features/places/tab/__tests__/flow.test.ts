@@ -359,9 +359,9 @@ describe("Schedule next (docs/PLACES.md §4)", () => {
 			["2027-10-06", "Closed Wed", true],
 		]);
 		expect(nishiki?.best.dayId).toBe(s.D.d3);
-		// Free time: the capacity (12h30) less the day's stops and travel.
-		expect(freeTimeOf(schedule, s.D.d3 as string, 750)).toBe(750 - 90);
-		expect(nishiki?.best.freeMin).toBe(660);
+		// Free time: the day (14h) less its stops and travel.
+		expect(freeTimeOf(schedule, s.D.d3 as string, 840)).toBe(840 - 90);
+		expect(nishiki?.best.freeMin).toBe(750);
 		expect(nishiki?.best.fits).toBe(true);
 		// Nearest stop that day: Kiyomizu-dera, a few km away.
 		expect(nishiki?.best.near?.name).toBe("Kiyomizu-dera");
@@ -371,9 +371,9 @@ describe("Schedule next (docs/PLACES.md §4)", () => {
 		const yasaka = items.find((c) => c.row.name === "Yasaka Shrine");
 		expect(yasaka?.best.near?.walkMin).toBeLessThanOrEqual(30);
 		expect(yasaka?.best.hoursKnown).toBe(false);
-		// 12 hours don't fit a day that has 2h30 free (Fushimi takes 10h on Wed).
+		// 12 hours fit Tue (12h30 free in a 14h day), not Wed (Fushimi takes 10h).
 		const trail = items.find((c) => c.row.name === "Kyoto Trail");
-		expect(trail?.days.map((d) => d.fits)).toEqual([false, false]);
+		expect(trail?.days.map((d) => d.fits)).toEqual([true, false]);
 		expect(trail?.best.dayId).toBe(s.D.d3);
 		// Unset time needed falls back to the category's usual time.
 		const tower = plan.windows[0]?.groups[0]?.items[0];

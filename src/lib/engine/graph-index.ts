@@ -167,7 +167,7 @@ export function resolveSettings(trip: GraphTrip): ResolvedSettings {
 		walkSpeedKmh: s.walkSpeedKmh && s.walkSpeedKmh > 0 ? s.walkSpeedKmh : 4.5,
 		compact: s.compact ?? false,
 		autofillLegs: s.autofillLegs ?? true,
-		dayCapacityMin: s.dayCapacityMin ?? 750,
+		dayCapacityMin: s.dayCapacityMin ?? 840,
 	};
 }
 

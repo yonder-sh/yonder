@@ -150,7 +150,7 @@ export function useDayIssues(dayId: string): Issue[] {
 	if (sd && sd.overCapacityMin > 0)
 		out.push({
 			key: "capacity",
-			text: `Over capacity by ${formatDuration(sd.overCapacityMin)} (${formatDuration(sd.capacityMin)} per day)`,
+			text: `Longer than your ${formatDuration(sd.capacityMin, { compact: true })} day by ${formatDuration(sd.overCapacityMin)}`,
 			conflict: false,
 		});
 	return out;

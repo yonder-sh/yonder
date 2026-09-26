@@ -458,7 +458,7 @@ export function TripSettingsDialog() {
 			name: trip.name,
 			slug: address.base,
 			dayStart: s.defaultDayStart ?? "09:00",
-			capacity: s.dayCapacityMin ?? 750,
+			capacity: s.dayCapacityMin ?? 840,
 			currency: s.currency ?? "USD",
 			walk: s.walkSpeedKmh ?? 4.5,
 			autofill: s.autofillLegs ?? true,
@@ -622,14 +622,14 @@ export function TripSettingsDialog() {
 							/>
 						</Row>
 						<Row
-							label="Planned per day"
-							hint="Days that run longer show a gentle warning."
+							label="Hours in your day"
+							hint="From getting up to going to bed, travel included. 14h leaves 8h of sleep and an hour each to get ready and wind down. Longer days get a gentle warning."
 						>
 							<span className="flex items-center sm:h-9">
 								<DurationInput
 									value={form.capacity}
 									disabled={disabled}
-									presets={[480, 600, 720, 750, 840]}
+									presets={[720, 780, 840, 900, 960]}
 									onChange={(v) =>
 										setForm({
 											...form,

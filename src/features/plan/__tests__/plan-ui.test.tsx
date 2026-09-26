@@ -231,7 +231,7 @@ describe("Overviews and mobile", () => {
 		renderWithWorkspace(<DayOverview dayId={D.d1 as string} />);
 		expect(
 			screen.getByTestId(PLAN_TESTID.dayOverviewCapacity).textContent,
-		).toMatch(/Activities/);
+		).toMatch(/Your day/);
 		expect(screen.getByText("Hands Shibuya")).toBeInTheDocument();
 	});
 

@@ -282,12 +282,14 @@ export function countryRuns(
 	return out;
 }
 
+/** A day's getting around, left out of its sights ("about 1.5 days" estimates). */
+const TRAVEL_ALLOWANCE_MIN = 90;
+
 /** Sights' time in half days of the day capacity ("about 1.5 days"), at least half a day. */
 export function sightDays(minutes: number, capacityMin: number): number {
-	return Math.max(
-		0.5,
-		Math.round((minutes / Math.max(60, capacityMin)) * 2) / 2,
-	);
+	// The day includes getting around: leave an hour and a half of it for that.
+	const sights = Math.max(60, capacityMin - TRAVEL_ALLOWANCE_MIN);
+	return Math.max(0.5, Math.round((minutes / sights) * 2) / 2);
 }
 
 function areaOf(ix: GraphIndex, nodeId: string, cityId: string) {

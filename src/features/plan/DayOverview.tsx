@@ -68,7 +68,9 @@ function DayOverviewBody({ dayId }: { dayId: string }) {
 	const pct = s
 		? Math.min(
 				100,
-				Math.round((s.activitiesMin / Math.max(1, s.capacityMin)) * 100),
+				Math.round(
+					((s.activitiesMin + s.travelMin) / Math.max(1, s.capacityMin)) * 100,
+				),
 			)
 		: 0;
 	const over = (s?.overCapacityMin ?? 0) > 0;
@@ -96,10 +98,10 @@ function DayOverviewBody({ dayId }: { dayId: string }) {
 					className="grid gap-1"
 				>
 					<div className="flex items-baseline justify-between text-xs">
-						<span className="text-muted-foreground">Capacity</span>
+						<span className="text-muted-foreground">Your day</span>
 						<span className="font-mono tnum">
-							Activities {formatDuration(s.activitiesMin, { compact: true })} /{" "}
-							{formatDuration(s.capacityMin, { compact: true })}
+							{formatDuration(s.activitiesMin + s.travelMin, { compact: true })}{" "}
+							/ {formatDuration(s.capacityMin, { compact: true })}
 						</span>
 					</div>
 					<div
@@ -116,8 +118,8 @@ function DayOverviewBody({ dayId }: { dayId: string }) {
 					</div>
 					{over ? (
 						<p className="text-xs text-muted-foreground">
-							Over by {formatDuration(s.overCapacityMin)} — trim a stop or move
-							one to a lighter day.
+							Longer than your day by {formatDuration(s.overCapacityMin)}. Trim
+							a stop or move one to a lighter day.
 						</p>
 					) : null}
 				</div>

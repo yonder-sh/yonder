@@ -160,11 +160,12 @@ const names = (split: DaySplit) =>
 
 describe("what each city's shortlist needs", () => {
 	it("the sights estimate in whole days, rounded up", () => {
-		// 12h30 a day: an hour is half a day (1), 1.4 days reads 1.5 (2).
-		expect(daysNeeded(60, 750)).toBe(1);
-		expect(daysNeeded(750, 750)).toBe(1);
-		expect(daysNeeded(750 * 1.4, 750)).toBe(2);
-		expect(daysNeeded(2880, 750)).toBe(4);
+		// A 14h day less 1h30 of getting around is 12h30 of sights: an hour is
+		// half a day (1), 1.4 days reads 1.5 (2).
+		expect(daysNeeded(60, 840)).toBe(1);
+		expect(daysNeeded(750, 840)).toBe(1);
+		expect(daysNeeded(750 * 1.4, 840)).toBe(2);
+		expect(daysNeeded(2880, 840)).toBe(4);
 	});
 
 	it("every city with places, shortlisted or not, with what's left to rate", () => {

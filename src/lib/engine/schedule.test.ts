@@ -501,7 +501,8 @@ describe("SPEC §9.4 schedule tests", () => {
 			travelMin: 80,
 			freeMin: 15,
 			capacityMin: 750,
-			overCapacityMin: 30,
+			// The day counts the travel too: 13h of stops + 1h20 of travel − 12h30.
+			overCapacityMin: 110,
 			conflicts: 0,
 			unsetLegs: 0,
 			rides: 2,

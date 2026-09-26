@@ -632,7 +632,8 @@ export function computeSchedule(ix: GraphIndex): ScheduleResult {
 			travelMin: acc.travel,
 			freeMin: acc.free,
 			capacityMin,
-			overCapacityMin: Math.max(0, acc.activities - capacityMin),
+			// The day is the waking day: stops and the travel between them (owner, 2026-09-25).
+			overCapacityMin: Math.max(0, acc.activities + acc.travel - capacityMin),
 			walkKm: acc.walkM / 1000,
 			rides: acc.rides,
 			unsetLegs: acc.unset,

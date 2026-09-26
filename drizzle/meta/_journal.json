@@ -127,6 +127,13 @@
       "when": 1790374255511,
       "tag": "0017_onboarding",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1790381781063,
+      "tag": "0018_day_includes_travel",
+      "breakpoints": true
     }
   ]
 }

@@ -38,7 +38,8 @@ export const TripSettings = z
 		/** §10.9: enqueue leg autofill jobs. */
 		autofillLegs: z.boolean().default(true),
 		/** The sheet's "Capacity/day ~12.5" h. */
-		dayCapacityMin: z.number().int().min(60).max(1440).default(750),
+		/** The waking day, travel included: 14h = 24h less 8h of sleep and an hour each end. */
+		dayCapacityMin: z.number().int().min(60).max(1440).default(840),
 		/** E1 (EXTENSIONS §2.2): public holidays that count as hours day 7. */
 		holidays: z.array(Holiday).max(100),
 		/**
