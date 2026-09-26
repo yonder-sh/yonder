@@ -259,6 +259,12 @@ function useCoarsePointer(): boolean {
 	);
 }
 
+/**
+ * A place's media: its photos, videos and embeds side by side in a track that
+ * scrolls sideways (a native swipe; the browser tells it from the feed's up
+ * and down), with dots along the bottom. With a mouse, clicks on the sides
+ * and ← / → step through them too.
+ */
 export function FeedMedia({
 	row,
 	active,
@@ -281,6 +287,9 @@ export function FeedMedia({
 	const at = Math.min(i, Math.max(n - 1, 0));
 	const s = slides[at];
 	const node = row.node;
+	const reduce = useReducedMotion();
+	const coarse = useCoarsePointer();
+	const track = useRef<HTMLDivElement>(null);
 	const go = useCallback(
 		(d: 1 | -1) => setI((i) => (Math.min(i, n - 1) + d + n) % n),
 		[n, setI],
@@ -297,49 +306,80 @@ export function FeedMedia({
 		window.addEventListener("keydown", onKey, true);
 		return () => window.removeEventListener("keydown", onKey, true);
 	}, [active, n, go]);
-	// A sideways swipe changes the photo (the feed itself scrolls up and down).
-	const touch = useRef<{ x: number; y: number } | null>(null);
-	const coarse = useCoarsePointer();
+	// The track shows the current slide (keys, clicks, someone I follow)…
+	useEffect(() => {
+		const el = track.current;
+		if (!el?.clientWidth) return;
+		const x = at * el.clientWidth;
+		if (Math.abs(el.scrollLeft - x) > 1)
+			el.scrollTo({ left: x, behavior: reduce ? "auto" : "smooth" });
+	}, [at, reduce]);
+	// …and where a swipe settles is the current slide.
+	const settle = useRef(0);
+	const onScroll = () => {
+		window.clearTimeout(settle.current);
+		settle.current = window.setTimeout(() => {
+			const el = track.current;
+			if (!el?.clientWidth) return;
+			const j = Math.round(el.scrollLeft / el.clientWidth);
+			if (j !== at && j >= 0 && j < n) setI(j);
+		}, 90);
+	};
+	useEffect(() => () => window.clearTimeout(settle.current), []);
+	const fallback =
+		node.lat !== null && node.lng !== null ? (
+			<MiniMap
+				lat={node.lat}
+				lng={node.lng}
+				zoom={14}
+				type={node.type}
+				category={node.category}
+				interactive={false}
+				className="size-full"
+				label={`Map of ${node.name}`}
+			/>
+		) : (
+			<CoverPlaceholder row={row} className="size-full" />
+		);
 	return (
 		<div
 			data-testid={PLACES_TESTID.feedMedia}
 			data-slide={n ? at : undefined}
 			className={cn("relative overflow-hidden bg-neutral-900", className)}
-			onTouchStart={(e) => {
-				const t = e.touches[0];
-				touch.current = t && n > 1 ? { x: t.clientX, y: t.clientY } : null;
-			}}
-			onTouchEnd={(e) => {
-				const a = touch.current;
-				const t = e.changedTouches[0];
-				touch.current = null;
-				if (!a || !t) return;
-				const dx = t.clientX - a.x;
-				const dy = t.clientY - a.y;
-				if (Math.abs(dx) > 40 && Math.abs(dx) > 1.5 * Math.abs(dy))
-					go(dx < 0 ? 1 : -1);
-			}}
 		>
-			{!near ? null : s ? (
+			{n > 1 ? (
+				<div
+					ref={track}
+					data-testid={PLACES_TESTID.rateMediaTrack}
+					onScroll={onScroll}
+					className="flex size-full snap-x snap-mandatory overflow-x-auto overflow-y-hidden overscroll-x-contain [scrollbar-width:none]"
+				>
+					{slides.map((sl, j) => (
+						<div
+							// biome-ignore lint/suspicious/noArrayIndexKey: one slot per slide, in order
+							key={j}
+							className="relative size-full shrink-0 snap-center snap-always"
+						>
+							{/* Only the slides next to the one in view load. */}
+							{near && Math.abs(j - at) <= 1 ? (
+								<SlideFill
+									s={sl}
+									active={active && j === at}
+									title={node.name}
+								/>
+							) : null}
+						</div>
+					))}
+				</div>
+			) : !near ? null : s ? (
 				<SlideFill s={s} active={active} title={node.name} />
-			) : node.lat !== null && node.lng !== null ? (
-				<MiniMap
-					lat={node.lat}
-					lng={node.lng}
-					zoom={14}
-					type={node.type}
-					category={node.category}
-					interactive={false}
-					className="size-full"
-					label={`Map of ${node.name}`}
-				/>
 			) : (
-				<CoverPlaceholder row={row} className="size-full" />
+				fallback
 			)}
 			{near && n > 1 && !coarse ? (
 				// With a mouse, like stories: the left third goes back, the rest
 				// forward (over a video player only its edges, so its own controls
-				// still work). Touch swipes instead.
+				// still work).
 				<>
 					<button
 						type="button"
@@ -361,43 +401,35 @@ export function FeedMedia({
 					/>
 				</>
 			) : null}
-			{n > 1 || (near && s?.from) ? (
+			{n > 1 ? (
 				<div
-					className={cn(
-						"pointer-events-none absolute inset-x-4 top-3 z-[3] flex flex-col items-start gap-2",
-					)}
+					data-testid={PLACES_TESTID.rateMediaDots}
+					role="img"
+					aria-label={`Photo ${at + 1} of ${n}`}
+					className="pointer-events-none absolute inset-x-0 bottom-3 z-[3] flex justify-center gap-1.5"
 				>
-					{n > 1 ? (
-						<div
-							data-testid={PLACES_TESTID.rateMediaBars}
-							role="img"
-							aria-label={`Photo ${at + 1} of ${n}`}
-							className="flex w-full gap-1"
-						>
-							{slides.map((_, j) => (
-								<span
-									// biome-ignore lint/suspicious/noArrayIndexKey: one bar per slide, in order
-									key={j}
-									className={cn(
-										"h-[3px] flex-1 rounded-full shadow-[0_0_2px_rgb(0_0_0/.35)] transition-colors",
-										j <= at ? "bg-white" : "bg-white/35",
-									)}
-								/>
-							))}
-						</div>
-					) : null}
-					{/* An area with no photos of its own (Shinjuku) shows its places', labelled. */}
-					{near && s?.from ? (
+					{slides.map((_, j) => (
 						<span
-							data-testid={PLACES_TESTID.rateMediaFrom}
-							title={`Photo from ${s.from.name}`}
-							className="inline-flex h-[22px] max-w-[calc(100%-10rem)] min-w-0 items-center gap-1 rounded-full bg-black/55 px-2 text-[11px] font-medium text-white backdrop-blur-sm"
-						>
-							<MapPin className="size-3 shrink-0" strokeWidth={2} />
-							<span className="truncate">{s.from.name}</span>
-						</span>
-					) : null}
+							// biome-ignore lint/suspicious/noArrayIndexKey: one dot per slide, in order
+							key={j}
+							className={cn(
+								"size-1.5 rounded-full shadow-[0_0_3px_rgb(0_0_0/.5)] transition-colors",
+								j === at ? "bg-white" : "bg-white/45",
+							)}
+						/>
+					))}
 				</div>
+			) : null}
+			{/* An area with no photos of its own (Shinjuku) shows its places', labelled. */}
+			{near && s?.from ? (
+				<span
+					data-testid={PLACES_TESTID.rateMediaFrom}
+					title={`Photo from ${s.from.name}`}
+					className="pointer-events-none absolute top-3 left-4 z-[3] inline-flex h-[22px] max-w-[calc(100%-2rem)] min-w-0 items-center gap-1 rounded-full bg-black/55 px-2 text-[11px] font-medium text-white backdrop-blur-sm"
+				>
+					<MapPin className="size-3 shrink-0" strokeWidth={2} />
+					<span className="truncate">{s.from.name}</span>
+				</span>
 			) : null}
 		</div>
 	);
@@ -514,9 +546,9 @@ function PlaceCard({
 	const me = act.me;
 	const node = row.node;
 	const mine = me ? (node.priorities[me] ?? null) : null;
-	const hook = useNotePreview(
-		active ? { kind: "node", nodeId: node.id } : null,
-	);
+	// Every card's, not only the one in view: its details never change size as
+	// it scrolls away (Safari keeps no scroll anchor, so the next card would slip).
+	const hook = useNotePreview({ kind: "node", nodeId: node.id });
 	const info = useRef<HTMLDivElement>(null);
 	const reduce = useReducedMotion();
 	const { links } = usePlaceMedia(node);
@@ -741,7 +773,7 @@ function PlaceCard({
 					>
 						{/* The bar just above names it. */}
 						{line ? <p className="text-sm text-neutral-300">{line}</p> : null}
-						{active || near ? <CardContext row={row} /> : null}
+						<CardContext row={row} />
 						{tagChip}
 						{commentRow}
 						{peek}

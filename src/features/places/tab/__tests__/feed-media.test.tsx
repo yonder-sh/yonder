@@ -1,11 +1,11 @@
 /**
- * The rate card's media with more than one photo, like stories: bars along
- * the top, with a mouse the left third goes back and the rest forward, a
- * sideways swipe (the only way on a touch screen), and ← / → on the card in
- * view.
+ * The rate card's media with more than one photo: dots along the bottom, a
+ * track that scrolls sideways (a swipe; the only way on a touch screen), with
+ * a mouse the left third goes back and the rest forward, and ← / → on the
+ * card in view.
  */
 import { QueryClient } from "@tanstack/react-query";
-import { fireEvent, screen } from "@testing-library/react";
+import { act, fireEvent, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { MediaDto } from "@/features/media/media.functions";
 import type { GraphNode } from "@/lib/engine/types";
@@ -46,52 +46,55 @@ function render(photos: number, active = true) {
 	);
 }
 
-const bars = () => screen.getByTestId(PLACES_TESTID.rateMediaBars);
+const dots = () => screen.getByTestId(PLACES_TESTID.rateMediaDots);
 const realMatchMedia = window.matchMedia;
 afterEach(() => {
 	vi.unstubAllGlobals();
+	vi.useRealTimers();
 	window.matchMedia = realMatchMedia;
 });
-const box = () => screen.getByTestId(PLACES_TESTID.feedMedia);
+
+/** A swipe: the track scrolls sideways and settles on slide `j` (400 px wide). */
+function swipeTo(j: number) {
+	const track = screen.getByTestId(PLACES_TESTID.rateMediaTrack);
+	Object.defineProperty(track, "clientWidth", {
+		value: 400,
+		configurable: true,
+	});
+	track.scrollLeft = j * 400;
+	fireEvent.scroll(track);
+	act(() => vi.advanceTimersByTime(120));
+}
 
 describe("the rate card's photos", () => {
-	it("shows a bar per photo; the right of the photo goes forward, the left back, round the ends", () => {
+	it("shows a dot per photo; with a mouse the right of the photo goes forward, the left back, round the ends", () => {
 		render(3);
-		expect(bars().children).toHaveLength(3);
-		expect(bars()).toHaveAccessibleName("Photo 1 of 3");
+		expect(dots().children).toHaveLength(3);
+		expect(dots()).toHaveAccessibleName("Photo 1 of 3");
 		fireEvent.click(screen.getByRole("button", { name: "Next photo" }));
-		expect(bars()).toHaveAccessibleName("Photo 2 of 3");
+		expect(dots()).toHaveAccessibleName("Photo 2 of 3");
 		fireEvent.click(screen.getByRole("button", { name: "Previous photo" }));
 		fireEvent.click(screen.getByRole("button", { name: "Previous photo" }));
-		expect(bars()).toHaveAccessibleName("Photo 3 of 3");
+		expect(dots()).toHaveAccessibleName("Photo 3 of 3");
 	});
 
-	it("follows a sideways swipe, never an up-and-down one", () => {
+	it("follows the sideways track where a swipe settles", () => {
+		vi.useFakeTimers();
 		render(3);
-		const swipe = (dx: number, dy: number) => {
-			fireEvent.touchStart(box(), {
-				touches: [{ clientX: 200, clientY: 300 }],
-			});
-			fireEvent.touchEnd(box(), {
-				changedTouches: [{ clientX: 200 + dx, clientY: 300 + dy }],
-			});
-		};
-		swipe(-80, 10);
-		expect(bars()).toHaveAccessibleName("Photo 2 of 3");
-		swipe(20, -200);
-		expect(bars()).toHaveAccessibleName("Photo 2 of 3");
-		swipe(90, 0);
-		expect(bars()).toHaveAccessibleName("Photo 1 of 3");
+		swipeTo(1);
+		expect(dots()).toHaveAccessibleName("Photo 2 of 3");
+		swipeTo(0);
+		expect(dots()).toHaveAccessibleName("Photo 1 of 3");
 	});
 
 	it("takes ← / → only on the card in view", () => {
 		const a = render(3);
 		fireEvent.keyDown(document.body, { key: "ArrowRight" });
-		expect(bars()).toHaveAccessibleName("Photo 2 of 3");
+		expect(dots()).toHaveAccessibleName("Photo 2 of 3");
 		a.unmount();
 		render(3, false);
 		fireEvent.keyDown(document.body, { key: "ArrowRight" });
-		expect(bars()).toHaveAccessibleName("Photo 1 of 3");
+		expect(dots()).toHaveAccessibleName("Photo 1 of 3");
 	});
 
 	it("on a touch screen, swipes only: no tap zones", () => {
@@ -103,19 +106,18 @@ describe("the rate card's photos", () => {
 		});
 		vi.stubGlobal("matchMedia", coarse);
 		window.matchMedia = coarse as unknown as typeof window.matchMedia;
+		vi.useFakeTimers();
 		render(3);
 		expect(screen.queryByRole("button", { name: "Next photo" })).toBeNull();
 		expect(screen.queryByRole("button", { name: "Previous photo" })).toBeNull();
-		fireEvent.touchStart(box(), { touches: [{ clientX: 200, clientY: 300 }] });
-		fireEvent.touchEnd(box(), {
-			changedTouches: [{ clientX: 110, clientY: 305 }],
-		});
-		expect(bars()).toHaveAccessibleName("Photo 2 of 3");
+		swipeTo(2);
+		expect(dots()).toHaveAccessibleName("Photo 3 of 3");
 	});
 
-	it("has no bars or tap zones for a single photo", () => {
+	it("has no dots, track or tap zones for a single photo", () => {
 		render(1);
-		expect(screen.queryByTestId(PLACES_TESTID.rateMediaBars)).toBeNull();
+		expect(screen.queryByTestId(PLACES_TESTID.rateMediaDots)).toBeNull();
+		expect(screen.queryByTestId(PLACES_TESTID.rateMediaTrack)).toBeNull();
 		expect(screen.queryByRole("button", { name: "Next photo" })).toBeNull();
 	});
 });
