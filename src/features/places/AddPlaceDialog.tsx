@@ -107,6 +107,7 @@ import {
 	reverseGeocode,
 	searchPlaces,
 } from "./places.functions";
+import { stepOfView } from "./tab/flow";
 import { PLACES_TESTID } from "./testids";
 import { MiniMap } from "./ui/mini-map";
 import { type ResultPin, ResultsMap } from "./ui/results-map";
@@ -118,6 +119,11 @@ import {
 
 /** Where focus goes when the palette closes (A11Y-02: never to `<body>`). */
 type AfterClose = "return" | "inspector";
+
+/** Places › Review lists what's added: a new place opens there, in its details. */
+function opensAdded(ws: ReturnType<typeof useWorkspace>): boolean {
+	return ws.tab === "places" && stepOfView(ws.search.pv) === "review";
+}
 
 /**
  * Focus after the palette: the Inspector it opened, else where focus was
@@ -539,10 +545,17 @@ function Palette({
 				...(newType === "place" ? { category: "other" as const } : {}),
 			},
 		];
+		const open = newType === "place" && opensAdded(ws);
 		createNamed.mutate(
 			{ chain, ids: [id] },
 			{
 				onSuccess: () => {
+					if (open) {
+						onClose("inspector");
+						nav.select({ kind: "node", id });
+						toast(`Added ${name}`);
+						return;
+					}
 					onClose();
 					toast(`Added ${name}`, {
 						action: {
@@ -1423,6 +1436,7 @@ function PreviewPane({
 					: null
 			}
 			knownExisting={q.data.existing?.nodeId}
+			openAdded={opensAdded(ws)}
 			ws={{ ix, graph, nav, schedule, sel: ws.sel, days: ws.days }}
 		/>
 	);
@@ -1434,6 +1448,7 @@ function PreviewBody({
 	onDone,
 	pin,
 	knownExisting,
+	openAdded,
 	ws,
 }: {
 	preview: PlacePreview;
@@ -1442,6 +1457,8 @@ function PreviewBody({
 	/** A dropped pin or pasted coordinates: the exact spot (the preview is only what's nearest). */
 	pin: { lat: number; lng: number } | null;
 	knownExisting?: string;
+	/** Saving a place to Ideas opens it (Places › Review). */
+	openAdded: boolean;
 	ws: Pick<
 		ReturnType<typeof useWorkspace>,
 		"ix" | "graph" | "nav" | "schedule" | "sel" | "days"
@@ -1562,6 +1579,12 @@ function PreviewBody({
 						filing.create.at(-1)?.name ??
 						ix.node(filing.existing.at(-1))?.name ??
 						graph.trip.name;
+					if (target === "ideas" && openAdded && level === "place") {
+						onDone("inspector");
+						nav.select({ kind: "node", id: leafId });
+						toast(`Saved to ${where} ideas`);
+						return;
+					}
 					if (target === "ideas") {
 						onDone();
 						if (mode === "first") nav.zoomTo(leafId);

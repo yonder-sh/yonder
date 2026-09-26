@@ -95,6 +95,21 @@ export function useRowKeys(threshold: number) {
 	);
 }
 
+function rowIn(body: HTMLElement | null, id: string): HTMLElement | null {
+	return body?.querySelector<HTMLElement>(`[data-row-id="${id}"]`) ?? null;
+}
+
+/** Brings a row into view vertically, keeping the sideways scroll where it is. */
+function scrollRowIntoView(el: HTMLElement | null) {
+	const box = el?.closest<HTMLElement>("[data-scroll-y]");
+	if (!el || !box) return;
+	const r = el.getBoundingClientRect();
+	const b = box.getBoundingClientRect();
+	const head = 36;
+	if (r.top < b.top + head) box.scrollTop -= b.top + head - r.top;
+	else if (r.bottom > b.bottom) box.scrollTop += r.bottom - b.bottom;
+}
+
 const W = {
 	place: 280,
 	category: 136,
@@ -256,11 +271,6 @@ export function PlacesTable({
 		W.time +
 		W.media;
 
-	// The drawer's place keeps the keyboard focus row (Enter from elsewhere).
-	useEffect(() => {
-		if (selId) setFocused(selId);
-	}, [selId]);
-
 	const rows: PlaceRow[] = [];
 	for (const g of data.groups)
 		if (!collapsed.has(g.key))
@@ -270,23 +280,23 @@ export function PlacesTable({
 		focused && rows.some((r) => r.id === focused)
 			? focused
 			: (rows[0]?.id ?? null);
+	const selShown = !!selId && rows.some((r) => r.id === selId);
+
+	// The drawer's place keeps the keyboard focus row (Enter from elsewhere),
+	// and comes into view (a place just added).
+	useEffect(() => {
+		if (!selId) return;
+		setFocused(selId);
+		if (selShown) scrollRowIntoView(rowIn(body.current, selId));
+	}, [selId, selShown]);
 
 	const focusRow = (id: string | undefined) => {
 		if (!id) return;
 		setFocused(id);
-		const el = body.current?.querySelector<HTMLElement>(
-			`[data-row-id="${id}"]`,
-		);
+		const el = rowIn(body.current, id);
 		if (!el) return;
-		// Keep the sideways scroll where it is; only bring the row into view vertically.
 		el.focus({ preventScroll: true });
-		const box = el.closest<HTMLElement>("[data-scroll-y]");
-		if (!box) return;
-		const r = el.getBoundingClientRect();
-		const b = box.getBoundingClientRect();
-		const head = 36;
-		if (r.top < b.top + head) box.scrollTop -= b.top + head - r.top;
-		else if (r.bottom > b.bottom) box.scrollTop += r.bottom - b.bottom;
+		scrollRowIntoView(el);
 	};
 
 	const onKeyDown = (e: KeyboardEvent<HTMLTableSectionElement>) => {

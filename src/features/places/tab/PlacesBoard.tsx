@@ -7,7 +7,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "cn";
 import { Film, ImageIcon } from "lucide-react";
-import { type CSSProperties, useMemo } from "react";
+import { type CSSProperties, useEffect, useMemo, useRef } from "react";
 import { CategoryIcon } from "@/components/common/glyphs";
 import { MemberAvatar } from "@/components/common/member";
 import { ThumbhashImage } from "@/components/common/thumbhash-image";
@@ -95,8 +95,14 @@ function Card({
 	const { sel, nav, access } = useWorkspace();
 	const selected = sel?.kind === "node" && sel.id === row.id;
 	const rated = data.allRaters.filter((m) => row.node.priorities[m.id]);
+	const ref = useRef<HTMLButtonElement>(null);
+	// The drawer's place comes into view (a place just added).
+	useEffect(() => {
+		if (selected) ref.current?.scrollIntoView?.({ block: "nearest" });
+	}, [selected]);
 	return (
 		<button
+			ref={ref}
 			type="button"
 			data-testid={PLACES_TAB_TESTID.card}
 			data-row-id={row.id}
