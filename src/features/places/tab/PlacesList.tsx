@@ -7,6 +7,7 @@
 import { cn } from "cn";
 import { MemberAvatar } from "@/components/common/member";
 import { PriorityDot } from "@/components/common/priority-dot";
+import { anchorKey } from "@/lib/realtime/cursor-protocol";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { ratingsCount } from "../lib/rate";
 import { rowReason } from "./bar";
@@ -20,7 +21,7 @@ function Row({ row, data }: { row: PlaceRow; data: PlacesData }) {
 	const selected = sel?.kind === "node" && sel.id === row.id;
 	const rated = data.allRaters.filter((m) => row.node.priorities[m.id]);
 	return (
-		<li>
+		<li data-cursor-anchor={`place:${row.id}`}>
 			<button
 				type="button"
 				data-testid={PLACES_TAB_TESTID.row}
@@ -79,7 +80,7 @@ export function PlacesList({ data }: { data: PlacesData }) {
 			data-testid={PLACES_TAB_TESTID.table}
 		>
 			{data.groups.map((g) => (
-				<section key={g.key}>
+				<section key={g.key} data-cursor-anchor={`sec:pl.${anchorKey(g.key)}`}>
 					{data.state.group === "none" ? null : (
 						<header
 							data-testid={PLACES_TAB_TESTID.groupHeader}

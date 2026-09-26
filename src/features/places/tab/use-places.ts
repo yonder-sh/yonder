@@ -3,10 +3,12 @@
  * filtered set every view shows, the groups, counts and per-member progress.
  * The view, grouping, sort, status pill, "Talk about it" and the shared `f`
  * live in the URL (so they deep-link and follow, FB-21); "Split by area" is
- * remembered per person (view prefs).
+ * remembered per person (view prefs), and travels with my view: while I
+ * follow someone their split cities show, never saved as mine.
  */
 import { useQuery } from "@tanstack/react-query";
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
+import { create } from "zustand";
 import { noteFor, tripNotesQuery } from "@/features/notes/queries";
 import { cityDayTable } from "@/features/places/lib/days";
 import {
@@ -16,7 +18,14 @@ import {
 } from "@/features/places/lib/rate";
 import { useViewPrefs } from "@/features/shell/view-prefs";
 import type { GraphMember } from "@/lib/engine/types";
+import { MAX_UI_KEYS } from "@/lib/realtime/view-protocol";
+import {
+	ids,
+	useFollowedValue,
+	usePublishViewUi,
+} from "@/lib/realtime/view-ui";
 import { filterContextOf } from "@/lib/workspace/filter-match";
+import { useUi } from "@/lib/workspace/ui-store";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import type { FeedOrder } from "./feed";
 import {
@@ -65,22 +74,57 @@ export function usePlacesState(): PlacesState {
 	};
 }
 
+/** The leader's split cities while I follow them (not saved), else null. */
+const useSplitShown = create<{ ids: readonly string[] | null }>()(() => ({
+	ids: null,
+}));
+
 /** "Split by area" per person: the city ids split (view prefs, synced). */
 export function useSplitAreas(): [ReadonlySet<string>, (id: string) => void] {
 	const { mode } = useWorkspace();
 	const { prefs, setPrefs } = useViewPrefs({ enabled: mode === "live" });
-	const list = prefs.placesSplit;
+	const shown = useSplitShown((s) => s.ids);
+	const list = shown ?? prefs.placesSplit;
 	const set = useMemo(() => new Set(list ?? []), [list]);
 	const toggle = useCallback(
 		(id: string) => {
 			const next = new Set(list ?? []);
 			if (next.has(id)) next.delete(id);
 			else next.add(id);
-			setPrefs({ placesSplit: [...next].slice(-200) });
+			if (shown) useSplitShown.setState({ ids: [...next] });
+			else setPrefs({ placesSplit: [...next].slice(-200) });
 		},
-		[list, setPrefs],
+		[list, shown, setPrefs],
 	);
 	return [set, toggle];
+}
+
+/** Mine travel (the cities in view); theirs show while I follow (`usePlaces`). */
+function useFollowSplit(split: ReadonlySet<string>, inView: readonly string[]) {
+	const { mode } = useWorkspace();
+	const following = useUi((s) => s.following);
+	const theirs = useFollowedValue("places.split", ids);
+	const key = theirs?.join(",") ?? null;
+	// biome-ignore lint/correctness/useExhaustiveDependencies: `key` stands for `theirs`
+	useEffect(() => {
+		useSplitShown.setState({
+			ids:
+				following && theirs
+					? theirs
+					: following
+						? useSplitShown.getState().ids
+						: null,
+		});
+	}, [following, key]);
+	const mine = useMemo(
+		() =>
+			inView
+				.filter((id) => split.has(id))
+				.sort()
+				.slice(0, MAX_UI_KEYS),
+		[inView, split],
+	);
+	usePublishViewUi("places.split", mine, mode === "live");
 }
 
 export type MemberProgress = {
@@ -171,6 +215,11 @@ export function usePlaces(q = "") {
 			}),
 		[visible, state.group, state.sort, ix, split, groupVisit],
 	);
+	const cities = useMemo(
+		() => groups.flatMap((g) => (g.canSplit && g.node ? [g.node.id] : [])),
+		[groups],
+	);
+	useFollowSplit(split, cities);
 	const progress = useMemo<MemberProgress[]>(
 		() =>
 			allRaters.map((m) => ({

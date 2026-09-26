@@ -15,6 +15,7 @@ import {
 	type KeyboardEvent,
 	useCallback,
 	useEffect,
+	useMemo,
 	useRef,
 	useState,
 } from "react";
@@ -24,6 +25,8 @@ import { MemberAvatar } from "@/components/common/member";
 import { PriorityDot } from "@/components/common/priority-dot";
 import { NODE_TYPES, PLACE_CATEGORIES } from "@/lib/domain/taxonomy";
 import type { GraphMember } from "@/lib/engine/types";
+import { anchorKey } from "@/lib/realtime/cursor-protocol";
+import { ids, useFollowState } from "@/lib/realtime/view-ui";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { priorityForKey, ratingsCount } from "../lib/rate";
 import { mayRate } from "../ui/member-ratings";
@@ -160,7 +163,11 @@ function GroupHeader({
 	const [, toggleSplit] = useSplitAreas();
 	const s = group.summary;
 	return (
-		<tr data-testid={PLACES_TAB_TESTID.groupHeader} data-group={group.key}>
+		<tr
+			data-testid={PLACES_TAB_TESTID.groupHeader}
+			data-group={group.key}
+			data-cursor-anchor={`sec:pl.${anchorKey(group.key)}`}
+		>
 			<th
 				colSpan={cols}
 				scope="colgroup"
@@ -215,7 +222,13 @@ export function PlacesTable({ data }: { data: PlacesData }) {
 	const { sel, nav } = useWorkspace();
 	const act = usePlaceActions();
 	const onRowKey = useRowKeys(data.threshold);
-	const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(new Set());
+	// Hidden groups travel with my view (a follower's hide with mine).
+	const [closedKeys, setClosedKeys] = useFollowState<string[]>(
+		"places.closed",
+		[],
+		ids,
+	);
+	const collapsed = useMemo(() => new Set(closedKeys), [closedKeys]);
 	const [focused, setFocused] = useState<string | null>(null);
 	const body = useRef<HTMLTableSectionElement>(null);
 	const selId = sel?.kind === "node" ? sel.id : null;
@@ -289,6 +302,7 @@ export function PlacesTable({ data }: { data: PlacesData }) {
 				data-row-id={r.id}
 				data-status={r.status}
 				data-score={r.score}
+				data-cursor-anchor={`place:${r.id}`}
 				aria-selected={selected}
 				tabIndex={tabStop === r.id ? 0 : -1}
 				onFocus={() => setFocused(r.id)}
@@ -461,12 +475,11 @@ export function PlacesTable({ data }: { data: PlacesData }) {
 					{data.groups.map((g) => {
 						const closed = collapsed.has(g.key);
 						const toggle = () =>
-							setCollapsed((c) => {
-								const next = new Set(c);
-								if (next.has(g.key)) next.delete(g.key);
-								else next.add(g.key);
-								return next;
-							});
+							setClosedKeys((c) =>
+								c.includes(g.key)
+									? c.filter((k) => k !== g.key)
+									: [...c, g.key],
+							);
 						const header =
 							data.state.group === "none" ? null : (
 								<GroupHeader

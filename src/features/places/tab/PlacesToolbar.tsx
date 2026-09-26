@@ -434,7 +434,11 @@ export function PlacesToolbar({
 							className={cn("h-8 pl-7 text-[13px]", compact ? "w-36" : "w-52")}
 						/>
 					</div>
-					<PlaceFilterButton align="end" className="size-8" />
+					<PlaceFilterButton
+						align="end"
+						className="size-8"
+						followPath="places.filter"
+					/>
 					<LevelControl bar={bar} />
 				</div>
 			</div>

@@ -331,7 +331,7 @@ export default function PlacesMap({ data }: { data: PlacesData }) {
 										)[0] ?? null)
 									: null;
 								return (
-									<li key={r.id}>
+									<li key={r.id} data-cursor-anchor={`place:${r.id}`}>
 										<button
 											type="button"
 											data-testid={PLACES_TAB_TESTID.mapRow}

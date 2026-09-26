@@ -24,6 +24,8 @@ import {
 	formatDistance,
 	formatDuration,
 } from "@/lib/format";
+import { copyAnchorId } from "@/lib/realtime/cursor-protocol";
+import { bool, useFollowState } from "@/lib/realtime/view-ui";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { formatDays } from "../lib/days";
 import type { FlowTally } from "./flow";
@@ -172,6 +174,7 @@ function CandidateRow({ c }: { c: ScheduleCandidate }) {
 			data-testid={PLACES_TAB_TESTID.scheduleRow}
 			data-place={row.id}
 			data-best-day={c.best.dayId}
+			data-cursor-anchor={`place:${row.id}`}
 			className="flex flex-col gap-2 py-3 md:flex-row md:items-center md:gap-4"
 		>
 			<div className="min-w-0 flex-1">
@@ -249,6 +252,8 @@ function WindowSection({ w }: { w: WindowPlan }) {
 		<section
 			data-testid={PLACES_TAB_TESTID.scheduleWindow}
 			data-city={w.cityId}
+			// A city can have several windows: each is one drawing of it.
+			data-cursor-anchor={copyAnchorId(`city:${w.cityId}`, w.dayIds[0])}
 			aria-label={`${w.cityName}, ${formatDateRange(first, last)}`}
 		>
 			<header className="flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5 border-b pb-2">
@@ -313,7 +318,11 @@ export function ScheduleNext({
 }) {
 	const { ix, schedule, graph, nav } = useWorkspace();
 	const act = usePlaceActions();
-	const [daysTable, setDaysTable] = useState(false);
+	const [daysTable, setDaysTable] = useFollowState(
+		"places.daysTable",
+		false,
+		bool,
+	);
 	const holidays = graph.trip.settings.holidays;
 	const plan = useMemo(
 		() =>
@@ -440,6 +449,11 @@ export function ScheduleNext({
 							<li
 								key={c.key}
 								data-city={c.cityId ?? ""}
+								data-cursor-anchor={
+									c.cityId
+										? copyAnchorId(`city:${c.cityId}`, "none")
+										: undefined
+								}
 								className="flex flex-col gap-0.5 px-4 py-2.5"
 							>
 								<span className="text-[15px]">

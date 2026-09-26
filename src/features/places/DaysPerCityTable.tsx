@@ -15,6 +15,7 @@ import { useEditGuard } from "@/components/common/edit-guard";
 import { FlagEmoji } from "@/components/common/glyphs";
 import type { GraphNode } from "@/lib/engine/types";
 import { humanError } from "@/lib/errors";
+import { copyAnchorId } from "@/lib/realtime/cursor-protocol";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { cityDayTable, formatDays, parseDays } from "./lib/days";
 import { useUpdateNode } from "./mutations";
@@ -151,7 +152,11 @@ export function DaysPerCityTable({
 						const scheduled = g.rows.reduce((s, r) => s + r.scheduled, 0);
 						return [
 							showCountries && g.country ? (
-								<tr key={`c-${g.country.id}`} className="border-t">
+								<tr
+									key={`c-${g.country.id}`}
+									data-cursor-anchor={`sec:dpc.${g.country.id}`}
+									className="border-t"
+								>
 									<td className="pt-2 pb-0.5 font-medium">
 										<span className="inline-flex items-center gap-1.5">
 											<FlagEmoji code={g.country.countryCode} />
@@ -175,6 +180,8 @@ export function DaysPerCityTable({
 										key={r.nodeId}
 										data-testid={PLACES_TESTID.daysRow}
 										data-node={r.nodeId}
+										// The table's drawing of the city (the Plan's day split has its own).
+										data-cursor-anchor={copyAnchorId(`city:${r.nodeId}`, "t")}
 										className="group"
 									>
 										<td className={cn("py-0.5", showCountries && "pl-5")}>

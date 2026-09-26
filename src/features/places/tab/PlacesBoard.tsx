@@ -16,6 +16,7 @@ import { tripMediaQuery } from "@/features/media/queries";
 import { PIN_FAMILIES, PLACE_CATEGORIES } from "@/lib/domain/taxonomy";
 import { formatDuration } from "@/lib/format";
 import { mediaUrl } from "@/lib/media-url";
+import { anchorKey } from "@/lib/realtime/cursor-protocol";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { ratingsCount } from "../lib/rate";
 import { rowReason } from "./bar";
@@ -100,6 +101,7 @@ function Card({
 			data-testid={PLACES_TAB_TESTID.card}
 			data-row-id={row.id}
 			data-status={row.status}
+			data-cursor-anchor={`place:${row.id}`}
 			aria-pressed={selected}
 			onClick={() => nav.select({ kind: "node", id: row.id })}
 			onKeyDown={(e) => {
@@ -207,7 +209,12 @@ export function PlacesBoard({ data }: { data: PlacesData }) {
 			data-testid={PLACES_TAB_TESTID.board}
 		>
 			{data.groups.map((g) => (
-				<section key={g.key} className="mb-6" data-group={g.key}>
+				<section
+					key={g.key}
+					className="mb-6"
+					data-group={g.key}
+					data-cursor-anchor={`sec:pl.${anchorKey(g.key)}`}
+				>
 					{data.state.group === "none" ? null : (
 						<header
 							className="mb-2.5 flex flex-wrap items-baseline gap-x-2 gap-y-1"

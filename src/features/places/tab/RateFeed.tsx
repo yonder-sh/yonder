@@ -55,7 +55,14 @@ import { useNotePreview } from "@/features/notes/use-note-preview";
 import { useBreakpoint } from "@/features/shell/use-breakpoint";
 import { formatDuration } from "@/lib/format";
 import { mediaUrl } from "@/lib/media-url";
-import { useFollowValue, uuid } from "@/lib/realtime/view-ui";
+import { anchorKey, copyAnchorId } from "@/lib/realtime/cursor-protocol";
+import {
+	ids,
+	int,
+	useFollowState,
+	useFollowValue,
+	uuid,
+} from "@/lib/realtime/view-ui";
 import type { Priority } from "@/lib/schemas/enums";
 import { useUi } from "@/lib/workspace/ui-store";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
@@ -249,13 +256,16 @@ export function FeedMedia({
 }) {
 	const { slides } = usePlaceMedia(row.node);
 	const n = slides.length;
-	const [i, setI] = useState(0);
+	// The card in view's photo travels with my view.
+	const [i, setI] = useFollowState("places.slide", 0, int(0, 999), {
+		enabled: active,
+	});
 	const at = Math.min(i, Math.max(n - 1, 0));
 	const s = slides[at];
 	const node = row.node;
 	const go = useCallback(
 		(d: 1 | -1) => setI((i) => (Math.min(i, n - 1) + d + n) % n),
-		[n],
+		[n, setI],
 	);
 	// ← / → on the card in view (↑ / ↓ move between places).
 	useEffect(() => {
@@ -603,6 +613,11 @@ function PlaceCard({
 			data-testid={PLACES_TAB_TESTID.feedCard}
 			data-key={cardKey}
 			data-place={node.id}
+			// Round 2's card is a second drawing of the place (`<id>#2`).
+			data-cursor-anchor={copyAnchorId(
+				`place:${node.id}`,
+				cardKey.split("#")[1] ?? null,
+			)}
 			data-rated={mine ?? undefined}
 			data-active={active || undefined}
 			aria-label={node.name}
@@ -665,6 +680,7 @@ function Slate({
 		<section
 			data-testid={testid}
 			data-key={cardKey}
+			data-cursor-anchor={`sec:feed.${anchorKey(cardKey)}`}
 			className="flex h-full w-full shrink-0 snap-start snap-always flex-col justify-center overflow-y-auto bg-neutral-950 px-6 py-16 text-white"
 		>
 			<div className="mx-auto flex w-full max-w-md flex-col gap-5">
@@ -1095,7 +1111,13 @@ export default function RateFeed({ data }: { data: PlacesData }) {
 		setCurrent(null);
 	}, [sessionKey]);
 
-	const [peeked, setPeeked] = useState<ReadonlySet<string>>(new Set());
+	// "Peek at N ratings" travels with my view (a follower peeks with me).
+	const [peekedKeys, setPeeked] = useFollowState<string[]>(
+		"places.peeked",
+		[],
+		ids,
+	);
+	const peeked = useMemo(() => new Set(peekedKeys), [peekedKeys]);
 	const rate = useCallback(
 		(id: string, key: string, p: Priority | null) => {
 			if (!act.rate(id, p)) return;
@@ -1127,13 +1149,15 @@ export default function RateFeed({ data }: { data: PlacesData }) {
 				step(-1);
 			} else if ((e.key === "p" || e.key === "P") && currentItem) {
 				e.preventDefault();
-				setPeeked((s) => new Set(s).add(currentItem.key));
+				setPeeked((s) =>
+					s.includes(currentItem.key) ? s : [...s, currentItem.key].slice(-48),
+				);
 			}
 		};
 		// Capture: ahead of the workspace's J / K / Enter shortcuts.
 		window.addEventListener("keydown", onKey, true);
 		return () => window.removeEventListener("keydown", onKey, true);
-	}, [currentItem, rate, step]);
+	}, [currentItem, rate, step, setPeeked]);
 
 	const left = leftCount(session, isRated);
 	const run = currentPlace ? live.runs.get(currentPlace.id) : undefined;
@@ -1219,7 +1243,11 @@ export default function RateFeed({ data }: { data: PlacesData }) {
 								active={i === currentIndex}
 								near={near}
 								peeked={peeked.has(it.key)}
-								onPeek={() => setPeeked((s) => new Set(s).add(it.key))}
+								onPeek={() =>
+									setPeeked((s) =>
+										s.includes(it.key) ? s : [...s, it.key].slice(-48),
+									)
+								}
 								onRate={(p) => rate(it.id, it.key, p)}
 								phone={phone}
 								wide={wide}
