@@ -51,7 +51,6 @@ import {
 } from "@/features/push/use-push";
 import { canRateOwn } from "@/lib/auth/roles";
 import { renameGuest } from "@/lib/auth/share.functions";
-import { clientEnv } from "@/lib/env.client";
 import { humanError } from "@/lib/errors";
 import { mediaUrl } from "@/lib/media-url";
 import { sessionKey, tripKeys } from "@/lib/query/keys";
@@ -78,7 +77,7 @@ export const E2E_WELCOME_KEY = "yonder.e2e.welcome";
 export const welcomeKey = (tripId: string) => ["tripWelcome", tripId] as const;
 
 function suppressed(): boolean {
-	if (!clientEnv.e2e) return false;
+	if (import.meta.env.VITE_E2E !== "1") return false;
 	try {
 		return localStorage.getItem(E2E_WELCOME_KEY) !== "1";
 	} catch {
