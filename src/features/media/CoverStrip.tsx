@@ -21,7 +21,7 @@ import { useMediaActions } from "./use-media-actions";
 const MediaLightbox = lazy(() => import("./components/media-lightbox"));
 
 export function CoverStrip({ target }: { target: BundleTarget }) {
-	const { ix, schedule, graph } = useWorkspace();
+	const { ix, schedule, graph, access } = useWorkspace();
 	const { data } = useTripMedia();
 	const actions = useMediaActions(graph.trip.id);
 	useDocOfflineSync();
@@ -89,6 +89,7 @@ export function CoverStrip({ target }: { target: BundleTarget }) {
 								{ onError: (e) => toast.error(humanError(e)) },
 							)
 						}
+						onDelete={access.mode !== "read" ? actions.deleteItem : undefined}
 					/>
 				</Suspense>
 			) : null}

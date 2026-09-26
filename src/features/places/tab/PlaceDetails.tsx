@@ -5,8 +5,9 @@
  *
  * - header: name, local name, where, category; status and score chips;
  *   Pin / Unpin, Add to day…, Drop / Bring back, Google Maps;
- * - media strip (photos open the lightbox, PDFs the in-app viewer; an area
- *   with no photos of its own shows its places', labelled; Add photo / link);
+ * - media strip (photos open the lightbox, PDFs the in-app viewer, both
+ *   with Delete; an area with no photos of its own shows its places',
+ *   labelled; Add photo / link; a link's trash deletes it);
  * - everyone's ratings with their comments (unrated counts as Sure), yours
  *   editable (keys 1–6 while the drawer has focus);
  * - time needed; where it fits (the days you're in that city, or none yet)
@@ -27,12 +28,13 @@ import {
 	Pencil,
 	Pin,
 	PinOff,
+	Trash2,
 	Undo2,
 	X,
 } from "lucide-react";
 import { lazy, type ReactNode, Suspense, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { EditGuard } from "@/components/common/edit-guard";
+import { EditGuard, useEditGuard } from "@/components/common/edit-guard";
 import { MarkdownText } from "@/components/common/markdown-text";
 import { MemberAvatar } from "@/components/common/member";
 import { ThumbhashImage } from "@/components/common/thumbhash-image";
@@ -184,9 +186,11 @@ function FromChip({ s }: { s: Slide }) {
 }
 
 function MediaStrip({ row }: { row: PlaceRow }) {
-	const { graph } = useWorkspace();
+	const { graph, access } = useWorkspace();
 	const { slides, links, pdfs, borrowed } = usePlaceMedia(row.node);
 	const actions = useMediaActions(graph.trip.id);
+	const edit = useEditGuard();
+	const canDelete = access.mode !== "read";
 	const [open, setOpen] = useState<number | null>(null);
 	// The open PDF by id, so "Hide from guests" shows its new state at once.
 	const [pdfId, setPdfId] = useState<string | null>(null);
@@ -249,18 +253,35 @@ function MediaStrip({ row }: { row: PlaceRow }) {
 			{links.length ? (
 				<ul className="grid gap-1 text-[13px]">
 					{links.slice(0, 4).map((m) => (
-						<li key={m.id} className="min-w-0">
+						<li
+							key={m.id}
+							className="group/link flex min-w-0 items-center gap-1"
+						>
 							<a
 								href={m.url ?? undefined}
 								target="_blank"
 								rel="noopener noreferrer"
-								className="inline-flex max-w-full items-center gap-1.5 text-primary hover:underline"
+								className="inline-flex min-w-0 items-center gap-1.5 text-primary hover:underline"
 							>
 								<ExternalLink className="size-3 shrink-0" />
 								<span className="truncate">
 									{m.title ?? m.siteName ?? m.url}
 								</span>
 							</a>
+							{canDelete ? (
+								<button
+									type="button"
+									aria-label={`Delete link ${m.title ?? m.siteName ?? m.url ?? ""}`.trim()}
+									title={
+										edit.disabled ? (edit.reason ?? undefined) : "Delete link"
+									}
+									disabled={edit.disabled}
+									onClick={() => actions.deleteItem(m)}
+									className="grid size-6 shrink-0 cursor-pointer place-items-center rounded-md text-muted-foreground opacity-0 outline-none group-hover/link:opacity-100 hover:bg-accent hover:text-foreground focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed [@media(hover:none)]:opacity-100"
+								>
+									<Trash2 className="size-3.5" />
+								</button>
+							) : null}
 						</li>
 					))}
 				</ul>
@@ -285,6 +306,7 @@ function MediaStrip({ row }: { row: PlaceRow }) {
 							{ onError: (e) => toast.error(humanError(e)) },
 						)
 					}
+					onDelete={canDelete ? () => actions.deleteItem(pdf) : undefined}
 				/>
 			) : null}
 			{open !== null ? (
@@ -299,6 +321,7 @@ function MediaStrip({ row }: { row: PlaceRow }) {
 								{ onError: (e) => toast.error(humanError(e)) },
 							)
 						}
+						onDelete={canDelete ? actions.deleteItem : undefined}
 					/>
 				</Suspense>
 			) : null}

@@ -2,18 +2,19 @@
  * The lightbox (SPEC §15.5, DESIGN §7.2): yet-another-react-lightbox with the
  * Video, Zoom, Thumbnails and Captions plugins, a 92 % black backdrop, and a
  * custom `embed` slide for TikTok, Reels and YouTube. The toolbar carries
- * "Hide from guests" (members) and Download. Lazy-loaded by the gallery.
+ * "Hide from guests" (members), Download and Delete. Lazy-loaded by the gallery.
  */
 import "yet-another-react-lightbox/styles.css";
 import "yet-another-react-lightbox/plugins/thumbnails.css";
 import "yet-another-react-lightbox/plugins/captions.css";
-import { Download } from "lucide-react";
+import { Download, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import Lightbox, { type Slide } from "yet-another-react-lightbox";
 import Captions from "yet-another-react-lightbox/plugins/captions";
 import Thumbnails from "yet-another-react-lightbox/plugins/thumbnails";
 import Video from "yet-another-react-lightbox/plugins/video";
 import Zoom from "yet-another-react-lightbox/plugins/zoom";
+import { useEditGuard } from "@/components/common/edit-guard";
 import { MarkdownText } from "@/components/common/markdown-text";
 import { mediaUrl } from "@/lib/media-url";
 import type { MediaPlay } from "@/lib/realtime/view-protocol";
@@ -91,6 +92,7 @@ export default function MediaLightbox({
 	index,
 	onClose,
 	onVisibility,
+	onDelete,
 	follow,
 }: {
 	items: MediaDto[];
@@ -100,6 +102,8 @@ export default function MediaLightbox({
 	onClose: () => void;
 	/** Omitted (a followed viewer): no "Hide from guests" toggle. */
 	onVisibility?: (id: string, next: MediaDto["visibility"]) => void;
+	/** Omitted (a followed viewer): no Delete. The next item shows; none left, it closes. */
+	onDelete?: (item: MediaDto) => void;
 	/**
 	 * FB-21c: this lightbox mirrors someone I follow: it shows their item
 	 * (next / previous with them) and keeps their video in step.
@@ -120,7 +124,14 @@ export default function MediaLightbox({
 	const current =
 		found >= 0 ? found : Math.min(index, Math.max(0, items.length - 1));
 	useEscapeOwner(onClose);
+	const edit = useEditGuard();
 	const item = items[current];
+	const remove = (m: MediaDto) => {
+		const next = items[current + 1] ?? items[current - 1];
+		if (next) setCurrentId(next.id);
+		else onClose();
+		onDelete?.(m);
+	};
 	// FB-21c: what I show travels (followers open it); my video's play /
 	// pause / seek too, unless I am the one following.
 	usePublishMedia(
@@ -188,6 +199,20 @@ export default function MediaLightbox({
 							>
 								<Download className="yarl__icon" strokeWidth={1.5} />
 							</a>
+						) : null,
+						item && onDelete ? (
+							<button
+								key="delete"
+								type="button"
+								data-testid={MEDIA_TESTID.lightboxDelete}
+								aria-label="Delete"
+								title={edit.disabled ? (edit.reason ?? undefined) : "Delete"}
+								disabled={edit.disabled}
+								onClick={() => remove(item)}
+								className="yarl__button disabled:opacity-40"
+							>
+								<Trash2 className="yarl__icon" strokeWidth={1.5} />
+							</button>
 						) : null,
 						"close",
 					],

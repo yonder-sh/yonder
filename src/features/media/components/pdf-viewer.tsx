@@ -2,14 +2,15 @@
  * The in-app PDF viewer (ADDENDUM §9): the pages the worker rendered
  * (`/media/<id>/page-<n>`, private and same-origin) in a scrolling column
  * with fit-width zoom, a page counter, Download (the original through a
- * presigned GET) and "Hide from guests". Offline, pages come from the
+ * presigned GET), "Hide from guests" and Delete. Offline, pages come from the
  * last-trip document cache (≤ 5 MB PDFs). Without rendered pages (poppler
  * missing, an encrypted file) it offers the download only.
  */
 import { cn } from "cn";
-import { Download, FileText, Minus, Plus, X } from "lucide-react";
+import { Download, FileText, Minus, Plus, Trash2, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { z } from "zod";
+import { useEditGuard } from "@/components/common/edit-guard";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -80,12 +81,16 @@ export function PdfViewer({
 	item,
 	onClose,
 	onVisibility,
+	onDelete,
 }: {
 	item: MediaDto;
 	onClose: () => void;
 	/** Omitted (a followed viewer, FB-21c): no "Hide from guests" toggle. */
 	onVisibility?: (next: MediaDto["visibility"]) => void;
+	/** Omitted (a followed viewer): no Delete. The viewer closes. */
+	onDelete?: () => void;
 }) {
+	const edit = useEditGuard();
 	// The zoom travels with my view (the pages follow my scroll).
 	const [zoom, setZoom] = useFollowState<number>("media.zoom", 1, isZoom);
 	const hidden =
@@ -191,6 +196,23 @@ export function PdfViewer({
 							</a>
 						)}
 					</Button>
+					{onDelete ? (
+						<Button
+							size="icon-sm"
+							variant="ghost"
+							disabled={edit.disabled}
+							title={edit.disabled ? (edit.reason ?? undefined) : "Delete"}
+							aria-label="Delete"
+							data-testid={MEDIA_TESTID.pdfDelete}
+							onClick={() => {
+								onClose();
+								onDelete();
+							}}
+							className="text-white/90 hover:bg-white/15 hover:text-white"
+						>
+							<Trash2 />
+						</Button>
+					) : null}
 					<Button
 						size="icon-sm"
 						variant="ghost"

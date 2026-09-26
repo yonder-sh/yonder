@@ -173,12 +173,7 @@ export function TileMenu({
 						variant="destructive"
 						disabled={edit.disabled}
 						title={reason(edit)}
-						onSelect={() =>
-							actions.remove.mutate(
-								{ id: item.id, kind: item.kind },
-								{ onError: (e) => toast.error(humanError(e)) },
-							)
-						}
+						onSelect={() => actions.deleteItem(item)}
 					>
 						<Trash2 /> Delete
 					</DropdownMenuItem>

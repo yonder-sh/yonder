@@ -659,7 +659,7 @@ export function PlaceMedia({
 	heroClassName?: string;
 }) {
 	const { slides, borrowed, links, pdfs } = usePlaceMedia(node);
-	const { graph } = useWorkspace();
+	const { graph, access } = useWorkspace();
 	const actions = useMediaActions(graph.trip.id);
 	// The open PDF by id, so "Hide from guests" shows its new state at once.
 	const [pdfId, setPdfId] = useState<string | null>(null);
@@ -765,6 +765,9 @@ export function PlaceMedia({
 					onClose={() => setPdfId(null)}
 					onVisibility={(visibility) =>
 						actions.visibility.mutate({ id: pdf.id, visibility })
+					}
+					onDelete={
+						access.mode !== "read" ? () => actions.deleteItem(pdf) : undefined
 					}
 				/>
 			) : null}

@@ -110,6 +110,7 @@ export function MediaGallery({
 	const qc = useQueryClient();
 	const vis = useVisibilityGuard();
 	const withMenu = ws.access.mode !== "read" || vis.show;
+	const canDelete = ws.access.mode !== "read";
 	const groups = useMemo(
 		() =>
 			rollupOptions
@@ -311,6 +312,7 @@ export function MediaGallery({
 						index={lightbox}
 						onClose={() => setLightbox(null)}
 						onVisibility={setVisibility}
+						onDelete={canDelete ? actions.deleteItem : undefined}
 					/>
 				</Suspense>
 			) : null}
@@ -319,6 +321,7 @@ export function MediaGallery({
 					item={pdfItem}
 					onClose={() => setPdf(null)}
 					onVisibility={(next) => setVisibility(pdfItem.id, next)}
+					onDelete={canDelete ? () => actions.deleteItem(pdfItem) : undefined}
 				/>
 			) : null}
 		</div>

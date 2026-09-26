@@ -167,7 +167,21 @@ export function useMediaActions(tripId: string) {
 	);
 
 	return useMemo(
-		() => ({ link, caption, move, remove, visibility, cover, refresh }),
+		() => ({
+			link,
+			caption,
+			move,
+			remove,
+			/** Delete with the "… deleted · Undo" toast; a failure says why. */
+			deleteItem: (m: Pick<MediaDto, "id" | "kind">) =>
+				remove.mutate(
+					{ id: m.id, kind: m.kind },
+					{ onError: (e) => toast.error(humanError(e)) },
+				),
+			visibility,
+			cover,
+			refresh,
+		}),
 		[link, caption, move, remove, visibility, cover, refresh],
 	);
 }
