@@ -136,10 +136,16 @@ export default defineConfig({
 		nitro({
 			rolldownConfig: { onwarn: quietDirectives },
 			// Close the pg pool and Redis clients on SIGTERM so the process exits;
-			// refuse to start a misconfigured production server.
+			// refuse to start a misconfigured production server; never cache a
+			// missing asset.
 			plugins: [
 				"./src/server/nitro/shutdown.ts",
 				"./src/server/nitro/startup-checks.ts",
+				"./src/server/nitro/asset-cache.ts",
+			],
+			// Another build's chunk: a plain 404, not the app's not-found page.
+			handlers: [
+				{ route: "/assets/**", handler: "./src/server/nitro/missing-asset.ts" },
 			],
 			// Static files skip the app's request middleware: give them the same
 			// baseline headers (Caddy adds HSTS in production).
