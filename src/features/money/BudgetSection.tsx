@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { EditGuard, useEditGuard } from "@/components/common/edit-guard";
 import { EmptyState } from "@/components/common/empty-state";
 import { useTripMutation } from "@/components/common/use-trip-mutation";
+import { SectionHeader } from "@/components/kit";
 import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
@@ -70,7 +71,7 @@ import {
 	setBudgetLine,
 	setBudgetPrivate,
 } from "./money.functions";
-import { Bar, CategoryIcon, Num, Overline } from "./money-ui";
+import { Bar, CategoryIcon, Num } from "./money-ui";
 import { MONEY_TESTID } from "./testids";
 import { type Display, moneyKeys } from "./use-money";
 
@@ -215,8 +216,8 @@ export function BudgetSection({
 			data-cursor-vis={mode === "me" && myPrivate ? "private" : "members"}
 			className={cn("px-4 pb-4", className)}
 		>
-			<Overline
-				right={
+			<SectionHeader
+				action={
 					<>
 						{meId ? (
 							<ToggleGroup
@@ -280,7 +281,7 @@ export function BudgetSection({
 				}
 			>
 				Budget
-			</Overline>
+			</SectionHeader>
 			{!anyBudget ? (
 				<EmptyState
 					className="py-4"

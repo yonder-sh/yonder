@@ -66,9 +66,7 @@ function DateImpact({ p }: { p: ProposalDto }) {
 	if (!impact) return null;
 	return (
 		<section className="mt-5">
-			<h3 className="text-2xs font-semibold tracking-[.06em] text-muted-foreground uppercase">
-				What moves
-			</h3>
+			<h3 className="eyebrow">What moves</h3>
 			<div className="mt-2">
 				<DateImpactList impact={impact} />
 			</div>

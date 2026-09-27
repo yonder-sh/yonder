@@ -86,9 +86,7 @@ export function Highlights({
 			) : null}
 			{favs.length ? (
 				<div data-testid={OVERVIEW_TESTID.favourites}>
-					<h3 className="mb-2 text-2xs font-semibold tracking-[.08em] text-muted-foreground uppercase">
-						The group's favourites
-					</h3>
+					<h3 className="eyebrow mb-2">The group's favourites</h3>
 					<ol className="flex flex-col">
 						{favs.map((f, i) => (
 							<li key={f.id}>

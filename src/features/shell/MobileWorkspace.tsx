@@ -255,9 +255,7 @@ function MobilePills() {
 				<Vaul.Portal>
 					<Vaul.Overlay className="fixed inset-0 z-50 bg-black/40" />
 					<Vaul.Content className="fixed inset-x-0 bottom-0 z-50 flex h-[92svh] flex-col rounded-t-2xl bg-sidebar">
-						<Vaul.Title className="px-4 pt-4 text-2xs font-semibold tracking-[.06em] text-muted-foreground uppercase">
-							Outline
-						</Vaul.Title>
+						<Vaul.Title className="eyebrow px-4 pt-4">Outline</Vaul.Title>
 						<div className="min-h-0 flex-1 overflow-y-auto">
 							<Outline />
 						</div>

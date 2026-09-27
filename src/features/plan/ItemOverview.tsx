@@ -623,9 +623,7 @@ function ItemOverviewBody({ itemId }: { itemId: string }) {
 			</dl>
 
 			<section className="grid gap-1.5" data-testid={PLAN_TESTID.overviewNote}>
-				<h3 className="text-2xs font-semibold tracking-[.06em] text-muted-foreground uppercase">
-					Note
-				</h3>
+				<h3 className="eyebrow">Note</h3>
 				{editingNote ? (
 					<MentionInput
 						multiline

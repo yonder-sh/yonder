@@ -140,9 +140,7 @@ function Section({
 	return (
 		<section className="grid gap-1.5" data-testid={testId}>
 			<div className="flex items-center gap-2">
-				<h3 className="text-2xs font-semibold tracking-[.06em] text-muted-foreground uppercase">
-					{title}
-				</h3>
+				<h3 className="eyebrow">{title}</h3>
 				{action ? <div className="ml-auto">{action}</div> : null}
 			</div>
 			{children}

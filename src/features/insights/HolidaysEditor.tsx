@@ -19,6 +19,7 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useEditGuard } from "@/components/common/edit-guard";
 import { useTripMutation } from "@/components/common/use-trip-mutation";
+import { Eyebrow } from "@/components/kit";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -42,8 +43,7 @@ import { TESTID } from "@/lib/testids";
 import { cn } from "@/lib/utils";
 import { useWorkspaceOptional } from "@/lib/workspace/model-context";
 import { INSIGHTS_TESTID } from "./testids";
-import { DateField, Overline } from "./ui";
-
+import { DateField } from "./ui";
 /** One holiday row as edited (an unsaved row may be half filled in). */
 export type HolidayRow = { date: string; name: string; countryCode: string };
 type Row = HolidayRow;
@@ -171,7 +171,7 @@ export function HolidaysEditor({
 	return (
 		<section data-testid={TESTID.holidaysEditor} className="grid gap-2.5">
 			<div className="grid gap-1">
-				<Overline>Public holidays</Overline>
+				<Eyebrow as="p">Public holidays</Eyebrow>
 				<p className="text-xs leading-4 text-muted-foreground">
 					Places use their holiday hours on these days.
 				</p>

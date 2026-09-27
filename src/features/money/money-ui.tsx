@@ -128,28 +128,6 @@ export function Bar({
 	);
 }
 
-/** Section overline: 11/14, 600, tracking .06em, uppercase (DESIGN §2.6). */
-export function Overline({
-	children,
-	className,
-	right,
-}: {
-	children: ReactNode;
-	className?: string;
-	right?: ReactNode;
-}) {
-	return (
-		<div className={cn("flex min-h-7 items-center gap-2", className)}>
-			<h3 className="text-2xs leading-[14px] font-semibold tracking-[.06em] text-muted-foreground uppercase">
-				{children}
-			</h3>
-			{right ? (
-				<div className="ml-auto flex items-center gap-1">{right}</div>
-			) : null}
-		</div>
-	);
-}
-
 const AMOUNT = /((?:[A-Z]{1,2}\$|[¥$€£₩₫₺]|−|-)*\d[\d,.]*[KMB]?)/;
 
 /**

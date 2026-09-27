@@ -21,6 +21,7 @@ import { Check, Download, PencilLine } from "lucide-react";
 import { useEditGuard } from "@/components/common/edit-guard";
 import { MemberAvatar, presenceColor } from "@/components/common/member";
 import { useTripMutation } from "@/components/common/use-trip-mutation";
+import { Eyebrow } from "@/components/kit";
 import { Button } from "@/components/ui/button";
 import {
 	effectiveHours,
@@ -48,7 +49,6 @@ import {
 import { fetchOpeningHours } from "./insights.functions";
 import { OsmHoursSource } from "./OsmHoursSource";
 import { INSIGHTS_TESTID } from "./testids";
-import { Overline } from "./ui";
 
 export function HoursTable({ nodeId }: { nodeId: string }) {
 	const { ix, graph, schedule, mode, proposals, nav, access } = useWorkspace();
@@ -104,7 +104,7 @@ export function HoursTable({ nodeId }: { nodeId: string }) {
 			className="grid gap-2"
 		>
 			<div className="flex items-center justify-between gap-2">
-				<Overline>Opening hours</Overline>
+				<Eyebrow as="p">Opening hours</Eyebrow>
 				{eh && !readOnly ? (
 					<Button
 						variant="ghost"

@@ -453,7 +453,7 @@ export function PlacesTable({
 					<col style={{ width: W.media }} />
 				</colgroup>
 				<thead className="sticky top-0 z-[2] bg-background">
-					<tr className="h-9 text-left text-2xs font-semibold tracking-[0.06em] text-muted-foreground uppercase">
+					<tr className="eyebrow h-9 text-left">
 						<th
 							scope="col"
 							className="sticky left-0 z-[1] border-r border-b bg-background px-3"

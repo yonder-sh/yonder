@@ -173,9 +173,7 @@ export function DuplicateTripDialog({
 						</div>
 					) : null}
 					<fieldset className="grid gap-2">
-						<legend className="mb-2 text-2xs font-semibold tracking-[.06em] text-muted-foreground uppercase">
-							Also copy
-						</legend>
+						<legend className="eyebrow mb-2">Also copy</legend>
 						{OPTIONS.map((o) => {
 							const id = `${ids.name}-${o.key}`;
 							return (

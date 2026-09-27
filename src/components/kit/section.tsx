@@ -29,22 +29,26 @@ export function Eyebrow({
 
 /** A caps label with an optional action on the right ("NOTES ··· +"). */
 export function SectionHeader({
-	title,
+	children,
 	action,
+	as,
 	className,
 	id,
 }: {
-	title: ReactNode;
+	children: ReactNode;
 	action?: ReactNode;
+	as?: "h2" | "h3" | "h4" | "p";
 	className?: string;
 	id?: string;
 }) {
 	return (
 		<div className={cn("flex min-h-7 items-center gap-2", className)}>
-			<Eyebrow id={id} className="flex-1">
-				{title}
+			<Eyebrow as={as} id={id} className="flex-1">
+				{children}
 			</Eyebrow>
-			{action}
+			{action ? (
+				<div className="flex shrink-0 items-center gap-1">{action}</div>
+			) : null}
 		</div>
 	);
 }
@@ -73,7 +77,7 @@ export function Section({
 			data-testid={testId}
 			className={cn("grid gap-2 py-4", divided && "border-t", className)}
 		>
-			<SectionHeader title={title} action={action} />
+			<SectionHeader action={action}>{title}</SectionHeader>
 			{children}
 		</section>
 	);

@@ -38,9 +38,7 @@ export function EdgeOverview({
 	};
 	return (
 		<div data-testid={TESTID.edgeOverview} className="grid gap-2 text-sm">
-			<p className="text-2xs leading-[14px] font-semibold tracking-[.06em] text-muted-foreground uppercase">
-				{edge.count === 1 ? "Leg" : "Legs"}
-			</p>
+			<p className="eyebrow">{edge.count === 1 ? "Leg" : "Legs"}</p>
 			<ul className="-mx-2 grid">
 				{edge.transitions.map((t) => {
 					const target = {

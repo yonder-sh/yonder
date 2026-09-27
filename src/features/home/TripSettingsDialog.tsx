@@ -144,11 +144,7 @@ function Row({
 }
 
 function Heading({ children }: { children: ReactNode }) {
-	return (
-		<h3 className="pt-2 text-2xs font-semibold tracking-[.06em] text-muted-foreground uppercase">
-			{children}
-		</h3>
-	);
+	return <h3 className="eyebrow pt-2">{children}</h3>;
 }
 
 /** Dates: pick → preview what moves → apply (or suggest). */

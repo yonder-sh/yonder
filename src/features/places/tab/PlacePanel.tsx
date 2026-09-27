@@ -38,7 +38,7 @@ import { toast } from "sonner";
 import { EditGuard, useEditGuard } from "@/components/common/edit-guard";
 import { MarkdownText } from "@/components/common/markdown-text";
 import { MemberAvatar } from "@/components/common/member";
-import { RatingMenu, RatingPill } from "@/components/kit";
+import { Eyebrow, RatingMenu, RatingPill } from "@/components/kit";
 import { Button } from "@/components/ui/button";
 import type { GraphMember, GraphNode } from "@/lib/engine/types";
 import { humanError } from "@/lib/errors";
@@ -66,7 +66,7 @@ import { RATING_TESTID } from "./rating-testids";
 import { formatScore, RATING_WEIGHT } from "./score";
 import { TimeNeededEditor, TimeNeededLabel } from "./TimeNeeded";
 import { PLACES_TAB_TESTID } from "./testids";
-import { ScoreChip, SectionLabel, SplitMark, StatusChip } from "./ui";
+import { ScoreChip, SplitMark, StatusChip } from "./ui";
 import {
 	PlaceActionsProvider,
 	usePlaceActions,
@@ -463,7 +463,7 @@ export function PlaceRatings() {
 	);
 	return (
 		<section className="grid gap-2">
-			<SectionLabel>Ratings</SectionLabel>
+			<Eyebrow>Ratings</Eyebrow>
 			<ul className="grid">
 				{members.map((m) => (
 					<RatingRow key={m.id} row={row} member={m} />
@@ -511,7 +511,7 @@ export function PlaceFits() {
 	if (!panel) return null;
 	return (
 		<section className="grid gap-1.5" data-testid={PLACES_TAB_TESTID.fits}>
-			<SectionLabel>Where it fits</SectionLabel>
+			<Eyebrow>Where it fits</Eyebrow>
 			<p className="rounded-lg bg-muted/60 px-3 py-2 text-sm leading-relaxed">
 				{fitsText(panel.row, ix)}
 			</p>

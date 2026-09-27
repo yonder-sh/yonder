@@ -138,9 +138,7 @@ function Section({
 	return (
 		<section className="grid gap-2">
 			<div className="flex items-center justify-between">
-				<h3 className="text-2xs font-semibold tracking-[.06em] text-muted-foreground uppercase">
-					{title}
-				</h3>
+				<h3 className="eyebrow">{title}</h3>
 				{aside}
 			</div>
 			{children}

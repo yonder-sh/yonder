@@ -75,16 +75,11 @@ function Section({
 	return (
 		<div className="grid gap-2">
 			{htmlFor ? (
-				<Label
-					htmlFor={htmlFor}
-					className="text-2xs font-semibold tracking-[.06em] text-muted-foreground uppercase"
-				>
+				<Label htmlFor={htmlFor} className="eyebrow">
 					{title}
 				</Label>
 			) : (
-				<div className="text-2xs font-semibold tracking-[.06em] text-muted-foreground uppercase">
-					{title}
-				</div>
+				<div className="eyebrow">{title}</div>
 			)}
 			{children}
 		</div>

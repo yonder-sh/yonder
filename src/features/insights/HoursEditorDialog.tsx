@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { useEditGuard } from "@/components/common/edit-guard";
 import { undoToast } from "@/components/common/undo-toast";
 import { useTripMutation } from "@/components/common/use-trip-mutation";
+import { Eyebrow } from "@/components/kit";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -59,7 +60,7 @@ import { setOpeningHours } from "./insights.functions";
 import { useLatestMount } from "./latest-mount";
 import { OsmAttribution, OsmObjectLink } from "./OsmHoursSource";
 import { INSIGHTS_TESTID } from "./testids";
-import { DateField, Overline, Segmented, SHEET_ON_MOBILE } from "./ui";
+import { DateField, Segmented, SHEET_ON_MOBILE } from "./ui";
 
 /** Whether ranges show their own last-entry field. */
 const ShowLastEntry = createContext(false);
@@ -340,7 +341,7 @@ function EditorBody({
 				</div>
 
 				<div className="grid gap-3 border-t pt-4">
-					<Overline>Rules</Overline>
+					<Eyebrow as="p">Rules</Eyebrow>
 					<div className="grid gap-2">
 						{draft.closedNth.length ? (
 							<p className="text-meta text-muted-foreground">
@@ -462,7 +463,7 @@ function EditorBody({
 				/>
 
 				<div className="grid gap-1.5 border-t pt-4">
-					<Overline>Note</Overline>
+					<Eyebrow as="p">Note</Eyebrow>
 					<Input
 						aria-label="Note"
 						data-testid={INSIGHTS_TESTID.hoursEditorNote}
@@ -811,7 +812,7 @@ function ExceptionsEditor({
 	const sorted = useMemo(() => draft.exceptions, [draft.exceptions]);
 	return (
 		<div className="grid gap-2 border-t pt-4">
-			<Overline>Special dates</Overline>
+			<Eyebrow as="p">Special dates</Eyebrow>
 			{sorted.length ? (
 				<div className="grid gap-2.5">
 					{sorted.map((e, i) => (

@@ -18,6 +18,7 @@ import { ChevronDown, Plus, X } from "lucide-react";
 import { useId, useMemo, useState } from "react";
 import { useEditGuard } from "@/components/common/edit-guard";
 import { assignableMembers, MemberAvatar } from "@/components/common/member";
+import { SectionHeader } from "@/components/kit";
 import { Button } from "@/components/ui/button";
 import {
 	Collapsible,
@@ -59,7 +60,7 @@ import { mergeRide, stationLabel } from "../lib/custom-route";
 import { TRANSIT_TESTID } from "../testids";
 import { railRide, searchRail } from "../transit.functions";
 import type { LegEditor } from "../use-leg-editor";
-import { AddPersonRow, Masked, SectionLabel, TimeField } from "./bits";
+import { AddPersonRow, Masked, TimeField } from "./bits";
 import { SuggestInput } from "./SuggestInput";
 
 type StepMode = SegmentMode | "taxi";
@@ -479,9 +480,9 @@ export function CustomRouteBuilder({
 			data-testid={TRANSIT_TESTID.customRoute}
 			className="grid gap-3 rounded-xl border bg-card p-3 shadow-float"
 		>
-			<SectionLabel>
+			<SectionHeader>
 				{editing ? "Edit custom route" : "Custom route"}
-			</SectionLabel>
+			</SectionHeader>
 			<div className="grid gap-1.5">
 				<Label
 					htmlFor={ids.label}

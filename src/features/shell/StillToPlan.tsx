@@ -136,10 +136,7 @@ function StillToPlanList() {
 			data-cursor-anchor="sec:still"
 			aria-labelledby="still-to-plan-h"
 		>
-			<h3
-				id="still-to-plan-h"
-				className="mb-1 text-2xs font-semibold tracking-[.06em] text-muted-foreground uppercase"
-			>
+			<h3 id="still-to-plan-h" className="eyebrow mb-1">
 				Still to plan
 			</h3>
 			{s.open === 0 ? (

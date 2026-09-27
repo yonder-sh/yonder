@@ -225,9 +225,7 @@ export function MapControls(p: MapControlsProps) {
 function Section({ title, children }: { title: string; children: ReactNode }) {
 	return (
 		<div className="grid gap-2 px-3 py-2.5">
-			<p className="text-2xs font-semibold tracking-wide text-muted-foreground uppercase">
-				{title}
-			</p>
+			<p className="eyebrow">{title}</p>
 			{children}
 		</div>
 	);

@@ -124,7 +124,7 @@ export function UnscheduledSection({
 					type="button"
 					aria-expanded={open}
 					onClick={() => setOpen((v) => !v)}
-					className="flex items-center gap-1 text-2xs font-semibold tracking-[.06em] text-muted-foreground uppercase hover:text-foreground"
+					className="eyebrow flex items-center gap-1 hover:text-foreground"
 				>
 					{open ? (
 						<ChevronDown className="size-3.5" strokeWidth={1.75} />

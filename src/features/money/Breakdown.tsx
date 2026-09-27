@@ -5,6 +5,7 @@
  * the rows add up to its Planned total.
  */
 import { useMemo } from "react";
+import { SectionHeader } from "@/components/kit";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
 	EXPENSE_CATEGORY_LABEL,
@@ -19,7 +20,7 @@ import {
 	type ExpenseCategory,
 } from "@/lib/schemas/enums";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
-import { Bar, CategoryIcon, Num, Overline } from "./money-ui";
+import { Bar, CategoryIcon, Num } from "./money-ui";
 import { MONEY_TESTID } from "./testids";
 import type { Display, Row, ShoppingRow } from "./use-money";
 
@@ -184,8 +185,8 @@ export function Breakdown({
 	if (!lines.length) return null;
 	return (
 		<section data-testid={MONEY_TESTID.breakdown} className="px-4 pb-4">
-			<Overline
-				right={
+			<SectionHeader
+				action={
 					<ToggleGroup
 						type="single"
 						size="sm"
@@ -208,7 +209,7 @@ export function Breakdown({
 				}
 			>
 				Breakdown
-			</Overline>
+			</SectionHeader>
 			<ul className="grid gap-2.5">
 				{lines.map((l) => (
 					<li

@@ -329,9 +329,7 @@ function Section({
 			className="grid gap-1"
 		>
 			<header className="flex items-baseline gap-2 px-1">
-				<h3 className="text-2xs leading-[14px] font-semibold tracking-[.06em] text-muted-foreground uppercase">
-					{title}
-				</h3>
+				<h3 className="eyebrow">{title}</h3>
 				{count ? (
 					<span
 						className="text-2xs text-muted-foreground tnum"

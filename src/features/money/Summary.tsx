@@ -12,6 +12,7 @@ import {
 	PersonAvatar,
 	resolveMember,
 } from "@/components/common/member";
+import { SectionHeader } from "@/components/kit";
 import { Button } from "@/components/ui/button";
 import {
 	formatCpp,
@@ -23,7 +24,7 @@ import type { GraphMember } from "@/lib/engine/types";
 import { cn } from "@/lib/utils";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import type { MoneyDto } from "./money.functions";
-import { Num, Overline, signed } from "./money-ui";
+import { Num, signed } from "./money-ui";
 import { MONEY_TESTID } from "./testids";
 import type { Display, MoneyView } from "./use-money";
 import { useMoneyUi } from "./use-money";
@@ -68,9 +69,7 @@ function Stat({
 	const shown = compact && short ? short : value;
 	return (
 		<div className="min-w-0">
-			<div className="text-2xs leading-[14px] font-semibold tracking-[.06em] text-muted-foreground uppercase">
-				{label}
-			</div>
+			<div className="eyebrow">{label}</div>
 			<div ref={box} className="relative mt-1 min-w-0">
 				{/* The full amount, measured in a zero-size clip (it never widens the
 				    tile or the page): does it fit this tile? */}
@@ -266,7 +265,7 @@ export function PeopleTable({
 			data-cursor-anchor="money:people"
 			className="px-4 pb-4"
 		>
-			<Overline>Per person</Overline>
+			<SectionHeader>Per person</SectionHeader>
 			{/*
 			 * Phones (owner, 390 px: "$7.2K$0.00$0.0…"): the name column takes
 			 * what the amounts leave (`w-full max-w-0`, so a long points line
@@ -492,8 +491,8 @@ export function Balances({
 			data-cursor-anchor="money:balances"
 			className="px-4 pb-4"
 		>
-			<Overline
-				right={
+			<SectionHeader
+				action={
 					canSettle || view.transfers.length ? (
 						<Button
 							size="sm"
@@ -508,7 +507,7 @@ export function Balances({
 				}
 			>
 				Balances · whole trip
-			</Overline>
+			</SectionHeader>
 			{view.transfers.length === 0 ? (
 				<p className="text-meta text-muted-foreground">Everyone is square.</p>
 			) : (

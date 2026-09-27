@@ -7,7 +7,6 @@
  */
 
 import { Pin, Scale } from "lucide-react";
-import type { ReactNode } from "react";
 import { RATING_FILL, ratingVars } from "@/components/kit";
 import { cn } from "@/lib/utils";
 import type { StatusInfo } from "./lifecycle";
@@ -120,25 +119,5 @@ export function SplitMark({ className }: { className?: string }) {
 			<Scale className="size-3" strokeWidth={2} />
 			Split
 		</span>
-	);
-}
-
-/** A section heading inside the drawer ("RATINGS"). */
-export function SectionLabel({
-	children,
-	className,
-}: {
-	children: ReactNode;
-	className?: string;
-}) {
-	return (
-		<h3
-			className={cn(
-				"text-2xs font-semibold tracking-[0.06em] text-muted-foreground uppercase",
-				className,
-			)}
-		>
-			{children}
-		</h3>
 	);
 }

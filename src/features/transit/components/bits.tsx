@@ -6,7 +6,7 @@
  */
 import { useQuery } from "@tanstack/react-query";
 import { ExternalLink, Lock, UserPlus } from "lucide-react";
-import { type ReactNode, useState } from "react";
+import { useState } from "react";
 import { useAddPerson } from "@/components/common/member";
 import { TimeInput } from "@/components/common/time";
 import { Input } from "@/components/ui/input";
@@ -177,25 +177,6 @@ export function Masked({ className }: { className?: string }) {
 			</TooltipTrigger>
 			<TooltipContent>Hidden for link guests</TooltipContent>
 		</Tooltip>
-	);
-}
-
-export function SectionLabel({
-	children,
-	className,
-	action,
-}: {
-	children: ReactNode;
-	className?: string;
-	action?: ReactNode;
-}) {
-	return (
-		<div className={cn("flex items-center justify-between gap-2", className)}>
-			<p className="text-2xs leading-[14px] font-semibold tracking-[.06em] text-muted-foreground uppercase">
-				{children}
-			</p>
-			{action}
-		</div>
 	);
 }
 

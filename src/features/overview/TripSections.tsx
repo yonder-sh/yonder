@@ -49,9 +49,7 @@ export function Section({
 			data-cursor-anchor={anchor ? `sec:ov.${anchor}` : undefined}
 			className={cn("min-w-0", className)}
 		>
-			<h3 className="mb-2 text-2xs font-semibold tracking-[.08em] text-muted-foreground uppercase">
-				{title}
-			</h3>
+			<h3 className="eyebrow mb-2">{title}</h3>
 			{children}
 		</section>
 	);

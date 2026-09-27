@@ -27,7 +27,7 @@ export function StubPanel({
 				className,
 			)}
 		>
-			<header className="mb-2 flex items-center justify-between gap-2 text-2xs font-semibold tracking-[.06em] text-muted-foreground uppercase">
+			<header className="eyebrow mb-2 flex items-center justify-between gap-2">
 				<span>{name}</span>
 				{owner ? (
 					<span className="font-mono font-medium tracking-normal normal-case">

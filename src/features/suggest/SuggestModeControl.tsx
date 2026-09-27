@@ -223,9 +223,7 @@ export function SuggestModeControl({
 			className="w-72"
 			data-testid={SUGGEST_TESTID.modeMenu}
 		>
-			<DropdownMenuLabel className="text-2xs font-semibold tracking-[.06em] text-muted-foreground uppercase">
-				Mode
-			</DropdownMenuLabel>
+			<DropdownMenuLabel className="eyebrow">Mode</DropdownMenuLabel>
 			<DropdownMenuRadioGroup
 				value={suggesting ? "suggest" : "edit"}
 				onValueChange={(v) => setSuggesting(tripId, v === "suggest")}

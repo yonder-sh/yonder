@@ -219,9 +219,7 @@ function DayOverviewBody({ dayId }: { dayId: string }) {
 
 			{issues.length ? (
 				<section className="grid gap-1">
-					<h3 className="text-2xs font-semibold tracking-[.06em] text-muted-foreground uppercase">
-						Issues
-					</h3>
+					<h3 className="eyebrow">Issues</h3>
 					<ul className="grid gap-0.5">
 						{issues.map((i) => (
 							<li
@@ -240,7 +238,7 @@ function DayOverviewBody({ dayId }: { dayId: string }) {
 
 			{items.length ? (
 				<section className="grid gap-1">
-					<h3 className="text-2xs font-semibold tracking-[.06em] text-muted-foreground uppercase">
+					<h3 className="eyebrow">
 						Stops · <span className="tnum">{items.length}</span>
 					</h3>
 					<ol className="grid">

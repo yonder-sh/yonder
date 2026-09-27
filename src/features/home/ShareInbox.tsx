@@ -617,9 +617,7 @@ function Saver({ entry }: { entry: SharedEntry }) {
 					<K.icon className="size-4" />
 				</span>
 				<div className="grid min-w-0 gap-0.5">
-					<span className="text-2xs font-semibold tracking-[.06em] text-muted-foreground uppercase">
-						{K.label}
-					</span>
+					<span className="eyebrow">{K.label}</span>
 					<span className="truncate text-sm">
 						{preview?.name ??
 							hint?.name ??

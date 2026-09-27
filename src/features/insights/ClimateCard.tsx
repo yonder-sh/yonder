@@ -10,6 +10,7 @@
  */
 import { useQuery } from "@tanstack/react-query";
 import { CloudSun } from "lucide-react";
+import { Eyebrow } from "@/components/kit";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { GraphIndex } from "@/lib/engine/graph-index";
 import { repAt } from "@/lib/engine/lens";
@@ -20,7 +21,6 @@ import { useWorkspace } from "@/lib/workspace/use-workspace";
 import type { ClimateMonth } from "./insights.functions";
 import { climateQuery } from "./queries";
 import { INSIGHTS_TESTID } from "./testids";
-import { Overline } from "./ui";
 
 const MONTH_LONG = [
 	"January",
@@ -150,7 +150,7 @@ export function ClimateCard({ nodeId }: { nodeId: string }) {
 				data-cursor-anchor={`sec:climate.${nodeId}`}
 				className="grid gap-2"
 			>
-				<Overline>Climate</Overline>
+				<Eyebrow as="p">Climate</Eyebrow>
 				{q.isPending && q.fetchStatus !== "idle" ? (
 					<Skeleton className="h-10 w-full rounded-lg" />
 				) : !data ? (
@@ -182,7 +182,7 @@ export function ClimateCard({ nodeId }: { nodeId: string }) {
 			data-cursor-anchor={`sec:climate.${nodeId}`}
 			className="grid gap-2"
 		>
-			<Overline>Climate · typical for your visit</Overline>
+			<Eyebrow as="p">Climate · typical for your visit</Eyebrow>
 			{q.isPending && q.fetchStatus !== "idle" ? (
 				<div className="grid gap-1.5">
 					{shown.map((r) => (

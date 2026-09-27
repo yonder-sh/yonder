@@ -18,4 +18,11 @@ describe("cn", () => {
 			"shadow-float shadow-black/10",
 		);
 	});
+
+	it("lets eyebrow replace an earlier size, weight and case", () => {
+		expect(cn("px-2 text-sm font-medium", "eyebrow")).toBe("px-2 eyebrow");
+		expect(cn("eyebrow", "hover:text-foreground")).toBe(
+			"eyebrow hover:text-foreground",
+		);
+	});
 });

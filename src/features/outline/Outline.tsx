@@ -145,7 +145,7 @@ function DroppedHeader({
 					onToggle();
 				}
 			}}
-			className="mt-1 flex h-8 cursor-pointer items-center gap-1.5 border-t pl-2 text-2xs font-semibold tracking-[.06em] text-muted-foreground uppercase outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset max-md:h-11"
+			className="eyebrow mt-1 flex h-8 cursor-pointer items-center gap-1.5 border-t pl-2 outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset max-md:h-11"
 		>
 			{open ? (
 				<ChevronDown className="size-3" />
@@ -547,9 +547,7 @@ function OutlineInner({ headerEnd }: OutlineProps) {
 			>
 				<div className="flex h-9 shrink-0 items-center gap-0.5 pr-2 pl-4">
 					{/* The mobile drawer already has its own "Outline" title. */}
-					<span className="flex-1 text-2xs font-semibold tracking-[.06em] text-muted-foreground uppercase max-md:opacity-0">
-						Outline
-					</span>
+					<span className="eyebrow flex-1 max-md:opacity-0">Outline</span>
 					<PlaceFilterButton />
 					<EditGuard>
 						<Button

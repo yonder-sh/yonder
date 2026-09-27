@@ -344,7 +344,7 @@ function IdeasBinInner({ embedded = false }: { embedded?: boolean }) {
 					type="button"
 					onClick={() => setOpen(!open)}
 					aria-expanded={open}
-					className="flex h-full min-w-0 flex-1 items-center gap-1.5 overflow-hidden pl-4 text-2xs font-semibold tracking-[.06em] whitespace-nowrap text-muted-foreground uppercase hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-inset"
+					className="eyebrow flex h-full min-w-0 flex-1 items-center gap-1.5 overflow-hidden pl-4 whitespace-nowrap hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-inset"
 				>
 					{open ? (
 						<ChevronDown className="size-3 shrink-0" />

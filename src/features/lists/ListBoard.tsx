@@ -387,7 +387,7 @@ export function ListBoard(props: BoardProps) {
 			>
 				{headerStart}
 				{title ? (
-					<h3 className="text-2xs font-semibold tracking-[.06em] text-muted-foreground uppercase">
+					<h3 className="eyebrow">
 						{title}
 						<span className="ml-1.5 tnum">{openCount || ""}</span>
 					</h3>

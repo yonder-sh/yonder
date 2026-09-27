@@ -132,26 +132,6 @@ export function HoverPopover({
 	);
 }
 
-/** The 11px overline that labels a section ("CLIMATE", "OPENING HOURS"). */
-export function Overline({
-	children,
-	className,
-}: {
-	children: ReactNode;
-	className?: string;
-}) {
-	return (
-		<p
-			className={cn(
-				"text-2xs leading-[14px] font-semibold tracking-[.06em] text-muted-foreground uppercase",
-				className,
-			)}
-		>
-			{children}
-		</p>
-	);
-}
-
 /** A small segmented control (a radio group of pills). */
 export function Segmented<T extends string>({
 	value,

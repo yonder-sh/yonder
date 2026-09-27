@@ -10,6 +10,7 @@ import { Download, MoreHorizontal, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { EditGuard } from "@/components/common/edit-guard";
 import { EmptyState } from "@/components/common/empty-state";
+import { SectionHeader } from "@/components/kit";
 import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
@@ -32,7 +33,6 @@ import { BudgetSection } from "./BudgetSection";
 import { DisplayCurrencyPicker } from "./DisplayCurrencyPicker";
 import { ExpenseRow } from "./ExpenseRow";
 import { exportMoneyCsv } from "./money.functions";
-import { Overline } from "./money-ui";
 import { SettleUpDialog } from "./SettleUpDialog";
 import { ShoppingRow } from "./ShoppingRow";
 import { Balances, NetPositions, PeopleTable, SummaryStrip } from "./Summary";
@@ -157,10 +157,10 @@ export function MoneyTab() {
 					<RowGroup title="Paid" rows={paid} />
 					{view.shopping.length ? (
 						<div>
-							<Overline className="sticky top-0 z-20 border-b bg-background/95 px-4 backdrop-blur">
+							<SectionHeader className="sticky top-0 z-20 border-b bg-background/95 px-4 backdrop-blur">
 								From the shopping list{" "}
 								<span className="font-normal tnum">{view.shopping.length}</span>
-							</Overline>
+							</SectionHeader>
 							<ul className="divide-y">
 								{view.shopping.map((r) => (
 									<ShoppingRow
@@ -186,9 +186,9 @@ function RowGroup({ title, rows }: { title: string; rows: Row[] }) {
 	if (!rows.length) return null;
 	return (
 		<div data-cursor-anchor={`money:rows.${anchorKey(title)}`}>
-			<Overline className="sticky top-0 z-20 border-b bg-background/95 px-4 backdrop-blur">
+			<SectionHeader className="sticky top-0 z-20 border-b bg-background/95 px-4 backdrop-blur">
 				{title} <span className="font-normal tnum">{rows.length}</span>
-			</Overline>
+			</SectionHeader>
 			<ul className="divide-y">
 				{rows.map((r) => (
 					<ExpenseRow key={r.expense.id} row={r} display={d} />

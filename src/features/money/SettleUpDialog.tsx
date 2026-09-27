@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { EditGuard, useEditGuard } from "@/components/common/edit-guard";
 import { PersonAvatar, resolveMember } from "@/components/common/member";
 import { useTripMutation } from "@/components/common/use-trip-mutation";
+import { SectionHeader } from "@/components/kit";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -45,7 +46,7 @@ import {
 	deleteSettlement,
 	type SettlementDto,
 } from "./money.functions";
-import { Num, Overline, paidDate } from "./money-ui";
+import { Num, paidDate } from "./money-ui";
 import { usePrimaryMount } from "./single-mount";
 import { MONEY_TESTID } from "./testids";
 import {
@@ -152,7 +153,7 @@ function SettleUpBody() {
 			)}
 			{recent.length ? (
 				<div>
-					<Overline>Recorded</Overline>
+					<SectionHeader>Recorded</SectionHeader>
 					<ul className="grid">
 						{recent.slice(0, 12).map((s) => (
 							<SettlementLine key={s.id} id={s.id} />

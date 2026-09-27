@@ -9,6 +9,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ChevronRight, Clock, Download } from "lucide-react";
 import { useEditGuard } from "@/components/common/edit-guard";
 import { useTripMutation } from "@/components/common/use-trip-mutation";
+import { Eyebrow } from "@/components/kit";
 import { effectiveHours, hoursApply, worstIssue } from "@/lib/engine/hours";
 import { hhmm } from "@/lib/engine/time";
 import { tripKeys } from "@/lib/query/keys";
@@ -19,7 +20,7 @@ import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { dayChipLabel } from "./hours-format";
 import { fetchOpeningHours } from "./insights.functions";
 import { INSIGHTS_TESTID } from "./testids";
-import { HoverPopover, Overline } from "./ui";
+import { HoverPopover } from "./ui";
 import { useHoursIssues } from "./use-hours-issues";
 
 export function DayHoursBadge({ dayId }: { dayId: string }) {
@@ -99,7 +100,7 @@ function DayHoursBadgeView({
 			}
 		>
 			<div className="px-3.5 pt-3 pb-1.5">
-				<Overline>Opening hours</Overline>
+				<Eyebrow as="p">Opening hours</Eyebrow>
 			</div>
 			<ul className="grid pb-1.5">
 				{rows.map((r) => (

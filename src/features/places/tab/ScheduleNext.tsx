@@ -14,6 +14,7 @@
 
 import { CalendarPlus, ChevronRight, Star } from "lucide-react";
 import { Fragment, type ReactNode, useMemo, useState } from "react";
+import { Eyebrow } from "@/components/kit";
 import { Button } from "@/components/ui/button";
 import { DaysPerCityTable } from "@/features/places/DaysPerCityTable";
 import { useDaySplit } from "@/features/plan/day-split/DaySplit";
@@ -41,7 +42,7 @@ import {
 	type WindowPlan,
 } from "./schedule-next";
 import { PLACES_TAB_TESTID } from "./testids";
-import { ScoreChip, SectionLabel, SplitMark } from "./ui";
+import { ScoreChip, SplitMark } from "./ui";
 import { usePlaceActions } from "./use-place-actions";
 import type { PlacesData } from "./use-places";
 
@@ -298,7 +299,7 @@ function Section({
 }) {
 	return (
 		<section data-testid={testid} className="flex flex-col gap-2">
-			<SectionLabel>{title}</SectionLabel>
+			<Eyebrow>{title}</Eyebrow>
 			{children}
 		</section>
 	);

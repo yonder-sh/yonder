@@ -101,9 +101,7 @@ function ActivityBody({ onPick }: { onPick(): void }) {
 		<div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
 			{groups.length ? (
 				<section className="mb-5">
-					<h3 className="mb-2 text-2xs font-semibold tracking-[.06em] text-muted-foreground uppercase">
-						Since you last looked
-					</h3>
+					<h3 className="eyebrow mb-2">Since you last looked</h3>
 					<ul className="grid gap-3">
 						{groups.map((g) => (
 							<li key={g.actorUserId ?? g.actorName}>
@@ -150,9 +148,7 @@ function ActivityBody({ onPick }: { onPick(): void }) {
 				</section>
 			) : null}
 			<section>
-				<h3 className="mb-2 text-2xs font-semibold tracking-[.06em] text-muted-foreground uppercase">
-					Recent
-				</h3>
+				<h3 className="eyebrow mb-2">Recent</h3>
 				{recent.isPending && live ? (
 					<div className="grid gap-2" aria-busy="true">
 						{[0, 1, 2, 3].map((i) => (

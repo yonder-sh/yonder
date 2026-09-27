@@ -227,7 +227,7 @@ function InboxPanel({
 				) : (
 					groups.map((g) => (
 						<section key={g.key} aria-label={INBOX_GROUP_LABEL[g.key]}>
-							<h3 className="sticky top-0 z-10 bg-popover/95 px-4 pt-3 pb-1 text-2xs font-semibold tracking-[.06em] text-muted-foreground uppercase backdrop-blur">
+							<h3 className="eyebrow sticky top-0 z-10 bg-popover/95 px-4 pt-3 pb-1 backdrop-blur">
 								{INBOX_GROUP_LABEL[g.key]}
 							</h3>
 							<ul className="pb-1">

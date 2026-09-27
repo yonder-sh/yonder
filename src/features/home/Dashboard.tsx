@@ -18,6 +18,7 @@ import { EmptyState } from "@/components/common/empty-state";
 import { FlagEmoji } from "@/components/common/glyphs";
 import { AvatarStack } from "@/components/common/member";
 import { YonderMark } from "@/components/common/yonder-mark";
+import { Eyebrow } from "@/components/kit";
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -72,25 +73,6 @@ function greeting(): string {
 			: h < 18
 				? "Good afternoon"
 				: "Good evening";
-}
-
-function Overline({
-	children,
-	className,
-}: {
-	children: React.ReactNode;
-	className?: string;
-}) {
-	return (
-		<h2
-			className={cn(
-				"mb-3 text-2xs font-semibold tracking-[.06em] text-muted-foreground uppercase",
-				className,
-			)}
-		>
-			{children}
-		</h2>
-	);
 }
 
 /** "1 day", "12 days" (QA HOME-7: never "1 days"). */
@@ -230,7 +212,7 @@ function Hero({
 			</div>
 			<div className="flex min-w-0 flex-col gap-2 p-5 sm:p-6 md:order-1">
 				<div className="flex items-center justify-between gap-2">
-					<span className="text-2xs font-semibold tracking-[.06em] text-muted-foreground uppercase">
+					<span className="eyebrow">
 						{running ? "On the road" : "Next trip"}
 					</span>
 					<span className="relative z-10">{menu}</span>
@@ -386,7 +368,7 @@ function Deadlines() {
 	return (
 		<section data-testid={HOME_TESTID.deadlines}>
 			<div className="mb-3 flex items-center justify-between gap-3">
-				<Overline className="mb-0">Upcoming deadlines</Overline>
+				<Eyebrow as="h2">Upcoming deadlines</Eyebrow>
 				<button
 					type="button"
 					aria-pressed={everyone}
@@ -719,7 +701,9 @@ export function Dashboard({
 						<Deadlines />
 						{mine.length ? (
 							<section>
-								<Overline>Your trips</Overline>
+								<Eyebrow as="h2" className="mb-3">
+									Your trips
+								</Eyebrow>
 								<Grid>
 									{mine.map((t) => (
 										<TripCard
@@ -734,7 +718,9 @@ export function Dashboard({
 						) : null}
 						{shared.length ? (
 							<section>
-								<Overline>Shared with you</Overline>
+								<Eyebrow as="h2" className="mb-3">
+									Shared with you
+								</Eyebrow>
 								<Grid>
 									{shared.map((t) => (
 										<TripCard
@@ -750,7 +736,9 @@ export function Dashboard({
 						) : null}
 						{past.length ? (
 							<section>
-								<Overline>Past</Overline>
+								<Eyebrow as="h2" className="mb-3">
+									Past
+								</Eyebrow>
 								<ul className="grid gap-2">
 									{past.map((t) => (
 										<li

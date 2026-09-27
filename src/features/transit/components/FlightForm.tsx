@@ -15,6 +15,7 @@ import { Plus, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useEditGuard } from "@/components/common/edit-guard";
 import { assignableMembers, MemberAvatar } from "@/components/common/member";
+import { SectionHeader } from "@/components/kit";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -66,7 +67,7 @@ import {
 	validateFlight,
 } from "../lib/flight";
 import { TRANSIT_TESTID } from "../testids";
-import { AddPersonRow, Masked, SectionLabel, TimeField } from "./bits";
+import { AddPersonRow, Masked, TimeField } from "./bits";
 import { CAPS_INPUT, SuggestInput } from "./SuggestInput";
 
 const CABINS: { value: Cabin; label: string }[] = [
@@ -438,7 +439,7 @@ export function FlightForm({
 						>
 							<legend className="sr-only">Flight {i + 1}</legend>
 							{segs.length > 1 ? (
-								<SectionLabel
+								<SectionHeader
 									action={
 										<Button
 											variant="ghost"
@@ -456,7 +457,7 @@ export function FlightForm({
 									}
 								>
 									Flight {i + 1}
-								</SectionLabel>
+								</SectionHeader>
 							) : null}
 							<div className="grid grid-cols-[1fr_6.5rem] gap-3">
 								<Row label="Airline">
