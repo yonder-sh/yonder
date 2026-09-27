@@ -18,6 +18,7 @@ import type { MoneyDto } from "@/features/money/money.functions";
 import type { FlightDetails, LegDetails } from "@/lib/schemas/legs";
 import type { ProposalDto } from "@/lib/schemas/proposals";
 import { localDateTimeToEpoch } from "../time";
+import { slugify } from "../tree";
 import type {
 	GraphDay,
 	GraphItem,
@@ -104,7 +105,8 @@ export function makeNodes(specs: readonly NodeSpec[], keys: Record<string, strin
 			status: s.status ?? "active",
 			name: s.name,
 			localName: null,
-			slug: s.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""),
+			// The app's own slugs (Türkiye → "turkiye", not "t-rkiye"), so paths resolve as in real trips.
+			slug: slugify(s.name, id),
 			description: null,
 			position: pos(startId + i),
 			lat: s.at?.[0] ?? null,
