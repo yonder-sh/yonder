@@ -271,17 +271,17 @@ test.describe("1100 (lg)", () => {
 test.describe("phone 390", () => {
 	test.use({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
 
-	test("DEFECT (WP-Shell): a link with ?tab=lists opens the sheet far enough to show the Lists tab", async ({ page }) => {
+	test("guard (WP-Shell): a link with ?tab=lists opens the sheet far enough to show the Lists tab", async ({ page }) => {
 		await signInDennis(page);
 		await openTrip(page, `/t/${TRIP}/japan/tokyo?tab=lists`);
 		const top = await page.getByTestId("mobile-sheet").evaluate((s) => Math.round(s.getBoundingClientRect().top));
 		const listsVisible = await page.evaluate(() => {
-			const p = document.querySelector('[data-testid="lists-panel"]');
+			const p = document.querySelector('[data-testid="lists-tab"]');
 			if (!p) return false;
 			const r = p.getBoundingClientRect();
 			return r.top < innerHeight - 80 && r.height > 0;
 		});
-		// Today: the sheet stays at the 120px peek (top 724 of 844); only the map and the day chips show.
+		// Fixed: it opens to the half snap (it stayed at the 120px peek, top 724 of 844).
 		expect(listsVisible, `sheet top ${top}`).toBe(true);
 	});
 });

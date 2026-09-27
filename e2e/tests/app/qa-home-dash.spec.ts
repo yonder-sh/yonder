@@ -323,8 +323,10 @@ test("TRIP-05: only the owner can delete; delete removes it everywhere", async (
 	// editor's tab: trip gone
 	await e.page.goto("/dashboard");
 	await expect(e.page.getByTestId("dashboard")).not.toContainText("Delete me");
+	// The no-access page, or (the saved copy opened first) back to the dashboard with a toast.
 	await e.page.goto(`/t/${slug}?tab=plan`);
-	await expect(e.page.getByText("This trip doesn't exist or you don't have access.")).toBeVisible({ timeout: 15_000 });
+	const gone = e.page.getByText("This trip doesn't exist or you don't have access.").or(e.page.getByText("You no longer have access to this trip."));
+	await expect(gone.first()).toBeVisible({ timeout: 15_000 });
 	await o.ctx.close();
 	await e.ctx.close();
 });

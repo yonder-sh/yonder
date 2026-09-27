@@ -55,8 +55,15 @@ async function userPage(browser: Browser, email: string, first = "QA", last = "T
 }
 
 test("R2 dashboard hero: a one-day trip says '1 day'", async ({ browser }) => {
-	const { ctx, page } = await userPage(browser, "dennis@asia2027.test");
-	await page.clock.setFixedTime(new Date("2027-11-10T12:00:00Z"));
+	// A fresh account whose next trip is one day long (the server picks the next
+	// trip by the real date, so a faked browser clock can't choose it).
+	const { ctx, page } = await userPage(browser, `qa-home-r2hero-${uniq()}@asia2027.test`, "Hero", "Tester");
+	const day = new Date(Date.now() + 30 * 86_400_000).toISOString().slice(0, 10);
+	await page.goto("/dashboard");
+	await page.evaluate(async (d) => {
+		const m = await import("/src/functions/trips.functions.ts");
+		await m.createTrip({ data: { name: "Day trip", startDate: d, endDate: d } });
+	}, day);
 	await page.goto("/dashboard");
 	await expect(page.getByTestId("dashboard")).toBeVisible({ timeout: 30_000 });
 	const hero = page.getByTestId("home-hero");
@@ -143,7 +150,8 @@ test("R2 viewer: 'Move to day' reads disabled in the item menu", async ({ browse
 	const delSt = await del.evaluate((el) => ({ disabled: el.getAttribute("data-disabled"), opacity: getComputedStyle(el).opacity }));
 	console.log("R2 viewer Move to day:", JSON.stringify(st), "Delete:", JSON.stringify(delSt));
 	await shot(page, "viewer-item-menu");
-	await move.hover();
+	// Disabled, it takes no pointer: hovering it can't open the day list.
+	await move.hover({ force: true });
 	await page.waitForTimeout(400);
 	const subOpen = await page.getByRole("menuitem", { name: /^D\d+/ }).count();
 	console.log("R2 viewer submenu items visible:", subOpen);
@@ -193,6 +201,8 @@ test("R2 placeholder claim: member prompt, guest hint, role never escalates", as
 	console.log("R2 CLAIM viewer prompt:", (await prompt.innerText()).replace(/\n/g, " | "));
 	await shot(v.page, "claim-viewer-prompt");
 	await v.page.getByTestId("home-claim-button").click();
+	// FB-15: "That's me" asks first.
+	await v.page.getByTestId("home-claim-confirm-yes").click();
 	await expect(prompt).toBeHidden({ timeout: 10_000 });
 	await v.page.waitForTimeout(1000);
 	await v.page.reload();

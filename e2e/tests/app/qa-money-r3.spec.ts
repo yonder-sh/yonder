@@ -562,7 +562,7 @@ test("R3 Local display in Türkiye/USA/Korea; single expense shows original + �
 	await callFn(page, "createExpense", { tripId: c.tripId, target: { kind: "node", nodeId: N.seoul }, title: "Bibimbap", category: "food_drink", amountMinor: 15000, currency: "KRW", split: { mode: "equal", shares: [{ memberId: owner }, { memberId: maya }] }, payments: [pay(15000, [{ memberId: owner, amountMinor: 15000 }], "KRW", new Date().toISOString(), "Asia/Seoul")] });
 	await callFn(page, "createExpense", { tripId: c.tripId, target: { kind: "node", nodeId: N.newark }, title: "Airport taxi", category: "transport", amountMinor: 8000, currency: "USD", split: { mode: "equal", shares: [{ memberId: owner }, { memberId: maya }] }, payments: [pay(8000, [{ memberId: owner, amountMinor: 8000 }], "USD", new Date().toISOString(), "America/New_York")] });
 	await callFn(page, "setUserPrefs", { displayCurrency: "local" }, PREFS);
-	for (const [k, path] of [["istanbul", "/t-rkiye/istanbul"], ["turkiye", "/t-rkiye"], ["seoul", "/south-korea/seoul"], ["newark", "/usa/newark"], ["root", ""]] as const) {
+	for (const [k, path] of [["istanbul", "/turkiye/istanbul"], ["turkiye", "/turkiye"], ["seoul", "/south-korea/seoul"], ["newark", "/usa/newark"], ["root", ""]] as const) {
 		await openMoney(page, c.slug, path);
 		out[k] = { summary: flat(await page.getByTestId(M.summary).innerText()).slice(0, 160), btn: flat(await page.getByTestId(M.displayCurrency).innerText()), rows: (await page.getByTestId(M.expenseRow).allInnerTexts()).map(flat) };
 		await page.screenshot({ path: `${SHOTS}/r3-local-${k}.png`, fullPage: true });
@@ -661,7 +661,8 @@ test("R3 Local: a ¥ scope with a June deposit — totals, breakdown, per person
 	await callFn(page, "setUserPrefs", { displayCurrency: null }, PREFS);
 	console.log(JSON.stringify(out, null, 1));
 	expect.soft(String(out.breakdown), "DEFECT: Lodging shows ¥10,000 paid like the PAID total").toMatch(/¥10(,000|K) paid/);
-	expect.soft(String(out.net), "DEFECT: Maya paid ¥5,000 more than her share").toContain("¥5,000");
+	// Maya paid ¥10,000 of the ryokan (her half of it ¥5,000) and owes ¥500 of the matcha.
+	expect.soft(String(out.net), "Maya paid ¥4,500 more than her share").toContain("Maya paid ¥4,500 more");
 	expect.soft(String(out.kyoto), "DEFECT: an equal ¥1,500 split 3: your share ¥500").toContain("¥500 planned");
 	await o.ctx.close();
 });

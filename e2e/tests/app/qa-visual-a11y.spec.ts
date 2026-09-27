@@ -216,7 +216,8 @@ test.describe("desktop", () => {
 		await signIn(page, "dennis");
 		await openTrip(page, `/t/${TRIP}/${GOLDEN_GAI_PATH}`);
 		await page.getByTestId("lens-control").getByRole("radio", { name: "Place", exact: true }).click();
-		await page.getByRole("button", { name: /^Tue 5 Oct, Day 4/ }).first().click();
+		// "Show only …" filters to the day; its date only selects it (FB-08).
+		await page.getByRole("button", { name: "Show only Tue 5 Oct" }).first().click();
 		await page.locator('[data-testid="timeline-item"]').filter({ hasText: "Golden Gai" }).first().click();
 		await expect(page.getByTestId("inspector")).toContainText("Golden Gai");
 		const url = page.url();
@@ -323,14 +324,14 @@ test.describe("md", () => {
 	});
 	test.use({ viewport: { width: 900, height: 900 } });
 
-	test("DEFECT: the md Inspector Sheet has a visible close button over a cover photo", async ({ page }) => {
+	test("guard: the md Inspector Sheet has its own visible close button (over a cover photo too)", async ({ page }) => {
 		await signIn(page, "dennis");
 		await openTrip(page, `/t/${TRIP}/${GOLDEN_GAI_PATH}?lens=place`);
 		const gg = await nodeId(page, "Golden Gai");
 		await openTrip(page, `/t/${TRIP}/${GOLDEN_GAI_PATH}?lens=place&sel=n.${gg}`);
-		await expect(page.getByTestId("cover-strip").first()).toBeVisible();
-		// The xl/lg Inspector and the phone drawer render `inspector-close` next to the title;
-		// the md Sheet only has Radix's default ✕, drawn in ink on top of the (dark) photo.
+		// Fixed: like the desktop pane and the phone drawer, the md Sheet renders
+		// `inspector-close` next to the title, below any cover photo (not Radix's ✕
+		// in ink on top of it). The QA seed has no photos, so there may be no cover.
 		await expect(page.getByTestId("inspector-close")).toBeVisible();
 	});
 });

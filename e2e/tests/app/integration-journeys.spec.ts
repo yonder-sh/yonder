@@ -314,7 +314,9 @@ test("J2 Asia 2027: zoom Japan → Tokyo → Shibuya, lens keys and Esc, Days 5�
 	const header = (n: number) =>
 		page.getByTestId(PLAN_TESTID.dayHeader).filter({ hasText: new RegExp(`Day ${n}\\b`) }).first();
 	await header(5).scrollIntoViewIfNeeded();
-	await header(5).locator('[role="button"]').first().click();
+	// "Show only …" filters; the date itself selects the day (FB-08).
+	await header(5).hover();
+	await header(5).getByTestId(PLAN_TESTID.dayFilter).click();
 	await expect(page).toHaveURL(new RegExp(`days=${d5}(&|$)`));
 	// The days after the range fold away; shift-click the fold adds Day 6.
 	await page

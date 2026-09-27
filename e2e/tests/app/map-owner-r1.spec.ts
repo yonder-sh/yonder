@@ -67,7 +67,8 @@ async function mapReady(page: Page, lens?: string) {
 async function open(page: Page, url: string, lens?: string) {
 	await page.goto(url);
 	if (url.includes(REAL_TRIP)) {
-		const notFound = page.getByText("We couldn't open this trip.");
+		// The page for a trip that isn't there (or isn't yours).
+		const notFound = page.getByTestId(TESTID.tripNoAccess);
 		await Promise.race([
 			page.getByTestId("workspace").waitFor({ timeout: 30_000 }),
 			notFound.waitFor({ timeout: 30_000 }),
@@ -169,7 +170,9 @@ test("FB-10: the real trip (days in Japan, three idea countries) opens on a whol
 
 test("PLAN-R3-04: selecting cities with the inspector open on the globe never throws, even while the map resizes", async ({
 	page,
-}) => {
+}, info) => {
+	// It picks cities in the Outline, which a phone doesn't have.
+	test.skip(info.project.name === "mobile", "the desktop Outline");
 	const errors: string[] = [];
 	page.on("pageerror", (e) => errors.push(e.message));
 	page.on("console", (m) => {

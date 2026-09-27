@@ -103,7 +103,9 @@ test("MT-02: a click on the centre of the Tokyo pin opens Tokyo, not the idea un
 	}).toPass({ timeout: 30_000 });
 });
 
-test("MT-03: a leg deep link on the root globe keeps the trip's countries in view, clear of the inspector (MAP-01)", async ({ page }) => {
+test("MT-03: a leg deep link on the root globe keeps the trip's countries in view, clear of the inspector (MAP-01)", async ({ page }, info) => {
+	// The details beside the map; a phone's drawer covers it from below.
+	test.skip(info.project.name === "mobile", "the desktop details pane");
 	await open(page, `/t/${TRIP}?tab=plan`, "country");
 	const pair = await page.evaluate(() => {
 		const g = (window as unknown as TripMapWindow).__yonder?.graph;
@@ -186,7 +188,9 @@ test("SEC-R1-16 / ERR-06: blocked tiles say 'Map tiles couldn't load', pins stay
 
 test("MT-R2-02: with a leg inspector open on the root globe, every located pin clears the inspector (MAP-01)", async ({
 	page,
-}) => {
+}, info) => {
+	// The details beside the map; a phone's drawer covers it from below.
+	test.skip(info.project.name === "mobile", "the desktop details pane");
 	await open(page, `/t/${TRIP}?tab=plan`, "country");
 	const pair = await page.evaluate(() => {
 		const g = (window as unknown as TripMapWindow).__yonder?.graph;

@@ -250,7 +250,7 @@ type Leg = {
 	details: Record<string, unknown> | null;
 };
 
-test("DEFECT overlay: a pending move draws a real leg as amber 'Unlinked transit' for the reviewer, and its Discard deletes the real route", async ({
+test("guard (was DEFECT overlay): a pending move never draws the real leg as amber 'Unlinked transit' for the reviewer, so nothing offers to discard the real route", async ({
 	browser,
 }) => {
 	test.setTimeout(150_000);
@@ -263,54 +263,29 @@ test("DEFECT overlay: a pending move draws a real leg as amber 'Unlinked transit
 	const legs0 = (g0 as unknown as { legs: Leg[] }).legs;
 	const jr = legs0.find((l) => l.fromItemId === cha.id && l.toItemId === nb.id);
 	if (!jr) throw new Error("fixture: no Cha no Ikedaya → Nakano Broadway leg");
-	expect(await d.page.getByTestId(P.unlinked).count(), "no unlinked row before the suggestion").toBe(0);
+	const unlinked = d.page.getByTestId(P.unlinked).filter({ hasText: "Nakano Broadway" });
+	expect(await unlinked.count(), "no unlinked row before the suggestion").toBe(0);
 	await withdrawMine(m.page, g0.trip.id, /Nakano Broadway/);
-	let discarded = false;
 	try {
 		const rm = await call<{ proposed?: { id: string } }>(m.page, "/src/functions/items.functions.ts", "moveItem", {
 			itemId: nb.id,
 			dayId: d6,
 		});
 		expect(rm.proposed?.id).toBeTruthy();
-		// Dennis (suggestions shown, the default): Tue 5 Oct now has an amber row for a leg nobody broke.
-		const row = d.page.getByTestId(P.unlinked).filter({ hasText: "Nakano Broadway" });
-		await expect(row).toBeVisible({ timeout: 10_000 });
-		await row.scrollIntoViewIfNeeded();
-		await snap(d.page, "r2-overlay-false-unlinked");
-		// The server graph is unchanged: the item is still on Tue 5 Oct, the leg still joins it.
+		// Dennis has the suggestion (suggestions shown, the default)…
+		await expect
+			.poll(async () => (await proposals(d.page, g0.trip.id)).some((x) => x.id === rm.proposed?.id), { timeout: 10_000 })
+			.toBe(true);
+		await d.page.waitForTimeout(1_500);
+		// …and no amber row for the leg nobody broke, so no Discard on the real route.
+		expect(await unlinked.count()).toBe(0);
+		await snap(d.page, "r2-overlay-no-false-unlinked");
+		// The server graph is unchanged: the item still on Tue 5 Oct, the reserved JR route still joins it.
 		const real = await graph(d.page);
 		expect(real.items.find((i) => i.id === nb.id)?.dayId).toBe(nb.dayId);
-		// Discard → Discard route: the REAL reserved JR route is deleted.
-		await row.getByRole("button", { name: "Discard" }).click();
-		await row.getByRole("button", { name: "Discard route" }).click();
-		await expect
-			.poll(async () => ((await graph(d.page)) as unknown as { legs: Leg[] }).legs.some((l) => l.id === jr.id), {
-				timeout: 10_000,
-			})
-			.toBe(false);
-		discarded = true;
-		// Maya withdraws: the item never moved, but its route is gone.
-		await withdrawMine(m.page, g0.trip.id, /Nakano Broadway/);
-		await d.page.waitForTimeout(1_500);
-		const after = await graph(d.page);
-		expect(after.items.find((i) => i.id === nb.id)?.dayId).toBe(nb.dayId);
-		await snap(d.page, "r2-overlay-route-gone");
-		expect.soft(discarded, "a hypothetical move must never offer a destructive action on the real leg").toBe(false);
+		expect((real as unknown as { legs: Leg[] }).legs.some((l) => l.id === jr.id)).toBe(true);
 	} finally {
 		await withdrawMine(m.page, g0.trip.id, /Nakano Broadway/).catch(() => undefined);
-		if (discarded)
-			await call(d.page, "/src/functions/legs.functions.ts", "setLeg", {
-				target: { kind: "pair", fromItemId: jr.fromItemId, toItemId: jr.toItemId },
-				patch: {
-					mode: jr.mode,
-					durationMin: jr.durationMin,
-					distanceM: jr.distanceM,
-					source: jr.source,
-					estimateMin: jr.estimateMin,
-					isEdited: jr.isEdited,
-					...(jr.details ? { details: jr.details } : {}),
-				},
-			}).catch((e) => console.log(`[restore] ${e}`));
 		await m.ctx.close();
 		await d.ctx.close();
 	}

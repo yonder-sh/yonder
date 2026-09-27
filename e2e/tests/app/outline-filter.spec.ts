@@ -120,6 +120,8 @@ test("a guest with the view link browses, and every edit affordance is disabled"
 	await expect(guest.getByRole("menuitem", { name: /Delete/ })).toBeDisabled();
 	await expect(guest.getByRole("menuitem", { name: /My priority/ })).toHaveCount(0);
 	await guest.keyboard.press("Escape");
+	// The closing menu hands focus back to the row, which would dismiss a popover opened meanwhile.
+	await expect(guest.getByRole("menu")).toHaveCount(0);
 	// The filter still works for guests (reading, not writing).
 	await outline(guest).getByTestId(OUTLINE_TESTID.filterButton).click();
 	await expect(guest.getByTestId(OUTLINE_TESTID.filterPanel)).toBeVisible();

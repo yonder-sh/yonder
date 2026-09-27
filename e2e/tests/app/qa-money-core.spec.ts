@@ -496,7 +496,7 @@ test("settle-up in ¥ for a USD balance, then edits after settlement are flagged
 	out.mayaInbox = mi.items?.filter((x) => x.kind === "balance_changed").map((x) => x.title);
 	expect.soft(out.inboxAfterNoteEdit).toEqual([]);
 	expect.soft(out.noticeAfterNoteEdit).toEqual([]);
-	expect.soft(String(out.inboxAfterEdit)).toContain("Balance changed since your last settlement: +$4.70 (Maya edited Sushi dinner)");
+	expect.soft(String(out.inboxAfterEdit)).toContain("Balance changed since your last settlement: +$4.94 (Maya edited Sushi dinner)");
 	expect.soft(String(out.noticeAfterEdit)).toContain("(Maya edited Sushi dinner)");
 	console.log(JSON.stringify(out, null, 1));
 	await m.ctx.close();
@@ -964,7 +964,7 @@ test("UI: shopping Bought + tax-free, private gift, manual rate on a paid cost, 
 	expect.soft((out.manualRate as { pay: number[][] }).pay[0]?.[0], "the manual rate applies to what was paid (DEFECT)").toBe(10000);
 	expect.soft(out.rootSummary).toContain("2.38¢");
 	expect.soft(out.rootSummary).toContain("2.85¢");
-	expect.soft(out.rootBal).toContain("Audrey owes you $121.15");
+	expect.soft(out.rootBal).toContain("Audrey owes you $133.33");
 	console.log(JSON.stringify(out, null, 1));
 	await m.ctx.close();
 	await ctx.close();

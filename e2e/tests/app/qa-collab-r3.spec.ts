@@ -282,7 +282,7 @@ test("ONE inbox: a booking window relative to Day 1's check-in (372 days before 
 	}
 });
 
-test("ONE inbox review item: Maya's first suggestion is '1 suggestion to review'; after Dennis reads it, her second makes it unread again with the new count; guests have no inbox; Kai can't mark Dennis's keys", async ({
+test("ONE inbox review item: Maya's suggestion adds one to its count; after Dennis reads it, her next makes it unread again with the new count; guests have no inbox; Kai can't mark Dennis's keys", async ({
 	browser,
 }) => {
 	test.setTimeout(120_000);
@@ -295,11 +295,18 @@ test("ONE inbox review item: Maya's first suggestion is '1 suggestion to review'
 	const lunch = g.items.find((i) => i.title === "Lunch" && i.dayId);
 	const bf = g.items.find((i) => i.title === "Breakfast" && i.dayId);
 	const pids: string[] = [];
+	// The seed trip is shared by this file's tests: count from what's already open.
+	const open0 = Number(
+		/^(\d+) suggestions? to review/.exec(
+			(await inbox(d.page, T)).items.find((i) => i.kind === "review")?.title ?? "",
+		)?.[1] ?? 0,
+	);
+	const titled = (n: number) => new RegExp(`^${n} ${n === 1 ? "suggestion" : "suggestions"} to review`);
 	try {
 		const r1 = must(await call<{ proposed?: { id: string } }>(m.page, ITF, "updateItem", { itemId: lunch?.id, patch: { durationMin: 75 } }), "p1");
 		pids.push(r1.proposed?.id as string);
 		const rv1 = (await inbox(d.page, T)).items.find((i) => i.kind === "review");
-		expect(rv1?.title).toMatch(/^1 suggestion to review/);
+		expect(rv1?.title).toMatch(titled(open0 + 1));
 		must(await call(d.page, INF, "markInboxRead", { keys: [rv1?.key] }), "mark");
 		// Kai tries to write Dennis's read state for the same key: nothing happens.
 		const kr = must(await call<{ updated: number }>(k.page, INF, "markInboxRead", { keys: [rv1?.key] }), "kai mark");
@@ -308,7 +315,7 @@ test("ONE inbox review item: Maya's first suggestion is '1 suggestion to review'
 		pids.push(r2.proposed?.id as string);
 		const rv2 = (await inbox(d.page, T)).items.find((i) => i.kind === "review");
 		console.log(`[review] ${rv1?.title} → ${rv2?.title} read=${rv2?.read}`);
-		expect(rv2?.title).toMatch(/^2 suggestions to review/);
+		expect(rv2?.title).toMatch(titled(open0 + 2));
 		expect(rv2?.read).toBe(false);
 		// Link guest: no bell, and listInbox refuses.
 		expect(await guest.page.getByTestId(TESTID.inboxBell).count()).toBe(0);
