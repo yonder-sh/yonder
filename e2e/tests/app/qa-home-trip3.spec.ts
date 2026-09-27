@@ -14,6 +14,26 @@ async function graphOf(page: Page): Promise<any> {
 	await expect.poll(() => page.evaluate(() => !!(window as any).__yonder?.graph), { timeout: 30_000 }).toBe(true);
 	return page.evaluate(() => JSON.parse(JSON.stringify((window as any).__yonder.graph)));
 }
+/**
+ * The graph once the trip is quiet: opening it as an editor runs the autofill
+ * sweep, whose jobs add legs a moment later (a flight between two airports
+ * the seed leaves unset); read it once its legs stop changing.
+ */
+async function settledGraph(page: Page): Promise<any> {
+	let last = -1;
+	await expect
+		.poll(
+			async () => {
+				const n = (await graphOf(page)).legs.length;
+				const same = n === last;
+				last = n;
+				return same;
+			},
+			{ timeout: 30_000, intervals: [2_000] },
+		)
+		.toBe(true);
+	return graphOf(page);
+}
 const jal = (g: any) => {
 	const n = g.nodes.find((x: any) => x.name === "JAL Sky Museum");
 	const it = g.items.find((i: any) => i.nodeId === n?.id);
@@ -28,7 +48,7 @@ test("TRIP-03 (+ Duplicate of Asia 2027): shift by one day keeps pinned local ti
 	}
 	await page.goto("/t/asia-2027?tab=plan");
 	await expect(page.getByTestId("workspace")).toBeVisible({ timeout: 30_000 });
-	const src = await graphOf(page);
+	const src = await settledGraph(page);
 	console.log("TRIP-03 source JAL:", jal(src), "days", src.days.length, "items", src.items.length, "legs", src.legs.length);
 	// Duplicate Asia 2027 with the same start (UI: Trip settings → Duplicate…)
 	await (await hydrated(page.getByTestId("trip-menu").first())).click();
