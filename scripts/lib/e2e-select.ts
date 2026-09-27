@@ -5,10 +5,11 @@
  *     Overview, a day's plan, Rate → Review → Schedule, money, lists, notes,
  *     media, sharing, live collab, the map), plus the phone basics. About 6
  *     minutes on 2 envs.
- *   - affected: the smoke set, plus every spec that imports from a feature a
- *     change touched (`src/features/<feature>/`, its test ids mostly), plus
- *     changed specs themselves. A change anywhere else in src brings the
- *     smoke set only.
+ *   - affected: the smoke set, plus the specs that use a test id a changed
+ *     file renders (`SHELL_TESTID.detailsSection` or its "details-section"),
+ *     plus changed specs. A changed file that renders no test id (a hook, a
+ *     helper) falls back to every spec importing from its feature; one
+ *     outside src/features brings the smoke set only.
  * Playwright matches `--grep` against "<project> <file> <describe…> <title>".
  */
 
@@ -226,5 +227,81 @@ export function affectedSpecs(
 	}
 	for (const [name, text] of Object.entries(specs))
 		for (const f of specFeatures(text)) if (features.has(f)) out.add(name);
+	return [...out].sort();
+}
+
+/** Test id constants: `export const X_TESTID = { key: "value" }` → "X_TESTID.key" → value. */
+export function parseTestIds(text: string): Map<string, string> {
+	const out = new Map<string, string>();
+	for (const block of text.matchAll(/export const (\w+) = \{([\s\S]*?)\n\}/g))
+		for (const m of (block[2] as string).matchAll(/(\w+):\s*"([^"]+)"/g))
+			out.set(`${block[1]}.${m[1]}`, m[2] as string);
+	return out;
+}
+
+/** `import { SHELL_TESTID as S, TESTID }` → S → SHELL_TESTID, TESTID → TESTID. */
+function testIdAliases(text: string): Map<string, string> {
+	const out = new Map<string, string>();
+	for (const imp of text.matchAll(/import\s*\{([^}]*)\}\s*from/g))
+		for (const part of (imp[1] as string).split(",")) {
+			const m = part
+				.trim()
+				.match(/^(?:type\s+)?(\w*TESTID)(?:\s+as\s+(\w+))?$/);
+			if (m) out.set((m[2] ?? m[1]) as string, m[1] as string);
+		}
+	return out;
+}
+
+/** The test ids a file uses: its constants' keys, and literal ids in getByTestId / data-testid. */
+export function usedTestIds(
+	text: string,
+	ids: ReadonlyMap<string, string>,
+): Set<string> {
+	const out = new Set<string>();
+	const alias = testIdAliases(text);
+	for (const m of text.matchAll(/\b(\w+)\.(\w+)\b/g)) {
+		const constName = alias.get(m[1] as string);
+		const v = constName ? ids.get(`${constName}.${m[2]}`) : undefined;
+		if (v) out.add(v);
+	}
+	for (const m of text.matchAll(
+		/(?:getByTestId\(\s*|data-testid=\\?"|data-testid=")(?:"|'|`)?([\w:-]+)/g,
+	))
+		out.add(m[1] as string);
+	return out;
+}
+
+/**
+ * The specs a change touches, by the test ids its files render (see the
+ * header). `files` maps each changed path to its text (deleted: "").
+ */
+export function affectedByTestIds(
+	files: Readonly<Record<string, string>>,
+	specs: Readonly<Record<string, string>>,
+	ids: ReadonlyMap<string, string>,
+): string[] {
+	const wanted = new Set<string>();
+	const fallback: string[] = [];
+	const out = new Set<string>();
+	for (const [file, text] of Object.entries(files)) {
+		const spec = file.match(/^e2e\/tests\/app\/([^/]+\.spec\.ts)$/);
+		if (spec) {
+			if ((spec[1] as string) in specs) out.add(spec[1] as string);
+			continue;
+		}
+		if (!/^src\/.*\.tsx?$/.test(file) || /\.test\.tsx?$/.test(file)) continue;
+		const used = usedTestIds(text, ids);
+		if (used.size) for (const v of used) wanted.add(v);
+		else fallback.push(file);
+	}
+	for (const [name, text] of Object.entries(specs)) {
+		const used = usedTestIds(text, ids);
+		for (const v of used)
+			if (wanted.has(v)) {
+				out.add(name);
+				break;
+			}
+	}
+	for (const f of affectedSpecs(fallback, specs)) out.add(f);
 	return [...out].sort();
 }

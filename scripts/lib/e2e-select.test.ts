@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+	affectedByTestIds,
 	affectedSpecs,
 	featureOf,
+	parseTestIds,
 	SMOKE,
 	selectionArgs,
 	smokeArgs,
@@ -70,5 +72,29 @@ describe("e2e selection", () => {
 		expect(re.test("mobile plan-colour.spec.ts phone anything")).toBe(true);
 		expect(re.test("chromium landing.spec.ts x")).toBe(true);
 		expect(re.test("chromium plan-timeline.spec.ts x")).toBe(false);
+	});
+
+	it("maps a changed component to the specs using the test ids it renders", () => {
+		const ids = parseTestIds(
+			'export const SHELL_TESTID = {\n\tdetailsSection: "details-section",\n\tinbox: "inbox",\n};\n',
+		);
+		expect(ids.get("SHELL_TESTID.detailsSection")).toBe("details-section");
+		const files = {
+			"src/features/shell/InspectorBody.tsx":
+				'import { SHELL_TESTID } from "./testids";\n<div data-testid={SHELL_TESTID.detailsSection} />',
+			"src/features/lists/model.ts": "export const x = 1;",
+		};
+		const specs = {
+			"a.spec.ts":
+				'import { SHELL_TESTID as S } from "../../../src/features/shell/testids";\nS.detailsSection',
+			"b.spec.ts": "page.locator('[data-testid=\"details-section\"]')",
+			"c.spec.ts": 'page.getByTestId("inbox")',
+			"d.spec.ts": 'import { L } from "../../../src/features/lists/testids";',
+		};
+		expect(affectedByTestIds(files, specs, ids)).toEqual([
+			"a.spec.ts",
+			"b.spec.ts",
+			"d.spec.ts",
+		]);
 	});
 });

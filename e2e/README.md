@@ -12,6 +12,7 @@ pnpm e2e:fast tests/app/overview.spec.ts         # one spec
 pnpm e2e:fast --envs 4 --retries=1 -g "share"    # any playwright flag works
 pnpm e2e:smoke                                   # ~110 tests over the main flows, ~6 min
 pnpm e2e:affected [ref]                          # smoke + specs whose feature changed since ref (default HEAD)
+pnpm e2e:smoke --frozen                          # test HEAD from ../trip-planner-e2e; keep editing meanwhile
 ```
 
 The smoke set lives in `scripts/lib/e2e-select.ts`.

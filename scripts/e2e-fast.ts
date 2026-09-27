@@ -23,6 +23,8 @@
  *   --smoke         only the smoke set (scripts/lib/e2e-select.ts, about 6 min)
  *   --affected [R]  the smoke set plus the specs a change since git ref R
  *                   (default HEAD, uncommitted work included) touches
+ *   --frozen        run from a worktree at HEAD (../trip-planner-e2e), so the
+ *                   repo can keep changing meanwhile (scripts/lib/e2e-frozen.ts)
  * Anything else goes to `playwright test` (spec files, --project, -g, --retries…).
  */
 import { execFileSync, spawn } from "node:child_process";
@@ -54,7 +56,13 @@ import {
 	withRedis,
 	writeJson,
 } from "./lib/e2e-fast";
-import { affectedSpecs, SMOKE, selectionArgs } from "./lib/e2e-select";
+import { runFrozen } from "./lib/e2e-frozen";
+import {
+	affectedByTestIds,
+	parseTestIds,
+	SMOKE,
+	selectionArgs,
+} from "./lib/e2e-select";
 
 const REPORT_FILE = path.join(FAST_DIR, "report.json");
 const PIDS_FILE = path.join(FAST_DIR, "pids.json");
@@ -291,7 +299,26 @@ function selection(args: Args): string[] {
 			.filter((f) => f.endsWith(".spec.ts"))
 			.map((f) => [f, readFileSync(path.join(dir, f), "utf8")]),
 	);
-	const touched = affectedSpecs(changed, specs);
+	const read = (f: string) => {
+		try {
+			return readFileSync(path.join(REPO_ROOT, f), "utf8");
+		} catch {
+			return "";
+		}
+	};
+	const ids = new Map<string, string>();
+	for (const f of execFileSync("git", ["ls-files", "src/**/testids.ts"], {
+		cwd: REPO_ROOT,
+		encoding: "utf8",
+	})
+		.split("\n")
+		.filter(Boolean))
+		for (const [k, v] of parseTestIds(read(f))) ids.set(k, v);
+	const touched = affectedByTestIds(
+		Object.fromEntries(changed.map((f) => [f, read(f)])),
+		specs,
+		ids,
+	);
 	console.log(
 		`[e2e:fast] --affected ${args.affected}: ${changed.length} changed files → smoke + ${touched.length} specs${touched.length ? ` (${touched.join(", ")})` : ""}`,
 	);
@@ -299,6 +326,8 @@ function selection(args: Args): string[] {
 }
 
 async function main(): Promise<number> {
+	if (process.argv.includes("--frozen"))
+		return runFrozen(process.argv.slice(2));
 	const args = parseArgs(process.argv.slice(2));
 	args.pw = [...selection(args), ...args.pw];
 	const t0 = Date.now();
