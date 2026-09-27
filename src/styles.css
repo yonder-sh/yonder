@@ -37,6 +37,11 @@
 	--warning-hairline: #d9a03f;
 	--warning-wash: rgb(217 160 63 / 0.1);
 	--selected-edge: rgb(24 29 47 / 0.22);
+	/* Done, booked, "you're ahead" (kit chips): never decoration. */
+	--good: #1f7a55;
+	--good-wash: rgb(31 122 85 / 0.1);
+	/* Someone is here (the presence dot). */
+	--online: #2fb36b;
 
 	/* Travel modes (§2.3): lines, rails and glyphs; never text under 18px */
 	--mode-walk: var(--map-walk);
@@ -104,6 +109,8 @@
 	--warning-hairline: #b8862f;
 	--warning-wash: rgb(224 165 74 / 0.1);
 	--selected-edge: rgb(238 240 246 / 0.26);
+	--good: #56d1a3;
+	--good-wash: rgb(86 209 163 / 0.12);
 	--mode-other: #a3a3a3;
 
 	/* Rings and carets are raised ~8% in lightness on dark grounds (§2.2). */
@@ -138,6 +145,9 @@
 	--color-warning-hairline: var(--warning-hairline);
 	--color-warning-wash: var(--warning-wash);
 	--color-selected-edge: var(--selected-edge);
+	--color-good: var(--good);
+	--color-good-wash: var(--good-wash);
+	--color-online: var(--online);
 
 	--color-mode-walk: var(--mode-walk);
 	--color-mode-transit: var(--mode-transit);
@@ -171,9 +181,33 @@
 	--animate-glow: glow 1.2s ease-out;
 }
 
-/* Mono numbers line up (times, durations, fares, counts). */
+/*
+ * The type scale (One Yonder kit, 2026-09-28): Tailwind's text-xs (12) and
+ * text-sm (14), plus meta (13, secondary lines) and body (15, reading text),
+ * text-lg (18, section titles) and text-2xl (24, page titles). Display sizes
+ * (text-3xl and up) only with font-display. No arbitrary text-[Npx] outside
+ * src/components (the kit guard test counts them down).
+ */
+@theme {
+	--text-meta: 0.8125rem;
+	--text-meta--line-height: 1.125rem;
+	--text-body: 0.9375rem;
+	--text-body--line-height: 1.375rem;
+}
+
+/* Numbers line up (times, durations, fares, counts), in the body font. */
 @utility tnum {
 	font-variant-numeric: tabular-nums;
+}
+
+/* The section label: 11px caps, one style everywhere ("WHEN & TRAVEL"). */
+@utility eyebrow {
+	font-size: 0.6875rem;
+	line-height: 1rem;
+	font-weight: 600;
+	letter-spacing: 0.07em;
+	text-transform: uppercase;
+	color: var(--muted-foreground);
 }
 
 /* A 1px rule in the border colour. */
