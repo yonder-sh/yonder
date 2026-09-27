@@ -29,17 +29,25 @@ test("a private day note blocks another member's date change and names the day",
 	// Dennis adds an empty day before the trip, then keeps a private note on it.
 	const prev = new Date(`${days0[0]?.date}T12:00:00Z`);
 	prev.setUTCDate(prev.getUTCDate() - 1);
-	const ext = await d.evaluate(
-		async ({ tripId, start, end, v }) => {
-			const t = await import("/src/functions/trips.functions.ts");
-			try {
-				return await t.setTripDates({ data: { tripId, startDate: start, endDate: end, expectedVersion: v } });
-			} catch (e) {
-				return { __error: (e as Error).message };
-			}
-		},
-		{ tripId: c.tripId, start: prev.toISOString().slice(0, 10), end: days0[days0.length - 1]?.date as string, v: g0.trip.version },
-	);
+	// Background autofill can bump the trip's version right after load: retry with the fresh one.
+	let ext: unknown = null;
+	for (let i = 0; i < 3; i++) {
+		const v = await d.evaluate(() => (window as unknown as { __yonder: { graph: G } }).__yonder.graph.trip.version);
+		ext = await d.evaluate(
+			async ({ tripId, start, end, v }) => {
+				const t = await import("/src/functions/trips.functions.ts");
+				try {
+					return await t.setTripDates({ data: { tripId, startDate: start, endDate: end, expectedVersion: v } });
+				} catch (e) {
+					return { __error: (e as Error).message };
+				}
+			},
+			{ tripId: c.tripId, start: prev.toISOString().slice(0, 10), end: days0[days0.length - 1]?.date as string, v },
+		);
+		if (!JSON.stringify(ext).includes("changed while you were looking")) break;
+		await d.waitForTimeout(1500);
+	}
+	expect(JSON.stringify(ext)).toContain('"ok":true');
 	console.log("extend", JSON.stringify(ext));
 	await d.reload();
 	await expectLive(d);
