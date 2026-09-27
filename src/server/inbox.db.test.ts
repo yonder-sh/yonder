@@ -54,6 +54,7 @@ import {
 } from "@/db/migrate.server";
 import { tripMembers, user } from "@/db/schema";
 import { listTripListItems } from "@/features/lists/lists.functions";
+import { netNow } from "@/features/money/server/money.server";
 import { getTripCounts, listActivity } from "@/functions/graph.functions";
 import { listInbox, markInboxRead } from "@/functions/inbox.functions";
 import { setNodePriority } from "@/functions/nodes.functions";
@@ -63,7 +64,6 @@ import type { AuthUser } from "@/server/auth.server";
 import { cloneDemoTrip, type FixtureClone } from "@/server/fixture.server";
 import { closeQueues } from "@/server/live/jobs.server";
 import { closeRedis, redis, redisPrefix } from "@/server/live/redis.server";
-import { memberNets, splitByWeights } from "@/server/money-nets.server";
 
 vi.setConfig({ testTimeout: 30_000, hookTimeout: 60_000 });
 
@@ -266,29 +266,6 @@ describe("due", () => {
 });
 
 describe("money notices", () => {
-	it("splits exactly, leftover to the payer", () => {
-		const parts = splitByWeights(
-			1000,
-			new Map([
-				["a", 1],
-				["b", 1],
-				["c", 1],
-			]),
-			["b"],
-		);
-		expect([...parts.values()].reduce((s, v) => s + v, 0)).toBe(1000);
-		expect(parts.get("b")).toBe(334);
-		const neg = splitByWeights(
-			-1000,
-			new Map([
-				["a", 1],
-				["b", 1],
-				["c", 1],
-			]),
-		);
-		expect([...neg.values()].reduce((s, v) => s + v, 0)).toBe(-1000);
-	});
-
 	it("balance changed since my last settlement (someone else's edit, private expenses excluded)", async () => {
 		const t = await freshTrip();
 		const expense = async (o: {
@@ -327,7 +304,7 @@ describe("money notices", () => {
 			payer: dennis,
 			shares: [dennis, t.maya],
 		});
-		expect((await memberNets(getDb(), t.tripId)).nets).toMatchObject({
+		expect(await netNow(getDb(), t.tripId)).toMatchObject({
 			[dennis]: 5_000,
 			[t.maya]: -5_000,
 		});

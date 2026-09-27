@@ -23,7 +23,11 @@
  */
 import { sql } from "drizzle-orm";
 import { db } from "@/db/db.server";
-import { balanceEdits } from "@/features/money/server/money.server";
+import {
+	balanceEdits,
+	netNow,
+	tripHomeCurrency,
+} from "@/features/money/server/money.server";
 import { dueState, effectiveDue } from "@/lib/engine/due";
 import { indexGraph } from "@/lib/engine/graph-index";
 import { formatMoney } from "@/lib/engine/money";
@@ -40,7 +44,6 @@ import type { BundleTarget } from "@/lib/schemas/targets";
 import { loadTripAccess } from "@/server/authz/trip-access.server";
 import { loadTripGraph } from "@/server/graph.server";
 import { mentionExcerpt } from "@/server/mentions.server";
-import { memberNets } from "@/server/money-nets.server";
 
 type MentionRow = {
 	id: string;
@@ -469,7 +472,10 @@ async function balanceItems(
 			limit: 1,
 		});
 		if (!last) continue;
-		const { currency, nets } = await memberNets(db, r.tripId);
+		// The same engine, member order and rounding as the settlement's
+		// snapshot and the Money tab's notice: never a phantom cent.
+		const nets = await netNow(db, r.tripId);
+		const currency = await tripHomeCurrency(db, r.tripId);
 		const delta = (nets[r.memberId] ?? 0) - before;
 		if (delta === 0) continue;
 		// Unread again only when my delta moves (not on every edit by anyone).
