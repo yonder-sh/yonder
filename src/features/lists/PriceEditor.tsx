@@ -105,7 +105,7 @@ function PriceForm({
 						setQty(e.target.value.replace(/\D/g, "").slice(0, 4))
 					}
 					placeholder="1"
-					className="h-8 w-20 text-right tnum"
+					className="w-20 text-right tnum"
 				/>
 			</div>
 			<div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
@@ -117,7 +117,7 @@ function PriceForm({
 						value={amount}
 						onChange={(e) => setAmount(e.target.value.replace(/[^\d.,]/g, ""))}
 						placeholder="0"
-						className="h-8 w-24 text-right tnum"
+						className="w-24 text-right tnum"
 					/>
 					<select
 						aria-label="Currency"

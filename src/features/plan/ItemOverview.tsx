@@ -343,7 +343,6 @@ function ItemOverviewBody({ itemId }: { itemId: string }) {
 						onKeyDown={(e) =>
 							e.key === "Enter" && (e.target as HTMLInputElement).blur()
 						}
-						className="h-8"
 					/>
 					{title.remoteChanged ? (
 						<p className="mt-1 text-xs text-muted-foreground">

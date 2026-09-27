@@ -497,7 +497,6 @@ export function CustomRouteBuilder({
 					maxLength={80}
 					disabled={disabled}
 					placeholder="Optional, e.g. Fuji Excursion 7"
-					className="h-8"
 					onChange={(e) => setLabel(e.target.value)}
 				/>
 			</div>
@@ -530,7 +529,7 @@ export function CustomRouteBuilder({
 						onChange={(e) =>
 							setTotal(e.target.value.replace(/\D/g, "").slice(0, 4))
 						}
-						className="h-8 w-24 tnum"
+						className="w-24 tnum"
 					/>
 					{num(total) ? (
 						<span className="text-xs text-muted-foreground tnum">
@@ -557,7 +556,7 @@ export function CustomRouteBuilder({
 								>
 									<SelectTrigger
 										data-testid={TRANSIT_TESTID.customRouteStepMode}
-										className="h-8 flex-1"
+										className="flex-1"
 										aria-label={`Step ${i + 1} mode`}
 									>
 										<SelectValue />
@@ -583,7 +582,7 @@ export function CustomRouteBuilder({
 											autoMinutes: false,
 										})
 									}
-									className="h-8 w-16 tnum"
+									className="w-16 tnum"
 								/>
 								{steps.length > 1 ? (
 									<Button
@@ -798,7 +797,7 @@ export function CustomRouteBuilder({
 									setDepDate(e.target.value);
 									if (!arrTime) setArrDate(e.target.value);
 								}}
-								className="h-8 tnum"
+								className="tnum"
 							/>
 							<TimeInput
 								testId={TRANSIT_TESTID.customRouteDepartTime}
@@ -816,7 +815,7 @@ export function CustomRouteBuilder({
 								value={arrDate}
 								disabled={disabled}
 								onChange={(e) => setArrDate(e.target.value)}
-								className="h-8 tnum"
+								className="tnum"
 							/>
 							<TimeInput
 								testId={TRANSIT_TESTID.customRouteArriveTime}
@@ -895,7 +894,7 @@ export function CustomRouteBuilder({
 								maxLength={40}
 								disabled={disabled}
 								onChange={(e) => setRef(e.target.value.toUpperCase())}
-								className="h-8 uppercase tnum placeholder:normal-case"
+								className="uppercase tnum placeholder:normal-case"
 								placeholder="Optional"
 							/>
 						)}
@@ -907,7 +906,6 @@ export function CustomRouteBuilder({
 							maxLength={40}
 							disabled={disabled}
 							onChange={(e) => setTrain(e.target.value)}
-							className="h-8"
 							placeholder="Optional"
 						/>
 					</Field>
@@ -919,7 +917,6 @@ export function CustomRouteBuilder({
 								maxLength={40}
 								disabled={disabled}
 								onChange={(e) => setCls(e.target.value)}
-								className="h-8"
 								placeholder="e.g. Green car"
 							/>
 						</Field>
@@ -930,7 +927,7 @@ export function CustomRouteBuilder({
 								maxLength={20}
 								disabled={disabled}
 								onChange={(e) => setCar(e.target.value)}
-								className="h-8 tnum"
+								className="tnum"
 								placeholder="–"
 							/>
 						</Field>
@@ -958,7 +955,7 @@ export function CustomRouteBuilder({
 													[m.id]: e.target.value.toUpperCase(),
 												}))
 											}
-											className="h-8 w-24 uppercase tnum placeholder:normal-case"
+											className="w-24 uppercase tnum placeholder:normal-case"
 											placeholder="Seat"
 										/>
 									)}

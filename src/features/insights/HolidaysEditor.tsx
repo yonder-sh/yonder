@@ -205,7 +205,7 @@ export function HolidaysEditor({
 									e.preventDefault();
 									if (canSave) submit();
 								}}
-								className="h-8 min-w-[8rem] flex-1 text-meta"
+								className="min-w-[8rem] flex-1 text-meta"
 							/>
 							<Select
 								value={r.countryCode || ANY}

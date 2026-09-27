@@ -141,7 +141,6 @@ function DayOverviewBody({ dayId }: { dayId: string }) {
 						onKeyDown={(e) =>
 							e.key === "Enter" && (e.target as HTMLInputElement).blur()
 						}
-						className="h-8"
 					/>
 				</dd>
 				<dt className="text-xs text-muted-foreground">Starts</dt>

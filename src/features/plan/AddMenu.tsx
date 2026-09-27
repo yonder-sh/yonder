@@ -174,7 +174,6 @@ export function AddMenu({
 							placeholder="Laundry, Check-in…"
 							aria-label="Block title"
 							maxLength={200}
-							className="h-8"
 						/>
 						<Button type="submit" size="sm">
 							Add

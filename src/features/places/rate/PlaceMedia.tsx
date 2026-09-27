@@ -588,7 +588,6 @@ export function AddPhotoOrLink({ node }: { node: GraphNode }) {
 								inputMode="url"
 								autoFocus
 								aria-invalid={!!error}
-								className="h-8"
 							/>
 							<Button type="submit" size="sm" disabled={busy || !url.trim()}>
 								Add

@@ -1108,7 +1108,7 @@ export function ExpenseEditor({
 										id="exp-due"
 										type="date"
 										aria-label="Expected on"
-										className="h-8 w-auto text-xs"
+										className="w-auto text-xs"
 										value={draft.expectedOn}
 										onChange={(e) => set({ expectedOn: e.target.value })}
 									/>
@@ -1150,7 +1150,7 @@ export function ExpenseEditor({
 										data-testid={MONEY_TESTID.payerAmount}
 										aria-invalid={isNegative(p.amount) || undefined}
 										inputMode="decimal"
-										className="h-8 flex-1 tnum"
+										className="flex-1 tnum"
 										value={p.amount}
 										onChange={(e) =>
 											set({
@@ -1305,7 +1305,7 @@ export function ExpenseEditor({
 											<Input
 												id="exp-date"
 												type="date"
-												className="h-8 text-xs"
+												className="text-xs"
 												value={draft.date}
 												onChange={(e) => set({ date: e.target.value })}
 											/>
@@ -1335,7 +1335,7 @@ export function ExpenseEditor({
 										<Input
 											id="exp-expected"
 											type="date"
-											className="h-8 w-auto text-xs"
+											className="w-auto text-xs"
 											value={draft.expectedOn}
 											onChange={(e) => set({ expectedOn: e.target.value })}
 										/>
@@ -1452,7 +1452,7 @@ export function ExpenseEditor({
 											<Input
 												id="exp-rate"
 												inputMode="decimal"
-												className="h-8 w-40 text-xs tnum"
+												className="w-40 text-xs tnum"
 												placeholder={
 													rateToHome ? (1 / rateToHome).toPrecision(4) : "auto"
 												}
@@ -1877,7 +1877,7 @@ function SplitEditor({
 								aria-label={`${nameOf(id)}'s amount`}
 								data-testid={MONEY_TESTID.splitExactAmount}
 								inputMode="decimal"
-								className="h-8 w-32 tnum"
+								className="w-32 tnum"
 								value={draft.exact[id] ?? ""}
 								aria-invalid={
 									(parseMoneyInput(draft.exact[id] ?? "", draft.currency) ??
@@ -1932,7 +1932,7 @@ function ItemizeEditor({
 							data-testid={MONEY_TESTID.lineLabel}
 							placeholder="Item"
 							maxLength={80}
-							className="h-8 flex-1"
+							className="flex-1"
 							value={l.label}
 							onChange={(e) => setLine(l.key, { label: e.target.value })}
 						/>
@@ -1940,7 +1940,7 @@ function ItemizeEditor({
 							aria-label="Item amount"
 							data-testid={MONEY_TESTID.lineAmount}
 							inputMode="decimal"
-							className="h-8 w-28 tnum"
+							className="w-28 tnum"
 							value={l.amount}
 							aria-invalid={
 								(parseMoneyInput(l.amount, draft.currency) ?? 0) < 0 ||
@@ -2047,7 +2047,7 @@ function ItemizeEditor({
 				<div key={f.key} className="flex items-center gap-2">
 					<Input
 						aria-label="Fee"
-						className="h-8 flex-1"
+						className="flex-1"
 						maxLength={40}
 						value={f.label}
 						onChange={(e) => setFee(f.key, { label: e.target.value })}
@@ -2056,7 +2056,7 @@ function ItemizeEditor({
 						aria-label="Fee value"
 						data-testid={MONEY_TESTID.feeValue}
 						inputMode="decimal"
-						className="h-8 w-20 tnum"
+						className="w-20 tnum"
 						value={f.value}
 						onChange={(e) => setFee(f.key, { value: e.target.value })}
 					/>
@@ -2131,7 +2131,7 @@ function PointsEditor({
 					placeholder="Programme (Aeroplan)"
 					list="money-programs"
 					maxLength={60}
-					className="h-8 flex-1"
+					className="flex-1"
 					value={draft.program}
 					onChange={(e) => set({ program: e.target.value })}
 				/>
@@ -2139,7 +2139,7 @@ function PointsEditor({
 					aria-label="Points"
 					placeholder="Points"
 					inputMode="numeric"
-					className="h-8 w-28 tnum"
+					className="w-28 tnum"
 					value={draft.pts}
 					onChange={(e) => set({ pts: e.target.value.replace(/[^\d]/g, "") })}
 				/>
@@ -2150,7 +2150,7 @@ function PointsEditor({
 					placeholder="From (Chase UR)"
 					list="money-programs"
 					maxLength={60}
-					className="h-8 flex-1"
+					className="flex-1"
 					value={draft.sourceProgram}
 					onChange={(e) => set({ sourceProgram: e.target.value })}
 				/>
@@ -2158,7 +2158,7 @@ function PointsEditor({
 					aria-label="Source points"
 					placeholder="Points"
 					inputMode="numeric"
-					className="h-8 w-28 tnum"
+					className="w-28 tnum"
 					value={draft.sourcePts}
 					onChange={(e) =>
 						set({ sourcePts: e.target.value.replace(/[^\d]/g, "") })
@@ -2176,7 +2176,7 @@ function PointsEditor({
 				<Input
 					aria-label="Cash price"
 					inputMode="decimal"
-					className="h-8 flex-1 tnum"
+					className="flex-1 tnum"
 					value={draft.cashValue}
 					onChange={(e) => set({ cashValue: e.target.value })}
 				/>
@@ -2319,7 +2319,7 @@ function PaymentsEditor({
 							<Input
 								type="date"
 								aria-label="Paid on"
-								className="h-8 w-36 text-xs"
+								className="w-36 text-xs"
 								value={p.date}
 								onChange={(e) => setP(p.key, { date: e.target.value })}
 							/>
@@ -2334,7 +2334,7 @@ function PaymentsEditor({
 							<Input
 								aria-label="Payment amount"
 								inputMode="decimal"
-								className="h-8 flex-1 tnum"
+								className="flex-1 tnum"
 								value={p.amount}
 								onChange={(e) => {
 									const v = e.target.value;
@@ -2387,7 +2387,7 @@ function PaymentsEditor({
 											aria-label="Payer amount"
 											data-testid={MONEY_TESTID.paymentPayerAmount}
 											inputMode="decimal"
-											className="h-8 flex-1 tnum"
+											className="flex-1 tnum"
 											value={x.amount}
 											onChange={(e) => setPayer(i, { amount: e.target.value })}
 										/>

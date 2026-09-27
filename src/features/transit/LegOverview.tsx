@@ -308,7 +308,7 @@ function OvernightPanel({
 						<Select onValueChange={(v) => stay.mutate(v)}>
 							<SelectTrigger
 								data-testid={TRANSIT_TESTID.overnightSetStay}
-								className="h-8 w-44"
+								className="w-44"
 								aria-label="Set a stay"
 							>
 								<SelectValue placeholder="Set a stay…" />

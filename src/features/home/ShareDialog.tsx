@@ -276,7 +276,7 @@ function InviteRow({ tripId }: { tripId: string }) {
 						setError(null);
 					}}
 					data-testid={HOME_TESTID.inviteEmail}
-					className="h-8 min-w-0 flex-1 basis-full sm:basis-auto"
+					className="min-w-0 flex-1 basis-full sm:basis-auto"
 				/>
 				<RoleSelect
 					value={role}
@@ -307,7 +307,6 @@ function InviteRow({ tripId }: { tripId: string }) {
 					disabled={disabled}
 					onChange={(e) => setNote(e.target.value)}
 					data-testid={HOME_TESTID.inviteNote}
-					className="h-8"
 				/>
 			) : null}
 			{error ? (
@@ -351,7 +350,7 @@ function LinkNote({ tripId, note }: { tripId: string; note: string | null }) {
 				}
 			}}
 			data-testid={HOME_TESTID.linkNote}
-			className="h-8 text-meta"
+			className="text-meta"
 		/>
 	);
 }
@@ -408,7 +407,7 @@ function PlaceholderPanel({
 						value={email}
 						onChange={(e) => setEmail(e.target.value)}
 						aria-label={`Email for ${member.name}`}
-						className="h-8 flex-1 bg-background"
+						className="flex-1 bg-background"
 					/>
 					<Button
 						type="submit"
@@ -737,7 +736,7 @@ function AddPersonRow({ tripId }: { tripId: string }) {
 				onChange={(e) => setName(e.target.value)}
 				aria-label="Name of the person"
 				data-testid={HOME_TESTID.addPersonName}
-				className="h-8 flex-1"
+				className="flex-1"
 			/>
 			<Button type="submit" size="sm" disabled={!clean || act.isPending}>
 				Add
@@ -774,7 +773,7 @@ function AddressRow({ url }: { url: string }) {
 				readOnly
 				value={url}
 				onFocus={(e) => e.currentTarget.select()}
-				className="h-8 min-w-0 tnum text-xs"
+				className="min-w-0 tnum text-xs"
 				aria-label="Trip address"
 				data-testid={TESTID.shareLinkUrl}
 			/>

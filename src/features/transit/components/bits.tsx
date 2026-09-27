@@ -228,7 +228,7 @@ export function AddPersonRow({ disabled }: { disabled?: boolean }) {
 					}
 				}}
 				onBlur={() => void submit()}
-				className="h-8 min-w-0 flex-1 border-dashed"
+				className="min-w-0 flex-1 border-dashed"
 			/>
 		</div>
 	);

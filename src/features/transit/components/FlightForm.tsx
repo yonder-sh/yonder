@@ -520,7 +520,7 @@ export function FlightForm({
 													),
 												});
 										}}
-										className="h-8 font-mono uppercase tnum placeholder:font-sans placeholder:normal-case"
+										className="font-mono uppercase tnum placeholder:font-sans placeholder:normal-case"
 									/>
 								</Row>
 							</div>
@@ -619,7 +619,7 @@ export function FlightForm({
 									>
 										<SelectTrigger
 											data-testid={TRANSIT_TESTID.flightCabin}
-											className="h-8 w-full"
+											className="w-full"
 											aria-label="Cabin"
 										>
 											<SelectValue placeholder="Cabin" />
@@ -642,7 +642,6 @@ export function FlightForm({
 										placeholder="Optional"
 										disabled={disabled}
 										onChange={(e) => up(s.key, { aircraft: e.target.value })}
-										className="h-8"
 									/>
 								</Row>
 							</div>
@@ -675,7 +674,7 @@ export function FlightForm({
 																},
 															})
 														}
-														className="h-8 w-20 font-mono uppercase tnum placeholder:font-sans placeholder:normal-case"
+														className="w-20 font-mono uppercase tnum placeholder:font-sans placeholder:normal-case"
 													/>
 												)}
 											</div>
@@ -701,7 +700,7 @@ export function FlightForm({
 												onChange={(e) =>
 													up(s.key, { ref: e.target.value.toUpperCase() })
 												}
-												className="h-8 font-mono uppercase tnum placeholder:font-sans placeholder:normal-case"
+												className="font-mono uppercase tnum placeholder:font-sans placeholder:normal-case"
 											/>
 										)}
 									</Row>
@@ -715,7 +714,6 @@ export function FlightForm({
 										placeholder="Optional"
 										disabled={disabled}
 										onChange={(e) => up(s.key, { baggage: e.target.value })}
-										className="h-8"
 									/>
 								</Row>
 							</div>
@@ -737,7 +735,7 @@ export function FlightForm({
 														costCurrency: e.target.value.toUpperCase(),
 													})
 												}
-												className="h-8 w-16 shrink-0 font-mono uppercase"
+												className="w-16 shrink-0 font-mono uppercase"
 											/>
 											<Input
 												data-testid={TRANSIT_TESTID.flightCostAmount}
@@ -749,7 +747,7 @@ export function FlightForm({
 												onChange={(e) =>
 													up(s.key, { costAmount: e.target.value })
 												}
-												className="h-8 min-w-0 font-mono tnum placeholder:font-sans"
+												className="min-w-0 font-mono tnum placeholder:font-sans"
 											/>
 										</div>
 									)}
@@ -769,7 +767,7 @@ export function FlightForm({
 												onChange={(e) =>
 													up(s.key, { pointsProgram: e.target.value })
 												}
-												className="h-8 min-w-0 flex-1"
+												className="min-w-0 flex-1"
 											/>
 											<Input
 												data-testid={TRANSIT_TESTID.flightPointsAmount}
@@ -781,7 +779,7 @@ export function FlightForm({
 												onChange={(e) =>
 													up(s.key, { pointsAmount: e.target.value })
 												}
-												className="h-8 w-20 shrink-0 font-mono tnum placeholder:font-sans"
+												className="w-20 shrink-0 font-mono tnum placeholder:font-sans"
 											/>
 										</div>
 									)}
@@ -800,7 +798,7 @@ export function FlightForm({
 											onChange={(e) =>
 												up(s.key, { feesAmount: e.target.value })
 											}
-											className="h-8 font-mono tnum placeholder:font-sans"
+											className="font-mono tnum placeholder:font-sans"
 										/>
 									)}
 								</Row>
@@ -848,7 +846,7 @@ export function FlightForm({
 								placeholder="Optional"
 								disabled={disabled}
 								onChange={(e) => setSharedRef(e.target.value.toUpperCase())}
-								className="h-8 w-40 font-mono uppercase tnum placeholder:font-sans placeholder:normal-case"
+								className="w-40 font-mono uppercase tnum placeholder:font-sans placeholder:normal-case"
 							/>
 						)}
 					</Row>
@@ -1059,7 +1057,7 @@ function AirportRowFields({
 					value={date}
 					disabled={disabled}
 					onChange={(e) => onDate(e.target.value)}
-					className="h-8 min-w-0 font-mono tnum"
+					className="min-w-0 font-mono tnum"
 				/>
 				<TimeInput
 					testId={testIds.time}

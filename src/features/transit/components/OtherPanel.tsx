@@ -122,7 +122,6 @@ export function OtherPanel({ ed }: { ed: LegEditor }) {
 						value={label}
 						maxLength={80}
 						placeholder="e.g. MK Taxi, Drive to JFK"
-						className="h-8"
 						onChange={(e) => setLabel(e.target.value)}
 						onBlur={() => {
 							if (label.trim() !== (current?.label ?? "")) save({ label });

@@ -346,7 +346,7 @@ function DueForm({
 							inputMode="numeric"
 							value={amount}
 							onChange={(e) => setAmount(e.target.value.replace(/\D/g, ""))}
-							className="h-8 w-16 tnum"
+							className="w-16 tnum"
 							aria-label="How many"
 						/>
 						<Select

@@ -182,7 +182,7 @@ export function DurationInput({
 							setError(false);
 						}}
 						aria-invalid={error || undefined}
-						className="h-8 tnum"
+						className="tnum"
 						placeholder="1h30"
 					/>
 					{error ? (

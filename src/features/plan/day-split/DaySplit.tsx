@@ -359,7 +359,7 @@ function SplitSuggestion({
 							const ok = Number.isInteger(n) && n >= 1 && n <= MAX_DAYS;
 							update({ tripDays: ok ? n : undefined });
 						}}
-						className="h-8 w-20"
+						className="w-20"
 					/>
 					{need && !shown ? (
 						<span className="text-sm text-muted-foreground">

@@ -131,7 +131,7 @@ export function TimeNeededEditor({
 						aria-label="Time needed"
 						aria-invalid={typed === null || undefined}
 						data-testid={PLACES_TAB_TESTID.timeInput}
-						className="h-8 flex-1 text-meta tnum"
+						className="flex-1 text-meta tnum"
 					/>
 					<Button size="sm" type="submit" disabled={!typed}>
 						Set

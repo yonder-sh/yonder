@@ -439,7 +439,7 @@ function EditorBody({
 								});
 							}}
 							placeholder="–"
-							className="h-8 w-16 text-center tnum"
+							className="w-16 text-center tnum"
 						/>
 						<span className="text-muted-foreground">min before close</span>
 						{draft.mode === "weekly" ? (
@@ -880,7 +880,7 @@ function ExceptionsEditor({
 									})
 								}
 								placeholder="Why (Sports Day, renovation…)"
-								className="h-8 text-meta"
+								className="text-meta"
 							/>
 						</div>
 					))}
