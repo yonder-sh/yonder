@@ -125,6 +125,7 @@ describe("history (QA MOB-02)", () => {
 			"openPlaces",
 			"setDays",
 			"setTab",
+			"showMedia",
 			"zoomIn",
 			"zoomOut",
 			"zoomTo",

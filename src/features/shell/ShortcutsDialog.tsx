@@ -20,7 +20,6 @@ export const SHIFT = IS_MAC ? "⇧" : "Shift";
 
 export const SHORTCUTS: { keys: string[]; label: string }[] = [
 	{ keys: [MOD, "K"], label: "Search, add or jump" },
-	{ keys: [MOD, "\\"], label: "Show or hide the outline" },
 	{ keys: [MOD, SHIFT, "\\"], label: "Show or hide the map" },
 	{ keys: ["["], label: "Coarser lens" },
 	{ keys: ["]"], label: "Finer lens" },
@@ -29,7 +28,7 @@ export const SHORTCUTS: { keys: string[]; label: string }[] = [
 	{ keys: ["J"], label: "Next stop in the plan" },
 	{ keys: ["K"], label: "Previous stop in the plan" },
 	{ keys: ["D"], label: "Show the day of the selection" },
-	{ keys: ["A"], label: "Add the focused Outline place to the focused day" },
+	{ keys: ["A"], label: "Add the focused idea to the day in view" },
 	{ keys: [MOD, "Z"], label: "Undo the last delete or move" },
 	{ keys: ["/"], label: "Say something next to your cursor" },
 	{ keys: ["E"], label: "React with an emoji where you point" },

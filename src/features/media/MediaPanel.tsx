@@ -9,12 +9,11 @@
  * - a leg or an unlocated item: its own bundle.
  * Uploads, links and drops attach to what's shown ("…to this visit").
  * `section` (the details pane): the target's own items, then "From places in
- * Japan · 20" with See all (the full panel in a dialog).
+ * Japan · 20" with See all (the full gallery, `tab=media`).
  */
 import { useMemo, useState } from "react";
 import { Segmented } from "@/components/kit";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { offersRollupChoice } from "@/features/shell/bundle-target";
 import { defaultLens } from "@/lib/engine/lens";
@@ -36,7 +35,6 @@ import {
 import { MediaGallery } from "./components/media-gallery";
 import { buildGroups } from "./gallery-groups";
 import { dropLabel } from "./labels";
-import { MediaAll } from "./MediaAll";
 import { filterOf, MEDIA_FILTERS, type MediaFilter } from "./media-kinds";
 import { useDocOfflineSync } from "./offline/MediaOfflineSync";
 import { sameTarget, useTripMedia } from "./queries";
@@ -88,14 +86,6 @@ export function MediaPanel({
 	const effective: BundleTarget =
 		visitOnly && visitItemId ? { kind: "item", itemId: visitItemId } : target;
 	const day = target.kind === "day" ? ix.day(target.dayId) : undefined;
-	const [seeAll, setSeeAll] = useState(false);
-	// A group's zoom-in moves the view: the dialog goes with it.
-	const view = `${ws.scope?.id ?? ""}|${sel ? JSON.stringify(sel) : ""}`;
-	const [openedAt, setOpenedAt] = useState(view);
-	if (seeAll && openedAt !== view) {
-		setSeeAll(false);
-		setOpenedAt(view);
-	}
 	const viewScope: Scope = section && target.kind !== "day" ? "own" : scope;
 
 	const opts = useMemo<RollupOptions | null>(() => {
@@ -260,23 +250,14 @@ export function MediaPanel({
 							variant="ghost"
 							size="sm"
 							data-testid={MEDIA_TESTID.seeAll}
-							onClick={() => {
-								setOpenedAt(view);
-								setSeeAll(true);
-							}}
+							onClick={() =>
+								ws.nav.showMedia(target.kind === "node" ? target.nodeId : null)
+							}
 						>
 							See all
 						</Button>
 					</div>
 				) : null}
-				<Dialog open={seeAll} onOpenChange={setSeeAll}>
-					<DialogContent className="max-w-3xl">
-						<DialogTitle>Photos &amp; links · {name}</DialogTitle>
-						<div className="-mx-6 max-h-[70vh] overflow-y-auto">
-							<MediaAll target={target} />
-						</div>
-					</DialogContent>
-				</Dialog>
 				{drop.isOver ? (
 					<DropOverlay
 						label={dropLabel(ix, effective, visitOnly && !!visitItemId)}

@@ -29,7 +29,7 @@ import { loginViaApi } from "./_helpers/auth";
 import { shotPath, storageStateOf } from "./_helpers/env";
 import { cloneFixtureTrip } from "./_helpers/fixture";
 import { logOffset, readOtpFromLog } from "./_helpers/otp";
-import { collectConsole, detailsSection, expectLive, hydrated, mediaView, notesView } from "./_helpers/page";
+import { collectConsole, detailsSection, expectLive, goWhere, hydrated, notesView } from "./_helpers/page";
 import { openLink } from "./_helpers/link";
 
 const MAP_NOISE = [/GL Driver Message|WebGL|layers\[[^\]]+\]\.filter/];
@@ -245,28 +245,23 @@ test("J2 Asia 2027: zoom Japan → Tokyo → Shibuya, lens keys and Esc, Days 5�
 	await expect(page.getByTestId(TESTID.tripMap)).toBeVisible({ timeout: 20_000 });
 	await shot(page, "j2-01-root");
 	const rootLists = await tabCount(page, "lists");
-	const outline = page.getByTestId(TESTID.outline);
-	const row = (name: string) =>
-		outline.locator(`[data-testid="${TESTID.outlineRow}"][aria-label^="${name},"]`).first();
-
-	// Japan
-	await row("Japan").dblclick();
+	// Japan (One Yonder: the Where picker moves around)
+	await goWhere(page, "Japan");
 	await expect(page).toHaveURL(/\/t\/asia-2027\/japan(\?|$)/);
-	await expect(page.getByTestId(TESTID.scopeBreadcrumb)).toContainText("Japan");
+	await expect(page.getByTestId("where-button")).toContainText("Japan");
 	const japan = await scopeState(page);
 	const japanLists = await tabCount(page, "lists");
 	await shot(page, "j2-02-japan");
 
 	// Tokyo
-	await row("Tokyo").dblclick();
+	await goWhere(page, "Tokyo");
 	await expect(page).toHaveURL(/\/japan\/tokyo(\?|$)/);
 	await expect(page.getByTestId(TESTID.timelineItem).first()).toBeVisible();
 	const tokyo = await scopeState(page);
 	const tokyoLists = await tabCount(page, "lists");
 	await shot(page, "j2-03-tokyo");
 	// ] and [ step the lens at Tokyo (Shibuya, an area, only has "place").
-	const lensOf = async () =>
-		(await page.getByTestId(TESTID.lensControl).locator('[aria-pressed="true"],[aria-checked="true"],[data-state="on"]').first().textContent())?.trim();
+	const lensOf = () => page.getByTestId(TESTID.planTab).getAttribute("data-lens");
 	const lens0 = await lensOf();
 	await page.locator("body").press("]");
 	await expect.poll(lensOf).not.toBe(lens0);
@@ -275,7 +270,7 @@ test("J2 Asia 2027: zoom Japan → Tokyo → Shibuya, lens keys and Esc, Days 5�
 	await expect.poll(lensOf).toBe(lens0);
 
 	// Shibuya
-	await row("Shibuya").dblclick();
+	await goWhere(page, "Shibuya");
 	await expect(page).toHaveURL(/\/japan\/tokyo\/shibuya(\?|$)/);
 	const shibuya = await scopeState(page);
 	const shibuyaLists = await tabCount(page, "lists");
@@ -331,9 +326,12 @@ test("J2 Asia 2027: zoom Japan → Tokyo → Shibuya, lens keys and Esc, Days 5�
 	expect(ranged.pins.length).toBeGreaterThan(0);
 	expect(ranged.pins.length).toBeLessThan(japan.pins.length);
 	expect(ranged.pins.every((p) => !p.hollow)).toBe(true);
-	// The Media tab follows the days.
-	await page.getByTestId(TESTID.centerTabs).locator('[data-tab="media"]').click();
-	await expect(mediaView(page)).toBeVisible();
+	// The full gallery (out of the tab bar: a link or the details' See all) follows the days.
+	const withMedia = new URL(page.url());
+	withMedia.searchParams.set("tab", "media");
+	await page.goto(withMedia.toString());
+	await expectLive(page);
+	await expect(page.getByTestId(TESTID.mediaTab)).toBeVisible();
 	await expect(page).toHaveURL(/tab=media/);
 	await expect(page).toHaveURL(new RegExp(`days=${d5}\\.\\.${d6}`));
 	const rangedMedia = await page.getByTestId(TESTID.galleryItem).count();
@@ -800,7 +798,7 @@ test("J6 photo, video, TikTok and guide link roll up at Tokyo, Japan and on the 
 	await shot(page, "j6-03-day1-media");
 	await page.goto(`/t/${c.slug}?tab=media&days=2027-10-04`);
 	await expectLive(page);
-	await expect(mediaView(page)).toBeVisible();
+	await expect(page.getByTestId(TESTID.mediaTab)).toBeVisible();
 	await expect(tiles("video")).toHaveCount(0);
 	expect(logs.messages).toEqual([]);
 	await ctx.close();

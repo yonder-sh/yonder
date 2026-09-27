@@ -110,15 +110,15 @@ export function notesView(scope: Scope): Locator {
 	return scope.getByTestId("inspector").locator('[data-section="notes"]').first();
 }
 
-/** Where the Media tab went: the details' Photos & links section (own items; a `?tab=media` link opens it). */
-export function mediaView(scope: Scope): Locator {
-	return scope.getByTestId("inspector").locator('[data-section="media"]').first();
-}
 
-/** Everything inside, grouped (the old Media tab's gallery): the section's See all. */
-export async function openMediaAll(page: import("@playwright/test").Page): Promise<Locator> {
-	const all = page.getByTestId("media-tab");
-	if (!(await all.isVisible())) await mediaView(page).getByTestId("media-see-all").click();
-	await all.waitFor();
-	return all;
+/** Go to a city, area or place with the Where picker (One Yonder: it replaced the Outline and the breadcrumb). */
+export async function goWhere(page: import("@playwright/test").Page, name: string): Promise<void> {
+	await page.getByTestId("where-button").click();
+	const picker = page.getByTestId("where-picker");
+	await picker.getByPlaceholder("Find a city, area or place").fill(name);
+	await picker
+		.getByTestId("where-row")
+		.filter({ has: page.getByText(name, { exact: true }) })
+		.first()
+		.click();
 }

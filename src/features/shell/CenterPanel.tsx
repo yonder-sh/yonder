@@ -15,11 +15,14 @@
  *   (the MoneyTab's own guard).
  */
 
+import { ArrowLeft } from "lucide-react";
 import { useEffect, useMemo, useRef } from "react";
 import { RollupToggle } from "@/components/common/rollup-toggle";
 import { Chip } from "@/components/kit";
+import { Button } from "@/components/ui/button";
 import { ListsTab } from "@/features/lists/ListsTab";
 import { useListsOverdue } from "@/features/lists/use-lists-overdue";
+import { MediaAll } from "@/features/media/MediaAll";
 import { MoneyTab } from "@/features/money/MoneyTab";
 import { OverviewTab } from "@/features/overview/OverviewTab";
 import { PlacesTab } from "@/features/places/tab/PlacesTab";
@@ -89,7 +92,12 @@ export function CenterTabBar({
 	const listsOverdue = useListsOverdue();
 	const tabs = visibleTabs(ws.graph.me);
 	// A guest's URL may still say `tab=money`: show the plan instead.
-	const active = tabs.includes(ws.tab) ? ws.tab : "plan";
+	// The full gallery (`tab=media`) isn't in the bar: no tab is lit for it.
+	const active = tabs.includes(ws.tab)
+		? ws.tab
+		: ws.tab === "media"
+			? null
+			: "plan";
 	// A narrow bar scrolls sideways: keep the selected tab in view (a `?tab=money`
 	// link on a phone, past the Overview and Plan).
 	const bar = useRef<HTMLDivElement>(null);
@@ -208,7 +216,8 @@ export function CenterTabContent({
 	phone?: boolean;
 } = {}) {
 	const { tab, graph, mode } = useWorkspace();
-	const active = visibleTabs(graph.me).includes(tab) ? tab : "plan";
+	const active =
+		tab === "media" || visibleTabs(graph.me).includes(tab) ? tab : "plan";
 	const rollupChoice = useRollupChoice();
 	return (
 		<div className="flex min-h-0 flex-1 flex-col">
@@ -242,6 +251,7 @@ export function CenterTabContent({
 				{active === "overview" ? <OverviewTab phone={phone} /> : null}
 				{active === "plan" ? <PlanTab /> : null}
 				{active === "places" ? <PlacesTab phone={phone} /> : null}
+				{active === "media" ? <MediaView /> : null}
 				{active === "lists" ? <ListsTab /> : null}
 				{active === "money" ? <MoneyTab /> : null}
 			</div>
@@ -250,6 +260,35 @@ export function CenterTabContent({
 			{mode === "live" && whereChips ? (
 				<ElsewhereChips strip className="shrink-0 border-t px-3 py-1" />
 			) : null}
+		</div>
+	);
+}
+
+/**
+ * Everything saved in the scope, full width (the details' See all, or an old
+ * Media tab link): a header naming it, with the way back to the Plan.
+ */
+function MediaView() {
+	const { scope, graph, nav } = useWorkspace();
+	return (
+		<div className="flex min-h-full flex-col">
+			<div className="flex h-11 shrink-0 items-center gap-2 border-b px-4">
+				<Button
+					variant="ghost"
+					size="sm"
+					data-testid={SHELL_TESTID.mediaBack}
+					onClick={() => nav.setTab("plan")}
+				>
+					<ArrowLeft /> Plan
+				</Button>
+				<h2 className="min-w-0 truncate text-sm font-semibold">
+					Photos &amp; links · {scope?.name ?? graph.trip.name}
+				</h2>
+			</div>
+			<MediaAll
+				view
+				target={scope ? { kind: "node", nodeId: scope.id } : { kind: "trip" }}
+			/>
 		</div>
 	);
 }

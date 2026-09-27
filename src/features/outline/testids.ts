@@ -38,6 +38,8 @@ export const OUTLINE_TESTID = {
 	filterSummary: "place-filter-summary",
 	/** Ideas. */
 	ideaRow: "idea-row",
+	/** The Plan's + on an idea: add it to the day in view. */
+	ideaAdd: "idea-add",
 	ideasSort: "ideas-sort",
 	ideasCount: "ideas-count",
 	/** FB-05: the Ideas header's "Rate ideas →" (to `/t/<trip>/rate`). */

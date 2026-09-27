@@ -14,7 +14,7 @@ import { TESTID } from "../../../src/lib/testids";
 import { loginViaApi } from "./_helpers/auth";
 import { APP_URL, REPO_ROOT } from "./_helpers/env";
 import { cloneFixtureTrip } from "./_helpers/fixture";
-import { expectLive, mediaView } from "./_helpers/page";
+import { expectLive } from "./_helpers/page";
 
 function setQuota(email: string, gb: string): string {
 	return execFileSync(path.join(REPO_ROOT, "node_modules/.bin/tsx"), ["scripts/set-quota.ts", email, gb], {
@@ -39,7 +39,7 @@ test("an upload over the quota is refused before any bytes go up; the profile sh
 	const page = await ctx.newPage();
 	await page.goto(`/t/${c.slug}/japan/tokyo?tab=media`);
 	await expectLive(page);
-	await expect(mediaView(page)).toBeVisible();
+	await expect(page.getByTestId(TESTID.mediaTab)).toBeVisible();
 	const puts: string[] = [];
 	page.on("request", (r) => {
 		if (r.method() === "PUT") puts.push(r.url());

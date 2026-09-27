@@ -60,6 +60,7 @@ export const REPLACES_HISTORY = {
 	setList: true,
 	setInspectorTab: true,
 	openDetails: true,
+	showMedia: false,
 	setPlaces: true,
 	openPlaces: false,
 } as const;
@@ -211,6 +212,14 @@ export const openDetails = (s: NavState, section: InspectorTabParam) =>
 		sel: s.search.sel ?? (s.scopeId ? `n.${s.scopeId}` : "root"),
 		itab: section === "overview" ? undefined : section,
 	});
+
+/**
+ * Everything saved in a place (the details' See all): its scope, on the full
+ * gallery (`tab=media`, no longer in the tab bar).
+ */
+export function showMedia(s: NavState, nodeId: string | null): NavTarget {
+	return withTab(zoomTo(s, nodeId), nodeId, "media");
+}
 
 /**
  * A centre tab. The Overview is the whole trip's: from a place it goes to

@@ -7,6 +7,9 @@
  * shared filter (ADDENDUM §10, `?f=`) narrows them. Drag a row onto a Plan day
  * to schedule it, or press **A** on a focused row to add it to the focused
  * day. Proposed places (E7) sort in like any other, drawn as ghosts.
+ *
+ * `plan` (One Yonder, D03/D04): the same list under the Plan's days, "Ideas in
+ * Kyoto" for the day in view, each row with + to add it to that day.
  */
 import { useDndMonitor, useDraggable } from "@dnd-kit/core";
 import {
@@ -15,6 +18,7 @@ import {
 	ChevronDown,
 	ChevronRight,
 	Lightbulb,
+	Plus,
 } from "lucide-react";
 import {
 	type KeyboardEvent,
@@ -44,6 +48,7 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { isRateable } from "@/features/places/lib/rate";
+import { PLAN_TESTID } from "@/features/plan/testids";
 import type { GraphNode } from "@/lib/engine/types";
 import { bool, oneOf, useFollowValue } from "@/lib/realtime/view-ui";
 import { TESTID } from "@/lib/testids";
@@ -97,6 +102,7 @@ function IdeaRow({
 	onFocusRow,
 	onKey,
 	registerRef,
+	onAdd,
 }: {
 	entry: IdeaEntry;
 	instance: string;
@@ -105,6 +111,8 @@ function IdeaRow({
 	onFocusRow(id: string): void;
 	onKey(e: KeyboardEvent<HTMLElement>, node: GraphNode): void;
 	registerRef(id: string, el: HTMLElement | null): void;
+	/** The Plan's +: add it to the day in view. */
+	onAdd?: (nodeId: string) => void;
 }) {
 	const { nav, sel, ix, proposals } = useWorkspace();
 	const guard = useEditGuard();
@@ -179,12 +187,28 @@ function IdeaRow({
 					{parent.name}
 				</span>
 			) : null}
-			<span className="ml-auto flex shrink-0 items-center pl-1">
+			<span className="ml-auto flex shrink-0 items-center gap-1 pl-1">
 				{ghost ? (
 					<span className="sr-only">suggested</span>
 				) : (
 					<RatingDot level={top} />
 				)}
+				{onAdd && !ghost ? (
+					<Button
+						variant="ghost"
+						size="icon-sm"
+						data-testid={OUTLINE_TESTID.ideaAdd}
+						aria-label={`Add ${node.name} to the day`}
+						disabled={guard.disabled}
+						onClick={(e) => {
+							e.stopPropagation();
+							onAdd(node.id);
+						}}
+						onPointerDown={(e) => e.stopPropagation()}
+					>
+						<Plus />
+					</Button>
+				) : null}
 			</span>
 		</div>
 	);
@@ -234,8 +258,16 @@ function RateIdeasLink({ where }: { where: string | undefined }) {
 	);
 }
 
-function IdeasBinInner({ embedded = false }: { embedded?: boolean }) {
-	const { ix, scope, proposals, access, mode } = useWorkspace();
+function IdeasBinInner({
+	embedded = false,
+	scopeId: scopeIdProp,
+	plan = false,
+}: {
+	embedded?: boolean;
+	scopeId?: string | null;
+	plan?: boolean;
+}) {
+	const { ix, scope, proposals, access, mode, graph } = useWorkspace();
 	const { filter, ctx, active: filtering, clear } = usePlaceFilter();
 	const openAddPlace = useUi((s) => s.openAddPlace);
 	const actions = useOutlineActions();
@@ -259,7 +291,7 @@ function IdeasBinInner({ embedded = false }: { embedded?: boolean }) {
 	// FB-21d: the bin's fold and sort travel with my view (not saved as a follower's).
 	useFollowValue("outline.ideas", open, setOpenState, bool);
 	useFollowValue("outline.isort", sort, setSortState, isIdeasSort);
-	const scopeId = scope?.id ?? null;
+	const scopeId = scopeIdProp !== undefined ? scopeIdProp : (scope?.id ?? null);
 	const ghosts = useMemo(
 		() => (proposals.show ? ghostNodes(ix, proposals.list) : []),
 		[proposals.show, proposals.list, ix],
@@ -328,15 +360,16 @@ function IdeasBinInner({ embedded = false }: { embedded?: boolean }) {
 		ideas.some((e) => !e.proposalId && isRateable(e.node));
 	const countText =
 		filtering && total ? `${ideas.length} of ${total}` : String(total);
-	const where = scope?.name;
+	const where = scopeId ? ix.node(scopeId)?.name : undefined;
 
 	return (
 		<section
-			data-testid={TESTID.ideasBin}
-			aria-label="Ideas"
+			data-testid={plan ? PLAN_TESTID.ideas : TESTID.ideasBin}
+			aria-label={plan ? `Ideas in ${where ?? graph.trip.name}` : "Ideas"}
 			className={cn(
-				"flex shrink-0 flex-col border-t",
-				embedded ? "" : "max-h-[40%]",
+				"flex shrink-0 flex-col",
+				plan ? "mx-4 mt-6 rounded-xl border bg-card" : "border-t",
+				!plan && !embedded && "max-h-[40%]",
 			)}
 		>
 			<div className="@container flex h-9 shrink-0 items-center gap-1 pr-2 max-md:h-11">
@@ -351,7 +384,7 @@ function IdeasBinInner({ embedded = false }: { embedded?: boolean }) {
 					) : (
 						<ChevronRight className="size-3 shrink-0" />
 					)}
-					<span>Ideas</span>
+					<span>{plan ? `Ideas in ${where ?? graph.trip.name}` : "Ideas"}</span>
 					<span aria-hidden>·</span>
 					<span
 						className="normal-case tracking-normal tnum"
@@ -403,8 +436,16 @@ function IdeasBinInner({ embedded = false }: { embedded?: boolean }) {
 					<div
 						role="listbox"
 						aria-label={where ? `Ideas in ${where}` : "Ideas"}
-						className={cn("min-h-0 pb-2", !embedded && "overflow-y-auto")}
+						className={cn(
+							"min-h-0 pb-2",
+							!embedded && !plan && "overflow-y-auto",
+						)}
 					>
+						{plan ? (
+							<p className="px-4 pb-1 text-meta text-muted-foreground">
+								Drag one onto a day, or tap + to add it to the day in view.
+							</p>
+						) : null}
 						{ideas.map((entry) => (
 							<IdeaRow
 								key={entry.node.id}
@@ -415,6 +456,7 @@ function IdeasBinInner({ embedded = false }: { embedded?: boolean }) {
 								onFocusRow={setFocusedId}
 								onKey={onKey}
 								registerRef={registerRef}
+								onAdd={plan ? (id) => actions.schedule(id) : undefined}
 							/>
 						))}
 					</div>
@@ -462,8 +504,16 @@ function IdeasBinInner({ embedded = false }: { embedded?: boolean }) {
 	);
 }
 
-export function IdeasBin({ embedded }: { embedded?: boolean } = {}) {
+export function IdeasBin(
+	props: {
+		embedded?: boolean;
+		/** Whose ideas (default: the scope's). */
+		scopeId?: string | null;
+		/** Under the Plan's days, with + to add each to the day in view. */
+		plan?: boolean;
+	} = {},
+) {
 	const { inContext } = useDnd();
-	const body = <IdeasBinInner embedded={embedded} />;
+	const body = <IdeasBinInner {...props} />;
 	return inContext ? body : <WorkspaceDnd>{body}</WorkspaceDnd>;
 }

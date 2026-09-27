@@ -6,15 +6,9 @@
  * on this device, never followed), with ⌘\ and ⌘⇧\ as shortcuts.
  */
 
-import {
-	PanelLeftClose,
-	PanelLeftOpen,
-	PanelRightClose,
-	PanelRightOpen,
-} from "lucide-react";
+import { PanelRightClose, PanelRightOpen } from "lucide-react";
 import type { ReactNode } from "react";
 import { Kbd } from "@/components/common/glyphs";
-import { Button } from "@/components/ui/button";
 import {
 	Tooltip,
 	TooltipContent,
@@ -49,25 +43,6 @@ function Tip({
 				</span>
 			</TooltipContent>
 		</Tooltip>
-	);
-}
-
-/** "Hide the outline", in the Outline's header. */
-export function OutlineHideButton() {
-	const toggle = useShell((s) => s.toggleOutline);
-	return (
-		<Tip label="Hide the outline" keys={[MOD, "\\"]} side="bottom">
-			<Button
-				variant="ghost"
-				size="icon"
-				className="size-7"
-				aria-label="Hide the outline"
-				data-testid={SHELL_TESTID.outlineHide}
-				onClick={toggle}
-			>
-				<PanelLeftClose className="size-4" />
-			</Button>
-		</Tip>
 	);
 }
 
@@ -119,26 +94,6 @@ function Rail({
 				</button>
 			</Tip>
 		</div>
-	);
-}
-
-/**
- * xl, the Outline hidden: its rail at the left edge. `onShow` when it's
- * folded for the details pane (showing it folds the pane instead).
- */
-export function OutlineRail({ onShow }: { onShow?: () => void } = {}) {
-	const toggle = useShell((s) => s.toggleOutline);
-	return (
-		<Rail
-			side="left"
-			label="Show the outline"
-			word="Outline"
-			icon={<PanelLeftOpen className="size-4" />}
-			keys={[MOD, "\\"]}
-			onShow={onShow ?? toggle}
-			testId={SHELL_TESTID.outlineRail}
-			buttonTestId={SHELL_TESTID.outlineShow}
-		/>
 	);
 }
 

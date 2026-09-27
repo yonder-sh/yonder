@@ -1,13 +1,14 @@
 /**
  * DESIGN §5 desktop layouts:
- * - xl ≥ 1280: Outline 264 (hidden to a rail from its header or ⌘\; the popover takes over) | centre 520 (resizable 440–720, persisted) | map | details
- * - lg: Outline in a popover (top bar), centre 460, map, details
+ * - xl ≥ 1280: centre 520 (resizable 440–720, persisted) | map | details
+ * - lg: centre 460, map, details
+ * - One Yonder: no Outline column; the top bar's Where picker moves around
+ *   (its Organize places has the tree), and the Plan lists the ideas.
  * - The details (lg/xl, owner 2026-09-26): a selection's panel docks as a
  *   pane at the right edge (`DetailsPane`: resizable, folds to a rail), the
  *   map giving up the width. Without room for the list, the map and the
- *   pane, the Outline folds to its rail while it's open; still without, the
- *   map does (its rail's "Show the map" folds the pane instead). Your own
- *   Outline and map settings stay as they are.
+ *   pane, the map folds (its rail's "Show the map" folds the pane instead).
+ *   Your own map setting stays as it is.
  * - md: centre 55% | map 45%, inspector in a right Sheet (420)
  * - The map hides from its corner or ⌘⇧\ (md and up): the centre takes its
  *   width, a rail at the right edge brings it back, the inspector docks
@@ -27,8 +28,6 @@ import {
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { GuestNudge } from "@/features/home/GuestNudge";
 import { OfflineBanner } from "@/features/offline/OfflineBanner";
-import { IdeasBin } from "@/features/outline/IdeasBin";
-import { Outline } from "@/features/outline/Outline";
 import {
 	useIsPlacesRow,
 	usePlacesMapView,
@@ -43,11 +42,10 @@ import { DetailsPane, useDetailsFold, useDetailsWidth } from "./DetailsPane";
 import { FollowBar } from "./FollowBar";
 import { InspectorBody } from "./InspectorBody";
 import { MapRegion } from "./MapRegion";
-import { MapRail, OutlineHideButton, OutlineRail } from "./PanelToggles";
+import { MapRail } from "./PanelToggles";
 import { pixelLayoutStorage } from "./pane-layout";
 import { useShell } from "./shell-store";
 import { TopBar } from "./TopBar";
-import { SHELL_TESTID } from "./testids";
 import type { Breakpoint } from "./use-breakpoint";
 
 /** The Overview tab is on screen: it takes the map's space too. */
@@ -56,8 +54,7 @@ function useOverviewTakesAll(): boolean {
 	return tab === "overview";
 }
 
-/** `--outline-w`, the hidden Outline's rail (`PanelToggles`, w-10), the 1px divider. */
-const OUTLINE_PX = 264;
+/** A folded pane's rail (`PanelToggles`, w-10) and the 1px divider. */
 const RAIL_PX = 40;
 const DIVIDER_PX = 1;
 /** The centre's and the map's narrowest (their panels' `minSize`). */
@@ -112,7 +109,6 @@ export function InspectorSheet() {
 }
 
 export function DesktopWorkspace({ bp }: { bp: Exclude<Breakpoint, "sm"> }) {
-	const outlineCollapsed = useShell((s) => s.outlineCollapsed);
 	const mapHidden = useShell((s) => s.mapHidden);
 	// docs/PLACES.md §1: the Places tab's Map view stands in for the side map.
 	const placesMap = usePlacesMapView();
@@ -133,20 +129,12 @@ export function DesktopWorkspace({ bp }: { bp: Exclude<Breakpoint, "sm"> }) {
 	// What's left for the pane beside a left column this wide, with or without the map.
 	const room = (left: number, map: boolean) =>
 		winW - left - DIVIDER_PX - CENTER_MIN - (map ? MAP_MIN : 0);
-	const outlineW = bp !== "xl" ? 0 : outlineCollapsed ? RAIL_PX : OUTLINE_PX;
 	const paneW = collapsed ? RAIL_PX : detailsW;
-	const tight = details && !collapsed && room(outlineW, mapShown) < paneW;
-	// No room for the list, the map and the pane: the Outline folds first…
-	const foldOutline =
-		tight &&
-		mapShown &&
-		bp === "xl" &&
-		!outlineCollapsed &&
-		room(RAIL_PX, true) >= paneW;
-	// …and without room still, the map.
-	const foldMap = tight && mapShown && !foldOutline;
+	const tight = details && !collapsed && room(0, mapShown) < paneW;
+	// No room for the list, the map and the pane: the map folds.
+	const foldMap = tight && mapShown;
 	const withMap = mapShown && !foldMap;
-	const left = foldOutline ? RAIL_PX : outlineW;
+	const left = 0;
 	const docked = details;
 	// The centre's width in pixels: the panes share the window less the xl
 	// left column, the details and the divider.
@@ -176,19 +164,6 @@ export function DesktopWorkspace({ bp }: { bp: Exclude<Breakpoint, "sm"> }) {
 			<OfflineBanner />
 			<GuestNudge />
 			<div className="flex min-h-0 flex-1">
-				{bp !== "xl" ? null : outlineCollapsed || foldOutline ? (
-					// Folded for the details: showing it folds them instead.
-					<OutlineRail onShow={foldOutline ? fold : undefined} />
-				) : (
-					<aside
-						aria-label="Outline"
-						data-testid={SHELL_TESTID.outlineAside}
-						className="flex w-[var(--outline-w)] shrink-0 flex-col border-r bg-sidebar text-sidebar-foreground animate-in fade-in-0 slide-in-from-left-2 duration-150 motion-reduce:animate-none"
-					>
-						<Outline headerEnd={<OutlineHideButton />} />
-						<IdeasBin />
-					</aside>
-				)}
 				{overview ? (
 					<>
 						<div className="h-full min-w-0 flex-1">

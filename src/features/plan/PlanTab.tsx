@@ -47,8 +47,11 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useMoneyCounts } from "@/features/money/use-money-counts";
+import { IdeasBin } from "@/features/outline/IdeasBin";
 import { TabPurpose } from "@/features/shell/TabPurpose";
+import type { GraphIndex } from "@/lib/engine/graph-index";
 import { indexGraph } from "@/lib/engine/graph-index";
+import type { DayRange } from "@/lib/engine/types";
 import { formatDateRange, formatDuration, formatTime } from "@/lib/format";
 import { userPrefsQuery } from "@/lib/query/trip-queries";
 import { decodePlanFolds, encodePlanFolds } from "@/lib/realtime/view-protocol";
@@ -251,6 +254,25 @@ function OverlayCard({ itemId }: { itemId: string }) {
 			</Chip>
 		</div>
 	);
+}
+
+/**
+ * Whose ideas the Plan offers: where the first day in view stays (its city,
+ * else its region, like Mt. Fuji), else the scope.
+ */
+export function planIdeasScope(
+	ix: GraphIndex,
+	days: DayRange | null,
+	scopeId: string | null,
+): string | null {
+	if (days) {
+		const night = ix.days.find((d) => d.date === days.from)?.nightNodeId;
+		const up = night ? [...ix.path(night)].reverse() : [];
+		const where =
+			up.find((n) => n.type === "city") ?? up.find((n) => n.type === "region");
+		if (where) return where.id;
+	}
+	return scopeId;
 }
 
 export function PlanTab() {
@@ -679,6 +701,11 @@ function PlanTabBody() {
 							</>
 						)}
 						<UnscheduledSection itemIds={model.unscheduled} />
+						{/* One Yonder (D03): what's saved but not planned, for the day in view. */}
+						<IdeasBin
+							plan
+							scopeId={planIdeasScope(ix, days, scope?.id ?? null)}
+						/>
 					</div>
 				</DropIndicatorProvider>
 			</PlanWindowContext.Provider>

@@ -5,6 +5,8 @@
  * Never rename an id.
  */
 export const SHELL_TESTID = {
+	/** The full gallery's way back to the Plan (`tab=media`). */
+	mediaBack: "media-back",
 	/** The Where button in the top bar ("Japan › Tokyo"). */
 	whereButton: "where-button",
 	/** The Where picker's popover; its rows (`data-node-id`, "" = the whole trip). */
@@ -48,11 +50,7 @@ export const SHELL_TESTID = {
 	fabMenu: "fab-menu",
 	fabPlace: "fab-place",
 	fabExpense: "fab-expense",
-	outlineAside: "outline-aside",
 	// The side panels' hide and show controls (desktop)
-	outlineHide: "outline-hide",
-	outlineRail: "outline-rail",
-	outlineShow: "outline-show",
 	mapHide: "map-hide",
 	mapRail: "map-rail",
 	detailsRail: "details-rail",

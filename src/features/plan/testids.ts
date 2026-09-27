@@ -5,6 +5,8 @@
  * `src/lib/testids.ts`. Never rename an id.
  */
 export const PLAN_TESTID = {
+	/** "Ideas in Kyoto" under the days (One Yonder: the Outline's Ideas bin moved here). */
+	ideas: "plan-ideas",
 	daySection: "plan-day",
 	dayHeader: "plan-day-header",
 	dayMenu: "plan-day-menu",

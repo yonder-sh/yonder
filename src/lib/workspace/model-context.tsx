@@ -133,6 +133,8 @@ export interface WorkspaceNav {
 	setInspectorTab(tab: InspectorTabParam): void;
 	/** A details section for the selection, else the scope (replace navigation). */
 	openDetails(section: InspectorTabParam): void;
+	/** A place's full gallery (`tab=media`, push navigation). */
+	showMedia(nodeId: string | null): void;
 	/** The Places tab's view, grouping, sort and filters (replace navigation). */
 	setPlaces(patch: N.PlacesPatch): void;
 	/** Open the Places tab at a scope with a view and filters (push navigation). */
@@ -305,6 +307,7 @@ export function WorkspaceModelProvider({
 			setInspectorTab: (t) =>
 				run(N.setInspectorTab(state, t), R.setInspectorTab),
 			openDetails: (t) => run(N.openDetails(state, t), R.openDetails),
+			showMedia: (id) => run(N.showMedia(state, id), R.showMedia),
 			setPlaces: (p) => run(N.setPlaces(state, p), R.setPlaces),
 			openPlaces: (o) => run(N.openPlaces(state, o), R.openPlaces),
 			hrefPlaces: (o) => href(N.openPlaces(state, o)),

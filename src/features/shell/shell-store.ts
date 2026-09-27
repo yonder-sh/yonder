@@ -10,7 +10,6 @@
  */
 import { create } from "zustand";
 
-export const OUTLINE_KEY = "yonder:outline-collapsed";
 export const MAP_HIDDEN_KEY = "yonder:map-hidden";
 export const DETAILS_WIDTH_KEY = "yonder:details-width";
 
@@ -41,9 +40,6 @@ function writeFlag(key: string, v: boolean): void {
 }
 
 export type ShellState = {
-	/** xl Outline collapsed to a rail (⌘\). */
-	outlineCollapsed: boolean;
-	toggleOutline(): void;
 	/** The map hidden (md and up, ⌘⇧\): the centre takes its width. */
 	mapHidden: boolean;
 	toggleMap(): void;
@@ -91,12 +87,6 @@ export type InspectorTab = "overview" | "media" | "lists" | "notes" | "money";
 export const INSPECTOR_TAB_TTL_MS = 10_000;
 
 export const useShell = create<ShellState>()((set, get) => ({
-	outlineCollapsed: readFlag(OUTLINE_KEY),
-	toggleOutline: () => {
-		const next = !get().outlineCollapsed;
-		writeFlag(OUTLINE_KEY, next);
-		set({ outlineCollapsed: next });
-	},
 	mapHidden: readFlag(MAP_HIDDEN_KEY),
 	toggleMap: () => {
 		const next = !get().mapHidden;

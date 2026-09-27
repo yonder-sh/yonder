@@ -14,7 +14,7 @@ import { renderWithWorkspace } from "@/test/render-workspace";
 import { DesktopWorkspace } from "./DesktopWorkspace";
 import { pixelLayoutStorage } from "./pane-layout";
 import { SHORTCUTS } from "./ShortcutsDialog";
-import { MAP_HIDDEN_KEY, OUTLINE_KEY, useShell } from "./shell-store";
+import { MAP_HIDDEN_KEY, useShell } from "./shell-store";
 import { SHELL_TESTID } from "./testids";
 import { useWorkspaceHotkeys } from "./use-workspace-hotkeys";
 
@@ -24,7 +24,7 @@ vi.mock("@/features/home/GuestNudge", () => ({ GuestNudge: () => null }));
 
 afterEach(() => {
 	act(() => {
-		useShell.setState({ outlineCollapsed: false, mapHidden: false });
+		useShell.setState({ mapHidden: false });
 		useUi.getState().resetUi();
 	});
 	localStorage.clear();
@@ -38,18 +38,10 @@ const desktop = (bp: "md" | "lg" | "xl") => (
 );
 
 describe("side panels", () => {
-	it("the Outline hides to a rail and comes back, remembered on this device", () => {
+	it("has no Outline column (One Yonder: Where moves around, the Plan lists the ideas)", () => {
 		renderWithWorkspace(desktop("xl"), { search: { tab: "plan" } });
-		const aside = screen.getByTestId(SHELL_TESTID.outlineAside);
-		fireEvent.click(
-			within(aside).getByRole("button", { name: "Hide the outline" }),
-		);
-		expect(screen.queryByTestId(SHELL_TESTID.outlineAside)).toBeNull();
-		expect(screen.getByTestId(SHELL_TESTID.outlineRail)).toBeInTheDocument();
-		expect(localStorage.getItem(OUTLINE_KEY)).toBe("1");
-		fireEvent.click(screen.getByRole("button", { name: "Show the outline" }));
-		expect(screen.getByTestId(SHELL_TESTID.outlineAside)).toBeInTheDocument();
-		expect(localStorage.getItem(OUTLINE_KEY)).toBeNull();
+		expect(screen.queryByTestId(TESTID.outline)).toBeNull();
+		expect(screen.queryByTestId(TESTID.ideasBin)).toBeNull();
 	});
 
 	it("the map hides to a rail at md, lg and xl; the centre takes its width", () => {
@@ -95,15 +87,11 @@ describe("side panels", () => {
 		expect(screen.getByTestId(SHELL_TESTID.mapRail)).toBeInTheDocument();
 	});
 
-	it("a fresh start reads both from storage", async () => {
-		localStorage.setItem(OUTLINE_KEY, "1");
+	it("a fresh start reads the map's from storage", async () => {
 		localStorage.setItem(MAP_HIDDEN_KEY, "1");
 		vi.resetModules();
 		const fresh = await import("./shell-store");
-		expect(fresh.useShell.getState()).toMatchObject({
-			outlineCollapsed: true,
-			mapHidden: true,
-		});
+		expect(fresh.useShell.getState()).toMatchObject({ mapHidden: true });
 	});
 });
 
@@ -155,25 +143,19 @@ describe("shortcuts", () => {
 			});
 		});
 
-	it("⌘\\ toggles the Outline, ⌘⇧\\ the map", () => {
+	it("⌘⇧\\ toggles the map; ⌘\\ alone does nothing now", () => {
 		renderWithWorkspace(<Keys />);
 		press(true);
-		expect(useShell.getState()).toMatchObject({
-			mapHidden: true,
-			outlineCollapsed: false,
-		});
+		expect(useShell.getState().mapHidden).toBe(true);
 		press(false);
-		expect(useShell.getState()).toMatchObject({
-			mapHidden: true,
-			outlineCollapsed: true,
-		});
+		expect(useShell.getState().mapHidden).toBe(true);
 		press(true);
 		expect(useShell.getState().mapHidden).toBe(false);
 	});
 
-	it("both are in the shortcuts list", () => {
+	it("the map's is in the shortcuts list", () => {
 		const labels = SHORTCUTS.map((s) => s.label);
-		expect(labels).toContain("Show or hide the outline");
+		expect(labels).not.toContain("Show or hide the outline");
 		expect(labels).toContain("Show or hide the map");
 		const map = SHORTCUTS.find((s) => s.label === "Show or hide the map");
 		expect(map?.keys.at(-1)).toBe("\\");
@@ -206,7 +188,6 @@ describe("the details pane (lg/xl)", () => {
 		const pane = screen.getByTestId(TESTID.inspector);
 		expect(pane.className).not.toContain("absolute");
 		expect(pane.style.width).toBe("400px");
-		expect(screen.getByTestId(SHELL_TESTID.outlineAside)).toBeInTheDocument();
 
 		fireEvent.click(screen.getByTestId(SHELL_TESTID.detailsCollapse));
 		expect(screen.queryByTestId(TESTID.inspector)).toBeNull();
@@ -233,22 +214,17 @@ describe("the details pane (lg/xl)", () => {
 		expect(localStorage.getItem("yonder:details-width")).toBe("416");
 	});
 
-	it("at 1280 px the Outline folds while it's open; showing the Outline folds the pane instead", () => {
+	it("at 1280 px the list, the map and the pane all fit (no Outline to fold)", () => {
 		setWidth(1280);
 		const { ws } = renderWithWorkspace(desktop("xl"), {
 			search: { tab: "plan", lens: "place" },
 		});
-		expect(screen.getByTestId(SHELL_TESTID.outlineAside)).toBeInTheDocument();
 		act(() => ws().nav.select({ kind: "day", id: day(ws) }));
-		expect(screen.queryByTestId(SHELL_TESTID.outlineAside)).toBeNull();
 		expect(screen.getByTestId(TESTID.inspector).className).not.toContain(
 			"absolute",
 		);
-		fireEvent.click(screen.getByRole("button", { name: "Show the outline" }));
-		expect(screen.getByTestId(SHELL_TESTID.outlineAside)).toBeInTheDocument();
-		expect(screen.getByTestId(SHELL_TESTID.detailsRail)).toBeInTheDocument();
-		// Your own Outline setting is untouched.
-		expect(localStorage.getItem(OUTLINE_KEY)).toBeNull();
+		expect(screen.queryByTestId(SHELL_TESTID.mapRail)).toBeNull();
+		expect(screen.queryByTestId(SHELL_TESTID.detailsRail)).toBeNull();
 	});
 
 	it("without room for the list, the map and the pane, the map folds; showing it folds the pane instead", () => {

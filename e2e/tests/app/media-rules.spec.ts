@@ -13,7 +13,7 @@ import { TESTID } from "../../../src/lib/testids";
 import { shotPath, storageStateOf } from "./_helpers/env";
 import { cloneFixtureTrip } from "./_helpers/fixture";
 import { clearToasts } from "./media-helpers";
-import { collectConsole, detailsSection, expectLive, expectNoHorizontalOverflow, mediaView } from "./_helpers/page";
+import { collectConsole, detailsSection, expectLive, expectNoHorizontalOverflow } from "./_helpers/page";
 
 test.use({ storageState: storageStateOf("dev") });
 
@@ -126,7 +126,7 @@ test("drop to attach, This visit only, Everything that day", async ({ page }, in
 	await page.goto(`/t/${c.slug}/japan/tokyo?tab=media`);
 	await expectLive(page);
 	const png = (await pngFromPage(page)).toString("base64");
-	await dropFiles(page, `[data-testid="inspector"] [data-section="media"]`, [{ name: "street.png", type: "image/png", b64: png }], {
+	await dropFiles(page, `[data-testid=${TESTID.mediaTab}]`, [{ name: "street.png", type: "image/png", b64: png }], {
 		shot: shotPath("media/drop-overlay-1440.png"),
 	});
 	await expect(tiles(page)).toHaveCount(2, { timeout: 20_000 });
@@ -359,7 +359,7 @@ test("phone layout: the Media tab and the PDF viewer at 390 × 844", async ({ br
 	await page.mouse.move(x, 60, { steps: 8 });
 	await page.mouse.up();
 	await expect(page).not.toHaveURL(/days=/);
-	await expect(mediaView(sheet)).toBeVisible();
+	await expect(sheet.getByTestId(TESTID.mediaTab)).toBeVisible();
 	await expect(sheet.getByTestId(TESTID.centerTabs).locator("xpath=..")).not.toHaveAttribute("aria-hidden", "true");
 	await page.getByTestId(MEDIA_TESTID.fileInput).first().setInputFiles({
 		name: "Suica guide.pdf",

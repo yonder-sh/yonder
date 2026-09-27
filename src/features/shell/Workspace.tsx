@@ -78,13 +78,14 @@ function useDefaultLens() {
 }
 
 /**
- * Old Media and Notes tab links (inbox mentions, bookmarks) open the place's
- * details at that section instead (One Yonder: five tabs).
+ * Old Notes tab links (inbox mentions, bookmarks) open the place's details at
+ * its Notes (One Yonder: five tabs). `tab=media` is still the full gallery,
+ * out of the tab bar.
  */
 function useRetiredTabs() {
 	const { tab, nav } = useWorkspace();
 	useEffect(() => {
-		if (tab === "media" || tab === "notes") nav.openDetails(tab);
+		if (tab === "notes") nav.openDetails("notes");
 	}, [tab, nav]);
 }
 

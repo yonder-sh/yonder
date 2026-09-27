@@ -14,7 +14,7 @@ import { TESTID } from "../../../src/lib/testids";
 import { shotPath, storageStateOf } from "./_helpers/env";
 import { cloneFixtureTrip } from "./_helpers/fixture";
 import { clearToasts } from "./media-helpers";
-import { collectConsole, expectLive, mediaView } from "./_helpers/page";
+import { collectConsole, expectLive } from "./_helpers/page";
 import { openLink } from "./_helpers/link";
 
 test.use({ storageState: storageStateOf("dev") });
@@ -47,7 +47,7 @@ async function jpegFromPage(page: Page, hue = 200): Promise<Buffer> {
 async function openMedia(page: Page, slug: string, path = "japan/tokyo") {
 	await page.goto(`/t/${slug}/${path}?tab=media`);
 	await expectLive(page);
-	await expect(mediaView(page)).toBeVisible();
+	await expect(page.getByTestId(TESTID.mediaTab)).toBeVisible();
 }
 
 const tiles = (page: Page, kind?: string) =>

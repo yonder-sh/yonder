@@ -67,7 +67,6 @@ const OPTS = {
 export function useWorkspaceHotkeys() {
 	const { nav, sel, ix, scope, days } = useWorkspace();
 	const openAddPlace = useUi((s) => s.openAddPlace);
-	const toggleOutline = useShell((s) => s.toggleOutline);
 	const toggleMap = useShell((s) => s.toggleMap);
 	const setShortcutsOpen = useShell((s) => s.setShortcutsOpen);
 	// Read the latest state when a key fires (a quick J, J must not reuse the old selection).
@@ -118,15 +117,6 @@ export function useWorkspaceHotkeys() {
 		},
 		{ enableOnFormTags: true },
 		[openAddPlace],
-	);
-	useHotkeys(
-		"mod+backslash",
-		(e) => {
-			e.preventDefault();
-			toggleOutline();
-		},
-		OPTS,
-		[toggleOutline],
 	);
 	// Shift makes it a different chord: ⌘\ alone never fires this one.
 	useHotkeys(

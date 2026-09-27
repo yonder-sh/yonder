@@ -36,9 +36,16 @@ import {
 	useWindowDropGuard,
 } from "./use-media-surface";
 
-export function MediaAll({ target }: { target: BundleTarget }) {
+export function MediaAll({
+	target,
+	view = false,
+}: {
+	target: BundleTarget;
+	/** The centre view (`tab=media`): the lens, days and "Only" of the URL. */
+	view?: boolean;
+}) {
 	const ws = useWorkspace();
-	const { graph, ix, model, schedule } = ws;
+	const { graph, ix, model, schedule, lens, only, days } = ws;
 	const { data, isLoading } = useTripMedia();
 	const actions = useMediaActions(graph.trip.id);
 	const [mf, setMf] = useMediaFilter();
@@ -51,13 +58,22 @@ export function MediaAll({ target }: { target: BundleTarget }) {
 	usePasteToAttach(ws.mode === "live", surface.addUrl, surface.uploadFiles);
 
 	const opts = useMemo<RollupOptions>(
-		() => ({
-			scopeId,
-			lens: defaultLens(ix, scopeId),
-			includeDescendants: true,
-			model,
-		}),
-		[scopeId, ix, model],
+		() =>
+			view
+				? {
+						scopeId,
+						lens,
+						includeDescendants: !only,
+						dayRange: days,
+						model,
+					}
+				: {
+						scopeId,
+						lens: defaultLens(ix, scopeId),
+						includeDescendants: true,
+						model,
+					},
+		[view, scopeId, ix, model, lens, only, days],
 	);
 	// What the rollup shows before the kind filter (for the chips and the empty state).
 	const inView = useMemo(() => {

@@ -16,7 +16,7 @@ import { TESTID } from "../../../src/lib/testids";
 import { shotPath } from "./_helpers/env";
 import { cloneFixtureTrip } from "./_helpers/fixture";
 import { openLink } from "./_helpers/link";
-import { expectLive, mediaView, notesView } from "./_helpers/page";
+import { expectLive, notesView } from "./_helpers/page";
 
 const AUTH = process.env.QA_AUTH_DIR ?? path.resolve("e2e/.auth");
 const auth = (h: string) => path.join(AUTH, `${h}.json`);
@@ -251,7 +251,7 @@ test("SUG-11/13: uploads are disabled for suggesters with the reason; a view lin
 	await m.page.waitForTimeout(1_000);
 	const hint = m.page.getByTestId(S.firstHint);
 	if (await hint.isVisible().catch(() => false)) await hint.getByRole("button", { name: "Got it" }).click();
-	await mediaView(m.page).getByRole("button", { name: /^Add$/ }).first().click();
+	await m.page.getByTestId(TESTID.mediaTab).getByRole("button", { name: /^Add$/ }).first().click();
 	await m.page.waitForTimeout(400);
 	await m.page.screenshot({ path: shot("sug11-maya-add-menu") });
 	const up = m.page.getByRole("menuitem", { name: /upload|photos|files/i }).first();

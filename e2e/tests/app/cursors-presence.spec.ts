@@ -73,12 +73,16 @@ test("where are they: a strip, breadcrumb dots, and a tap goes there", async ({ 
 	const chip = a.page.locator(`[data-testid="${S.elsewhereChip}"][data-user-id="${mayaId}"]`);
 	await expect(chip).toContainText("Maya");
 	await expect(chip).toContainText("in Tokyo");
-	// The Outline row of Tokyo carries her dot already; on B's breadcrumb, A's dot sits on Japan.
-	await expect(b.page.getByTestId(TESTID.scopeBreadcrumb).getByTestId(S.crumbPresence)).toHaveCount(1);
+	// On B's Where picker, A's dot sits on Japan (One Yonder: the picker replaced the breadcrumb).
+	await b.page.getByTestId(S.whereButton).click();
+	await expect(
+		b.page.locator(`[data-testid="${S.whereRow}"][data-node-id="${trip.ids.nodes.japan}"]`).getByTestId(S.crumbPresence),
+	).toHaveCount(1);
+	await b.page.keyboard.press("Escape");
 	await b.page.getByRole("tab", { name: /Lists/ }).click();
 	await expect(chip).toContainText("Lists tab · in Tokyo");
 	await a.page.screenshot({ path: shotPath("cursors/where-strip.png") });
-	await b.page.getByTestId(TESTID.scopeBreadcrumb).screenshot({ path: shotPath("cursors/crumb-dot.png") });
+
 	await chip.click();
 	await expect(a.page).toHaveURL(/\/japan\/tokyo\?.*tab=lists/);
 	// Same place, same tab: no chip, the cursor says it.
