@@ -34,6 +34,8 @@
     "test:watch": "vitest",
     "e2e": "bash e2e/pw.sh playwright test -c playwright.app.config.ts",
     "e2e:fast": "tsx scripts/e2e-fast.ts",
+    "e2e:smoke": "tsx scripts/e2e-fast.ts --smoke",
+    "e2e:affected": "tsx scripts/e2e-fast.ts --affected",
     "kit:baseline": "tsx scripts/kit-baseline.ts",
     "e2e:template": "tsx scripts/e2e-template.ts",
     "db:up": "docker compose up -d --wait postgres s3proxy redis",

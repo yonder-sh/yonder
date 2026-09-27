@@ -20,10 +20,13 @@
  *   --keep          leave the envs running after the run (stop: kill the pids
  *                   in .data/e2e-fast/pids.json, or run again)
  *   --baseline F    also list which failures are not in F (`project | file | title`)
+ *   --smoke         only the smoke set (scripts/lib/e2e-select.ts, about 6 min)
+ *   --affected [R]  the smoke set plus the specs a change since git ref R
+ *                   (default HEAD, uncommitted work included) touches
  * Anything else goes to `playwright test` (spec files, --project, -g, --retries…).
  */
-import { spawn } from "node:child_process";
-import { cpSync, existsSync, readFileSync, rmSync } from "node:fs";
+import { execFileSync, spawn } from "node:child_process";
+import { cpSync, existsSync, readdirSync, readFileSync, rmSync } from "node:fs";
 import { createConnection } from "node:net";
 import path from "node:path";
 import { ensureTemplate } from "./e2e-template";
@@ -51,6 +54,7 @@ import {
 	withRedis,
 	writeJson,
 } from "./lib/e2e-fast";
+import { affectedSpecs, SMOKE, selectionArgs } from "./lib/e2e-select";
 
 const REPORT_FILE = path.join(FAST_DIR, "report.json");
 const PIDS_FILE = path.join(FAST_DIR, "pids.json");
@@ -71,11 +75,14 @@ type Args = {
 	rebuild: boolean;
 	keep: boolean;
 	baseline?: string;
+	smoke: boolean;
+	/** A git ref, for `--affected`. */
+	affected?: string;
 	pw: string[];
 };
 
 function parseArgs(argv: string[]): Args {
-	const a: Args = { rebuild: false, keep: false, pw: [] };
+	const a: Args = { rebuild: false, keep: false, smoke: false, pw: [] };
 	for (let i = 0; i < argv.length; i++) {
 		const x = argv[i] as string;
 		if (x === "--") continue;
@@ -85,6 +92,13 @@ function parseArgs(argv: string[]): Args {
 		else if (x === "--keep") a.keep = true;
 		else if (x === "--baseline") a.baseline = argv[++i];
 		else if (x.startsWith("--baseline=")) a.baseline = x.slice(11);
+		else if (x === "--smoke") a.smoke = true;
+		else if (x === "--affected")
+			a.affected =
+				argv[i + 1]?.startsWith("-") || !argv[i + 1]
+					? "HEAD"
+					: (argv[++i] as string);
+		else if (x.startsWith("--affected=")) a.affected = x.slice(11);
 		else a.pw.push(x);
 	}
 	return a;
@@ -256,8 +270,37 @@ function summarize(wallMs: number, baseline?: string): void {
 
 // ---------------------------------------------------------------------------
 
+/** Playwright args for `--smoke` / `--affected` (printed so the run says what it covers). */
+function selection(args: Args): string[] {
+	if (!args.smoke && !args.affected) return [];
+	if (!args.affected) {
+		console.log(`[e2e:fast] --smoke: ${SMOKE.length} entries`);
+		return selectionArgs();
+	}
+	const git = (...a: string[]) =>
+		execFileSync("git", a, { cwd: REPO_ROOT, encoding: "utf8" })
+			.split("\n")
+			.filter(Boolean);
+	const changed = [
+		...git("diff", "--name-only", args.affected),
+		...git("ls-files", "--others", "--exclude-standard"),
+	];
+	const dir = path.join(REPO_ROOT, "e2e/tests/app");
+	const specs = Object.fromEntries(
+		readdirSync(dir)
+			.filter((f) => f.endsWith(".spec.ts"))
+			.map((f) => [f, readFileSync(path.join(dir, f), "utf8")]),
+	);
+	const touched = affectedSpecs(changed, specs);
+	console.log(
+		`[e2e:fast] --affected ${args.affected}: ${changed.length} changed files → smoke + ${touched.length} specs${touched.length ? ` (${touched.join(", ")})` : ""}`,
+	);
+	return selectionArgs(touched);
+}
+
 async function main(): Promise<number> {
 	const args = parseArgs(process.argv.slice(2));
+	args.pw = [...selection(args), ...args.pw];
 	const t0 = Date.now();
 	stopLeftovers();
 	assertMemory("e2e:fast");

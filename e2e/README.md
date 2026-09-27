@@ -10,7 +10,11 @@ From the repo root:
 pnpm e2e:fast                                    # everything, desktop + mobile
 pnpm e2e:fast tests/app/overview.spec.ts         # one spec
 pnpm e2e:fast --envs 4 --retries=1 -g "share"    # any playwright flag works
+pnpm e2e:smoke                                   # ~110 tests over the main flows, ~6 min
+pnpm e2e:affected [ref]                          # smoke + specs whose feature changed since ref (default HEAD)
 ```
+
+The smoke set lives in `scripts/lib/e2e-select.ts`.
 
 It starts several isolated copies of the app (each with its own database cloned from a pre-seeded template, bucket, Redis prefix and ports), runs one worker per copy, resets the data before every spec file, stops everything afterwards and prints a summary with the failing tests. The number of copies adapts to free memory (default 4).
 

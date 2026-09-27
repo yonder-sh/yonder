@@ -75,7 +75,13 @@ export default defineConfig({
 	},
 	projects: [
 		{ name: "chromium", use: { ...devices["Desktop Chrome"], viewport: { width: 1440, height: 900 } } },
-		{ name: "mobile", use: { ...devices["Pixel 7"] } },
+		{
+			name: "mobile",
+			use: { ...devices["Pixel 7"] },
+			// Desktop QA verifier specs (their phone checks set their own viewport):
+			// re-running them at phone size cost ~23 min and checked nothing new.
+			testIgnore: ["**/qa-content-*.spec.ts", "**/qa-money-core.spec.ts"],
+		},
 	],
 	webServer: [
 		...(routesStub
