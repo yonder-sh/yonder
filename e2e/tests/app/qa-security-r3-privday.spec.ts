@@ -13,7 +13,7 @@ import { NOTES_TESTID as NT } from "../../../src/features/notes/testids";
 import { TESTID } from "../../../src/lib/testids";
 import { loginViaApi } from "./_helpers/auth";
 import { cloneFixtureTrip, type FixtureClone } from "./_helpers/fixture";
-import { expectLive } from "./_helpers/page";
+import { detailsSection, expectLive } from "./_helpers/page";
 import { call, MOD } from "./qa-security-helpers";
 import { openLink } from "./_helpers/link";
 
@@ -61,7 +61,7 @@ async function privateNoteOnNewFirstDay(p: Page, c: FixtureClone, text: string, 
 	const first = sorted(g)[0] as { id: string; date: string };
 	await p.goto(`/t/${c.slug}?sel=d.${first.id}`);
 	await expectLive(p);
-	await p.getByTestId(TESTID.inspector).getByRole("tab", { name: /Notes/ }).click();
+	await detailsSection(p.getByTestId(TESTID.inspector), "notes");
 	const panel = p.getByTestId(TESTID.notesPanel);
 	await panel.getByTestId(NT.privateToggle).getByRole("button", { name: /Only me/ }).click();
 	const ed = panel.getByTestId(NT.editor);
@@ -99,7 +99,7 @@ test("a private day note never blocks or names itself to another member (direct)
 	const m = await user(browser, "maya@example.com", "Maya", "Chen");
 	await m.page.goto(`/t/${c.slug}?sel=d.${first.id}`);
 	await expectLive(m.page);
-	await m.page.getByTestId(TESTID.inspector).getByRole("tab", { name: /Notes/ }).click();
+	await detailsSection(m.page.getByTestId(TESTID.inspector), "notes");
 	await m.page.waitForTimeout(1500);
 	out.mayaDayNotes = (await m.page.getByTestId(TESTID.notesPanel).innerText()).slice(0, 200);
 	await m.page.screenshot({ path: path.join(DIR, "r3-privday-maya-day.png") });
@@ -120,9 +120,9 @@ test("a private day note never blocks or names itself to another member (direct)
 	// The owner's trip Notes (root) show it as their private note.
 	await o.page.goto(`/t/${c.slug}?sel=root`);
 	await expectLive(o.page);
-	const notesTab = o.page.getByTestId(TESTID.inspector).getByRole("tab", { name: /Notes/ });
-	if (await notesTab.count()) {
-		await notesTab.first().click();
+	const notesSection = o.page.getByTestId(TESTID.inspector).locator('[data-section="notes"]');
+	if (await notesSection.count()) {
+		await notesSection.first().scrollIntoViewIfNeeded();
 		await o.page.waitForTimeout(2000);
 		out.ownerRootNotesShowsText = (await o.page.getByTestId(TESTID.notesPanel).innerText().catch(() => "")).includes(text);
 		await o.page.screenshot({ path: path.join(DIR, "r3-privday-owner-root.png") });
@@ -228,7 +228,7 @@ test("the author keeps typing in the private day note while another member remov
 	// Olga already has a private TRIP note (the merge path).
 	await o.page.goto(`/t/${c.slug}?sel=root`);
 	await expectLive(o.page);
-	await o.page.getByTestId(TESTID.inspector).getByRole("tab", { name: /Notes/ }).click();
+	await detailsSection(o.page.getByTestId(TESTID.inspector), "notes");
 	const rootPanel = o.page.getByTestId(TESTID.notesPanel);
 	await rootPanel.getByTestId(NT.privateToggle).getByRole("button", { name: /Only me/ }).click();
 	const rootEd = rootPanel.getByTestId(NT.editor);

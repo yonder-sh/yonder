@@ -8,7 +8,7 @@ import { LISTS_TESTID as L } from "../../../src/features/lists/testids";
 import { MEDIA_TESTID as MT } from "../../../src/features/media/testids";
 import { NOTES_TESTID as NT } from "../../../src/features/notes/testids";
 import { TESTID } from "../../../src/lib/testids";
-import { expectLive } from "./_helpers/page";
+import { detailsSection, expectLive } from "./_helpers/page";
 
 test.skip(!process.env.QA_AUTH_DIR, "I2 content verifier spec: set QA_AUTH_DIR");
 
@@ -144,7 +144,7 @@ test("NOTE-04 pasting Google Docs HTML keeps bold and links, drops styling", asy
 	const d = await ctxFor(browser, "dennis");
 	await d.page.goto(`/t/asia-2027?sel=n.${kuro?.id}`);
 	await expectLive(d.page);
-	await d.page.getByTestId(TESTID.inspector).getByRole("tab", { name: /Notes/ }).click();
+	await detailsSection(d.page.getByTestId(TESTID.inspector), "notes");
 	const ed = d.page.getByTestId(TESTID.notesPanel).getByTestId(NT.editor);
 	await expect(ed).toHaveAttribute("contenteditable", "true", { timeout: 15_000 });
 	await ed.click();
@@ -189,7 +189,7 @@ test("MED-08 cancelling an upload halfway leaves no tile and no row", async ({ b
 	});
 	await d.page.goto(`/t/asia-2027?sel=n.${gg?.id}`);
 	await expectLive(d.page);
-	await d.page.getByTestId(TESTID.inspector).getByRole("tab", { name: /Media/ }).click();
+	await detailsSection(d.page.getByTestId(TESTID.inspector), "media");
 	const input = d.page.getByTestId(TESTID.inspector).getByTestId(MT.fileInput).first();
 	const big = Buffer.alloc(3 * 1024 * 1024, 0);
 	// A tiny valid PNG header so type sniffing (if any) passes.

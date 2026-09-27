@@ -14,7 +14,7 @@ import { TESTID } from "../../../src/lib/testids";
 import { loginViaApi } from "./_helpers/auth";
 import { shotPath } from "./_helpers/env";
 import { cloneFixtureTrip, type FixtureOptions } from "./_helpers/fixture";
-import { expectLive } from "./_helpers/page";
+import { detailsSection, expectLive } from "./_helpers/page";
 
 test.describe.configure({ mode: "serial" });
 test.skip(({ isMobile }) => isMobile, "one desktop run covers the server paths");
@@ -45,7 +45,7 @@ async function setDates(p: Page, tripId: string, start: string, end: string, v?:
 async function openPrivateNote(p: Page, url: string) {
 	await p.goto(url);
 	await expectLive(p);
-	await p.getByTestId(TESTID.inspector).getByRole("tab", { name: /Notes/ }).click();
+	await detailsSection(p.getByTestId(TESTID.inspector), "notes");
 	const panel = p.getByTestId(TESTID.notesPanel);
 	await panel.getByTestId(NT.privateToggle).getByRole("button", { name: /Only me/ }).click();
 	const ed = panel.getByTestId(NT.editor);

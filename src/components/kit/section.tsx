@@ -64,6 +64,7 @@ export function Section({
 	divided = true,
 	className,
 	testId,
+	name,
 }: {
 	title: ReactNode;
 	action?: ReactNode;
@@ -71,10 +72,13 @@ export function Section({
 	divided?: boolean;
 	className?: string;
 	testId?: string;
+	/** `data-section`: what a link scrolls to ("notes"). */
+	name?: string;
 }) {
 	return (
 		<section
 			data-testid={testId}
+			data-section={name}
 			className={cn("grid gap-2 py-4", divided && "border-t", className)}
 		>
 			<SectionHeader action={action}>{title}</SectionHeader>

@@ -6,7 +6,7 @@ import path from "node:path";
 import { type Browser, expect, type Page, test } from "@playwright/test";
 import { NOTES_TESTID as NT } from "../../../src/features/notes/testids";
 import { TESTID } from "../../../src/lib/testids";
-import { expectLive } from "./_helpers/page";
+import { detailsSection, expectLive } from "./_helpers/page";
 import { openLink } from "./_helpers/link";
 
 // Needs this verifier's env (QA_AUTH_DIR with qa-* storage states for APP_URL); skipped in a normal `pnpm e2e`.
@@ -36,7 +36,7 @@ let nodeIds: Record<string, string> = {};
 async function notesOf(page: Page, nodeId: string) {
 	await page.goto(`/t/asia-2027?sel=n.${nodeId}`);
 	await expectLive(page);
-	await page.getByTestId(TESTID.inspector).getByRole("tab", { name: /Notes/ }).click();
+	await detailsSection(page.getByTestId(TESTID.inspector), "notes");
 	const panel = page.getByTestId(TESTID.notesPanel);
 	await expect(panel).toBeVisible();
 	const editor = panel.getByTestId(NT.editor);

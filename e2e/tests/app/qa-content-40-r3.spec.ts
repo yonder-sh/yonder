@@ -13,7 +13,7 @@ import { NOTES_TESTID as NT } from "../../../src/features/notes/testids";
 import { TESTID } from "../../../src/lib/testids";
 import { loginViaApi } from "./_helpers/auth";
 import { cloneFixtureTrip } from "./_helpers/fixture";
-import { expectLive } from "./_helpers/page";
+import { detailsSection, expectLive } from "./_helpers/page";
 import { psql } from "./_helpers/psql";
 
 test.skip(!process.env.QA_AUTH_DIR, "I2 content verifier spec: set QA_AUTH_DIR");
@@ -47,7 +47,7 @@ async function setDates(p: Page, tripId: string, start: string, end: string, v: 
 async function openPrivateNote(p: Page, url: string) {
 	await p.goto(url);
 	await expectLive(p);
-	await p.getByTestId(TESTID.inspector).getByRole("tab", { name: /Notes/ }).click();
+	await detailsSection(p.getByTestId(TESTID.inspector), "notes");
 	const panel = p.getByTestId(TESTID.notesPanel);
 	await panel.getByTestId(NT.privateToggle).getByRole("button", { name: /Only me/ }).click();
 	const ed = panel.getByTestId(NT.editor);

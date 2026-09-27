@@ -9,7 +9,13 @@
  * a long line can't widen the columns (COLLAB-R2-05).
  */
 import { QueryClient } from "@tanstack/react-query";
-import { act, fireEvent, screen, within } from "@testing-library/react";
+import {
+	act,
+	fireEvent,
+	screen,
+	waitFor,
+	within,
+} from "@testing-library/react";
 import type { ReactElement, ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ClimateCard } from "@/features/insights/ClimateCard";
@@ -116,6 +122,16 @@ const moved = (
 		<ClimateCard nodeId="root" />
 	</>
 );
+
+/** The sections the details scrolled to (`data-section`), in order. */
+function spyScroll() {
+	const seen: string[] = [];
+	Element.prototype.scrollIntoView = function (this: Element) {
+		const s = this.getAttribute("data-section");
+		if (s) seen.push(s);
+	};
+	return Object.assign(() => [...seen], { clear: () => seen.splice(0) });
+}
 
 describe("trip overview", () => {
 	it("the inspector keeps a summary, Still to plan and a way to the Overview", () => {
@@ -236,58 +252,52 @@ describe("trip overview", () => {
 		});
 	});
 
-	it("the inspector opens on Lists for a requested selection (PLAN-R2-05)", () => {
+	it("the details scroll to To-dos for a requested selection (PLAN-R2-05)", async () => {
 		act(() =>
 			useShell.getState().openInspectorTab(`i.${sky}`, "lists", "root"),
 		);
+		const scrolled = spyScroll();
 		const { unmount } = renderWithWorkspace(<InspectorBody />, {
 			search: { sel: `i.${sky}` },
 		});
-		const tab = (name: RegExp) =>
-			within(screen.getByTestId(SHELL_TESTID.inspectorTabs)).getByRole("tab", {
-				name,
-			});
-		expect(tab(/Lists/)).toHaveAttribute("aria-selected", "true");
+		await waitFor(() => expect(scrolled()).toContain("lists"));
 		// The request holds while the selection stays: a remount (the route's
-		// search changing) opens on Lists again.
+		// search changing) scrolls there again.
 		unmount();
+		scrolled.clear();
 		const { ws } = renderWithWorkspace(<InspectorBody />, {
 			search: { sel: `i.${sky}` },
 		});
-		expect(tab(/Lists/)).toHaveAttribute("aria-selected", "true");
-		// Selecting something else spends it; coming back opens on Overview.
+		await waitFor(() => expect(scrolled()).toContain("lists"));
+		// Selecting something else spends it; coming back stays at the top.
 		act(() => ws().nav.select({ kind: "node", id: N.tokyo ?? "" }));
 		expect(useShell.getState().inspectorTab).toBeNull();
-		expect(tab(/Overview/)).toHaveAttribute("aria-selected", "true");
+		scrolled.clear();
 		act(() => ws().nav.select({ kind: "item", id: sky }));
-		expect(tab(/Overview/)).toHaveAttribute("aria-selected", "true");
+		await new Promise((r) => setTimeout(r, 120));
+		expect(scrolled()).toEqual([]);
 	});
 
-	it("a request survives the click's own selection until the target is selected", () => {
+	it("a request survives the click's own selection until the target is selected", async () => {
 		// The row is clicked at the root overview; the navigation lands a moment later.
 		act(() =>
 			useShell.getState().openInspectorTab(`i.${sky}`, "lists", "root"),
 		);
+		const scrolled = spyScroll();
 		const { ws } = renderWithWorkspace(<InspectorBody />, {
 			search: { sel: "root" },
 		});
 		expect(useShell.getState().inspectorTab).not.toBeNull();
 		act(() => ws().nav.select({ kind: "item", id: sky }));
-		expect(
-			within(screen.getByTestId(SHELL_TESTID.inspectorTabs)).getByRole("tab", {
-				name: /Lists/,
-			}),
-		).toHaveAttribute("aria-selected", "true");
+		await waitFor(() => expect(scrolled()).toContain("lists"));
 	});
 
-	it("another selection ignores the request and opens on Overview", () => {
+	it("another selection ignores the request and stays at the top", async () => {
 		act(() => useShell.getState().openInspectorTab(`n.${N.tokyo}`, "lists"));
+		const scrolled = spyScroll();
 		renderWithWorkspace(<InspectorBody />, { search: { sel: `i.${sky}` } });
-		expect(
-			within(screen.getByTestId(SHELL_TESTID.inspectorTabs)).getByRole("tab", {
-				name: /Overview/,
-			}),
-		).toHaveAttribute("aria-selected", "true");
+		await new Promise((r) => setTimeout(r, 120));
+		expect(scrolled()).toEqual([]);
 	});
 
 	it("a deadline row puts its title before the chip and opens the to-do's view (VIS2-13)", () => {

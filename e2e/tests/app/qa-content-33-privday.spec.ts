@@ -9,7 +9,7 @@ import { NOTES_TESTID as NT } from "../../../src/features/notes/testids";
 import { TESTID } from "../../../src/lib/testids";
 import { loginViaApi } from "./_helpers/auth";
 import { cloneFixtureTrip } from "./_helpers/fixture";
-import { expectLive } from "./_helpers/page";
+import { detailsSection, expectLive } from "./_helpers/page";
 
 test.skip(!process.env.QA_AUTH_DIR, "I2 content verifier spec: set QA_AUTH_DIR");
 const SHOTS = process.env.QA_SHOTS ?? "/tmp";
@@ -57,7 +57,7 @@ test("a private day note blocks another member's date change and names the day",
 	console.log("days", days.map((x) => x.date).join(","), "last has items:", g.items.filter((i) => i.dayId === last?.id).length);
 	await d.goto(`/t/${c.slug}?sel=d.${last?.id}`);
 	await expectLive(d);
-	await d.getByTestId(TESTID.inspector).getByRole("tab", { name: /Notes/ }).click();
+	await detailsSection(d.getByTestId(TESTID.inspector), "notes");
 	const panel = d.getByTestId(TESTID.notesPanel);
 	await panel.getByTestId(NT.privateToggle).getByRole("button", { name: /Only me/ }).click();
 	const ed = panel.getByTestId(NT.editor);
@@ -74,7 +74,7 @@ test("a private day note blocks another member's date change and names the day",
 	await expectLive(m);
 	const mg = await m.evaluate(() => (window as unknown as { __yonder: { graph: G & { me: unknown } } }).__yonder.graph);
 	console.log("maya me", JSON.stringify(mg.me));
-	await m.getByTestId(TESTID.inspector).getByRole("tab", { name: /Notes/ }).click();
+	await detailsSection(m.getByTestId(TESTID.inspector), "notes");
 	await m.waitForTimeout(1500);
 	console.log("maya day notes text:", JSON.stringify((await m.getByTestId(TESTID.notesPanel).innerText()).slice(0, 200)));
 	const res = await m.evaluate(

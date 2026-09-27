@@ -1,8 +1,10 @@
 /**
- * DESIGN §4.4 inspector template: cover strip, header (title + chip + crumbs),
- * the suggestion strip (`ProposalBar`, E7), tabs Overview · Media 6 · Lists 2
- * · Notes · Money, scrollable content, and the recent-activity footer. The
- * Overview dispatches on `sel` to the owning package's component (SPEC §12.5).
+ * The details pane (One Yonder: no inner tabs): cover strip, header (title +
+ * chip + crumbs), the suggestion strip (`ProposalBar`, E7), then one scroll of
+ * sections: the overview, Photos & links, Notes (and the notes inside a
+ * place), To-dos & bookings, Expenses; and the recent-activity footer. The
+ * overview dispatches on `sel` to the owning package's component (SPEC §12.5).
+ * A link's `itab` scrolls to its section.
  * Used inside the floating panel (xl/lg), the right Sheet (md), the nested
  * mobile drawer (sm) and, the same panel on every tab (owner, 2026-09-26),
  * the Places tab's docked details and its map's side panel.
@@ -24,16 +26,23 @@
  */
 import { useQuery } from "@tanstack/react-query";
 import { PanelRightClose, X } from "lucide-react";
-import { type ReactNode, useEffect, useMemo, useState } from "react";
+import {
+	type ReactNode,
+	type RefObject,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from "react";
 import { Crumbs } from "@/components/common/crumbs";
 import { TypeGlyph } from "@/components/common/glyphs";
-import { Chip } from "@/components/kit";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Chip, Section } from "@/components/kit";
 import { ListsPanel } from "@/features/lists/ListsPanel";
 import { CoverStrip } from "@/features/media/CoverStrip";
 import { MediaPanel } from "@/features/media/MediaPanel";
 import { MoneyPanel } from "@/features/money/MoneyPanel";
 import { NotesPanel } from "@/features/notes/NotesPanel";
+import { NotesInside, useNotesInside } from "@/features/notes/NotesTab";
 import { isRateable } from "@/features/places/lib/rate";
 import { NodeOverview } from "@/features/places/NodeOverview";
 import {
@@ -58,12 +67,7 @@ import { type ActivityTarget, activityQuery } from "@/lib/query/trip-queries";
 import type { BundleTarget } from "@/lib/schemas/targets";
 import { TESTID } from "@/lib/testids";
 import { cn } from "@/lib/utils";
-import {
-	INSPECTOR_TABS,
-	type InspectorTabParam,
-	type Sel,
-	serializeSel,
-} from "@/lib/workspace/search";
+import { type Sel, serializeSel } from "@/lib/workspace/search";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { bundleTargetForSel } from "./bundle-target";
 import { InspectorFormChips } from "./form-presence-ui";
@@ -116,11 +120,9 @@ function activityTargetOf(
 	}
 }
 
-function TabCount({ n }: { n: number }) {
+function Count({ n }: { n: number }) {
 	if (!n) return null;
-	return (
-		<span className="text-2xs font-normal text-muted-foreground tnum">{n}</span>
-	);
+	return <span className="ml-1 font-normal tnum">{n}</span>;
 }
 
 type InspectorProps = {
@@ -198,7 +200,8 @@ function Body({
 	const showMoney = seesMoney(graph.me) && target !== null;
 	const node = sel?.kind === "node" ? ix.node(sel.id) : undefined;
 	const counts = useInspectorCounts(target);
-	const [tab, setTab] = useInspectorTab(sel, bundleTabs, showMoney);
+	const scroller = useRef<HTMLDivElement>(null);
+	useSectionLink(sel, scroller);
 	const placeKeys = usePlaceKeys();
 	return (
 		// biome-ignore lint/a11y/noStaticElementInteractions: a place's rating buttons are the keyboard entry; 1–6 are a shortcut
@@ -287,148 +290,146 @@ function Body({
 			<div className="mt-3 empty:hidden">
 				<ProposalBar sel={sel} />
 			</div>
-			<Tabs
+			<div
 				key={key}
-				value={tab}
-				onValueChange={setTab}
-				className="mt-3 flex min-h-0 flex-1 flex-col gap-0"
+				ref={scroller}
+				className="mt-3 min-h-0 flex-1 overflow-y-auto border-t px-4"
 			>
-				<TabsList
-					className="mx-4 h-8 w-fit"
-					data-testid={SHELL_TESTID.inspectorTabs}
+				<div
+					data-testid={SHELL_TESTID.detailsSection}
+					data-section="overview"
+					className="py-4"
 				>
-					<TabsTrigger value="overview" className="text-xs">
-						Overview
-					</TabsTrigger>
-					<TabsTrigger
-						value="media"
-						className="gap-1 text-xs"
-						disabled={!bundleTabs}
-					>
-						Media <TabCount n={counts.media} />
-					</TabsTrigger>
-					<TabsTrigger
-						value="lists"
-						className="gap-1 text-xs"
-						disabled={!bundleTabs}
-					>
-						Lists <TabCount n={counts.lists} />
-					</TabsTrigger>
-					<TabsTrigger
-						value="notes"
-						className="gap-1 text-xs"
-						disabled={!bundleTabs}
-					>
-						Notes
-						{counts.notes ? (
-							<span
-								role="img"
-								aria-label="has notes"
-								className="size-1.5 rounded-full bg-muted-foreground/60"
-							/>
-						) : null}
-					</TabsTrigger>
-					{showMoney ? (
-						<TabsTrigger value="money" className="text-xs">
-							Money
-						</TabsTrigger>
-					) : null}
-				</TabsList>
-				<div className="mt-3 min-h-0 flex-1 overflow-y-auto border-t px-4 py-4">
-					<TabsContent value="overview">
-						<Overview />
-					</TabsContent>
-					{target ? (
-						<>
-							{(["media", "lists", "notes"] as const).map((t) => (
-								<TabsContent key={t} value={t}>
-									{t === "media" ? (
-										<MediaPanel target={target} />
-									) : t === "lists" ? (
-										<ListsPanel target={target} />
-									) : (
-										<NotesPanel target={target} />
-									)}
-								</TabsContent>
-							))}
-							{showMoney ? (
-								<TabsContent value="money">
-									<MoneyPanel target={target} />
-								</TabsContent>
-							) : null}
-						</>
-					) : pendingLeg ? (
-						<>
-							<TabsContent value="media">
-								<LegBundleGate target={pendingLeg} tab="media" />
-							</TabsContent>
-							<TabsContent value="lists">
-								<LegBundleGate target={pendingLeg} tab="lists" />
-							</TabsContent>
-							<TabsContent value="notes">
-								<LegBundleGate target={pendingLeg} tab="notes" />
-							</TabsContent>
-						</>
-					) : null}
+					<Overview />
 				</div>
-			</Tabs>
+				{bundleTabs ? (
+					<>
+						<Section
+							name="media"
+							testId={SHELL_TESTID.detailsSection}
+							title={
+								<>
+									Photos &amp; links
+									<Count n={counts.media} />
+								</>
+							}
+						>
+							{target ? (
+								<MediaPanel target={target} section />
+							) : pendingLeg ? (
+								<LegBundleGate target={pendingLeg} tab="media" />
+							) : null}
+						</Section>
+						<Section
+							name="notes"
+							testId={SHELL_TESTID.detailsSection}
+							title="Notes"
+						>
+							{target ? (
+								<>
+									<NotesPanel target={target} />
+									<NotesInsideTarget target={target} />
+								</>
+							) : pendingLeg ? (
+								<LegBundleGate target={pendingLeg} tab="notes" />
+							) : null}
+						</Section>
+						<Section
+							name="lists"
+							testId={SHELL_TESTID.detailsSection}
+							title={
+								<>
+									To-dos &amp; bookings
+									<Count n={counts.lists} />
+								</>
+							}
+						>
+							{target ? (
+								<ListsPanel target={target} />
+							) : pendingLeg ? (
+								<LegBundleGate target={pendingLeg} tab="lists" />
+							) : null}
+						</Section>
+						{showMoney && target ? (
+							<Section
+								name="money"
+								testId={SHELL_TESTID.detailsSection}
+								title="Expenses"
+							>
+								{/* Its rows carry their own padding. */}
+								<div className="-mx-4">
+									<MoneyPanel target={target} />
+								</div>
+							</Section>
+						) : null}
+					</>
+				) : null}
+			</div>
 			<ActivityFooter target={activityTargetOf(sel, target)} />
 		</div>
 	);
 }
 
+/** The notes inside a place or the trip, under its own note ("From places in Japan · 6"). */
+function NotesInsideTarget({ target }: { target: BundleTarget }) {
+	const { ix, graph } = useWorkspace();
+	const scopeId =
+		target.kind === "node"
+			? target.nodeId
+			: target.kind === "trip"
+				? null
+				: undefined;
+	const sections = useNotesInside(scopeId);
+	if (!sections.length) return null;
+	const name =
+		scopeId === null ? graph.trip.name : (ix.node(scopeId ?? "")?.name ?? "");
+	return (
+		<div className="mt-3">
+			<p className="mb-1 text-meta text-muted-foreground">
+				Inside {name} <span className="tnum">· {sections.length}</span>
+			</p>
+			<NotesInside sections={sections} limit={3} dense />
+		</div>
+	);
+}
+
 /**
- * The inspector's tab, in the URL (`itab`, FB-21b): links open on it and
- * Follow mirrors it. Overview for each new selection (`nav.select` drops
- * `itab`), unless a "Still to plan" to-do asked for this selection's Lists
- * tab (`useShell().inspectorTab`, PLAN-R2-05): the request holds while its
- * selection stays and is written to the URL, and is dropped once the
- * selection moves elsewhere. A tab this selection can't show (Money for a
- * guest, a bundle tab without a target) reads as Overview.
+ * A link's `itab` (FB-21b), or a "Still to plan" to-do's request for this
+ * selection's Lists (PLAN-R2-05), scrolls that section into view. The request
+ * holds while its selection stays and is dropped once the selection moves.
  */
-function useInspectorTab(
+function useSectionLink(
 	sel: Sel | null,
-	bundleTabs: boolean,
-	showMoney: boolean,
-): [string, (tab: string) => void] {
-	const { search, nav } = useWorkspace();
+	scroller: RefObject<HTMLDivElement | null>,
+) {
+	const { search } = useWorkspace();
 	const selKey = sel ? (serializeSel(sel) ?? "root") : "none";
 	const req = useShell((s) => s.inspectorTab);
 	const clear = useShell((s) => s.clearInspectorTab);
-	const usable = (t: string) =>
-		t === "overview" || (t === "money" ? showMoney : bundleTabs);
 	const pending =
-		req &&
-		req.sel === selKey &&
-		Date.now() - req.at < INSPECTOR_TAB_TTL_MS &&
-		usable(req.tab)
+		req && req.sel === selKey && Date.now() - req.at < INSPECTOR_TAB_TTL_MS
 			? req.tab
 			: null;
-	const url = search.itab ?? "overview";
-	// A request for what's selected (the same row clicked again) goes to the URL.
+	const want = pending ?? search.itab ?? null;
 	useEffect(() => {
-		if (pending && pending !== url) nav.setInspectorTab(pending);
-	}, [pending, url, nav]);
+		if (!want || want === "overview") return;
+		// After the panels' first render, so the section sits where it will stay.
+		const t = window.setTimeout(() => {
+			scroller.current
+				?.querySelector(`[data-section="${want}"]`)
+				?.scrollIntoView({ block: "start" });
+		}, 60);
+		return () => window.clearTimeout(t);
+	}, [want, selKey, scroller]);
 	// The selection moved on: the request is spent.
 	useEffect(() => {
 		if (req && selKey !== req.sel && selKey !== req.from) clear();
 	}, [req, selKey, clear]);
-	const tab = pending ?? (usable(url) ? url : "overview");
-	return [
-		tab,
-		(t: string) =>
-			nav.setInspectorTab(
-				(INSPECTOR_TABS as readonly string[]).includes(t)
-					? (t as InspectorTabParam)
-					: "overview",
-			),
-	];
 }
 
 /**
- * Tab counts for the selection, as each tab opens (SPEC §8.4): Media and
- * Lists roll up over a place (a located item's too) and the trip; the Notes
- * dot is the target's own note, the one the Notes tab shows.
+ * Section counts for the selection (SPEC §8.4): Photos & links and To-dos
+ * roll up over a place (a located item's too) and the trip.
  */
 function useInspectorCounts(target: BundleTarget | null): TabCounts {
 	const { ix, counts, lens } = useWorkspace();

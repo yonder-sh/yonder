@@ -29,7 +29,7 @@ import { loginViaApi } from "./_helpers/auth";
 import { shotPath, storageStateOf } from "./_helpers/env";
 import { cloneFixtureTrip } from "./_helpers/fixture";
 import { logOffset, readOtpFromLog } from "./_helpers/otp";
-import { collectConsole, expectLive, hydrated } from "./_helpers/page";
+import { collectConsole, detailsSection, expectLive, hydrated } from "./_helpers/page";
 import { openLink } from "./_helpers/link";
 
 const MAP_NOISE = [/GL Driver Message|WebGL|layers\[[^\]]+\]\.filter/];
@@ -754,7 +754,7 @@ test("J6 photo, video, TikTok and guide link roll up at Tokyo, Japan and on the 
 	await page.goto(`/t/${c.slug}/japan/tokyo?sel=n.${skyId}`);
 	await expectLive(page);
 	const inspector = page.getByTestId(TESTID.inspector);
-	await inspector.getByRole("tab", { name: "Media" }).click();
+	await detailsSection(inspector, "media");
 	const photo = await canvasMedia(page, "jpeg");
 	const video = await canvasMedia(page, "webm");
 	await inspector.getByTestId(MEDIA_TESTID.fileInput).setInputFiles([
@@ -1584,7 +1584,7 @@ test("X8 PDFs: a general PDF shows to guests until hidden; a flight PDF starts h
 	await page.goto(`/t/${c.slug}?sel=l.${I.kix}.${I.icn}`);
 	await expectLive(page);
 	const inspector = page.getByTestId(TESTID.inspector);
-	await inspector.getByRole("tab", { name: "Media" }).click();
+	await detailsSection(inspector, "media");
 	await inspector.getByTestId(MEDIA_TESTID.fileInput).setInputFiles({
 		name: "E-ticket KE724.pdf",
 		mimeType: "application/pdf",

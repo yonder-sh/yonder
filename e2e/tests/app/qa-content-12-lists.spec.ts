@@ -6,7 +6,7 @@ import path from "node:path";
 import { type Browser, expect, type Page, test } from "@playwright/test";
 import { LISTS_TESTID as L } from "../../../src/features/lists/testids";
 import { TESTID } from "../../../src/lib/testids";
-import { expectLive } from "./_helpers/page";
+import { detailsSection, expectLive } from "./_helpers/page";
 import { openLink } from "./_helpers/link";
 
 // Needs this verifier's env (QA_AUTH_DIR with qa-* storage states for APP_URL); skipped in a normal `pnpm e2e`.
@@ -38,7 +38,7 @@ const row = (scope: Page | ReturnType<Page["getByTestId"]>, text: string | RegEx
 async function inspectorLists(page: Page, sel: string) {
 	await page.goto(`/t/asia-2027?sel=${sel}`);
 	await expectLive(page);
-	await page.getByTestId(TESTID.inspector).getByRole("tab", { name: "Lists" }).click();
+	await detailsSection(page.getByTestId(TESTID.inspector), "lists");
 	const panel = page.getByTestId(TESTID.listsPanel);
 	await expect(panel).toBeVisible();
 	return panel;
@@ -80,7 +80,7 @@ test("LIST-01 a todo on Bar Benfiddich syncs to Audrey; check/uncheck persists",
 	await expect(row(ap, text)).toHaveAttribute("data-status", "open", { timeout: 5_000 });
 	await d.page.reload();
 	await expectLive(d.page);
-	await d.page.getByTestId(TESTID.inspector).getByRole("tab", { name: "Lists" }).click();
+	await detailsSection(d.page.getByTestId(TESTID.inspector), "lists");
 	await expect(row(d.page.getByTestId(TESTID.listsPanel), text)).toHaveAttribute("data-status", "open");
 	await shot(d.page, "12-list01-dennis-reload");
 	await d.ctx.close();

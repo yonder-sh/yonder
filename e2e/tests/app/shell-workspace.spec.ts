@@ -18,7 +18,7 @@ import { SHELL_TESTID } from "../../../src/features/shell/testids";
 import { TESTID } from "../../../src/lib/testids";
 import { shotPath, storageStateOf } from "./_helpers/env";
 import { cloneFixtureTrip } from "./_helpers/fixture";
-import { collectConsole, expectLive, expectNoHorizontalOverflow } from "./_helpers/page";
+import { collectConsole, detailsSection, expectLive, expectNoHorizontalOverflow } from "./_helpers/page";
 
 test.use({ storageState: storageStateOf("dev") });
 
@@ -74,9 +74,7 @@ test("desktop: the trip overview shows what's still to plan", async ({ page }, i
 	await expect(page).toHaveURL(/tab=lists/);
 	await expect(page).toHaveURL(/list=todo/);
 	await expect(page).toHaveURL(/sel=/);
-	await expect(
-		page.getByTestId(SHELL_TESTID.inspectorTabs).getByRole("tab", { name: /Lists/ }),
-	).toHaveAttribute("aria-selected", "true");
+	await expect(page.getByTestId(TESTID.inspector).locator('[data-section="lists"]')).toBeInViewport();
 
 	// Unrated by me → the shared filter in the URL.
 	await page.goto(`/t/${c.slug}?sel=root`);
@@ -214,7 +212,7 @@ test("global mounts: Try other dates, the Money tab, the inspector's Money tab",
 	await expect(page).toHaveURL(/tab=money/);
 	await expect(page.getByTestId(TESTID.moneyTab)).toBeVisible();
 	await page.goto(`/t/${c.slug}?sel=n.${c.ids.nodes.tokyo}`);
-	await page.getByTestId(SHELL_TESTID.inspectorTabs).getByRole("tab", { name: "Money" }).click();
+	await detailsSection(page.getByTestId(TESTID.inspector), "money");
 	await expect(page.getByTestId(TESTID.moneyPanel)).toBeVisible();
 });
 

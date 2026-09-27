@@ -13,7 +13,7 @@ import { TESTID } from "../../../src/lib/testids";
 import { shotPath, storageStateOf } from "./_helpers/env";
 import { cloneFixtureTrip } from "./_helpers/fixture";
 import { clearToasts } from "./media-helpers";
-import { collectConsole, expectLive, expectNoHorizontalOverflow } from "./_helpers/page";
+import { collectConsole, detailsSection, expectLive, expectNoHorizontalOverflow } from "./_helpers/page";
 
 test.use({ storageState: storageStateOf("dev") });
 
@@ -136,7 +136,7 @@ test("drop to attach, This visit only, Everything that day", async ({ page }, in
 	await page.goto(`/t/${c.slug}?sel=i.${c.ids.items.sky}`);
 	await expectLive(page);
 	const inspector = page.getByTestId(TESTID.inspector);
-	await inspector.getByRole("tab", { name: "Media" }).click();
+	await detailsSection(inspector, "media");
 	const panel = inspector.getByTestId(TESTID.mediaPanel);
 	await expect(panel.locator(`[data-testid=${TESTID.galleryItem}][data-kind=link]`)).toHaveCount(1);
 	await panel.getByText("This visit only").click();
@@ -150,7 +150,7 @@ test("drop to attach, This visit only, Everything that day", async ({ page }, in
 	// A day: "This day" is empty; "Everything that day" rolls up its items.
 	await page.goto(`/t/${c.slug}?sel=d.${c.ids.days.d1}`);
 	await expectLive(page);
-	await inspector.getByRole("tab", { name: "Media" }).click();
+	await detailsSection(inspector, "media");
 	await expect(panel.getByTestId(MEDIA_TESTID.empty)).toBeVisible();
 	await panel.getByRole("radio", { name: "Everything that day" }).click();
 	await expect(panel.locator(`[data-testid=${TESTID.galleryItem}]`)).toHaveCount(2);
@@ -232,7 +232,7 @@ test("a video on a transit leg gets a poster and plays (MED-02)", async ({ page 
 	await expectLive(page);
 	const video = await webmFromPage(page);
 	const inspector = page.getByTestId(TESTID.inspector);
-	await inspector.getByRole("tab", { name: "Media" }).click();
+	await detailsSection(inspector, "media");
 	await inspector.getByTestId(MEDIA_TESTID.fileInput).setInputFiles({
 		name: "fuji-excursion-window.webm",
 		mimeType: "video/webm",

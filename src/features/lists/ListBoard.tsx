@@ -453,7 +453,11 @@ export function ListBoard(props: BoardProps) {
 					))}
 				</div>
 			) : null}
-			{empty ? (
+			{empty && compact && !(who || nearActive) ? (
+				<p className="px-4 py-1 text-meta text-muted-foreground">
+					{kind === "todo" ? "No to-dos here yet." : "Nothing to buy here yet."}
+				</p>
+			) : empty ? (
 				<EmptyState
 					className="py-8"
 					line={

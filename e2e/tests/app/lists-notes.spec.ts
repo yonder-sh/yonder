@@ -15,7 +15,7 @@ import { TESTID } from "../../../src/lib/testids";
 import { loginViaApi } from "./_helpers/auth";
 import { shotPath, storageStateOf } from "./_helpers/env";
 import { cloneFixtureTrip } from "./_helpers/fixture";
-import { collectConsole, expectLive } from "./_helpers/page";
+import { collectConsole, detailsSection, expectLive } from "./_helpers/page";
 import { openLink } from "./_helpers/link";
 
 async function open(browser: Browser, handle: "dev" | "maya", url: string) {
@@ -170,7 +170,7 @@ test("a visit keeps its own note, apart from its place's (QA NOTE-02)", async ({
 	const a = await open(browser, "dev", `/t/${trip.slug}?sel=i.${trip.ids.items.kiyomizu}`);
 	const logs = collectConsole(a.page);
 	const inspector = a.page.getByTestId(TESTID.inspector);
-	await inspector.getByRole("tab", { name: "Notes" }).click();
+	await detailsSection(inspector, "notes");
 	const panel = a.page.getByTestId(TESTID.notesPanel);
 	await panel.getByTestId(NT.visitScope).getByRole("radio", { name: "This visit only" }).click();
 	const ed = panel.getByTestId(NT.editor);

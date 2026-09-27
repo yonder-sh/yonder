@@ -25,7 +25,8 @@ export const SHELL_TESTID = {
 	deadlineRow: "trip-deadline-row",
 	recentList: "trip-recent",
 	// Inspector
-	inspectorTabs: "inspector-tabs",
+	/** A section of the details pane (`data-section`: overview, media, notes, lists, money). */
+	detailsSection: "details-section",
 	// Chrome
 	followBar: "follow-bar",
 	followResume: "follow-resume",

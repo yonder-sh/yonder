@@ -11,7 +11,7 @@ import { TESTID } from "../../../src/lib/testids";
 import { shotPath, storageStateOf } from "./_helpers/env";
 import { cloneFixtureTrip } from "./_helpers/fixture";
 import { clearToasts } from "./media-helpers";
-import { collectConsole, expectLive, expectNoHorizontalOverflow } from "./_helpers/page";
+import { collectConsole, detailsSection, expectLive, expectNoHorizontalOverflow } from "./_helpers/page";
 import { openLink } from "./_helpers/link";
 
 test.use({ storageState: storageStateOf("dev") });
@@ -85,7 +85,7 @@ test("photos, PDFs and links: upload, roll up, view, hide from guests", async ({
 	await page.goto(`/t/${c.slug}?sel=l.${c.ids.items.kix}.${c.ids.items.icn}`);
 	await expectLive(page);
 	const inspector = page.getByTestId(TESTID.inspector);
-	await inspector.getByRole("tab", { name: "Media" }).click();
+	await detailsSection(inspector, "media");
 	await inspector.getByTestId(MEDIA_TESTID.fileInput).setInputFiles({
 		name: "E-ticket KE724.pdf",
 		mimeType: "application/pdf",

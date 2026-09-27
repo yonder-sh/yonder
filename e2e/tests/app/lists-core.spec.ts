@@ -19,7 +19,7 @@ import { LISTS_TESTID as L } from "../../../src/features/lists/testids";
 import { TESTID } from "../../../src/lib/testids";
 import { shotPath, storageStateOf } from "./_helpers/env";
 import { cloneFixtureTrip } from "./_helpers/fixture";
-import { collectConsole, expectLive, expectNoHorizontalOverflow } from "./_helpers/page";
+import { collectConsole, detailsSection, expectLive, expectNoHorizontalOverflow } from "./_helpers/page";
 
 test.use({ storageState: storageStateOf("dev") });
 
@@ -311,7 +311,7 @@ test("the inspector rolls up everything inside a place", async ({ page }, info) 
 	const c = await cloneFixtureTrip(page.request);
 	await page.goto(`/t/${c.slug}?sel=n.${c.ids.nodes.tokyo}`);
 	await expectLive(page);
-	await page.getByTestId(TESTID.inspector).getByRole("tab", { name: "Lists" }).click();
+	await detailsSection(page.getByTestId(TESTID.inspector), "lists");
 	const panel = page.getByTestId(TESTID.listsPanel);
 	await expect(panel.getByText("Book Shibuya Sky sunset slot")).toBeVisible();
 	await panel.getByTestId(L.kindShopping).click();
@@ -348,7 +348,7 @@ test("rows drag to reorder within a place (Place view)", async ({ page }, info) 
 	const c = await cloneFixtureTrip(page.request);
 	await page.goto(`/t/${c.slug}?sel=n.${c.ids.nodes.knifeShop}`);
 	await expectLive(page);
-	await page.getByTestId(TESTID.inspector).getByRole("tab", { name: "Lists" }).click();
+	await detailsSection(page.getByTestId(TESTID.inspector), "lists");
 	const panel = page.getByTestId(TESTID.listsPanel);
 	await panel.getByTestId(L.kindShopping).click();
 	const input = panel.getByTestId(L.add).getByTestId(TESTID.mentionInput);
@@ -369,7 +369,7 @@ test("rows drag to reorder within a place (Place view)", async ({ page }, info) 
 		.toBe(true);
 	await page.reload();
 	await expectLive(page);
-	await page.getByTestId(TESTID.inspector).getByRole("tab", { name: "Lists" }).click();
+	await detailsSection(page.getByTestId(TESTID.inspector), "lists");
 	await panel.getByTestId(L.kindShopping).click();
 	await expect(rows).toHaveText([/Petty knife/, /Whetstone #1000/]);
 	const whetstone = rows.filter({ hasText: "Whetstone" });
@@ -401,7 +401,7 @@ test("rows drag to reorder within a place (Place view)", async ({ page }, info) 
 		.toBe("Whetstone #1000 < Petty knife");
 	await page.reload();
 	await expectLive(page);
-	await page.getByTestId(TESTID.inspector).getByRole("tab", { name: "Lists" }).click();
+	await detailsSection(page.getByTestId(TESTID.inspector), "lists");
 	await panel.getByTestId(L.kindShopping).click();
 	await expect(panel.getByTestId(L.row)).toHaveText([/Whetstone #1000/, /Petty knife/]);
 });

@@ -10,7 +10,7 @@ import { expect, type Page, test } from "@playwright/test";
 import { MEDIA_TESTID as MT } from "../../../src/features/media/testids";
 import { NOTES_TESTID as NT } from "../../../src/features/notes/testids";
 import { TESTID } from "../../../src/lib/testids";
-import { expectLive } from "./_helpers/page";
+import { detailsSection, expectLive } from "./_helpers/page";
 import { psql } from "./_helpers/psql";
 
 test.skip(!process.env.QA_AUTH_DIR, "I2 content verifier spec: set QA_AUTH_DIR");
@@ -49,7 +49,7 @@ test("a damaged PDF gets the generic PDF fallback, not a tile stuck processing",
 	console.log("damaged upload:", JSON.stringify(up));
 	await p.goto(`/t/asia-2027?sel=n.${kuro?.id}`);
 	await expectLive(p);
-	await p.getByTestId(TESTID.inspector).getByRole("tab", { name: /Media/ }).click();
+	await detailsSection(p.getByTestId(TESTID.inspector), "media");
 	const id = (up as { id?: string }).id;
 	if (!id) {
 		console.log("refused at upload (acceptable)");
@@ -90,7 +90,7 @@ test("NOTE-04 (typed): Ctrl+U in a note never stores `++…++` markdown", async 
 	const gg = g.nodes.find((n) => n.name === "Golden Gai");
 	await p.goto(`/t/asia-2027?sel=n.${gg?.id}`);
 	await expectLive(p);
-	await p.getByTestId(TESTID.inspector).getByRole("tab", { name: /Notes/ }).click();
+	await detailsSection(p.getByTestId(TESTID.inspector), "notes");
 	const ed = p.getByTestId(TESTID.notesPanel).getByTestId(NT.editor);
 	await expect(ed).toHaveAttribute("contenteditable", "true", { timeout: 15_000 });
 	await ed.click();

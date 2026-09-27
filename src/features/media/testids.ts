@@ -4,6 +4,8 @@
  * stay in `src/lib/testids.ts`.
  */
 export const MEDIA_TESTID = {
+	/** "See all" under a details section's own photos. */
+	seeAll: "media-see-all",
 	filterChip: "media-filter-chip",
 	addButton: "media-add",
 	addUpload: "media-add-upload",

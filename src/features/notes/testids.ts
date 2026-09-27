@@ -10,6 +10,8 @@ export const NOTES_TESTID = {
 	visitScope: "note-visit-scope",
 	/** A section of the Notes tab (`data-target`). */
 	section: "note-section",
+	/** "Show all N" under the notes inside a place (the details pane). */
+	showAll: "note-show-all",
 	sectionEdit: "note-section-edit",
 	/** The @-mention popup and its rows. */
 	mentionPopup: "mention-popup",

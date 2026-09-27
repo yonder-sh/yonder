@@ -24,7 +24,7 @@ import { SUGGEST_TESTID as S } from "../../../src/features/suggest/testids";
 import { TESTID } from "../../../src/lib/testids";
 import { shotPath, storageStateOf } from "./_helpers/env";
 import { cloneFixtureTrip, type FixtureClone } from "./_helpers/fixture";
-import { collectConsole, expectLive, expectNoHorizontalOverflow } from "./_helpers/page";
+import { collectConsole, detailsSection, expectLive, expectNoHorizontalOverflow } from "./_helpers/page";
 import { callServerFn, centerRuleWidth, dayOfItem, settle, withSuggestUi } from "./suggest-helpers";
 import { openLink } from "./_helpers/link";
 
@@ -289,7 +289,7 @@ test.describe("live review (desktop 1440×900)", () => {
 		await expect(ctl).toHaveAttribute("data-mode", "suggest");
 		await expect(ctl).toContainText("Suggesting");
 
-		await page.getByTestId(TESTID.inspector).getByRole("tab", { name: "Notes" }).click();
+		await detailsSection(page.getByTestId(TESTID.inspector), "notes");
 		await page.getByTestId(S.noteSuggestButton).click();
 		await page.getByTestId(S.noteTextarea).fill("- **Sunset** slots sell out: book 4 weeks ahead");
 		await page.getByTestId(S.noteSend).click();

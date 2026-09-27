@@ -140,6 +140,7 @@ export function BudgetSection({
 	meId,
 	nodeId: nodeIdProp,
 	className,
+	hideEmpty = false,
 }: {
 	data: MoneyDto;
 	display: Display;
@@ -147,6 +148,8 @@ export function BudgetSection({
 	/** The inspector's place (null = the trip); default: the current scope. */
 	nodeId?: string | null;
 	className?: string;
+	/** Nothing until a budget is set (the details pane). */
+	hideEmpty?: boolean;
 }) {
 	const { scope, ix, access, graph } = useWorkspace();
 	const guard = useEditGuard();
@@ -207,6 +210,7 @@ export function BudgetSection({
 				trigger={trigger}
 			/>
 		);
+	if (hideEmpty && !anyBudget) return null;
 	return (
 		<section
 			data-testid={MONEY_TESTID.budget}

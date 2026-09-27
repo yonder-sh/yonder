@@ -92,3 +92,13 @@ export async function expectNoHorizontalOverflow(
 	}));
 	expect(dims.scroll, `scrollWidth ${dims.scroll} > ${dims.width}`).toBeLessThanOrEqual(dims.width);
 }
+
+/** A details section (One Yonder: one scroll, no inner tabs). */
+export type DetailsSection = "overview" | "media" | "notes" | "lists" | "money";
+
+/** The details pane's section inside `scope` (the inspector), scrolled into view. */
+export async function detailsSection(scope: Locator, name: DetailsSection): Promise<Locator> {
+	const s = scope.locator(`[data-testid="details-section"][data-section="${name}"]`).first();
+	await s.scrollIntoViewIfNeeded();
+	return s;
+}

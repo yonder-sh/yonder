@@ -14,7 +14,7 @@ import { expect, test } from "@playwright/test";
 import { SUGGEST_TESTID as S } from "../../../src/features/suggest/testids";
 import { TESTID } from "../../../src/lib/testids";
 import { shotPath } from "./_helpers/env";
-import { collectConsole, expectNoHorizontalOverflow } from "./_helpers/page";
+import { collectConsole, detailsSection, expectNoHorizontalOverflow } from "./_helpers/page";
 import { centerRuleWidth, graphOf, itemIdByName, settle, withSuggestUi } from "./suggest-helpers";
 
 /** Fixture proposal ids: `uuid(0x5000 + n)` in the demo fixture. */
@@ -130,7 +130,7 @@ test.describe("fixture: reviewing suggestions (desktop 1440×900)", () => {
 		await page.goto(`/dev/fixture/japan/tokyo?sel=n.${sky?.id}`);
 		const harness = await withSuggestUi(page, "fixture");
 		test.skip(!harness, "the fixture has no note.append; the harness adds one");
-		await page.getByTestId(TESTID.inspector).getByRole("tab", { name: "Notes" }).click();
+		await detailsSection(page.getByTestId(TESTID.inspector), "notes");
 		const block = page.getByTestId(S.noteBlock);
 		await expect(block).toBeVisible();
 		await expect(block.locator("strong")).toHaveText("Sunset slots sell out");

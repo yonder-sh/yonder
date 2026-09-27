@@ -111,9 +111,11 @@ function render(itab?: "media") {
 describe("deleting a place's media", () => {
 	it("a photo from the viewer, which shows the next one", async () => {
 		render();
-		fireEvent.click(
-			await screen.findByRole("button", { name: "Open The gate" }),
-		);
+		// The cover strip's (the Photos section lists it too).
+		const [strip] = await screen.findAllByRole("button", {
+			name: "Open The gate",
+		});
+		fireEvent.click(strip as HTMLElement);
 		fireEvent.click(
 			await screen.findByTestId(
 				MEDIA_TESTID.lightboxDelete,
@@ -122,9 +124,11 @@ describe("deleting a place's media", () => {
 			),
 		);
 		await waitFor(() => expect(calls.deleted).toEqual([gate.id]));
-		// Still open, on the hall; the gate is gone from the strip.
+		// Still open, on the hall; the gate is gone from the strip and the section.
 		expect(screen.getByTestId(MEDIA_TESTID.lightbox)).toBeInTheDocument();
-		expect(screen.queryByRole("button", { name: "Open The gate" })).toBeNull();
+		expect(screen.queryAllByRole("button", { name: "Open The gate" })).toEqual(
+			[],
+		);
 	});
 
 	it("a PDF from its viewer", async () => {

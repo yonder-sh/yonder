@@ -3,7 +3,7 @@
  * shows its rule, a located item's inspector tabs count its place's bundle
  * (the panels own "This visit only"), and tab counts are rollup sums.
  */
-import { act, screen, within } from "@testing-library/react";
+import { act, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import type { Counts, TripCounts, TripGraph } from "@/lib/engine/types";
 import { demo, demoGraph, N } from "@/lib/fixtures/demo";
@@ -35,6 +35,11 @@ const c = (p: Partial<Counts>): Counts => ({
 afterEach(() => {
 	act(() => useUi.getState().resetUi());
 });
+
+/** A details section's header ("Photos & links 4"). */
+const heading = (name: string) =>
+	(document.querySelector(`[data-section="${name}"]`) as HTMLElement)
+		.firstElementChild as HTMLElement;
 
 describe("centre tabs", () => {
 	it("members get Money; link guests never do", () => {
@@ -97,15 +102,8 @@ describe("inspector", () => {
 			search: { sel: `i.${sky}` },
 			counts,
 		});
-		const tabs = screen.getByTestId(SHELL_TESTID.inspectorTabs);
-		expect(within(tabs).getByRole("tab", { name: /Media/ })).toHaveTextContent(
-			/Media\s*4/,
-		);
-		expect(within(tabs).getByRole("tab", { name: /Lists/ })).toHaveTextContent(
-			/Lists\s*1/,
-		);
-		// The Notes tab opens on the place's own note, which is empty.
-		expect(within(tabs).queryByLabelText("has notes")).toBeNull();
+		expect(heading("media")).toHaveTextContent(/Photos & links\s*4/);
+		expect(heading("lists")).toHaveTextContent(/To-dos & bookings\s*1/);
 	});
 
 	it("a day counts its own bundle", () => {
@@ -121,20 +119,15 @@ describe("inspector", () => {
 			search: { sel: `d.${day}` },
 			counts,
 		});
-		const tabs = screen.getByTestId(SHELL_TESTID.inspectorTabs);
-		expect(within(tabs).getByRole("tab", { name: /Media/ })).toHaveTextContent(
-			/Media\s*2/,
-		);
-		expect(within(tabs).getByLabelText("has notes")).toBeInTheDocument();
+		expect(heading("media")).toHaveTextContent(/Photos & links\s*2/);
 	});
 
-	it("guests get no Money tab in the inspector", () => {
+	it("guests get no Expenses in the details", () => {
 		renderWithWorkspace(<InspectorBody />, {
 			graph: guestGraph,
 			search: { sel: `n.${N.tokyo}` },
 		});
-		const tabs = screen.getByTestId(SHELL_TESTID.inspectorTabs);
-		expect(within(tabs).queryByRole("tab", { name: "Money" })).toBeNull();
+		expect(document.querySelector('[data-section="money"]')).toBeNull();
 		expect(screen.getByTestId(TESTID.nodeOverview)).toBeInTheDocument();
 	});
 });

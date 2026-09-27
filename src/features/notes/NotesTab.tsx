@@ -36,6 +36,8 @@ import { hasText, noteFor, noteTarget, tripNotesQuery } from "./queries";
 import { StaticNote } from "./StaticNote";
 import { NOTES_TESTID } from "./testids";
 
+export type NoteSectionData = Section;
+
 type Section = {
 	note: NoteDto;
 	target: BundleTarget;
@@ -43,30 +45,30 @@ type Section = {
 	crumb: string | null;
 };
 
-export function NotesTab() {
-	const ws = useWorkspace();
-	const { graph, scope, ix, mode, only, days, lens, model } = ws;
+/**
+ * The notes inside a scope, not its own (null = the trip): its places, their
+ * visits, days and transit, and the viewer's private ones, in trip order.
+ */
+export function useNotesInside(
+	scopeId: string | null | undefined,
+	dayRange: ReturnType<typeof useWorkspace>["days"] = null,
+): Section[] {
+	const { graph, ix, mode, lens, model } = useWorkspace();
 	const q = useQuery({
 		...tripNotesQuery(graph.trip.id),
 		enabled: mode === "live",
 	});
-	const { sharedWrite, canPrivate } = useNoteAccess();
-	const own: BundleTarget = scope
-		? { kind: "node", nodeId: scope.id }
-		: { kind: "trip" };
-	const where = scope?.name ?? graph.trip.name;
-	const [editing, setEditing] = useState<string | null>(null);
-	// Opened by the one I follow: no focus grab.
-	const [followed, setFollowed] = useState(false);
-	const [writing, setWriting] = useState(false);
-
-	const sections = useMemo<Section[]>(() => {
-		if (only || !q.data) return [];
+	return useMemo<Section[]>(() => {
+		if (scopeId === undefined || !q.data) return [];
+		const scope = scopeId ? ix.node(scopeId) : undefined;
+		const own: BundleTarget = scope
+			? { kind: "node", nodeId: scope.id }
+			: { kind: "trip" };
 		const notes = q.data.filter((n) => hasText(n));
 		const groups = rollupRows(
 			ix,
 			notes.map((n) => ({ id: n.name, target: noteTarget(n) })),
-			{ scopeId: scope?.id ?? null, lens, dayRange: days, model },
+			{ scopeId: scope?.id ?? null, lens, dayRange, model },
 		);
 		const out: Section[] = [];
 		for (const g of groups)
@@ -75,7 +77,7 @@ export function NotesTab() {
 					const note = notes.find((n) => n.name === row.id);
 					if (!note) continue;
 					const target = noteTarget(note);
-					// The scope's own note is the live editor on top.
+					// The scope's own note is the live editor above.
 					if (JSON.stringify(target) === JSON.stringify(own)) continue;
 					out.push(sectionOf(note, target));
 				}
@@ -128,8 +130,28 @@ export function NotesTab() {
 					return { note, target, title: graph.trip.name, crumb: null };
 			}
 		}
-	}, [q.data, only, ix, scope, lens, days, model, graph.trip.name, own]);
+	}, [q.data, scopeId, dayRange, ix, lens, model, graph.trip.name]);
+}
 
+/**
+ * The notes inside, as collapsible static sections; "Edit" swaps one into a
+ * live editor, one at a time. `limit` shows the first few, then "Show all".
+ */
+export function NotesInside({
+	sections,
+	limit,
+	dense = false,
+}: {
+	sections: Section[];
+	limit?: number;
+	/** Smaller titles (the details pane). */
+	dense?: boolean;
+}) {
+	const { sharedWrite, canPrivate } = useNoteAccess();
+	const [editing, setEditing] = useState<string | null>(null);
+	// Opened by the one I follow: no focus grab.
+	const [followed, setFollowed] = useState(false);
+	const [all, setAll] = useState(false);
 	// Which shared note is open live (their carets show) travels with my view.
 	const live = sections.find(
 		(s) => s.note.name === editing && !s.note.ownerUserId,
@@ -146,6 +168,55 @@ export function NotesTab() {
 		},
 		idOrNone,
 	);
+	const shown =
+		limit && !all && sections.length > limit
+			? sections.filter((s, i) => i < limit || s.note.name === editing)
+			: sections;
+	return (
+		<div className="space-y-1">
+			{shown.map((s) => (
+				<NoteSection
+					key={s.note.name}
+					section={s}
+					dense={dense}
+					editing={editing === s.note.name}
+					focus={!followed}
+					onEdit={() => {
+						setEditing(s.note.name);
+						setFollowed(false);
+					}}
+					onDone={() => setEditing(null)}
+					canEdit={s.note.ownerUserId ? canPrivate : sharedWrite}
+				/>
+			))}
+			{shown.length < sections.length ? (
+				<Button
+					variant="ghost"
+					size="sm"
+					data-testid={NOTES_TESTID.showAll}
+					onClick={() => setAll(true)}
+				>
+					Show all {sections.length}
+				</Button>
+			) : null}
+		</div>
+	);
+}
+
+export function NotesTab() {
+	const ws = useWorkspace();
+	const { graph, scope, mode, only, days } = ws;
+	const q = useQuery({
+		...tripNotesQuery(graph.trip.id),
+		enabled: mode === "live",
+	});
+	const { sharedWrite, canPrivate } = useNoteAccess();
+	const own: BundleTarget = scope
+		? { kind: "node", nodeId: scope.id }
+		: { kind: "trip" };
+	const where = scope?.name ?? graph.trip.name;
+	const [writing, setWriting] = useState(false);
+	const sections = useNotesInside(only ? undefined : (scope?.id ?? null), days);
 
 	const ownShared = noteFor(q.data, own);
 	const ownPrivate = canPrivate
@@ -181,21 +252,8 @@ export function NotesTab() {
 				/>
 			)}
 			{sections.length ? (
-				<div className="mt-8 space-y-1 border-t pt-2">
-					{sections.map((s) => (
-						<NoteSection
-							key={s.note.name}
-							section={s}
-							editing={editing === s.note.name}
-							focus={!followed}
-							onEdit={() => {
-								setEditing(s.note.name);
-								setFollowed(false);
-							}}
-							onDone={() => setEditing(null)}
-							canEdit={s.note.ownerUserId ? canPrivate : sharedWrite}
-						/>
-					))}
+				<div className="mt-8 border-t pt-2">
+					<NotesInside sections={sections} />
 				</div>
 			) : null}
 		</div>
@@ -204,6 +262,7 @@ export function NotesTab() {
 
 function NoteSection({
 	section,
+	dense,
 	editing,
 	focus,
 	onEdit,
@@ -211,6 +270,7 @@ function NoteSection({
 	canEdit,
 }: {
 	section: Section;
+	dense: boolean;
 	editing: boolean;
 	/** Focus the editor when it opens (not when a leader opened it). */
 	focus: boolean;
@@ -253,7 +313,12 @@ function NoteSection({
 								!open && "-rotate-90",
 							)}
 						/>
-						<span className="truncate text-lg leading-6 font-semibold">
+						<span
+							className={cn(
+								"truncate font-semibold",
+								dense ? "text-sm" : "text-lg leading-6",
+							)}
+						>
 							{section.title}
 						</span>
 						{section.crumb ? (

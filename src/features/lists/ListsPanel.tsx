@@ -171,7 +171,9 @@ export function ListsPanel({ target }: { target: BundleTarget }) {
 
 	return (
 		<div data-testid={TESTID.listsPanel} className="-mx-4 flex flex-col gap-1">
-			{toggle ? (
+			{/* Nothing inside to narrow to: no switch. */}
+			{toggle &&
+			!(isWide && !loading && counts.todo + counts.shopping === 0) ? (
 				<div className="px-4">
 					{/* The same Everything / Only switch as the center tabs (DESIGN §4.4). */}
 					<Segmented

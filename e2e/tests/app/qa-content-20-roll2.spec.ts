@@ -7,7 +7,7 @@ import { type Browser, expect, type Page, test } from "@playwright/test";
 import { LISTS_TESTID as L } from "../../../src/features/lists/testids";
 import { NOTES_TESTID as NT } from "../../../src/features/notes/testids";
 import { TESTID } from "../../../src/lib/testids";
-import { expectLive } from "./_helpers/page";
+import { detailsSection, expectLive } from "./_helpers/page";
 
 // Needs this verifier's env (QA_AUTH_DIR with qa-* storage states for APP_URL); skipped in a normal `pnpm e2e`.
 test.skip(!process.env.QA_AUTH_DIR, "I2 content verifier spec: set QA_AUTH_DIR");
@@ -165,7 +165,7 @@ test("NOTE-02 independent notes on trip, Japan, Tokyo, Shinjuku, Golden Gai, Bar
 	for (const [label, sel] of sels) {
 		await a.page.goto(`/t/asia-2027?sel=${sel}`);
 		await expectLive(a.page);
-		await a.page.getByTestId(TESTID.inspector).getByRole("tab", { name: /Notes/ }).click();
+		await detailsSection(a.page.getByTestId(TESTID.inspector), "notes");
 		const panel = a.page.getByTestId(TESTID.notesPanel);
 		if (label === "Benfiddich visit") await panel.getByTestId(NT.visitScope).getByText("This visit only").click();
 		const ed = panel.getByTestId(NT.editor);

@@ -174,31 +174,14 @@ test("FB-21a/b/d: folds, the inspector tab and view switches follow", async ({ b
 	await a.page.getByRole("button", { name: "Expand all" }).click();
 	await expect(b.page.getByRole("button", { name: "Collapse all" })).toBeVisible({ timeout: 8_000 });
 
-	// FB-21b: the inspector tab is in the URL and follows.
+	// FB-21b: the details are one scroll now; a link's section (`itab`) scrolls into view.
 	const sky = trip.ids.items.sky as string;
-	await a.page.goto(`/t/${trip.slug}?lens=place&sel=i.${sky}`);
-	await expectLive(a.page);
-	const tabsA = a.page.getByTestId(S.inspectorTabs);
-	await tabsA.getByRole("tab", { name: /Lists/ }).click();
-	await expect(a.page).toHaveURL(/itab=lists/);
-	await expect(b.page).toHaveURL(/itab=lists/, { timeout: 10_000 });
-	await expect(b.page.getByTestId(S.inspectorTabs).getByRole("tab", { name: /Lists/ })).toHaveAttribute(
-		"aria-selected",
-		"true",
-	);
-	// A link opens on it too.
 	const c = await b.ctx.newPage();
 	await c.goto(`/t/${trip.slug}?lens=place&sel=i.${sky}&itab=notes`);
-	await expect(c.getByTestId(S.inspectorTabs).getByRole("tab", { name: /Notes/ })).toHaveAttribute(
-		"aria-selected",
-		"true",
-		{ timeout: 20_000 },
-	);
+	await expect(c.getByTestId(TESTID.inspector).locator('[data-section="notes"]')).toBeInViewport({
+		timeout: 20_000,
+	});
 	await c.close();
-	// A new selection opens on its Overview (for both).
-	await card(a.page, trip.ids.items.meiji as string).click();
-	await expect(a.page).not.toHaveURL(/itab=/);
-	await expect(b.page).not.toHaveURL(/itab=/, { timeout: 10_000 });
 
 	// FB-21d: the lists grouping (not in the URL) follows.
 	await a.page.goto(`/t/${trip.slug}?tab=lists&list=todo`);

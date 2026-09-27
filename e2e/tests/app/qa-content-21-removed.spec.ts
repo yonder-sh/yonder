@@ -7,7 +7,7 @@ import { type Browser, expect, type Page, test } from "@playwright/test";
 import { NOTES_TESTID as NT } from "../../../src/features/notes/testids";
 import { PLAN_TESTID } from "../../../src/features/plan/testids";
 import { TESTID } from "../../../src/lib/testids";
-import { expectLive } from "./_helpers/page";
+import { detailsSection, expectLive } from "./_helpers/page";
 
 // Needs this verifier's env (QA_AUTH_DIR with qa-* storage states for APP_URL); skipped in a normal `pnpm e2e`.
 test.skip(!process.env.QA_AUTH_DIR, "I2 content verifier spec: set QA_AUTH_DIR");
@@ -55,7 +55,7 @@ test("TAG-04 / MENT-03 Kai removed: greyed former-member tag, plain-text mention
 	const notes = async () => {
 		await d.page.goto(`/t/asia-2027?sel=n.${gg.id}`);
 		await expectLive(d.page);
-		await d.page.getByTestId(TESTID.inspector).getByRole("tab", { name: /Notes/ }).click();
+		await detailsSection(d.page.getByTestId(TESTID.inspector), "notes");
 		const editor = d.page.getByTestId(TESTID.notesPanel).getByTestId(NT.editor);
 		await expect(editor).toHaveAttribute("contenteditable", "true", { timeout: 15_000 });
 		return editor;

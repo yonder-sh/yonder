@@ -18,7 +18,7 @@ import { TESTID } from "../../../src/lib/testids";
 import { loginViaApi } from "./_helpers/auth";
 import { shotPath } from "./_helpers/env";
 import { cloneFixtureTrip } from "./_helpers/fixture";
-import { collectConsole, expectLive } from "./_helpers/page";
+import { collectConsole, detailsSection, expectLive } from "./_helpers/page";
 
 async function signedIn(
 	browser: Browser,
@@ -88,7 +88,7 @@ test("FB-06: the inspector's list popovers hang from their row", async ({ browse
 	// A narrow board: the assign and date buttons hide, the ⋯ menu opens them.
 	await page.goto(`/t/${c.slug}?sel=n.${c.ids.nodes.tokyo}`);
 	await expectLive(page);
-	await page.getByTestId(TESTID.inspector).getByRole("tab", { name: "Lists" }).click();
+	await detailsSection(page.getByTestId(TESTID.inspector), "lists");
 	const panel = page.getByTestId(TESTID.listsPanel);
 	const sky = rowOf(panel, "Book Shibuya Sky sunset slot");
 	await expect(sky).toBeVisible();

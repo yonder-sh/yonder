@@ -8,7 +8,7 @@ import { NOTES_TESTID as NT } from "../../../src/features/notes/testids";
 import { TESTID } from "../../../src/lib/testids";
 import { loginViaApi } from "./_helpers/auth";
 import { cloneFixtureTrip } from "./_helpers/fixture";
-import { expectLive } from "./_helpers/page";
+import { detailsSection, expectLive } from "./_helpers/page";
 
 test.skip(!process.env.QA_AUTH_DIR, "I2 content verifier spec: set QA_AUTH_DIR");
 const SHOTS = process.env.QA_SHOTS ?? "/tmp";
@@ -22,7 +22,7 @@ test("NOTE-05 a 10,000-word trip note", async ({ browser }) => {
 	const c = await cloneFixtureTrip(d.request);
 	await d.goto(`/t/${c.slug}?sel=root`);
 	await expectLive(d);
-	await d.getByTestId(TESTID.inspector).getByRole("tab", { name: /Notes/ }).click();
+	await detailsSection(d.getByTestId(TESTID.inspector), "notes");
 	const ed = d.getByTestId(TESTID.notesPanel).getByTestId(NT.editor);
 	await expect(ed).toHaveAttribute("contenteditable", "true", { timeout: 15_000 });
 	await ed.click();
@@ -70,7 +70,7 @@ test("NOTE-05 a 10,000-word trip note", async ({ browser }) => {
 	const m = await mctx.newPage();
 	await m.goto(`/t/${c.slug}?sel=root`);
 	await expectLive(m);
-	await m.getByTestId(TESTID.inspector).getByRole("tab", { name: /Notes/ }).click();
+	await detailsSection(m.getByTestId(TESTID.inspector), "notes");
 	const med = m.getByTestId(TESTID.notesPanel).getByTestId(NT.editor);
 	const s0 = Date.now();
 	await expect.poll(async () => (await med.textContent())?.includes("hello world again") ?? false, { timeout: 10_000, intervals: [100] }).toBe(true);

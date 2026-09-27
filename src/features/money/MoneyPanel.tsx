@@ -142,6 +142,7 @@ export function MoneyPanel({ target }: { target: BundleTarget }) {
 					meId={meId}
 					nodeId={budgetNode}
 					className="pt-2"
+					hideEmpty
 				/>
 			) : null}
 			<AddExpenseDialog />

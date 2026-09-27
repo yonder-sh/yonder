@@ -24,6 +24,7 @@ import { SHELL_TESTID } from "../../../src/features/shell/testids";
 import { TESTID } from "../../../src/lib/testids";
 import { loginViaApi } from "./_helpers/auth";
 import { shotPath } from "./_helpers/env";
+import { detailsSection } from "./_helpers/page";
 
 test.describe.configure({ mode: "default" });
 
@@ -205,27 +206,22 @@ test.describe("desktop", () => {
 		await openTrip(page, `/t/${TRIP}/japan/tokyo`);
 		const sky = await nodeId(page, "Shibuya Sky");
 		const shibuya = await nodeId(page, "Shibuya");
-		const tabs = () => page.getByTestId(SHELL_TESTID.inspectorTabs);
-		// A click that lands while the inspector is still settling is retried.
-		const openTab = (name: RegExp) =>
-			expect(async () => {
-				await tabs().getByRole("tab", { name }).click();
-				await expect(tabs().getByRole("tab", { name })).toHaveAttribute("aria-selected", "true", { timeout: 1_000 });
-			}).toPass();
+		// The details are one scroll: go to the section.
+		const openTab = (name: "media" | "lists") => detailsSection(page.getByTestId(TESTID.inspector), name);
 		await openTrip(page, `/t/${TRIP}/japan/tokyo?sel=n.${sky}`);
-		await openTab(/Media/);
+		await openTab("media");
 		await expect(page.getByTestId(TESTID.mediaPanel)).toBeVisible();
 		await expect(page.getByTestId("media-scope-toggle")).toHaveCount(0);
-		await openTab(/Lists/);
+		await openTab("lists");
 		await expect(page.getByTestId(TESTID.listsPanel)).toBeVisible();
 		await expect(page.getByTestId("lists-panel-scope")).toHaveCount(0);
 		await settle(page);
 		await page.getByTestId(TESTID.inspector).screenshot({ path: shotPath("shell/fb12-inspector-leaf.png"), animations: "disabled" });
 
 		await openTrip(page, `/t/${TRIP}/japan/tokyo?sel=n.${shibuya}`);
-		await openTab(/Media/);
+		await openTab("media");
 		await expect(page.getByTestId("media-scope-toggle")).toBeVisible();
-		await openTab(/Lists/);
+		await openTab("lists");
 		await expect(page.getByTestId("lists-panel-scope")).toBeVisible();
 	});
 });

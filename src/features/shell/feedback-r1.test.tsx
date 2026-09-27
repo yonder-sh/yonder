@@ -145,25 +145,26 @@ describe("FB-12: the rollup choice only for a node with children", () => {
 		expect(navigations).toEqual([]);
 	});
 
-	it("inspector: a place's Media and Lists tabs offer no toggle; an area with places does", () => {
-		const tabs = () => screen.getByTestId(SHELL_TESTID.inspectorTabs);
+	it("details: a place's Photos and To-dos offer no toggle; an area with places does", () => {
+		const section = (name: string) =>
+			document.querySelector(`[data-section="${name}"]`) as HTMLElement;
 		const leaf = renderWithWorkspace(<InspectorBody />, {
 			search: { sel: `n.${N.shibuyaSky}` },
 		});
-		fireEvent.mouseDown(within(tabs()).getByRole("tab", { name: /Media/ }));
-		expect(screen.getByTestId(TESTID.mediaPanel)).toBeInTheDocument();
+		expect(
+			within(section("media")).getByTestId(TESTID.mediaPanel),
+		).toBeInTheDocument();
 		expect(screen.queryByTestId("media-scope-toggle")).toBeNull();
-		fireEvent.mouseDown(within(tabs()).getByRole("tab", { name: /Lists/ }));
-		expect(screen.getByTestId(TESTID.listsPanel)).toBeInTheDocument();
+		expect(
+			within(section("lists")).getByTestId(TESTID.listsPanel),
+		).toBeInTheDocument();
 		expect(screen.queryByTestId("lists-panel-scope")).toBeNull();
 		leaf.unmount();
 
 		renderWithWorkspace(<InspectorBody />, {
 			search: { sel: `n.${N.shibuya}` },
 		});
-		fireEvent.mouseDown(within(tabs()).getByRole("tab", { name: /Media/ }));
 		expect(screen.getByTestId("media-scope-toggle")).toBeInTheDocument();
-		fireEvent.mouseDown(within(tabs()).getByRole("tab", { name: /Lists/ }));
 		expect(screen.getByTestId("lists-panel-scope")).toBeInTheDocument();
 	});
 });

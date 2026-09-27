@@ -9,7 +9,7 @@ import { type Browser, expect, type Page, test } from "@playwright/test";
 import { makePdf } from "../../../src/features/media/__tests__/make-pdf";
 import { MEDIA_TESTID as MT } from "../../../src/features/media/testids";
 import { TESTID } from "../../../src/lib/testids";
-import { expectLive } from "./_helpers/page";
+import { detailsSection, expectLive } from "./_helpers/page";
 import { ensureQaPdfs } from "./_helpers/qa-pdfs";
 import { openLink } from "./_helpers/link";
 
@@ -50,7 +50,7 @@ test("MED-06 through the UI: .exe, HEIC, oversized PDF and bad links get specifi
 	const gg = g.nodes.find((n) => n.name === "Golden Gai");
 	await a.page.goto(`/t/asia-2027?sel=n.${gg?.id}`);
 	await expectLive(a.page);
-	await a.page.getByTestId(TESTID.inspector).getByRole("tab", { name: /Media/ }).click();
+	await detailsSection(a.page.getByTestId(TESTID.inspector), "media");
 	const input = a.page.getByTestId(TESTID.inspector).getByTestId(MT.fileInput).first();
 	const puts: string[] = [];
 	a.page.on("request", (r) => {
@@ -114,10 +114,12 @@ test("A guest editor's e-ticket on the flight: what do they see after uploading?
 	await ge.page.goto(`/t/asia-2027?days=${day?.date}&sel=l.${flight?.fromItemId}.${flight?.toItemId}`);
 	await expectLive(ge.page);
 	await ge.page.waitForTimeout(1000);
-	const tabs = await ge.page.getByTestId(TESTID.inspector).getByRole("tab").allInnerTexts();
-	console.log("guest flight inspector tabs:", JSON.stringify(tabs));
-	const media = ge.page.getByTestId(TESTID.inspector).getByRole("tab", { name: /Media/ });
-	if (await media.count()) await media.first().click();
+	const sections = await ge.page
+		.getByTestId(TESTID.inspector)
+		.locator('[data-testid="details-section"]')
+		.evaluateAll((els) => els.map((e) => e.getAttribute("data-section")));
+	console.log("guest flight details sections:", JSON.stringify(sections));
+	if (sections.includes("media")) await detailsSection(ge.page.getByTestId(TESTID.inspector), "media");
 	const input = ge.page.getByTestId(TESTID.inspector).getByTestId(MT.fileInput).first();
 	if (!(await input.count())) {
 		console.log("no file input for the guest editor on the flight");
