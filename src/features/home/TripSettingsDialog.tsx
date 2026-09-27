@@ -34,6 +34,10 @@ import {
 	useState,
 } from "react";
 import { toast } from "sonner";
+import {
+	type DayNotesChoice,
+	DayNotesChoiceField,
+} from "@/components/common/day-notes-choice";
 import { EditGuard, useEditGuard } from "@/components/common/edit-guard";
 import { DurationInput, TimeInput } from "@/components/common/time";
 import { useTripMutation } from "@/components/common/use-trip-mutation";
@@ -153,6 +157,7 @@ function DatesRow() {
 	const trip = graph.trip;
 	const [from, setFrom] = useState<string | null>(trip.startDate);
 	const [to, setTo] = useState<string | null>(trip.endDate);
+	const [dayNotes, setDayNotes] = useState<DayNotesChoice>("keep");
 	const openShift = useUi((s) => s.openShiftTrip);
 	const { disabled, reason } = useEditGuard();
 	useEffect(() => {
@@ -177,8 +182,12 @@ function DatesRow() {
 	// lags behind changes that don't refetch the graph (a to-do, an expense),
 	// which refused a date change nothing had touched.
 	const apply = useTripMutation(
-		(v: { startDate: string; endDate: string; expectedVersion: number }) =>
-			setTripDates({ data: { tripId: trip.id, ...v } }),
+		(v: {
+			startDate: string;
+			endDate: string;
+			expectedVersion: number;
+			dayNotes?: DayNotesChoice;
+		}) => setTripDates({ data: { tripId: trip.id, ...v } }),
 		{
 			tripId: trip.id,
 			keys: [
@@ -223,9 +232,15 @@ function DatesRow() {
 			</Row>
 			{changed ? (
 				<div className="grid gap-2 rounded-lg bg-muted/60 p-3 text-[13px] sm:ml-[176px]">
-					{p?.blockedBy ? (
-						<p className="text-warning">{p.blockedBy}</p>
-					) : items.length ? (
+					{p?.blockedBy ? <p className="text-warning">{p.blockedBy}</p> : null}
+					{!p?.blockedBy && p?.notedDays?.length ? (
+						<DayNotesChoiceField
+							dates={p.notedDays ?? []}
+							value={dayNotes}
+							onChange={setDayNotes}
+						/>
+					) : null}
+					{p?.blockedBy ? null : items.length ? (
 						<p>
 							{items.length} {items.length === 1 ? "item" : "items"} on{" "}
 							{p?.removedDays
@@ -269,6 +284,7 @@ function DatesRow() {
 										startDate: from,
 										endDate: to,
 										expectedVersion: p?.version ?? trip.version,
+										...(p?.notedDays?.length ? { dayNotes } : {}),
 									},
 									{
 										// "Review again": the next click sends the fresh preview's version.

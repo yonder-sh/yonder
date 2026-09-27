@@ -122,6 +122,8 @@ export const TESTID = {
 
 	// ---- Common (F1u) ------------------------------------------------------
 	emptyState: "empty-state",
+	/** A removed day's shared note: keep in the trip's notes, or delete. */
+	dayNotesChoice: "day-notes-choice",
 	/** The branded error page (`RouteError`, QA ERR-04) and its retry. */
 	routeError: "route-error",
 	routeErrorRetry: "route-error-retry",

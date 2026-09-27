@@ -425,7 +425,8 @@ function usePlanActionsImpl() {
 		},
 	);
 	const dayDelete = useTripMutation(
-		(v: { dayId: string }) => friendly(deleteDay({ data: v })),
+		(v: { dayId: string; dayNotes?: "keep" | "delete" }) =>
+			friendly(deleteDay({ data: v })),
 		{
 			...common,
 			keys: [

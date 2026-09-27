@@ -591,7 +591,7 @@ describe("days (§7.7): never lose items", () => {
 		const root = noteDocName(c.tripId, { kind: "trip" }, U.owner.id);
 
 		// Day 5 is the flight's; drop Day 1 (a private note, no own trip note
-		// yet). Its shared note is emptied first: that one still blocks everyone.
+		// yet). Its shared note is emptied first (that one has its own test).
 		await getDb().execute(sql`
 			delete from yjs_documents
 			 where trip_id = ${c.tripId} and day_id = ${D.d1} and owner_user_id is null`);
@@ -604,7 +604,7 @@ describe("days (§7.7): never lose items", () => {
 		type Preview = { blockedBy?: string };
 		// QA R3: a private note never blocks, its author's own included ("Day 1
 		// has a note" named a note his Shared layer didn't show); it moves to
-		// his private trip note like anyone else's (the shared note still blocks).
+		// his private trip note like anyone else's.
 		expect(
 			(await call<Preview>(previewTripDates, U.owner, range)).blockedBy,
 		).toBeUndefined();
@@ -613,10 +613,13 @@ describe("days (§7.7): never lose items", () => {
 			(await call<Preview>(previewTripDates, U.maya, range)).blockedBy,
 		).toBeUndefined();
 		expect(await codeOf(call(setTripDates, U.maya, range))).toBe("ok");
-		// Kept: it became the owner's private trip note.
-		expect(await ownerNotes()).toEqual([
-			{ name: root, dayId: null, text: "PRIVATE DAYNOTE only for me" },
-		]);
+		// Kept: it became the owner's private trip note, headed with its day.
+		const kept = await ownerNotes();
+		expect(kept).toHaveLength(1);
+		expect(kept[0]).toMatchObject({ name: root, dayId: null });
+		expect(kept[0]?.text).toMatch(
+			/^From Sun 3 Oct \(removed day\)\s+PRIVATE DAYNOTE only for me/,
+		);
 
 		// With a private trip note already there, a second day's note merges in.
 		const d2 = (await graphOf(c.tripId)).days[0]?.id as string;
@@ -626,10 +629,58 @@ describe("days (§7.7): never lose items", () => {
 		expect(after).toHaveLength(1);
 		expect(after[0]).toMatchObject({ name: root, dayId: null });
 		expect(after[0]?.text).toContain("PRIVATE DAYNOTE only for me");
+		expect(after[0]?.text).toContain("From Mon 4 Oct (removed day)");
 		expect(after[0]?.text).toContain("Second private note");
 		// Maya never gets the text back from any read.
 		const mayaGraph = await call(getTripGraph, U.maya, { tripId: c.tripId });
 		expect(JSON.stringify(mayaGraph)).not.toContain("PRIVATE DAYNOTE");
+	});
+
+	it("a shared day note never blocks: it moves to the trip's notes, or goes if the remover says so", async () => {
+		const c = await freshTrip();
+		const D = c.ids.days;
+		const put = async (dayId: string, md: string) => {
+			const snap = markdownToYdoc(md);
+			await getDb().execute(sql`
+				delete from yjs_documents where trip_id = ${c.tripId} and day_id = ${dayId} and owner_user_id is null`);
+			await getDb().execute(sql`
+				insert into yjs_documents (name, trip_id, day_id, state, json, plain_text)
+				values (${noteDocName(c.tripId, { kind: "day", dayId })}, ${c.tripId}, ${dayId},
+				        ${Buffer.from(snap.state)}, ${JSON.stringify(snap.json)}::jsonb, ${snap.plainText})`);
+		};
+		const tripNote = async () =>
+			(
+				(
+					await getDb().execute(sql`
+						select plain_text as "text" from yjs_documents
+						 where name = ${noteDocName(c.tripId, { kind: "trip" })}`)
+				).rows[0] as { text: string } | undefined
+			)?.text ?? "";
+		await put(D.d1 as string, "Luggage forwarding from the airport");
+		const range = {
+			tripId: c.tripId,
+			startDate: "2027-10-04",
+			endDate: "2027-10-07",
+		};
+		type Preview = { blockedBy?: string; notedDays: string[] };
+		const preview = await call<Preview>(previewTripDates, U.owner, range);
+		expect(preview.blockedBy).toBeUndefined();
+		expect(preview.notedDays).toEqual(["2027-10-03"]);
+		// Kept (the default): into the trip's shared note, headed with its day.
+		expect(await codeOf(call(setTripDates, U.owner, range))).toBe("ok");
+		expect(await tripNote()).toContain("From Sun 3 Oct (removed day)");
+		expect(await tripNote()).toContain("Luggage forwarding from the airport");
+		// Deleted: the remover chose so; nothing reaches the trip's note.
+		const d2 = (await graphOf(c.tripId)).days[0]?.id as string;
+		await put(d2, "Scratch plan, never mind");
+		expect(
+			await codeOf(call(deleteDay, U.owner, { dayId: d2, dayNotes: "delete" })),
+		).toBe("ok");
+		expect(await tripNote()).not.toContain("Scratch plan");
+		const left = await getDb().execute(
+			sql`select 1 from yjs_documents where day_id = ${d2}`,
+		);
+		expect(left.rows).toHaveLength(0);
 	});
 
 	it("setDayStay sets the night for a range", async () => {

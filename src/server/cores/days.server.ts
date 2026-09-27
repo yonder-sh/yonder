@@ -42,7 +42,13 @@ export const MoveDayInput = z
 	.object({ dayId: z.uuid(), toDate: IsoDate })
 	.strict();
 
-export const DeleteDayInput = z.object({ dayId: z.uuid() }).strict();
+export const DeleteDayInput = z
+	.object({
+		dayId: z.uuid(),
+		/** Its shared note: into the trip's notes (the default) or deleted. */
+		dayNotes: z.enum(["keep", "delete"]).optional(),
+	})
+	.strict();
 
 export const UpdateDayInput = z
 	.object({
@@ -163,7 +169,13 @@ export async function deleteDayCore(
 	if (!day) return fail("NOT_FOUND");
 	const blocker = await dayRemovalBlocker(tx, ix, day.id);
 	if (blocker) return fail("CONFLICT", blocker);
-	const moved = await evacuateDay(tx, tripId, day.id, out);
+	const moved = await evacuateDay(
+		tx,
+		tripId,
+		day,
+		out,
+		data.dayNotes ?? "keep",
+	);
 	await tx.delete(tripDays).where(sql`${tripDays.id} = ${day.id}`);
 	const later = new Map<string, string>();
 	const deltas = new Map<string, number | null>([[day.id, null]]);

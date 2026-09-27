@@ -290,14 +290,20 @@ export async function startCollabServer(
 
 	/**
 	 * Retires the loaded note documents `gone` names (a name also covers its
-	 * private variants `…/u/<user>`): a private one's unsaved text goes to its
-	 * owner's private trip note, then its editors are closed with
-	 * `doc-gone` (re-authenticating answers `gone`, so they stop taking
-	 * typing) and it is never stored again. `refresh` names loaded documents
-	 * whose stored state gained text server-side: they fold it in now, so an
-	 * open editor shows it and never stores over it.
+	 * private variants `…/u/<user>`): unsaved text goes where the server moved
+	 * the note (`moved`: a kept shared day note to the trip's note), and a
+	 * private one's always to its owner's private trip note; a deleted shared
+	 * note's goes nowhere. Then its editors are closed with `doc-gone`
+	 * (re-authenticating answers `gone`, so they stop taking typing) and it is
+	 * never stored again. `refresh` names loaded documents whose stored state
+	 * gained text server-side: they fold it in now, so an open editor shows it
+	 * and never stores over it.
 	 */
-	async function retireNotes(gone: string[], refresh: string[]): Promise<void> {
+	async function retireNotes(
+		gone: string[],
+		refresh: string[],
+		moved: ReadonlyMap<string, string> = new Map(),
+	): Promise<void> {
 		const hp = hocuspocusRef;
 		if (!hp) return;
 		const hit = (name: string) =>
@@ -306,12 +312,14 @@ export async function startCollabServer(
 			if (!hit(name) || isGone(name)) continue;
 			goneDocs.set(name, Date.now());
 			const ref = parseDocName(name);
-			if (ref?.kind === "note" && ref.ownerUserId) {
+			const into =
+				moved.get(name) ??
+				(ref?.kind === "note" && ref.ownerUserId
+					? noteDocName(ref.tripId, { kind: "trip" }, ref.ownerUserId)
+					: null);
+			if (into) {
 				try {
-					await foldInto(
-						noteDocName(ref.tripId, { kind: "trip" }, ref.ownerUserId),
-						Y.encodeStateAsUpdate(doc),
-					);
+					await foldInto(into, Y.encodeStateAsUpdate(doc));
 				} catch (e) {
 					console.error(
 						`[collab] keeping ${name} failed:`,
@@ -344,6 +352,7 @@ export async function startCollabServer(
 		retireNotes(
 			[...e.gone, ...e.moved.map((m) => m.from)],
 			[...new Set(e.moved.map((m) => m.to))],
+			new Map(e.moved.map((m) => [m.from, m.to])),
 		).catch((err: unknown) => console.error("[collab] notes event:", err));
 
 	const connName = opts.redis.name ? `-${opts.redis.name}` : "";

@@ -14,6 +14,7 @@
  * the ⋯ menu, the day Overview's "Show only …", the phone's day chips and
  * the `d` key.
  */
+import { useQuery } from "@tanstack/react-query";
 import { cn } from "cn";
 import {
 	BedDouble,
@@ -24,6 +25,10 @@ import {
 	Wallet,
 } from "lucide-react";
 import { useState } from "react";
+import {
+	type DayNotesChoice,
+	DayNotesChoiceField,
+} from "@/components/common/day-notes-choice";
 import { useEditGuard } from "@/components/common/edit-guard";
 import { TimeInput } from "@/components/common/time";
 import { TreePicker } from "@/components/common/tree-picker";
@@ -48,6 +53,7 @@ import {
 import { DayHoursBadge } from "@/features/insights/DayHoursBadge";
 import { DaySun } from "@/features/insights/DaySun";
 import { useHoursIssues } from "@/features/insights/use-hours-issues";
+import { noteFor, tripNotesQuery } from "@/features/notes/queries";
 import { can } from "@/lib/auth/roles";
 import { tzLabel } from "@/lib/engine/time";
 import type { GraphDay } from "@/lib/engine/types";
@@ -649,27 +655,49 @@ function DayMenuContent({
 
 /** "Its 6 items move to Unscheduled." Delete day · Cancel (inline, under the header). */
 function DeleteConfirm({ day, onDone }: { day: GraphDay; onDone: () => void }) {
-	const { ix } = useWorkspace();
+	const { ix, graph, mode } = useWorkspace();
 	const actions = usePlanActions();
 	const n = ix.itemsByDay.get(day.id)?.length ?? 0;
+	// Its shared note (the one everyone sees): keep in the trip's notes, or delete.
+	const notes = useQuery({
+		...tripNotesQuery(graph.trip.id),
+		enabled: mode === "live",
+	}).data;
+	const hasNote = !!noteFor(notes, {
+		kind: "day",
+		dayId: day.id,
+	})?.plainText?.trim();
+	const [dayNotes, setDayNotes] = useState<DayNotesChoice>("keep");
 	return (
 		<div
 			data-testid={PLAN_TESTID.dayDeleteConfirm}
 			className="flex flex-wrap items-center gap-2 border-b bg-muted/60 px-4 py-2 text-sm"
 		>
-			<span className="flex-1">
-				Delete {formatDayDate(day.date)}?{" "}
-				<span className="text-muted-foreground">
-					{n
-						? `Its ${n} ${n === 1 ? "item moves" : "items move"} to Unscheduled; later days move back one.`
-						: "Later days move back one."}
+			<span className="grid flex-1 gap-2">
+				<span>
+					Delete {formatDayDate(day.date)}?{" "}
+					<span className="text-muted-foreground">
+						{n
+							? `Its ${n} ${n === 1 ? "item moves" : "items move"} to Unscheduled; later days move back one.`
+							: "Later days move back one."}
+					</span>
 				</span>
+				{hasNote ? (
+					<DayNotesChoiceField
+						dates={[day.date]}
+						value={dayNotes}
+						onChange={setDayNotes}
+					/>
+				) : null}
 			</span>
 			<Button
 				size="sm"
 				variant="destructive"
 				onClick={() => {
-					actions.dayDelete.mutate({ dayId: day.id });
+					actions.dayDelete.mutate({
+						dayId: day.id,
+						...(hasNote ? { dayNotes } : {}),
+					});
 					onDone();
 				}}
 			>

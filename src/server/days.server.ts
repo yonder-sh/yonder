@@ -14,6 +14,8 @@ import type { Tx } from "@/db/db.server";
 import { tripDays } from "@/db/schema";
 import type { GraphIndex } from "@/lib/engine/graph-index";
 import { addDays } from "@/lib/engine/time";
+import { formatDayDate } from "@/lib/format";
+import { NOTE_FIELD } from "@/lib/notes/extensions.shared";
 import { notePlainText } from "@/lib/notes/plain-text";
 import {
 	jsonToMarkdown,
@@ -64,15 +66,13 @@ export function assertBlocksMoveTogether(
 }
 
 /**
- * Why a day can't be removed (part of a flight block, or a non-empty SHARED
- * day note), or null. Private notes never block, the viewer's own included
- * (QA R3: "Day 1 has a note" named a note the shared layer didn't show, and
- * reached a suggester through the accepter's error, SEC-R3-02): every
- * member's private day note moves to their private trip note instead
- * (`rehomePrivateDayNotes`).
+ * Why a day can't be removed (part of a flight block), or null. Notes never
+ * block (owner, 2026-09-28): a shared day note moves to the trip's notes
+ * unless the remover chose to delete it, and every member's private day note
+ * moves to their own private trip note (`rehomeDayNotes`).
  */
 export async function dayRemovalBlocker(
-	tx: Tx,
+	_tx: Tx,
 	ix: GraphIndex,
 	dayId: string,
 ): Promise<string | null> {
@@ -80,62 +80,101 @@ export async function dayRemovalBlocker(
 		if (block.some((id) => ix.item(id)?.dayId === dayId))
 			return `Day ${ix.dayNumber(dayId)} holds flight ${blockLabel(ix, block)}`;
 	}
-	const res = await tx.execute(sql`
-		select 1 from yjs_documents
-		 where day_id = ${dayId} and coalesce(plain_text, '') <> ''
-		   and owner_user_id is null
-		 limit 1`);
-	if (res.rows.length) return `Day ${ix.dayNumber(dayId)} has a note`;
 	return null;
+}
+
+/** The days among `dayIds` whose shared note has text (the remover is asked about those). */
+export async function daysWithSharedNotes(
+	tx: Tx,
+	dayIds: readonly string[],
+): Promise<Set<string>> {
+	if (!dayIds.length) return new Set();
+	const res = await tx.execute(sql`
+		select distinct day_id::text as "dayId" from yjs_documents
+		 where day_id = any(${sql.param([...dayIds])}::uuid[])
+		   and owner_user_id is null and coalesce(plain_text, '') <> ''`);
+	return new Set((res.rows as { dayId: string }[]).map((r) => r.dayId));
 }
 
 const bytesOf = (b: Buffer | Uint8Array): Uint8Array =>
 	new Uint8Array(b.buffer, b.byteOffset, b.byteLength);
 
+/** What happens to a removed day's shared note; private notes always move. */
+export type DayNotesChoice = "keep" | "delete";
+
+/** A day note's state with "From Tue 5 Oct (removed day)" put first, so it reads apart in the trip's note. */
+export function labelledDayNote(state: Uint8Array, date: string): Uint8Array {
+	const doc = ydocFromState(state);
+	const heading = new Y.XmlElement("heading");
+	heading.setAttribute("level", 3 as unknown as string);
+	heading.insert(0, [
+		new Y.XmlText(`From ${formatDayDate(date)} (removed day)`),
+	]);
+	doc.getXmlFragment(NOTE_FIELD).insert(0, [heading]);
+	return Y.encodeStateAsUpdate(doc);
+}
+
 /**
- * ADDENDUM §7.2: a member's private note on a day that is being removed is
- * kept, not cascaded away with the day. It moves to that member's private
- * trip note: renamed when they have none, else merged into it (a Yjs merge,
- * so both texts survive). Empty ones go with the day, like the empty shared
- * note. Returns the moves (`from` → `to` document names) for collab, which
- * folds in anything still unsaved and refreshes an open target (QA P1).
+ * ADDENDUM §7.2 and owner 2026-09-28: a removed day's notes are kept, not
+ * cascaded away with it. Every member's private note moves to that member's
+ * private trip note; the shared note to the trip's shared note, unless
+ * `shared` is "delete" (it then goes with the day). Each moved text starts
+ * with "From Tue 5 Oct (removed day)"; it is renamed when the target has no
+ * note yet, else merged into it (a Yjs merge, so both texts survive). Empty
+ * notes go with the day. Returns the moves (`from` → `to` document names)
+ * for collab, which folds in anything still unsaved and refreshes an open
+ * target (QA P1).
  */
-export async function rehomePrivateDayNotes(
+export async function rehomeDayNotes(
 	tx: Tx,
 	tripId: string,
-	dayId: string,
+	day: { id: string; date: string },
+	shared: DayNotesChoice = "keep",
 ): Promise<{ from: string; to: string }[]> {
 	const res = await tx.execute(sql`
 		select name, owner_user_id as "ownerUserId", state from yjs_documents
-		 where trip_id = ${tripId} and day_id = ${dayId}
-		   and owner_user_id is not null and coalesce(plain_text, '') <> ''
+		 where trip_id = ${tripId} and day_id = ${day.id}
+		   and coalesce(plain_text, '') <> ''
+		   ${shared === "keep" ? sql`` : sql`and owner_user_id is not null`}
 		 order by name`);
 	const moved: { from: string; to: string }[] = [];
 	for (const r of res.rows as {
 		name: string;
-		ownerUserId: string;
+		ownerUserId: string | null;
 		state: Buffer;
 	}[]) {
 		const target = noteDocName(tripId, { kind: "trip" }, r.ownerUserId);
 		moved.push({ from: r.name, to: target });
+		const labelled = labelledDayNote(bytesOf(r.state), day.date);
 		const cur = await tx.execute(
 			sql`select state from yjs_documents where name = ${target} for update`,
 		);
 		const root = cur.rows[0] as { state: Buffer } | undefined;
+		const state = root
+			? Y.mergeUpdates([bytesOf(root.state), labelled])
+			: labelled;
+		const json = ydocToJSON(ydocFromState(state));
+		const derived = {
+			state: Buffer.from(state),
+			json: JSON.stringify(json),
+			markdown: jsonToMarkdown(json),
+			plainText: notePlainText(json),
+		};
 		if (!root) {
 			await tx.execute(sql`
-				update yjs_documents set name = ${target}, day_id = null, updated_at = now()
+				update yjs_documents set name = ${target}, day_id = null,
+				  state = ${derived.state}, json = ${derived.json}::jsonb,
+				  markdown = ${derived.markdown}, plain_text = ${derived.plainText},
+				  updated_at = now()
 				 where name = ${r.name}`);
 			continue;
 		}
-		const merged = Y.mergeUpdates([bytesOf(root.state), bytesOf(r.state)]);
-		const json = ydocToJSON(ydocFromState(merged));
 		await tx.execute(sql`
 			update yjs_documents set
-			  state = ${Buffer.from(merged)},
-			  json = ${JSON.stringify(json)}::jsonb,
-			  markdown = ${jsonToMarkdown(json)},
-			  plain_text = ${notePlainText(json)},
+			  state = ${derived.state},
+			  json = ${derived.json}::jsonb,
+			  markdown = ${derived.markdown},
+			  plain_text = ${derived.plainText},
 			  updated_at = now()
 			 where name = ${target}`);
 		await tx.execute(sql`delete from yjs_documents where name = ${r.name}`);
@@ -147,22 +186,25 @@ export async function rehomePrivateDayNotes(
  * Moves everything off a day that is about to be deleted: its items (live and
  * soft-deleted, which the NO ACTION FK would otherwise block) to the end of
  * Unscheduled in their order, its attachments and list items to the trip
- * root, and private notes to their owner's private trip note. The empty
- * day note row cascades with the day; `out` tells collab to close the day's
- * open note documents (QA P1). Returns the moved live item ids.
+ * root, and its notes to the trip's (`rehomeDayNotes`; a shared note the
+ * remover chose to delete, and empty ones, cascade with the day). `out`
+ * tells collab to close the day's open note documents (QA P1). Returns the
+ * moved live item ids.
  */
 export async function evacuateDay(
 	tx: Tx,
 	tripId: string,
-	dayId: string,
+	day: { id: string; date: string },
 	out?: Pick<TxOutbox, "notes">,
+	notes: DayNotesChoice = "keep",
 ): Promise<string[]> {
+	const dayId = day.id;
 	// Every note document of the day, saved or not (an editor may have one
 	// open that was never stored): collab closes them after COMMIT.
 	const docs = await tx.execute(
 		sql`select name from yjs_documents where trip_id = ${tripId} and day_id = ${dayId}`,
 	);
-	const moved = await rehomePrivateDayNotes(tx, tripId, dayId);
+	const moved = await rehomeDayNotes(tx, tripId, day, notes);
 	out?.notes({
 		gone: [
 			...(docs.rows as { name: string }[]).map((r) => r.name),

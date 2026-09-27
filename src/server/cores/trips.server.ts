@@ -22,6 +22,7 @@ import { logActivity } from "@/server/activity.server";
 import { fail } from "@/server/authz/session.server";
 import {
 	dayRemovalBlocker,
+	daysWithSharedNotes,
 	evacuateDay,
 	insertDays,
 	redateDays,
@@ -84,12 +85,16 @@ export type UpdateTripInput = z.infer<typeof UpdateTripInput>;
 /** "The trip changed while you were looking" guard for date ops (EXTENSIONS §5). */
 const ExpectedVersion = z.number().int().nonnegative().optional();
 
+/** A removed day's shared note: into the trip's notes (the default) or deleted. */
+const DayNotes = z.enum(["keep", "delete"]).optional();
+
 const DatesShape = z
 	.object({
 		tripId: z.uuid(),
 		startDate: IsoDate,
 		endDate: IsoDate,
 		expectedVersion: ExpectedVersion,
+		dayNotes: DayNotes,
 	})
 	.strict();
 export const SetTripDatesInput = DatesShape.refine(
@@ -112,7 +117,7 @@ export const ShiftTripDatesInput = z
  * what-if, where only `blockedBy` matters).
  */
 export const PreviewTripDatesInput = z.union([
-	DatesShape.omit({ expectedVersion: true }).refine(
+	DatesShape.omit({ expectedVersion: true, dayNotes: true }).refine(
 		(v) =>
 			v.startDate <= v.endDate &&
 			datesBetween(v.startDate, v.endDate).length <= MAX_TRIP_DAYS,
@@ -129,6 +134,8 @@ export const PreviewTripDatesInput = z.union([
 export type PreviewTripDatesResult = {
 	removedDays: string[];
 	affectedItems: { id: string; title: string }[];
+	/** Removed days with a shared note: the dialog asks keep or delete. */
+	notedDays: string[];
 	blockedBy?: string;
 	/**
 	 * The `trips.version` this preview reflects: what the user reviewed, so the
@@ -161,6 +168,7 @@ export async function planTripDates(
 	removed: GraphDay[];
 	added: string[];
 	affected: { id: string; title: string }[];
+	noted: string[];
 	blockedBy?: string;
 }> {
 	const ix = await indexTx(tx, tripId);
@@ -181,7 +189,19 @@ export async function planTripDates(
 			break;
 		}
 	}
-	return { ix, removed, added, affected, ...(blockedBy ? { blockedBy } : {}) };
+	const withNotes = await daysWithSharedNotes(
+		tx,
+		removed.map((d) => d.id),
+	);
+	const noted = removed.filter((d) => withNotes.has(d.id)).map((d) => d.date);
+	return {
+		ix,
+		removed,
+		added,
+		affected,
+		noted,
+		...(blockedBy ? { blockedBy } : {}),
+	};
 }
 
 /** Read-only preview (QA TRIP-02; E2 what-if blockers). */
@@ -195,7 +215,7 @@ export async function previewTripDatesRead(
 		if ("deltaDays" in data) {
 			// A shift removes no day; only a flight block could refuse it, and a
 			// uniform shift moves every block together.
-			return { removedDays: [], affectedItems: [], version };
+			return { removedDays: [], affectedItems: [], notedDays: [], version };
 		}
 		const plan = await planTripDates(
 			tx,
@@ -206,6 +226,7 @@ export async function previewTripDatesRead(
 		return {
 			removedDays: plan.removed.map((d) => d.date),
 			affectedItems: plan.affected,
+			notedDays: plan.noted,
 			...(plan.blockedBy ? { blockedBy: plan.blockedBy } : {}),
 			version,
 		};
@@ -229,7 +250,9 @@ export async function setTripDatesCore(
 	if (plan.blockedBy) return fail("CONFLICT", plan.blockedBy);
 	const moved: string[] = [];
 	for (const d of plan.removed) {
-		moved.push(...(await evacuateDay(tx, data.tripId, d.id, out)));
+		moved.push(
+			...(await evacuateDay(tx, data.tripId, d, out, data.dayNotes ?? "keep")),
+		);
 		await tx.delete(tripDays).where(eq(tripDays.id, d.id));
 	}
 	await insertDays(
