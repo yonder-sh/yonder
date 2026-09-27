@@ -131,6 +131,8 @@ export interface WorkspaceNav {
 	setList(list: WorkspaceSearch["list"] | null): void;
 	/** The inspector's tab (`itab`, FB-21b; replace navigation). */
 	setInspectorTab(tab: InspectorTabParam): void;
+	/** A details section for the selection, else the scope (replace navigation). */
+	openDetails(section: InspectorTabParam): void;
 	/** The Places tab's view, grouping, sort and filters (replace navigation). */
 	setPlaces(patch: N.PlacesPatch): void;
 	/** Open the Places tab at a scope with a view and filters (push navigation). */
@@ -302,6 +304,7 @@ export function WorkspaceModelProvider({
 			setList: (l) => run(N.setList(state, l), R.setList),
 			setInspectorTab: (t) =>
 				run(N.setInspectorTab(state, t), R.setInspectorTab),
+			openDetails: (t) => run(N.openDetails(state, t), R.openDetails),
 			setPlaces: (p) => run(N.setPlaces(state, p), R.setPlaces),
 			openPlaces: (o) => run(N.openPlaces(state, o), R.openPlaces),
 			hrefPlaces: (o) => href(N.openPlaces(state, o)),

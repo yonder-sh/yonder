@@ -1,14 +1,15 @@
 /**
- * The Media tab (SPEC §12.5 `MediaTab()`, DESIGN §7.2, ADDENDUM §9): the
- * scope's photos, videos, social posts, guide links and documents, rolled up
- * with the same rules as Lists and Notes ("Everything inside · Only Tokyo"
- * sits above, in the centre panel), filtered by `mf`, in groups with a
- * masonry per group. Drop files or paste a link anywhere to add to the scope.
+ * Everything saved in a place (or the trip), from the details' "See all"
+ * (SPEC §12.5, DESIGN §7.2, ADDENDUM §9; the Media tab until One Yonder):
+ * photos, videos, social posts, guide links and documents inside it, filtered
+ * by `mf`, grouped by place with a masonry per group and zoom-in headers.
+ * Drop files or paste a link anywhere to add to the place.
  */
 
 import { useMemo } from "react";
 import { EmptyState } from "@/components/common/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
+import { defaultLens } from "@/lib/engine/lens";
 import type { RollupOptions } from "@/lib/engine/rollup";
 import type { BundleTarget } from "@/lib/schemas/targets";
 import { TESTID } from "@/lib/testids";
@@ -35,32 +36,28 @@ import {
 	useWindowDropGuard,
 } from "./use-media-surface";
 
-export function MediaTab() {
+export function MediaAll({ target }: { target: BundleTarget }) {
 	const ws = useWorkspace();
-	const { graph, scope, ix, lens, days, only, model, schedule } = ws;
+	const { graph, ix, model, schedule } = ws;
 	const { data, isLoading } = useTripMedia();
 	const actions = useMediaActions(graph.trip.id);
 	const [mf, setMf] = useMediaFilter();
 	useDocOfflineSync();
 	useWindowDropGuard();
 
-	const target = useMemo<BundleTarget>(
-		() => (scope ? { kind: "node", nodeId: scope.id } : { kind: "trip" }),
-		[scope],
-	);
+	const scopeId = target.kind === "node" ? target.nodeId : null;
 	const surface = useMediaSurface(target);
 	const drop = useAttachDrop(target, { label: surface.label });
 	usePasteToAttach(ws.mode === "live", surface.addUrl, surface.uploadFiles);
 
 	const opts = useMemo<RollupOptions>(
 		() => ({
-			scopeId: scope?.id ?? null,
-			lens,
-			includeDescendants: !only,
-			dayRange: days,
+			scopeId,
+			lens: defaultLens(ix, scopeId),
+			includeDescendants: true,
 			model,
 		}),
-		[scope?.id, lens, only, days, model],
+		[scopeId, ix, model],
 	);
 	// What the rollup shows before the kind filter (for the chips and the empty state).
 	const inView = useMemo(() => {
@@ -80,7 +77,7 @@ export function MediaTab() {
 		[inView, mf],
 	);
 	const uploads = surface.uploads.filter((u) => u.tripId === graph.trip.id);
-	const where = scope?.name ?? graph.trip.name;
+	const where = (scopeId ? ix.node(scopeId)?.name : null) ?? graph.trip.name;
 
 	return (
 		<div

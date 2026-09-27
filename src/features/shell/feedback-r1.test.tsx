@@ -111,7 +111,7 @@ describe("FB-12: the rollup choice only for a node with children", () => {
 		const leaf = renderWithWorkspace(<CenterTabContent />, {
 			graph: withGinza,
 			splat: "japan/tokyo/ginza",
-			search: { tab: "notes" },
+			search: { tab: "lists" },
 		});
 		expect(leaf.ws().scope?.id).toBe(GINZA);
 		expect(screen.queryByLabelText("What to include")).toBeNull();
@@ -119,7 +119,7 @@ describe("FB-12: the rollup choice only for a node with children", () => {
 		renderWithWorkspace(<CenterTabContent />, {
 			graph: withGinza,
 			splat: "japan/tokyo",
-			search: { tab: "notes" },
+			search: { tab: "lists" },
 		});
 		expect(screen.getByLabelText("What to include")).toBeInTheDocument();
 	});
@@ -128,18 +128,18 @@ describe("FB-12: the rollup choice only for a node with children", () => {
 		const { ws, navigations } = renderWithWorkspace(<CenterTabContent />, {
 			graph: withGinza,
 			splat: "japan/tokyo/ginza",
-			search: { tab: "notes", only: 1 },
+			search: { tab: "lists", only: 1 },
 		});
 		expect(ws().only).toBe(false);
 		expect(navigations.at(-1)?.search.only).toBeUndefined();
-		expect(navigations.at(-1)?.search.tab).toBe("notes");
+		expect(navigations.at(-1)?.search.tab).toBe("lists");
 	});
 
 	it("keeps only=1 where there is a choice", () => {
 		const { ws, navigations } = renderWithWorkspace(<CenterTabContent />, {
 			graph: withGinza,
 			splat: "japan/tokyo",
-			search: { tab: "notes", only: 1 },
+			search: { tab: "lists", only: 1 },
 		});
 		expect(ws().only).toBe(true);
 		expect(navigations).toEqual([]);

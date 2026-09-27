@@ -20,9 +20,7 @@ import { RollupToggle } from "@/components/common/rollup-toggle";
 import { Chip } from "@/components/kit";
 import { ListsTab } from "@/features/lists/ListsTab";
 import { useListsOverdue } from "@/features/lists/use-lists-overdue";
-import { MediaTab } from "@/features/media/MediaTab";
 import { MoneyTab } from "@/features/money/MoneyTab";
-import { NotesTab } from "@/features/notes/NotesTab";
 import { OverviewTab } from "@/features/overview/OverviewTab";
 import { PlacesTab } from "@/features/places/tab/PlacesTab";
 import { ReminderLine } from "@/features/places/tab/ReminderLine";
@@ -50,12 +48,15 @@ const TAB_LABEL: Record<Tab, string> = {
 	money: "Money",
 };
 
-/** The tabs this viewer gets: Money only for those who pay (`seesMoney`). */
+/**
+ * The tabs this viewer gets (One Yonder: five; Media and Notes live in each
+ * place's details): Money only for those who pay (`seesMoney`).
+ */
 export function visibleTabs(me: {
 	role: Parameters<typeof seesMoney>[0]["role"];
 	isGuest: boolean;
 }): Tab[] {
-	const all = Object.keys(TAB_LABEL) as Tab[];
+	const all: Tab[] = ["overview", "plan", "places", "lists", "money"];
 	return seesMoney(me) ? all : all.filter((t) => t !== "money");
 }
 
@@ -241,9 +242,7 @@ export function CenterTabContent({
 				{active === "overview" ? <OverviewTab phone={phone} /> : null}
 				{active === "plan" ? <PlanTab /> : null}
 				{active === "places" ? <PlacesTab phone={phone} /> : null}
-				{active === "media" ? <MediaTab /> : null}
 				{active === "lists" ? <ListsTab /> : null}
-				{active === "notes" ? <NotesTab /> : null}
 				{active === "money" ? <MoneyTab /> : null}
 			</div>
 			{/* FB-17a: where the others are when they aren't on this screen (a
@@ -272,7 +271,7 @@ export function SuggestRule() {
 export function CenterPanel({ className }: { className?: string }) {
 	return (
 		<section
-			aria-label="Overview, plan, places, media, lists, notes and money"
+			aria-label="Overview, plan, places, lists and money"
 			data-testid={TESTID.centerPanel}
 			className={cn("flex h-full min-h-0 flex-col bg-background", className)}
 		>

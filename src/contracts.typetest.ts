@@ -45,8 +45,8 @@ import type { ListsPanel } from "@/features/lists/ListsPanel";
 import type { ListsTab } from "@/features/lists/ListsTab";
 import type TripMap from "@/features/map/TripMap";
 import type { CoverStrip } from "@/features/media/CoverStrip";
+import type { MediaAll } from "@/features/media/MediaAll";
 import type { MediaPanel } from "@/features/media/MediaPanel";
-import type { MediaTab } from "@/features/media/MediaTab";
 import type { useAttachDrop } from "@/features/media/use-attach-drop";
 import type { AddExpenseDialog } from "@/features/money/AddExpenseDialog";
 import type { MoneyPanel } from "@/features/money/MoneyPanel";
@@ -55,7 +55,6 @@ import type { MoneyDto } from "@/features/money/money.functions";
 import type { useMoneyCounts } from "@/features/money/use-money-counts";
 import type { MentionInput } from "@/features/notes/MentionInput";
 import type { NotesPanel } from "@/features/notes/NotesPanel";
-import type { NotesTab } from "@/features/notes/NotesTab";
 import type { useNotePreview } from "@/features/notes/use-note-preview";
 import type { InstallButton } from "@/features/offline/InstallButton";
 import type { OfflineBanner } from "@/features/offline/OfflineBanner";
@@ -183,12 +182,11 @@ export type ComponentContracts = [
 		: false,
 	typeof AddPlaceDialog extends Component<Record<string, never>> ? true : false,
 	typeof NodeOverview extends Component<{ nodeId: string }> ? true : false,
-	typeof MediaTab extends Component<Record<string, never>> ? true : false,
+	typeof MediaAll extends Component<{ target: BundleTarget }> ? true : false,
 	typeof MediaPanel extends Component<{ target: BundleTarget }> ? true : false,
 	typeof CoverStrip extends Component<{ target: BundleTarget }> ? true : false,
 	typeof ListsTab extends Component<Record<string, never>> ? true : false,
 	typeof ListsPanel extends Component<{ target: BundleTarget }> ? true : false,
-	typeof NotesTab extends Component<Record<string, never>> ? true : false,
 	typeof NotesPanel extends Component<{ target: BundleTarget }> ? true : false,
 	typeof MentionInput extends Component<{
 		value: string;

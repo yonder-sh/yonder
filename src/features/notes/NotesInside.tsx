@@ -1,22 +1,19 @@
 /**
- * The Notes tab (SPEC §12.5 `NotesTab()`, DESIGN §7.4): the scope's own note
- * live on top (the trip note at the root), then — unless "Only <scope>" — the
- * notes inside the scope as collapsible, static sections: descendant places,
- * this scope's visits ("This visit · Day 4 · Itoya"), days ("Day 5 · Thu 7
- * Oct") and transit. "Edit" swaps a section into a live editor, one at a time.
- * The viewer's own private notes show as sections too, marked "Only you".
+ * The notes inside a place or the trip (the details' Notes section, below
+ * its own note; the Notes tab until One Yonder): descendant places, visits
+ * ("This visit · Day 4 · Itoya"), days ("Day 5 · Thu 7 Oct") and transit, as
+ * collapsible static sections. "Edit" swaps a section into a live editor,
+ * one at a time. The viewer's own private notes show too, marked "Only you".
  */
 import { useQuery } from "@tanstack/react-query";
 import { ChevronDown, Lock, PencilLine } from "lucide-react";
 import { useMemo, useState } from "react";
-import { EmptyState } from "@/components/common/empty-state";
 import { Button } from "@/components/ui/button";
 import {
 	Collapsible,
 	CollapsibleContent,
 	CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { TabPurpose } from "@/features/shell/TabPurpose";
 import { anchorKey } from "@/lib/realtime/cursor-protocol";
 import { noteDocName } from "@/lib/realtime/protocol";
 import {
@@ -25,14 +22,13 @@ import {
 	useFollowValue,
 } from "@/lib/realtime/view-ui";
 import type { BundleTarget } from "@/lib/schemas/targets";
-import { TESTID } from "@/lib/testids";
 import { cn } from "@/lib/utils";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { dayLabel, itemName, legLabel, rollupRows } from "../lists/list-model";
-import { NoteBlock, useNoteAccess } from "./NoteBlock";
+import { useNoteAccess } from "./NoteBlock";
 import { NoteEditor } from "./NoteEditor";
 import type { NoteDto } from "./notes.functions";
-import { hasText, noteFor, noteTarget, tripNotesQuery } from "./queries";
+import { hasText, noteTarget, tripNotesQuery } from "./queries";
 import { StaticNote } from "./StaticNote";
 import { NOTES_TESTID } from "./testids";
 
@@ -198,63 +194,6 @@ export function NotesInside({
 				>
 					Show all {sections.length}
 				</Button>
-			) : null}
-		</div>
-	);
-}
-
-export function NotesTab() {
-	const ws = useWorkspace();
-	const { graph, scope, mode, only, days } = ws;
-	const q = useQuery({
-		...tripNotesQuery(graph.trip.id),
-		enabled: mode === "live",
-	});
-	const { sharedWrite, canPrivate } = useNoteAccess();
-	const own: BundleTarget = scope
-		? { kind: "node", nodeId: scope.id }
-		: { kind: "trip" };
-	const where = scope?.name ?? graph.trip.name;
-	const [writing, setWriting] = useState(false);
-	const sections = useNotesInside(only ? undefined : (scope?.id ?? null), days);
-
-	const ownShared = noteFor(q.data, own);
-	const ownPrivate = canPrivate
-		? noteFor(q.data, own, graph.me.userId)
-		: undefined;
-	const empty =
-		mode === "live" &&
-		q.isSuccess &&
-		!hasText(ownShared) &&
-		!hasText(ownPrivate) &&
-		sections.length === 0;
-
-	return (
-		<div data-testid={TESTID.notesTab} className="px-4 pt-3 pb-16">
-			{empty && !writing ? (
-				<EmptyState
-					lead={<TabPurpose tab="notes" />}
-					line={`No notes for ${where}.`}
-					action={
-						sharedWrite || canPrivate ? (
-							<Button size="sm" onClick={() => setWriting(true)}>
-								<PencilLine /> Start writing
-							</Button>
-						) : undefined
-					}
-				/>
-			) : (
-				<NoteBlock
-					key={JSON.stringify(own)}
-					target={own}
-					label={`Notes for ${where}`}
-					autoFocus={writing}
-				/>
-			)}
-			{sections.length ? (
-				<div className="mt-8 border-t pt-2">
-					<NotesInside sections={sections} />
-				</div>
 			) : null}
 		</div>
 	);

@@ -14,8 +14,8 @@ import { TESTID } from "@/lib/testids";
 import { renderWithWorkspace } from "@/test/render-workspace";
 import { CoverStrip } from "../CoverStrip";
 import { MediaTile } from "../components/media-tile";
+import { MediaAll } from "../MediaAll";
 import { MediaPanel } from "../MediaPanel";
-import { MediaTab } from "../MediaTab";
 import { MEDIA_TESTID } from "../testids";
 import type { MediaDto } from "../types";
 
@@ -58,8 +58,11 @@ const base: MediaDto = {
 };
 
 describe("Media UI", () => {
-	it("the tab's empty state names the scope and offers Add", () => {
-		renderWithWorkspace(<MediaTab />, { splat: "japan/tokyo" });
+	it("See all's empty state names the place and offers Add", () => {
+		renderWithWorkspace(
+			<MediaAll target={{ kind: "node", nodeId: N.tokyo as string }} />,
+			{ splat: "japan/tokyo" },
+		);
 		expect(screen.getByTestId(TESTID.mediaTab)).toBeTruthy();
 		expect(
 			screen.getByText("No photos, videos, PDFs or links in Tokyo yet."),
@@ -185,11 +188,14 @@ describe("Media UI", () => {
 		} satisfies ProposalDto;
 		const errors = vi.spyOn(console, "error").mockImplementation(() => {});
 		try {
-			renderWithWorkspace(<MediaTab />, {
-				splat: "japan/tokyo",
-				queryClient: qc,
-				proposals: [open],
-			});
+			renderWithWorkspace(
+				<MediaAll target={{ kind: "node", nodeId: N.tokyo as string }} />,
+				{
+					splat: "japan/tokyo",
+					queryClient: qc,
+					proposals: [open],
+				},
+			);
 			const tiles = screen
 				.getAllByTestId(TESTID.galleryItem)
 				.filter((t) => t.getAttribute("data-id") === id);

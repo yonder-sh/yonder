@@ -77,12 +77,24 @@ function useDefaultLens() {
 	}, [graph.trip.id, synced, want, search.lens, lensOptions, nav]);
 }
 
+/**
+ * Old Media and Notes tab links (inbox mentions, bookmarks) open the place's
+ * details at that section instead (One Yonder: five tabs).
+ */
+function useRetiredTabs() {
+	const { tab, nav } = useWorkspace();
+	useEffect(() => {
+		if (tab === "media" || tab === "notes") nav.openDetails(tab);
+	}, [tab, nav]);
+}
+
 export function Workspace() {
 	const { mode, scopeResolved, graph } = useWorkspace();
 	const bp = useBreakpoint();
 	const live = mode === "live";
 	useWorkspaceHotkeys();
 	useDefaultLens();
+	useRetiredTabs();
 	return (
 		<WorkspaceDnd>
 			<div

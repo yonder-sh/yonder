@@ -179,3 +179,23 @@ describe("the Overview tab (docs/OVERVIEW.md)", () => {
 		expect(tab(t, null)).toBe("overview");
 	});
 });
+
+describe("retired Media and Notes tabs (One Yonder)", () => {
+	it("open the scope's details at that section, or the selection's", () => {
+		const t = nav.openDetails(
+			state(N.tokyo ?? null, { tab: "notes" }),
+			"notes",
+		);
+		expect(t.search.sel).toBe(`n.${N.tokyo}`);
+		expect(t.search.itab).toBe("notes");
+		expect(t.search.tab).toBeUndefined();
+		const root = nav.openDetails(state(null, { tab: "media" }), "media");
+		expect(root.search.sel).toBe("root");
+		expect(root.search.itab).toBe("media");
+		const picked = nav.openDetails(
+			state(N.tokyo ?? null, { tab: "media", sel: `n.${N.shibuyaSky}` }),
+			"media",
+		);
+		expect(picked.search.sel).toBe(`n.${N.shibuyaSky}`);
+	});
+});

@@ -36,6 +36,7 @@ import {
 import { MediaGallery } from "./components/media-gallery";
 import { buildGroups } from "./gallery-groups";
 import { dropLabel } from "./labels";
+import { MediaAll } from "./MediaAll";
 import { filterOf, MEDIA_FILTERS, type MediaFilter } from "./media-kinds";
 import { useDocOfflineSync } from "./offline/MediaOfflineSync";
 import { sameTarget, useTripMedia } from "./queries";
@@ -88,6 +89,13 @@ export function MediaPanel({
 		visitOnly && visitItemId ? { kind: "item", itemId: visitItemId } : target;
 	const day = target.kind === "day" ? ix.day(target.dayId) : undefined;
 	const [seeAll, setSeeAll] = useState(false);
+	// A group's zoom-in moves the view: the dialog goes with it.
+	const view = `${ws.scope?.id ?? ""}|${sel ? JSON.stringify(sel) : ""}`;
+	const [openedAt, setOpenedAt] = useState(view);
+	if (seeAll && openedAt !== view) {
+		setSeeAll(false);
+		setOpenedAt(view);
+	}
 	const viewScope: Scope = section && target.kind !== "day" ? "own" : scope;
 
 	const opts = useMemo<RollupOptions | null>(() => {
@@ -252,7 +260,10 @@ export function MediaPanel({
 							variant="ghost"
 							size="sm"
 							data-testid={MEDIA_TESTID.seeAll}
-							onClick={() => setSeeAll(true)}
+							onClick={() => {
+								setOpenedAt(view);
+								setSeeAll(true);
+							}}
 						>
 							See all
 						</Button>
@@ -261,8 +272,8 @@ export function MediaPanel({
 				<Dialog open={seeAll} onOpenChange={setSeeAll}>
 					<DialogContent className="max-w-3xl">
 						<DialogTitle>Photos &amp; links · {name}</DialogTitle>
-						<div className="max-h-[70vh] overflow-y-auto">
-							<MediaPanel target={target} />
+						<div className="-mx-6 max-h-[70vh] overflow-y-auto">
+							<MediaAll target={target} />
 						</div>
 					</DialogContent>
 				</Dialog>

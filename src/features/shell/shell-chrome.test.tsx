@@ -63,17 +63,19 @@ describe("centre tabs", () => {
 		const counts: TripCounts = {
 			root: c({}),
 			byNode: {
-				[N.shibuyaSky as string]: c({ media: 2 }),
-				[N.kiyomizu as string]: c({ media: 5 }),
+				[N.shibuyaSky as string]: c({ todoOpen: 2 }),
+				[N.kiyomizu as string]: c({ todoOpen: 5 }),
 			},
 			byItem: {},
 			byLeg: {},
 			byDay: {},
 		};
 		renderWithWorkspace(<CenterTabBar />, { splat: "japan/tokyo", counts });
-		expect(screen.getByRole("tab", { name: /Media/ })).toHaveTextContent(
-			"Media2",
+		expect(screen.getByRole("tab", { name: /Lists/ })).toHaveTextContent(
+			"Lists2",
 		);
+		// Media and Notes are sections of each place's details now.
+		expect(screen.queryByRole("tab", { name: /Media|Notes/ })).toBeNull();
 	});
 
 	it("suggest mode shows its rule; edit mode doesn't", () => {

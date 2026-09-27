@@ -41,8 +41,8 @@ import { ListsPanel } from "@/features/lists/ListsPanel";
 import { CoverStrip } from "@/features/media/CoverStrip";
 import { MediaPanel } from "@/features/media/MediaPanel";
 import { MoneyPanel } from "@/features/money/MoneyPanel";
+import { NotesInside, useNotesInside } from "@/features/notes/NotesInside";
 import { NotesPanel } from "@/features/notes/NotesPanel";
-import { NotesInside, useNotesInside } from "@/features/notes/NotesTab";
 import { isRateable } from "@/features/places/lib/rate";
 import { NodeOverview } from "@/features/places/NodeOverview";
 import {

@@ -59,6 +59,7 @@ export const REPLACES_HISTORY = {
 	setMediaFilter: true,
 	setList: true,
 	setInspectorTab: true,
+	openDetails: true,
 	setPlaces: true,
 	openPlaces: false,
 } as const;
@@ -196,6 +197,19 @@ export const select = (s: NavState, sel: Sel | null) => {
 /** The inspector's tab (`itab`, FB-21b; replace navigation). Overview drops it. */
 export const setInspectorTab = (s: NavState, tab: InspectorTabParam) =>
 	here(s, { itab: tab === "overview" ? undefined : tab });
+
+/**
+ * A details section (`itab`) for what's selected, else the scope (the trip at
+ * the root). Old Media and Notes tab links land here (One Yonder: those tabs
+ * are sections of each place's details now).
+ */
+export const openDetails = (s: NavState, section: InspectorTabParam) =>
+	here(s, {
+		// The Plan (the default with a selection, so the URL drops `tab`).
+		tab: "plan",
+		sel: s.search.sel ?? (s.scopeId ? `n.${s.scopeId}` : "root"),
+		itab: section === "overview" ? undefined : section,
+	});
 
 /**
  * A centre tab. The Overview is the whole trip's: from a place it goes to

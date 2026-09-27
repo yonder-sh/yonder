@@ -17,7 +17,7 @@ const NOTES = path.join(SRC, "features/notes");
 const ENTRIES = [
 	"MentionInput.tsx",
 	"NotesPanel.tsx",
-	"NotesTab.tsx",
+	"NotesInside.tsx",
 	"NoteBlock.tsx",
 	"NoteEditor.tsx",
 	"StaticNote.tsx",
