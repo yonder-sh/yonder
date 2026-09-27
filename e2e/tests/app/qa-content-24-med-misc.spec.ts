@@ -6,7 +6,7 @@ import path from "node:path";
 import { expect, type Page, test } from "@playwright/test";
 import { MEDIA_TESTID as MT } from "../../../src/features/media/testids";
 import { TESTID } from "../../../src/lib/testids";
-import { expectLive } from "./_helpers/page";
+import { detailsSection, expectLive } from "./_helpers/page";
 
 // Needs this verifier's env (QA_AUTH_DIR with qa-* storage states for APP_URL); skipped in a normal `pnpm e2e`.
 test.skip(!process.env.QA_AUTH_DIR, "I2 content verifier spec: set QA_AUTH_DIR");
@@ -56,7 +56,7 @@ test("MED-02 video on the Fuji Excursion leg; MED-06 refusals", async ({ page })
 	await page.goto(`/t/asia-2027?sel=l.${fuji?.fromItemId}.${fuji?.toItemId}`);
 	await expectLive(page);
 	const insp = page.getByTestId(TESTID.inspector);
-	await insp.getByRole("tab", { name: /Media/ }).click();
+	await detailsSection(insp, "media");
 	await insp.getByTestId(MT.fileInput).setInputFiles({ name: "fuji-excursion-window.webm", mimeType: "video/webm", buffer: await webmFromPage(page) });
 	const tile = insp.locator(`[data-testid=${TESTID.galleryItem}][data-kind=video]`).first();
 	await expect(tile).toHaveAttribute("data-status", "ready", { timeout: 40_000 });

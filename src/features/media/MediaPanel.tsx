@@ -88,7 +88,7 @@ export function MediaPanel({
 		visitOnly && visitItemId ? { kind: "item", itemId: visitItemId } : target;
 	const day = target.kind === "day" ? ix.day(target.dayId) : undefined;
 	const [seeAll, setSeeAll] = useState(false);
-	const viewScope: Scope = section ? "own" : scope;
+	const viewScope: Scope = section && target.kind !== "day" ? "own" : scope;
 
 	const opts = useMemo<RollupOptions | null>(() => {
 		if (effective.kind === "node" && viewScope === "all")
@@ -204,12 +204,15 @@ export function MediaPanel({
 				className="relative -mx-1 grid gap-2 px-1"
 			>
 				<div className="flex flex-wrap items-center gap-2">
+					{target.kind === "day" ? toggle : null}
 					{inView.length === 0 && uploads.length === 0 ? (
 						<p
 							data-testid={MEDIA_TESTID.empty}
 							className="text-meta text-muted-foreground"
 						>
-							Add a photo, reel or link, or drop files here.
+							{visitOnly && visitItemId
+								? "Nothing on this visit yet. Add a photo, reel or link."
+								: "Add a photo, reel or link, or drop files here."}
 						</p>
 					) : null}
 					{visitItemId ? (

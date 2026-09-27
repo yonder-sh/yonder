@@ -60,6 +60,9 @@ export default defineConfig({
 		proxy: {
 			"/collab": { target: `ws://localhost:${COLLAB_PORT}`, ws: true },
 		},
+		// e2e envs: a dropped connection under load ("read ECONNRESET") would
+		// otherwise cover the page with Vite's error overlay and block clicks.
+		hmr: { overlay: process.env.VITE_E2E !== "1" },
 		watch: {
 			ignored: [
 				"**/spikes/**",

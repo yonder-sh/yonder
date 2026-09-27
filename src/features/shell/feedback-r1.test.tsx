@@ -145,7 +145,7 @@ describe("FB-12: the rollup choice only for a node with children", () => {
 		expect(navigations).toEqual([]);
 	});
 
-	it("details: a place's Photos and To-dos offer no toggle; an area with places does", () => {
+	it("details: no Everything / Only switch with nothing to narrow", () => {
 		const section = (name: string) =>
 			document.querySelector(`[data-section="${name}"]`) as HTMLElement;
 		const leaf = renderWithWorkspace(<InspectorBody />, {
@@ -164,8 +164,11 @@ describe("FB-12: the rollup choice only for a node with children", () => {
 		renderWithWorkspace(<InspectorBody />, {
 			search: { sel: `n.${N.shibuya}` },
 		});
-		expect(screen.getByTestId("media-scope-toggle")).toBeInTheDocument();
-		expect(screen.getByTestId("lists-panel-scope")).toBeInTheDocument();
+		// Photos show the area's own; what's inside is behind See all. To-dos
+		// switch only when there's something inside to narrow (none in the demo
+		// trip's Shibuya); e2e FB-12 checks an area that has some.
+		expect(screen.queryByTestId("media-scope-toggle")).toBeNull();
+		expect(screen.queryByTestId("lists-panel-scope")).toBeNull();
 	});
 });
 

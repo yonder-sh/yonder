@@ -10,6 +10,7 @@ import { type APIRequestContext, type Browser, expect, type Page, test } from "@
 import { MONEY_TESTID as M } from "../../../src/features/money/testids";
 import { TESTID } from "../../../src/lib/testids";
 import { openLink } from "./_helpers/link";
+import { detailsSection } from "./_helpers/page";
 
 const BASE = process.env.APP_URL ?? "http://localhost:5350";
 const SHOTS = process.env.QA_SHOTS ?? "/tmp/qa-money-shots";
@@ -741,14 +742,14 @@ test("UI look: breakdown adds up to the total, inspector Money, day scope, settl
 	await page.goto(`/t/${c.slug}?sel=n.${N.kyoto}`);
 	await waitLive(page);
 	const insp = page.getByTestId(TESTID.inspector);
-	await insp.getByRole("tab", { name: /Money/ }).click({ timeout: 5000 }).catch(() => undefined);
+	await detailsSection(insp, "money").catch(() => undefined);
 	await page.waitForTimeout(800);
 	out.inspectorKyoto = await page.getByTestId(TESTID.moneyPanel).innerText().catch(() => "no panel");
 	await page.screenshot({ path: `${SHOTS}/r2-inspector-kyoto.png` });
 	// inspector Money for the item
 	await page.goto(`/t/${c.slug}?sel=i.${itemId}`);
 	await waitLive(page);
-	await insp.getByRole("tab", { name: /Money/ }).click({ timeout: 5000 }).catch(() => undefined);
+	await detailsSection(insp, "money").catch(() => undefined);
 	await page.waitForTimeout(800);
 	out.inspectorItem = await page.getByTestId(TESTID.moneyPanel).innerText().catch(() => "no panel");
 	await page.screenshot({ path: `${SHOTS}/r2-inspector-item.png` });

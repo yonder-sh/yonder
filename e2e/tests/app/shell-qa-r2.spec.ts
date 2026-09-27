@@ -85,11 +85,9 @@ test.describe("desktop", () => {
 		await pick.click();
 		await expect(page).toHaveURL(/tab=lists/);
 		await expect(page).toHaveURL(/sel=/);
-		const tabs = page.getByTestId("inspector-tabs");
-		await expect(tabs.getByRole("tab", { name: /Lists/ })).toHaveAttribute(
-			"aria-selected",
-			"true",
-		);
+		await expect(
+			page.getByTestId("inspector").locator('[data-section="lists"]'),
+		).toBeInViewport();
 		await expect(
 			page.getByTestId("inspector").getByTestId("list-row").first(),
 		).toBeVisible();
@@ -105,8 +103,8 @@ test.describe("desktop", () => {
 			await expect(page).toHaveURL(/sel=l\./);
 			await expect(page).toHaveURL(/days=/);
 			await expect(
-				page.getByTestId("inspector-tabs").getByRole("tab", { name: /Lists/ }),
-			).toHaveAttribute("aria-selected", "true");
+				page.getByTestId("inspector").locator('[data-section="lists"]'),
+			).toBeInViewport();
 		}
 	});
 

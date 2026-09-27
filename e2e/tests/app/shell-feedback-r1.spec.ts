@@ -212,6 +212,7 @@ test.describe("desktop", () => {
 		await openTab("media");
 		await expect(page.getByTestId(TESTID.mediaPanel)).toBeVisible();
 		await expect(page.getByTestId("media-scope-toggle")).toHaveCount(0);
+		await expect(page.getByTestId("media-see-all")).toHaveCount(0);
 		await openTab("lists");
 		await expect(page.getByTestId(TESTID.listsPanel)).toBeVisible();
 		await expect(page.getByTestId("lists-panel-scope")).toHaveCount(0);
@@ -219,8 +220,9 @@ test.describe("desktop", () => {
 		await page.getByTestId(TESTID.inspector).screenshot({ path: shotPath("shell/fb12-inspector-leaf.png"), animations: "disabled" });
 
 		await openTrip(page, `/t/${TRIP}/japan/tokyo?sel=n.${shibuya}`);
+		// The details show a place's own photos; what's inside is behind See all.
 		await openTab("media");
-		await expect(page.getByTestId("media-scope-toggle")).toBeVisible();
+		await expect(page.getByTestId("media-see-all")).toBeVisible();
 		await openTab("lists");
 		await expect(page.getByTestId("lists-panel-scope")).toBeVisible();
 	});

@@ -8,7 +8,7 @@ import { type Browser, expect, type Page, test } from "@playwright/test";
 import { MEDIA_TESTID as MT } from "../../../src/features/media/testids";
 import { TESTID } from "../../../src/lib/testids";
 import { E2E_ROOT } from "./_helpers/env";
-import { expectLive } from "./_helpers/page";
+import { detailsSection, expectLive } from "./_helpers/page";
 import { openLink } from "./_helpers/link";
 
 // Needs this verifier's env (QA_AUTH_DIR with qa-* storage states for APP_URL); skipped in a normal `pnpm e2e`.
@@ -273,7 +273,7 @@ test("MED-04/05 TikTok, Reel, YouTube ×3, guide link", async ({ browser }) => {
 	await d.page.goto(`/t/asia-2027?sel=l.${fuji?.fromItemId}.${fuji?.toItemId}`);
 	await expectLive(d.page);
 	const insp = d.page.getByTestId(TESTID.inspector);
-	await insp.getByRole("tab", { name: /Media/ }).click();
+	await detailsSection(insp, "media");
 	await d.page.waitForTimeout(1500);
 	await shot(d.page, "16-med04-leg-media");
 	const yt = insp.locator(`[data-testid=${TESTID.galleryItem}][data-kind=embed]`);
