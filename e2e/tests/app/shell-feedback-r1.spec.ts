@@ -220,11 +220,16 @@ test.describe("desktop", () => {
 		await page.getByTestId(TESTID.inspector).screenshot({ path: shotPath("shell/fb12-inspector-leaf.png"), animations: "disabled" });
 
 		await openTrip(page, `/t/${TRIP}/japan/tokyo?sel=n.${shibuya}`);
-		// The details show a place's own photos; what's inside is behind See all.
+		// The details show a place's own photos; what's inside is behind See all
+		// (Shibuya's photos are its own, Tokyo's are mostly inside).
 		await openTab("media");
-		await expect(page.getByTestId("media-see-all")).toBeVisible();
+		await expect(page.getByTestId("media-scope-toggle")).toHaveCount(0);
 		await openTab("lists");
 		await expect(page.getByTestId("lists-panel-scope")).toBeVisible();
+		const tokyo = await nodeId(page, "Tokyo");
+		await openTrip(page, `/t/${TRIP}/japan/tokyo?sel=n.${tokyo}`);
+		await openTab("media");
+		await expect(page.getByTestId("media-see-all")).toBeVisible();
 	});
 });
 

@@ -79,7 +79,13 @@ export function Section({
 		<section
 			data-testid={testId}
 			data-section={name}
-			className={cn("grid gap-2 py-4", divided && "border-t", className)}
+			// minmax(0,1fr): a wide child (a table) scrolls or truncates inside
+			// the column instead of widening the pane.
+			className={cn(
+				"grid grid-cols-[minmax(0,1fr)] gap-2 py-4",
+				divided && "border-t",
+				className,
+			)}
 		>
 			<SectionHeader action={action}>{title}</SectionHeader>
 			{children}

@@ -76,7 +76,8 @@ export function MoneyPanel({ target }: { target: BundleTarget }) {
 			data-testid={TESTID.moneyPanel}
 			data-cursor-anchor="money:panel"
 			data-cursor-vis="members"
-			className="grid gap-2 py-2"
+			// minmax(0,1fr): long expense rows truncate instead of widening the pane.
+			className="grid grid-cols-[minmax(0,1fr)] gap-2 py-2"
 		>
 			<div className="flex items-center gap-2 px-4">
 				{s && view.rows.length ? (
