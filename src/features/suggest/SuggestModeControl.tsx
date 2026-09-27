@@ -50,6 +50,7 @@ import {
 	TooltipContent,
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useWelcome } from "@/features/welcome/welcome-store";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { TESTID } from "@/lib/testids";
 import { useUi } from "@/lib/workspace/ui-store";
@@ -140,9 +141,13 @@ export function SuggestModeControl({
 		if (!o) quietUntil.current = Date.now() + 500;
 		setTipOpen(false);
 	}, []);
+	// One prompt per visit: after the welcome (or instead of it next time).
+	const welcome = useWelcome((s) => s.status);
+	const welcomed = useWelcome((s) => s.showed);
 	useEffect(() => {
-		if (isSuggester && mode === "live") setHintOpen(!readHintSeen(tripId));
-	}, [isSuggester, mode, tripId]);
+		if (isSuggester && mode === "live" && welcome === "done" && !welcomed)
+			setHintOpen(!readHintSeen(tripId));
+	}, [isSuggester, mode, tripId, welcome, welcomed]);
 
 	if (!isEditor && !isSuggester) return null;
 	if (n === 0 && !suggesting) return null;

@@ -34,8 +34,10 @@ const SHOW_AFTER_MS = 1200;
 
 export function PushPromptCard() {
 	const { mode } = useWorkspace();
-	// The welcome asks first (and marks this seen): wait until it has settled.
+	// The welcome asks first (and marks this seen): wait until it has settled,
+	// and when it showed, wait for the next visit (one prompt per visit).
 	const welcome = useWelcome((s) => s.status);
+	const welcomed = useWelcome((s) => s.showed);
 	const live = mode === "live";
 	const account = useHasAccount(live);
 	const settings = usePushSettings(live && account);
@@ -47,7 +49,7 @@ export function PushPromptCard() {
 	useEffect(() => {
 		if (!publicKey) return;
 		void syncPushSubscription(publicKey);
-		if (welcome !== "done") return;
+		if (welcome !== "done" || welcomed) return;
 		const env = pushEnv();
 		if (promptSeen() || env === "unsupported") return;
 		if (env === "supported" && permission() !== "default") return;
@@ -56,7 +58,7 @@ export function PushPromptCard() {
 			SHOW_AFTER_MS,
 		);
 		return () => clearTimeout(t);
-	}, [publicKey, welcome]);
+	}, [publicKey, welcome, welcomed]);
 
 	if (!show || !publicKey || welcome !== "done") return null;
 
