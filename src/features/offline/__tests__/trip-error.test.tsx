@@ -71,8 +71,10 @@ describe("trip route: no access (PWA-08, LINK-04)", () => {
 		const o = window.location.origin;
 		stubCaches([`${o}/`, `${o}/share`, `${o}/t/asia`]);
 		view(<TripNotFound />);
+		// Signed out: the page leads with signing in, not "doesn't exist".
+		expect(screen.getByText("Sign in to open this trip")).toBeInTheDocument();
 		expect(
-			screen.getByText("This trip doesn't exist or you don't have access."),
+			screen.getByText(/sign in with the email they sent it to/),
 		).toBeInTheDocument();
 		await waitFor(() => expect(pages.has(`${o}/t/asia`)).toBe(false));
 		expect([...pages]).toEqual([`${o}/`, `${o}/share`]);

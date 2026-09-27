@@ -394,11 +394,13 @@ function TripError({ error }: { error: unknown }) {
 				line={
 					linkGone
 						? "This link is no longer active."
-						: noAccess
-							? "This trip doesn't exist or you don't have access."
-							: notKept
-								? "Not available offline. Open this trip once while you're online to keep a copy."
-								: "We couldn't open this trip."
+						: signedOut
+							? "Sign in to open this trip"
+							: noAccess
+								? "This trip doesn't exist or you don't have access."
+								: notKept
+									? "Not available offline. Open this trip once while you're online to keep a copy."
+									: "We couldn't open this trip."
 				}
 				action={
 					linkGone || signedOut ? (
@@ -436,6 +438,11 @@ function TripError({ error }: { error: unknown }) {
 					)
 				}
 			/>
+			{signedOut ? (
+				<p className="-mt-4 max-w-xs text-center text-sm text-muted-foreground">
+					If someone shared it with you, sign in with the email they sent it to.
+				</p>
+			) : null}
 		</main>
 	);
 }
