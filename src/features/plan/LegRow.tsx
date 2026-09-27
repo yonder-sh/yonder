@@ -19,8 +19,8 @@ import { useState } from "react";
 import { useEditGuard } from "@/components/common/edit-guard";
 import { ModeGlyph } from "@/components/common/glyphs";
 import { LegSummary } from "@/components/common/leg-summary";
-import { MemberAvatar } from "@/components/common/member";
 import { ProposalGhost } from "@/components/common/proposal-ghost";
+import { AvatarStack } from "@/components/kit";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { useDateDraftImpact } from "@/features/insights/use-date-draft-impact";
@@ -227,13 +227,7 @@ function lineColor(
 
 function Travellers({ ids }: { ids: readonly string[] }) {
 	if (!ids.length) return null;
-	return (
-		<span className="ml-auto flex shrink-0 -space-x-1">
-			{ids.slice(0, 3).map((id) => (
-				<MemberAvatar key={id} memberId={id} size={16} />
-			))}
-		</span>
-	);
+	return <AvatarStack memberIds={ids} size={16} className="ml-auto shrink-0" />;
 }
 
 /**

@@ -89,15 +89,20 @@ export function MemberAvatar({
 	);
 }
 
-/** Up to `max` avatars overlapping by 6px, then "+N". */
+/**
+ * Up to `max` avatars overlapping (4px under 24px, else 6px), then "+N".
+ * Pass `people`, or `memberIds` inside a workspace.
+ */
 export function AvatarStack({
 	people,
+	memberIds,
 	max = 3,
 	size = 28,
 	className,
 	renderAvatar,
 }: {
-	people: (AvatarPerson & { id: string })[];
+	people?: (AvatarPerson & { id: string })[];
+	memberIds?: readonly string[];
 	max?: number;
 	size?: AvatarPx;
 	className?: string;
@@ -107,14 +112,23 @@ export function AvatarStack({
 		avatar: ReactNode,
 	) => ReactNode;
 }) {
-	const shown = people.slice(0, max);
-	const extra = people.length - shown.length;
+	const ids = people?.map((p) => p.id) ?? memberIds ?? [];
+	const shown = ids.slice(0, max);
+	const extra = ids.length - shown.length;
 	return (
-		<div className={cn("flex items-center -space-x-1.5", className)}>
-			{shown.map((p) => {
-				const avatar = <MemberAvatar key={p.id} user={p} size={size} />;
+		<div
+			className={cn(
+				"flex items-center",
+				size < 24 ? "-space-x-1" : "-space-x-1.5",
+				className,
+			)}
+		>
+			{shown.map((id, i) => {
+				const p = people?.[i];
+				if (!p) return <MemberAvatar key={id} memberId={id} size={size} />;
+				const avatar = <MemberAvatar key={id} user={p} size={size} />;
 				return renderAvatar ? (
-					<span key={p.id}>{renderAvatar(p, avatar)}</span>
+					<span key={id}>{renderAvatar(p, avatar)}</span>
 				) : (
 					avatar
 				);

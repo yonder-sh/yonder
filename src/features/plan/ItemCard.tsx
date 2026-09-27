@@ -42,7 +42,7 @@ import { MarkdownText } from "@/components/common/markdown-text";
 import { MemberAvatar, presenceColor } from "@/components/common/member";
 import { ProposalGhost } from "@/components/common/proposal-ghost";
 import { DurationInput, TimeInput } from "@/components/common/time";
-import { chipVariants } from "@/components/kit";
+import { AvatarStack, chipVariants } from "@/components/kit";
 import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
@@ -931,11 +931,11 @@ export function ItemCard({
 			</div>
 			<div className="flex shrink-0 items-center gap-1.5">
 				{item.assigneeIds.length ? (
-					<span className="hidden -space-x-1 @xs:flex">
-						{item.assigneeIds.slice(0, 3).map((id) => (
-							<MemberAvatar key={id} memberId={id} size={20} />
-						))}
-					</span>
+					<AvatarStack
+						memberIds={item.assigneeIds}
+						size={20}
+						className="hidden @xs:flex"
+					/>
 				) : null}
 				<BundleIcons item={item} />
 				<WarningChip item={item} />

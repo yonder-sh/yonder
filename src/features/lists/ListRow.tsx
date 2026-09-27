@@ -27,9 +27,8 @@ import {
 import { type PointerEvent, type ReactNode, useRef, useState } from "react";
 import type { DragData } from "@/components/common/dnd/workspace-dnd";
 import { MarkdownText } from "@/components/common/markdown-text";
-import { MemberAvatar } from "@/components/common/member";
 import { ProposalGhost } from "@/components/common/proposal-ghost";
-import { Chip } from "@/components/kit";
+import { AvatarStack, Chip } from "@/components/kit";
 import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
@@ -592,18 +591,14 @@ export function ListRow({
 									assignees.length ? "Change who it's for" : "Assign someone"
 								}
 								className={cn(
-									"flex items-center -space-x-1 rounded-full disabled:cursor-default",
+									"flex items-center rounded-full disabled:cursor-default",
 									!assignees.length &&
 										// Narrow boards keep this in the ⋯ menu ("Assign…").
 										"opacity-0 group-focus-within/row:opacity-100 group-hover/row:opacity-100 max-md:hidden @max-md:hidden",
 								)}
 							>
 								{assignees.length ? (
-									assignees
-										.slice(0, 3)
-										.map((id) => (
-											<MemberAvatar key={id} memberId={id} size={16} />
-										))
+									<AvatarStack memberIds={assignees} size={16} />
 								) : (
 									<UserPlus className="size-3.5" strokeWidth={1.5} />
 								)}
