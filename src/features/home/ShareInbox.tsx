@@ -135,6 +135,25 @@ function Shell({ children }: { children: React.ReactNode }) {
 	);
 }
 
+/** An entry from `/share?url=&text=&title=` (the iOS Shortcut sends the shared link as `url`). */
+export function directEntry(d: {
+	url?: string;
+	text?: string;
+	title?: string;
+}): SharedEntry | null {
+	const url = firstUrl(d.url ?? "") ?? firstUrl(d.text ?? "");
+	const text = (url ? (d.text ?? "").replace(url, " ") : (d.text ?? "")).trim();
+	if (!url && !text) return null;
+	return {
+		id: `link-${Date.now().toString(36)}`,
+		createdAt: Date.now(),
+		title: d.title?.trim() || null,
+		text: text ? text.slice(0, 2000) : null,
+		url,
+		files: [],
+	};
+}
+
 function PasteLink({ onEntry }: { onEntry: (e: SharedEntry) => void }) {
 	const [text, setText] = useState("");
 	const submit = (e: FormEvent) => {
@@ -868,13 +887,18 @@ function FileThumb({ file }: { file: SharedEntry["files"][number] }) {
 export function ShareInbox({
 	id,
 	lost,
+	direct,
 }: {
 	/** The IndexedDB entry id from `/share?id=`. */
 	id?: string;
 	/** `/share?lost=1`: the POST reached the server instead of the SW. */
 	lost?: boolean;
+	/** `/share?url=&text=&title=`: a link handed over in the address. */
+	direct?: { url?: string; text?: string; title?: string };
 }) {
-	const [entry, setEntry] = useState<SharedEntry | null>(null);
+	const [entry, setEntry] = useState<SharedEntry | null>(() =>
+		direct ? directEntry(direct) : null,
+	);
 	const [loading, setLoading] = useState(!!id);
 	useEffect(() => {
 		if (!id) return;

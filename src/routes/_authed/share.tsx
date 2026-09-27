@@ -5,7 +5,8 @@ import { pageTitle } from "@/lib/brand";
 
 /**
  * `/share` — the Web Share Target landing page (EXTENSIONS §10, F route;
- * WP-Home owns `ShareInbox`). The service worker receives the share-target
+ * WP-Home owns `ShareInbox`). `?url=&text=&title=` hand a link over directly
+ * (the iOS Shortcut, ⌘K). The service worker receives the share-target
  * POST, stores it in IndexedDB and redirects here with `?id=`. If the POST
  * ever reaches the server (no service worker yet), the handler answers 303
  * `/share?lost=1` ("Couldn't receive that — share again"); the body is never
@@ -19,6 +20,10 @@ const ShareSearch = z.object({
 		.optional()
 		.catch(undefined),
 	lost: z.literal(1).optional().catch(undefined),
+	/** A link handed over in the address: the iOS Shortcut, or ⌘K's "Save this link…". */
+	url: z.string().max(2000).optional().catch(undefined),
+	text: z.string().max(2000).optional().catch(undefined),
+	title: z.string().max(300).optional().catch(undefined),
 });
 
 export const Route = createFileRoute("/_authed/share")({
@@ -38,6 +43,12 @@ export const Route = createFileRoute("/_authed/share")({
 });
 
 function ShareRoute() {
-	const { id, lost } = Route.useSearch();
-	return <ShareInbox id={id} lost={lost === 1} />;
+	const { id, lost, url, text, title } = Route.useSearch();
+	return (
+		<ShareInbox
+			id={id}
+			lost={lost === 1}
+			direct={url || text ? { url, text, title } : undefined}
+		/>
+	);
 }

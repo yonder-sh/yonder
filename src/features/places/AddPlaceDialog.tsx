@@ -13,7 +13,11 @@
  * without coordinates) and `first` ("Where to first?": countries and cities).
  */
 
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import {
+	keepPreviousData,
+	useQuery,
+	useQueryClient,
+} from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { cn } from "cn";
 import {
@@ -63,6 +67,7 @@ import {
 } from "@/components/ui/dialog";
 import { Kbd } from "@/components/ui/kbd";
 import { Spinner } from "@/components/ui/spinner";
+import { addLinkAndCache } from "@/features/media/use-media-actions";
 import { can } from "@/lib/auth/roles";
 import {
 	NODE_TYPES,
@@ -286,6 +291,7 @@ function Palette({
 }) {
 	const ws = useWorkspace();
 	const navigate = useNavigate();
+	const qc = useQueryClient();
 	const { ix, graph, nav, access, scope } = ws;
 	const tripId = graph.trip.id;
 	const mode = request.mode;
@@ -387,6 +393,20 @@ function Palette({
 	const dayHit =
 		dayQuery !== null && dayQuery >= 1 ? ix.days[dayQuery - 1] : undefined;
 	const mapsLink = looksLikeUrl(q) && parseMapsUrl(q.trim()) ? q.trim() : null;
+	// Any other link (a reel, a guide) is never a place name: it goes on the
+	// open place, or to the share page (new idea or an existing place).
+	const otherLink = looksLikeUrl(q) && !mapsLink ? q.trim() : null;
+	const openNode = ix.node(
+		ws.sel?.kind === "node"
+			? ws.sel.id
+			: ws.sel?.kind === "item"
+				? ix.item(ws.sel.id)?.nodeId
+				: null,
+	);
+	const saveLink = (url?: string) => {
+		onClose();
+		void navigate({ to: "/share", search: url ? { url } : {} });
+	};
 	// EMPTY-05 / DESIGN §12: a finished search that found nothing says so
 	// (the Actions group always has items, so cmdk's own empty never shows).
 	const settled =
@@ -397,6 +417,7 @@ function Palette({
 		!!q.trim() &&
 		!coords &&
 		!mapsLink &&
+		!otherLink &&
 		!dayHit &&
 		settled &&
 		tripHits.length === 0 &&
@@ -899,27 +920,56 @@ function Palette({
 									Save the place in this Maps link
 								</CommandItem>
 							) : null}
+							{otherLink && openNode && access.canEdit ? (
+								<CommandItem
+									value="action:link-to"
+									data-testid={PLACES_TESTID.addLinkTo}
+									onSelect={() => {
+										const name = openNode.name;
+										onClose();
+										void addLinkAndCache(qc, tripId, {
+											target: { kind: "node", nodeId: openNode.id },
+											url: otherLink,
+										})
+											.then(() => toast(`Link added to ${name}`))
+											.catch((e) => toast.error(humanError(e)));
+									}}
+								>
+									<Link2 strokeWidth={1.5} />
+									<span className="truncate">
+										Add this link to {openNode.name}
+									</span>
+								</CommandItem>
+							) : null}
+							{otherLink ? (
+								<CommandItem
+									value="action:save-link"
+									data-testid={PLACES_TESTID.saveLink}
+									onSelect={() => saveLink(otherLink)}
+								>
+									<Link2 strokeWidth={1.5} />
+									Save this link…
+								</CommandItem>
+							) : null}
 							{!q.trim() && canSearch && mode !== "first" ? (
 								<CommandItem
 									value="action:paste"
 									onSelect={async () => {
-										// E8 on iOS (no share target): paste a Google Maps link.
+										// E8 on iOS (no share target): paste a link.
+										let text = "";
 										try {
-											const text = (
-												await navigator.clipboard.readText()
-											).trim();
-											if (looksLikeUrl(text) && parseMapsUrl(text)) {
-												setQ(text);
-												setSelected({ kind: "link", url: text });
-												return;
-											}
+											text = (await navigator.clipboard.readText()).trim();
 										} catch {
 											// No clipboard access: the share page has a paste box.
 										}
+										if (looksLikeUrl(text) && parseMapsUrl(text)) {
+											setQ(text);
+											setSelected({ kind: "link", url: text });
+											return;
+										}
 										// Any other link (a video, a guide): WP-Home's share page
 										// saves it in one tap (EXTENSIONS §10 iOS path).
-										onClose();
-										void navigate({ to: "/share" });
+										saveLink(looksLikeUrl(text) ? text : undefined);
 									}}
 								>
 									<Link2 strokeWidth={1.5} />
@@ -956,7 +1006,8 @@ function Palette({
 							access.canEdit &&
 							mode !== "locate" &&
 							!coords &&
-							!mapsLink ? (
+							!mapsLink &&
+							!otherLink ? (
 								<CommandItem
 									value="action:add"
 									onSelect={addNamed}

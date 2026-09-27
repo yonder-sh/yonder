@@ -16,6 +16,9 @@ export const PLACES_TESTID = {
 	scheduleMenu: "places-schedule-menu",
 	useLocation: "places-use-location",
 	dropPin: "places-drop-pin",
+	/** ⌘K with a pasted link: onto the open place, or to the share page. */
+	addLinkTo: "places-add-link-to",
+	saveLink: "places-save-link",
 	dropPinUse: "places-drop-pin-use",
 	providerFooter: "places-provider-footer",
 	paletteEmpty: "places-palette-empty",
