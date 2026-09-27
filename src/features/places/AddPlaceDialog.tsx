@@ -49,6 +49,7 @@ import {
 	TypeGlyph,
 } from "@/components/common/glyphs";
 import { TreePicker } from "@/components/common/tree-picker";
+import { Chip } from "@/components/kit";
 import { Button } from "@/components/ui/button";
 import { ButtonGroup } from "@/components/ui/button-group";
 import {
@@ -1771,15 +1772,15 @@ function PreviewBody({
 						)}
 						<div className="flex flex-wrap items-center gap-2 text-meta text-muted-foreground">
 							{level === "place" ? (
-								<span className="inline-flex h-[22px] items-center gap-1.5 rounded-full bg-muted px-2 text-xs text-foreground">
+								<Chip className="gap-1.5 text-foreground">
 									<CategoryDot category={category} />
 									{PLACE_CATEGORIES[category].label}
-								</span>
+								</Chip>
 							) : (
-								<span className="inline-flex h-[22px] items-center gap-1.5 rounded-full bg-muted px-2 text-xs text-foreground">
+								<Chip className="gap-1.5 text-foreground">
 									<TypeGlyph type={level} />
 									{NODE_TYPES[level].label}
-								</span>
+								</Chip>
 							)}
 							{preview.countryCode ? (
 								<FlagEmoji code={preview.countryCode} />

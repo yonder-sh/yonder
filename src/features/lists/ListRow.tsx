@@ -29,6 +29,7 @@ import type { DragData } from "@/components/common/dnd/workspace-dnd";
 import { MarkdownText } from "@/components/common/markdown-text";
 import { MemberAvatar } from "@/components/common/member";
 import { ProposalGhost } from "@/components/common/proposal-ghost";
+import { Chip } from "@/components/kit";
 import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
@@ -486,9 +487,7 @@ export function ListRow({
 									</span>
 								) : null}
 								{row.status === "skipped" ? (
-									<span className="shrink-0 rounded-full bg-muted px-1.5 text-2xs text-muted-foreground">
-										skipped
-									</span>
+									<Chip size="sm">skipped</Chip>
 								) : null}
 								{row.note && !noteOpen ? (
 									<button

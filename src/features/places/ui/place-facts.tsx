@@ -7,6 +7,7 @@
 
 import type { CSSProperties } from "react";
 import { CategoryDot, TypeGlyph } from "@/components/common/glyphs";
+import { Chip } from "@/components/kit";
 import {
 	NODE_TYPES,
 	PLACE_CATEGORIES,
@@ -60,12 +61,7 @@ export function KindChip({
 	className?: string;
 }) {
 	return (
-		<span
-			className={cn(
-				"inline-flex h-[22px] items-center gap-1.5 rounded-full bg-muted px-2 text-xs whitespace-nowrap",
-				className,
-			)}
-		>
+		<Chip className={cn("gap-1.5 text-inherit", className)}>
 			{node.type === "place" ? (
 				<CategoryDot category={node.category ?? "other"} />
 			) : (
@@ -74,7 +70,7 @@ export function KindChip({
 			{node.type === "place"
 				? PLACE_CATEGORIES[node.category ?? "other"].label
 				: NODE_TYPES[node.type].label}
-		</span>
+		</Chip>
 	);
 }
 

@@ -17,6 +17,7 @@ import { useEffect, useRef, useState } from "react";
 import { EditGuard, useEditGuard } from "@/components/common/edit-guard";
 import { DurationInput, useDisplayPrefs } from "@/components/common/time";
 import { undoToast } from "@/components/common/undo-toast";
+import { Chip } from "@/components/kit";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { tzLabel } from "@/lib/engine/time";
@@ -167,11 +168,7 @@ export function TransitPanel({ ed }: { ed: LegEditor }) {
 						{tzLabel(fromTz, sched.start)}
 					</p>
 				) : null}
-				{scheduleEstimate ? (
-					<span className="inline-flex h-5 items-center rounded-full bg-muted px-2 text-2xs text-muted-foreground">
-						typical schedule
-					</span>
-				) : null}
+				{scheduleEstimate ? <Chip size="sm">typical schedule</Chip> : null}
 			</div>
 
 			{fixed ? (

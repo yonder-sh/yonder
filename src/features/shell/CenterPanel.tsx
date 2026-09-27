@@ -17,6 +17,7 @@
 
 import { useEffect, useMemo, useRef } from "react";
 import { RollupToggle } from "@/components/common/rollup-toggle";
+import { Chip } from "@/components/kit";
 import { ListsTab } from "@/features/lists/ListsTab";
 import { useListsOverdue } from "@/features/lists/use-lists-overdue";
 import { MediaTab } from "@/features/media/MediaTab";
@@ -140,9 +141,11 @@ export function CenterTabBar({
 					>
 						{TAB_LABEL[t]}
 						{t === "places" && toDecide ? (
-							<span
+							<Chip
 								// Amber is for conflicts only: places to decide aren't one.
-								className="rounded-full bg-accent px-1.5 text-2xs font-medium text-accent-foreground tnum"
+								tone="accent"
+								size="sm"
+								className="tnum"
 								title={`${toDecide} ${toDecide === 1 ? "place" : "places"} to decide`}
 								data-testid={SHELL_TESTID.placesToDecide}
 							>
@@ -151,7 +154,7 @@ export function CenterTabBar({
 									{" "}
 									to decide
 								</span>
-							</span>
+							</Chip>
 						) : null}
 						{count[t] ? (
 							<span className="text-xs font-normal text-muted-foreground tnum">

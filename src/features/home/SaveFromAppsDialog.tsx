@@ -8,6 +8,7 @@
 import { Check, Copy } from "lucide-react";
 import { type ReactNode, useState } from "react";
 import { toast } from "sonner";
+import { Chip } from "@/components/kit";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -48,11 +49,7 @@ function Way({
 		<section className="grid gap-2">
 			<h3 className="flex items-center gap-2 text-sm font-semibold">
 				{title}
-				{here ? (
-					<span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
-						This device
-					</span>
-				) : null}
+				{here ? <Chip>This device</Chip> : null}
 			</h3>
 			{children}
 		</section>

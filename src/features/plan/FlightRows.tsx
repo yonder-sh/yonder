@@ -10,6 +10,7 @@
 import { Lock, Plane } from "lucide-react";
 import type { CSSProperties } from "react";
 import { useEditGuard } from "@/components/common/edit-guard";
+import { Chip } from "@/components/kit";
 import { Button } from "@/components/ui/button";
 import { mustRedact } from "@/lib/auth/roles";
 import {
@@ -361,12 +362,9 @@ export function LayoverRow({ itemId }: { itemId: string }) {
 					· {iata}
 				</span>
 				{warn ? (
-					<span
-						data-testid={TESTID.conflictBadge}
-						className="shrink-0 rounded-full border border-warning-hairline bg-warning-wash px-2 py-0.5 text-2xs font-medium text-warning"
-					>
+					<Chip tone="warn" size="sm" data-testid={TESTID.conflictBadge}>
 						Tight connection
-					</span>
+					</Chip>
 				) : null}
 			</button>
 		</RowFrame>

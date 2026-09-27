@@ -18,7 +18,7 @@ import { EmptyState } from "@/components/common/empty-state";
 import { FlagEmoji } from "@/components/common/glyphs";
 import { AvatarStack } from "@/components/common/member";
 import { YonderMark } from "@/components/common/yonder-mark";
-import { Eyebrow } from "@/components/kit";
+import { Chip, Eyebrow } from "@/components/kit";
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -257,12 +257,9 @@ function Hero({
 					<span className="flex items-center gap-3">
 						<Flags codes={trip.countryCodes} />
 						{offline ? (
-							<span
-								data-testid={HOME_TESTID.offlineChip}
-								className="inline-flex h-[22px] items-center gap-1 rounded-full bg-muted px-2 text-xs text-muted-foreground"
-							>
-								<Check className="size-3" /> Available offline
-							</span>
+							<Chip icon={Check} data-testid={HOME_TESTID.offlineChip}>
+								Available offline
+							</Chip>
 						) : null}
 					</span>
 					<AvatarStack people={trip.members} max={5} size={28} />

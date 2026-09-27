@@ -27,6 +27,7 @@ import { PanelRightClose, X } from "lucide-react";
 import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { Crumbs } from "@/components/common/crumbs";
 import { TypeGlyph } from "@/components/common/glyphs";
+import { Chip } from "@/components/kit";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ListsPanel } from "@/features/lists/ListsPanel";
 import { CoverStrip } from "@/features/media/CoverStrip";
@@ -228,18 +229,15 @@ function Body({
 							</h2>
 							<div className="mt-1 flex min-w-0 flex-wrap items-center gap-2">
 								{header.chip ? (
-									<span
-										className={cn(
-											"inline-flex h-[22px] items-center gap-1 rounded-full bg-muted px-2 text-xs text-muted-foreground",
-											// A place's type is a word; times and dates are data (DESIGN §2.6).
-											node ? "capitalize" : "tnum",
-										)}
+									<Chip
+										// A place's type is a word; times and dates are data (DESIGN §2.6).
+										className={node ? "capitalize" : "tnum"}
 									>
 										{node ? (
 											<TypeGlyph type={node.type} category={node.category} />
 										) : null}
 										{header.chip}
-									</span>
+									</Chip>
 								) : null}
 								{node?.parentId ? <Crumbs nodeIds={node.parentId} /> : null}
 								{node?.localName ? (

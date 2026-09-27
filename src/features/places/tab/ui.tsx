@@ -7,7 +7,7 @@
  */
 
 import { Pin, Scale } from "lucide-react";
-import { RATING_FILL, ratingVars } from "@/components/kit";
+import { Chip, type ChipTone, RATING_FILL, ratingVars } from "@/components/kit";
 import { cn } from "@/lib/utils";
 import type { StatusInfo } from "./lifecycle";
 import { formatScore, scoreTier } from "./score";
@@ -36,7 +36,7 @@ export function ScoreChip({
 			className={cn(
 				"inline-flex shrink-0 items-center rounded-full font-semibold whitespace-nowrap tnum",
 				RATING_FILL,
-				size === "sm" ? "h-5 px-1.5 text-2xs" : "h-[22px] px-2 text-xs",
+				size === "sm" ? "h-5 px-1.5 text-2xs" : "h-6 px-2 text-xs",
 				className,
 			)}
 		>
@@ -46,12 +46,11 @@ export function ScoreChip({
 	);
 }
 
-const STATUS_STYLE: Record<StatusInfo["status"], string> = {
-	idea: "bg-muted text-muted-foreground",
-	shortlist: "bg-primary/10 text-primary",
-	scheduled:
-		"bg-emerald-50 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300",
-	dropped: "bg-muted text-muted-foreground line-through",
+const STATUS_TONE: Record<StatusInfo["status"], ChipTone> = {
+	idea: "neutral",
+	shortlist: "accent",
+	scheduled: "good",
+	dropped: "neutral",
 };
 
 /** Idea · Shortlist (pinned / suggested) · Scheduled · Dropped. */
@@ -84,40 +83,34 @@ export function StatusChip({
 					: info.autoDropped
 						? "Dropped · all Nah"
 						: "Dropped";
+	const suggested = info.status === "shortlist" && !info.pinned;
 	return (
-		<span
+		<Chip
+			tone={suggested ? "outline" : STATUS_TONE[info.status]}
+			icon={info.pinned ? Pin : undefined}
 			data-testid={PLACES_TAB_TESTID.statusChip}
 			data-status={info.status}
 			data-pinned={info.pinned || undefined}
 			title={reason ?? undefined}
-			className={cn(
-				"inline-flex h-[22px] shrink-0 items-center gap-1 rounded-full px-2 text-xs font-medium whitespace-nowrap",
-				STATUS_STYLE[info.status],
-				info.status === "shortlist" &&
-					!info.pinned &&
-					"bg-transparent ring-1 ring-primary/30 ring-inset",
-				className,
-			)}
+			className={cn(info.status === "dropped" && "line-through", className)}
 		>
-			{info.pinned ? <Pin className="size-3" strokeWidth={2} /> : null}
 			{label}
-		</span>
+		</Chip>
 	);
 }
 
 /** The Split marker: keen and against on the same place. */
 export function SplitMark({ className }: { className?: string }) {
 	return (
-		<span
+		<Chip
+			tone="warn"
+			size="sm"
+			icon={Scale}
 			data-testid={PLACES_TAB_TESTID.splitMark}
 			title="Split: someone is keen, someone isn't. Talk about it."
-			className={cn(
-				"inline-flex h-5 shrink-0 items-center gap-1 rounded-full bg-warning-wash px-1.5 text-2xs font-medium text-warning",
-				className,
-			)}
+			className={className}
 		>
-			<Scale className="size-3" strokeWidth={2} />
 			Split
-		</span>
+		</Chip>
 	);
 }

@@ -13,7 +13,7 @@ import { toast } from "sonner";
 import { EditGuard, useEditGuard } from "@/components/common/edit-guard";
 import { EmptyState } from "@/components/common/empty-state";
 import { useTripMutation } from "@/components/common/use-trip-mutation";
-import { SectionHeader, Segmented } from "@/components/kit";
+import { Chip, SectionHeader, Segmented } from "@/components/kit";
 import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
@@ -369,13 +369,9 @@ function BudgetRow({
 				) : null}
 				<span className="font-medium">{label}</span>
 				{c.source === "custom" ? (
-					<span className="rounded-full bg-muted px-1.5 text-2xs text-muted-foreground">
-						Custom
-					</span>
+					<Chip size="sm">Custom</Chip>
 				) : c.source === "derived" ? (
-					<span className="rounded-full bg-muted px-1.5 text-2xs text-muted-foreground">
-						derived
-					</span>
+					<Chip size="sm">derived</Chip>
 				) : null}
 				<span className="ml-auto">
 					{amount !== null ? (

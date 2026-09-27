@@ -18,7 +18,7 @@ import { ChevronDown, Plus, X } from "lucide-react";
 import { useId, useMemo, useState } from "react";
 import { useEditGuard } from "@/components/common/edit-guard";
 import { assignableMembers, MemberAvatar } from "@/components/common/member";
-import { SectionHeader } from "@/components/kit";
+import { Chip, SectionHeader } from "@/components/kit";
 import { Button } from "@/components/ui/button";
 import {
 	Collapsible,
@@ -1071,9 +1071,9 @@ function StationField({
 					</span>
 					<span className="flex flex-wrap items-center gap-1">
 						{s.lines.slice(0, 4).map((l) => (
-							<span
+							<Chip
+								size="sm"
 								key={l.key}
-								className="inline-flex h-4 items-center rounded-full bg-muted px-1.5 text-2xs text-muted-foreground"
 								style={
 									l.color
 										? { boxShadow: `inset 3px 0 0 ${l.color}` }
@@ -1081,7 +1081,7 @@ function StationField({
 								}
 							>
 								{l.short}
-							</span>
+							</Chip>
 						))}
 						{s.distanceM !== undefined ? (
 							<span className="text-2xs text-muted-foreground">

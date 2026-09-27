@@ -4,6 +4,7 @@ import { useEditGuard } from "@/components/common/edit-guard";
 import { CategoryDot, ModeGlyph, TypeGlyph } from "@/components/common/glyphs";
 import { LegChips, LegSummary } from "@/components/common/leg-summary";
 import { MemberAvatar, presenceColor } from "@/components/common/member";
+import { Chip } from "@/components/kit";
 import { Button } from "@/components/ui/button";
 import {
 	Popover,
@@ -528,9 +529,9 @@ export function BandCard({
 							{rep?.name ?? "Elsewhere"}
 						</span>
 						{visit.occurrence > 1 ? (
-							<span className="shrink-0 rounded-full bg-muted px-1.5 tnum text-2xs text-muted-foreground">
+							<Chip size="sm" className="tnum">
 								visit {visit.occurrence}
-							</span>
+							</Chip>
 						) : null}
 					</span>
 					<span className="mt-0.5 block truncate text-meta text-muted-foreground">

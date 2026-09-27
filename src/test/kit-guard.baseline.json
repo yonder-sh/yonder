@@ -39,9 +39,6 @@
 	"src/features/places/tab/RateFeed.tsx": {
 		"palette": 40
 	},
-	"src/features/places/tab/ui.tsx": {
-		"palette": 4
-	},
 	"src/features/places/ui/mini-map.impl.tsx": {
 		"text": 1
 	},

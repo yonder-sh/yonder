@@ -42,6 +42,7 @@ import { MarkdownText } from "@/components/common/markdown-text";
 import { MemberAvatar, presenceColor } from "@/components/common/member";
 import { ProposalGhost } from "@/components/common/proposal-ghost";
 import { DurationInput, TimeInput } from "@/components/common/time";
+import { chipVariants } from "@/components/kit";
 import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
@@ -346,7 +347,7 @@ function PopoverTriggerChip({ label }: { label: string }) {
 				type="button"
 				data-testid={TESTID.conflictBadge}
 				onClick={(e) => e.stopPropagation()}
-				className="inline-flex h-[22px] shrink-0 items-center gap-1 rounded-full border border-warning-hairline bg-warning-wash px-2 text-xs font-medium text-warning"
+				className={cn(chipVariants({ tone: "warn" }), "cursor-pointer")}
 			>
 				<TriangleAlert className="size-3" strokeWidth={1.75} aria-hidden />
 				{label}

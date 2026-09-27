@@ -38,6 +38,7 @@ import {
 	MemberName,
 	resolveMember,
 } from "@/components/common/member";
+import { Chip } from "@/components/kit";
 import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
@@ -245,9 +246,9 @@ function OverlayCard({ itemId }: { itemId: string }) {
 			<span className="min-w-0 flex-1 truncate text-sm font-medium">
 				{itemName(ix, item)}
 			</span>
-			<span className="shrink-0 rounded-full bg-muted px-2 text-xs leading-[22px] tnum">
+			<Chip className="tnum">
 				{formatDuration(item.durationMin, { compact: true })}
-			</span>
+			</Chip>
 		</div>
 	);
 }

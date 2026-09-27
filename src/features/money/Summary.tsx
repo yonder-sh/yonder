@@ -12,7 +12,7 @@ import {
 	PersonAvatar,
 	resolveMember,
 } from "@/components/common/member";
-import { SectionHeader } from "@/components/kit";
+import { chipVariants, SectionHeader } from "@/components/kit";
 import { Button } from "@/components/ui/button";
 import {
 	formatCpp,
@@ -207,7 +207,7 @@ export function SummaryStrip({
 					{s.programs.map((p) => (
 						<li
 							key={p.program}
-							className="inline-flex h-[22px] items-center gap-1.5 rounded-full bg-muted px-2.5 text-xs"
+							className={cn(chipVariants(), "gap-1.5 px-2.5 text-foreground")}
 						>
 							<span className="font-medium">{p.program}</span>
 							{p.points ? <Num>{p.points.toLocaleString("en")} pts</Num> : null}
