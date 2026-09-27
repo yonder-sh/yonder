@@ -262,7 +262,7 @@ export function SuggestRule() {
 	return (
 		<div
 			data-testid={SHELL_TESTID.suggestRule}
-			className="shrink-0 border-t-2 border-primary/40 bg-primary/5 px-4 py-1 text-xs text-primary"
+			className="shrink-0 border-t-2 border-primary/40 bg-accent/50 px-4 py-1 text-xs text-primary"
 		>
 			Suggesting — your changes need approval
 		</div>

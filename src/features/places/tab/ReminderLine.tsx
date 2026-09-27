@@ -21,7 +21,7 @@ export function ReminderLine() {
 		<div
 			data-testid={RATING_TESTID.reminderLine}
 			role="status"
-			className="flex min-h-8 shrink-0 items-center gap-2 border-b bg-primary/5 px-4 py-1 text-meta"
+			className="flex min-h-8 shrink-0 items-center gap-2 border-b bg-accent/50 px-4 py-1 text-meta"
 		>
 			<BellRing
 				className="size-3.5 shrink-0 text-primary"

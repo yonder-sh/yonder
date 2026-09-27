@@ -186,7 +186,7 @@ function Line({
 				narrow
 					? "flex flex-col gap-0.5 py-2"
 					: "grid min-h-[42px] grid-cols-[30px_92px_minmax(0,150px)_minmax(0,1fr)] items-center gap-3",
-				today && "rounded-md bg-primary/8 ring-1 ring-primary/30",
+				today && "rounded-md bg-accent/50 ring-1 ring-primary/30",
 			)}
 		>
 			{narrow ? (

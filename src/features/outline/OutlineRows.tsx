@@ -559,7 +559,7 @@ function RowShell({
 				isScope && "font-semibold text-foreground",
 				flash && "animate-glow",
 				dragging && "z-10",
-				attach.isOver && "bg-primary/10",
+				attach.isOver && "bg-accent",
 				className,
 			)}
 			style={{

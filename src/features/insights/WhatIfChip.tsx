@@ -20,7 +20,7 @@ export function WhatIfChip() {
 		<span
 			data-testid={TESTID.whatIfChip}
 			data-delta={n}
-			className="inline-flex h-7 shrink-0 items-center rounded-full bg-primary/10 pr-0.5 pl-2.5 text-xs font-medium text-primary ring-1 ring-primary/25 ring-inset"
+			className="inline-flex h-7 shrink-0 items-center rounded-full bg-accent pr-0.5 pl-2.5 text-xs font-medium text-accent-foreground ring-1 ring-primary/25 ring-inset"
 		>
 			<CalendarClock
 				className="mr-1.5 size-3.5 shrink-0"

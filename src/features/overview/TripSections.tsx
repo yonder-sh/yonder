@@ -109,7 +109,7 @@ export function Deadlines({ now: at }: { now?: number } = {}) {
 											"max-w-full truncate rounded-full px-2 text-2xs leading-5 tnum",
 											// ADDENDUM §10: due-soon is the neutral/primary tint, never amber.
 											overdue || days <= 7
-												? "bg-primary/10 text-primary"
+												? "bg-accent text-accent-foreground"
 												: "bg-muted text-muted-foreground",
 										)}
 									>

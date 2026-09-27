@@ -48,7 +48,7 @@ export function DayChips() {
 			className="-mt-1 flex shrink-0 items-center gap-0.5 overflow-x-auto px-2.5 [scrollbar-width:none]"
 		>
 			{anchor ? (
-				<span className="flex h-8 shrink-0 items-center rounded-full bg-primary/10 px-2.5 text-xs text-primary">
+				<span className="flex h-8 shrink-0 items-center rounded-full bg-accent px-2.5 text-xs text-accent-foreground">
 					Tap the last day
 				</span>
 			) : null}

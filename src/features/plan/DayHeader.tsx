@@ -478,7 +478,7 @@ function DayFilterButton({ day }: { day: GraphDay }) {
 			className={cn(
 				"transition-opacity max-md:hidden",
 				only
-					? "bg-primary/10 text-primary hover:bg-primary/15 hover:text-primary"
+					? "bg-accent text-accent-foreground hover:bg-accent/80 hover:text-accent-foreground"
 					: "text-muted-foreground",
 				!inRange &&
 					"[@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover/day:opacity-100 [@media(hover:hover)]:focus-visible:opacity-100",

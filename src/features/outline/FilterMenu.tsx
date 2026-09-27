@@ -139,7 +139,7 @@ export function PlaceFilterPanel() {
 									"inline-flex h-7 items-center gap-1.5 rounded-full border px-2.5 text-xs transition-colors",
 									"focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
 									on
-										? "border-primary/50 bg-primary/10 text-foreground"
+										? "border-primary/50 bg-accent text-foreground"
 										: "border-border text-muted-foreground hover:bg-accent hover:text-foreground",
 								)}
 							>
@@ -328,7 +328,7 @@ export function PlaceFilterSummary({
 		<div
 			data-testid={OUTLINE_TESTID.filterSummary}
 			className={cn(
-				"flex h-7 shrink-0 items-center gap-1.5 border-y border-primary/15 bg-primary/5 pr-1 pl-4 text-xs",
+				"flex h-7 shrink-0 items-center gap-1.5 border-y border-primary/15 bg-accent/50 pr-1 pl-4 text-xs",
 				className,
 			)}
 		>

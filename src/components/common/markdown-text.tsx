@@ -76,7 +76,7 @@ export function MentionChip({
 			data-mention={memberId}
 			data-avatar={image ? "" : undefined}
 			className={cn(
-				"inline-flex items-baseline gap-1 rounded-sm bg-primary/10 px-1 font-medium text-primary",
+				"inline-flex items-baseline gap-1 rounded-sm bg-accent px-1 font-medium text-accent-foreground",
 				image && "pl-0.5",
 				!member && ws && "bg-muted text-muted-foreground italic",
 				className,

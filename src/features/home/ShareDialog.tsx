@@ -810,7 +810,7 @@ function TripLink({ tripId, data }: { tripId: string; data: SharingDto }) {
 						className={cn(
 							"flex size-8 shrink-0 items-center justify-center rounded-full",
 							on
-								? "bg-primary/10 text-primary"
+								? "bg-accent text-accent-foreground"
 								: "bg-muted text-muted-foreground",
 						)}
 						aria-hidden="true"

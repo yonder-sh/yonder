@@ -172,7 +172,7 @@ export function SuggestModeControl({
 								aria-label={`Suggesting${n ? ` · ${n} open` : ""}. ${line}`}
 								onClick={() => openReview(mineOpen ? "mine" : "open")}
 								className={cn(
-									"inline-flex shrink-0 items-center gap-1.5 rounded-full border border-primary/30 bg-primary/[0.06] text-sm font-medium text-primary transition-colors hover:bg-primary/10 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none",
+									"inline-flex shrink-0 items-center gap-1.5 rounded-full border border-primary/30 bg-accent/50 text-sm font-medium text-primary transition-colors hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none",
 									compact ? "h-8 px-2.5" : "h-8 px-3",
 								)}
 							>
@@ -286,7 +286,7 @@ export function SuggestModeControl({
 	);
 
 	const tone = suggesting
-		? "border-primary/30 bg-primary/[0.06] text-primary hover:bg-primary/10 hover:text-primary"
+		? "border-primary/30 bg-accent/50 text-primary hover:bg-accent hover:text-primary"
 		: "";
 
 	if (compact) {

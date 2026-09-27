@@ -358,7 +358,7 @@ function InboxRow({
 								"rounded-full px-1.5 leading-4",
 								// Due-soon uses the neutral/primary tint (ADDENDUM §10), never amber.
 								i.state === "overdue" || i.state === "open_now"
-									? "bg-primary/10 text-primary"
+									? "bg-accent text-accent-foreground"
 									: "bg-muted",
 							)}
 						>

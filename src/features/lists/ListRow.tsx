@@ -761,7 +761,8 @@ function DueChip({
 			className={cn(
 				"inline-flex h-[22px] items-center gap-1.5 rounded-full px-2 text-xs whitespace-nowrap tnum",
 				state === "overdue" && "text-warning",
-				(state === "today" || state === "soon") && "bg-primary/10 text-primary",
+				(state === "today" || state === "soon") &&
+					"bg-accent text-accent-foreground",
 				state === "open_now" && "bg-muted text-foreground",
 				(state === "later" || state === "none" || tbd) &&
 					"text-muted-foreground",

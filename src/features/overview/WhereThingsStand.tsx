@@ -182,7 +182,7 @@ function Line({
 			data-next={next || undefined}
 			className={cn(
 				"-mx-1.5 grid gap-1 rounded-lg px-1.5 py-1",
-				next && (hero ? "bg-white/[.06]" : "bg-primary/5"),
+				next && (hero ? "bg-white/[.06]" : "bg-accent/50"),
 			)}
 		>
 			<div className="flex items-center gap-2">

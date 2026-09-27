@@ -87,7 +87,7 @@ export function OtherPanel({ ed }: { ed: LegEditor }) {
 								className={cn(
 									"inline-flex h-7 items-center gap-1.5 rounded-full border px-2.5 text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
 									on
-										? "border-primary bg-primary/10 text-foreground"
+										? "border-primary bg-accent text-foreground"
 										: "border-border text-muted-foreground hover:border-foreground/20 hover:text-foreground",
 								)}
 							>

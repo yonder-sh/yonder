@@ -119,7 +119,7 @@ function DayChip({
 	const cls = cn(
 		"inline-flex h-6 shrink-0 items-center gap-1.5 rounded-full border px-2 text-2xs whitespace-nowrap text-muted-foreground",
 		d.closed && "border-dashed opacity-70",
-		best && "border-primary/40 bg-primary/5 text-foreground",
+		best && "border-primary/40 bg-accent/50 text-foreground",
 	);
 	return onAdd && !d.closed ? (
 		<button

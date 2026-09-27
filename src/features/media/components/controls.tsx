@@ -259,7 +259,7 @@ export function DropOverlay({ label }: { label: string }) {
 	return (
 		<div
 			data-testid={MEDIA_TESTID.dropOverlay}
-			className="pointer-events-none absolute inset-0 z-30 grid place-items-center rounded-lg border-2 border-dashed border-primary/40 bg-primary/5"
+			className="pointer-events-none absolute inset-0 z-30 grid place-items-center rounded-lg border-2 border-dashed border-primary/40 bg-accent/50"
 		>
 			<span className="rounded-full bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground shadow-float">
 				{label}

@@ -560,7 +560,7 @@ function Saver({ entry }: { entry: SharedEntry }) {
 				data-testid={HOME_TESTID.shareSaved}
 				className="grid justify-items-center gap-4 rounded-2xl border bg-card px-6 py-10 text-center"
 			>
-				<span className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-primary">
+				<span className="flex size-10 items-center justify-center rounded-full bg-accent text-accent-foreground">
 					<Check className="size-5" />
 				</span>
 				<p className="font-display text-lg font-medium">{state.text}</p>
@@ -849,7 +849,7 @@ function WhereButton({
 			className={cn(
 				"grid gap-0.5 rounded-lg border p-3 text-left transition-colors",
 				active
-					? "border-primary bg-primary/5 ring-1 ring-primary"
+					? "border-primary bg-accent/50 ring-1 ring-primary"
 					: "hover:border-foreground/20",
 			)}
 		>

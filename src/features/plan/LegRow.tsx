@@ -501,7 +501,7 @@ export function LegRow({
 				className={cn(
 					"plan-leg",
 					late && "bg-warning-wash",
-					selected && "bg-primary/5",
+					selected && "bg-accent/50",
 				)}
 				rail={
 					<Rail

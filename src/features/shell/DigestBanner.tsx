@@ -90,7 +90,7 @@ export function DigestBanner() {
 				type="button"
 				onClick={gotIt}
 				data-testid={SHELL_TESTID.digestGotIt}
-				className="ml-auto shrink-0 rounded-md px-2 py-0.5 text-xs font-medium text-primary hover:bg-primary/10"
+				className="ml-auto shrink-0 rounded-md px-2 py-0.5 text-xs font-medium text-primary hover:bg-accent"
 			>
 				Got it
 			</button>

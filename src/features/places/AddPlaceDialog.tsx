@@ -1228,7 +1228,7 @@ function CategoryChips({
 						className={cn(
 							"inline-flex h-[22px] items-center gap-1 rounded-full border px-2 text-xs transition-colors",
 							value === c
-								? "border-primary bg-primary/10 text-foreground"
+								? "border-primary bg-accent text-foreground"
 								: "border-transparent bg-muted text-muted-foreground hover:text-foreground",
 						)}
 					>
@@ -1808,7 +1808,7 @@ function PreviewBody({
 				)}
 
 				{existing ? (
-					<div className="flex items-center gap-2 rounded-lg bg-primary/5 px-3 py-2 text-meta">
+					<div className="flex items-center gap-2 rounded-lg bg-accent/50 px-3 py-2 text-meta">
 						<span className="min-w-0 flex-1">
 							Already in {graph.trip.name}:{" "}
 							<span className="font-medium">{existing.name}</span>
