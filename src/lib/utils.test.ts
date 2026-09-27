@@ -25,4 +25,9 @@ describe("cn", () => {
 			"eyebrow hover:text-foreground",
 		);
 	});
+
+	it("lets a screen's own height replace a control's default", () => {
+		expect(cn("h-(--control) px-3", "h-11")).toBe("px-3 h-11");
+		expect(cn("size-(--control)", "size-9")).toBe("size-9");
+	});
 });

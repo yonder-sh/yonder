@@ -198,6 +198,24 @@
 	--text-body--line-height: 1.375rem;
 }
 
+/*
+ * Control heights (One Yonder kit): 32 / 28 / 40, one step taller on touch
+ * screens. Buttons, inputs, selects and toggles read these, so a screen's own
+ * height (`h-11`) replaces them instead of losing to a touch variant.
+ */
+:root {
+	--control: 2rem;
+	--control-sm: 1.75rem;
+	--control-lg: 2.5rem;
+}
+@media (pointer: coarse) {
+	:root {
+		--control: 2.5rem;
+		--control-sm: 2.25rem;
+		--control-lg: 2.75rem;
+	}
+}
+
 /* Numbers line up (times, durations, fares, counts), in the body font. */
 @utility tnum {
 	font-variant-numeric: tabular-nums;

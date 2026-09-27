@@ -22,15 +22,15 @@ const buttonVariants = cva(
 			size: {
 				// The kit's heights (2026-09-27): 28 / 32 / 40 / 44, one step up
 				// where the pointer is a finger (phones, iPads).
-				default: "h-8 px-3 has-[>svg]:px-2.5 pointer-coarse:h-10",
+				default: "h-(--control) px-3 has-[>svg]:px-2.5",
 				xs: "h-6 gap-1 rounded-md px-2 text-xs has-[>svg]:px-1.5 [&_svg:not([class*='size-'])]:size-3",
-				sm: "h-7 gap-1.5 rounded-md px-2.5 text-meta has-[>svg]:px-2 pointer-coarse:h-9",
-				lg: "h-10 rounded-lg px-4 has-[>svg]:px-3 pointer-coarse:h-11",
+				sm: "h-(--control-sm) gap-1.5 rounded-md px-2.5 text-meta has-[>svg]:px-2",
+				lg: "h-(--control-lg) rounded-lg px-4 has-[>svg]:px-3",
 				xl: "h-11 rounded-xl px-5 text-body has-[>svg]:px-4",
-				icon: "size-8 pointer-coarse:size-10",
+				icon: "size-(--control)",
 				"icon-xs": "size-6 rounded-md [&_svg:not([class*='size-'])]:size-3",
-				"icon-sm": "size-7 pointer-coarse:size-9",
-				"icon-lg": "size-10 pointer-coarse:size-11",
+				"icon-sm": "size-(--control-sm)",
+				"icon-lg": "size-(--control-lg)",
 			},
 		},
 		defaultVariants: {
