@@ -321,12 +321,18 @@ test("DEFECT (WP-Shell): Still to plan's unrated count matches the Places tab's 
 	expect(panelCount).toBe((total as number) - (rated as number));
 });
 
-test("DEFECT TL-03 / F4-b (F schedule): Tue 5 Oct clock times match the fixture", async ({ page }) => {
-	// Open since round 1: legs never join unlocated items (Breakfast, Lunch, Dinner), so
-	// the fixture's walks to and from them are missing (SPEC §7.8/§8.1 vs QA F4-b).
+test("TL-03 / F4-b guard: Tue 5 Oct, travel only between places (a meal with no place gets none)", async ({ page }) => {
+	// Owner, 2026-09-27: legs join places only; the sheet's walks to Breakfast, Lunch and
+	// Dinner (no place) stay out. Linking a meal to its area gives it a travel estimate.
 	await openTrip(page, `/t/${TRIP}?days=2027-10-05&lens=place`);
-	const ikedaya = await itemId(page, "Cha no Ikedaya", "2027-10-05");
-	const card = page.locator(`[data-testid="timeline-item"][data-item-id="${ikedaya}"]`).first();
-	await expect(card.getByTestId("item-start")).toHaveText("09:40");
-	await expect(page.getByTestId("plan-day-header").first()).toContainText("Travel 1h20");
+	const start = async (title: string) => {
+		const id = await itemId(page, title, "2027-10-05");
+		return page.locator(`[data-testid="timeline-item"][data-item-id="${id}"]`).first().getByTestId("item-start");
+	};
+	await expect(await start("Cha no Ikedaya")).toHaveText("09:30");
+	// Right after Nakano Broadway (12:45); its 20 min to Yodobashi comes after Lunch.
+	await expect(await start("Lunch")).toHaveText("12:45");
+	await expect(await start("Yodobashi Camera")).toHaveText("14:05");
+	await expect(await start("Dinner")).toHaveText("17:40");
+	await expect(page.getByTestId("plan-day-header").first()).toContainText("Travel 55m");
 });
