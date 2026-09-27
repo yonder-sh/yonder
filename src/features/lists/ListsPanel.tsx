@@ -11,7 +11,7 @@
 
 import { useMemo, useState } from "react";
 import { z } from "zod";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Segmented } from "@/components/kit";
 import { offersRollupChoice } from "@/features/shell/bundle-target";
 import type { Lens } from "@/lib/engine/types";
 import { bool, oneOf, useFollowValue, uuid } from "@/lib/realtime/view-ui";
@@ -174,26 +174,24 @@ export function ListsPanel({ target }: { target: BundleTarget }) {
 			{toggle ? (
 				<div className="px-4">
 					{/* The same Everything / Only switch as the center tabs (DESIGN §4.4). */}
-					<ToggleGroup
-						type="single"
+					<Segmented
+						label="What to include"
+						testId={LISTS_TESTID.panelScope}
 						size="sm"
-						variant="outline"
+						className="max-w-full"
 						value={isWide ? "all" : "only"}
 						onValueChange={(v) => v && setIsWide(v === "all")}
-						className="h-7 max-w-full"
-						aria-label="What to include"
-						data-testid={LISTS_TESTID.panelScope}
-					>
-						<ToggleGroupItem value="all" className="h-7 min-w-0 px-2.5 text-xs">
-							<span className="truncate">{toggle.on}</span>
-						</ToggleGroupItem>
-						<ToggleGroupItem
-							value="only"
-							className="h-7 min-w-0 px-2.5 text-xs"
-						>
-							<span className="truncate">{toggle.off}</span>
-						</ToggleGroupItem>
-					</ToggleGroup>
+						options={[
+							{
+								value: "all",
+								label: <span className="truncate">{toggle.on}</span>,
+							},
+							{
+								value: "only",
+								label: <span className="truncate">{toggle.off}</span>,
+							},
+						]}
+					/>
 				</div>
 			) : null}
 			<ListBoard

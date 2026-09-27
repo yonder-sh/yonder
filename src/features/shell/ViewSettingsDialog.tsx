@@ -10,6 +10,7 @@
  * and Satellite is a button on the map itself.
  */
 import type { ReactNode } from "react";
+import { Segmented } from "@/components/kit";
 import {
 	Dialog,
 	DialogContent,
@@ -25,7 +26,6 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { mustRedact } from "@/lib/auth/roles";
 import { NODE_TYPES } from "@/lib/domain/taxonomy";
 import { resolveSettings } from "@/lib/engine/graph-index";
@@ -87,27 +87,15 @@ function Segments<T extends string>({
 	label: string;
 }) {
 	return (
-		<ToggleGroup
-			type="single"
-			variant="outline"
-			size="sm"
+		<Segmented
+			label={label}
 			value={value}
-			// A click on the selected segment sends "": it keeps (and saves) that
-			// choice, e.g. a map style that only followed the app theme until now.
-			onValueChange={(v) => onChange((v || value) as T)}
-			aria-label={label}
-			className="h-8"
-		>
-			{options.map((o) => (
-				<ToggleGroupItem
-					key={o.value}
-					value={o.value}
-					className="h-8 px-3 text-xs data-[state=on]:bg-foreground data-[state=on]:text-background"
-				>
-					{o.label}
-				</ToggleGroupItem>
-			))}
-		</ToggleGroup>
+			// A click on the picked segment keeps (and saves) that choice, e.g. a
+			// map style that only followed the app theme until now.
+			reselect
+			onValueChange={onChange}
+			options={options}
+		/>
 	);
 }
 

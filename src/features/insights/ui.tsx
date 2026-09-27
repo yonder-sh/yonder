@@ -132,61 +132,6 @@ export function HoverPopover({
 	);
 }
 
-/** A small segmented control (a radio group of pills). */
-export function Segmented<T extends string>({
-	value,
-	onChange,
-	options,
-	label,
-	disabled,
-	testId,
-	className,
-}: {
-	value: T;
-	onChange: (v: T) => void;
-	options: readonly { value: T; label: string }[];
-	label: string;
-	disabled?: boolean;
-	testId?: string;
-	className?: string;
-}) {
-	return (
-		<div
-			role="radiogroup"
-			aria-label={label}
-			data-testid={testId}
-			className={cn(
-				"inline-flex h-8 items-center gap-0.5 rounded-full bg-muted p-0.5",
-				className,
-			)}
-		>
-			{options.map((o) => {
-				const on = o.value === value;
-				return (
-					// biome-ignore lint/a11y/useSemanticElements: a pill radio, keyboard-operable as a button
-					<button
-						key={o.value}
-						type="button"
-						role="radio"
-						aria-checked={on}
-						data-value={o.value}
-						disabled={disabled}
-						onClick={() => onChange(o.value)}
-						className={cn(
-							"h-7 rounded-full px-3 text-xs font-medium whitespace-nowrap transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-50",
-							on
-								? "bg-card text-foreground shadow-xs"
-								: "text-muted-foreground hover:text-foreground",
-						)}
-					>
-						{o.label}
-					</button>
-				);
-			})}
-		</div>
-	);
-}
-
 /**
  * A Dialog that becomes a bottom sheet under 640px (EXTENSIONS §4.5/§5: "a
  * Sheet on mobile"): same content, no second component tree.

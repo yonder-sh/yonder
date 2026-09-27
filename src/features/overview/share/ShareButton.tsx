@@ -17,6 +17,7 @@ import { useParams } from "@tanstack/react-router";
 import { Copy, Download, ImageIcon, RotateCw, Share2 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { Segmented } from "@/components/kit";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -27,7 +28,6 @@ import {
 	DialogTitle,
 } from "@/components/ui/dialog";
 import { Spinner } from "@/components/ui/spinner";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { cn } from "@/lib/utils";
 import { SHARE_CARD_TESTID as T } from "./testids";
 
@@ -204,19 +204,17 @@ export function ShareCardDialog({
 						Your route as an image for stories and chats.
 					</DialogDescription>
 				</DialogHeader>
-				<ToggleGroup
-					type="single"
-					variant="outline"
-					size="sm"
+				<Segmented
+					label="Card size"
+					testId={T.size}
+					className="mx-auto"
 					value={size}
 					onValueChange={(v) => v && setSize(v as Size)}
-					data-testid={T.size}
-					className="mx-auto"
-					aria-label="Card size"
-				>
-					<ToggleGroupItem value="story">Story</ToggleGroupItem>
-					<ToggleGroupItem value="square">Square</ToggleGroupItem>
-				</ToggleGroup>
+					options={[
+						{ value: "story", label: "Story" },
+						{ value: "square", label: "Square" },
+					]}
+				/>
 				<div
 					className={cn(
 						"relative mx-auto w-full overflow-hidden rounded-lg bg-black",

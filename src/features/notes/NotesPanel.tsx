@@ -5,7 +5,8 @@
  * with "This visit only" for the visit's own note (DESIGN §4.4; QA NOTE-02:
  * the Bar Benfiddich ITEM has its own note, separate from the place's).
  */
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+
+import { Segmented } from "@/components/kit";
 import { bool, useFollowState } from "@/lib/realtime/view-ui";
 import type { BundleTarget } from "@/lib/schemas/targets";
 import { TESTID } from "@/lib/testids";
@@ -28,23 +29,21 @@ export function NotesPanel({ target }: { target: BundleTarget }) {
 			? (ix.node(target.nodeId)?.name ?? "The place")
 			: "The place";
 	const visitSwitch = visitId ? (
-		<ToggleGroup
-			type="single"
+		<Segmented
+			label="Whose note"
+			testId={NOTES_TESTID.visitScope}
 			size="sm"
-			variant="outline"
+			className="max-w-full"
 			value={visitOnly ? "visit" : "place"}
 			onValueChange={(v) => v && setVisitOnly(v === "visit")}
-			className="h-7 max-w-full"
-			aria-label="Whose note"
-			data-testid={NOTES_TESTID.visitScope}
-		>
-			<ToggleGroupItem value="place" className="h-7 min-w-0 px-2.5 text-xs">
-				<span className="truncate">{placeName}</span>
-			</ToggleGroupItem>
-			<ToggleGroupItem value="visit" className="h-7 min-w-0 px-2.5 text-xs">
-				This visit only
-			</ToggleGroupItem>
-		</ToggleGroup>
+			options={[
+				{
+					value: "place",
+					label: <span className="truncate">{placeName}</span>,
+				},
+				{ value: "visit", label: "This visit only" },
+			]}
+		/>
 	) : null;
 	return (
 		<div data-testid={TESTID.notesPanel} className="text-sm">

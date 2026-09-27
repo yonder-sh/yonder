@@ -16,7 +16,7 @@ import { toast } from "sonner";
 import { useEditGuard } from "@/components/common/edit-guard";
 import { undoToast } from "@/components/common/undo-toast";
 import { useTripMutation } from "@/components/common/use-trip-mutation";
-import { Eyebrow } from "@/components/kit";
+import { Eyebrow, Segmented } from "@/components/kit";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -60,7 +60,7 @@ import { setOpeningHours } from "./insights.functions";
 import { useLatestMount } from "./latest-mount";
 import { OsmAttribution, OsmObjectLink } from "./OsmHoursSource";
 import { INSIGHTS_TESTID } from "./testids";
-import { DateField, Segmented, SHEET_ON_MOBILE } from "./ui";
+import { DateField, SHEET_ON_MOBILE } from "./ui";
 
 /** Whether ranges show their own last-entry field. */
 const ShowLastEntry = createContext(false);
@@ -283,7 +283,7 @@ function EditorBody({
 						label="Kind of hours"
 						testId={INSIGHTS_TESTID.hoursEditorMode}
 						value={draft.mode}
-						onChange={(mode) =>
+						onValueChange={(mode) =>
 							update((d) => {
 								d.mode = mode;
 							})
@@ -572,7 +572,7 @@ function WeeklyEditor({
 									? "own"
 									: "same"
 						}
-						onChange={(v) =>
+						onValueChange={(v) =>
 							update((d) => {
 								d.holiday.on = v === "own";
 								d.holiday.closed = v === "closed";
@@ -837,7 +837,7 @@ function ExceptionsEditor({
 								<Segmented
 									label="Open or closed that day"
 									value={e.closed ? "closed" : "hours"}
-									onChange={(v) =>
+									onValueChange={(v) =>
 										update((d) => {
 											d.exceptions[i] = {
 												...e,

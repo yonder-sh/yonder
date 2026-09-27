@@ -15,6 +15,8 @@ export type SegmentedOption<T extends string> = {
 	/** A count after the label ("Shortlist 4"). */
 	count?: number | null;
 	disabled?: boolean;
+	/** The option's name when its label is an icon or truncates. */
+	ariaLabel?: string;
 	testId?: string;
 };
 
@@ -25,6 +27,7 @@ export function Segmented<T extends string>({
 	label,
 	size = "md",
 	full = false,
+	reselect = false,
 	disabled,
 	testId,
 	className,
@@ -37,6 +40,8 @@ export function Segmented<T extends string>({
 	size?: "sm" | "md";
 	/** Stretch across its container (phones). */
 	full?: boolean;
+	/** Clicking the picked option calls `onValueChange` with it again (to save a choice that was only a default). */
+	reselect?: boolean;
 	disabled?: boolean;
 	testId?: string;
 	className?: string;
@@ -47,6 +52,7 @@ export function Segmented<T extends string>({
 			value={value}
 			onValueChange={(v) => {
 				if (v) onValueChange(v as T);
+				else if (reselect) onValueChange(value);
 			}}
 			aria-label={label}
 			disabled={disabled}
@@ -63,10 +69,11 @@ export function Segmented<T extends string>({
 					key={o.value}
 					value={o.value}
 					disabled={o.disabled}
+					aria-label={o.ariaLabel}
 					data-testid={o.testId}
 					data-value={o.value}
 					className={cn(
-						"inline-flex items-center justify-center gap-1.5 rounded-md px-3 font-medium whitespace-nowrap text-muted-foreground transition-colors outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50",
+						"inline-flex min-w-0 items-center justify-center gap-1.5 rounded-md px-3 font-medium whitespace-nowrap text-muted-foreground transition-colors outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50",
 						"data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-xs dark:data-[state=on]:bg-accent",
 						size === "sm"
 							? "h-6 text-xs pointer-coarse:h-8"

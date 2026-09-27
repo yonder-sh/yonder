@@ -5,8 +5,7 @@
  * the rows add up to its Planned total.
  */
 import { useMemo } from "react";
-import { SectionHeader } from "@/components/kit";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { SectionHeader, Segmented } from "@/components/kit";
 import {
 	EXPENSE_CATEGORY_LABEL,
 	formatMoneyShort,
@@ -187,25 +186,17 @@ export function Breakdown({
 		<section data-testid={MONEY_TESTID.breakdown} className="px-4 pb-4">
 			<SectionHeader
 				action={
-					<ToggleGroup
-						type="single"
+					<Segmented
+						label="Break down by"
 						size="sm"
-						variant="outline"
 						value={by}
 						onValueChange={(v) => v && setBy(v as By)}
-						className="h-7"
-						aria-label="Break down by"
-					>
-						<ToggleGroupItem value="category" className="h-7 px-2 text-xs">
-							Category
-						</ToggleGroupItem>
-						<ToggleGroupItem value="place" className="h-7 px-2 text-xs">
-							Place
-						</ToggleGroupItem>
-						<ToggleGroupItem value="day" className="h-7 px-2 text-xs">
-							Day
-						</ToggleGroupItem>
-					</ToggleGroup>
+						options={[
+							{ value: "category", label: "Category" },
+							{ value: "place", label: "Place" },
+							{ value: "day", label: "Day" },
+						]}
+					/>
 				}
 			>
 				Breakdown

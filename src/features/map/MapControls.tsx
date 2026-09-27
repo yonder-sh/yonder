@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { type ReactNode, useSyncExternalStore } from "react";
 import { EditGuard } from "@/components/common/edit-guard";
+import { Segmented } from "@/components/kit";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
@@ -36,7 +37,6 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
 	Tooltip,
 	TooltipContent,
@@ -296,24 +296,19 @@ function LayerMenu(p: MapControlsProps) {
 			</Section>
 			<Separator />
 			<Section title="Selected days">
-				<ToggleGroup
-					type="single"
-					size="sm"
-					variant="outline"
+				<Segmented
+					label="Other days"
+					testId={MAP_TESTID.dayMode}
+					full
 					value={p.dayMode}
 					onValueChange={(v) => {
 						if (v === "only" || v === "dim") p.setDayMode(v);
 					}}
-					data-testid={MAP_TESTID.dayMode}
-					className="w-full"
-				>
-					<ToggleGroupItem value="only" className="flex-1 text-meta">
-						Only
-					</ToggleGroupItem>
-					<ToggleGroupItem value="dim" className="flex-1 text-meta">
-						Dim others
-					</ToggleGroupItem>
-				</ToggleGroup>
+					options={[
+						{ value: "only", label: "Only" },
+						{ value: "dim", label: "Dim others" },
+					]}
+				/>
 			</Section>
 			<Separator />
 			<Section title="Legend">

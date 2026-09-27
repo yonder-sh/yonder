@@ -13,7 +13,7 @@ import { toast } from "sonner";
 import { EditGuard, useEditGuard } from "@/components/common/edit-guard";
 import { EmptyState } from "@/components/common/empty-state";
 import { useTripMutation } from "@/components/common/use-trip-mutation";
-import { SectionHeader } from "@/components/kit";
+import { SectionHeader, Segmented } from "@/components/kit";
 import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
@@ -35,7 +35,6 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { can } from "@/lib/auth/roles";
 import {
 	EXPENSE_CATEGORY_LABEL,
@@ -220,22 +219,16 @@ export function BudgetSection({
 				action={
 					<>
 						{meId ? (
-							<ToggleGroup
-								type="single"
+							<Segmented
+								label="Whose budget"
 								size="sm"
-								variant="outline"
 								value={mode}
 								onValueChange={(v) => v && setMode(v as Mode)}
-								className="h-7"
-								aria-label="Whose budget"
-							>
-								<ToggleGroupItem value="me" className="h-7 px-2 text-xs">
-									Mine
-								</ToggleGroupItem>
-								<ToggleGroupItem value="group" className="h-7 px-2 text-xs">
-									Group
-								</ToggleGroupItem>
-							</ToggleGroup>
+								options={[
+									{ value: "me", label: "Mine" },
+									{ value: "group", label: "Group" },
+								]}
+							/>
 						) : null}
 						{anyBudget && (canOwn || canDefault)
 							? editor(
@@ -729,38 +722,28 @@ function BudgetEditor({
 						</div>
 						<div className="grid gap-1.5">
 							<span className="text-xs text-muted-foreground">Per</span>
-							<ToggleGroup
-								type="single"
-								variant="outline"
-								size="sm"
+							<Segmented
+								label="Budget per"
 								value={kind}
 								onValueChange={(v) => v && setKind(v as "total" | "per_day")}
-							>
-								<ToggleGroupItem value="total" className="px-2 text-xs">
-									Total
-								</ToggleGroupItem>
-								<ToggleGroupItem value="per_day" className="px-2 text-xs">
-									Day
-								</ToggleGroupItem>
-							</ToggleGroup>
+								options={[
+									{ value: "total", label: "Total" },
+									{ value: "per_day", label: "Day" },
+								]}
+							/>
 						</div>
 					</div>
 					{canDefault && meId ? (
-						<ToggleGroup
-							type="single"
-							variant="outline"
-							size="sm"
+						<Segmented
+							label="Whose budget"
+							full
 							value={forWhom}
 							onValueChange={(v) => v && switchTo(v as ForWhom)}
-							className="w-full"
-						>
-							<ToggleGroupItem value="everyone" className="flex-1 text-xs">
-								Trip default
-							</ToggleGroupItem>
-							<ToggleGroupItem value="me" className="flex-1 text-xs">
-								Just me
-							</ToggleGroupItem>
-						</ToggleGroup>
+							options={[
+								{ value: "everyone", label: "Trip default" },
+								{ value: "me", label: "Just me" },
+							]}
+						/>
 					) : null}
 					{forWhom === "me" && def ? (
 						<p className="text-xs text-muted-foreground">

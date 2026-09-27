@@ -10,8 +10,8 @@
  * Uploads, links and drops attach to what's shown ("…to this visit").
  */
 import { useMemo, useState } from "react";
+import { Segmented } from "@/components/kit";
 import { Switch } from "@/components/ui/switch";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { offersRollupChoice } from "@/features/shell/bundle-target";
 import { defaultLens } from "@/lib/engine/lens";
 import type { RollupOptions } from "@/lib/engine/rollup";
@@ -131,44 +131,38 @@ export function MediaPanel({ target }: { target: BundleTarget }) {
 				: null;
 	const toggle =
 		target.kind === "day" ? (
-			<ToggleGroup
-				type="single"
+			<Segmented
+				label="What to include"
+				testId={MEDIA_TESTID.scopeToggle}
 				size="sm"
-				variant="outline"
 				value={scope}
 				onValueChange={(v) => v && setScope(v as Scope)}
-				className="h-7"
-				aria-label="What to include"
-				data-testid={MEDIA_TESTID.scopeToggle}
-			>
-				<ToggleGroupItem value="own" className="h-7 px-2.5 text-xs">
-					This day
-				</ToggleGroupItem>
-				<ToggleGroupItem value="all" className="h-7 px-2.5 text-xs">
-					Everything that day
-				</ToggleGroupItem>
-			</ToggleGroup>
+				options={[
+					{ value: "own", label: "This day" },
+					{ value: "all", label: "Everything that day" },
+				]}
+			/>
 		) : name &&
 			// FB-12: a node with no children has nothing to choose between.
 			offersRollupChoice(ix, target) &&
 			!(visitOnly && visitItemId) ? (
-			<ToggleGroup
-				type="single"
+			<Segmented
+				label="What to include"
+				testId={MEDIA_TESTID.scopeToggle}
 				size="sm"
-				variant="outline"
 				value={scope}
 				onValueChange={(v) => v && setScope(v as Scope)}
-				className="h-7"
-				aria-label="What to include"
-				data-testid={MEDIA_TESTID.scopeToggle}
-			>
-				<ToggleGroupItem value="all" className="h-7 px-2.5 text-xs">
-					{target.kind === "trip" ? "Everything" : "Everything inside"}
-				</ToggleGroupItem>
-				<ToggleGroupItem value="own" className="h-7 max-w-40 px-2.5 text-xs">
-					<span className="truncate">Only {name}</span>
-				</ToggleGroupItem>
-			</ToggleGroup>
+				options={[
+					{
+						value: "all",
+						label: target.kind === "trip" ? "Everything" : "Everything inside",
+					},
+					{
+						value: "own",
+						label: <span className="truncate">Only {name}</span>,
+					},
+				]}
+			/>
 		) : null;
 
 	return (

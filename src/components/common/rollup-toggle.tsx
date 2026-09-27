@@ -5,9 +5,8 @@
  */
 
 import { ChevronRight } from "lucide-react";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Segmented } from "@/components/kit";
 import { formatDateRange } from "@/lib/format";
-import { cn } from "@/lib/utils";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { Crumbs } from "./crumbs";
 
@@ -17,26 +16,17 @@ export function RollupToggle({ className }: { className?: string }) {
 		? `Everything on ${formatDateRange(days.from, days.to)}`
 		: "Everything inside";
 	return (
-		<ToggleGroup
-			type="single"
+		<Segmented
+			label="What to include"
 			size="sm"
-			variant="outline"
+			className={className}
 			value={only ? "only" : "all"}
 			onValueChange={(v) => v && nav.setOnly(v === "only")}
-			className={cn("h-7", className)}
-			aria-label="What to include"
-		>
-			<ToggleGroupItem value="all" className="h-7 px-2.5 text-xs">
-				{everything}
-			</ToggleGroupItem>
-			<ToggleGroupItem
-				value="only"
-				className="h-7 px-2.5 text-xs"
-				disabled={!scope}
-			>
-				Only {scope?.name ?? "the trip"}
-			</ToggleGroupItem>
-		</ToggleGroup>
+			options={[
+				{ value: "all", label: everything },
+				{ value: "only", label: <>Only {scope?.name ?? "the trip"}</> },
+			]}
+		/>
 	);
 }
 

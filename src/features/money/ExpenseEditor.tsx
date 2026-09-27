@@ -34,6 +34,7 @@ import { TimeInput } from "@/components/common/time";
 import { TreePicker } from "@/components/common/tree-picker";
 import { undoToast } from "@/components/common/undo-toast";
 import { useTripMutation } from "@/components/common/use-trip-mutation";
+import { Segmented } from "@/components/kit";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -46,7 +47,6 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { tripListsQuery } from "@/features/lists/queries";
 import { ReceiptStrip } from "@/features/media/ReceiptStrip";
 import { uploadOne } from "@/features/media/upload/uploader";
@@ -1074,23 +1074,21 @@ export function ExpenseEditor({
 					{/* Paid / planned (new) */}
 					{!editing ? (
 						<div className="flex flex-wrap items-center gap-2">
-							<ToggleGroup
-								type="single"
-								variant="outline"
-								size="sm"
-								data-testid={MONEY_TESTID.status}
+							<Segmented
+								label="Paid or planned"
+								testId={MONEY_TESTID.status}
 								value={draft.status}
 								onValueChange={(v) =>
 									v && set({ status: v as Draft["status"] })
 								}
-							>
-								<ToggleGroupItem value="paid" className="px-3 text-xs">
-									{isRefund ? "Received" : "Paid"}
-								</ToggleGroupItem>
-								<ToggleGroupItem value="planned" className="px-3 text-xs">
-									{isRefund ? "Expected" : "Planned"}
-								</ToggleGroupItem>
-							</ToggleGroup>
+								options={[
+									{ value: "paid", label: isRefund ? "Received" : "Paid" },
+									{
+										value: "planned",
+										label: isRefund ? "Expected" : "Planned",
+									},
+								]}
+							/>
 							{draft.status === "paid" && !draft.isPrivate ? (
 								draft.multiPayer ? null : (
 									<PayerSelect
@@ -1805,26 +1803,17 @@ function SplitEditor({
 	return (
 		<div className="mt-2 grid gap-3 rounded-lg border p-3">
 			<div className="flex items-center gap-2">
-				<ToggleGroup
-					type="single"
-					variant="outline"
-					size="sm"
+				<Segmented
+					label="How to split"
 					value={draft.splitMode}
 					onValueChange={(v) =>
 						v && set({ splitMode: v as Draft["splitMode"] })
 					}
-				>
-					<ToggleGroupItem value="equal" className="px-3 text-xs">
-						Equally
-					</ToggleGroupItem>
-					<ToggleGroupItem
-						value="exact"
-						className="px-3 text-xs"
-						data-testid={MONEY_TESTID.splitExact}
-					>
-						Exact
-					</ToggleGroupItem>
-				</ToggleGroup>
+					options={[
+						{ value: "equal", label: "Equally" },
+						{ value: "exact", label: "Exact", testId: MONEY_TESTID.splitExact },
+					]}
+				/>
 				{draft.splitMode === "equal" && each !== null ? (
 					<span className="text-xs text-muted-foreground">
 						≈ <Num>{formatMoney(each, draft.currency)}</Num> each
@@ -2071,22 +2060,17 @@ function ItemizeEditor({
 						value={f.value}
 						onChange={(e) => setFee(f.key, { value: e.target.value })}
 					/>
-					<ToggleGroup
-						type="single"
-						variant="outline"
-						size="sm"
+					<Segmented
+						label="Fee in"
 						value={f.kind}
 						onValueChange={(v) =>
 							v && setFee(f.key, { kind: v as FeeDraft["kind"] })
 						}
-					>
-						<ToggleGroupItem value="percent" className="px-2 text-xs">
-							%
-						</ToggleGroupItem>
-						<ToggleGroupItem value="fixed" className="px-2 text-xs">
-							{draft.currency}
-						</ToggleGroupItem>
-					</ToggleGroup>
+						options={[
+							{ value: "percent", label: "%" },
+							{ value: "fixed", label: draft.currency },
+						]}
+					/>
 					<Button
 						type="button"
 						size="icon-sm"

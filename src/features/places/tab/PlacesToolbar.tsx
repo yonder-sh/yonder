@@ -21,6 +21,7 @@ import {
 import type { ReactNode } from "react";
 import { MemberAvatar } from "@/components/common/member";
 import { useTripMutation } from "@/components/common/use-trip-mutation";
+import { Segmented } from "@/components/kit";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -37,7 +38,6 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { PlaceFilterButton } from "@/features/outline/FilterMenu";
 import { updateTrip } from "@/functions/trips.functions";
 import { can } from "@/lib/auth/roles";
@@ -342,28 +342,22 @@ export function PlacesToolbar({
 	return (
 		<div className="flex shrink-0 flex-col gap-2 border-b px-4 pt-3 pb-2.5">
 			<div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-				<ToggleGroup
-					type="single"
-					size="sm"
-					variant="outline"
+				<Segmented
+					label="View"
+					testId={PLACES_TAB_TESTID.viewSwitch}
 					value={state.view}
-					onValueChange={(v) => v && nav.setPlaces({ pv: v as ReviewView })}
-					aria-label="View"
-					data-testid={PLACES_TAB_TESTID.viewSwitch}
-				>
-					{VIEWS.map(({ v, label, icon: Icon }) => (
-						<ToggleGroupItem
-							key={v}
-							value={v}
-							aria-label={label}
-							data-value={v}
-							className="gap-1.5 px-2.5"
-						>
-							<Icon className="size-3.5" />
-							<span className={compact ? "sr-only" : undefined}>{label}</span>
-						</ToggleGroupItem>
-					))}
-				</ToggleGroup>
+					onValueChange={(v) => nav.setPlaces({ pv: v })}
+					options={VIEWS.map(({ v, label, icon: Icon }) => ({
+						value: v,
+						ariaLabel: label,
+						label: (
+							<>
+								<Icon className="size-3.5" />
+								<span className={compact ? "sr-only" : undefined}>{label}</span>
+							</>
+						),
+					}))}
+				/>
 				{state.view === "map" ? null : (
 					<>
 						<div className="flex items-center gap-1.5 text-xs text-muted-foreground">
