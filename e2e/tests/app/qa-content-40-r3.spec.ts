@@ -69,7 +69,15 @@ async function setupPrivateDayNote(browser: Browser, text: string) {
 	prev.setUTCDate(prev.getUTCDate() - 1);
 	const firstDate = days0[0]?.date as string;
 	const lastDate = days0[days0.length - 1]?.date as string;
-	console.log("extend", JSON.stringify(await setDates(d, c.tripId, prev.toISOString().slice(0, 10), lastDate, g0.trip.version)));
+	// Background autofill can bump the version right after load: retry with the fresh one.
+	let ext: unknown = null;
+	for (let i = 0; i < 3; i++) {
+		ext = await setDates(d, c.tripId, prev.toISOString().slice(0, 10), lastDate, (await graphOf(d)).trip.version);
+		if (!JSON.stringify(ext).includes("changed while you were looking")) break;
+		await d.waitForTimeout(1500);
+	}
+	console.log("extend", JSON.stringify(ext));
+	expect(JSON.stringify(ext)).toContain('"ok":true');
 	await d.reload();
 	await expectLive(d);
 	const g = await graphOf(d);
