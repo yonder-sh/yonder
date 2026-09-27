@@ -66,10 +66,13 @@ export function visibleTabs(me: {
 export function CenterTabBar({
 	className,
 	touch = false,
+	inTopBar = false,
 }: {
 	className?: string;
 	/** Phone sheet (MOB-07): a 44px bar and tabs at least 44px wide. */
 	touch?: boolean;
+	/** In the one-row top bar (One Yonder, ≥ 1440 px): its height, no rule. */
+	inTopBar?: boolean;
 }) {
 	const ws = useWorkspace();
 	const { counts: c, ix, scope, only, lens, days, model } = ws;
@@ -123,6 +126,7 @@ export function CenterTabBar({
 				// drag moves the sheet (like the day chips), never wobbles the bar.
 				touch &&
 					"h-[45px] touch-pan-x gap-2 overflow-y-hidden overscroll-x-contain",
+				inTopBar && "h-full shrink-0 gap-5 overflow-visible border-b-0 px-1",
 				className,
 			)}
 		>
@@ -159,7 +163,7 @@ export function CenterTabBar({
 								data-testid={SHELL_TESTID.placesToDecide}
 							>
 								{toDecide}
-								<span className={touch ? "sr-only" : undefined}>
+								<span className={touch || inTopBar ? "sr-only" : undefined}>
 									{" "}
 									to decide
 								</span>
@@ -307,7 +311,14 @@ export function SuggestRule() {
 	);
 }
 
-export function CenterPanel({ className }: { className?: string }) {
+export function CenterPanel({
+	className,
+	tabs = true,
+}: {
+	className?: string;
+	/** The tab bar above the content (false: the top bar has it, ≥ 1440 px). */
+	tabs?: boolean;
+}) {
 	return (
 		<section
 			aria-label="Overview, plan, places, lists and money"
@@ -315,7 +326,7 @@ export function CenterPanel({ className }: { className?: string }) {
 			className={cn("flex h-full min-h-0 flex-col bg-background", className)}
 		>
 			<SuggestRule />
-			<CenterTabBar />
+			{tabs ? <CenterTabBar /> : null}
 			<CenterTabContent />
 		</section>
 	);

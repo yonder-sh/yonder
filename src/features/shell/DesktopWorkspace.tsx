@@ -57,6 +57,8 @@ function useOverviewTakesAll(): boolean {
 /** A folded pane's rail (`PanelToggles`, w-10) and the 1px divider. */
 const RAIL_PX = 40;
 const DIVIDER_PX = 1;
+/** From here the tabs sit in the top bar's row (the mockups' 1440 laptop). */
+const TABS_IN_TOP_BAR_PX = 1440;
 /** The centre's and the map's narrowest (their panels' `minSize`). */
 const CENTER_MIN = 440;
 const MAP_MIN = 320;
@@ -117,6 +119,8 @@ export function DesktopWorkspace({ bp }: { bp: Exclude<Breakpoint, "sm"> }) {
 	const overview = useOverviewTakesAll();
 	const { sel } = useWorkspace();
 	const winW = useWindowWidth();
+	// One Yonder: a laptop-wide window takes the tabs into the top bar's row.
+	const tabsTop = winW >= TABS_IN_TOP_BAR_PX;
 	const detailsW = useDetailsWidth(bp === "xl" ? "xl" : "lg");
 	const { folded: collapsed, fold } = useDetailsFold();
 	// The Places Map view shows its own place's panel beside its map.
@@ -158,7 +162,7 @@ export function DesktopWorkspace({ bp }: { bp: Exclude<Breakpoint, "sm"> }) {
 		// ancestor (an sr-only label in a scrolling list) can't stretch the page,
 		// as on the phone layout.
 		<div className="relative flex h-svh flex-col overflow-hidden bg-background">
-			<TopBar bp={bp} />
+			<TopBar bp={bp} tabs={tabsTop} />
 			<FollowBar />
 			<SpotlightBar />
 			<OfflineBanner />
@@ -167,14 +171,14 @@ export function DesktopWorkspace({ bp }: { bp: Exclude<Breakpoint, "sm"> }) {
 				{overview ? (
 					<>
 						<div className="h-full min-w-0 flex-1">
-							<CenterPanel />
+							<CenterPanel tabs={!tabsTop} />
 						</div>
 						<InspectorSheet />
 					</>
 				) : mapHidden || placesMap || rateFeed || foldMap ? (
 					<>
 						<div className="h-full min-w-0 flex-1">
-							<CenterPanel />
+							<CenterPanel tabs={!tabsTop} />
 						</div>
 						{bp === "md" ? (
 							<InspectorSheet />
@@ -195,7 +199,7 @@ export function DesktopWorkspace({ bp }: { bp: Exclude<Breakpoint, "sm"> }) {
 					// The centre's box matches the hidden-map layout's: hiding keeps its state.
 					<>
 						<div className="h-full w-[55%] min-w-0 border-r">
-							<CenterPanel />
+							<CenterPanel tabs={!tabsTop} />
 						</div>
 						<div className="h-full min-w-0 flex-1">
 							<MapRegion variant="desktop" hideable />
@@ -217,7 +221,7 @@ export function DesktopWorkspace({ bp }: { bp: Exclude<Breakpoint, "sm"> }) {
 							minSize={440}
 							maxSize={720}
 						>
-							<CenterPanel />
+							<CenterPanel tabs={!tabsTop} />
 						</ResizablePanel>
 						<ResizableHandle className="hover:bg-primary/40 hover:after:w-[3px]" />
 						<ResizablePanel id="map" minSize={320}>

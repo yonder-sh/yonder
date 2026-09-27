@@ -42,6 +42,7 @@ import { TESTID } from "@/lib/testids";
 import { cn } from "@/lib/utils";
 import { useUi } from "@/lib/workspace/ui-store";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
+import { CenterTabBar } from "./CenterPanel";
 import { ConnectionPill } from "./ConnectionPill";
 import { FollowersBadge, SpotlightMenuItem } from "./cursors/presence-ui";
 import { InboxBell } from "./InboxBell";
@@ -106,7 +107,14 @@ export function TripMenuItems() {
 	);
 }
 
-export function TopBar({ bp }: { bp: Breakpoint }) {
+export function TopBar({
+	bp,
+	tabs = false,
+}: {
+	bp: Breakpoint;
+	/** The centre's tabs in this row (One Yonder, ≥ 1440 px). */
+	tabs?: boolean;
+}) {
 	const { graph, mode } = useWorkspace();
 	const setShareOpen = useUi((s) => s.setShareOpen);
 	const openAddPlace = useUi((s) => s.openAddPlace);
@@ -152,7 +160,10 @@ export function TopBar({ bp }: { bp: Breakpoint }) {
 			>
 				<WhatIfChip />
 			</div>
-			<WherePicker className={tablet ? "max-w-48" : "max-w-72"} />
+			{tabs ? <CenterTabBar inTopBar /> : null}
+			<WherePicker
+				className={tablet ? "max-w-48" : tabs ? "max-w-60" : "max-w-72"}
+			/>
 			<DayRangeChip />
 			<span className="flex-1" />
 			<div
