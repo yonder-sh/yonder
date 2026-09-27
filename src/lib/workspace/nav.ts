@@ -138,7 +138,8 @@ export function zoomOut(s: NavState): NavTarget | null {
 export function zoomTo(
 	s: NavState,
 	nodeId: string | null,
-	opts: { lens?: Lens } = {},
+	/** `sel`: what to select there (a place picked in the Where picker). */
+	opts: { lens?: Lens; sel?: Sel | null } = {},
 ): NavTarget {
 	return withTab(
 		{
@@ -146,7 +147,7 @@ export function zoomTo(
 			search: cleanSearch({
 				...s.search,
 				lens: resolveLens(s.ix, nodeId, opts.lens ?? null),
-				sel: undefined,
+				sel: serializeSel(opts.sel ?? null),
 				itab: undefined,
 			}),
 		},

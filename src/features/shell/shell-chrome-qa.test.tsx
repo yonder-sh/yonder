@@ -5,10 +5,8 @@
  * touch targets (VIS-02 / MOB-07; the boxes are measured in e2e).
  */
 import { act, fireEvent, screen, within } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it } from "vitest";
-import type { GraphNode, TripGraph } from "@/lib/engine/types";
-import { demoGraph, N } from "@/lib/fixtures/demo";
+import { N } from "@/lib/fixtures/demo";
 import { TESTID } from "@/lib/testids";
 import { useUi } from "@/lib/workspace/ui-store";
 import { renderWithWorkspace } from "@/test/render-workspace";
@@ -16,93 +14,12 @@ import { CenterTabBar } from "./CenterPanel";
 import { InspectorSheet } from "./DesktopWorkspace";
 import { InboxBell } from "./InboxBell";
 import { LensControl } from "./LensControl";
-import {
-	crumbLayout,
-	MAX_FULL_CRUMBS,
-	ScopeBreadcrumb,
-} from "./ScopeBreadcrumb";
 import { useShell } from "./shell-store";
 import { SHELL_TESTID } from "./testids";
 
 afterEach(() => {
 	act(() => useUi.getState().resetUi());
 	act(() => useShell.getState().setInboxOpen(false));
-});
-
-const japan = demoGraph.nodes.find((x) => x.id === N.japan) as GraphNode;
-const deepId = (i: number) =>
-	`00000000-0000-7000-8000-0000000d${String(i).padStart(4, "0")}`;
-/** Japan › Deep1 › … › Deep9 (areas), ten levels under the root. */
-const deepGraph: TripGraph = {
-	...demoGraph,
-	nodes: [
-		...demoGraph.nodes,
-		...Array.from({ length: 9 }, (_, k): GraphNode => {
-			const i = k + 1;
-			return {
-				...japan,
-				id: deepId(i),
-				parentId: i === 1 ? japan.id : deepId(i - 1),
-				type: "area",
-				category: null,
-				name: `Deep${i}`,
-				slug: `deep${i}`,
-				countryCode: null,
-				tz: null,
-				position: `zz${i}`,
-			};
-		}),
-	],
-};
-const deepSplat = [
-	"japan",
-	...Array.from({ length: 9 }, (_, k) => `deep${k + 1}`),
-].join("/");
-
-describe("breadcrumb on deep scopes (PLAN-I2-11)", () => {
-	it("crumbLayout keeps the first two and the last two", () => {
-		expect(crumbLayout(4, true)).toEqual({ shown: [0, 1, 2, 3], hidden: [] });
-		expect(crumbLayout(6, false).hidden).toEqual([]);
-		expect(crumbLayout(11, true)).toEqual({
-			shown: [0, 1, "gap", 9, 10],
-			hidden: [2, 3, 4, 5, 6, 7, 8],
-		});
-		expect(MAX_FULL_CRUMBS).toBe(6);
-	});
-
-	it("'All places › Japan › … › Deep8 › Deep9', the full path in the menu", async () => {
-		const user = userEvent.setup();
-		const { ws } = renderWithWorkspace(<ScopeBreadcrumb />, {
-			graph: deepGraph,
-			splat: deepSplat,
-		});
-		expect(ws().scope?.id).toBe(deepId(9));
-		const crumb = screen.getByTestId(TESTID.scopeBreadcrumb);
-		const text = crumb.textContent?.replace(/\s+/g, " ") ?? "";
-		expect(text).toContain("All places›Japan›…›Deep8›Deep9");
-		expect(within(crumb).queryByText("Deep3")).toBeNull();
-		const more = screen.getByTestId(SHELL_TESTID.crumbOverflow);
-		expect(more).toHaveAccessibleName("7 more levels");
-		await user.click(more);
-		const menu = await screen.findByRole("menu");
-		const names = within(menu)
-			.getAllByRole("menuitem")
-			.map((el) => el.textContent);
-		expect(names).toEqual([
-			"All places",
-			"Japan",
-			...Array.from({ length: 9 }, (_, k) => `Deep${k + 1}`),
-		]);
-		await user.click(within(menu).getByRole("menuitem", { name: "Deep3" }));
-		expect(ws().scope?.id).toBe(deepId(3));
-	});
-
-	it("shallow scopes keep every crumb", () => {
-		renderWithWorkspace(<ScopeBreadcrumb />, { splat: "japan/tokyo/shibuya" });
-		expect(screen.queryByTestId(SHELL_TESTID.crumbOverflow)).toBeNull();
-		const crumb = screen.getByTestId(TESTID.scopeBreadcrumb);
-		expect(crumb.textContent).toContain("All places›Japan›Tokyo›Shibuya");
-	});
 });
 
 describe("md Inspector Sheet (VIS-13)", () => {

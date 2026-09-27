@@ -32,7 +32,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { AccountMenu } from "@/features/home/AccountMenu";
 import { WhatIfChip } from "@/features/insights/WhatIfChip";
-import { OutlinePopover } from "@/features/outline/OutlinePopover";
 import { MuteTripMenuItem } from "@/features/push/MuteTripMenuItem";
 import {
 	SuggestModeControl,
@@ -46,13 +45,12 @@ import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { ConnectionPill } from "./ConnectionPill";
 import { FollowersBadge, SpotlightMenuItem } from "./cursors/presence-ui";
 import { InboxBell } from "./InboxBell";
-import { LensControl } from "./LensControl";
 import { PresenceAvatars } from "./PresenceAvatars";
 import { RateButton, RateMenuItem } from "./rate-entry";
-import { ScopeBreadcrumb } from "./ScopeBreadcrumb";
 import { useShell } from "./shell-store";
 import { SHELL_TESTID } from "./testids";
 import type { Breakpoint } from "./use-breakpoint";
+import { DayRangeChip, WherePicker } from "./WherePicker";
 
 /** The trip-title ▾ menu (DESIGN §4.1 + EXTENSIONS §1.4 "Try other dates…"). */
 export function TripMenuItems() {
@@ -112,7 +110,6 @@ export function TopBar({ bp }: { bp: Breakpoint }) {
 	const { graph, mode } = useWorkspace();
 	const setShareOpen = useUi((s) => s.setShareOpen);
 	const openAddPlace = useUi((s) => s.openAddPlace);
-	const outlineCollapsed = useShell((s) => s.outlineCollapsed);
 	const tablet = bp === "md" || bp === "lg";
 	return (
 		<header
@@ -155,12 +152,9 @@ export function TopBar({ bp }: { bp: Breakpoint }) {
 			>
 				<WhatIfChip />
 			</div>
-			{bp !== "xl" || outlineCollapsed ? <OutlinePopover /> : null}
-			<ScopeBreadcrumb
-				className={cn("flex-1", tablet ? "min-w-20" : "min-w-0")}
-				compact={tablet}
-			/>
-			<LensControl compact={bp === "md"} />
+			<WherePicker className={tablet ? "max-w-48" : "max-w-72"} />
+			<DayRangeChip />
+			<span className="flex-1" />
 			<div
 				className={cn(
 					"ml-auto flex shrink-0 items-center",

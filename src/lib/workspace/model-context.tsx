@@ -113,7 +113,7 @@ export interface WorkspaceProposals {
 export interface WorkspaceNav {
 	zoomIn(nodeId: string): void;
 	zoomOut(): void;
-	zoomTo(nodeId: string | null, opts?: { lens?: Lens }): void;
+	zoomTo(nodeId: string | null, opts?: { lens?: Lens; sel?: Sel | null }): void;
 	setLens(l: Lens): void;
 	stepLens(d: 1 | -1): void;
 	select(sel: Sel | null): void;

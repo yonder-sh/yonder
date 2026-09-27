@@ -5,6 +5,16 @@
  * Never rename an id.
  */
 export const SHELL_TESTID = {
+	/** The Where button in the top bar ("Japan › Tokyo"). */
+	whereButton: "where-button",
+	/** The Where picker's popover; its rows (`data-node-id`, "" = the whole trip). */
+	wherePicker: "where-picker",
+	whereRow: "where-row",
+	/** The picker's foot: "About Tokyo" and "Organize places". */
+	whereAbout: "where-about",
+	whereOrganize: "where-organize",
+	/** The Organize places dialog (the tree). */
+	organizePlaces: "organize-places",
 	// Inbox (ADDENDUM §10 "one inbox")
 	inboxPanel: "inbox-panel",
 	inboxRow: "inbox-row",

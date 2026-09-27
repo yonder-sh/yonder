@@ -66,7 +66,6 @@ import type {
 import type { useOfflineAvailability } from "@/features/offline/use-offline-availability";
 import type { IdeasBin } from "@/features/outline/IdeasBin";
 import type { Outline } from "@/features/outline/Outline";
-import type { OutlinePopover } from "@/features/outline/OutlinePopover";
 import type { AddPlaceDialog } from "@/features/places/AddPlaceDialog";
 import type { NodeOverview } from "@/features/places/NodeOverview";
 import type { DayChips } from "@/features/plan/DayChips";
@@ -164,7 +163,6 @@ export type ComponentContracts = [
 	typeof Workspace extends Component<Record<string, never>> ? true : false,
 	typeof Outline extends Component<Record<string, never>> ? true : false,
 	typeof IdeasBin extends Component<Record<string, never>> ? true : false,
-	typeof OutlinePopover extends Component<Record<string, never>> ? true : false,
 	typeof PlanTab extends Component<Record<string, never>> ? true : false,
 	typeof ItemOverview extends Component<{ itemId: string }> ? true : false,
 	typeof DayOverview extends Component<{ dayId: string }> ? true : false,
