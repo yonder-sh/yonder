@@ -20,7 +20,7 @@ const buttonVariants = cva(
 				link: "text-primary underline-offset-4 hover:underline",
 			},
 			size: {
-				// The kit's heights (2026-09-28): 28 / 32 / 40 / 44, one step up
+				// The kit's heights (2026-09-27): 28 / 32 / 40 / 44, one step up
 				// where the pointer is a finger (phones, iPads).
 				default: "h-8 px-3 has-[>svg]:px-2.5 pointer-coarse:h-10",
 				xs: "h-6 gap-1 rounded-md px-2 text-xs has-[>svg]:px-1.5 [&_svg:not([class*='size-'])]:size-3",

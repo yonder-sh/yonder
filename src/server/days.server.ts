@@ -67,7 +67,7 @@ export function assertBlocksMoveTogether(
 
 /**
  * Why a day can't be removed (part of a flight block), or null. Notes never
- * block (owner, 2026-09-28): a shared day note moves to the trip's notes
+ * block (owner, 2026-09-27): a shared day note moves to the trip's notes
  * unless the remover chose to delete it, and every member's private day note
  * moves to their own private trip note (`rehomeDayNotes`).
  */
@@ -115,7 +115,7 @@ export function labelledDayNote(state: Uint8Array, date: string): Uint8Array {
 }
 
 /**
- * ADDENDUM §7.2 and owner 2026-09-28: a removed day's notes are kept, not
+ * ADDENDUM §7.2 and owner 2026-09-27: a removed day's notes are kept, not
  * cascaded away with it. Every member's private note moves to that member's
  * private trip note; the shared note to the trip's shared note, unless
  * `shared` is "delete" (it then goes with the day). Each moved text starts

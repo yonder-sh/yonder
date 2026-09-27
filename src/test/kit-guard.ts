@@ -1,5 +1,5 @@
 /**
- * The kit guard (One Yonder kit, 2026-09-28): counts, per file, what the kit
+ * The kit guard (One Yonder kit, 2026-09-27): counts, per file, what the kit
  * replaces, so it can only go down. Arbitrary text sizes (`text-[13px]`), raw
  * Tailwind palette colours (`text-amber-600`) and hex colours in classes
  * (`bg-[#040507]`). The kit itself, the shadcn primitives, tests and dev

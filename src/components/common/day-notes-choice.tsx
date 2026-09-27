@@ -1,5 +1,5 @@
 /**
- * A removed day's shared note (owner, 2026-09-28): it never blocks the removal.
+ * A removed day's shared note (owner, 2026-09-27): it never blocks the removal.
  * The person removing the day, who can see the note, chooses: into the
  * trip's notes (the default, headed "From Tue 5 Oct (removed day)") or
  * deleted. Private notes always move to their author's trip note, so they
