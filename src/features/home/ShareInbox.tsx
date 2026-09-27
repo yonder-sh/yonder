@@ -82,6 +82,7 @@ import { PLACE_CATEGORY_VALUES } from "@/lib/schemas/enums";
 import { isProposed } from "@/lib/schemas/proposals";
 import { TESTID } from "@/lib/testids";
 import { myTripsQuery } from "./queries";
+import { SaveFromAppsDialog } from "./SaveFromAppsDialog";
 import {
 	autoParent,
 	classifyShare,
@@ -900,6 +901,7 @@ export function ShareInbox({
 		direct ? directEntry(direct) : null,
 	);
 	const [loading, setLoading] = useState(!!id);
+	const [howOpen, setHowOpen] = useState(false);
 	useEffect(() => {
 		if (!id) return;
 		let alive = true;
@@ -932,9 +934,17 @@ export function ShareInbox({
 							}
 						/>
 						<PasteLink onEntry={setEntry} />
+						<button
+							type="button"
+							onClick={() => setHowOpen(true)}
+							className="justify-self-start text-sm font-medium text-primary hover:underline"
+						>
+							Save from Instagram or TikTok on your phone
+						</button>
 					</div>
 				)}
 			</div>
+			<SaveFromAppsDialog open={howOpen} onOpenChange={setHowOpen} />
 		</Shell>
 	);
 }

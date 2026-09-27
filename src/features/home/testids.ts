@@ -4,6 +4,11 @@
  * Never rename an id.
  */
 export const HOME_TESTID = {
+	// Account → Save from other apps
+	saveFromApps: "home-save-from-apps",
+	saveFromAppsDialog: "home-save-from-apps-dialog",
+	saveFromAppsAddress: "home-save-from-apps-address",
+	saveFromAppsCopy: "home-save-from-apps-copy",
 	// Dashboard
 	heroCard: "home-hero",
 	heroWhen: "home-hero-when",

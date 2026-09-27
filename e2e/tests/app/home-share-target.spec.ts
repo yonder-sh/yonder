@@ -209,3 +209,44 @@ test("a signed-in guest is asked 'Are you Audrey?'; the owner's 'Add to trip' ma
 		.toMatchObject({ role: "viewer", isGuest: false });
 	await ctx.close();
 });
+
+test("the iOS Shortcut's address opens the saver on the shared link, no paste", async ({ page, request }, info) => {
+	test.skip(info.project.name !== "chromium", "one browser is enough");
+	const c = await cloneFixtureTrip(request);
+	await page.goto("/share");
+	await page.evaluate((id) => localStorage.setItem("yonder:share-last-trip", id), c.tripId);
+	const tag = randomBytes(2).toString("hex");
+	const url = "https://www.tiktok.com/@kyoto.eats/video/7302";
+	await page.goto(`/share?${new URLSearchParams({ url, text: `Hojicha ${tag} at Kagizen ${url}` })}`);
+	await expect(page.getByTestId(HOME_TESTID.shareName)).toHaveValue(`Hojicha ${tag} at Kagizen`);
+	await expect(page.getByTestId(TESTID.shareInbox)).toContainText("Social video");
+	await expect(page.getByTestId(HOME_TESTID.shareSave)).toBeEnabled();
+});
+
+test("⌘K: a pasted reel goes onto the open place in one step", async ({ page, request }, info) => {
+	test.skip(info.project.name !== "chromium", "one browser is enough");
+	const c = await cloneFixtureTrip(request);
+	const place = c.ids.nodes.harajuku as string;
+	await page.setViewportSize({ width: 1440, height: 900 });
+	await page.goto(`/t/${c.slug}?tab=plan&sel=n.${place}`);
+	await expectLive(page);
+	await page.keyboard.press("Control+k");
+	await expect(page.getByTestId(TESTID.addPlaceDialog)).toBeVisible();
+	const reel = `https://www.instagram.com/reel/C9${randomBytes(3).toString("hex")}/`;
+	await page.getByTestId("places-palette-input").fill(reel);
+	await expect(page.getByText(/as a new/)).toHaveCount(0);
+	await page.getByTestId("places-add-link-to").click();
+	await expect(page.getByText(/^Link added to /)).toBeVisible();
+	await expect
+		.poll(async () =>
+			page.evaluate(
+				async ({ tripId, reel }) => {
+					const m = await import(/* @vite-ignore */ "/src/features/media/media.functions.ts");
+					const all = (await m.listTripMedia({ data: { tripId } })) as { url: string | null; target: { kind: string; nodeId?: string } }[];
+					return all.find((x) => x.url === reel)?.target ?? null;
+				},
+				{ tripId: c.tripId, reel },
+			),
+		)
+		.toEqual({ kind: "node", nodeId: place });
+});

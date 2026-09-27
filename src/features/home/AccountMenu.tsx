@@ -13,6 +13,7 @@ import {
 	LogOut,
 	Monitor,
 	Moon,
+	Share,
 	Sun,
 	UserRound,
 } from "lucide-react";
@@ -38,6 +39,8 @@ import { sessionQuery } from "@/lib/query/trip-queries";
 import { TESTID } from "@/lib/testids";
 import { useWorkspaceOptional } from "@/lib/workspace/model-context";
 import { useUi } from "@/lib/workspace/ui-store";
+import { SaveFromAppsDialog } from "./SaveFromAppsDialog";
+import { HOME_TESTID } from "./testids";
 
 export function AccountMenu({
 	viewer,
@@ -64,6 +67,7 @@ export function AccountMenu({
 	const guest = me?.isAnonymous ?? false;
 	const next = `${location.pathname}${location.searchStr ?? ""}`;
 	const [notificationsOpen, setNotificationsOpen] = useState(false);
+	const [saveOpen, setSaveOpen] = useState(false);
 	return (
 		<DropdownMenu>
 			<DropdownMenuTrigger
@@ -107,6 +111,14 @@ export function AccountMenu({
 						<Bell /> Notifications
 					</DropdownMenuItem>
 				)}
+				{guest ? null : (
+					<DropdownMenuItem
+						onSelect={() => setSaveOpen(true)}
+						data-testid={HOME_TESTID.saveFromApps}
+					>
+						<Share /> Save from other apps
+					</DropdownMenuItem>
+				)}
 				<InstallButton />
 				<DropdownMenuSeparator />
 				<DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
@@ -137,6 +149,9 @@ export function AccountMenu({
 					open={notificationsOpen}
 					onOpenChange={setNotificationsOpen}
 				/>
+			)}
+			{guest ? null : (
+				<SaveFromAppsDialog open={saveOpen} onOpenChange={setSaveOpen} />
 			)}
 		</DropdownMenu>
 	);
