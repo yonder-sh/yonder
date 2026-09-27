@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 // The public services the app's server calls, stubbed for e2e: runs never
 // spend Open-Meteo's free daily quota or load Overpass or the FOSSGIS OSRM
-// server, and never depend on what they answer that day. `pnpm e2e:fast`
-// starts it and points OPEN_METEO_ARCHIVE_URL, OVERPASS_URL and OSRM_FOOT_URL
-// here; it can also run on its own:
+// server, and never depend on what they answer that day (exchange rates
+// included). `pnpm e2e:fast` starts it and points OPEN_METEO_ARCHIVE_URL,
+// OVERPASS_URL, OSRM_FOOT_URL and FX_URL here; it can also run on its own:
 //
 //   node e2e/stubs/services-stub.mjs [--port 7099]
 //   OPEN_METEO_ARCHIVE_URL=http://127.0.0.1:7099 \
@@ -17,6 +17,9 @@
 //   and the hours sync changes nothing.
 // GET /route/v1/foot/<lng>,<lat>;<lng>,<lat> (OSRM): one walk, the straight
 //   line × 1.3 at 1.25 m/s, drawn as a straight line (as routes-stub.mjs).
+// GET /fx@<YYYY-MM-DD|latest>/v1/currencies/usd.json (the currency-api):
+//   fixed USD rates, one table before 2026-03-01 and one after (the lira
+//   loses value between them, like the real one); a future date is a 404.
 // GET /__stub/calls → { total }
 import { createServer } from "node:http";
 import { pathToFileURL } from "node:url";
@@ -43,6 +46,17 @@ export function osrmFoot(coords) {
 			},
 		],
 	};
+}
+
+/** USD → quote before 2026-03-01 and from then on (lower-case codes, as the currency-api). */
+const FX_BEFORE = { usd: 1, jpy: 146, krw: 1350, twd: 31.5, vnd: 24500, try: 34, cad: 1.36, eur: 0.92, gbp: 0.78, aud: 1.5, thb: 34.5 };
+const FX_AFTER = { usd: 1, jpy: 150, krw: 1380, twd: 32, vnd: 25400, try: 45, cad: 1.38, eur: 0.9, gbp: 0.76, aud: 1.52, thb: 35 };
+
+/** The currency-api's day file for `date` (`latest`: today), or null for a day that hasn't come. */
+export function fxDay(date, today = new Date().toISOString().slice(0, 10)) {
+	const d = date === "latest" ? today : date;
+	if (!/^\d{4}-\d{2}-\d{2}$/.test(d) || d > today) return null;
+	return { date: d, usd: d < "2026-03-01" ? FX_BEFORE : FX_AFTER };
 }
 
 /** The made-up history of one place: Open-Meteo's `daily` shape. */
@@ -89,6 +103,12 @@ export function startWeatherStub(port) {
 			total++;
 			const r = osrmFoot(decodeURIComponent(url.pathname.slice("/route/v1/foot/".length)));
 			return r ? json(200, r) : json(400, { code: "InvalidQuery" });
+		}
+		const fx = /^\/fx@([\w-]+)\/v1\/currencies\/usd\.json$/.exec(url.pathname);
+		if (req.method === "GET" && fx) {
+			total++;
+			const day = fxDay(fx[1]);
+			return day ? json(200, day) : json(404, { error: "not found" });
 		}
 		if (req.method === "POST" && url.pathname === "/api/interpreter") {
 			total++;

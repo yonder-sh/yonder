@@ -166,6 +166,9 @@ export function fastEnv(index: number, source: Env): FastEnv {
 		OPEN_METEO_ARCHIVE_URL: `http://127.0.0.1:${WEATHER_STUB_PORT}`,
 		OVERPASS_URL: `http://127.0.0.1:${WEATHER_STUB_PORT}/api/interpreter`,
 		OSRM_FOOT_URL: `http://127.0.0.1:${WEATHER_STUB_PORT}`,
+		// Fixed rates: amounts at "today's rate" don't move from one day to the next.
+		FX_URL: `http://127.0.0.1:${WEATHER_STUB_PORT}/fx@latest/v1`,
+		FX_FALLBACK_URL: `http://127.0.0.1:${WEATHER_STUB_PORT}/fx@latest/v1`,
 		// Read by the e2e helpers (otp.ts, env.ts, the QA specs).
 		E2E_APP_LOG: path.join(dir, "app.log"),
 		E2E_AUTH_DIR: AUTH_DIR,
