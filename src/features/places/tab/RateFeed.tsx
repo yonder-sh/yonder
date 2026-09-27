@@ -96,7 +96,6 @@ import {
 	startSession,
 } from "./feed";
 import type { PlaceRow } from "./model";
-import { fitsText } from "./PlacePanel";
 import { CoverPlaceholder } from "./PlacesBoard";
 import { categoryLabel, ownsKeys } from "./PlacesTable";
 import { RatingButtons } from "./RatingButtons";
@@ -551,12 +550,20 @@ function revealTag(
 	return { text: `Score ${score}`, tone: "plain" };
 }
 
+/** The card's time needed: the planned stop's or the place's own; null until someone sets it. */
+export function feedTimeNeeded(row: PlaceRow): string | null {
+	if (row.timeMin === null) return null;
+	return `${formatDuration(row.timeMin)}${row.timeSource === "planned" ? " planned" : ""}`;
+}
+
 /**
- * Decide with the same context as the place's panel (docs/PLACES.md §1): where
- * it fits, the shared note and your private note, in full.
+ * Decide with the context that matters (docs/PLACES.md §1): the time it
+ * needs (once someone has set it), the shared note and your private note, in
+ * full.
  */
 function CardContext({ row }: { row: PlaceRow }) {
-	const { graph, ix, mode } = useWorkspace();
+	const { graph, mode } = useWorkspace();
+	const time = feedTimeNeeded(row);
 	const notes = useQuery({
 		...tripNotesQuery(graph.trip.id),
 		enabled: mode === "live",
@@ -568,12 +575,17 @@ function CardContext({ row }: { row: PlaceRow }) {
 		: undefined;
 	return (
 		<div className="grid gap-4 text-sm">
-			<section className="grid gap-1">
-				<h3 className="text-2xs font-semibold tracking-[0.06em] text-neutral-400 uppercase">
-					Where it fits
-				</h3>
-				<p className="text-neutral-200">{fitsText(row, ix)}</p>
-			</section>
+			{time ? (
+				<section
+					className="grid gap-1"
+					data-testid={PLACES_TAB_TESTID.feedTime}
+				>
+					<h3 className="text-2xs font-semibold tracking-[0.06em] text-neutral-400 uppercase">
+						Time needed
+					</h3>
+					<p className="text-neutral-200 tnum">{time}</p>
+				</section>
+			) : null}
 			{shared ? (
 				<section className="grid gap-1">
 					<h3 className="text-2xs font-semibold tracking-[0.06em] text-neutral-400 uppercase">
@@ -654,15 +666,8 @@ function PlaceCard({
 	const tag = me && mine ? revealTag(row, data, me) : null;
 	const [commenting, setCommenting] = useState(false);
 	const comment = me ? node.ratingComments[me] : undefined;
-	const meta = [
-		row.where,
-		categoryLabel(row),
-		row.timeMin === null
-			? "time needed not set"
-			: `${formatDuration(row.timeMin)}${row.timeSource === "planned" ? " planned" : ""}`,
-	]
-		.filter(Boolean)
-		.join(" · ");
+	// The time needed is in the card's context, below.
+	const meta = [row.where, categoryLabel(row)].filter(Boolean).join(" · ");
 
 	const tagChip = tag ? (
 		<span

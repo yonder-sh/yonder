@@ -1,7 +1,7 @@
 /**
  * The phone's Rate feed: each place's media full-screen under a thin bar,
- * then its details (the shared note and my private one in full, like the
- * desktop), the rating buttons last, in the thumb zone.
+ * then its details (the time it needs, the shared note and my private one in
+ * full, like the desktop), the rating buttons last, in the thumb zone.
  */
 import { QueryClient } from "@tanstack/react-query";
 import { screen, within } from "@testing-library/react";
@@ -10,7 +10,9 @@ import type { NoteDto } from "@/features/notes/notes.functions";
 import { demoGraph } from "@/lib/fixtures/demo";
 import { tripKeys } from "@/lib/query/keys";
 import { renderWithWorkspace } from "@/test/render-workspace";
+import type { PlaceRow } from "../model";
 import { PlacesTab } from "../PlacesTab";
+import { feedTimeNeeded } from "../RateFeed";
 import { PLACES_TAB_TESTID as T } from "../testids";
 
 const note = (nodeId: string, text: string, owner: string | null): NoteDto => ({
@@ -77,5 +79,29 @@ describe("the phone's Rate feed", () => {
 		expect(
 			note.compareDocumentPosition(must) & Node.DOCUMENT_POSITION_FOLLOWING,
 		).toBeTruthy();
+	});
+
+	it("says how long the place needs, not which days it fits", async () => {
+		render();
+		const card = await activeCard();
+		const time = within(within(card).getByTestId(T.feedInfo)).queryByTestId(
+			T.feedTime,
+		);
+		if (time) expect(time).toHaveTextContent(/^Time needed\d/);
+		expect(card).not.toHaveTextContent("Where it fits");
+		expect(within(card).getByTestId(T.feedBar)).not.toHaveTextContent(
+			"time needed",
+		);
+	});
+});
+
+describe("the Rate card's time needed", () => {
+	const row = (timeMin: number | null, timeSource: PlaceRow["timeSource"]) =>
+		({ timeMin, timeSource }) as PlaceRow;
+
+	it("is the planned stop's or the place's own, and nothing until someone sets it", () => {
+		expect(feedTimeNeeded(row(90, "planned"))).toBe("1h 30m planned");
+		expect(feedTimeNeeded(row(120, "set"))).toBe("2h");
+		expect(feedTimeNeeded(row(null, null))).toBeNull();
 	});
 });

@@ -50,6 +50,7 @@ export const PLACES_TAB_TESTID = {
 	feedButton: "places-feed-button",
 	feedReveal: "places-feed-reveal",
 	feedTag: "places-feed-tag",
+	feedTime: "places-feed-time",
 	feedPeek: "places-feed-peek",
 	feedLeft: "places-feed-left",
 	feedRun: "places-feed-run",
