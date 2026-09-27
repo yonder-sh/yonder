@@ -1015,17 +1015,13 @@ test("viewer read-only, day scope + inspector, over-allocation, phone fast entry
 	await openMoney(page, c.slug, "/japan");
 	out.over = await page.getByTestId(M.budget).innerText();
 	await page.screenshot({ path: `${SHOTS}/budget-over.png`, fullPage: true });
-	// viewer Maya
+	// viewer Maya: "Can view" gets no Money tab (owner, 2026-09-27); the server still refuses writes
 	const m = await userPage(browser, "maya@example.com", "Maya", "Chen");
-	await openMoney(m.page, c.slug);
-	out.viewerAddEnabled = await m.page.getByTestId(M.addButton).first().isEnabled();
+	await m.page.goto(`/t/${c.slug}?tab=money`);
+	await waitLive(m.page);
+	out.viewerMoneyTab = await m.page.getByTestId(TESTID.moneyTab).count();
 	out.viewerCreate = await callFnErr(m.page, "createExpense", { tripId: c.tripId, target: { kind: "trip" }, amountMinor: 100, currency: "JPY" });
 	out.viewerBudgetOwn = await callFnErr(m.page, "setBudgetLine", { tripId: c.tripId, nodeId: null, category: null, memberId: maya, amountMinor: 100, kind: "total" });
-	out.viewerRows = await m.page.getByTestId(M.expenseRow).count();
-	await m.page.getByTestId(M.expenseRow).first().click();
-	await m.page.waitForTimeout(500);
-	out.viewerEditor = await m.page.getByTestId(TESTID.addExpenseDialog).innerText().catch(() => "no dialog");
-	await m.page.screenshot({ path: `${SHOTS}/viewer-editor.png` });
 	await m.ctx.close();
 	// day scope via the URL's day range? open the day inspector through the Plan tab instead
 	await page.goto(`/t/${c.slug}?tab=plan`);
@@ -1061,7 +1057,7 @@ test("viewer read-only, day scope + inspector, over-allocation, phone fast entry
 	out.phoneOverflow = await pp.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
 	await p.close();
 	expect.soft(out.over).toContain("Over-allocated: its places add up to $70.00.");
-	expect.soft(out.viewerAddEnabled).toBe(false);
+	expect.soft(out.viewerMoneyTab).toBe(0);
 	expect.soft(out.viewerCreate).toContain("FORBIDDEN");
 	expect.soft(out.phoneTaps).toBeLessThanOrEqual(3);
 	expect.soft(out.phoneOverflow).toBe(0);
@@ -1215,15 +1211,16 @@ test("Asia 2027 (QA seed): Dennis and Audrey, Vietnam Local, per-scope", async (
 	await a.page.screenshot({ path: `${SHOTS}/asia-audrey-japan.png`, fullPage: true });
 	await a.ctx.close();
 	const k = await userPage(browser, "kai@asia2027.test");
-	await openMoney(k.page, "asia-2027");
-	out.kai = { add: await k.page.getByTestId(M.addButton).first().isEnabled(), rows: await k.page.getByTestId(M.expenseRow).count() };
+	await k.page.goto("/t/asia-2027?tab=money");
+	await waitLive(k.page);
+	out.kai = { money: await k.page.getByTestId(TESTID.moneyTab).count() };
 	await k.ctx.close();
 	const e = await userPage(browser, "eve@asia2027.test");
 	await e.page.goto("/t/asia-2027?tab=money");
 	await e.page.waitForTimeout(3000);
 	out.eve = { url: e.page.url(), money: await e.page.getByTestId(TESTID.moneyTab).count() };
 	await e.ctx.close();
-	expect.soft((out.kai as { add: boolean }).add).toBe(false);
+	expect.soft((out.kai as { money: number }).money, "Can view gets no Money tab").toBe(0);
 	expect.soft((out.eve as { money: number }).money).toBe(0);
 	expect.soft(out.vnCurrency).toBe("VND");
 	console.log(JSON.stringify(out, null, 1));

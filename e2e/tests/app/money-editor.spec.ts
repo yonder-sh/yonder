@@ -226,7 +226,7 @@ test("free-text people: typing a new payer's name adds a placeholder who is owed
 	await expect(page.getByTestId(M.balances)).toContainText("Kenji");
 });
 
-test("MONEY-10: a suggester adds an expense directly; a viewer sees Expense disabled", async ({ browser }) => {
+test("MONEY-10: a suggester adds an expense directly; a viewer gets no Money tab", async ({ browser }) => {
 	const owner = await browser.newContext({ storageState: storageStateOf("dev") });
 	const c = await cloneFixtureTrip(owner.request, { mayaRole: "suggester" });
 	await owner.close();
@@ -246,7 +246,10 @@ test("MONEY-10: a suggester adds an expense directly; a viewer sees Expense disa
 	await owner2.close();
 	const vctx = await browser.newContext({ storageState: storageStateOf("maya") });
 	const viewer = await vctx.newPage();
-	await openMoney(viewer, v);
-	await expect(viewer.getByTestId(M.addButton).first()).toBeDisabled();
+	// "Can view" follows along (owner, 2026-09-27): ?tab=money falls back to the Plan.
+	await viewer.goto(`/t/${v.slug}?tab=money`);
+	await expectLive(viewer);
+	await expect(viewer.getByTestId(TESTID.workspace)).toBeVisible();
+	await expect(viewer.getByTestId(TESTID.moneyTab)).toHaveCount(0);
 	await vctx.close();
 });
