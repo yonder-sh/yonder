@@ -3,7 +3,7 @@
  * Videos · Social · Guides · Documents), the Add button (upload, or paste a
  * link) and the drop overlay.
  */
-import { cn } from "cn";
+
 import { Link2, Plus, Upload } from "lucide-react";
 import { type FormEvent, useRef, useState } from "react";
 import { useEditGuard } from "@/components/common/edit-guard";
@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { humanError } from "@/lib/errors";
+import { cn } from "@/lib/utils";
 import { classifyUrl, providerLabel } from "../embeds";
 import {
 	FILTER_LABEL,

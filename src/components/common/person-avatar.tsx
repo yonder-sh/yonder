@@ -12,12 +12,13 @@
  * Placeholders, guests and people without a picture keep the initials.
  * `MemberAvatar` (`./member`) is this component.
  */
-import { cn } from "cn";
+
 import type { CSSProperties } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { GraphMember } from "@/lib/engine/types";
 import { initials } from "@/lib/format";
 import { avatarSrc } from "@/lib/schemas/avatar";
+import { cn } from "@/lib/utils";
 import { useWorkspaceOptional } from "@/lib/workspace/model-context";
 
 /**

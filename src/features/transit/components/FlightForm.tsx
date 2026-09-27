@@ -10,7 +10,7 @@
  * and the departure date are required; without times the helper shows the
  * great-circle estimate.
  */
-import { cn } from "cn";
+
 import { Plus, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useEditGuard } from "@/components/common/edit-guard";
@@ -45,6 +45,7 @@ import {
 import type { GraphMember } from "@/lib/engine/types";
 import { formatDayDate, formatDuration } from "@/lib/format";
 import type { Cabin, FlightDetails } from "@/lib/schemas/legs";
+import { cn } from "@/lib/utils";
 import {
 	type AirlineRow,
 	type AirportRow,

@@ -3,7 +3,7 @@
  * (the flight dialog), and a Block (Breakfast, Lunch, Dinner, Rest, Custom…),
  * inserted at that point of the day.
  */
-import { cn } from "cn";
+
 import { Plane, Plus, Search, Utensils } from "lucide-react";
 import { useState } from "react";
 import { useEditGuard } from "@/components/common/edit-guard";
@@ -22,6 +22,7 @@ import {
 	PopoverAnchor,
 	PopoverContent,
 } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 import { useUi } from "@/lib/workspace/ui-store";
 import { useMenuHandoff } from "./menu-handoff";
 import { PLAN_TESTID } from "./testids";

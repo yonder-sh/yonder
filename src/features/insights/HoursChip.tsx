@@ -7,7 +7,7 @@
  * link their OpenStreetMap object, with the attribution) and up to two
  * fixes (EXTENSIONS §4.3).
  */
-import { cn } from "cn";
+
 import { Clock, MoonStar, PencilLine } from "lucide-react";
 import { useEditGuard } from "@/components/common/edit-guard";
 import { undoToast } from "@/components/common/undo-toast";
@@ -25,6 +25,7 @@ import {
 import { hhmm, localDateOf } from "@/lib/engine/time";
 import { tripKeys } from "@/lib/query/keys";
 import { TESTID } from "@/lib/testids";
+import { cn } from "@/lib/utils";
 import { useUi } from "@/lib/workspace/ui-store";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { issueSentence, sourceLabel, WEEKDAY_LONG } from "./hours-format";

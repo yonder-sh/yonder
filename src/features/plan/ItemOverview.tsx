@@ -8,7 +8,6 @@
  * disabled, with the reason.
  */
 import { useQuery } from "@tanstack/react-query";
-import { cn } from "cn";
 import { ArrowDownLeft, ArrowUpRight, Wallet } from "lucide-react";
 import { type ReactNode, useEffect, useId, useRef, useState } from "react";
 import { EditGuard, useEditGuard } from "@/components/common/edit-guard";
@@ -46,6 +45,7 @@ import { useFormPresence } from "@/lib/realtime/form-presence";
 import { useSetEditing } from "@/lib/realtime/presence";
 import type { LegTarget } from "@/lib/schemas/targets";
 import { TESTID } from "@/lib/testids";
+import { cn } from "@/lib/utils";
 import { useUi } from "@/lib/workspace/ui-store";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import {

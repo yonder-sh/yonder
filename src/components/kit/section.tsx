@@ -4,8 +4,9 @@
  * is the `eyebrow` utility (styles.css), so a heading that isn't a component
  * can still match.
  */
-import { cn } from "cn";
+
 import type { ReactNode } from "react";
+import { cn } from "@/lib/utils";
 
 /** The caps label on its own. */
 export function Eyebrow({

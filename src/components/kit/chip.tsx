@@ -6,9 +6,9 @@
  * Use a Button for actions; a chip only says something.
  */
 import { cva, type VariantProps } from "class-variance-authority";
-import { cn } from "cn";
 import type { LucideIcon } from "lucide-react";
 import type * as React from "react";
+import { cn } from "@/lib/utils";
 
 export const chipVariants = cva(
 	"inline-flex shrink-0 items-center gap-1 rounded-full font-medium whitespace-nowrap [&_svg]:shrink-0",

@@ -6,10 +6,10 @@
  * (SPEC §7.10), and bad JSON renders nothing rather than throwing.
  */
 import { renderToReactElement } from "@tiptap/static-renderer/pm/react";
-import { cn } from "cn";
 import { memo, type ReactNode } from "react";
 import { safeUrlTransform } from "@/components/common/markdown-text";
 import { noteExtensions } from "@/lib/notes/extensions.shared";
+import { cn } from "@/lib/utils";
 import { NoteMentionChip } from "./mention-chip";
 
 let cached: ReturnType<typeof noteExtensions> | null = null;

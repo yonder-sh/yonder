@@ -6,7 +6,7 @@
  * get the button at all (they never see hidden rows anyway). Offline it stays
  * visible but disabled with the reason (DESIGN "never hide disabled controls").
  */
-import { cn } from "cn";
+
 import { Lock, LockOpen } from "lucide-react";
 import {
 	Tooltip,
@@ -14,6 +14,7 @@ import {
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { can } from "@/lib/auth/roles";
+import { cn } from "@/lib/utils";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { MEDIA_TESTID } from "../testids";
 import type { MediaDto } from "../types";

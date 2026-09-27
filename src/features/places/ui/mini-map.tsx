@@ -3,7 +3,7 @@
  * (or if WebGL is unavailable) a quiet basemap-coloured box with the pin
  * stands in, so the layout never jumps.
  */
-import { cn } from "cn";
+
 import {
 	Component,
 	lazy,
@@ -13,6 +13,7 @@ import {
 	useState,
 } from "react";
 import { pinStyle } from "@/lib/domain/taxonomy";
+import { cn } from "@/lib/utils";
 import type { MiniMapProps } from "./mini-map.impl";
 
 const Impl = lazy(() => import("./mini-map.impl"));

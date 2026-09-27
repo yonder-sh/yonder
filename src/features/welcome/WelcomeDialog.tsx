@@ -20,7 +20,6 @@
  */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useLocation } from "@tanstack/react-router";
-import { cn } from "cn";
 import { BellRing, CircleHelp, Copy, Share } from "lucide-react";
 import { type FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -55,6 +54,7 @@ import { humanError } from "@/lib/errors";
 import { mediaUrl } from "@/lib/media-url";
 import { sessionKey, tripKeys } from "@/lib/query/keys";
 import { sessionQuery } from "@/lib/query/trip-queries";
+import { cn } from "@/lib/utils";
 import { useUi } from "@/lib/workspace/ui-store";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { WELCOME_TESTID as T } from "./testids";

@@ -7,12 +7,13 @@
  * are never rendered (no tracking pixels); a chip's picture comes from the
  * trip's member list, never from the Markdown.
  */
-import { cn } from "cn";
+
 import { memo } from "react";
 import Markdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import type { GraphMember } from "@/lib/engine/types";
 import { avatarSrc } from "@/lib/schemas/avatar";
+import { cn } from "@/lib/utils";
 import { useWorkspaceOptional } from "@/lib/workspace/model-context";
 import { presenceColor } from "./person-avatar";
 

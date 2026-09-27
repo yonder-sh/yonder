@@ -5,7 +5,7 @@
  * day's issues, its stops, and Add expense. The day's notes and lists are the
  * inspector's own tabs (WP-Shell).
  */
-import { cn } from "cn";
+
 import { BedDouble, Wallet } from "lucide-react";
 import { EditGuard, useEditGuard } from "@/components/common/edit-guard";
 import { TimeInput } from "@/components/common/time";
@@ -17,6 +17,7 @@ import { DaySun } from "@/features/insights/DaySun";
 import { can } from "@/lib/auth/roles";
 import { formatDayDate, formatDuration, formatTime } from "@/lib/format";
 import { TESTID } from "@/lib/testids";
+import { cn } from "@/lib/utils";
 import { useUi } from "@/lib/workspace/ui-store";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { useDayIssues } from "./DayHeader";

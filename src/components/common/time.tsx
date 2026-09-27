@@ -3,7 +3,7 @@
  * 24-hour (or 12-hour when the viewer chose it, ADDENDUM §7.2), always
  * formatted in an explicit zone. Inputs are always 24-hour `HH:mm`.
  */
-import { cn } from "cn";
+
 import {
 	type KeyboardEvent,
 	useEffect,
@@ -27,6 +27,7 @@ import {
 	parseDuration,
 	subscribeDisplayPrefs,
 } from "@/lib/format";
+import { cn } from "@/lib/utils";
 
 /** The page-wide 12/24 h and km/mi setting (`setDisplayPrefs`); re-renders on change. */
 export function useDisplayPrefs(): DisplayPrefs {

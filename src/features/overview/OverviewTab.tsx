@@ -13,7 +13,6 @@
  * - `?asOf=YYYY-MM-DD` stands in for today (demos, e2e).
  */
 import "./overview.css";
-import { cn } from "cn";
 import {
 	type ReactNode,
 	type RefObject,
@@ -29,6 +28,7 @@ import { useCovers } from "@/features/places/tab/PlacesBoard";
 import { StillToPlan } from "@/features/shell/StillToPlan";
 import type { LngLat } from "@/lib/engine/geo";
 import { mediaUrl } from "@/lib/media-url";
+import { cn } from "@/lib/utils";
 import { useUi } from "@/lib/workspace/ui-store";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { DayByDay } from "./DayByDay";

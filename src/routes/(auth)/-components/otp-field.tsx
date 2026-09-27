@@ -1,6 +1,6 @@
-import { cn } from "cn";
 import { OTPInput, REGEXP_ONLY_DIGITS, type SlotProps } from "input-otp";
 import type { Ref } from "react";
+import { cn } from "@/lib/utils";
 
 /**
  * The 6-digit code input (DESIGN §10.1): two groups of three 44 px slots,

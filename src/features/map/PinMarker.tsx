@@ -6,7 +6,6 @@
  * (its background click clears the selection).
  */
 import { Marker } from "@vis.gl/react-maplibre";
-import { cn } from "cn";
 import { BedDouble } from "lucide-react";
 import { type CSSProperties, type MouseEvent, memo } from "react";
 import { useEditGuard } from "@/components/common/edit-guard";
@@ -15,6 +14,7 @@ import { PLACE_CATEGORIES, pinStyle } from "@/lib/domain/taxonomy";
 import { flagEmoji } from "@/lib/format";
 import type { PlaceCategory } from "@/lib/schemas/enums";
 import { TESTID } from "@/lib/testids";
+import { cn } from "@/lib/utils";
 import type { SplitStop } from "@/lib/workspace/ui-store";
 import type { PinView } from "./map-data";
 import { MARKER_Z, pinZIndex } from "./marker-z";

@@ -13,7 +13,7 @@
  * before, that Save wrote the other settings, closed the dialog and dropped
  * the new holiday without a word.
  */
-import { cn } from "cn";
+
 import { Plus, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -39,6 +39,7 @@ import type {
 	TripSettingsPatch,
 } from "@/lib/schemas/trips";
 import { TESTID } from "@/lib/testids";
+import { cn } from "@/lib/utils";
 import { useWorkspaceOptional } from "@/lib/workspace/model-context";
 import { INSIGHTS_TESTID } from "./testids";
 import { DateField, Overline } from "./ui";

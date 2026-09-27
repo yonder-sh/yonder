@@ -13,7 +13,6 @@
  * - `CrumbPresence`: presence dots on a breadcrumb crumb (their scope).
  */
 import { useRouter } from "@tanstack/react-router";
-import { cn } from "cn";
 import { Eye, Presentation } from "lucide-react";
 import { useEffect, useMemo, useRef } from "react";
 import { toast } from "sonner";
@@ -22,6 +21,7 @@ import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { mustRedact } from "@/lib/auth/roles";
 import { randomId } from "@/lib/realtime/cursor-protocol";
 import { usePresence, useTripAwareness } from "@/lib/realtime/presence";
+import { cn } from "@/lib/utils";
 import { useUi } from "@/lib/workspace/ui-store";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { safeFollowPath } from "../follow";

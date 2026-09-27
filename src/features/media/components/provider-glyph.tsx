@@ -3,8 +3,9 @@
  * Simple monochrome shapes of our own (lucide has no brand icons); the
  * provider name is always in the accessible label.
  */
-import { cn } from "cn";
+
 import { FileText, Globe, Play } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { providerLabel } from "../embeds";
 
 function YouTubeMark({ className }: { className?: string }) {

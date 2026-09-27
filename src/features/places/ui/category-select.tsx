@@ -3,7 +3,7 @@
  * tab's details and its table): the same list and colours as the map pins.
  * Read-only for people who can't edit (the edit guard says why).
  */
-import { cn } from "cn";
+
 import { toast } from "sonner";
 import { useEditGuard } from "@/components/common/edit-guard";
 import { CategoryDot } from "@/components/common/glyphs";
@@ -17,6 +17,7 @@ import {
 import { PLACE_CATEGORIES } from "@/lib/domain/taxonomy";
 import type { GraphNode } from "@/lib/engine/types";
 import { humanError } from "@/lib/errors";
+import { cn } from "@/lib/utils";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { useUpdateNode } from "../mutations";
 

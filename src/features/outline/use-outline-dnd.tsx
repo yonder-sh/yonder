@@ -14,7 +14,6 @@ import {
 	type UniqueIdentifier,
 	useDndMonitor,
 } from "@dnd-kit/core";
-import { cn } from "cn";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { create } from "zustand";
@@ -25,6 +24,7 @@ import {
 } from "@/components/common/dnd/workspace-dnd";
 import { TypeGlyph } from "@/components/common/glyphs";
 import type { GraphIndex } from "@/lib/engine/graph-index";
+import { cn } from "@/lib/utils";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { othersProposedCreate, reviewFirst } from "./ghosts";
 import {

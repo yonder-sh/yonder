@@ -19,7 +19,7 @@
  * the tab takes its space. On a tablet the Rate step always takes the map's
  * space (beside the map, the feed was a narrow column).
  */
-import { cn } from "cn";
+
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { EmptyState } from "@/components/common/empty-state";
 import { PlaceFilterSummary } from "@/features/outline/FilterMenu";
@@ -27,6 +27,7 @@ import { useShell } from "@/features/shell/shell-store";
 import { TabPurpose } from "@/features/shell/TabPurpose";
 import { useBreakpoint } from "@/features/shell/use-breakpoint";
 import { canRateOwn } from "@/lib/auth/roles";
+import { cn } from "@/lib/utils";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { isRateable } from "../lib/rate";
 import {

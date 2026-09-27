@@ -12,7 +12,7 @@
  * Colours come from `PRIORITIES` (light and dark pairs) through CSS
  * variables, so they follow the theme without JS.
  */
-import { cn } from "cn";
+
 import { Check, X } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import type { CSSProperties, ReactNode } from "react";
@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/tooltip";
 import { PRIORITIES, PRIORITY_ORDER } from "@/lib/domain/taxonomy";
 import type { Priority } from "@/lib/schemas/enums";
+import { cn } from "@/lib/utils";
 
 /** The CSS variables a rating's fill, ink and dot read (light and dark). */
 export function ratingVars(p: Priority): CSSProperties {

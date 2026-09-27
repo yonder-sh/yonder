@@ -10,10 +10,11 @@
  * for trips with no located cities) a quiet deterministic sketch shows.
  * Decorative: `aria-hidden`.
  */
-import { cn } from "cn";
+
 import type { GeoPermissibleObjects } from "d3-geo";
 import { useEffect, useMemo, useState } from "react";
 import { COUNTRY_VIEWS } from "@/data/countries";
+import { cn } from "@/lib/utils";
 
 const W = 400;
 const H = 300;

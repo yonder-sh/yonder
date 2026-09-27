@@ -5,7 +5,6 @@
  * the table; the same row keys on a focused card.
  */
 import { useQuery } from "@tanstack/react-query";
-import { cn } from "cn";
 import { Film, ImageIcon } from "lucide-react";
 import { type CSSProperties, useEffect, useMemo, useRef } from "react";
 import { CategoryIcon } from "@/components/common/glyphs";
@@ -18,6 +17,7 @@ import { PIN_FAMILIES, PLACE_CATEGORIES } from "@/lib/domain/taxonomy";
 import { formatDuration } from "@/lib/format";
 import { mediaUrl } from "@/lib/media-url";
 import { anchorKey } from "@/lib/realtime/cursor-protocol";
+import { cn } from "@/lib/utils";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { ratingsCount } from "../lib/rate";
 import { rowReason } from "./bar";

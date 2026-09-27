@@ -3,7 +3,7 @@
  * minutes and a label ("Drive · Home → JFK T7", QA TR-10), and "Open in
  * Google Maps" in the kind's travel mode (FB-03: driving for a taxi or car).
  */
-import { cn } from "cn";
+
 import {
 	Bike,
 	BusFront,
@@ -17,6 +17,7 @@ import { EditGuard, useEditGuard } from "@/components/common/edit-guard";
 import { DurationInput } from "@/components/common/time";
 import { Input } from "@/components/ui/input";
 import type { OtherKind } from "@/lib/schemas/legs";
+import { cn } from "@/lib/utils";
 import { mapsTravelMode } from "../lib/endpoints";
 import { TRANSIT_TESTID } from "../testids";
 import type { LegEditor } from "../use-leg-editor";

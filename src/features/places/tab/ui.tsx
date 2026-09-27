@@ -5,10 +5,11 @@
  * map's side list). Colours come from `PRIORITIES` (light and dark pairs)
  * through CSS variables, so they follow the theme without JS.
  */
-import { cn } from "cn";
+
 import { Pin, Scale } from "lucide-react";
 import type { ReactNode } from "react";
 import { RATING_FILL, ratingVars } from "@/components/kit";
+import { cn } from "@/lib/utils";
 import type { StatusInfo } from "./lifecycle";
 import { formatScore, scoreTier } from "./score";
 import { PLACES_TAB_TESTID } from "./testids";

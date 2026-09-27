@@ -3,10 +3,11 @@
  * (reads and writes `only`), and the sticky mini-breadcrumb that heads each
  * group in the Media, Lists and Notes tabs.
  */
-import { cn } from "cn";
+
 import { ChevronRight } from "lucide-react";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { formatDateRange } from "@/lib/format";
+import { cn } from "@/lib/utils";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { Crumbs } from "./crumbs";
 

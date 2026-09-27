@@ -6,9 +6,9 @@
  */
 import "maplibre-gl/dist/maplibre-gl.css";
 import { Map as MapGL, type MapRef, Marker } from "@vis.gl/react-maplibre";
-import { cn } from "cn";
 import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url";
 import { useEffect, useRef } from "react";
+import { cn } from "@/lib/utils";
 import { isNetworkError, useDark, useYonderStyle } from "./mini-map.impl";
 
 export type ResultPin = {

@@ -9,7 +9,7 @@
  * Calm by design (ADDENDUM §10 "fewer badges"): neutral text and mono counts,
  * no amber (nothing here is a conflict), rows only for what's left to do.
  */
-import { cn } from "cn";
+
 import {
 	ArrowLeftRight,
 	BedDouble,
@@ -34,6 +34,7 @@ import { formatDayDate } from "@/lib/format";
 import { anchorKey } from "@/lib/realtime/cursor-protocol";
 import { useFollowToggle } from "@/lib/realtime/view-ui";
 import type { BundleTarget } from "@/lib/schemas/targets";
+import { cn } from "@/lib/utils";
 import { EMPTY_FILTER, serializeFilter } from "@/lib/workspace/filter";
 import { parseSel } from "@/lib/workspace/search";
 import { useWorkspace } from "@/lib/workspace/use-workspace";

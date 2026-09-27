@@ -5,7 +5,6 @@
  * the proportional segment strip (DESIGN §8.2).
  */
 import { useQuery } from "@tanstack/react-query";
-import { cn } from "cn";
 import { ExternalLink, Lock, UserPlus } from "lucide-react";
 import { type ReactNode, useState } from "react";
 import { useAddPerson } from "@/components/common/member";
@@ -21,6 +20,7 @@ import {
 	normalizePersonName,
 	PLACEHOLDER_NAME_MAX,
 } from "@/lib/schemas/people";
+import { cn } from "@/lib/utils";
 import {
 	googleMapsDirectionsUrl,
 	type LegEnds,

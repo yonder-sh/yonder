@@ -4,7 +4,7 @@
  * through the suggestions, Enter picks, Esc closes. The list renders in a
  * portal so the inspector's scroll area never clips it.
  */
-import { cn } from "cn";
+
 import { type ReactNode, useEffect, useId, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import {
@@ -12,6 +12,7 @@ import {
 	PopoverAnchor,
 	PopoverContent,
 } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 
 /** Phone keyboards: capitals, no autocorrect or spellcheck (codes, refs, seats). */
 export const CAPS_INPUT = {

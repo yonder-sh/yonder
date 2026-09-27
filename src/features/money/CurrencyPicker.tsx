@@ -3,7 +3,7 @@
  * currency, the trip's currencies), then every ISO 4217 code the runtime
  * knows, with its name ("JPY · Japanese yen").
  */
-import { cn } from "cn";
+
 import { Check, ChevronDown } from "lucide-react";
 import { type ReactNode, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,7 @@ import {
 	PopoverTrigger,
 } from "@/components/ui/popover";
 import { currencySymbol } from "@/lib/engine/money";
+import { cn } from "@/lib/utils";
 
 const COMMON = [
 	"USD",

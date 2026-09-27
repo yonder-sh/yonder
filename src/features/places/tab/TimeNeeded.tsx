@@ -3,7 +3,7 @@
  * table and the drawer; a scheduled place shows its planned stop's duration
  * instead; "not set" until someone fills it.
  */
-import { cn } from "cn";
+
 import { CalendarCheck, Clock } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,7 @@ import {
 	PopoverTrigger,
 } from "@/components/ui/popover";
 import { formatDuration, parseDuration } from "@/lib/format";
+import { cn } from "@/lib/utils";
 import type { PlaceRow } from "./model";
 import { PLACES_TAB_TESTID } from "./testids";
 

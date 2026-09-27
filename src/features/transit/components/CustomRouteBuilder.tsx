@@ -13,7 +13,7 @@
  * - Booking (collapsible): ref, train number, class, car, seats per member.
  *   Link guests see ref and seats masked and can't change them.
  */
-import { cn } from "cn";
+
 import { ChevronDown, Plus, X } from "lucide-react";
 import { useId, useMemo, useState } from "react";
 import { useEditGuard } from "@/components/common/edit-guard";
@@ -54,6 +54,7 @@ import type {
 	TransitRoute,
 	TransitSegment,
 } from "@/lib/schemas/legs";
+import { cn } from "@/lib/utils";
 import { mergeRide, stationLabel } from "../lib/custom-route";
 import { TRANSIT_TESTID } from "../testids";
 import { railRide, searchRail } from "../transit.functions";

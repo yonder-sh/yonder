@@ -4,9 +4,10 @@
  * picked one sits on a raised thumb in a muted track. A radio group: arrows
  * move between options, and the value is never empty.
  */
-import { cn } from "cn";
+
 import { ToggleGroup as ToggleGroupPrimitive } from "radix-ui";
 import type { ReactNode } from "react";
+import { cn } from "@/lib/utils";
 
 export type SegmentedOption<T extends string> = {
 	value: T;

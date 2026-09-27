@@ -14,7 +14,6 @@ import {
 	SortableContext,
 	verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { cn } from "cn";
 import { ChevronRight, Lock, MapPin, Plus, User } from "lucide-react";
 import {
 	type ReactNode,
@@ -54,6 +53,7 @@ import {
 } from "@/lib/realtime/view-ui";
 import type { ListKind } from "@/lib/schemas/enums";
 import type { BundleTarget } from "@/lib/schemas/targets";
+import { cn } from "@/lib/utils";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { ListRow, type RowCtx } from "./ListRow";
 import {

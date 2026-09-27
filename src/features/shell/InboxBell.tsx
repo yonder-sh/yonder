@@ -15,7 +15,6 @@
  */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { cn } from "cn";
 import {
 	AtSign,
 	Bell,
@@ -47,6 +46,7 @@ import { meKeys } from "@/lib/query/keys";
 import { inboxQuery } from "@/lib/query/trip-queries";
 import type { InboxDto, InboxItem, InboxLink } from "@/lib/schemas/inbox";
 import { TESTID } from "@/lib/testids";
+import { cn } from "@/lib/utils";
 import { useWorkspaceOptional } from "@/lib/workspace/model-context";
 import { parseSel } from "@/lib/workspace/search";
 import {

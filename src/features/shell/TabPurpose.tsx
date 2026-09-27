@@ -2,7 +2,7 @@
  * What each tab is for, in one plain line (owner, 2026-09-25): the lead of
  * a tab's empty state, and the tab's tooltip otherwise.
  */
-import { cn } from "cn";
+import { cn } from "@/lib/utils";
 import type { Tab } from "@/lib/workspace/search";
 
 export const TAB_PURPOSE: Record<Tab, string> = {

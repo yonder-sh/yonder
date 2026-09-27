@@ -7,13 +7,13 @@
  * (WP-Suggest's `NoteSuggestions`), viewers read.
  */
 import { useQuery } from "@tanstack/react-query";
-import { cn } from "cn";
 import { Lock, Users } from "lucide-react";
 import { type ReactNode, useCallback, useEffect, useState } from "react";
 import { NoteSuggestions } from "@/features/suggest/NoteSuggestions";
 import { can } from "@/lib/auth/roles";
 import { noteDocName } from "@/lib/realtime/protocol";
 import type { BundleTarget } from "@/lib/schemas/targets";
+import { cn } from "@/lib/utils";
 import { useUi } from "@/lib/workspace/ui-store";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { NoteEditor } from "./NoteEditor";

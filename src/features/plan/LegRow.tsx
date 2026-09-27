@@ -12,7 +12,7 @@
  * Google Maps and the accept chips float in on hover, focus or while the leg
  * is selected (`LegMore`, plan.css), so the row never changes height.
  */
-import { cn } from "cn";
+
 import { BedDouble, Lock, Moon } from "lucide-react";
 import type { CSSProperties, ReactNode } from "react";
 import { useState } from "react";
@@ -37,6 +37,7 @@ import { formatDistance, formatDuration, formatTime } from "@/lib/format";
 import type { LegMode } from "@/lib/schemas/enums";
 import type { LegTarget } from "@/lib/schemas/targets";
 import { TESTID } from "@/lib/testids";
+import { cn } from "@/lib/utils";
 import { type HoverTarget, useUi } from "@/lib/workspace/ui-store";
 import { useProposalMarks } from "@/lib/workspace/use-proposals";
 import { useWorkspace } from "@/lib/workspace/use-workspace";

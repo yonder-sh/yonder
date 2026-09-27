@@ -6,7 +6,7 @@
  * last-trip document cache (≤ 5 MB PDFs). Without rendered pages (poppler
  * missing, an encrypted file) it offers the download only.
  */
-import { cn } from "cn";
+
 import { Download, FileText, Minus, Plus, Trash2, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { z } from "zod";
@@ -21,6 +21,7 @@ import {
 import { Spinner } from "@/components/ui/spinner";
 import { mediaPageUrl, mediaUrl } from "@/lib/media-url";
 import { useFollowState } from "@/lib/realtime/view-ui";
+import { cn } from "@/lib/utils";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { formatBytes } from "../media-kinds";
 import { usePublishMedia } from "../media-presence";

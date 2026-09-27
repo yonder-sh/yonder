@@ -16,9 +16,10 @@
  * - The TipTap editor itself (`LiveNote`) loads lazily with the first live
  *   note (QA VIS3-08, SPEC §19 PERF-05); until then the saved copy shows.
  */
-import { cn } from "cn";
+
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { useCollabDoc } from "@/lib/realtime/use-collab-doc";
+import { cn } from "@/lib/utils";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { type NoteHold, noteLiveState } from "./note-live";
 import { StaticNote } from "./StaticNote";

@@ -1,6 +1,6 @@
-import { cn } from "cn";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useTheme } from "@/components/theme-provider";
+import { cn } from "@/lib/utils";
 
 /**
  * Cloudflare Turnstile for the steps that send a sign-in code (the login

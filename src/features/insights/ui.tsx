@@ -1,7 +1,7 @@
 /**
  * Small UI pieces WP-Insights shares between its components.
  */
-import { cn } from "cn";
+
 import { CalendarDays } from "lucide-react";
 import {
 	type ReactElement,
@@ -18,6 +18,7 @@ import {
 	PopoverTrigger,
 } from "@/components/ui/popover";
 import { useFollowToggle } from "@/lib/realtime/view-ui";
+import { cn } from "@/lib/utils";
 
 /**
  * A popover that opens on hover with a mouse and on tap/click everywhere

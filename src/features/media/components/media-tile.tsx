@@ -6,7 +6,7 @@
  * keeps a quiet lock mark for members. The caption is one muted line under
  * the tile, with the source ("Shibuya › Shibuya Sky") in rollups.
  */
-import { cn } from "cn";
+
 import { AlertCircle, FileText, Lock, Play } from "lucide-react";
 import type { ReactNode } from "react";
 import { MarkdownText } from "@/components/common/markdown-text";
@@ -14,6 +14,7 @@ import { ThumbhashImage } from "@/components/common/thumbhash-image";
 import { Spinner } from "@/components/ui/spinner";
 import { mediaUrl } from "@/lib/media-url";
 import { TESTID } from "@/lib/testids";
+import { cn } from "@/lib/utils";
 import { canonicalLink, displayHost, providerLabel } from "../embeds";
 import { formatBytes } from "../media-kinds";
 import { MEDIA_TESTID } from "../testids";

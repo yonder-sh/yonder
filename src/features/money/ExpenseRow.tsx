@@ -4,11 +4,12 @@
  * ("¥10k of ¥60k"). Private rows get a 12px Lock and "Only you". Planned
  * rows are NOT dashed (ADDENDUM §10). Click opens the editor.
  */
-import { cn } from "cn";
+
 import { Lock, Undo2 } from "lucide-react";
 import { Crumbs } from "@/components/common/crumbs";
 import { PersonAvatar, resolveMember } from "@/components/common/member";
 import { targetLabel } from "@/lib/engine/money-scope";
+import { cn } from "@/lib/utils";
 import { useUi } from "@/lib/workspace/ui-store";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { CategoryGlyph, MonoNumbers, Num, statusText } from "./money-ui";

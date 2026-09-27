@@ -15,7 +15,6 @@
  */
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { cn } from "cn";
 import {
 	ArrowRight,
 	BedDouble,
@@ -66,6 +65,7 @@ import type { GraphNode, NodeType } from "@/lib/engine/types";
 import { langFor } from "@/lib/format";
 import { useSetEditing } from "@/lib/realtime/presence";
 import { TESTID } from "@/lib/testids";
+import { cn } from "@/lib/utils";
 import { useFlash } from "@/lib/workspace/ui-store";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { useGhostActions } from "./ghost-actions";

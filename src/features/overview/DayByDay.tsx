@@ -6,11 +6,12 @@
  * A click opens that day in the Plan. Which countries are open travels with
  * my view (a follower's open with mine).
  */
-import { cn } from "cn";
+
 import { ChevronDown } from "lucide-react";
 import { useMemo } from "react";
 import { formatDayDate } from "@/lib/format";
 import { ids, useFollowState } from "@/lib/realtime/view-ui";
+import { cn } from "@/lib/utils";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { type DayLine, type DaySection, daySections } from "./lib/day-lines";
 import { countryLabel, type TripRoute } from "./lib/trip-route";

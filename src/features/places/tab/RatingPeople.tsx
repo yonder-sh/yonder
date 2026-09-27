@@ -4,7 +4,7 @@
  * for owners and editors a menu on their name to leave their ratings out
  * or count them again.
  */
-import { cn } from "cn";
+
 import { BellRing, ChevronDown, CircleOff, RotateCcw } from "lucide-react";
 import type { ReactNode } from "react";
 import {
@@ -15,6 +15,7 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { GraphMember } from "@/lib/engine/types";
+import { cn } from "@/lib/utils";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { ratingsCount } from "../lib/rate";
 import { RATING_TESTID } from "./rating-testids";

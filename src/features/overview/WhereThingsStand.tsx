@@ -6,7 +6,7 @@
  * people with places left. Viewers get the lines only. On the Overview's
  * dark hero (`tone="hero"`) and in the welcome (`compact`).
  */
-import { cn } from "cn";
+
 import { ChevronRight, Circle, CircleCheck } from "lucide-react";
 import { useId } from "react";
 import { RemindButton } from "@/features/places/tab/RatingPeople";
@@ -16,6 +16,7 @@ import {
 	useCanRemind,
 } from "@/features/places/tab/use-rating-people";
 import { canRateOwn } from "@/lib/auth/roles";
+import { cn } from "@/lib/utils";
 import { useUi } from "@/lib/workspace/ui-store";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import type { Standing, StandingKey, StandingLine } from "./lib/standing";

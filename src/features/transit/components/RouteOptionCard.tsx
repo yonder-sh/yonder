@@ -7,7 +7,7 @@
  * the whole way", FB-03). Google options offer "Lock these times"; manual
  * ones Edit/Delete.
  */
-import { cn } from "cn";
+
 import type { Feature, LineString as GeoLine } from "geojson";
 import { Lock, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { EditGuard } from "@/components/common/edit-guard";
@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { formatDuration } from "@/lib/format";
 import type { TransitRoute } from "@/lib/schemas/legs";
+import { cn } from "@/lib/utils";
 import { useUi } from "@/lib/workspace/ui-store";
 import type { MapsTravelMode } from "../lib/endpoints";
 import {

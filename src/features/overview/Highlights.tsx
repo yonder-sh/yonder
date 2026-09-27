@@ -4,12 +4,13 @@
  * collage). Without photos it falls back to the group's favourites by score.
  * A tile opens the place (selected in the Plan).
  */
-import { cn } from "cn";
+
 import { ThumbhashImage } from "@/components/common/thumbhash-image";
 import type { MediaDto } from "@/features/media/media.functions";
 import { ScoreChip } from "@/features/places/tab/ui";
 import { mediaUrl } from "@/lib/media-url";
 import { copyAnchorId } from "@/lib/realtime/cursor-protocol";
+import { cn } from "@/lib/utils";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import {
 	favourites,

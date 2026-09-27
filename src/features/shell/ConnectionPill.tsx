@@ -4,8 +4,9 @@
  * Offline · read-only (no dot, muted fill). Status changes are announced
  * politely.
  */
-import { cn } from "cn";
+
 import { TESTID } from "@/lib/testids";
+import { cn } from "@/lib/utils";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 
 const LABEL = {

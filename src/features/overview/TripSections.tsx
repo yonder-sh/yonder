@@ -6,7 +6,6 @@
  * next to them by the page.
  */
 import { useQuery } from "@tanstack/react-query";
-import { cn } from "cn";
 import { ChevronRight } from "lucide-react";
 import { type ReactNode, useMemo, useState } from "react";
 import { assignableMembers, MemberAvatar } from "@/components/common/member";
@@ -25,6 +24,7 @@ import {
 import { plainText } from "@/features/shell/use-trip-go";
 import { roleLabel } from "@/lib/auth/roles";
 import { activityQuery } from "@/lib/query/trip-queries";
+import { cn } from "@/lib/utils";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 
 const DAY_MS = 86_400_000;

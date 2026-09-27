@@ -23,7 +23,6 @@
  * FB-12). Money is never rendered for link guests (EXTENSIONS §1.4).
  */
 import { useQuery } from "@tanstack/react-query";
-import { cn } from "cn";
 import { PanelRightClose, X } from "lucide-react";
 import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { Crumbs } from "@/components/common/crumbs";
@@ -57,6 +56,7 @@ import { langFor } from "@/lib/format";
 import { type ActivityTarget, activityQuery } from "@/lib/query/trip-queries";
 import type { BundleTarget } from "@/lib/schemas/targets";
 import { TESTID } from "@/lib/testids";
+import { cn } from "@/lib/utils";
 import {
 	INSPECTOR_TABS,
 	type InspectorTabParam,

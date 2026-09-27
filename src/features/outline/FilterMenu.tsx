@@ -10,7 +10,7 @@
  * one quiet line under a header while a filter is on (fewer badges: no chip
  * per criterion).
  */
-import { cn } from "cn";
+
 import { Filter, X } from "lucide-react";
 import { useId } from "react";
 import { assignableMembers } from "@/components/common/member";
@@ -40,6 +40,7 @@ import {
 } from "@/lib/domain/taxonomy";
 import type { Priority } from "@/lib/engine/types";
 import { bool, useFollowState } from "@/lib/realtime/view-ui";
+import { cn } from "@/lib/utils";
 import type { WorkspaceFilter } from "@/lib/workspace/filter";
 import { describeFilter } from "@/lib/workspace/filter-match";
 import { useWorkspace } from "@/lib/workspace/use-workspace";

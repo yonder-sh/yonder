@@ -9,7 +9,6 @@
  * goes (the button stays), and at md the lens becomes a dropdown.
  */
 import { Link } from "@tanstack/react-router";
-import { cn } from "cn";
 import {
 	CalendarRange,
 	ChevronDown,
@@ -41,6 +40,7 @@ import {
 } from "@/features/suggest/SuggestModeControl";
 import { WelcomeMenuItem } from "@/features/welcome/WelcomeDialog";
 import { TESTID } from "@/lib/testids";
+import { cn } from "@/lib/utils";
 import { useUi } from "@/lib/workspace/ui-store";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { ConnectionPill } from "./ConnectionPill";

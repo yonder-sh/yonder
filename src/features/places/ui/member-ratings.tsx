@@ -8,7 +8,7 @@
  * ≤ 280 characters as read (a mention counts as its "@Name", PLAN-R3-03) and
  * may hold @mentions (`MentionInput`, WP-Lists).
  */
-import { cn } from "cn";
+
 import { MessageSquare, Pencil } from "lucide-react";
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -21,6 +21,7 @@ import { can, canRateOwn } from "@/lib/auth/roles";
 import type { GraphMember, GraphNode } from "@/lib/engine/types";
 import { humanError } from "@/lib/errors";
 import type { Priority } from "@/lib/schemas/enums";
+import { cn } from "@/lib/utils";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import {
 	COMMENT_MAX,

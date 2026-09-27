@@ -3,7 +3,7 @@
  * colours are for place pins only), mono amounts, the 8px bar, section
  * headings and the status line ("¥10k of ¥60k"). DESIGN tokens only.
  */
-import { cn } from "cn";
+
 import {
 	BedDouble,
 	Receipt,
@@ -20,6 +20,7 @@ import {
 	paidInCurrency,
 } from "@/lib/engine/money";
 import type { ExpenseCategory } from "@/lib/schemas/enums";
+import { cn } from "@/lib/utils";
 import type { ExpenseDto } from "./money.functions";
 
 const ICON = {

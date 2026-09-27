@@ -1,5 +1,5 @@
-import { cn } from "cn";
 import { useEffect, useState } from "react";
+import { cn } from "@/lib/utils";
 
 /**
  * Decorative map for the auth pages (DESIGN §10.1 `RouteSketch`): East Asia

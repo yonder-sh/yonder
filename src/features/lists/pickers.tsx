@@ -4,7 +4,7 @@
  * open): people (members only, never guests; a typed name adds a person,
  * ADDENDUM §8 via `useAddPerson`) and places (Move to…, candidate shops).
  */
-import { cn } from "cn";
+
 import { Check, House, UserPlus } from "lucide-react";
 import { type ReactNode, useState } from "react";
 import { TypeGlyph } from "@/components/common/glyphs";
@@ -31,6 +31,7 @@ import {
 	normalizePersonName,
 	PLACEHOLDER_NAME_MAX,
 } from "@/lib/schemas/people";
+import { cn } from "@/lib/utils";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 
 type Controlled = {

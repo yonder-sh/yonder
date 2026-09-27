@@ -9,7 +9,6 @@
  */
 import "maplibre-gl/dist/maplibre-gl.css";
 import { Map as MapGL, type MapRef, Marker } from "@vis.gl/react-maplibre";
-import { cn } from "cn";
 import { ArrowLeft } from "lucide-react";
 import type { LngLatBoundsLike } from "maplibre-gl";
 import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url";
@@ -26,6 +25,7 @@ import { RatingDot } from "@/components/kit";
 import { Button } from "@/components/ui/button";
 import { InspectorBody } from "@/features/shell/InspectorBody";
 import { PRIORITIES } from "@/lib/domain/taxonomy";
+import { cn } from "@/lib/utils";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { isNetworkError, useDark, useYonderStyle } from "../ui/mini-map.impl";
 import type { PlaceRow } from "./model";

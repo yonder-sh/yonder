@@ -1,4 +1,4 @@
-import { cn } from "cn";
+import { cn } from "@/lib/utils";
 
 /**
  * The Yonder lockup (brand/logo/yonder-lockup.svg), recoloured with tokens:

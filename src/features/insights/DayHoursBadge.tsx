@@ -6,7 +6,6 @@
  * it into the header's single "N issues" chip when other issues exist.
  */
 import { useQuery } from "@tanstack/react-query";
-import { cn } from "cn";
 import { ChevronRight, Clock, Download } from "lucide-react";
 import { useEditGuard } from "@/components/common/edit-guard";
 import { useTripMutation } from "@/components/common/use-trip-mutation";
@@ -15,6 +14,7 @@ import { hhmm } from "@/lib/engine/time";
 import { tripKeys } from "@/lib/query/keys";
 import { capabilitiesQuery } from "@/lib/query/trip-queries";
 import { TESTID } from "@/lib/testids";
+import { cn } from "@/lib/utils";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { dayChipLabel } from "./hours-format";
 import { fetchOpeningHours } from "./insights.functions";

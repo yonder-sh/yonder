@@ -23,7 +23,6 @@ import {
 	verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { cn } from "cn";
 import {
 	ArrowDown,
 	ArrowUp,
@@ -47,6 +46,7 @@ import { ScoreChip } from "@/features/places/tab/ui";
 import { formatDuration } from "@/lib/format";
 import { anchorKey, copyAnchorId } from "@/lib/realtime/cursor-protocol";
 import { ids, useFollowState } from "@/lib/realtime/view-ui";
+import { cn } from "@/lib/utils";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import type { DaySplitInfo } from "./DaySplit";
 import { headingText, type SplitLine, splitLines } from "./day-split";

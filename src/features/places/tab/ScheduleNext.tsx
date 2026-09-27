@@ -11,7 +11,7 @@
  * the Plan to decide it; this step never writes days. Read-only for people
  * who can't edit.
  */
-import { cn } from "cn";
+
 import { CalendarPlus, ChevronRight, Star } from "lucide-react";
 import { Fragment, type ReactNode, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -26,6 +26,7 @@ import {
 } from "@/lib/format";
 import { copyAnchorId } from "@/lib/realtime/cursor-protocol";
 import { bool, useFollowState } from "@/lib/realtime/view-ui";
+import { cn } from "@/lib/utils";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { formatDays } from "../lib/days";
 import type { FlowTally } from "./flow";

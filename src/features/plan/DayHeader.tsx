@@ -15,7 +15,6 @@
  * the `d` key.
  */
 import { useQuery } from "@tanstack/react-query";
-import { cn } from "cn";
 import {
 	BedDouble,
 	ChevronDown,
@@ -62,6 +61,7 @@ import { copyAnchorId } from "@/lib/realtime/cursor-protocol";
 import { useFormPresence } from "@/lib/realtime/form-presence";
 import { useFollowToggle } from "@/lib/realtime/view-ui";
 import { TESTID } from "@/lib/testids";
+import { cn } from "@/lib/utils";
 import { useUi } from "@/lib/workspace/ui-store";
 import { useProposalMarks } from "@/lib/workspace/use-proposals";
 import { useWorkspace } from "@/lib/workspace/use-workspace";

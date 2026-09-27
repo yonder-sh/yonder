@@ -1,6 +1,6 @@
-import { cn } from "cn";
 import type { ReactNode } from "react";
 import { TESTID } from "@/lib/testids";
+import { cn } from "@/lib/utils";
 
 /**
  * Used only by functional stubs (SPEC §12.6): a quiet, dashed frame that says

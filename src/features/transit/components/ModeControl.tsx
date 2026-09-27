@@ -4,11 +4,12 @@
  * listbox (arrow keys move, Enter/Space/click choose), so screen readers and
  * the foundation spec (`leg-mode` → option "transit") read it as a choice.
  */
-import { cn } from "cn";
+
 import { type KeyboardEvent, useRef } from "react";
 import { ModeGlyph } from "@/components/common/glyphs";
 import { LEG_MODE_VALUES, type LegMode } from "@/lib/schemas/enums";
 import { TESTID } from "@/lib/testids";
+import { cn } from "@/lib/utils";
 import { TRANSIT_TESTID } from "../testids";
 
 const LABEL: Record<LegMode, string> = {

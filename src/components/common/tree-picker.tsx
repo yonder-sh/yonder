@@ -3,7 +3,7 @@
  * chip, "Re-file" and the stay picker: a searchable, indented list of the
  * trip's nodes. `filter` hides nodes; `disabledReason` greys them with a tooltip.
  */
-import { cn } from "cn";
+
 import { Check, ChevronsUpDown } from "lucide-react";
 import { type ReactNode, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,7 @@ import {
 	PopoverTrigger,
 } from "@/components/ui/popover";
 import type { GraphNode } from "@/lib/engine/types";
+import { cn } from "@/lib/utils";
 import { useWorkspaceOptional } from "@/lib/workspace/model-context";
 import { TypeGlyph } from "./glyphs";
 

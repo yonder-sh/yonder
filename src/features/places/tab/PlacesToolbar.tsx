@@ -8,7 +8,7 @@
  * hold the shortlist's level. Rate and Schedule are the tab's steps
  * (`PlacesSteps`); "Add a place" and wide mode sit on the steps' bar.
  */
-import { cn } from "cn";
+
 import {
 	Columns3,
 	LayoutGrid,
@@ -43,6 +43,7 @@ import { updateTrip } from "@/functions/trips.functions";
 import { can } from "@/lib/auth/roles";
 import type { TripGraph } from "@/lib/engine/types";
 import { tripKeys } from "@/lib/query/keys";
+import { cn } from "@/lib/utils";
 import { useUi } from "@/lib/workspace/ui-store";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import {

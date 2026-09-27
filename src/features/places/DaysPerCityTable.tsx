@@ -8,7 +8,7 @@
  *   <DaysPerCityTable />                 whole trip, with the unallocated total
  *   <DaysPerCityTable scopeId={japan} /> one country or region
  */
-import { cn } from "cn";
+
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useEditGuard } from "@/components/common/edit-guard";
@@ -16,6 +16,7 @@ import { FlagEmoji } from "@/components/common/glyphs";
 import type { GraphNode } from "@/lib/engine/types";
 import { humanError } from "@/lib/errors";
 import { copyAnchorId } from "@/lib/realtime/cursor-protocol";
+import { cn } from "@/lib/utils";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { cityDayTable, formatDays, parseDays } from "./lib/days";
 import { useUpdateNode } from "./mutations";

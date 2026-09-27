@@ -18,7 +18,6 @@
  * instead"), which WP-Shell puts in the trip-title ▾ menu (M6).
  */
 import "./suggest.css";
-import { cn } from "cn";
 import {
 	ChevronDown,
 	Eye,
@@ -53,6 +52,7 @@ import {
 import { useWelcome } from "@/features/welcome/welcome-store";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { TESTID } from "@/lib/testids";
+import { cn } from "@/lib/utils";
 import { useUi } from "@/lib/workspace/ui-store";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { isMine, reviewerFirstNames, reviewersLine } from "./proposal-view";

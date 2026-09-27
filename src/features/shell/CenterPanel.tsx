@@ -14,7 +14,7 @@
  * - Money is never rendered for link guests; it is read-only for viewers
  *   (the MoneyTab's own guard).
  */
-import { cn } from "cn";
+
 import { useEffect, useMemo, useRef } from "react";
 import { RollupToggle } from "@/components/common/rollup-toggle";
 import { ListsTab } from "@/features/lists/ListsTab";
@@ -29,6 +29,7 @@ import { usePlacesToDecide } from "@/features/places/tab/use-places";
 import { PlanTab } from "@/features/plan/PlanTab";
 import { seesMoney } from "@/lib/auth/roles";
 import { TESTID } from "@/lib/testids";
+import { cn } from "@/lib/utils";
 import type { Tab } from "@/lib/workspace/search";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { hasChildNodes } from "./bundle-target";

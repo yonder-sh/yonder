@@ -10,7 +10,6 @@
  */
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { cn } from "cn";
 import {
 	Camera,
 	ChevronDown,
@@ -81,6 +80,7 @@ import {
 } from "@/lib/schemas/enums";
 import type { ExpenseInput, PaymentInput } from "@/lib/schemas/money";
 import type { BundleTarget } from "@/lib/schemas/targets";
+import { cn } from "@/lib/utils";
 import { type AddExpenseRequest, useUi } from "@/lib/workspace/ui-store";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { CurrencyPicker } from "./CurrencyPicker";

@@ -4,7 +4,7 @@
  * share, points per programme with cents per point, the per-person table,
  * the scope's net positions, and the trip-wide balances with settle-up.
  */
-import { cn } from "cn";
+
 import { ArrowRight, Lock } from "lucide-react";
 import { type ReactNode, useLayoutEffect, useRef, useState } from "react";
 import {
@@ -20,6 +20,7 @@ import {
 	type ScopeSummary,
 } from "@/lib/engine/money";
 import type { GraphMember } from "@/lib/engine/types";
+import { cn } from "@/lib/utils";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import type { MoneyDto } from "./money.functions";
 import { Num, Overline, signed } from "./money-ui";

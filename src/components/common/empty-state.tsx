@@ -1,6 +1,6 @@
-import { cn } from "cn";
 import type { ReactNode } from "react";
 import { TESTID } from "@/lib/testids";
+import { cn } from "@/lib/utils";
 
 /**
  * DESIGN §12: every empty state is ONE line (Parkinsans 17/500) and ONE

@@ -17,7 +17,6 @@
  * disabled, with the reason (SPEC §0 rule 17).
  */
 import { useQuery } from "@tanstack/react-query";
-import { cn } from "cn";
 import { Check, Download, PencilLine } from "lucide-react";
 import { useEditGuard } from "@/components/common/edit-guard";
 import { MemberAvatar, presenceColor } from "@/components/common/member";
@@ -35,6 +34,7 @@ import { tripKeys } from "@/lib/query/keys";
 import { capabilitiesQuery } from "@/lib/query/trip-queries";
 import { OpeningHours } from "@/lib/schemas/hours";
 import { TESTID } from "@/lib/testids";
+import { cn } from "@/lib/utils";
 import { useUi } from "@/lib/workspace/ui-store";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import {

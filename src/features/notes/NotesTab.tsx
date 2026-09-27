@@ -7,7 +7,6 @@
  * The viewer's own private notes show as sections too, marked "Only you".
  */
 import { useQuery } from "@tanstack/react-query";
-import { cn } from "cn";
 import { ChevronDown, Lock, PencilLine } from "lucide-react";
 import { useMemo, useState } from "react";
 import { EmptyState } from "@/components/common/empty-state";
@@ -27,6 +26,7 @@ import {
 } from "@/lib/realtime/view-ui";
 import type { BundleTarget } from "@/lib/schemas/targets";
 import { TESTID } from "@/lib/testids";
+import { cn } from "@/lib/utils";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { dayLabel, itemName, legLabel, rollupRows } from "../lists/list-model";
 import { NoteBlock, useNoteAccess } from "./NoteBlock";

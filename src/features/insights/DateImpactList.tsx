@@ -6,7 +6,7 @@
  * its entity (`onSelect` closes the dialog but keeps the draft). Used by
  * ShiftTripDialog, the dates dialog and `ProposalOverview` for `trip.*`.
  */
-import { cn } from "cn";
+
 import {
 	BedDouble,
 	CalendarDays,
@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import type { DateImpact } from "@/lib/engine/date-impact";
 import { shortDate } from "@/lib/engine/hours";
 import { TESTID } from "@/lib/testids";
+import { cn } from "@/lib/utils";
 import { useWorkspaceOptional } from "@/lib/workspace/model-context";
 import type { Sel } from "@/lib/workspace/search";
 import { INSIGHTS_TESTID } from "./testids";

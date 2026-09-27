@@ -6,8 +6,8 @@
  * and focusing either lights it on the map.
  */
 import "./stops.css";
-import { cn } from "cn";
 import { useMemo } from "react";
+import { cn } from "@/lib/utils";
 import { useUi } from "@/lib/workspace/ui-store";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { buildStops } from "./stops";

@@ -4,7 +4,7 @@
  * category chip, a compact opening-hours summary, and "where it is on the
  * plan".
  */
-import { cn } from "cn";
+
 import type { CSSProperties } from "react";
 import { CategoryDot, TypeGlyph } from "@/components/common/glyphs";
 import {
@@ -17,6 +17,7 @@ import type { GraphIndex } from "@/lib/engine/graph-index";
 import { effectiveHours } from "@/lib/engine/hours";
 import type { GraphNode } from "@/lib/engine/types";
 import { formatDayDate, formatDuration } from "@/lib/format";
+import { cn } from "@/lib/utils";
 import { occurrencesOf } from "../lib/node-facts";
 
 export function TimeNeededChip({

@@ -19,7 +19,6 @@
  * - The order: short shuffled city runs, stable per person (`feed.ts`).
  */
 import { useQuery } from "@tanstack/react-query";
-import { cn } from "cn";
 import {
 	ArrowDown,
 	Check,
@@ -72,6 +71,7 @@ import {
 	uuid,
 } from "@/lib/realtime/view-ui";
 import type { Priority } from "@/lib/schemas/enums";
+import { cn } from "@/lib/utils";
 import { useUi } from "@/lib/workspace/ui-store";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { commentVisibleText, priorityForKey } from "../lib/rate";

@@ -5,11 +5,12 @@
  * a stay; a click or tap opens that stay's days in the Plan
  * (`tab=plan&days=first..last`).
  */
-import { cn } from "cn";
+
 import { BusFront, Plane, TrainFront } from "lucide-react";
 import type { PointerEvent } from "react";
 import type { EdgeMode } from "@/lib/engine/types";
 import { formatDayDate } from "@/lib/format";
+import { cn } from "@/lib/utils";
 import { serializeDays } from "@/lib/workspace/search";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import type { RouteStay, TripRoute } from "./lib/trip-route";

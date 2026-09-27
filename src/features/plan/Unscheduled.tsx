@@ -11,11 +11,11 @@ import {
 	verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { cn } from "cn";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { useContext } from "react";
 import { useEditGuard } from "@/components/common/edit-guard";
 import { bool, useFollowState } from "@/lib/realtime/view-ui";
+import { cn } from "@/lib/utils";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { DragGrip, ItemCard } from "./ItemCard";
 import { DropIndicatorContext } from "./plan-context";

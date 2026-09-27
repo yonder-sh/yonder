@@ -14,7 +14,6 @@
  * hand). The trip comes from the route (`/t/$trip/…`) unless `slug` is given.
  */
 import { useParams } from "@tanstack/react-router";
-import { cn } from "cn";
 import { Copy, Download, ImageIcon, RotateCw, Share2 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -29,6 +28,7 @@ import {
 } from "@/components/ui/dialog";
 import { Spinner } from "@/components/ui/spinner";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { cn } from "@/lib/utils";
 import { SHARE_CARD_TESTID as T } from "./testids";
 
 type Size = "story" | "square";

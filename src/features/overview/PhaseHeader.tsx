@@ -4,7 +4,7 @@
  * the planning line; during it "Day 9 of 37 · Kyoto", today's list and
  * tomorrow's first stop; after it "That was Asia 2027." with the recap.
  */
-import { cn } from "cn";
+
 import type { ReactNode } from "react";
 import { todoContext } from "@/features/shell/still-to-plan";
 import { deadlineChip } from "@/features/shell/trip-deadlines";
@@ -12,6 +12,7 @@ import { plainText } from "@/features/shell/use-trip-go";
 import type { GraphIndex } from "@/lib/engine/graph-index";
 import type { ScheduleResult } from "@/lib/engine/types";
 import { formatDayDate, formatTime } from "@/lib/format";
+import { cn } from "@/lib/utils";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import type { DayLine } from "./lib/day-lines";
 import type { TripPhase } from "./lib/phase";

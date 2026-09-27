@@ -1,9 +1,9 @@
-import { cn } from "cn";
 import { flightTimes } from "@/lib/engine/flights";
 import type { GraphLeg, ScheduledLeg } from "@/lib/engine/types";
 import { formatDistance, formatDuration, formatFlight } from "@/lib/format";
 import { type LegDetails, readLegDetails } from "@/lib/schemas/legs";
 import { TESTID } from "@/lib/testids";
+import { cn } from "@/lib/utils";
 import { LineChip, ModeGlyph } from "./glyphs";
 
 export { flightOwnMinutes } from "@/lib/engine/flights";

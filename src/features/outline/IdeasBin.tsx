@@ -9,7 +9,6 @@
  * day. Proposed places (E7) sort in like any other, drawn as ghosts.
  */
 import { useDndMonitor, useDraggable } from "@dnd-kit/core";
-import { cn } from "cn";
 import {
 	ArrowDownUp,
 	ArrowRight,
@@ -48,6 +47,7 @@ import { isRateable } from "@/features/places/lib/rate";
 import type { GraphNode } from "@/lib/engine/types";
 import { bool, oneOf, useFollowValue } from "@/lib/realtime/view-ui";
 import { TESTID } from "@/lib/testids";
+import { cn } from "@/lib/utils";
 import { ratingOf } from "@/lib/workspace/filter-match";
 import { useUi } from "@/lib/workspace/ui-store";
 import { useWorkspace } from "@/lib/workspace/use-workspace";

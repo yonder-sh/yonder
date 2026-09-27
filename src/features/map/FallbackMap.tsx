@@ -5,12 +5,13 @@
  * and clickable at their midpoint. It also renders in component tests, where
  * there is no WebGL.
  */
-import { cn } from "cn";
+
 import { useEffect, useMemo, useRef } from "react";
 import { EditGuard } from "@/components/common/edit-guard";
 import { Button } from "@/components/ui/button";
 import { pinStyle } from "@/lib/domain/taxonomy";
 import { TESTID } from "@/lib/testids";
+import { cn } from "@/lib/utils";
 import { registerMapProjector } from "@/lib/workspace/map-projector";
 import { useUi } from "@/lib/workspace/ui-store";
 import { useWorkspace } from "@/lib/workspace/use-workspace";

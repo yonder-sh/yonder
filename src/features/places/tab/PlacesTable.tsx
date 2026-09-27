@@ -9,7 +9,7 @@
  * row), time needed and the status pin. Keyboard: ↑/↓ move, Enter opens the
  * drawer, S pins / unpins, D drops, 0 clears your rating.
  */
-import { cn } from "cn";
+
 import { ChevronDown, ChevronRight, Split } from "lucide-react";
 import {
 	type KeyboardEvent,
@@ -26,6 +26,7 @@ import { NODE_TYPES, PLACE_CATEGORIES } from "@/lib/domain/taxonomy";
 import type { GraphMember } from "@/lib/engine/types";
 import { anchorKey } from "@/lib/realtime/cursor-protocol";
 import { ids, useFollowState } from "@/lib/realtime/view-ui";
+import { cn } from "@/lib/utils";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { priorityForKey, ratingsCount } from "../lib/rate";
 import { CategorySelect } from "../ui/category-select";

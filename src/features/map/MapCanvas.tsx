@@ -32,7 +32,6 @@ import {
 	useControl,
 	useMap,
 } from "@vis.gl/react-maplibre";
-import { cn } from "cn";
 import type { FeatureCollection, LineString, Point, Position } from "geojson";
 import type {
 	AttributionControl as MaplibreAttribution,
@@ -62,6 +61,7 @@ import {
 	useFollowState,
 	useFollowValue,
 } from "@/lib/realtime/view-ui";
+import { cn } from "@/lib/utils";
 import { describeFilter } from "@/lib/workspace/filter-match";
 import {
 	notifyMapMoved,

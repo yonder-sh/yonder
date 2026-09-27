@@ -18,7 +18,6 @@
  */
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { cn } from "cn";
 import {
 	ArrowLeft,
 	Check,
@@ -81,6 +80,7 @@ import { tripGraphQuery } from "@/lib/query/trip-queries";
 import { PLACE_CATEGORY_VALUES } from "@/lib/schemas/enums";
 import { isProposed } from "@/lib/schemas/proposals";
 import { TESTID } from "@/lib/testids";
+import { cn } from "@/lib/utils";
 import { myTripsQuery } from "./queries";
 import { SaveFromAppsDialog } from "./SaveFromAppsDialog";
 import {

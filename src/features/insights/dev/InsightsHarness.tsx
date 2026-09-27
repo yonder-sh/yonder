@@ -9,7 +9,6 @@
  * the way the owning packages are asked to wire them (EXTENSIONS §1.4).
  */
 import { useQuery } from "@tanstack/react-query";
-import { cn } from "cn";
 import { CalendarRange, Settings2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { CategoryDot } from "@/components/common/glyphs";
@@ -19,6 +18,7 @@ import { PLACE_CATEGORIES } from "@/lib/domain/taxonomy";
 import type { TripGraph } from "@/lib/engine/types";
 import { formatDuration, formatTime } from "@/lib/format";
 import { tripGraphQuery, tripProposalsQuery } from "@/lib/query/trip-queries";
+import { cn } from "@/lib/utils";
 import {
 	WorkspaceModelProvider,
 	type WorkspaceRouteBinding,

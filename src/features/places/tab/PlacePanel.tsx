@@ -16,7 +16,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { distance } from "@turf/distance";
 import { point } from "@turf/helpers";
-import { cn } from "cn";
 import {
 	CalendarPlus,
 	CircleSlash,
@@ -50,6 +49,7 @@ import {
 	formatDuration,
 } from "@/lib/format";
 import { activityQuery } from "@/lib/query/trip-queries";
+import { cn } from "@/lib/utils";
 import { useUi } from "@/lib/workspace/ui-store";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { googleMapsLink } from "../lib/providers";

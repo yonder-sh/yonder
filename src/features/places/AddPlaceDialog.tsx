@@ -19,7 +19,6 @@ import {
 	useQueryClient,
 } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { cn } from "cn";
 import {
 	ArrowLeft,
 	CalendarDays,
@@ -84,6 +83,7 @@ import { useFormPresence } from "@/lib/realtime/form-presence";
 import type { NodeType, PlaceCategory } from "@/lib/schemas/enums";
 import type { LegTarget } from "@/lib/schemas/targets";
 import { TESTID } from "@/lib/testids";
+import { cn } from "@/lib/utils";
 import { type AddPlaceRequest, useUi } from "@/lib/workspace/ui-store";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { resultKind } from "./lib/categorize";

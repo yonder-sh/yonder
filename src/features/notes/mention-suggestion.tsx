@@ -15,7 +15,6 @@ import type { Editor, Range } from "@tiptap/core";
 import type { MentionNodeAttrs } from "@tiptap/extension-mention";
 import { ReactRenderer } from "@tiptap/react";
 import type { SuggestionOptions, SuggestionProps } from "@tiptap/suggestion";
-import { cn } from "cn";
 import { UserPlus } from "lucide-react";
 import { type Ref, useEffect, useImperativeHandle, useState } from "react";
 import { MemberAvatar } from "@/components/common/member";
@@ -24,6 +23,7 @@ import {
 	normalizePersonName,
 	PLACEHOLDER_NAME_MAX,
 } from "@/lib/schemas/people";
+import { cn } from "@/lib/utils";
 import { NOTES_TESTID } from "./testids";
 
 export type MentionCandidate =

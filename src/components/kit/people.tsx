@@ -6,7 +6,7 @@
  *   open, or "Maya · just now" on what she just changed.
  * `AvatarStack` and `MemberAvatar` are the shared people pieces, re-exported.
  */
-import { cn } from "cn";
+
 import type { CSSProperties } from "react";
 import {
 	type AvatarPerson,
@@ -15,6 +15,7 @@ import {
 	presenceColor,
 	resolveMember,
 } from "@/components/common/member";
+import { cn } from "@/lib/utils";
 import { useWorkspaceOptional } from "@/lib/workspace/model-context";
 
 export {

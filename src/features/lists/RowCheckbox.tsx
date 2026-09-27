@@ -4,10 +4,11 @@
  * margins keep the row's layout as if only the box were there, so the box
  * sits exactly where the plain 16px checkbox did.
  */
-import { cn } from "cn";
+
 import { CheckIcon } from "lucide-react";
 import { Checkbox as CheckboxPrimitive } from "radix-ui";
 import type * as React from "react";
+import { cn } from "@/lib/utils";
 
 export function RowCheckbox({
 	className,

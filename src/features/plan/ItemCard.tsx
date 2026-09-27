@@ -10,7 +10,7 @@
  * avatar); the date what-if draws a primary ring; a peer editing it draws a
  * presence rule; a remote change glows once.
  */
-import { cn } from "cn";
+
 import {
 	ArrowDown,
 	ArrowUp,
@@ -86,6 +86,7 @@ import { useFormPresence } from "@/lib/realtime/form-presence";
 import { useEditingPeer } from "@/lib/realtime/presence";
 import { useFollowToggle } from "@/lib/realtime/view-ui";
 import { TESTID } from "@/lib/testids";
+import { cn } from "@/lib/utils";
 import { useFlash, useUi } from "@/lib/workspace/ui-store";
 import { useProposalMarks } from "@/lib/workspace/use-proposals";
 import { useWorkspace } from "@/lib/workspace/use-workspace";

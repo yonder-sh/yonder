@@ -2,7 +2,7 @@
  * Lazy `ResultsMap`: MapLibre loads on first use, client-only; the quiet
  * basemap colour stands in while it loads or without WebGL.
  */
-import { cn } from "cn";
+
 import {
 	Component,
 	lazy,
@@ -11,6 +11,7 @@ import {
 	useEffect,
 	useState,
 } from "react";
+import { cn } from "@/lib/utils";
 import type { ResultsMapProps } from "./results-map.impl";
 
 const Impl = lazy(() => import("./results-map.impl"));

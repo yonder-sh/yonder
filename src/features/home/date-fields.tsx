@@ -5,7 +5,7 @@
  * calendar dates, never instants): the Date objects react-day-picker needs
  * are built from local calendar parts, so no zone can shift a day.
  */
-import { cn } from "cn";
+
 import { CalendarDays } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { DateRange } from "react-day-picker";
@@ -17,6 +17,7 @@ import {
 	PopoverTrigger,
 } from "@/components/ui/popover";
 import { formatDateRange, formatDayDate } from "@/lib/format";
+import { cn } from "@/lib/utils";
 
 export function toDate(iso: string | null | undefined): Date | undefined {
 	if (!iso) return undefined;

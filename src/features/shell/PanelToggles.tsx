@@ -5,7 +5,7 @@
  * rail at the right edge. Both are personal layout (`useShell`, remembered
  * on this device, never followed), with ⌘\ and ⌘⇧\ as shortcuts.
  */
-import { cn } from "cn";
+
 import {
 	PanelLeftClose,
 	PanelLeftOpen,
@@ -20,6 +20,7 @@ import {
 	TooltipContent,
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 import { MOD, SHIFT } from "./ShortcutsDialog";
 import { useShell } from "./shell-store";
 import { SHELL_TESTID } from "./testids";

@@ -18,7 +18,6 @@
  * counts the user's own "Mark booked" edits (each bumps the trip by one).
  */
 import { useQuery } from "@tanstack/react-query";
-import { cn } from "cn";
 import { CalendarDays, Minus, Plus, TriangleAlert } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useEditGuard } from "@/components/common/edit-guard";
@@ -48,6 +47,7 @@ import { errorCode } from "@/lib/errors";
 import { tripKeys } from "@/lib/query/keys";
 import { useFormPresence } from "@/lib/realtime/form-presence";
 import { TESTID } from "@/lib/testids";
+import { cn } from "@/lib/utils";
 import { useWorkspaceOptional } from "@/lib/workspace/model-context";
 import { useUi } from "@/lib/workspace/ui-store";
 import { DateImpactList, dayMonth } from "./DateImpactList";

@@ -14,7 +14,6 @@
  * media or receipts).
  */
 import { useQuery } from "@tanstack/react-query";
-import { cn } from "cn";
 import {
 	ChevronRight,
 	ExternalLink,
@@ -52,6 +51,7 @@ import type { GraphNode } from "@/lib/engine/types";
 import { humanError } from "@/lib/errors";
 import { mediaUrl } from "@/lib/media-url";
 import { capabilitiesQuery } from "@/lib/query/trip-queries";
+import { cn } from "@/lib/utils";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { getPlacePhotos, type PlacePhoto } from "../places.functions";
 import { PLACES_TESTID } from "../testids";

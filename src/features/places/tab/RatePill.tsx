@@ -7,10 +7,11 @@
  * whenever you have places to rate here; hidden at 0, for people who can't
  * rate, and while the feed itself is open. A tap opens the full-screen feed.
  */
-import { cn } from "cn";
+
 import { Star } from "lucide-react";
 import type { CSSProperties, MouseEvent } from "react";
 import { useRateTarget } from "@/features/shell/rate-entry";
+import { cn } from "@/lib/utils";
 import { useUi } from "@/lib/workspace/ui-store";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { PLACES_TAB_TESTID } from "./testids";

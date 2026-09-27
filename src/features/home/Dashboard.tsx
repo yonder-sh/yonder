@@ -11,7 +11,6 @@
  */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { cn } from "cn";
 import { ArrowRight, Check, Inbox, Plus } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -49,6 +48,7 @@ import { MENTION_TOKEN_RE } from "@/lib/notes/mentions";
 import { meKeys } from "@/lib/query/keys";
 import { useOnline } from "@/lib/realtime/connection";
 import { TESTID } from "@/lib/testids";
+import { cn } from "@/lib/utils";
 import { AccountMenu } from "./AccountMenu";
 import { CardMenu } from "./CardMenu";
 import { DuplicateTripDialog } from "./DuplicateTripDialog";

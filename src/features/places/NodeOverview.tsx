@@ -16,7 +16,6 @@
  *   a rateable one (an area) leads with its ratings and where it fits.
  */
 import { useQuery } from "@tanstack/react-query";
-import { cn } from "cn";
 import {
 	BedDouble,
 	Check,
@@ -64,6 +63,7 @@ import {
 import { tripKeys } from "@/lib/query/keys";
 import { capabilitiesQuery } from "@/lib/query/trip-queries";
 import { TESTID } from "@/lib/testids";
+import { cn } from "@/lib/utils";
 import { useUi } from "@/lib/workspace/ui-store";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { DaysPerCityTable, PlannedDaysLine } from "./DaysPerCityTable";

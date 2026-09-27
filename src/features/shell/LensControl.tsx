@@ -3,7 +3,7 @@
  * is a foreground fill (a mode, not a selection, so never primary); disabled
  * levels explain why. `[` and `]` step it (use-workspace-hotkeys.ts).
  */
-import { cn } from "cn";
+
 import { useEffect, useRef } from "react";
 import {
 	Select,
@@ -21,6 +21,7 @@ import {
 import { NODE_TYPES } from "@/lib/domain/taxonomy";
 import type { Lens } from "@/lib/engine/types";
 import { TESTID } from "@/lib/testids";
+import { cn } from "@/lib/utils";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 
 export function LensControl({

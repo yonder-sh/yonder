@@ -38,7 +38,6 @@ export function crumbLayout(
 	};
 }
 
-import { cn } from "cn";
 import { ChevronDown, X } from "lucide-react";
 import { Fragment, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { TypeGlyph } from "@/components/common/glyphs";
@@ -63,6 +62,7 @@ import {
 } from "@/components/ui/popover";
 import { formatDateRange } from "@/lib/format";
 import { TESTID } from "@/lib/testids";
+import { cn } from "@/lib/utils";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { CrumbPresence } from "./cursors/presence-ui";
 import { SHELL_TESTID } from "./testids";

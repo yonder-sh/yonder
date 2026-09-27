@@ -1,4 +1,4 @@
-import { cn } from "cn";
+import { cn } from "@/lib/utils";
 
 /**
  * The Yonder mark (brand/logo/yonder-mark*.svg): the forked route in

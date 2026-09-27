@@ -8,7 +8,7 @@
  * - a leg or an unlocated block: its own rows.
  * New rows attach to what's shown ("This visit only" → the visit).
  */
-import { cn } from "cn";
+
 import { useMemo, useState } from "react";
 import { z } from "zod";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
@@ -18,6 +18,7 @@ import { bool, oneOf, useFollowValue, uuid } from "@/lib/realtime/view-ui";
 import type { ListKind } from "@/lib/schemas/enums";
 import type { BundleTarget } from "@/lib/schemas/targets";
 import { TESTID } from "@/lib/testids";
+import { cn } from "@/lib/utils";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { ListBoard } from "./ListBoard";
 import { rollupRows, type ScopeOptions, targetLabel } from "./list-model";

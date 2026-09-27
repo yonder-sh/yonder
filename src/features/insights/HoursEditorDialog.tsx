@@ -9,7 +9,7 @@
  * from the sheet — confirm or fix"; OSM with its link and attribution); Save
  * stores them as manual through `setOpeningHours` (proposable `node.hours`).
  */
-import { cn } from "cn";
+
 import { Copy, Plus, Trash2, X } from "lucide-react";
 import { createContext, useContext, useId, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -41,6 +41,7 @@ import { tripKeys } from "@/lib/query/keys";
 import { useFormPresence } from "@/lib/realtime/form-presence";
 import type { OpeningHours } from "@/lib/schemas/hours";
 import { TESTID } from "@/lib/testids";
+import { cn } from "@/lib/utils";
 import { useWorkspaceOptional } from "@/lib/workspace/model-context";
 import { useUi } from "@/lib/workspace/ui-store";
 import {

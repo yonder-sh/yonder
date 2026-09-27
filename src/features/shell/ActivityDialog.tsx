@@ -6,7 +6,6 @@
  * the inspector's recent-activity footer.
  */
 import { useQuery } from "@tanstack/react-query";
-import { cn } from "cn";
 import { useMemo, useState } from "react";
 import { presenceColor } from "@/components/common/member";
 import {
@@ -19,6 +18,7 @@ import {
 import { buildDigest, type DigestLine } from "@/lib/engine/digest";
 import { activityQuery, tripDigestQuery } from "@/lib/query/trip-queries";
 import { bool, useFollowValue } from "@/lib/realtime/view-ui";
+import { cn } from "@/lib/utils";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { type EntityRefs, selForRefs } from "./activity-sel";
 import { timeAgo } from "./inbox-model";

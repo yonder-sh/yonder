@@ -10,7 +10,6 @@
  */
 import "./landing.css";
 import { Link } from "@tanstack/react-router";
-import { cn } from "cn";
 import {
 	ArrowRight,
 	Eye,
@@ -32,6 +31,7 @@ import {
 	useContext,
 } from "react";
 import { PRIORITIES, PRIORITY_ORDER } from "@/lib/domain/taxonomy";
+import { cn } from "@/lib/utils";
 import { YonderLockup } from "@/routes/(auth)/-components/yonder-lockup";
 import {
 	countryOf,

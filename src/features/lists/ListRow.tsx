@@ -15,7 +15,6 @@
 
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { cn } from "cn";
 import {
 	CalendarPlus,
 	GripVertical,
@@ -53,6 +52,7 @@ import type { GraphIndex } from "@/lib/engine/graph-index";
 import type { ScheduleResult } from "@/lib/engine/types";
 import { useFormPresence } from "@/lib/realtime/form-presence";
 import type { BundleTarget } from "@/lib/schemas/targets";
+import { cn } from "@/lib/utils";
 import { useUi } from "@/lib/workspace/ui-store";
 import { useProposalMarks } from "@/lib/workspace/use-proposals";
 import { useWorkspace } from "@/lib/workspace/use-workspace";

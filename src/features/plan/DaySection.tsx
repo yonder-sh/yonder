@@ -11,7 +11,6 @@ import {
 	verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { cn } from "cn";
 import {
 	type ReactNode,
 	useCallback,
@@ -26,6 +25,7 @@ import { pairKey } from "@/lib/engine/graph-index";
 import { localDateOf } from "@/lib/engine/time";
 import { formatTime } from "@/lib/format";
 import { copyAnchorId } from "@/lib/realtime/cursor-protocol";
+import { cn } from "@/lib/utils";
 import { useProposalMarks } from "@/lib/workspace/use-proposals";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { AddMenu } from "./AddMenu";

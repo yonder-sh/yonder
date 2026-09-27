@@ -19,7 +19,6 @@
 import "./plan.css";
 import { useDndContext } from "@dnd-kit/core";
 import { useQuery } from "@tanstack/react-query";
-import { cn } from "cn";
 import { ChevronsDownUp, ChevronsUpDown, Users } from "lucide-react";
 import {
 	type ReactNode,
@@ -54,6 +53,7 @@ import { userPrefsQuery } from "@/lib/query/trip-queries";
 import { decodePlanFolds, encodePlanFolds } from "@/lib/realtime/view-protocol";
 import { useFollowedUi, usePublishViewUi } from "@/lib/realtime/view-ui";
 import { TESTID } from "@/lib/testids";
+import { cn } from "@/lib/utils";
 import { useUi } from "@/lib/workspace/ui-store";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { cardTone } from "./card-tone";

@@ -5,9 +5,10 @@
  * the apricot "next" dot (DESIGN §1: now / next). The step is the URL's
  * view (`pv`), so it deep-links and follows like the rest of the tab.
  */
-import { cn } from "cn";
+
 import { ChevronRight } from "lucide-react";
 import type { ReactNode } from "react";
+import { cn } from "@/lib/utils";
 import {
 	FLOW_STEPS,
 	type FlowStep,

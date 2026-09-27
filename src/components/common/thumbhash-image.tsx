@@ -2,9 +2,10 @@
  * An image that shows its thumbhash placeholder until it loads (SPEC §12.6).
  * The placeholder is decoded once per hash.
  */
-import { cn } from "cn";
+
 import { useMemo, useState } from "react";
 import { thumbHashToDataURL } from "thumbhash";
+import { cn } from "@/lib/utils";
 
 function decode(hash: string | null | undefined): string | undefined {
 	if (!hash) return undefined;

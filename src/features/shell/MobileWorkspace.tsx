@@ -7,7 +7,6 @@
  * 92%), the inspector as a drawer over it, and the (+) FAB.
  */
 import { Link } from "@tanstack/react-router";
-import { cn } from "cn";
 import {
 	ChevronDown,
 	ChevronLeft,
@@ -49,6 +48,7 @@ import { mustRedact } from "@/lib/auth/roles";
 import { signOut } from "@/lib/auth/sign-out";
 import { bool, useFollowedStore, useFollowState } from "@/lib/realtime/view-ui";
 import { TESTID } from "@/lib/testids";
+import { cn } from "@/lib/utils";
 import { useUi } from "@/lib/workspace/ui-store";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { quickExpenseTarget } from "./bundle-target";

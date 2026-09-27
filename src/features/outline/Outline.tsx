@@ -20,7 +20,6 @@ import {
 	SortableContext,
 	verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { cn } from "cn";
 import {
 	ChevronDown,
 	ChevronRight,
@@ -63,6 +62,7 @@ import {
 	useFollowValue,
 } from "@/lib/realtime/view-ui";
 import { TESTID } from "@/lib/testids";
+import { cn } from "@/lib/utils";
 import { matchesFilter } from "@/lib/workspace/filter-match";
 import { useUi } from "@/lib/workspace/ui-store";
 import { useWorkspace } from "@/lib/workspace/use-workspace";

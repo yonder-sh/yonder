@@ -5,7 +5,7 @@
  * "Sunrise 05:47 · Golden hour 16:32 · Sunset 17:07 · Tokyo". Times are the
  * place's local time, computed offline (suncalc).
  */
-import { cn } from "cn";
+
 import { Sunrise, Sunset } from "lucide-react";
 import {
 	Tooltip,
@@ -13,6 +13,7 @@ import {
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { TESTID } from "@/lib/testids";
+import { cn } from "@/lib/utils";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { INSIGHTS_TESTID } from "./testids";
 import { daySunOf } from "./use-hours-issues";

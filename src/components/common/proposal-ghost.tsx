@@ -11,13 +11,14 @@
  *
  *   <ProposalGhost marks={useProposalMarks(`item:${id}`)}>{card}</ProposalGhost>
  */
-import { cn } from "cn";
+
 import { TriangleAlert } from "lucide-react";
 import type { CSSProperties, ReactNode } from "react";
 import type { ProposalMark } from "@/lib/engine/proposals";
 import { formatDuration } from "@/lib/format";
 import type { Json } from "@/lib/schemas/proposals";
 import { TESTID } from "@/lib/testids";
+import { cn } from "@/lib/utils";
 import { MemberAvatar, presenceColor } from "./member";
 
 /** The first applied (non-stacked) mark, else the first one. */

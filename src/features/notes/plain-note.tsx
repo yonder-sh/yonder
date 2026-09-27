@@ -6,9 +6,10 @@
  * the same `.yonder-note` styles, so the swap to the real render doesn't move
  * anything.
  */
-import { cn } from "cn";
+
 import type { ReactNode } from "react";
 import { safeUrlTransform } from "@/components/common/markdown-text";
+import { cn } from "@/lib/utils";
 import { NoteMentionChip } from "./mention-chip";
 
 type PmNode = {

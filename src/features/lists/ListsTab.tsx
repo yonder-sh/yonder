@@ -6,12 +6,13 @@
  * root Todo opens in View = Due: the MAIN list of everything, overdue first.
  * The list is the URL's `list=todo|shopping` (the inbox deep-links with it).
  */
-import { cn } from "cn";
+
 import { useEffect, useMemo, useRef, useState } from "react";
 import { oneOf, useFollowValue } from "@/lib/realtime/view-ui";
 import type { ListKind } from "@/lib/schemas/enums";
 import type { BundleTarget } from "@/lib/schemas/targets";
 import { TESTID } from "@/lib/testids";
+import { cn } from "@/lib/utils";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { ListBoard } from "./ListBoard";
 import { rollupRows, type ScopeOptions } from "./list-model";

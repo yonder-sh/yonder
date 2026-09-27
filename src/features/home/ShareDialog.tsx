@@ -25,7 +25,6 @@
  * name merges in, and the menu says so); any guest removed.
  */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { cn } from "cn";
 import {
 	Check,
 	CircleOff,
@@ -83,6 +82,7 @@ import { meKeys, tripKeys } from "@/lib/query/keys";
 import { sessionQuery } from "@/lib/query/trip-queries";
 import { normalizePersonName } from "@/lib/schemas/people";
 import { TESTID } from "@/lib/testids";
+import { cn } from "@/lib/utils";
 import { useUi } from "@/lib/workspace/ui-store";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { ClaimConfirmDialog } from "./ClaimConfirm";

@@ -6,7 +6,7 @@
  * over-allocated / derived / unbudgeted from the hierarchy engine; a
  * trip-default editor for owners and editors; the private toggle.
  */
-import { cn } from "cn";
+
 import { Lock, MoreHorizontal, Plus } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -62,6 +62,7 @@ import {
 	EXPENSE_CATEGORY_VALUES,
 	type ExpenseCategory,
 } from "@/lib/schemas/enums";
+import { cn } from "@/lib/utils";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import {
 	deleteBudgetLine,

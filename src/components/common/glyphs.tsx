@@ -3,7 +3,7 @@
  * glyphs, family dots, travel-mode glyphs, line chips and flags. All icons use
  * `strokeWidth 1.5` and are decorative unless given a label.
  */
-import { cn } from "cn";
+
 import {
 	BedDouble,
 	Car,
@@ -24,6 +24,7 @@ import {
 } from "@/lib/domain/taxonomy";
 import { flagEmoji } from "@/lib/format";
 import type { LegMode, NodeType, PlaceCategory } from "@/lib/schemas/enums";
+import { cn } from "@/lib/utils";
 
 type GlyphProps = { className?: string; label?: string };
 

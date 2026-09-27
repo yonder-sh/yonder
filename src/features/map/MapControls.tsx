@@ -5,7 +5,7 @@
  * (ADDENDUM §10) and zoom ± (hidden on touch). Plus the chips that float over the map
  * (DESIGN §9.4): "Show areas", the active-filter summary, the empty card.
  */
-import { cn } from "cn";
+
 import {
 	ArrowDownRight,
 	CloudOff,
@@ -52,6 +52,7 @@ import {
 import type { GraphMember } from "@/lib/engine/types";
 import { bool, useFollowState } from "@/lib/realtime/view-ui";
 import type { Priority } from "@/lib/schemas/enums";
+import { cn } from "@/lib/utils";
 import {
 	EMPTY_FILTER,
 	isEmptyFilter,

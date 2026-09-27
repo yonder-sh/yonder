@@ -15,9 +15,10 @@
  * The editor (`MentionInputEditor`) loads lazily with the TipTap chunk (QA
  * VIS3-08, SPEC §19 PERF-05); a stand-in with the same box shows until then.
  */
-import { cn } from "cn";
+
 import { lazy, Suspense, useState } from "react";
 import { MENTION_TOKEN_RE } from "@/lib/notes/mentions";
+import { cn } from "@/lib/utils";
 import "./notes.css";
 
 export { docToTokens, tokensToDoc } from "./mention-tokens";

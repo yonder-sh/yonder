@@ -7,8 +7,8 @@
  * and nothing to hydrate. Reduced motion shows the finished route.
  */
 
-import { cn } from "cn";
 import type { CSSProperties } from "react";
+import { cn } from "@/lib/utils";
 import { HERO_GLOBE } from "./colors";
 import {
 	buildScene,

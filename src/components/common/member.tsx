@@ -11,7 +11,7 @@
  * pickers, e.g. `MentionInput`, split and payer editors) turn a typed name
  * that isn't a member yet into a placeholder via `addPlaceholder`.
  */
-import { cn } from "cn";
+
 import { Check, UserPlus, Users } from "lucide-react";
 import { type ReactNode, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -36,6 +36,7 @@ import {
 	normalizePersonName,
 	PLACEHOLDER_NAME_MAX,
 } from "@/lib/schemas/people";
+import { cn } from "@/lib/utils";
 import { useWorkspaceOptional } from "@/lib/workspace/model-context";
 import {
 	AVATAR_PX,

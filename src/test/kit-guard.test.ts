@@ -10,6 +10,7 @@ import {
 	BASELINE_PATH,
 	type GuardKind,
 	type GuardReport,
+	rawCnImports,
 	scanKitGuard,
 } from "./kit-guard";
 
@@ -50,5 +51,9 @@ describe("the kit guard", () => {
 			}
 		}
 		expect(loose).toEqual([]);
+	});
+
+	it('imports cn from "@/lib/utils", which knows text-meta and text-body', () => {
+		expect(rawCnImports(root)).toEqual([]);
 	});
 });

@@ -5,7 +5,7 @@
  * conflict line with "Accept anyway", the closed status, and the
  * ReviewDrawer row itself.
  */
-import { cn } from "cn";
+
 import {
 	Check,
 	CircleCheck,
@@ -35,6 +35,7 @@ import {
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
 import type { ProposalConflict, ProposalDto } from "@/lib/schemas/proposals";
+import { cn } from "@/lib/utils";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { describeProposal } from "./describe-proposal";
 import {

@@ -62,3 +62,14 @@ export function scanKitGuard(root: string): GuardReport {
 }
 
 export const BASELINE_PATH = "src/test/kit-guard.baseline.json";
+
+/** Files importing `cn` from the package, which doesn't know the kit's sizes. */
+export function rawCnImports(root: string): string[] {
+	return walk(join(root, "src"), [])
+		.map((f) => relative(root, f).split("\\").join("/"))
+		.filter((rel) =>
+			/^(?:import|export)\b[^;]*\bfrom "cn";/m.test(
+				readFileSync(join(root, rel), "utf8"),
+			),
+		);
+}

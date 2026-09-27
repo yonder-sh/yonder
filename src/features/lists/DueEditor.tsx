@@ -7,7 +7,7 @@
  * before at 10:00 JST", "355 days before", "the 10th, 2 months before") and
  * Clear. A live preview shows the resolved date.
  */
-import { cn } from "cn";
+
 import { CalendarClock, Link2 } from "lucide-react";
 import { type ReactNode, type RefObject, useMemo, useState } from "react";
 import { TimeInput } from "@/components/common/time";
@@ -33,6 +33,7 @@ import { dueCtxOf, effectiveDue } from "@/lib/engine/due";
 import { tzLabel } from "@/lib/engine/time";
 import type { DueKind } from "@/lib/schemas/enums";
 import type { DueRule } from "@/lib/schemas/lists";
+import { cn } from "@/lib/utils";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { dayLabel, itemName } from "./list-model";
 import type { ListItemDto } from "./lists.functions";

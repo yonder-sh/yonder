@@ -6,7 +6,7 @@
  * arrival day of an overnight flight. The block drags as one unit; the drop
  * rules live in the Plan's drop handler.
  */
-import { cn } from "cn";
+
 import { Lock, Plane } from "lucide-react";
 import type { CSSProperties } from "react";
 import { useEditGuard } from "@/components/common/edit-guard";
@@ -25,6 +25,7 @@ import type { GraphLeg, ScheduledLeg } from "@/lib/engine/types";
 import { formatDuration, formatTime } from "@/lib/format";
 import type { FlightDetails } from "@/lib/schemas/legs";
 import { TESTID } from "@/lib/testids";
+import { cn } from "@/lib/utils";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { LegBundleIcons } from "./ItemCard";
 import { LegMarks, Rail, RowFrame } from "./LegRow";

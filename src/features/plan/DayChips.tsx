@@ -4,10 +4,11 @@
  * a long press starts a range and the next tap ends it ("D3–D5"). The active
  * chip scrolls into view.
  */
-import { cn } from "cn";
+
 import { useEffect, useRef, useState } from "react";
 import { formatDayDate } from "@/lib/format";
 import { TESTID } from "@/lib/testids";
+import { cn } from "@/lib/utils";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 
 const LONG_PRESS_MS = 450;

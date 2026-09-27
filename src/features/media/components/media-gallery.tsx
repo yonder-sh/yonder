@@ -6,7 +6,6 @@
  * flight, the lightbox (photos, videos, social) and the PDF viewer.
  */
 import { useQueryClient } from "@tanstack/react-query";
-import { cn } from "cn";
 import {
 	lazy,
 	type ReactNode,
@@ -24,6 +23,7 @@ import type { RollupOptions } from "@/lib/engine/rollup";
 import { humanError } from "@/lib/errors";
 import { tripKeys } from "@/lib/query/keys";
 import { anchorKey } from "@/lib/realtime/cursor-protocol";
+import { cn } from "@/lib/utils";
 import { useProposalMarks } from "@/lib/workspace/use-proposals";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { buildGroups, type Tile } from "../gallery-groups";

@@ -5,7 +5,7 @@
  * payments and balances carry over). Viewers and link guests never add people
  * (`useAddPerson()` is null for them).
  */
-import { cn } from "cn";
+
 import { Check, ChevronDown, UserPlus } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -33,6 +33,7 @@ import {
 	normalizePersonName,
 	PLACEHOLDER_NAME_MAX,
 } from "@/lib/schemas/people";
+import { cn } from "@/lib/utils";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 
 export function PersonSelect({
