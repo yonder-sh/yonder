@@ -39,10 +39,10 @@ test("desktop: a trip link lands on the Overview, with the stats and the route",
 	await expect(ov).toHaveAttribute("data-layout", "wide");
 	await expect(page.getByTestId(TESTID.tripMap)).toHaveCount(0);
 
-	// The demo: 5 days, Mt. Fuji the one stay; places and a flight planned.
+	// The demo: 5 days; Tokyo (from its days' stops) and Mt. Fuji (the one stay).
 	const stat = (k: string) => page.locator(`[data-testid=${O.stat}][data-stat=${k}]`);
 	await expect(stat("days")).toContainText("5");
-	await expect(stat("cities")).toContainText("1");
+	await expect(stat("cities")).toContainText("2");
 	await expect(stat("flights")).toContainText(/flights?/);
 	await expect(stat("places")).toContainText("places planned");
 	await expect(stat("km")).toContainText("km travelled");
@@ -95,7 +95,7 @@ test("a stay on the route strip opens its days in the Plan; a day line opens tha
 	const c = await cloneFixtureTrip(page.request);
 	await page.setViewportSize({ width: 1440, height: 900 });
 	await page.goto(`/t/${c.slug}`);
-	const stay = page.getByTestId(O.strip).getByTestId(O.stay).first();
+	const stay = page.getByTestId(O.strip).getByTestId(O.stay).filter({ hasText: "Mt. Fuji" });
 	await expect(stay).toHaveAttribute("data-days", "2027-10-05");
 	// Hovering turns the globe there (the ring marks it); a click opens the Plan.
 	await stay.hover();

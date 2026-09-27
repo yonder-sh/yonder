@@ -362,3 +362,30 @@ describe("routeView", () => {
 		if (v.kind === "globe") expect(v.spreadDeg).toBeLessThan(20);
 	});
 });
+
+describe("nights with no stay set", () => {
+	// Tokyo: a hotel night, then two nights with stops but no stay, then Seoul.
+	const half = buildScenario({
+		nodes: [
+			{
+				key: "tokyoHotel",
+				parent: "shibuya",
+				type: "place",
+				category: "lodging",
+				name: "Tokyo hotel",
+				at: [35.66, 139.7],
+			},
+		],
+		days: [
+			{ night: "tokyoHotel", items: [{ k: "sensoji", node: "sensoji" }] },
+			{ items: [{ k: "loft", node: "loft" }] },
+			{ items: [{ k: "meiji", node: "meijiJingu" }] },
+			{ items: [{ k: "kiyomizu", node: "kiyomizu" }] },
+		],
+	});
+	const r = tripRoute(indexGraph(half.graph));
+
+	it("take the day's city while the next stop is in it too; a move or the last day leaves it unknown", () => {
+		expect(r.stays.map((x) => [x.name, x.nights])).toEqual([["Tokyo", 2]]);
+	});
+});

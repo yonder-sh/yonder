@@ -310,6 +310,7 @@ describe("card data", () => {
 	it("draws an empty trip without falling over", () => {
 		const g = exampleGraph(ASIA_2027);
 		g.days = g.days.map((d) => ({ ...d, nightNodeId: null }));
+		g.items = [];
 		for (const size of SIZES) {
 			const card = buildShareCard(shareCardData(g), size, m);
 			expect(card.layout.rows).toHaveLength(0);

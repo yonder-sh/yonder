@@ -7,9 +7,11 @@
  * - **Stays**: runs of consecutive nights in one city. A night's city is the
  *   stay node's nearest `city` ancestor-or-self, else `region` (Mt. Fuji),
  *   else `area`, else the node itself.
- * - **Nights with no stay** count toward a country only when the stays on
- *   both sides are in that country (a night train or bus: `transitNights` on
- *   the stay after it). Red-eye flights out, between countries and home don't.
+ * - **Nights with no stay** fall back to the day's city when the day ends
+ *   where the next stop is (`dayCity`). The rest count toward a country only
+ *   when the stays on both sides are in that country (a night train or bus:
+ *   `transitNights` on the stay after it). Red-eye flights out, between
+ *   countries and home don't.
  * - **Rows** (share card list): consecutive stays in one country; going back
  *   to a country is a new row.
  * - **Hops** (the Overview's globe): every change of city between consecutive
@@ -231,6 +233,25 @@ export function routeView(points: readonly LngLat[]): RouteView {
 	return { kind: "flat", centerLng, spreadDeg };
 }
 
+const TRANSIT_CATEGORIES = new Set(["airport", "station", "port"]);
+
+/**
+ * A night with no stay set: the city of the day's last stop, but only when
+ * the trip's next stop is in that city too. A move, the last day, or an
+ * airport at the end of the day leaves the night unknown, so a
+ * half-planned trip reads short, never wrong (owner, 2026-09-27).
+ */
+function dayCity(ix: GraphIndex, dayId: string): RoutePlace | null {
+	const last = ix.lastLocated(dayId);
+	const node = ix.node(last?.nodeId);
+	if (!last || !node || ix.isDropped(node.id)) return null;
+	if (node.category && TRANSIT_CATEGORIES.has(node.category)) return null;
+	const city = cityOf(ix, node.id);
+	const next = ix.nextLocated(last.id);
+	if (!city || !next?.nodeId) return null;
+	return cityOf(ix, next.nodeId)?.id === city.id ? city : null;
+}
+
 export function tripRoute(ix: GraphIndex): TripRoute {
 	// ---- stays --------------------------------------------------------------
 	const stays: RouteStay[] = [];
@@ -242,7 +263,7 @@ export function tripRoute(ix: GraphIndex): TripRoute {
 			!ix.isDropped(day.nightNodeId)
 				? day.nightNodeId
 				: null;
-		const city = nightId ? cityOf(ix, nightId) : null;
+		const city = nightId ? cityOf(ix, nightId) : dayCity(ix, day.id);
 		if (!city) {
 			if (stays.length) pendingNull++;
 			continue;
