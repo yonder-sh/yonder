@@ -27,7 +27,7 @@ import { PlacesTab } from "@/features/places/tab/PlacesTab";
 import { ReminderLine } from "@/features/places/tab/ReminderLine";
 import { usePlacesToDecide } from "@/features/places/tab/use-places";
 import { PlanTab } from "@/features/plan/PlanTab";
-import { mustRedact } from "@/lib/auth/roles";
+import { seesMoney } from "@/lib/auth/roles";
 import { TESTID } from "@/lib/testids";
 import type { Tab } from "@/lib/workspace/search";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
@@ -48,13 +48,13 @@ const TAB_LABEL: Record<Tab, string> = {
 	money: "Money",
 };
 
-/** The tabs this viewer gets: guests never see money (EXTENSIONS §1.4). */
+/** The tabs this viewer gets: Money only for those who pay (`seesMoney`). */
 export function visibleTabs(me: {
-	role: Parameters<typeof mustRedact>[0]["role"];
+	role: Parameters<typeof seesMoney>[0]["role"];
 	isGuest: boolean;
 }): Tab[] {
 	const all = Object.keys(TAB_LABEL) as Tab[];
-	return mustRedact(me) ? all.filter((t) => t !== "money") : all;
+	return seesMoney(me) ? all : all.filter((t) => t !== "money");
 }
 
 export function CenterTabBar({

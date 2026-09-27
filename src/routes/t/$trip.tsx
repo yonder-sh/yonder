@@ -12,7 +12,7 @@ import {
 	useParams,
 	useRouter,
 } from "@tanstack/react-router";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/common/empty-state";
 import { YonderMark } from "@/components/common/yonder-mark";
@@ -51,7 +51,7 @@ import {
 	type WorkspaceRouteBinding,
 } from "@/lib/workspace/model-context";
 import type { NavTarget } from "@/lib/workspace/nav";
-import { WorkspaceSearch } from "@/lib/workspace/search";
+import { defaultTab, WorkspaceSearch } from "@/lib/workspace/search";
 import { useUi } from "@/lib/workspace/ui-store";
 
 /**
@@ -207,6 +207,21 @@ function TripWorkspace({
 		useUi.getState().loadSuggesting(tripId);
 		return () => useUi.getState().resetUi();
 	}, [tripId]);
+	// Someone who can only rate lands on Rate: a bare trip link, once per open
+	// (owner, 2026-09-27). Going to the Overview afterwards stays there.
+	const landed = useRef<string | null>(null);
+	useEffect(() => {
+		if (landed.current === tripId) return;
+		landed.current = tripId;
+		if (graph.me.role !== "rater" || splat) return;
+		if (search.tab || defaultTab(null, search) !== "overview") return;
+		void navigate({
+			to: "/t/$trip",
+			params: { trip: slug },
+			search: { ...search, tab: "places", pv: "rate" },
+			replace: true,
+		});
+	}, [tripId, graph.me.role, splat, search, slug, navigate]);
 
 	const go = useCallback(
 		(t: NavTarget, opts?: { replace?: boolean }) => {

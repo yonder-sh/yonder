@@ -135,6 +135,9 @@ test("a friend joins with the \"Can rate\" link, rates a place, and can't change
 	await expect
 		.poll(async () => (await graphOf(rita.page))?.me ?? null)
 		.toMatchObject({ role: "rater", isGuest: false });
+	// The bare link lands someone who can only rate on Rate.
+	await expect(rita.page).toHaveURL(/[?&]tab=places/);
+	await expect(rita.page).toHaveURL(/[?&]pv=rate/);
 	const me = (await graphOf(rita.page))?.me.memberId as string;
 	expect(me).toBeTruthy();
 
@@ -231,6 +234,10 @@ test("a plain viewer sees no active rating controls and can't rate", async ({
 	await expect
 		.poll(async () => (await graphOf(vic.page))?.me ?? null)
 		.toMatchObject({ role: "viewer", isGuest: false });
+	// "Can view" follows along: no Money tab (owner, 2026-09-27).
+	const tabs = vic.page.getByTestId(TESTID.centerTabs).getByRole("tab");
+	await expect(tabs.first()).toBeVisible();
+	await expect(tabs.filter({ hasText: "Money" })).toHaveCount(0);
 	const me = (await graphOf(vic.page))?.me.memberId as string;
 	expect(me).toBeTruthy();
 

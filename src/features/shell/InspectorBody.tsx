@@ -50,7 +50,7 @@ import { ProposalBar } from "@/features/suggest/ProposalBar";
 import { ProposalOverview } from "@/features/suggest/ProposalOverview";
 import { EdgeOverview } from "@/features/transit/EdgeOverview";
 import { LegOverview } from "@/features/transit/LegOverview";
-import { mustRedact } from "@/lib/auth/roles";
+import { seesMoney } from "@/lib/auth/roles";
 import { NODE_TYPES } from "@/lib/domain/taxonomy";
 import type { GraphNode } from "@/lib/engine/types";
 import { langFor } from "@/lib/format";
@@ -196,7 +196,7 @@ function Body({
 	// A leg without a row: the bundle tabs stay enabled and gate on ensureLeg.
 	const pendingLeg = !target && sel?.kind === "leg" ? sel.target : null;
 	const bundleTabs = target !== null || pendingLeg !== null;
-	const showMoney = !mustRedact(graph.me) && target !== null;
+	const showMoney = seesMoney(graph.me) && target !== null;
 	const node = sel?.kind === "node" ? ix.node(sel.id) : undefined;
 	const counts = useInspectorCounts(target);
 	const [tab, setTab] = useInspectorTab(sel, bundleTabs, showMoney);

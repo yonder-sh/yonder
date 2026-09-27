@@ -10,6 +10,7 @@ import {
 	mustRedact,
 	roleAtLeast,
 	roleLabel,
+	seesMoney,
 	type TripRole,
 } from "./roles";
 
@@ -221,6 +222,15 @@ describe("permission matrix (SPEC §11.3, EXTENSIONS §3.1)", () => {
 		// A rater sees exactly what a viewer sees.
 		expect(mustRedact({ role: "rater", isGuest: false })).toBe(false);
 		expect(mustRedact({ role: "rater", isGuest: true })).toBe(true);
+	});
+
+	it("shows money to members who pay: not link guests, not 'Can view'", () => {
+		expect(seesMoney({ role: "owner", isGuest: false })).toBe(true);
+		expect(seesMoney({ role: "editor", isGuest: false })).toBe(true);
+		expect(seesMoney({ role: "suggester", isGuest: false })).toBe(true);
+		expect(seesMoney({ role: "rater", isGuest: false })).toBe(true);
+		expect(seesMoney({ role: "viewer", isGuest: false })).toBe(false);
+		expect(seesMoney({ role: "editor", isGuest: true })).toBe(false);
 	});
 
 	it("a rater is a viewer who may rate (PLACES §1c); plain viewers never rate", () => {

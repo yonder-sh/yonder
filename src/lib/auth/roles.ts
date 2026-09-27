@@ -227,6 +227,15 @@ export function mustRedact(access: Pick<TripAccess, "role" | "isGuest">) {
 }
 
 /**
+ * Who gets the Money tab and panels: never link guests (EXTENSIONS §1.4), and
+ * not "Can view" members either, who follow along rather than pay (owner,
+ * 2026-09-27). The server still lets viewers read money; this is the UI.
+ */
+export function seesMoney(access: Pick<TripAccess, "role" | "isGuest">) {
+	return !mustRedact(access) && access.role !== "viewer";
+}
+
+/**
  * The workspace's edit mode (EXTENSIONS §2.3): `edit` applies directly,
  * `suggest` turns changes into proposals, `read` shows everything disabled.
  * `suggesting` is the editor's own "Suggesting" toggle.
