@@ -248,10 +248,9 @@ test("private day note: Dev keeps typing in the day's private note while Maya re
 	console.log("DB private rows:", psql(`select name || ' | day=' || coalesce(day_id::text,'-') || ' | ' || replace(plain_text, chr(10), ' / ') from yjs_documents where trip_id = '${s.c.tripId}' and owner_user_id is not null`));
 	await shot(s.d, "40-dev-day-note-open-during-removal");
 	const again = await openPrivateNote(s.d, `/t/${s.c.slug}?sel=root`);
-	await s.d.waitForTimeout(1500);
-	const text = await again.ed.innerText();
-	console.log("Dev's private trip note:", JSON.stringify(text));
-	expect(text).toContain(T);
+	// The note syncs in after the editor mounts: wait for it rather than a fixed pause.
+	await expect(again.ed).toContainText(T, { timeout: 15_000 });
+	console.log("Dev's private trip note:", JSON.stringify(await again.ed.innerText()));
 	await s.dctx.close();
 	await s.mctx.close();
 });
