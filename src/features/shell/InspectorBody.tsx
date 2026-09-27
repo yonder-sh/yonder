@@ -412,7 +412,8 @@ function useSectionLink(
 			: null;
 	const want = pending ?? search.itab ?? null;
 	useEffect(() => {
-		if (!want || want === "overview") return;
+		// Each selection (selKey) scrolls to its section once it has rendered.
+		if (!want || want === "overview" || selKey === "none") return;
 		// After the panels' first render, so the section sits where it will stay.
 		const t = window.setTimeout(() => {
 			scroller.current
