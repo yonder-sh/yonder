@@ -2,15 +2,32 @@
  * "Now 10:45 Harajuku →" / "Starts in 376 days · Day 1 Haneda" (SPEC §12.5
  * `NowNext()`, DESIGN §6): before the trip, the countdown and the first stop;
  * during it, the current stop (else the next one) with its local time, on a
- * live clock; after it, "Trip finished". A tap selects the stop. "Now" sits on
+ * live clock, and its day when that isn't today ("Tomorrow 09:30 …"); after
+ * it, "Trip finished". A tap selects the stop. "Now" sits on
  * the one glow pill of the sheet.
  */
 import { ChevronRight } from "lucide-react";
-import { daysUntil, formatTime, todayIn } from "@/lib/format";
+import { addDays, localDateOf } from "@/lib/engine/time";
+import { daysUntil, formatDayDate, formatTime, todayIn } from "@/lib/format";
 import { TESTID } from "@/lib/testids";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { useNow } from "./use-media";
 import { itemName } from "./use-plan-actions";
+
+/** "Tomorrow " or "Wed 6 Oct · " when the next stop isn't today (in its own zone). */
+export function nextDay(
+	start: Date,
+	at: number,
+	tz: string,
+	current: boolean,
+): string {
+	if (current) return "";
+	const date = localDateOf(start, tz);
+	const today = localDateOf(at, tz);
+	if (date === today) return "";
+	if (date === addDays(today, 1)) return "Tomorrow ";
+	return `${formatDayDate(date)} · `;
+}
 
 export function NowNext() {
 	const { ix, schedule, graph, nav } = useWorkspace();
@@ -52,7 +69,7 @@ export function NowNext() {
 		const s = it ? schedule.items[it.id] : undefined;
 		if (it && s) {
 			pill = current ? "Now" : "Next";
-			text = `${formatTime(current ? at : s.start, s.tz)} ${itemName(ix, it)}`;
+			text = `${nextDay(s.start, at, s.tz, !!current)}${formatTime(current ? at : s.start, s.tz)} ${itemName(ix, it)}`;
 			target = it.id;
 		} else {
 			text = "Trip finished";
