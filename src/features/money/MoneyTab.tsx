@@ -61,7 +61,7 @@ export function MoneyTab() {
 		<div className="flex min-h-10 flex-wrap items-center gap-2 px-4 pt-2">
 			<span className="text-xs text-muted-foreground">
 				{view
-					? `${view.rows.length} ${view.rows.length === 1 ? "cost" : "costs"}`
+					? `${view.rows.length} ${view.rows.length === 1 ? "expense" : "expenses"}`
 					: ""}
 				{days ? ` · ${formatDateRange(days.from, days.to)}` : ""}
 				{data?.ratesAsOf

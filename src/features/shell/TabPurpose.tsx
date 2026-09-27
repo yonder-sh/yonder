@@ -13,7 +13,7 @@ export const TAB_PURPOSE: Record<Tab, string> = {
 	media: "Photos, videos, PDFs and links from the trip.",
 	lists: "To-dos and shopping lists, shared or just for you.",
 	notes: "Tips, plans and anything else worth writing down.",
-	money: "What things cost, who paid, and who owes whom.",
+	money: "Expenses: who paid, and who owes whom.",
 };
 
 export function TabPurpose({

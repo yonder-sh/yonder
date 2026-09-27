@@ -2505,7 +2505,7 @@ function PaymentsEditor({
 									{p.rate.trim()
 										? "your rate"
 										: inherits
-											? "the cost's rate"
+											? "the expense's rate"
 											: auto.label}
 								</span>
 							</div>

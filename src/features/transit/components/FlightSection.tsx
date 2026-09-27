@@ -94,7 +94,7 @@ export function FlightSummary({
 	if (flight.baggage) facts.push(["Baggage", flight.baggage]);
 	if (flight.cost || redacted)
 		facts.push([
-			"Cost",
+			"Price",
 			redacted ? (
 				<Masked key="masked" />
 			) : flight.cost ? (

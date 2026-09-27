@@ -309,7 +309,7 @@ function flightFacets(memberName: (id: string) => string): Facet[] {
 			(f) => str(f.bookingRef),
 			(f) => str(f.bookingRef)?.toUpperCase() ?? null,
 		],
-		["cost", "Cost", (f) => moneyText(f.cost)],
+		["cost", "Price", (f) => moneyText(f.cost)],
 		[
 			"points",
 			"Points",

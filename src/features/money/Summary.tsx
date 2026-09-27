@@ -186,7 +186,7 @@ export function SummaryStrip({
 				) : null}
 				{hasPaidPlan ? (
 					<p>
-						Paid costs came in{" "}
+						Paid expenses came in{" "}
 						<Num className="text-foreground">
 							{d.fmt(Math.abs(s.deltaHome), { approx: false })}
 						</Num>{" "}
@@ -195,7 +195,9 @@ export function SummaryStrip({
 				) : null}
 				{s.unconverted ? (
 					<p>
-						{s.unconverted === 1 ? "1 cost is" : `${s.unconverted} costs are`}{" "}
+						{s.unconverted === 1
+							? "1 expense is"
+							: `${s.unconverted} expenses are`}{" "}
 						waiting for an exchange rate.
 					</p>
 				) : null}

@@ -718,14 +718,14 @@ export function FlightForm({
 								</Row>
 							</div>
 							<div className="grid gap-3 @lg:grid-cols-3">
-								<Row label="Cost">
+								<Row label="Price">
 									{redacted ? (
 										<Masked />
 									) : (
 										<div className="flex gap-1">
 											<Input
 												data-testid={TRANSIT_TESTID.flightCostCurrency}
-												aria-label="Cost currency"
+												aria-label="Price currency"
 												{...CAPS_INPUT}
 												value={s.costCurrency}
 												maxLength={3}
@@ -739,7 +739,7 @@ export function FlightForm({
 											/>
 											<Input
 												data-testid={TRANSIT_TESTID.flightCostAmount}
-												aria-label="Cost amount"
+												aria-label="Price amount"
 												placeholder="Amount"
 												inputMode="decimal"
 												value={s.costAmount}

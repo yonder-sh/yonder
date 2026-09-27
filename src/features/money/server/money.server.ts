@@ -1169,7 +1169,7 @@ async function assertRefundsFit(
 	];
 	if (!refunds.length) return;
 	if (orig.amountMinor === null || orig.currency === null)
-		bad("This cost has refunds, so it needs a cash amount.");
+		bad("This expense has refunds, so it needs a cash amount.");
 	const abs = (xs: readonly (number | null)[]) =>
 		xs.reduce<number>((a, x) => a + Math.abs(x ?? 0), 0);
 	if (refunds.every((r) => r.currency === orig.currency)) {
@@ -1642,7 +1642,7 @@ export async function updateExpenseRow(
 			.limit(1);
 		if (shared)
 			bad(
-				"This cost has refunds the group can see. Delete them before making it private.",
+				"This expense has refunds the group can see. Delete them before making it private.",
 			);
 	}
 	const cols = expenseCols(e, prepared.conv.planned, ctx.home);
@@ -1680,7 +1680,7 @@ export function paymentForRemainder(
 	if (!me.memberId) return fail("FORBIDDEN");
 	const currency = patch.currency ?? e.currency;
 	if (!currency || e.amountMinor === null)
-		bad("Points-only costs have nothing to pay.");
+		bad("Points-only expenses have nothing to pay.");
 	let amount = patch.amountMinor;
 	if (amount === undefined) {
 		const rem = remainingInCurrency(e);

@@ -353,7 +353,9 @@ function BudgetRow({
 			onSuccess: () => toast("Following the trip default"),
 		},
 	);
-	const label = c.category ? EXPENSE_CATEGORY_LABEL[c.category] : "All costs";
+	const label = c.category
+		? EXPENSE_CATEGORY_LABEL[c.category]
+		: "All expenses";
 	const amount = c.amount;
 	// A derived budget covers only its budgeted parts; the rest is shown as
 	// unbudgeted below, never counted against it too (ADDENDUM §7.1).
@@ -696,7 +698,7 @@ function BudgetEditor({
 							</SelectTrigger>
 							<SelectContent>
 								<SelectItem className="cursor-pointer" value="all">
-									All costs
+									All expenses
 								</SelectItem>
 								{EXPENSE_CATEGORY_VALUES.map((c) => (
 									<SelectItem className="cursor-pointer" key={c} value={c}>
