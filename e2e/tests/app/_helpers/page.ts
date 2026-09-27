@@ -102,3 +102,23 @@ export async function detailsSection(scope: Locator, name: DetailsSection): Prom
 	await s.scrollIntoViewIfNeeded();
 	return s;
 }
+
+type Scope = import("@playwright/test").Page | Locator;
+
+/** Where the Notes tab went (One Yonder): the details' Notes section (a `?tab=notes` link opens it). */
+export function notesView(scope: Scope): Locator {
+	return scope.getByTestId("inspector").locator('[data-section="notes"]').first();
+}
+
+/** Where the Media tab went: the details' Photos & links section (own items; a `?tab=media` link opens it). */
+export function mediaView(scope: Scope): Locator {
+	return scope.getByTestId("inspector").locator('[data-section="media"]').first();
+}
+
+/** Everything inside, grouped (the old Media tab's gallery): the section's See all. */
+export async function openMediaAll(page: import("@playwright/test").Page): Promise<Locator> {
+	const all = page.getByTestId("media-tab");
+	if (!(await all.isVisible())) await mediaView(page).getByTestId("media-see-all").click();
+	await all.waitFor();
+	return all;
+}

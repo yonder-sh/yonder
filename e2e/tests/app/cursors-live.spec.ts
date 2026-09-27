@@ -348,9 +348,9 @@ test("Spotlight: everyone follows the presenter, B breaks away, A ends it", asyn
 	// B breaks away; A's spotlight doesn't pull B back.
 	await b.page.getByTestId(S.followBar).getByRole("button", { name: "Stop" }).click();
 	await expect(b.page.getByTestId(S.followBar)).toHaveCount(0);
-	await a.page.getByRole("tab", { name: /Media/ }).click();
+	await a.page.getByRole("tab", { name: /Places/ }).click();
 	await b.page.waitForTimeout(1_500);
-	await expect(b.page).not.toHaveURL(/tab=media/);
+	await expect(b.page).not.toHaveURL(/tab=places/);
 	await expect(b.page.getByTestId(S.followBar)).toHaveCount(0);
 	// A ends it.
 	await a.page.getByTestId(S.spotlightEnd).click();

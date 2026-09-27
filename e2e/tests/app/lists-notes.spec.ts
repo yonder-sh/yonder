@@ -15,7 +15,7 @@ import { TESTID } from "../../../src/lib/testids";
 import { loginViaApi } from "./_helpers/auth";
 import { shotPath, storageStateOf } from "./_helpers/env";
 import { cloneFixtureTrip } from "./_helpers/fixture";
-import { collectConsole, detailsSection, expectLive } from "./_helpers/page";
+import { collectConsole, detailsSection, expectLive, notesView } from "./_helpers/page";
 import { openLink } from "./_helpers/link";
 
 async function open(browser: Browser, handle: "dev" | "maya", url: string) {
@@ -31,7 +31,7 @@ async function open(browser: Browser, handle: "dev" | "maya", url: string) {
 
 /** The Notes tab's own (top) editor. */
 const topEditor = (page: Page) =>
-	page.getByTestId(TESTID.notesTab).getByTestId(NT.editor).first();
+	notesView(page).getByTestId(NT.editor).first();
 
 /** ProseMirror picked up the click (its selection left the document start). */
 async function caretMoved(ed: Locator) {
@@ -152,10 +152,10 @@ test("a viewer reads live but can't type; a private note stays private", async (
 	await expect(topEditor(b.page)).toContainText("Meet at the east exit.");
 	await b.page.getByTestId(NT.privateToggle).getByRole("button", { name: /Only me/ }).click();
 	await expect(topEditor(b.page)).toHaveAttribute("data-editable", "true", { timeout: 15_000 });
-	await expect(b.page.getByTestId(TESTID.notesTab)).not.toContainText("matcha");
+	await expect(notesView(b.page)).not.toContainText("matcha");
 	await v.reload();
 	await expectLive(v);
-	await expect(v.getByTestId(TESTID.notesTab)).not.toContainText("matcha");
+	await expect(notesView(v)).not.toContainText("matcha");
 	await b.page.getByTestId(NT.privateToggle).getByRole("button", { name: /Shared/ }).click();
 	await a.ctx.close();
 	await b.ctx.close();

@@ -19,7 +19,7 @@ import { LISTS_TESTID as L } from "../../../src/features/lists/testids";
 import { TESTID } from "../../../src/lib/testids";
 import { shotPath, storageStateOf } from "./_helpers/env";
 import { cloneFixtureTrip } from "./_helpers/fixture";
-import { collectConsole, detailsSection, expectLive, expectNoHorizontalOverflow } from "./_helpers/page";
+import { collectConsole, detailsSection, expectLive, expectNoHorizontalOverflow, notesView } from "./_helpers/page";
 
 test.use({ storageState: storageStateOf("dev") });
 
@@ -459,9 +459,9 @@ test("mobile: the Lists tab in the sheet", async ({ page }, info) => {
 	await sheet.getByTestId(L.kindShopping).click();
 	await expect(sheet.getByText("Petty knife")).toBeVisible();
 	await page.screenshot({ path: shotPath("lists/shopping-mobile.png"), animations: "disabled" });
-	// The Notes tab in the same sheet.
-	await sheet.getByRole("tab", { name: /Notes/ }).click();
-	await expect(sheet.getByTestId(TESTID.notesTab)).toContainText("Passports valid until 2028");
+	// The trip's notes: a section of its details (One Yonder; an old Notes tab link lands there).
+	await page.goto(`${new URL(page.url()).pathname}?tab=notes`);
+	await expect(notesView(page)).toContainText("Passports valid until 2028");
 	await expectNoHorizontalOverflow(page);
 	await page.screenshot({ path: shotPath("lists/notes-mobile.png"), animations: "disabled" });
 });

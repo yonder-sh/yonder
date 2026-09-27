@@ -29,7 +29,7 @@ import { loginViaApi } from "./_helpers/auth";
 import { shotPath, storageStateOf } from "./_helpers/env";
 import { cloneFixtureTrip } from "./_helpers/fixture";
 import { logOffset, readOtpFromLog } from "./_helpers/otp";
-import { collectConsole, detailsSection, expectLive, hydrated } from "./_helpers/page";
+import { collectConsole, detailsSection, expectLive, hydrated, mediaView, notesView } from "./_helpers/page";
 import { openLink } from "./_helpers/link";
 
 const MAP_NOISE = [/GL Driver Message|WebGL|layers\[[^\]]+\]\.filter/];
@@ -333,7 +333,7 @@ test("J2 Asia 2027: zoom Japan → Tokyo → Shibuya, lens keys and Esc, Days 5�
 	expect(ranged.pins.every((p) => !p.hollow)).toBe(true);
 	// The Media tab follows the days.
 	await page.getByTestId(TESTID.centerTabs).locator('[data-tab="media"]').click();
-	await expect(page.getByTestId(TESTID.mediaTab)).toBeVisible();
+	await expect(mediaView(page)).toBeVisible();
 	await expect(page).toHaveURL(/tab=media/);
 	await expect(page).toHaveURL(new RegExp(`days=${d5}\\.\\.${d6}`));
 	const rangedMedia = await page.getByTestId(TESTID.galleryItem).count();
@@ -526,7 +526,7 @@ test("J4 two browsers: note with carets, reorder glows, mention rings the bell, 
 	const a = await open("dev", `/t/${c.slug}?tab=notes`);
 	const b = await open("maya", `/t/${c.slug}?tab=notes`);
 	const logsA = collectConsole(a.page, MAP_NOISE);
-	const top = (p: Page) => p.getByTestId(TESTID.notesTab).getByTestId(NT.editor).first();
+	const top = (p: Page) => notesView(p).getByTestId(NT.editor).first();
 	const toEnd = async (p: Page) => {
 		const ed = top(p);
 		await expect(ed).toHaveAttribute("data-editable", "true", { timeout: 15_000 });
@@ -800,7 +800,7 @@ test("J6 photo, video, TikTok and guide link roll up at Tokyo, Japan and on the 
 	await shot(page, "j6-03-day1-media");
 	await page.goto(`/t/${c.slug}?tab=media&days=2027-10-04`);
 	await expectLive(page);
-	await expect(page.getByTestId(TESTID.mediaTab)).toBeVisible();
+	await expect(mediaView(page)).toBeVisible();
 	await expect(tiles("video")).toHaveCount(0);
 	expect(logs.messages).toEqual([]);
 	await ctx.close();
@@ -1545,7 +1545,7 @@ test("X7 duplicate trip: shifted days, pinned times kept, the right things copie
 	await expect(page.getByTestId(TESTID.galleryItem).first()).toBeVisible();
 	await page.goto(`/t/${dup.trip.slug}?tab=notes`);
 	await expectLive(page);
-	await expect(page.getByTestId(TESTID.notesTab)).toContainText("Passports valid until 2028");
+	await expect(notesView(page)).toContainText("Passports valid until 2028");
 	const dupMoney = await listMoney(page, dup.trip.id);
 	expect(dupMoney.expenses).toHaveLength(0);
 	await page.goto(`/t/${dup.trip.slug}?tab=money`);

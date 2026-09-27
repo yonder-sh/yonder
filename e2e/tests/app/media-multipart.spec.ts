@@ -15,7 +15,7 @@ import { MEDIA_TESTID } from "../../../src/features/media/testids";
 import { TESTID } from "../../../src/lib/testids";
 import { storageStateOf } from "./_helpers/env";
 import { cloneFixtureTrip } from "./_helpers/fixture";
-import { expectLive } from "./_helpers/page";
+import { expectLive, mediaView } from "./_helpers/page";
 
 test.use({ storageState: storageStateOf("dev") });
 
@@ -57,7 +57,7 @@ test("a 40 MB video goes up in 16 MB parts, a failed part is retried alone, and 
 	const c = await cloneFixtureTrip(page.request);
 	await page.goto(`/t/${c.slug}/japan/tokyo?tab=media`);
 	await expectLive(page);
-	await expect(page.getByTestId(TESTID.mediaTab)).toBeVisible();
+	await expect(mediaView(page)).toBeVisible();
 
 	// Every PUT of the original, and the first try of part 2 dropped once.
 	const puts: URL[] = [];

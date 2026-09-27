@@ -16,7 +16,7 @@ import { TESTID } from "../../../src/lib/testids";
 import { shotPath } from "./_helpers/env";
 import { cloneFixtureTrip } from "./_helpers/fixture";
 import { openLink } from "./_helpers/link";
-import { expectLive } from "./_helpers/page";
+import { expectLive, mediaView, notesView } from "./_helpers/page";
 
 const AUTH = process.env.QA_AUTH_DIR ?? path.resolve("e2e/.auth");
 const auth = (h: string) => path.join(AUTH, `${h}.json`);
@@ -155,9 +155,9 @@ test("SUG-07: Maya can't type in notes (server-enforced); her addition is insert
 	test.setTimeout(120_000);
 	const url = `${TOKYO}/shinjuku/golden-gai?tab=notes`;
 	const m = await open(browser, "maya", url);
-	const ed = m.page.getByTestId(TESTID.notesTab).getByTestId(NT.editor).first();
+	const ed = notesView(m.page).getByTestId(NT.editor).first();
 	await expect(ed).toHaveAttribute("data-editable", "false", { timeout: 15_000 });
-	await expect(m.page.getByTestId(TESTID.notesTab).getByTestId(NT.readOnlyNote).first()).toBeVisible();
+	await expect(notesView(m.page).getByTestId(NT.readOnlyNote).first()).toBeVisible();
 	const tag = randomBytes(2).toString("hex");
 	await m.page.getByTestId(S.noteSuggestButton).first().click();
 	await m.page.getByTestId(S.noteTextarea).fill(`**Bring cash** ${tag}\n\n- ¥1,000 notes`);
@@ -171,12 +171,12 @@ test("SUG-07: Maya can't type in notes (server-enforced); her addition is insert
 	await expect(block.locator("strong", { hasText: "Bring cash" }).first()).toBeVisible();
 	await d.page.screenshot({ path: shot("sug07-dennis-block") });
 	await block.getByTestId(S.noteInsert).click();
-	const ded = d.page.getByTestId(TESTID.notesTab).getByTestId(NT.editor).first();
+	const ded = notesView(d.page).getByTestId(NT.editor).first();
 	await expect(ded.locator("p", { hasText: tag }).locator("strong", { hasText: "Bring cash" })).toBeVisible({ timeout: 10_000 });
 	await expect(ded.locator("li", { hasText: "¥1,000 notes" }).first()).toBeVisible();
 	await expect(block).toHaveCount(0, { timeout: 10_000 });
 	// And Maya sees the text live, as formatted Markdown.
-	const med = m.page.getByTestId(TESTID.notesTab).getByTestId(NT.editor).first();
+	const med = notesView(m.page).getByTestId(NT.editor).first();
 	await expect(med.locator("p", { hasText: tag }).locator("strong", { hasText: "Bring cash" })).toBeVisible({ timeout: 10_000 });
 	await d.ctx.close();
 	await m.ctx.close();
@@ -251,7 +251,7 @@ test("SUG-11/13: uploads are disabled for suggesters with the reason; a view lin
 	await m.page.waitForTimeout(1_000);
 	const hint = m.page.getByTestId(S.firstHint);
 	if (await hint.isVisible().catch(() => false)) await hint.getByRole("button", { name: "Got it" }).click();
-	await m.page.getByTestId(TESTID.mediaTab).getByRole("button", { name: /^Add$/ }).first().click();
+	await mediaView(m.page).getByRole("button", { name: /^Add$/ }).first().click();
 	await m.page.waitForTimeout(400);
 	await m.page.screenshot({ path: shot("sug11-maya-add-menu") });
 	const up = m.page.getByRole("menuitem", { name: /upload|photos|files/i }).first();
@@ -292,7 +292,7 @@ test("SUG-17: downgrading an editor to suggester makes her open note read-only w
 	const c = await demoClone(browser, "editor");
 	const url = `/t/${c.slug}?tab=notes`;
 	const m = await open(browser, "demomaya", url);
-	const ed = m.page.getByTestId(TESTID.notesTab).getByTestId(NT.editor).first();
+	const ed = notesView(m.page).getByTestId(NT.editor).first();
 	await expect(ed).toHaveAttribute("data-editable", "true", { timeout: 15_000 });
 	const o = await open(browser, "dev", url);
 	const mayaMember = c.members.maya as string;

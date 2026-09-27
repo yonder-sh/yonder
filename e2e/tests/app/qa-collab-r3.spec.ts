@@ -15,7 +15,7 @@ import { PLAN_TESTID as P } from "../../../src/features/plan/testids";
 import { SHELL_TESTID as SH } from "../../../src/features/shell/testids";
 import { TESTID } from "../../../src/lib/testids";
 import { shotPath } from "./_helpers/env";
-import { expectLive } from "./_helpers/page";
+import { expectLive, notesView } from "./_helpers/page";
 import { openLink } from "./_helpers/link";
 
 const AUTH = process.env.QA_AUTH_DIR ?? path.resolve("e2e/.auth");
@@ -441,7 +441,7 @@ test("HRS-05: Bar Centifolia ('18:00–03:00 (some sources list closed Wed — c
 // ---------------------------------------------------------------------------
 // Realtime
 // ---------------------------------------------------------------------------
-const topEditor = (p: Page) => p.getByTestId(TESTID.notesTab).getByTestId(NT.editor).first();
+const topEditor = (p: Page) => notesView(p).getByTestId(NT.editor).first();
 type Ed = {
 	editor?: {
 		state: { doc: { textBetween: (a: number, b: number, sep: string) => string; content: { size: number } } };

@@ -6,7 +6,7 @@ import path from "node:path";
 import { type Browser, expect, type Page, test } from "@playwright/test";
 import { NOTES_TESTID as NT } from "../../../src/features/notes/testids";
 import { TESTID } from "../../../src/lib/testids";
-import { detailsSection, expectLive } from "./_helpers/page";
+import { detailsSection, expectLive, notesView } from "./_helpers/page";
 import { openLink } from "./_helpers/link";
 
 // Needs this verifier's env (QA_AUTH_DIR with qa-* storage states for APP_URL); skipped in a normal `pnpm e2e`.
@@ -229,7 +229,7 @@ test("private note: only its author ever sees it", async ({ browser }) => {
 	await a.page.goto("/t/asia-2027/japan/tokyo/shinjuku?tab=notes");
 	await expectLive(a.page);
 	await a.page.waitForTimeout(1500);
-	expect(await a.page.getByTestId(TESTID.notesTab).innerText()).not.toMatch(/SECRET/);
+	expect(await notesView(a.page).innerText()).not.toMatch(/SECRET/);
 	// Activity feed.
 	const act = await a.page.evaluate(async () => {
 		const m = await import("/src/functions/graph.functions.ts");

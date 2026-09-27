@@ -395,8 +395,8 @@ test.describe("phone", () => {
 		await page.waitForTimeout(800);
 		await sheet.getByRole("tab", { name: /Lists/ }).click();
 		await expect(page).toHaveURL(/tab=lists/);
-		await sheet.getByRole("tab", { name: /Media/ }).click();
-		await expect(page).toHaveURL(/tab=media/);
+		await sheet.getByRole("tab", { name: /Places/ }).click();
+		await expect(page).toHaveURL(/tab=places/);
 		await page.goBack();
 		await page.waitForTimeout(800);
 		// Expected: back to the Lists tab, still inside the trip.

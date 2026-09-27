@@ -119,11 +119,17 @@ test("'Show others' cursors' off hides them; the notes editor hides my mouse cur
 	await expect(cursor).toHaveAttribute("data-state", "idle", { timeout: 9_000 });
 
 	// Notes: over the editor A's mouse cursor is hidden for B (the caret takes over).
-	await a.page.getByRole("tab", { name: /Notes/ }).click();
-	await b.page.getByRole("tab", { name: /Notes/ }).click();
+	// (One Yonder: notes are a section of the trip's details.)
+	for (const p of [a.page, b.page]) {
+		const u = new URL(p.url());
+		u.searchParams.set("sel", "root");
+		u.searchParams.set("itab", "notes");
+		await p.goto(u.toString());
+		await expectLive(p);
+	}
 	const editorA = a.page.locator("[data-cursor-caret] .ProseMirror").first();
 	await expect(editorA).toBeVisible();
-	await hover(a.page, a.page.locator('[data-cursor-anchor="tab:notes"]'));
+	await hover(a.page, a.page.locator(`[data-testid="${TESTID.inspector}"] [data-section="notes"] h3`).first());
 	await expect(cursor).toHaveAttribute("data-state", "on");
 	await hover(a.page, editorA, 0.3, 0.3);
 	await expect(cursor).toHaveAttribute("data-state", "off");

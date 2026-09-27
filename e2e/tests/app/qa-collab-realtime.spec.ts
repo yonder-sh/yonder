@@ -13,7 +13,7 @@ import { PLAN_TESTID as P } from "../../../src/features/plan/testids";
 import { TESTID } from "../../../src/lib/testids";
 import { shotPath } from "./_helpers/env";
 import { openLink } from "./_helpers/link";
-import { collectConsole, expectLive } from "./_helpers/page";
+import { collectConsole, expectLive, notesView } from "./_helpers/page";
 
 const AUTH = process.env.QA_AUTH_DIR ?? path.resolve("e2e/.auth");
 const auth = (h: string) => path.join(AUTH, `${h}.json`);
@@ -34,7 +34,7 @@ async function open(browser: Browser, handle: string | null, url: string) {
 	return { ctx, page };
 }
 
-const topEditor = (p: Page) => p.getByTestId(TESTID.notesTab).getByTestId(NT.editor).first();
+const topEditor = (p: Page) => notesView(p).getByTestId(NT.editor).first();
 type Ed = { editor?: { state: { doc: { textBetween: (a: number, b: number, sep: string) => string; content: { size: number } } }; commands: { focus: (p: "start" | "end") => boolean } } };
 /** The document's text (not innerText: that includes other people's caret labels). */
 const text = (p: Page) =>

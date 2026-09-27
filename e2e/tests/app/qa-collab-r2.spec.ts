@@ -16,7 +16,7 @@ import { SHELL_TESTID as SH } from "../../../src/features/shell/testids";
 import { SUGGEST_TESTID as S } from "../../../src/features/suggest/testids";
 import { TESTID } from "../../../src/lib/testids";
 import { shotPath } from "./_helpers/env";
-import { expectLive } from "./_helpers/page";
+import { expectLive, notesView } from "./_helpers/page";
 import { openLink } from "./_helpers/link";
 
 const AUTH = process.env.QA_AUTH_DIR ?? path.resolve("e2e/.auth");
@@ -737,7 +737,7 @@ test("Privacy: making a to-do private after Maya suggested an edit to it still s
 // Realtime (qa/SCENARIOS RT)
 // ---------------------------------------------------------------------------
 const GG = "/t/asia-2027/japan/tokyo/shinjuku/golden-gai";
-const topEditor = (p: Page) => p.getByTestId(TESTID.notesTab).getByTestId(NT.editor).first();
+const topEditor = (p: Page) => notesView(p).getByTestId(NT.editor).first();
 type Ed = {
 	editor?: {
 		state: { doc: { textBetween: (a: number, b: number, sep: string) => string; content: { size: number } } };
@@ -874,7 +874,7 @@ test("RT-12: the realtime server stops for ~6 s while Dennis types; he sees Reco
 		console.log(`[rt12] pill text: ${(await pill.innerText().catch(() => "")).trim()}`);
 		await snap(d.page, "r2-rt12-reconnecting");
 		// What Dennis SEES (the live editor is hidden while reconnecting; a saved copy shows instead).
-		const visible = await d.page.getByTestId(TESTID.notesTab).evaluate((el) => (el as HTMLElement).innerText);
+		const visible = await notesView(d.page).evaluate((el) => (el as HTMLElement).innerText);
 		const seesOwnLine = visible.includes(s1);
 		console.log(`[rt12] still sees the line he just typed: ${seesOwnLine}`);
 		await d.page.keyboard.type(s2, { delay: 40 });

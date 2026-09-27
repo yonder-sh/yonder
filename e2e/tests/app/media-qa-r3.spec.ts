@@ -21,7 +21,7 @@ import { TESTID } from "../../../src/lib/testids";
 import { loginViaApi } from "./_helpers/auth";
 import { shotPath } from "./_helpers/env";
 import { cloneFixtureTrip, type FixtureClone } from "./_helpers/fixture";
-import { collectConsole, expectLive } from "./_helpers/page";
+import { collectConsole, expectLive, mediaView } from "./_helpers/page";
 import { clearToasts } from "./media-helpers";
 
 test.skip(({ isMobile }) => isMobile, "desktop: hover controls and the lightbox toolbar");
@@ -37,7 +37,7 @@ async function person(browser: Browser, email: string, first: string, last: stri
 async function openMedia(page: Page, slug: string) {
 	await page.goto(`/t/${slug}/japan/tokyo?tab=media`);
 	await expectLive(page);
-	await expect(page.getByTestId(TESTID.mediaTab)).toBeVisible();
+	await expect(mediaView(page)).toBeVisible();
 }
 
 /** The server function a dev-mode `/_serverFn/<base64url {file, export}>` request calls. */
