@@ -398,7 +398,7 @@ export const SHEET_CATEGORY_MAP = {
  * step also differs in lightness and the label is always shown, so red-green
  * colour blindness still works. `bg`/`fg` fill a pill (a rating that stands
  * alone); `dot` is the 8px dot of the "dot + label" style in dense lists
- * (`PriorityDot`). `pinScale` lets priority drive pin size so colour stays
+ * (the kit's `RatingDot`). `pinScale` lets priority drive pin size so colour stays
  * free for the category. Not rated is `null` (no row), never a tier.
  */
 export const PRIORITIES = {

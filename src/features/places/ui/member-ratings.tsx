@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { EditGuard, useEditGuard } from "@/components/common/edit-guard";
 import { MarkdownText } from "@/components/common/markdown-text";
 import { MemberAvatar } from "@/components/common/member";
+import { RatingMenu, RatingPill } from "@/components/kit";
 import { Button } from "@/components/ui/button";
 import { can, canRateOwn } from "@/lib/auth/roles";
 import type { GraphMember, GraphNode } from "@/lib/engine/types";
@@ -29,7 +30,6 @@ import {
 } from "../lib/rate";
 import { useSetPriority } from "../mutations";
 import { PLACES_TESTID } from "../testids";
-import { PriorityBadge, PriorityPicker } from "./priority";
 
 /**
  * The comment field (WP-Lists' TipTap `MentionInput`) loads when a comment is
@@ -221,7 +221,7 @@ function MemberRow({
 				{allowed ? (
 					<EditGuard kind={own ? "rate" : "propose-ok"}>
 						<span data-testid={PLACES_TESTID.priorityPicker}>
-							<PriorityPicker
+							<RatingMenu
 								value={priority}
 								disabled={disabled}
 								align="end"
@@ -236,7 +236,7 @@ function MemberRow({
 						</span>
 					</EditGuard>
 				) : (
-					<PriorityBadge priority={priority} />
+					<RatingPill level={priority} />
 				)}
 			</div>
 			{editing && priority ? (

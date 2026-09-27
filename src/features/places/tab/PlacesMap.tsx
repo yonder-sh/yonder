@@ -22,7 +22,7 @@ import {
 	useState,
 } from "react";
 import { EmptyState } from "@/components/common/empty-state";
-import { PriorityDot } from "@/components/common/priority-dot";
+import { RatingDot } from "@/components/kit";
 import { Button } from "@/components/ui/button";
 import { InspectorBody } from "@/features/shell/InspectorBody";
 import { PRIORITIES } from "@/lib/domain/taxonomy";
@@ -353,7 +353,7 @@ export default function PlacesMap({ data }: { data: PlacesData }) {
 												<span className="flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
 													<span className="truncate">{r.where}</span>
 													{top ? (
-														<PriorityDot priority={top} className="text-xs" />
+														<RatingDot level={top} className="text-xs" />
 													) : null}
 												</span>
 											</span>

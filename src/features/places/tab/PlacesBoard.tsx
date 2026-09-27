@@ -11,6 +11,7 @@ import { type CSSProperties, useEffect, useMemo, useRef } from "react";
 import { CategoryIcon } from "@/components/common/glyphs";
 import { MemberAvatar } from "@/components/common/member";
 import { ThumbhashImage } from "@/components/common/thumbhash-image";
+import { RatingDot } from "@/components/kit";
 import type { MediaDto } from "@/features/media/media.functions";
 import { tripMediaQuery } from "@/features/media/queries";
 import { PIN_FAMILIES, PLACE_CATEGORIES } from "@/lib/domain/taxonomy";
@@ -23,7 +24,7 @@ import { rowReason } from "./bar";
 import type { PlaceRow } from "./model";
 import { categoryLabel, ownsKeys, useRowKeys } from "./PlacesTable";
 import { PLACES_TAB_TESTID } from "./testids";
-import { RatingDot, ScoreChip, SplitMark, StatusChip } from "./ui";
+import { ScoreChip, SplitMark, StatusChip } from "./ui";
 import { type PlacesData, useSplitAreas } from "./use-places";
 
 /** Each place's cover: its first ready photo (or video poster), by position. */
@@ -171,7 +172,7 @@ function Card({
 										title={`${m.id === access.memberId ? "You" : m.name}: ${p}${ratingsCount(m) ? "" : " (not counted)"}`}
 									>
 										<MemberAvatar memberId={m.id} size={16} ring={false} />
-										<RatingDot priority={p} />
+										<RatingDot level={p} label={false} />
 									</span>
 								) : null;
 							})}

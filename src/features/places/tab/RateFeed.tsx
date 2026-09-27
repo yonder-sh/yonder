@@ -48,6 +48,7 @@ import {
 import { createPortal } from "react-dom";
 import { MemberAvatar } from "@/components/common/member";
 import { ThumbhashImage } from "@/components/common/thumbhash-image";
+import { RatingPill } from "@/components/kit";
 import { Button } from "@/components/ui/button";
 import {
 	Select,
@@ -78,7 +79,6 @@ import { type Slide, usePlaceMedia } from "../rate/PlaceMedia";
 import { PLACES_TESTID } from "../testids";
 import { RatingCommentEditor } from "../ui/member-ratings";
 import { MiniMap } from "../ui/mini-map";
-import { PriorityBadge } from "../ui/priority";
 import {
 	FEED_ORDER_LABEL,
 	FEED_ORDERS,
@@ -842,7 +842,7 @@ function PlaceCard({
 								</span>
 							</span>
 							{mine ? (
-								<PriorityBadge priority={mine} className="shrink-0" />
+								<RatingPill level={mine} className="shrink-0" />
 							) : (
 								<span className="inline-flex h-7 shrink-0 items-center gap-1 rounded-full bg-white/15 px-2.5 text-xs font-medium text-white backdrop-blur-sm">
 									<ChevronUp className="size-3.5" />

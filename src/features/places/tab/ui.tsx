@@ -8,32 +8,10 @@
 import { cn } from "cn";
 import { Pin, Scale } from "lucide-react";
 import type { ReactNode } from "react";
-import { priorityDotVars } from "@/components/common/priority-dot";
-import type { Priority } from "@/lib/schemas/enums";
-import { PRIORITY_FILL, priorityVars } from "../ui/priority";
+import { RATING_FILL, ratingVars } from "@/components/kit";
 import type { StatusInfo } from "./lifecycle";
 import { formatScore, scoreTier } from "./score";
 import { PLACES_TAB_TESTID } from "./testids";
-
-/** A bare 8px rating dot (next to an avatar on a board card). */
-export function RatingDot({
-	priority,
-	className,
-}: {
-	priority: Priority;
-	className?: string;
-}) {
-	return (
-		<span
-			aria-hidden="true"
-			style={priorityDotVars(priority)}
-			className={cn(
-				"inline-block size-2 shrink-0 rounded-full bg-(--pd) dark:bg-(--pd-dark)",
-				className,
-			)}
-		/>
-	);
-}
 
 /** The group score as a pill on its tier's colour ("+6"). */
 export function ScoreChip({
@@ -54,10 +32,10 @@ export function ScoreChip({
 			data-testid={PLACES_TAB_TESTID.scoreChip}
 			data-score={score}
 			title={`Group score ${formatScore(score)} (Must +3 … Nah −2; unrated counts as 0)`}
-			style={priorityVars(tier)}
+			style={ratingVars(tier)}
 			className={cn(
 				"inline-flex shrink-0 items-center rounded-full font-mono font-semibold whitespace-nowrap tnum",
-				PRIORITY_FILL,
+				RATING_FILL,
 				size === "sm" ? "h-5 px-1.5 text-[11px]" : "h-[22px] px-2 text-xs",
 				className,
 			)}

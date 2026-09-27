@@ -29,12 +29,12 @@ import {
 import { useDnd, WorkspaceDnd } from "@/components/common/dnd/workspace-dnd";
 import { useEditGuard } from "@/components/common/edit-guard";
 import { TypeGlyph } from "@/components/common/glyphs";
-import { PriorityDot } from "@/components/common/priority-dot";
 import {
 	describeMark,
 	leadMark,
 	ProposalGhost,
 } from "@/components/common/proposal-ghost";
+import { RatingDot } from "@/components/kit";
 import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
@@ -183,7 +183,7 @@ function IdeaRow({
 				{ghost ? (
 					<span className="sr-only">suggested</span>
 				) : (
-					<PriorityDot priority={top} />
+					<RatingDot level={top} />
 				)}
 			</span>
 		</div>

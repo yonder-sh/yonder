@@ -22,6 +22,7 @@ import {
 import { type ComponentType, type ReactNode, useMemo, useRef } from "react";
 import { useEditGuard } from "@/components/common/edit-guard";
 import { TypeGlyph } from "@/components/common/glyphs";
+import { RatingPill } from "@/components/kit";
 import {
 	ContextMenuItem,
 	ContextMenuLabel,
@@ -46,7 +47,6 @@ import type { GraphNode } from "@/lib/engine/types";
 import { useUi } from "@/lib/workspace/ui-store";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { useOutlineUi } from "./outline-context";
-import { PriorityBadge } from "./PriorityBadge";
 import { typeLabel } from "./tree-rows";
 
 type ItemProps = {
@@ -260,7 +260,7 @@ export function NodeMenuItems({
 								disabled={rateOff}
 								onSelect={() => ui.actions.setPriority(node.id, me, p)}
 							>
-								<PriorityBadge priority={p} />
+								<RatingPill level={p} size="sm" />
 								{mine === p ? <Check className="ml-auto" /> : null}
 							</K.Item>
 						))}

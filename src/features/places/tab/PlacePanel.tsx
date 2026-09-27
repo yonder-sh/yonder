@@ -39,6 +39,7 @@ import { toast } from "sonner";
 import { EditGuard, useEditGuard } from "@/components/common/edit-guard";
 import { MarkdownText } from "@/components/common/markdown-text";
 import { MemberAvatar } from "@/components/common/member";
+import { RatingMenu, RatingPill } from "@/components/kit";
 import { Button } from "@/components/ui/button";
 import type { GraphMember, GraphNode } from "@/lib/engine/types";
 import { humanError } from "@/lib/errors";
@@ -56,7 +57,6 @@ import { priorityForKey, ratingsCount } from "../lib/rate";
 import { useSetPriority } from "../mutations";
 import { PLACES_TESTID } from "../testids";
 import { mayRate, RatingCommentEditor } from "../ui/member-ratings";
-import { PriorityBadge, PriorityPicker } from "../ui/priority";
 import { SchedulePicker } from "../ui/schedule-picker";
 import { rowReason } from "./bar";
 import { formatDayNumbers, type PlaceRow } from "./model";
@@ -164,7 +164,7 @@ function RatingRow({ row, member }: { row: PlaceRow; member: GraphMember }) {
 	const picker = mayRate(access, member) ? (
 		<EditGuard kind={mine ? "rate" : "propose-ok"}>
 			<span data-testid={PLACES_TESTID.priorityPicker}>
-				<PriorityPicker
+				<RatingMenu
 					value={p}
 					disabled={guard.disabled}
 					label={`Change ${mine ? "your" : `${member.name}'s`} rating for ${row.node.name}`}
@@ -210,7 +210,7 @@ function RatingRow({ row, member }: { row: PlaceRow; member: GraphMember }) {
 				</span>
 				{p ? (
 					<>
-						{picker ?? <PriorityBadge priority={p} />}
+						{picker ?? <RatingPill level={p} />}
 						<span className="font-mono text-xs tnum text-muted-foreground">
 							{formatScore(RATING_WEIGHT[p])}
 						</span>

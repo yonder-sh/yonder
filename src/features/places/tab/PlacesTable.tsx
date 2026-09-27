@@ -21,7 +21,7 @@ import {
 } from "react";
 import { EditGuard } from "@/components/common/edit-guard";
 import { MemberAvatar } from "@/components/common/member";
-import { PriorityDot } from "@/components/common/priority-dot";
+import { RatingDot, RatingMenu } from "@/components/kit";
 import { NODE_TYPES, PLACE_CATEGORIES } from "@/lib/domain/taxonomy";
 import type { GraphMember } from "@/lib/engine/types";
 import { anchorKey } from "@/lib/realtime/cursor-protocol";
@@ -30,7 +30,6 @@ import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { priorityForKey, ratingsCount } from "../lib/rate";
 import { CategorySelect } from "../ui/category-select";
 import { mayRate } from "../ui/member-ratings";
-import { PriorityPicker } from "../ui/priority";
 import { rowReason } from "./bar";
 import type { PlaceGroup } from "./grouping";
 import type { PlaceRow } from "./model";
@@ -128,8 +127,8 @@ function RatingCell({ row, member }: { row: PlaceRow; member: GraphMember }) {
 	const editable = mayRate(access, member) && member.id === act.me;
 	const placeholder = mayRate(access, member) && member.id !== act.me;
 	const label = (
-		<PriorityDot
-			priority={p}
+		<RatingDot
+			level={p}
 			className={cn("text-[13px]", !ratingsCount(member) && "opacity-50")}
 		/>
 	);
@@ -145,7 +144,7 @@ function RatingCell({ row, member }: { row: PlaceRow; member: GraphMember }) {
 			onKeyDown={(e) => e.stopPropagation()}
 		>
 			<EditGuard kind={editable ? "rate" : "propose-ok"}>
-				<PriorityPicker
+				<RatingMenu
 					value={p}
 					label={`${editable ? "Your" : `${member.name}'s`} rating for ${row.name}`}
 					disabled={editable ? !act.canRate : !act.canEdit}
