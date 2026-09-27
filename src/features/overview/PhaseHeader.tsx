@@ -55,9 +55,7 @@ export function PhaseChip({
 		text = (
 			<>
 				Planning ·{" "}
-				<b className="font-mono font-semibold text-white tnum">
-					{fmt(phase.daysToGo)}
-				</b>{" "}
+				<b className="font-semibold text-white tnum">{fmt(phase.daysToGo)}</b>{" "}
 				{plural(phase.daysToGo, "day")} to go
 			</>
 		);
@@ -74,7 +72,7 @@ export function PhaseChip({
 	return (
 		<span
 			data-testid={OVERVIEW_TESTID.chip}
-			className="inline-flex h-7 shrink-0 items-center gap-2 self-start rounded-full bg-white/[.09] px-3 text-[13px] text-white/80"
+			className="inline-flex h-7 shrink-0 items-center gap-2 self-start rounded-full bg-white/[.09] px-3 text-meta text-white/80"
 		>
 			<span className="size-[7px] rounded-full" style={{ background: dot }} />
 			{text}
@@ -152,14 +150,14 @@ export function CountryChips({ route }: { route: TripRoute }) {
 			{[...by.entries()].map(([k, c]) => (
 				<li
 					key={k}
-					className="inline-flex h-[30px] items-center gap-2 rounded-full border border-white/10 bg-white/[.05] px-3 text-[13px] text-white"
+					className="inline-flex h-[30px] items-center gap-2 rounded-full border border-white/10 bg-white/[.05] px-3 text-meta text-white"
 				>
 					<span
 						className="size-2 rounded-full"
 						style={{ background: c.color }}
 					/>
 					{c.name}
-					<span className="font-mono text-white/55 tnum">
+					<span className="text-white/55 tnum">
 						{c.nights} {plural(c.nights, "night")}
 					</span>
 				</li>
@@ -220,10 +218,10 @@ export function Stats({
 					data-stat={s.k}
 					className="flex min-w-0 flex-col gap-0.5 rounded-2xl border border-white/[.08] bg-white/[.04] px-4 py-3.5"
 				>
-					<span className="font-display text-[30px] leading-[1.1] font-bold text-white tnum">
+					<span className="font-display text-3xl leading-[1.1] font-bold text-white tnum">
 						{s.v}
 					</span>
-					<span className="text-[13px] leading-snug text-white/60">
+					<span className="text-meta leading-snug text-white/60">
 						{s.label}
 					</span>
 				</div>
@@ -238,7 +236,7 @@ export function PlanningLine({ data }: { data: OverviewData }) {
 	const { ix } = useWorkspace();
 	const p = data.planning;
 	const bits: { key: string; node: ReactNode }[] = [];
-	const n = (v: number) => <b className="font-mono text-white tnum">{v}</b>;
+	const n = (v: number) => <b className="text-white tnum">{v}</b>;
 	if (p.must)
 		bits.push({
 			key: "must",
@@ -285,7 +283,7 @@ export function PlanningLine({ data }: { data: OverviewData }) {
 				</p>
 			) : null}
 			{next ? (
-				<p className="truncate text-[13px] text-white/55">
+				<p className="truncate text-meta text-white/55">
 					Next deadline:{" "}
 					<span className="text-white/85">
 						{plainText(next.li.text)}
@@ -358,7 +356,7 @@ export function TodayList({
 								data-cursor-anchor={`item:${e.id}`}
 								data-done={e.done}
 								onClick={() => nav.select({ kind: "item", id: e.id })}
-								className="flex w-full min-w-0 items-center gap-2.5 text-left text-[15px]"
+								className="flex w-full min-w-0 items-center gap-2.5 text-left text-body"
 							>
 								<span
 									className={cn(
@@ -378,18 +376,18 @@ export function TodayList({
 						</li>
 					))}
 					{entries.length > shown.length ? (
-						<li className="pl-[18px] text-[13px] text-white/50">
+						<li className="pl-[18px] text-meta text-white/50">
 							+{entries.length - shown.length} more
 						</li>
 					) : null}
 				</ul>
 			) : (
-				<p className="text-[15px] text-white/60">A free day.</p>
+				<p className="text-body text-white/60">A free day.</p>
 			)}
 			{tomorrow && (first || moving) ? (
 				<p
 					data-testid={OVERVIEW_TESTID.tomorrow}
-					className="text-[13px] text-white/55"
+					className="text-meta text-white/55"
 				>
 					Tomorrow: {moving ? `on to ${next}` : null}
 					{moving && first ? " · " : null}

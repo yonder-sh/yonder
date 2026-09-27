@@ -80,7 +80,7 @@ export function ModeControl({
 						onKeyDown={(e) => onKey(e, i)}
 						onClick={() => onChange(m)}
 						className={cn(
-							"inline-flex min-w-0 items-center justify-center gap-1.5 rounded-md px-2 text-[13px] font-medium outline-none transition-[color,background-color,box-shadow] duration-150 focus-visible:ring-2 focus-visible:ring-ring",
+							"inline-flex min-w-0 items-center justify-center gap-1.5 rounded-md px-2 text-meta font-medium outline-none transition-[color,background-color,box-shadow] duration-150 focus-visible:ring-2 focus-visible:ring-ring",
 							selected
 								? "bg-card text-foreground shadow-sm ring-1 ring-border"
 								: "text-muted-foreground hover:text-foreground disabled:hover:text-muted-foreground",

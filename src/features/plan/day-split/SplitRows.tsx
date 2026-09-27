@@ -100,7 +100,7 @@ function CityPlaces({
 							<span className="size-3.5" />
 						)}
 						<span className="min-w-0 flex-1 truncate">{r.node.name}</span>
-						<span className="shrink-0 font-mono text-xs text-muted-foreground tnum">
+						<span className="shrink-0 text-xs text-muted-foreground tnum">
 							{r.timeMin ? formatDuration(r.timeMin, { compact: true }) : ""}
 						</span>
 						<ScoreChip score={r.score} size="sm" />
@@ -181,7 +181,7 @@ function Heading({ line }: { line: Exclude<SplitLine, { kind: "stop" }> }) {
 			className={cn(
 				"border-t first:border-t-0",
 				country
-					? "bg-muted/50 px-3 py-1.5 text-[13px] font-semibold"
+					? "bg-muted/50 px-3 py-1.5 text-meta font-semibold"
 					: "px-3 pt-2 pb-1 pl-9 text-xs font-medium text-muted-foreground",
 			)}
 		>
@@ -262,7 +262,7 @@ function StopRow({
 				<span
 					data-testid={T.stop}
 					className={cn(
-						"grid size-6 shrink-0 place-items-center rounded-full font-mono text-xs font-semibold tnum",
+						"grid size-6 shrink-0 place-items-center rounded-full text-xs font-semibold tnum",
 						line.stop
 							? "bg-primary text-primary-foreground"
 							: "border border-dashed border-border",
@@ -279,7 +279,7 @@ function StopRow({
 							title={`${open ? "Hide" : "Show"} the places in ${row.name}`}
 							onClick={onToggle}
 							className={cn(
-								"flex min-w-0 cursor-pointer items-center gap-0.5 text-left text-[15px] font-medium hover:underline",
+								"flex min-w-0 cursor-pointer items-center gap-0.5 text-left text-body font-medium hover:underline",
 								!row.days && "text-muted-foreground",
 							)}
 						>
@@ -298,7 +298,7 @@ function StopRow({
 								!row.days && "text-muted-foreground",
 							)}
 						>
-							<span className="font-mono tnum">{row.days}</span>{" "}
+							<span className="tnum">{row.days}</span>{" "}
 							{row.days === 1 ? "day" : "days"}
 						</span>
 					</div>

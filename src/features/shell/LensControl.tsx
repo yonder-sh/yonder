@@ -43,7 +43,7 @@ export function LensControl({
 					size="sm"
 					aria-label="Granularity"
 					data-testid={TESTID.lensControl}
-					className={cn("h-8 w-auto shrink-0 gap-1 text-[13px]", className)}
+					className={cn("h-8 w-auto shrink-0 gap-1 text-meta", className)}
 				>
 					<SelectValue />
 				</SelectTrigger>
@@ -104,7 +104,7 @@ function LensSegments({
 						value={o.lens}
 						disabled={!o.enabled}
 						className={cn(
-							"group/lens h-11 min-w-11 shrink-0 rounded-md px-0 text-[13px] font-medium whitespace-nowrap",
+							"group/lens h-11 min-w-11 shrink-0 rounded-md px-0 text-meta font-medium whitespace-nowrap",
 							"text-muted-foreground hover:bg-transparent hover:text-foreground data-[state=on]:bg-transparent data-[state=on]:text-background",
 							"disabled:opacity-40",
 						)}
@@ -119,7 +119,7 @@ function LensSegments({
 						value={o.lens}
 						disabled={!o.enabled}
 						className={cn(
-							"h-7 shrink-0 rounded-md px-2.5 text-[13px] font-medium whitespace-nowrap",
+							"h-7 shrink-0 rounded-md px-2.5 text-meta font-medium whitespace-nowrap",
 							"text-muted-foreground hover:text-foreground data-[state=on]:bg-foreground data-[state=on]:text-background",
 							"disabled:opacity-40",
 						)}

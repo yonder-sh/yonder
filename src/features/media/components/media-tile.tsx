@@ -82,7 +82,7 @@ function PhotoLike({ item, alt }: { item: MediaDto; alt: string }) {
 						</span>
 					</span>
 					{formatClock(item.durationSec) ? (
-						<span className="absolute right-2 bottom-2 rounded-full bg-black/60 px-1.5 py-0.5 font-mono text-[11px] leading-none text-white tnum">
+						<span className="absolute right-2 bottom-2 rounded-full bg-black/60 px-1.5 py-0.5 text-2xs leading-none text-white tnum">
 							{formatClock(item.durationSec)}
 						</span>
 					) : null}
@@ -147,7 +147,7 @@ function SocialPoster({ item }: { item: MediaDto }) {
 						strokeWidth={0}
 					/>
 				</span>
-				<span className="mt-1.5 block truncate text-[11px] font-medium text-white">
+				<span className="mt-1.5 block truncate text-2xs font-medium text-white">
 					{item.author
 						? `${kindWord} · ${item.provider === "youtube" ? item.author : `@${item.author.replace(/^@/, "")}`}`
 						: (item.title ?? fallback)}
@@ -173,7 +173,7 @@ function LinkCard({ item }: { item: MediaDto }) {
 			<span className="block space-y-1 p-3">
 				<span
 					className={cn(
-						"flex items-center gap-1.5 text-[11px] text-muted-foreground",
+						"flex items-center gap-1.5 text-2xs text-muted-foreground",
 						!item.hasImage &&
 							(item.visibility === "members"
 								? "pr-7 [@media(hover:none)]:pr-16"
@@ -246,17 +246,17 @@ function PdfTile({ item }: { item: MediaDto }) {
 						/>
 					</span>
 				)}
-				<span className="absolute top-2 left-2 rounded bg-foreground/80 px-1.5 py-0.5 font-mono text-[10px] leading-none font-medium tracking-wide text-background">
+				<span className="absolute top-2 left-2 rounded bg-foreground/80 px-1.5 py-0.5 font-mono text-2xs leading-none font-medium tracking-wide text-background">
 					PDF
 				</span>
 				{item.status === "processing" ? <Processing /> : null}
 			</span>
 			<span className="block space-y-0.5 px-3 py-2">
-				<span className="line-clamp-2 block text-[13px] leading-[18px] font-medium break-words">
+				<span className="line-clamp-2 block text-meta leading-[18px] font-medium break-words">
 					{item.title ?? "Document"}
 				</span>
 				{meta ? (
-					<span className="block text-[11px] text-muted-foreground tnum">
+					<span className="block text-2xs text-muted-foreground tnum">
 						{meta}
 					</span>
 				) : null}
@@ -396,18 +396,18 @@ export function MediaTile({
 						/>
 					) : null}
 					{source ? (
-						<span className="block truncate text-[11px] text-muted-foreground/80">
+						<span className="block truncate text-2xs text-muted-foreground/80">
 							{source}
 						</span>
 					) : null}
 					{item.license ? (
-						<span className="block truncate text-[11px] text-muted-foreground/70">
+						<span className="block truncate text-2xs text-muted-foreground/70">
 							© {item.license}
 						</span>
 					) : null}
 				</figcaption>
 			) : item.license ? (
-				<figcaption className="mt-1 truncate px-0.5 text-[11px] text-muted-foreground/70">
+				<figcaption className="mt-1 truncate px-0.5 text-2xs text-muted-foreground/70">
 					© {item.license}
 				</figcaption>
 			) : null}

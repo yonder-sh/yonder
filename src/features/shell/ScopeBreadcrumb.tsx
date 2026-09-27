@@ -282,7 +282,7 @@ export function ScopeBreadcrumb({
 			{days ? (
 				<span
 					data-testid={TESTID.dayRangeChip}
-					className="ml-1 inline-flex h-6 shrink-0 items-center gap-1 rounded-full bg-muted pr-1 pl-2 font-mono text-[13px] tnum"
+					className="ml-1 inline-flex h-6 shrink-0 items-center gap-1 rounded-full bg-muted pr-1 pl-2 text-meta tnum"
 				>
 					{formatDateRange(days.from, days.to)}
 					<button

@@ -179,7 +179,7 @@ function BundleIcon({
 		>
 			<Icon className="size-3.5" strokeWidth={1.5} aria-hidden />
 			{count > 1 ? (
-				<span className="font-mono text-[11px] leading-none tnum">{count}</span>
+				<span className="text-2xs leading-none tnum">{count}</span>
 			) : null}
 		</span>
 	);
@@ -702,7 +702,7 @@ function ItemMenuContent({
 							disabled={d.id === item.dayId}
 							onSelect={leaving(() => actions.moveToDay(item.id, d.id))}
 						>
-							<span className="font-mono text-xs text-muted-foreground tnum">
+							<span className="text-xs text-muted-foreground tnum">
 								D{ix.dayNumber(d.id)}
 							</span>
 							{formatDayDate(d.date)}
@@ -875,7 +875,7 @@ export function ItemCard({
 		>
 			<div className="min-w-0 flex-1">
 				{crumbNodeId && !compact ? (
-					<div className="truncate text-[11px] leading-4 text-muted-foreground">
+					<div className="truncate text-2xs leading-4 text-muted-foreground">
 						{ix.node(crumbNodeId)?.name} ›
 					</div>
 				) : null}
@@ -896,7 +896,7 @@ export function ItemCard({
 								node.countryCode ??
 									ix.path(node.id).find((n) => n.countryCode)?.countryCode,
 							)}
-							className="hidden truncate text-[13px] text-muted-foreground @xs:inline"
+							className="hidden truncate text-meta text-muted-foreground @xs:inline"
 						>
 							{node.localName}
 						</span>
@@ -1004,7 +1004,7 @@ export function ItemCard({
 							className="absolute inset-x-3 bottom-0 h-1.5 cursor-row-resize rounded-full outline-none focus-visible:bg-ring/60"
 						/>
 					</TooltipTrigger>
-					<TooltipContent side="bottom" className="font-mono">
+					<TooltipContent side="bottom" className="tnum">
 						{formatDuration(durationShown)}
 					</TooltipContent>
 				</Tooltip>
@@ -1028,11 +1028,11 @@ export function ItemCard({
 							? `Pinned at ${item.pinnedStart}`
 							: "Pin start time"
 					}
-					className="ml-auto flex flex-col items-end justify-center rounded-md pr-3 text-right font-mono text-[12px] leading-4 tnum outline-none hover:bg-accent/60 focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-default disabled:hover:bg-transparent"
+					className="ml-auto flex flex-col items-end justify-center rounded-md pr-3 text-right text-xs leading-4 tnum outline-none hover:bg-accent/60 focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-default disabled:hover:bg-transparent"
 				>
 					{s ? (
 						<>
-							<span className="flex items-center gap-1 text-[13px] text-foreground">
+							<span className="flex items-center gap-1 text-meta text-foreground">
 								{booked ? (
 									<Lock
 										className="size-2.5 text-muted-foreground"

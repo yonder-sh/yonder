@@ -40,7 +40,7 @@ export function Highlights({
 			data-cursor-anchor="sec:ov.highlights"
 			className={cn("flex min-w-0 flex-col gap-3", className)}
 		>
-			<h2 className="font-display text-[22px] font-semibold">
+			<h2 className="font-display text-2xl font-semibold">
 				{after && tiles.length ? "The trip in pictures" : "Highlights"}
 			</h2>
 			{tiles.length ? (
@@ -86,7 +86,7 @@ export function Highlights({
 			) : null}
 			{favs.length ? (
 				<div data-testid={OVERVIEW_TESTID.favourites}>
-					<h3 className="mb-2 text-[11px] font-semibold tracking-[.08em] text-muted-foreground uppercase">
+					<h3 className="mb-2 text-2xs font-semibold tracking-[.08em] text-muted-foreground uppercase">
 						The group's favourites
 					</h3>
 					<ol className="flex flex-col">
@@ -97,9 +97,9 @@ export function Highlights({
 									// A second drawing of a place the tiles may show too.
 									data-cursor-anchor={copyAnchorId(`place:${f.id}`, "fav")}
 									onClick={() => nav.select({ kind: "node", id: f.id })}
-									className="flex w-full min-w-0 items-center gap-3 rounded-md px-1 py-1.5 text-left text-[15px] hover:bg-accent/60"
+									className="flex w-full min-w-0 items-center gap-3 rounded-md px-1 py-1.5 text-left text-body hover:bg-accent/60"
 								>
-									<span className="w-4 font-mono text-sm text-muted-foreground tnum">
+									<span className="w-4 text-sm text-muted-foreground tnum">
 										{i + 1}
 									</span>
 									<span className="min-w-0 flex-1 truncate">{f.name}</span>

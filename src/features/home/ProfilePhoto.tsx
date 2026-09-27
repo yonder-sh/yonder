@@ -182,7 +182,7 @@ export function ProfilePhoto({
 				onChange={onPick}
 			/>
 			{error ? (
-				<p className="text-[13px] text-destructive" role="alert">
+				<p className="text-meta text-destructive" role="alert">
 					{error}
 				</p>
 			) : null}

@@ -346,7 +346,7 @@ function DueForm({
 							inputMode="numeric"
 							value={amount}
 							onChange={(e) => setAmount(e.target.value.replace(/\D/g, ""))}
-							className="h-8 w-16 font-mono tnum"
+							className="h-8 w-16 tnum"
 							aria-label="How many"
 						/>
 						<Select
@@ -399,7 +399,7 @@ function DueForm({
 								onChange={(e) =>
 									setDayOfMonth(e.target.value.replace(/\D/g, "").slice(0, 2))
 								}
-								className="h-7 w-16 font-mono tnum"
+								className="h-7 w-16 tnum"
 								aria-label="Day of the month"
 							/>
 							of that month
@@ -459,7 +459,7 @@ function DueForm({
 			{/* Stays in view while a capped editor scrolls: Save is always there. */}
 			<div className="sticky bottom-0 flex flex-col gap-2 border-t bg-popover px-3 py-2">
 				<span
-					className="min-h-4 font-mono text-xs text-muted-foreground tnum"
+					className="min-h-4 text-xs text-muted-foreground tnum"
 					aria-live="polite"
 				>
 					{preview

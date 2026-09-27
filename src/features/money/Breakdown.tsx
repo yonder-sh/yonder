@@ -216,7 +216,7 @@ export function Breakdown({
 						data-cursor-anchor={`money:by.${anchorKey(l.key)}`}
 						className="grid gap-1"
 					>
-						<div className="flex items-baseline gap-2 text-[13px]">
+						<div className="flex items-baseline gap-2 text-meta">
 							{l.icon}
 							{by === "place" && ix.node(l.key) ? (
 								<button

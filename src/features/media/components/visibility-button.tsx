@@ -76,7 +76,7 @@ export function VisibilityButton({
 				variant === "tile" &&
 					"grid size-7 place-items-center rounded-full bg-black/55 text-white backdrop-blur-sm hover:bg-black/75",
 				variant === "toolbar" &&
-					"h-8 rounded-md px-2.5 text-[13px] font-medium text-white/90 hover:bg-white/15 hover:text-white",
+					"h-8 rounded-md px-2.5 text-meta font-medium text-white/90 hover:bg-white/15 hover:text-white",
 				variant === "menu" &&
 					"h-8 w-full rounded-sm px-2 text-sm hover:bg-accent",
 				variant === "toolbar" && hidden && "bg-white/15 text-white",

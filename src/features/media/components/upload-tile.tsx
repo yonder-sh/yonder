@@ -126,7 +126,7 @@ export function UploadTile({
 					<span className="absolute inset-0 grid place-items-center">
 						<span className="flex flex-col items-center gap-1 rounded-xl bg-black/45 px-3 py-2 text-white backdrop-blur-sm">
 							<Ring value={item.phase === "preparing" ? 0 : item.progress} />
-							<span className="font-mono text-[11px] tnum">
+							<span className="text-2xs tnum">
 								{item.phase === "preparing"
 									? "…"
 									: item.phase === "finishing"

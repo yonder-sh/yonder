@@ -101,7 +101,7 @@ export function DayChips() {
 					>
 						<span
 							className={cn(
-								"flex h-8 items-center rounded-full px-3 font-mono text-[13px] tnum transition-colors group-focus-visible:outline-2 group-focus-visible:outline-offset-2 group-focus-visible:outline-ring",
+								"flex h-8 items-center rounded-full px-3 text-meta tnum transition-colors group-focus-visible:outline-2 group-focus-visible:outline-offset-2 group-focus-visible:outline-ring",
 								active
 									? "bg-foreground text-background"
 									: "bg-muted text-foreground",
@@ -116,7 +116,7 @@ export function DayChips() {
 				);
 			})}
 			{days && days.from !== days.to ? (
-				<span className="flex h-8 shrink-0 items-center px-1 font-mono text-xs text-muted-foreground tnum">
+				<span className="flex h-8 shrink-0 items-center px-1 text-xs text-muted-foreground tnum">
 					D{(ix.dayIndex.get(days.from) ?? 0) + 1}–D
 					{(ix.dayIndex.get(days.to) ?? 0) + 1}
 				</span>

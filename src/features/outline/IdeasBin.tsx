@@ -344,7 +344,7 @@ function IdeasBinInner({ embedded = false }: { embedded?: boolean }) {
 					type="button"
 					onClick={() => setOpen(!open)}
 					aria-expanded={open}
-					className="flex h-full min-w-0 flex-1 items-center gap-1.5 overflow-hidden pl-4 text-[11px] font-semibold tracking-[.06em] whitespace-nowrap text-muted-foreground uppercase hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-inset"
+					className="flex h-full min-w-0 flex-1 items-center gap-1.5 overflow-hidden pl-4 text-2xs font-semibold tracking-[.06em] whitespace-nowrap text-muted-foreground uppercase hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-inset"
 				>
 					{open ? (
 						<ChevronDown className="size-3 shrink-0" />
@@ -354,7 +354,7 @@ function IdeasBinInner({ embedded = false }: { embedded?: boolean }) {
 					<span>Ideas</span>
 					<span aria-hidden>·</span>
 					<span
-						className="font-mono normal-case tracking-normal tnum"
+						className="normal-case tracking-normal tnum"
 						data-testid={OUTLINE_TESTID.ideasCount}
 					>
 						{countText}
@@ -432,7 +432,7 @@ function IdeasBinInner({ embedded = false }: { embedded?: boolean }) {
 					</div>
 				) : (
 					<div className="flex flex-col items-start gap-2 px-4 pb-4">
-						<p className="flex items-center gap-1.5 font-display text-[15px] text-foreground">
+						<p className="flex items-center gap-1.5 font-display text-body text-foreground">
 							<Lightbulb
 								className="size-4 text-muted-foreground"
 								strokeWidth={1.5}

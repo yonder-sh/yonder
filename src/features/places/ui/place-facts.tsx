@@ -95,12 +95,12 @@ export function HoursSummary({
 	if (eff?.hours) {
 		const h = eff.hours;
 		if (h.alwaysOpen)
-			return <p className={cn("text-[13px]", className)}>Open 24 hours</p>;
+			return <p className={cn("text-meta", className)}>Open 24 hours</p>;
 		if (h.periods.length) {
 			return (
 				<dl
 					className={cn(
-						"grid grid-cols-[36px_1fr] gap-x-2 gap-y-0.5 font-mono text-xs tnum",
+						"grid grid-cols-[36px_1fr] gap-x-2 gap-y-0.5 text-xs tnum",
 						className,
 					)}
 				>
@@ -135,7 +135,7 @@ export function HoursSummary({
 		);
 	if (node.details.openHoursText)
 		return (
-			<p className={cn("text-[13px] text-foreground/90", className)}>
+			<p className={cn("text-meta text-foreground/90", className)}>
 				{node.details.openHoursText}
 			</p>
 		);

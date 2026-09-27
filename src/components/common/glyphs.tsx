@@ -167,7 +167,7 @@ export function LineChip({
 	return (
 		<span
 			className={cn(
-				"inline-flex h-[18px] shrink-0 items-center rounded-full px-1.5 text-[11px] leading-none font-medium whitespace-nowrap",
+				"inline-flex h-[18px] shrink-0 items-center rounded-full px-1.5 text-2xs leading-none font-medium whitespace-nowrap",
 				!color && "bg-muted text-foreground",
 				className,
 			)}

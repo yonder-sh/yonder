@@ -225,7 +225,7 @@ export function MapControls(p: MapControlsProps) {
 function Section({ title, children }: { title: string; children: ReactNode }) {
 	return (
 		<div className="grid gap-2 px-3 py-2.5">
-			<p className="text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">
+			<p className="text-2xs font-semibold tracking-wide text-muted-foreground uppercase">
 				{title}
 			</p>
 			{children}
@@ -252,7 +252,7 @@ function ShowRow({
 }) {
 	return (
 		<div className="flex items-center justify-between gap-3">
-			<Label htmlFor={id} className="text-[13px] font-normal">
+			<Label htmlFor={id} className="text-meta font-normal">
 				{label}
 				{hint ? (
 					<span className="ml-1 text-muted-foreground">{hint}</span>
@@ -309,10 +309,10 @@ function LayerMenu(p: MapControlsProps) {
 					data-testid={MAP_TESTID.dayMode}
 					className="w-full"
 				>
-					<ToggleGroupItem value="only" className="flex-1 text-[13px]">
+					<ToggleGroupItem value="only" className="flex-1 text-meta">
 						Only
 					</ToggleGroupItem>
-					<ToggleGroupItem value="dim" className="flex-1 text-[13px]">
+					<ToggleGroupItem value="dim" className="flex-1 text-meta">
 						Dim others
 					</ToggleGroupItem>
 				</ToggleGroup>
@@ -557,14 +557,14 @@ export function Legend({ palette: c }: { palette: LinePalette }) {
 	return (
 		<div className="grid gap-1.5" data-testid={MAP_TESTID.legend}>
 			{lines.map(([label, sample]) => (
-				<div key={label} className="flex items-center gap-2.5 text-[12px]">
+				<div key={label} className="flex items-center gap-2.5 text-xs">
 					{sample}
 					<span className="text-foreground">{label}</span>
 				</div>
 			))}
 			<div className="mt-1.5 grid gap-y-1.5">
 				{pins.map(([label, sample]) => (
-					<div key={label} className="flex items-center gap-2.5 text-[12px]">
+					<div key={label} className="flex items-center gap-2.5 text-xs">
 						<span className="flex w-9 shrink-0 justify-center">{sample}</span>
 						<span className="leading-tight text-foreground">{label}</span>
 					</div>
@@ -598,7 +598,7 @@ export function FilterMenu({
 	return (
 		<div className="grid">
 			<div className="flex items-center justify-between px-3 pt-2.5">
-				<p className="text-[13px] font-medium">Filter places</p>
+				<p className="text-meta font-medium">Filter places</p>
 				<Button
 					variant="ghost"
 					size="xs"
@@ -609,7 +609,7 @@ export function FilterMenu({
 					Clear
 				</Button>
 			</div>
-			<p className="px-3 pb-1 text-[12px] text-muted-foreground">
+			<p className="px-3 pb-1 text-xs text-muted-foreground">
 				Shared with Ideas and the Outline.
 			</p>
 			<Section title="Kinds">
@@ -623,7 +623,7 @@ export function FilterMenu({
 								aria-pressed={on}
 								onClick={() => toggleGroup(g)}
 								className={cn(
-									"h-7 rounded-full border px-2.5 text-[12px] transition-colors",
+									"h-7 rounded-full border px-2.5 text-xs transition-colors",
 									on
 										? "border-primary bg-primary text-primary-foreground"
 										: "border-border bg-background hover:bg-muted",
@@ -637,7 +637,7 @@ export function FilterMenu({
 			</Section>
 			<Separator />
 			<Section title="Rating">
-				<div className="grid grid-cols-[88px_1fr] items-center gap-2 text-[13px]">
+				<div className="grid grid-cols-[88px_1fr] items-center gap-2 text-meta">
 					<span className="text-muted-foreground">At least</span>
 					<Select
 						value={filter.minPriority ?? ANY}

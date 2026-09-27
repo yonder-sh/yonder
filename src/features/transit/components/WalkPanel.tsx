@@ -39,12 +39,12 @@ export function WalkPanel({ ed }: { ed: LegEditor }) {
 			<div className="flex items-end gap-3">
 				<span
 					data-testid={TRANSIT_TESTID.walkMinutes}
-					className="font-mono text-[22px] leading-7 font-semibold tnum"
+					className="text-2xl leading-7 font-semibold tnum"
 				>
 					{formatDuration(minutes, { compact: true })}
 				</span>
 				{km ? (
-					<span className="pb-0.5 font-mono text-[13px] text-muted-foreground tnum">
+					<span className="pb-0.5 text-meta text-muted-foreground tnum">
 						{formatDistance(km)}
 					</span>
 				) : null}

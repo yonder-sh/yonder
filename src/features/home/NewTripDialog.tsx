@@ -125,13 +125,13 @@ export function NewTripDialog({ trigger }: { trigger?: React.ReactNode }) {
 						) : null}
 					</div>
 					{create.error ? (
-						<p className="text-[13px] text-destructive" role="alert">
+						<p className="text-meta text-destructive" role="alert">
 							{humanError(create.error)}
 						</p>
 					) : null}
 					<DialogFooter className="items-center">
 						{!online ? (
-							<span className="mr-auto text-[13px] text-muted-foreground">
+							<span className="mr-auto text-meta text-muted-foreground">
 								Reconnect to create a trip.
 							</span>
 						) : null}

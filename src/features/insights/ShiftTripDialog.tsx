@@ -207,10 +207,10 @@ function ShiftBody({ onClose }: { onClose: () => void }) {
 	return (
 		<>
 			<DialogHeader className="gap-1 border-b px-5 pt-5 pb-4 text-left">
-				<DialogTitle className="text-[17px] leading-6 font-semibold">
+				<DialogTitle className="text-lg leading-6 font-semibold">
 					Try other dates
 				</DialogTitle>
-				<DialogDescription className="text-[13px]">
+				<DialogDescription className="text-meta">
 					Move every day together and see what changes before you commit.
 				</DialogDescription>
 			</DialogHeader>
@@ -233,7 +233,7 @@ function ShiftBody({ onClose }: { onClose: () => void }) {
 							data-delta={delta}
 							aria-live="polite"
 							className={cn(
-								"min-w-[5.5rem] text-center font-mono text-[14px] font-semibold tnum",
+								"min-w-[5.5rem] text-center text-sm font-semibold tnum",
 								delta === 0 ? "text-muted-foreground" : "text-primary",
 							)}
 						>
@@ -258,7 +258,7 @@ function ShiftBody({ onClose }: { onClose: () => void }) {
 									variant="ghost"
 									size="sm"
 									data-testid={INSIGHTS_TESTID.shiftDay1}
-									className="h-8 gap-1.5 px-2 text-[13px] text-muted-foreground hover:text-foreground"
+									className="h-8 gap-1.5 px-2 text-meta text-muted-foreground hover:text-foreground"
 								>
 									<CalendarDays className="size-4" strokeWidth={1.75} />
 									Shift so Day 1 is…
@@ -284,7 +284,7 @@ function ShiftBody({ onClose }: { onClose: () => void }) {
 					data-testid={INSIGHTS_TESTID.shiftSummary}
 					className="grid gap-0.5"
 				>
-					<p className="font-display text-[19px] leading-6 font-semibold">
+					<p className="font-display text-lg leading-6 font-semibold">
 						{!day1
 							? "This trip has no dates yet."
 							: delta === 0
@@ -292,7 +292,7 @@ function ShiftBody({ onClose }: { onClose: () => void }) {
 								: `Day 1 becomes ${shortDate(addDays(day1, delta))}`}
 					</p>
 					{impact && day1 ? (
-						<p className="text-[13px] text-muted-foreground">
+						<p className="text-meta text-muted-foreground">
 							<span className="tnum">
 								{dayMonth(impact.range.from)} – {dayMonth(impact.range.to)}
 							</span>
@@ -306,7 +306,7 @@ function ShiftBody({ onClose }: { onClose: () => void }) {
 						</p>
 					) : null}
 					{impact?.startsInPast && delta !== 0 ? (
-						<p className="mt-1 flex items-center gap-1.5 text-[13px] font-medium text-warning">
+						<p className="mt-1 flex items-center gap-1.5 text-meta font-medium text-warning">
 							<TriangleAlert className="size-3.5" aria-hidden /> The trip would
 							start before today.
 						</p>
@@ -315,14 +315,14 @@ function ShiftBody({ onClose }: { onClose: () => void }) {
 						<p
 							role="alert"
 							data-testid={INSIGHTS_TESTID.shiftConflict}
-							className="mt-1 flex items-center gap-1.5 text-[13px] font-medium text-warning"
+							className="mt-1 flex items-center gap-1.5 text-meta font-medium text-warning"
 						>
 							<TriangleAlert className="size-3.5" aria-hidden /> The trip
 							changed while you were looking. Review again, then shift.
 						</p>
 					) : null}
 					{blockedBy ? (
-						<p className="mt-1 flex items-center gap-1.5 text-[13px] font-medium text-warning">
+						<p className="mt-1 flex items-center gap-1.5 text-meta font-medium text-warning">
 							<TriangleAlert className="size-3.5" aria-hidden /> {blockedBy}
 						</p>
 					) : null}
@@ -330,7 +330,7 @@ function ShiftBody({ onClose }: { onClose: () => void }) {
 			</div>
 			<div className="min-h-[8rem] flex-1 overflow-y-auto px-4 py-4">
 				{delta === 0 ? (
-					<p className="px-1 text-[13px] text-muted-foreground">
+					<p className="px-1 text-meta text-muted-foreground">
 						Step a few days either way. Bookings, pinned times, stays and
 						opening hours update as you go.
 					</p>

@@ -86,7 +86,7 @@ export function FlightSummary({
 			redacted ? (
 				<Masked key="masked" />
 			) : (
-				<span key="ref" className="font-mono tnum">
+				<span key="ref" className="tnum">
 					{flight.bookingRef}
 				</span>
 			),
@@ -114,7 +114,7 @@ export function FlightSummary({
 				<div className="grid gap-0.5 p-3">
 					<span
 						data-testid={TRANSIT_TESTID.flightDepClock}
-						className="font-mono text-[15px] leading-5 font-semibold tnum"
+						className="text-body leading-5 font-semibold tnum"
 					>
 						{depTime ? (
 							clockText(depTime)
@@ -124,10 +124,10 @@ export function FlightSummary({
 							</span>
 						)}
 					</span>
-					<span className="text-[15px] leading-5 font-semibold tracking-wide">
+					<span className="text-body leading-5 font-semibold tracking-wide">
 						{flight.from.iata}
 					</span>
-					<span className="text-[11px] text-muted-foreground">
+					<span className="text-2xs text-muted-foreground">
 						{tzLabel(flight.from.tz, depAt)}
 						{term(flight.from) ? ` · ${term(flight.from)}` : ""}
 					</span>
@@ -138,14 +138,14 @@ export function FlightSummary({
 						strokeWidth={1.5}
 						aria-hidden
 					/>
-					<span className="font-mono text-[11px] tnum">
+					<span className="text-2xs tnum">
 						{mins !== null
 							? formatDuration(mins, { compact: true })
 							: `~${formatDuration(t.minutes, { compact: true })} est.`}
 					</span>
 				</div>
 				<div className="grid gap-0.5 p-3 text-right">
-					<span className="font-mono text-[15px] leading-5 font-semibold tnum">
+					<span className="text-body leading-5 font-semibold tnum">
 						{arrTime ? (
 							clockText(arrTime)
 						) : t.arrEstimated && t.arrMs !== null ? (
@@ -159,10 +159,10 @@ export function FlightSummary({
 							<sup className="ml-0.5 text-[9px] text-muted-foreground">+1</sup>
 						) : null}
 					</span>
-					<span className="text-[15px] leading-5 font-semibold tracking-wide">
+					<span className="text-body leading-5 font-semibold tracking-wide">
 						{flight.to.iata}
 					</span>
-					<span className="text-[11px] text-muted-foreground">
+					<span className="text-2xs text-muted-foreground">
 						{tzLabel(flight.to.tz, arrAt)}
 						{term(flight.to) ? ` · ${term(flight.to)}` : ""}
 					</span>
@@ -192,7 +192,7 @@ export function FlightSummary({
 					.join(" · ")}
 			</p>
 			{facts.length ? (
-				<dl className="grid grid-cols-[88px_1fr] gap-x-3 gap-y-1.5 text-[13px]">
+				<dl className="grid grid-cols-[88px_1fr] gap-x-3 gap-y-1.5 text-meta">
 					{facts.map(([k, v]) => (
 						<div key={k} className="contents">
 							<dt className="text-xs text-muted-foreground">{k}</dt>
@@ -218,7 +218,7 @@ export function FlightSummary({
 									{redacted ? (
 										<Masked />
 									) : (
-										<span className="font-mono font-medium tnum">{s.seat}</span>
+										<span className="font-medium tnum">{s.seat}</span>
 									)}
 								</li>
 							);

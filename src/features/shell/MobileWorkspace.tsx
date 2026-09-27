@@ -255,7 +255,7 @@ function MobilePills() {
 				<Vaul.Portal>
 					<Vaul.Overlay className="fixed inset-0 z-50 bg-black/40" />
 					<Vaul.Content className="fixed inset-x-0 bottom-0 z-50 flex h-[92svh] flex-col rounded-t-2xl bg-sidebar">
-						<Vaul.Title className="px-4 pt-4 text-[11px] font-semibold tracking-[.06em] text-muted-foreground uppercase">
+						<Vaul.Title className="px-4 pt-4 text-2xs font-semibold tracking-[.06em] text-muted-foreground uppercase">
 							Outline
 						</Vaul.Title>
 						<div className="min-h-0 flex-1 overflow-y-auto">
@@ -399,7 +399,7 @@ function EmptyPeek() {
 			data-testid={SHELL_TESTID.mobileEmptyPeek}
 			className="flex items-center gap-3 px-4 pb-2"
 		>
-			<p className="min-w-0 flex-1 font-display text-[15px] leading-5 font-medium text-balance">
+			<p className="min-w-0 flex-1 font-display text-body leading-5 font-medium text-balance">
 				{first ? "Where to first?" : "How long in each city?"}
 			</p>
 			<EditGuard>

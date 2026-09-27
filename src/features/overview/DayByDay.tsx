@@ -59,9 +59,7 @@ export function DayByDay({
 			data-cursor-anchor="sec:ov.days"
 			className="min-w-0"
 		>
-			<h2 className="mb-3 font-display text-[22px] font-semibold">
-				Day by day
-			</h2>
+			<h2 className="mb-3 font-display text-2xl font-semibold">Day by day</h2>
 			<div className="flex flex-col gap-3">
 				{sections.map((sec, i) => {
 					const key = keyOf(sec, i);
@@ -142,7 +140,7 @@ function SectionHeader({
 				style={{ background: row?.color ?? "#a3a3a3" }}
 			/>
 			<span className="shrink-0 text-sm font-semibold">{name}</span>
-			<span className="shrink-0 font-mono text-xs text-muted-foreground tnum">
+			<span className="shrink-0 text-xs text-muted-foreground tnum">
 				{sec.days} {sec.days === 1 ? "day" : "days"}
 			</span>
 			<span className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
@@ -194,7 +192,7 @@ function Line({
 			{narrow ? (
 				<>
 					<span className="flex min-w-0 items-center gap-2">
-						<span className="font-mono text-xs text-muted-foreground tnum">
+						<span className="text-xs text-muted-foreground tnum">
 							Day {l.n}
 						</span>
 						<span className="text-muted-foreground">
@@ -206,16 +204,14 @@ function Line({
 						</span>
 					</span>
 					{places ? (
-						<span className="truncate text-[13px] text-foreground/80">
+						<span className="truncate text-meta text-foreground/80">
 							{places}
 						</span>
 					) : null}
 				</>
 			) : (
 				<>
-					<span className="pl-1 font-mono text-xs text-muted-foreground tnum">
-						{l.n}
-					</span>
+					<span className="pl-1 text-xs text-muted-foreground tnum">{l.n}</span>
 					<span className="text-muted-foreground">{formatDayDate(l.date)}</span>
 					<span className="flex min-w-0 items-center gap-2 font-semibold">
 						{dot}

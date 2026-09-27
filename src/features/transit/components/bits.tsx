@@ -136,7 +136,7 @@ export function RailAttribution({ className }: { className?: string }) {
 	return (
 		<p
 			data-testid={TRANSIT_TESTID.railAttribution}
-			className={cn("text-[11px] leading-4 text-muted-foreground", className)}
+			className={cn("text-2xs leading-4 text-muted-foreground", className)}
 		>
 			<span lang="ja">
 				{data?.attributionJa ??
@@ -191,7 +191,7 @@ export function SectionLabel({
 }) {
 	return (
 		<div className={cn("flex items-center justify-between gap-2", className)}>
-			<p className="text-[11px] leading-[14px] font-semibold tracking-[.06em] text-muted-foreground uppercase">
+			<p className="text-2xs leading-[14px] font-semibold tracking-[.06em] text-muted-foreground uppercase">
 				{children}
 			</p>
 			{action}

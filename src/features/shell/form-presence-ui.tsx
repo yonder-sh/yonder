@@ -74,7 +74,7 @@ export function InspectorFormChips({
 					<span
 						key={p.user.id}
 						data-testid={SHELL_TESTID.inspectorFormChip}
-						className="inline-flex h-[22px] max-w-full items-center truncate rounded-[4px] px-2 text-[11px] font-semibold text-white"
+						className="inline-flex h-[22px] max-w-full items-center truncate rounded-[4px] px-2 text-2xs font-semibold text-white"
 						style={{ backgroundColor: presenceColor(p.user.color) }}
 					>
 						{formChipText(p.user.name, f, (f.t ? labelOf(f.t) : null) ?? title)}
@@ -94,7 +94,7 @@ export function FollowFormBanner({ peer }: { peer: Peer | undefined }) {
 			data-testid={SHELL_TESTID.followFormBanner}
 			role="status"
 			aria-live="polite"
-			className="pointer-events-none flex h-6 shrink-0 items-center justify-center gap-1.5 px-3 text-[11px] text-muted-foreground"
+			className="pointer-events-none flex h-6 shrink-0 items-center justify-center gap-1.5 px-3 text-2xs text-muted-foreground"
 			style={{
 				backgroundColor: `color-mix(in oklab, ${presenceColor(peer.user.color)} 6%, var(--background))`,
 			}}

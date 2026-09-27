@@ -173,7 +173,7 @@ export function DuplicateTripDialog({
 						</div>
 					) : null}
 					<fieldset className="grid gap-2">
-						<legend className="mb-2 text-[11px] font-semibold tracking-[.06em] text-muted-foreground uppercase">
+						<legend className="mb-2 text-2xs font-semibold tracking-[.06em] text-muted-foreground uppercase">
 							Also copy
 						</legend>
 						{OPTIONS.map((o) => {
@@ -208,13 +208,13 @@ export function DuplicateTripDialog({
 						</p>
 					</fieldset>
 					{dup.error ? (
-						<p className="text-[13px] text-destructive" role="alert">
+						<p className="text-meta text-destructive" role="alert">
 							{humanError(dup.error)}
 						</p>
 					) : null}
 					<DialogFooter className="items-center">
 						{!online ? (
-							<span className="mr-auto text-[13px] text-muted-foreground">
+							<span className="mr-auto text-meta text-muted-foreground">
 								Reconnect to duplicate.
 							</span>
 						) : null}

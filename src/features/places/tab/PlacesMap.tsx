@@ -86,7 +86,7 @@ function Pin({
 				)}
 			/>
 			{selected ? (
-				<span className="absolute left-6 flex items-center gap-1.5 rounded-full bg-background/95 py-0.5 pr-1 pl-2.5 text-[13px] font-semibold whitespace-nowrap shadow-float">
+				<span className="absolute left-6 flex items-center gap-1.5 rounded-full bg-background/95 py-0.5 pr-1 pl-2.5 text-meta font-semibold whitespace-nowrap shadow-float">
 					{row.name}
 					<ScoreChip score={row.score} size="sm" />
 				</span>

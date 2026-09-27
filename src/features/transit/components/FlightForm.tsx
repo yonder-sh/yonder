@@ -422,7 +422,7 @@ export function FlightForm({
 				return (
 					<div key={s.key} className="grid gap-3">
 						{layover ? (
-							<div className="flex h-9 items-center justify-center gap-2 rounded-md bg-hatch text-[11px] text-muted-foreground">
+							<div className="flex h-9 items-center justify-center gap-2 rounded-md bg-hatch text-2xs text-muted-foreground">
 								Layover {formatDuration(layover.minutes)} ·{" "}
 								{prevDetails?.to.iata}
 								{layover.tight ? (
@@ -1031,7 +1031,7 @@ function AirportRowFields({
 							<span className="min-w-0 flex-1 truncate">
 								{a.city} · {a.name}
 							</span>
-							<span className="font-mono text-[11px] text-muted-foreground">
+							<span className="font-mono text-2xs text-muted-foreground">
 								{tzLabel(a.tz, at)}
 							</span>
 						</span>

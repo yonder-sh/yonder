@@ -77,12 +77,12 @@ function Section({
 			{htmlFor ? (
 				<Label
 					htmlFor={htmlFor}
-					className="text-[11px] font-semibold tracking-[.06em] text-muted-foreground uppercase"
+					className="text-2xs font-semibold tracking-[.06em] text-muted-foreground uppercase"
 				>
 					{title}
 				</Label>
 			) : (
-				<div className="text-[11px] font-semibold tracking-[.06em] text-muted-foreground uppercase">
+				<div className="text-2xs font-semibold tracking-[.06em] text-muted-foreground uppercase">
 					{title}
 				</div>
 			)}
@@ -113,7 +113,7 @@ export function PlaceFilterPanel() {
 	return (
 		<div data-testid={OUTLINE_TESTID.filterPanel} className="grid gap-4">
 			<div className="flex items-center justify-between">
-				<span className="font-display text-[15px] font-medium">
+				<span className="font-display text-body font-medium">
 					Filter places
 				</span>
 				<Button
@@ -347,7 +347,7 @@ export function PlaceFilterSummary({
 				{count !== undefined ? (
 					<span className="text-muted-foreground">
 						{" "}
-						— <span className="font-mono tnum">{count}</span>{" "}
+						— <span className="tnum">{count}</span>{" "}
 						{count === 1 ? noun.replace(/s$/, "") : noun}
 					</span>
 				) : null}

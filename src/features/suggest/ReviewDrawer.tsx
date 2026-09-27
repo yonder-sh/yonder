@@ -115,7 +115,7 @@ function GroupHeader({ batch }: { batch: Batch }) {
 					guest: batch.author.isGuest,
 				}}
 			/>
-			<p className="min-w-0 flex-1 truncate text-[13px] leading-[18px]">
+			<p className="min-w-0 flex-1 truncate text-meta leading-[18px]">
 				<span className="font-medium">{batch.author.name}</span>
 				<span className="text-muted-foreground">
 					{" "}
@@ -229,7 +229,7 @@ function ReviewBody({ onAfterShow }: { onAfterShow: () => void }) {
 
 	return (
 		<>
-			<p className="px-4 text-[13px] leading-[18px] text-muted-foreground">
+			<p className="px-4 text-meta leading-[18px] text-muted-foreground">
 				{access.canReview
 					? proposals.count
 						? `${proposals.count} open from ${joinNames(authors.slice(0, 3))}${authors.length > 3 ? " and others" : ""}.`
@@ -251,7 +251,7 @@ function ReviewBody({ onAfterShow }: { onAfterShow: () => void }) {
 						>
 							{f.label}
 							{count[f.value] ? (
-								<span className="font-mono text-[11px] text-muted-foreground tnum">
+								<span className="text-2xs text-muted-foreground tnum">
 									{count[f.value]}
 								</span>
 							) : null}
@@ -285,7 +285,7 @@ export function ReviewDrawer() {
 					className="flex h-[92svh] max-h-[92svh] flex-col gap-3 data-[vaul-drawer-direction=bottom]:max-h-[92svh]"
 				>
 					<DrawerHeader className="px-4 pt-2 pb-0 group-data-[vaul-drawer-direction=bottom]/drawer-content:text-left">
-						<DrawerTitle className="text-[17px] leading-6 font-semibold">
+						<DrawerTitle className="text-lg leading-6 font-semibold">
 							{title}
 						</DrawerTitle>
 						<DrawerDescription className="sr-only">
@@ -304,7 +304,7 @@ export function ReviewDrawer() {
 				className="flex w-full flex-col gap-3 p-0 sm:max-w-[420px]"
 			>
 				<SheetHeader className="px-4 pt-4 pb-0">
-					<SheetTitle className="text-[17px] leading-6">{title}</SheetTitle>
+					<SheetTitle className="text-lg leading-6">{title}</SheetTitle>
 					<SheetDescription className="sr-only">
 						Review, accept or reject suggested changes.
 					</SheetDescription>

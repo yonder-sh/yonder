@@ -211,7 +211,7 @@ function RatingRow({ row, member }: { row: PlaceRow; member: GraphMember }) {
 				{p ? (
 					<>
 						{picker ?? <RatingPill level={p} />}
-						<span className="font-mono text-xs tnum text-muted-foreground">
+						<span className="text-xs tnum text-muted-foreground">
 							{formatScore(RATING_WEIGHT[p])}
 						</span>
 						{counted ? null : (
@@ -263,7 +263,7 @@ function RatingRow({ row, member }: { row: PlaceRow; member: GraphMember }) {
 					/>
 				</div>
 			) : comment ? (
-				<div className="flex items-start gap-1.5 pl-7 text-[13px] text-muted-foreground">
+				<div className="flex items-start gap-1.5 pl-7 text-meta text-muted-foreground">
 					<MessageSquare className="mt-0.5 size-3 shrink-0" strokeWidth={1.5} />
 					<MarkdownText
 						md={comment}
@@ -350,7 +350,7 @@ export function PlaceHeadStatus() {
 			</div>
 			{reason ? (
 				<p
-					className="text-[13px] text-muted-foreground"
+					className="text-meta text-muted-foreground"
 					data-testid={RATING_TESTID.reason}
 				>
 					{reason}
@@ -517,7 +517,7 @@ export function PlaceFits() {
 			</p>
 			{nearby.length ? (
 				<p
-					className="text-[13px] text-muted-foreground"
+					className="text-meta text-muted-foreground"
 					data-testid={PLACES_TAB_TESTID.nearby}
 				>
 					{nearby.length} nearby:{" "}
@@ -525,7 +525,7 @@ export function PlaceFits() {
 						<span key={n.row.id}>
 							{i ? " · " : ""}
 							<span className="text-foreground">{n.row.name}</span>{" "}
-							<span className="font-mono tnum">
+							<span className="tnum">
 								{formatDistance(n.km * 1000)} · {n.walkMin} min
 							</span>
 						</span>

@@ -83,7 +83,7 @@ export function RateButton({ compact = false }: { compact?: boolean }) {
 				<span className={compact ? "sr-only" : undefined}>Rate</span>
 				{left ? (
 					<span
-						className="font-mono text-xs text-muted-foreground tnum"
+						className="text-xs text-muted-foreground tnum"
 						title={`${left} to rate`}
 					>
 						{left}

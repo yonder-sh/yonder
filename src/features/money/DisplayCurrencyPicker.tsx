@@ -47,7 +47,7 @@ export function DisplayCurrencyPicker() {
 					aria-label={`Show amounts in ${d.code}`}
 				>
 					Show in{" "}
-					<span className="font-mono text-foreground tnum">
+					<span className="text-foreground tnum">
 						{d.pref === "local" ? `Local · ${d.code}` : d.code}
 					</span>
 					<ChevronDown className="size-3.5 opacity-60" />

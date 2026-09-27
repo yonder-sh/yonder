@@ -27,7 +27,7 @@ export function AuthShell({
 				<YonderLockup className="h-7 self-start" />
 				<div className="flex flex-1 items-center">
 					<div className="mx-auto w-full max-w-[360px] py-10">
-						<h1 className="font-display text-[2rem] leading-[1.19] font-semibold tracking-[-0.02em] text-pretty">
+						<h1 className="font-display text-3xl leading-[1.19] font-semibold tracking-[-0.02em] text-pretty">
 							{title}
 						</h1>
 						{subtitle ? (

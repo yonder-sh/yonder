@@ -49,7 +49,7 @@ export function Section({
 			data-cursor-anchor={anchor ? `sec:ov.${anchor}` : undefined}
 			className={cn("min-w-0", className)}
 		>
-			<h3 className="mb-2 text-[11px] font-semibold tracking-[.08em] text-muted-foreground uppercase">
+			<h3 className="mb-2 text-2xs font-semibold tracking-[.08em] text-muted-foreground uppercase">
 				{title}
 			</h3>
 			{children}
@@ -103,12 +103,12 @@ export function Deadlines({ now: at }: { now?: number } = {}) {
 									<TodoText
 										text={li.text}
 										context={context}
-										className="max-w-full text-[13px]"
+										className="max-w-full text-meta"
 									/>
 									<span
 										data-testid={SHELL_TESTID.deadlineChip}
 										className={cn(
-											"max-w-full truncate rounded-full px-2 font-mono text-[11px] leading-5 tnum",
+											"max-w-full truncate rounded-full px-2 text-2xs leading-5 tnum",
 											// ADDENDUM §10: due-soon is the neutral/primary tint, never amber.
 											overdue || days <= 7
 												? "bg-primary/10 text-primary"
@@ -184,7 +184,7 @@ export function Recent() {
 						<li
 							key={a.id}
 							data-cursor-anchor={`sec:ov.recent.${a.id}`}
-							className="flex min-w-0 items-baseline gap-2 text-[13px]"
+							className="flex min-w-0 items-baseline gap-2 text-meta"
 						>
 							<button
 								type="button"
@@ -199,7 +199,7 @@ export function Recent() {
 								<span className="font-medium">{a.actorName}</span>{" "}
 								<span className="text-muted-foreground">{a.summary}</span>
 							</button>
-							<span className="shrink-0 font-mono text-[11px] text-muted-foreground tnum">
+							<span className="shrink-0 text-2xs text-muted-foreground tnum">
 								{timeAgo(a.at, now)}
 							</span>
 						</li>

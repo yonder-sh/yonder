@@ -172,7 +172,7 @@ export function HolidaysEditor({
 		<section data-testid={TESTID.holidaysEditor} className="grid gap-2.5">
 			<div className="grid gap-1">
 				<Overline>Public holidays</Overline>
-				<p className="text-[12px] leading-4 text-muted-foreground">
+				<p className="text-xs leading-4 text-muted-foreground">
 					Places use their holiday hours on these days.
 				</p>
 			</div>
@@ -206,7 +206,7 @@ export function HolidaysEditor({
 									e.preventDefault();
 									if (canSave) submit();
 								}}
-								className="h-8 min-w-[8rem] flex-1 text-[13px]"
+								className="h-8 min-w-[8rem] flex-1 text-meta"
 							/>
 							<Select
 								value={r.countryCode || ANY}
@@ -218,7 +218,7 @@ export function HolidaysEditor({
 								<SelectTrigger
 									size="sm"
 									aria-label="Country"
-									className="h-8 w-[7.5rem] text-[13px]"
+									className="h-8 w-[7.5rem] text-meta"
 								>
 									<SelectValue />
 								</SelectTrigger>
@@ -244,7 +244,7 @@ export function HolidaysEditor({
 					))}
 				</ul>
 			) : (
-				<p className="text-[13px] text-muted-foreground">No holidays yet.</p>
+				<p className="text-meta text-muted-foreground">No holidays yet.</p>
 			)}
 			<div className="flex flex-wrap items-center gap-2">
 				<Button
@@ -271,7 +271,7 @@ export function HolidaysEditor({
 				</Button>
 				<span className="flex-1" />
 				{error && dirty ? (
-					<span className="text-[12px] text-destructive">{error}</span>
+					<span className="text-xs text-destructive">{error}</span>
 				) : null}
 				{dirty ? (
 					<>

@@ -53,7 +53,7 @@ export const RATING_FILL =
 const RATING_DOT = "bg-(--rt-dot) dark:bg-(--rt-dot-d)";
 
 const PILL_SIZE = {
-	sm: "h-[18px] px-1.5 text-[11px]",
+	sm: "h-[18px] px-1.5 text-2xs",
 	md: "h-[22px] px-2 text-xs",
 	lg: "h-7 px-2.5 text-meta",
 } as const;
@@ -251,7 +251,7 @@ export function RatingButtons({
 						{keys ? (
 							<span
 								aria-hidden
-								className="text-[10px] leading-none opacity-60 tnum pointer-coarse:hidden"
+								className="text-2xs leading-none opacity-60 tnum pointer-coarse:hidden"
 							>
 								{i + 1}
 							</span>

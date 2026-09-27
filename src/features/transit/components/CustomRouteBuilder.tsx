@@ -529,10 +529,10 @@ export function CustomRouteBuilder({
 						onChange={(e) =>
 							setTotal(e.target.value.replace(/\D/g, "").slice(0, 4))
 						}
-						className="h-8 w-24 font-mono tnum"
+						className="h-8 w-24 tnum"
 					/>
 					{num(total) ? (
-						<span className="font-mono text-xs text-muted-foreground tnum">
+						<span className="text-xs text-muted-foreground tnum">
 							{formatDuration(num(total))}
 						</span>
 					) : null}
@@ -546,7 +546,7 @@ export function CustomRouteBuilder({
 							className="grid gap-2 rounded-lg border bg-background/60 p-2"
 						>
 							<div className="flex items-center gap-2">
-								<span className="w-4 font-mono text-[11px] text-muted-foreground tnum">
+								<span className="w-4 text-2xs text-muted-foreground tnum">
 									{i + 1}
 								</span>
 								<Select
@@ -582,7 +582,7 @@ export function CustomRouteBuilder({
 											autoMinutes: false,
 										})
 									}
-									className="h-8 w-16 font-mono tnum"
+									className="h-8 w-16 tnum"
 								/>
 								{steps.length > 1 ? (
 									<Button
@@ -757,7 +757,7 @@ export function CustomRouteBuilder({
 					>
 						<Plus className="size-3.5" /> Step
 					</Button>
-					<span className="font-mono text-xs text-muted-foreground tnum">
+					<span className="text-xs text-muted-foreground tnum">
 						{sum ? formatDuration(sum) : ""}
 					</span>
 				</div>
@@ -796,7 +796,7 @@ export function CustomRouteBuilder({
 									setDepDate(e.target.value);
 									if (!arrTime) setArrDate(e.target.value);
 								}}
-								className="h-8 font-mono tnum"
+								className="h-8 tnum"
 							/>
 							<TimeField
 								testId={TRANSIT_TESTID.customRouteDepartTime}
@@ -813,7 +813,7 @@ export function CustomRouteBuilder({
 								value={arrDate}
 								disabled={disabled}
 								onChange={(e) => setArrDate(e.target.value)}
-								className="h-8 font-mono tnum"
+								className="h-8 tnum"
 							/>
 							<TimeField
 								testId={TRANSIT_TESTID.customRouteArriveTime}
@@ -843,7 +843,7 @@ export function CustomRouteBuilder({
 								onChange={(e) =>
 									setAccess(e.target.value.replace(/\D/g, "").slice(0, 3))
 								}
-								className="h-7 w-14 font-mono tnum"
+								className="h-7 w-14 tnum"
 							/>
 							<span>min before</span>
 						</div>
@@ -859,7 +859,7 @@ export function CustomRouteBuilder({
 								onChange={(e) =>
 									setEgress(e.target.value.replace(/\D/g, "").slice(0, 3))
 								}
-								className="h-7 w-14 font-mono tnum"
+								className="h-7 w-14 tnum"
 							/>
 							<span>min to the next stop</span>
 						</div>
@@ -891,7 +891,7 @@ export function CustomRouteBuilder({
 								maxLength={40}
 								disabled={disabled}
 								onChange={(e) => setRef(e.target.value.toUpperCase())}
-								className="h-8 font-mono uppercase tnum placeholder:font-sans placeholder:normal-case"
+								className="h-8 uppercase tnum placeholder:normal-case"
 								placeholder="Optional"
 							/>
 						)}
@@ -926,7 +926,7 @@ export function CustomRouteBuilder({
 								maxLength={20}
 								disabled={disabled}
 								onChange={(e) => setCar(e.target.value)}
-								className="h-8 font-mono tnum placeholder:font-sans"
+								className="h-8 tnum"
 								placeholder="–"
 							/>
 						</Field>
@@ -954,7 +954,7 @@ export function CustomRouteBuilder({
 													[m.id]: e.target.value.toUpperCase(),
 												}))
 											}
-											className="h-8 w-24 font-mono uppercase tnum placeholder:font-sans placeholder:normal-case"
+											className="h-8 w-24 uppercase tnum placeholder:normal-case"
 											placeholder="Seat"
 										/>
 									)}
@@ -1063,7 +1063,7 @@ function StationField({
 							{s.name}
 						</span>
 						{s.no ? (
-							<span className="ml-auto shrink-0 font-mono text-[11px] text-muted-foreground">
+							<span className="ml-auto shrink-0 font-mono text-2xs text-muted-foreground">
 								{s.no}
 							</span>
 						) : null}
@@ -1072,7 +1072,7 @@ function StationField({
 						{s.lines.slice(0, 4).map((l) => (
 							<span
 								key={l.key}
-								className="inline-flex h-4 items-center rounded-full bg-muted px-1.5 text-[10px] text-muted-foreground"
+								className="inline-flex h-4 items-center rounded-full bg-muted px-1.5 text-2xs text-muted-foreground"
 								style={
 									l.color
 										? { boxShadow: `inset 3px 0 0 ${l.color}` }
@@ -1083,7 +1083,7 @@ function StationField({
 							</span>
 						))}
 						{s.distanceM !== undefined ? (
-							<span className="text-[10px] text-muted-foreground">
+							<span className="text-2xs text-muted-foreground">
 								{s.distanceM < 1000
 									? `${s.distanceM} m`
 									: `${(s.distanceM / 1000).toFixed(1)} km`}

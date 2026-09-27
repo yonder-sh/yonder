@@ -26,7 +26,7 @@ export function EmptyState({
 			)}
 		>
 			{lead ? <div className="-mb-2 max-w-sm">{lead}</div> : null}
-			<p className="font-display text-[17px] leading-6 font-medium text-foreground text-balance">
+			<p className="font-display text-lg leading-6 font-medium text-foreground text-balance">
 				{line}
 			</p>
 			{action ? <div>{action}</div> : null}

@@ -261,7 +261,7 @@ function StartTime({ day }: { day: GraphDay }) {
 					disabled={guard.disabled}
 					title={guard.reason ?? "Day start"}
 					onClick={(e) => e.stopPropagation()}
-					className="inline-flex h-6 items-center gap-0.5 rounded-md px-1 font-mono text-xs text-foreground tnum hover:bg-accent disabled:cursor-default disabled:text-muted-foreground disabled:hover:bg-transparent"
+					className="inline-flex h-6 items-center gap-0.5 rounded-md px-1 text-xs text-foreground tnum hover:bg-accent disabled:cursor-default disabled:text-muted-foreground disabled:hover:bg-transparent"
 				>
 					{day.startTime}
 					<ChevronDown
@@ -406,7 +406,7 @@ function DayTitle({
 		return day.title ? (
 			<span
 				data-testid={PLAN_TESTID.dayTitle}
-				className="truncate text-[13px] text-muted-foreground"
+				className="truncate text-meta text-muted-foreground"
 			>
 				{day.title}
 			</span>
@@ -433,7 +433,7 @@ function DayTitle({
 			placeholder="A title for the day"
 			aria-label="Day title"
 			maxLength={200}
-			className="h-7 w-56 max-w-full text-[13px]"
+			className="h-7 w-56 max-w-full text-meta"
 		/>
 	);
 }
@@ -633,7 +633,7 @@ function DayMenuContent({
 								})
 							}
 						>
-							<span className="font-mono text-xs text-muted-foreground tnum">
+							<span className="text-xs text-muted-foreground tnum">
 								D{ix.dayNumber(d.id)}
 							</span>
 							{formatDayDate(d.date)}
@@ -751,7 +751,7 @@ export function DayHeader({
 				    dismiss menus); the date selects the day. */}
 				<div className="flex min-h-12 flex-col justify-center gap-0.5 px-4 py-1.5 has-[[data-day-main]:focus-visible]:ring-2 has-[[data-day-main]:focus-visible]:ring-ring has-[[data-day-main]:focus-visible]:ring-inset">
 					<div className="flex min-w-0 items-center gap-x-2">
-						<h3 className="shrink-0 font-display text-[19px] leading-6 font-semibold whitespace-nowrap">
+						<h3 className="shrink-0 font-display text-lg leading-6 font-semibold whitespace-nowrap">
 							<button
 								type="button"
 								data-day-main=""
@@ -763,7 +763,7 @@ export function DayHeader({
 								{formatDayDate(day.date)}
 							</button>
 						</h3>
-						<span className="min-w-0 truncate text-[13px] text-muted-foreground">
+						<span className="min-w-0 truncate text-meta text-muted-foreground">
 							Day {ix.dayNumber(day.id)}
 							{city ? ` · ${city}` : ""}
 							{zone ? ` · ${zone}` : ""}
@@ -848,23 +848,21 @@ export function DayHeaderLite({ day, copy }: { day: GraphDay; copy?: string }) {
 				className="flex min-h-12 cursor-pointer flex-col justify-center gap-0.5 px-4 py-1.5 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
 			>
 				<div className="flex min-w-0 items-center gap-x-2">
-					<h3 className="shrink-0 font-display text-[19px] leading-6 font-semibold whitespace-nowrap">
+					<h3 className="shrink-0 font-display text-lg leading-6 font-semibold whitespace-nowrap">
 						{formatDayDate(day.date)}
 					</h3>
-					<span className="min-w-0 truncate text-[13px] text-muted-foreground">
+					<span className="min-w-0 truncate text-meta text-muted-foreground">
 						Day {ix.dayNumber(day.id)}
 						{city ? ` · ${city}` : ""}
 					</span>
 				</div>
 				{day.title ? (
-					<span className="truncate text-[13px] text-muted-foreground">
+					<span className="truncate text-meta text-muted-foreground">
 						{day.title}
 					</span>
 				) : null}
 				<div className="flex min-h-6 min-w-0 items-center gap-x-2 text-xs text-muted-foreground">
-					<span className="px-1 font-mono text-foreground tnum">
-						{day.startTime}
-					</span>
+					<span className="px-1 text-foreground tnum">{day.startTime}</span>
 					{stay ? (
 						<span className="inline-flex min-w-0 items-center gap-1 px-1">
 							<BedDouble
@@ -898,16 +896,16 @@ function Summary({ dayId, estimate }: { dayId: string; estimate: boolean }) {
 	return (
 		<>
 			Activities{" "}
-			<span className="font-mono tnum">
+			<span className="tnum">
 				{formatDuration(sd.activitiesMin, { compact: true })}
 			</span>{" "}
 			· Travel{" "}
-			<span className="font-mono tnum">
+			<span className="tnum">
 				{estimate ? "~" : ""}
 				{formatDuration(sd.travelMin, { compact: true })}
 			</span>
 			{estimate ? " est." : ""} · ends{" "}
-			<span className="font-mono tnum">
+			<span className="tnum">
 				{formatTime(end?.at ?? sd.end, end?.tz ?? sd.tz)}
 				{end && end.plusDays > 0 ? (
 					<sup className="text-[9px]">+{end.plusDays}</sup>
@@ -916,14 +914,13 @@ function Summary({ dayId, estimate }: { dayId: string; estimate: boolean }) {
 			{sd.walkKm >= 0.1 ? (
 				<span className="hidden @2xl:inline">
 					{" "}
-					· <span className="font-mono tnum">{sd.walkKm.toFixed(1)}</span> km on
-					foot
+					· <span className="tnum">{sd.walkKm.toFixed(1)}</span> km on foot
 				</span>
 			) : null}
 			{sd.rides > 0 ? (
 				<span className="hidden @2xl:inline">
 					{" "}
-					· <span className="font-mono tnum">{sd.rides}</span>{" "}
+					· <span className="tnum">{sd.rides}</span>{" "}
 					{sd.rides === 1 ? "ride" : "rides"}
 				</span>
 			) : null}

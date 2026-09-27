@@ -182,13 +182,16 @@
 }
 
 /*
- * The type scale (One Yonder kit, 2026-09-28): Tailwind's text-xs (12) and
- * text-sm (14), plus meta (13, secondary lines) and body (15, reading text),
+ * The type scale (One Yonder kit, 2026-09-28): 2xs (11, badges and counts),
+ * Tailwind's text-xs (12) and text-sm (14), plus meta (13, secondary lines)
+ * and body (15, reading text),
  * text-lg (18, section titles) and text-2xl (24, page titles). Display sizes
  * (text-3xl and up) only with font-display. No arbitrary text-[Npx] outside
  * src/components (the kit guard test counts them down).
  */
 @theme {
+	--text-2xs: 0.6875rem;
+	--text-2xs--line-height: 1rem;
 	--text-meta: 0.8125rem;
 	--text-meta--line-height: 1.125rem;
 	--text-body: 0.9375rem;
@@ -202,8 +205,8 @@
 
 /* The section label: 11px caps, one style everywhere ("WHEN & TRAVEL"). */
 @utility eyebrow {
-	font-size: 0.6875rem;
-	line-height: 1rem;
+	font-size: var(--text-2xs);
+	line-height: var(--text-2xs--line-height);
 	font-weight: 600;
 	letter-spacing: 0.07em;
 	text-transform: uppercase;

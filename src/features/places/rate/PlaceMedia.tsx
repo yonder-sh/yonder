@@ -271,7 +271,7 @@ function SlideView({ s, title }: { s: Slide; title: string }) {
 						className="size-full object-contain"
 					/>
 					{s.photo.attributions.length ? (
-						<figcaption className="absolute right-2 bottom-2 rounded bg-black/55 px-1.5 py-0.5 text-[11px] text-white">
+						<figcaption className="absolute right-2 bottom-2 rounded bg-black/55 px-1.5 py-0.5 text-2xs text-white">
 							{s.photo.attributions.map((a) => a.name).join(", ")}
 						</figcaption>
 					) : null}
@@ -395,7 +395,7 @@ function LinkPreview({ m }: { m: MediaDto }) {
 			href={m.url ?? "#"}
 			target="_blank"
 			rel="noopener noreferrer nofollow"
-			className="group flex min-w-0 items-stretch gap-3 overflow-hidden rounded-lg border bg-card p-2 text-[13px] transition-colors hover:bg-accent/60"
+			className="group flex min-w-0 items-stretch gap-3 overflow-hidden rounded-lg border bg-card p-2 text-meta transition-colors hover:bg-accent/60"
 		>
 			{x.hasImage !== false ? (
 				<span className="relative hidden w-24 shrink-0 overflow-hidden rounded-md bg-muted sm:block">
@@ -445,7 +445,7 @@ export function PdfRow({ m, onOpen }: { m: MediaDto; onOpen: () => void }) {
 			onClick={onOpen}
 			data-testid={PLACES_TESTID.ratePdf}
 			aria-haspopup="dialog"
-			className="group flex w-full min-w-0 items-center gap-3 rounded-lg border bg-card p-2 text-left text-[13px] transition-colors hover:bg-accent/60"
+			className="group flex w-full min-w-0 items-center gap-3 rounded-lg border bg-card p-2 text-left text-meta transition-colors hover:bg-accent/60"
 		>
 			<span className="relative grid h-12 w-9 shrink-0 place-items-center overflow-hidden rounded-[4px] border bg-background">
 				<FileText className="size-4 text-muted-foreground" strokeWidth={1.5} />
@@ -691,7 +691,7 @@ export function PlaceMedia({
 						{current.from ? (
 							<span
 								data-testid={PLACES_TESTID.rateMediaFrom}
-								className="pointer-events-none absolute bottom-2 left-2 inline-flex max-w-[calc(100%-1rem)] items-center gap-1 rounded-full bg-black/55 px-2 py-0.5 text-[11px] font-medium text-white backdrop-blur-sm"
+								className="pointer-events-none absolute bottom-2 left-2 inline-flex max-w-[calc(100%-1rem)] items-center gap-1 rounded-full bg-black/55 px-2 py-0.5 text-2xs font-medium text-white backdrop-blur-sm"
 							>
 								<MapPin className="size-3 shrink-0" strokeWidth={2} />
 								<span className="truncate">{current.from.name}</span>
@@ -713,7 +713,7 @@ export function PlaceMedia({
 						data-testid={PLACES_TESTID.rateMediaEmpty}
 						className="grid size-full content-center justify-items-center gap-3 p-6 text-center"
 					>
-						<p className="font-display text-[15px] text-muted-foreground">
+						<p className="font-display text-body text-muted-foreground">
 							No photos, videos or location for {node.name} yet.
 						</p>
 						<AddPhotoOrLink node={node} />

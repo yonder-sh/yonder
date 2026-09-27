@@ -294,7 +294,7 @@ function Header({
 		<div className="flex items-center gap-2">
 			<PhaseChip phase={phase} lastDate={lastDate} />
 			{phase.kind === "during" && todayLine ? (
-				<span className="ml-auto font-mono text-xs text-white/70 tnum">
+				<span className="ml-auto text-xs text-white/70 tnum">
 					{dayClock(
 						todayLine.date,
 						schedule.days[todayLine.dayId]?.tz ?? ix.defaultTz,
@@ -311,7 +311,7 @@ function Header({
 	const dates = dateLine(firstDate, lastDate);
 	const line = routeLine(route);
 	const sub = (
-		<p className={cn("text-white/60", wide ? "text-lg" : "text-[15px]")}>
+		<p className={cn("text-white/60", wide ? "text-lg" : "text-body")}>
 			{[dates, line].filter(Boolean).join(" · ")}
 		</p>
 	);

@@ -366,7 +366,7 @@ function BudgetRow({
 	const editable = !guard.disabled && mode === "me";
 	const body = (
 		<div className="min-w-0">
-			<div className="flex items-baseline gap-2 text-[13px]">
+			<div className="flex items-baseline gap-2 text-meta">
 				{c.category ? (
 					<CategoryIcon
 						category={c.category}
@@ -375,11 +375,11 @@ function BudgetRow({
 				) : null}
 				<span className="font-medium">{label}</span>
 				{c.source === "custom" ? (
-					<span className="rounded-full bg-muted px-1.5 text-[11px] text-muted-foreground">
+					<span className="rounded-full bg-muted px-1.5 text-2xs text-muted-foreground">
 						Custom
 					</span>
 				) : c.source === "derived" ? (
-					<span className="rounded-full bg-muted px-1.5 text-[11px] text-muted-foreground">
+					<span className="rounded-full bg-muted px-1.5 text-2xs text-muted-foreground">
 						derived
 					</span>
 				) : null}
@@ -721,7 +721,7 @@ function BudgetEditor({
 								id="budget-amount"
 								autoFocus
 								inputMode="decimal"
-								className="font-mono tnum placeholder:font-sans"
+								className="tnum"
 								value={text}
 								onChange={(e) => setText(e.target.value)}
 							/>

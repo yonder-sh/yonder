@@ -54,13 +54,11 @@ export function TimeText({
 	return (
 		<time
 			dateTime={new Date(date).toISOString()}
-			className={cn("font-mono text-[13px] tnum", className)}
+			className={cn("text-meta tnum", className)}
 		>
 			{formatTime(date, tz)}
 			{nextDay ? (
-				<sup className="ml-px font-mono text-[9px] text-muted-foreground">
-					+1
-				</sup>
+				<sup className="ml-px tnum text-[9px] text-muted-foreground">+1</sup>
 			) : null}
 		</time>
 	);
@@ -77,7 +75,7 @@ export function Duration({
 	className?: string;
 }) {
 	return (
-		<span className={cn("font-mono text-[13px] tnum", className)}>
+		<span className={cn("text-meta tnum", className)}>
 			{formatDuration(minutes, { compact })}
 		</span>
 	);
@@ -136,10 +134,7 @@ export function DurationInput({
 				<Button
 					variant="outline"
 					size="sm"
-					className={cn(
-						"h-[22px] rounded-full px-2 font-mono text-xs",
-						className,
-					)}
+					className={cn("h-[22px] rounded-full px-2 tnum text-xs", className)}
 				>
 					{formatDuration(value, { compact: true })}
 				</Button>
@@ -159,7 +154,7 @@ export function DurationInput({
 							key={p}
 							size="sm"
 							variant={p === value ? "default" : "ghost"}
-							className="h-7 px-1 font-mono text-xs"
+							className="h-7 px-1 tnum text-xs"
 							onClick={() => {
 								onChange(p);
 								setOpen(false);
@@ -187,11 +182,11 @@ export function DurationInput({
 							setError(false);
 						}}
 						aria-invalid={error || undefined}
-						className="h-8 font-mono"
+						className="h-8 tnum"
 						placeholder="1h30"
 					/>
 					{error ? (
-						<p className="mt-1 text-[12px] text-destructive">
+						<p className="mt-1 text-xs text-destructive">
 							Try 45m, 1h30 or 1.5h.
 						</p>
 					) : null}
@@ -307,7 +302,7 @@ export function TimeInput({
 				setText(next);
 				emit(next);
 			}}
-			className={cn("h-8 w-[5.5rem] font-mono tnum", className)}
+			className={cn("h-8 w-[5.5rem] tnum", className)}
 		/>
 	);
 }

@@ -138,7 +138,7 @@ function StillToPlanList() {
 		>
 			<h3
 				id="still-to-plan-h"
-				className="mb-1 text-[11px] font-semibold tracking-[.06em] text-muted-foreground uppercase"
+				className="mb-1 text-2xs font-semibold tracking-[.06em] text-muted-foreground uppercase"
 			>
 				Still to plan
 			</h3>
@@ -328,9 +328,9 @@ function StillToPlanList() {
 function ReadOnlyDaysTable({ days }: { days: StillToPlanResult["days"] }) {
 	const { nav } = useWorkspace();
 	return (
-		<table className="w-full text-[13px]">
+		<table className="w-full text-meta">
 			<thead>
-				<tr className="text-left text-[11px] text-muted-foreground">
+				<tr className="text-left text-2xs text-muted-foreground">
 					<th className="py-1 font-medium">City</th>
 					<th className="py-1 text-right font-medium">Planned</th>
 					<th className="py-1 text-right font-medium">Scheduled</th>
@@ -348,10 +348,8 @@ function ReadOnlyDaysTable({ days }: { days: StillToPlanResult["days"] }) {
 								{c.name}
 							</button>
 						</td>
-						<td className="py-1 text-right font-mono tnum">
-							{c.planned ?? "–"}
-						</td>
-						<td className="py-1 text-right font-mono tnum">{c.scheduled}</td>
+						<td className="py-1 text-right tnum">{c.planned ?? "–"}</td>
+						<td className="py-1 text-right tnum">{c.scheduled}</td>
 					</tr>
 				))}
 			</tbody>
@@ -379,7 +377,7 @@ export function TodoText({
 
 function Meta({ children }: { children: ReactNode }) {
 	return (
-		<span className="ml-auto shrink-0 pl-2 font-mono text-[11px] text-muted-foreground tnum">
+		<span className="ml-auto shrink-0 pl-2 text-2xs text-muted-foreground tnum">
 			{children}
 		</span>
 	);
@@ -417,13 +415,13 @@ function Row({
 				onClick={expandable ? () => setOpen((v) => !v) : onClick}
 				aria-expanded={expandable ? open : undefined}
 				aria-controls={expandable ? panelId : undefined}
-				className="flex h-9 w-full items-center gap-2.5 rounded-md px-2 text-left text-[13px] transition-colors hover:bg-accent"
+				className="flex h-9 w-full items-center gap-2.5 rounded-md px-2 text-left text-meta transition-colors hover:bg-accent"
 			>
 				<span className="text-muted-foreground [&_svg]:size-3.5">{icon}</span>
 				<span className="min-w-0 flex-1 truncate">
 					{count !== null && count !== undefined ? (
 						<>
-							<span className="font-mono font-medium tnum">{count}</span>{" "}
+							<span className="font-medium tnum">{count}</span>{" "}
 						</>
 					) : null}
 					{label}
@@ -453,7 +451,7 @@ function unratedFilter(by: string): string | undefined {
 }
 
 const SUB_ROW =
-	"flex h-7 w-full items-center gap-2 rounded-md pr-2 pl-8 text-left text-[13px] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground";
+	"flex h-7 w-full items-center gap-2 rounded-md pr-2 pl-8 text-left text-meta text-muted-foreground transition-colors hover:bg-accent hover:text-foreground";
 
 function SubRow({
 	onClick,

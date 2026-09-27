@@ -101,7 +101,7 @@ function ActivityBody({ onPick }: { onPick(): void }) {
 		<div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
 			{groups.length ? (
 				<section className="mb-5">
-					<h3 className="mb-2 text-[11px] font-semibold tracking-[.06em] text-muted-foreground uppercase">
+					<h3 className="mb-2 text-2xs font-semibold tracking-[.06em] text-muted-foreground uppercase">
 						Since you last looked
 					</h3>
 					<ul className="grid gap-3">
@@ -128,7 +128,7 @@ function ActivityBody({ onPick }: { onPick(): void }) {
 													disabled={!sel}
 													onClick={() => pick(refs)}
 													className={cn(
-														"text-left text-[13px] text-muted-foreground",
+														"text-left text-meta text-muted-foreground",
 														sel &&
 															"hover:text-foreground hover:underline underline-offset-2",
 													)}
@@ -150,7 +150,7 @@ function ActivityBody({ onPick }: { onPick(): void }) {
 				</section>
 			) : null}
 			<section>
-				<h3 className="mb-2 text-[11px] font-semibold tracking-[.06em] text-muted-foreground uppercase">
+				<h3 className="mb-2 text-2xs font-semibold tracking-[.06em] text-muted-foreground uppercase">
 					Recent
 				</h3>
 				{recent.isPending && live ? (
@@ -164,10 +164,7 @@ function ActivityBody({ onPick }: { onPick(): void }) {
 						{recent.data.map((a) => {
 							const sel = selForRefs(ix, a);
 							return (
-								<li
-									key={a.id}
-									className="flex items-baseline gap-2 text-[13px]"
-								>
+								<li key={a.id} className="flex items-baseline gap-2 text-meta">
 									<span
 										aria-hidden="true"
 										className="size-1.5 shrink-0 translate-y-[-1px] rounded-full"
@@ -185,7 +182,7 @@ function ActivityBody({ onPick }: { onPick(): void }) {
 										<span className="font-medium">{a.actorName}</span>{" "}
 										<span className="text-muted-foreground">{a.summary}</span>
 									</button>
-									<span className="shrink-0 font-mono text-[11px] text-muted-foreground tnum">
+									<span className="shrink-0 text-2xs text-muted-foreground tnum">
 										{timeAgo(a.at, now)}
 									</span>
 								</li>

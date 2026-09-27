@@ -227,7 +227,7 @@ function InboxPanel({
 				) : (
 					groups.map((g) => (
 						<section key={g.key} aria-label={INBOX_GROUP_LABEL[g.key]}>
-							<h3 className="sticky top-0 z-10 bg-popover/95 px-4 pt-3 pb-1 text-[11px] font-semibold tracking-[.06em] text-muted-foreground uppercase backdrop-blur">
+							<h3 className="sticky top-0 z-10 bg-popover/95 px-4 pt-3 pb-1 text-2xs font-semibold tracking-[.06em] text-muted-foreground uppercase backdrop-blur">
 								{INBOX_GROUP_LABEL[g.key]}
 							</h3>
 							<ul className="pb-1">
@@ -281,9 +281,7 @@ function secondary(i: InboxItem): ReactNode {
 		case "balance_changed":
 			return (
 				<>
-					<span className="font-mono tnum">
-						{formatDelta(i.deltaMinor, i.currency)}
-					</span>
+					<span className="tnum">{formatDelta(i.deltaMinor, i.currency)}</span>
 					{i.cause ? ` · ${i.cause}` : null}
 				</>
 			);
@@ -336,7 +334,7 @@ function InboxRow({
 			<span className="min-w-0 flex-1">
 				<span
 					className={cn(
-						"block text-[13px] leading-[18px] text-pretty",
+						"block text-meta leading-[18px] text-pretty",
 						i.read ? "text-muted-foreground" : "font-medium text-foreground",
 					)}
 				>
@@ -353,7 +351,7 @@ function InboxRow({
 						{sub}
 					</span>
 				) : null}
-				<span className="mt-0.5 flex items-center gap-1.5 text-[11px] text-muted-foreground">
+				<span className="mt-0.5 flex items-center gap-1.5 text-2xs text-muted-foreground">
 					{i.kind === "due" ? (
 						<span
 							className={cn(
@@ -367,7 +365,7 @@ function InboxRow({
 							{DUE_LABEL[i.state]}
 						</span>
 					) : null}
-					<span className="font-mono tnum">{timeAgo(i.at, now)}</span>
+					<span className="tnum">{timeAgo(i.at, now)}</span>
 				</span>
 			</span>
 			{i.read ? null : (

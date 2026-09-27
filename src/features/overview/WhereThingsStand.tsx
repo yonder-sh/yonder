@@ -128,7 +128,7 @@ export function WhereThingsStand({
 			<h2
 				id={titleId}
 				className={cn(
-					"mb-1.5 text-[11px] font-semibold tracking-[.06em] uppercase",
+					"mb-1.5 text-2xs font-semibold tracking-[.06em] uppercase",
 					hero ? "text-white/55" : "text-muted-foreground",
 				)}
 			>
@@ -246,7 +246,7 @@ function Line({
 							onAction?.();
 						}}
 						className={cn(
-							"inline-flex h-8 shrink-0 cursor-pointer items-center rounded-lg px-3 text-[13px] font-medium transition-colors",
+							"inline-flex h-8 shrink-0 cursor-pointer items-center rounded-lg px-3 text-meta font-medium transition-colors",
 							hero
 								? "border border-white/20 text-white hover:bg-white/10"
 								: "bg-primary text-primary-foreground hover:bg-primary/90",

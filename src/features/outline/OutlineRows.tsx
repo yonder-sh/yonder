@@ -197,7 +197,7 @@ function RightEdge({ row, rc }: { row: NodeRow; rc: RowContext }) {
 		<span className="ml-auto flex shrink-0 items-center gap-1.5 pl-1">
 			{row.hiddenPlaces > 0 && !row.open ? (
 				<span
-					className="font-mono text-[11px] text-muted-foreground tnum"
+					className="text-2xs text-muted-foreground tnum"
 					title={hiddenLabel}
 					data-testid={OUTLINE_TESTID.hiddenCount}
 				>
@@ -353,7 +353,7 @@ function RenameInput({ node }: { node: GraphNode }) {
 				className="h-6 min-w-0 rounded-sm border border-ring bg-background px-1.5 text-sm outline-none"
 			/>
 			{field.remoteChanged ? (
-				<span className="text-[11px] text-muted-foreground">
+				<span className="text-2xs text-muted-foreground">
 					{field.remoteChanged.name} changed this ·{" "}
 					<button
 						type="button"
@@ -728,7 +728,7 @@ export function DroppedNodeRow({ row, rc }: { row: NodeRow; rc: RowContext }) {
 			/>
 			<Names node={row.node} dim />
 			{parent && row.depth === 1 ? (
-				<span className="shrink-[200] truncate text-[11px] text-muted-foreground">
+				<span className="shrink-[200] truncate text-2xs text-muted-foreground">
 					{parent.name}
 				</span>
 			) : null}

@@ -25,7 +25,7 @@ export const chipVariants = cva(
 				danger: "bg-destructive/10 text-destructive",
 			},
 			size: {
-				sm: "h-5 px-1.5 text-[11px] [&_svg]:size-3",
+				sm: "h-5 px-1.5 text-2xs [&_svg]:size-3",
 				md: "h-6 px-2 text-xs [&_svg]:size-3.5",
 				lg: "h-7 px-2.5 text-meta [&_svg]:size-4",
 			},

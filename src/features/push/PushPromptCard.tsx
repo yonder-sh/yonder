@@ -115,7 +115,7 @@ export function PushPromptCard() {
 							? "Get notifications on this iPhone"
 							: "Stay in the loop"}
 					</h2>
-					<p className="text-[13px] text-muted-foreground">
+					<p className="text-meta text-muted-foreground">
 						{show === "ios" ? (
 							<>
 								Add Yonder to your Home Screen first: tap{" "}

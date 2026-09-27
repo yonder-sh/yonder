@@ -283,7 +283,7 @@ export function FallbackMap({ variant }: { variant: "desktop" | "mobile" }) {
 						>
 							<span
 								className={cn(
-									"flex items-center justify-center rounded-full border-2 border-[var(--map-casing)] font-mono text-[11px] font-semibold shadow-sm transition-transform group-hover:scale-110",
+									"flex items-center justify-center rounded-full border-2 border-[var(--map-casing)] tnum text-2xs font-semibold shadow-sm transition-transform group-hover:scale-110",
 									p.hollow && "border-dashed bg-background!",
 									p.repMode === "coarser" && "border-dashed",
 									selected &&
@@ -298,14 +298,14 @@ export function FallbackMap({ variant }: { variant: "desktop" | "mobile" }) {
 							>
 								{p.number ?? ""}
 							</span>
-							<span className="mt-1 max-w-32 truncate rounded bg-background/85 px-1 text-[11px] leading-4 font-medium text-foreground shadow-sm">
+							<span className="mt-1 max-w-32 truncate rounded bg-background/85 px-1 text-2xs leading-4 font-medium text-foreground shadow-sm">
 								{node.name}
 							</span>
 						</button>
 					);
 				})}
 			</div>
-			<p className="pointer-events-none absolute bottom-2 left-3 text-[10px] text-muted-foreground">
+			<p className="pointer-events-none absolute bottom-2 left-3 text-2xs text-muted-foreground">
 				Simplified map · this browser can't draw the full map (WebGL2)
 			</p>
 		</div>

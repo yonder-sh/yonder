@@ -253,7 +253,7 @@ function NoteSection({
 								!open && "-rotate-90",
 							)}
 						/>
-						<span className="truncate text-[17px] leading-6 font-semibold">
+						<span className="truncate text-lg leading-6 font-semibold">
 							{section.title}
 						</span>
 						{section.crumb ? (

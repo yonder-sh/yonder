@@ -1,400 +1,75 @@
 {
-	"src/components/common/empty-state.tsx": {
-		"text": 1
-	},
-	"src/components/common/glyphs.tsx": {
-		"text": 1
-	},
-	"src/components/common/leg-summary.tsx": {
-		"text": 1
-	},
-	"src/components/common/member.tsx": {
-		"text": 1
-	},
 	"src/components/common/person-avatar.tsx": {
-		"text": 3
-	},
-	"src/components/common/stub-panel.tsx": {
-		"text": 1
+		"text": 2
 	},
 	"src/components/common/time.tsx": {
-		"text": 4
+		"text": 1
 	},
 	"src/features/home/AvatarCropper.tsx": {
 		"hex": 1
-	},
-	"src/features/home/Dashboard.tsx": {
-		"text": 20
-	},
-	"src/features/home/DuplicateTripDialog.tsx": {
-		"text": 3
-	},
-	"src/features/home/NewTripDialog.tsx": {
-		"text": 2
-	},
-	"src/features/home/ProfileDialog.tsx": {
-		"text": 1
-	},
-	"src/features/home/ProfilePhoto.tsx": {
-		"text": 1
-	},
-	"src/features/home/ShareDialog.tsx": {
-		"text": 8
-	},
-	"src/features/home/ShareInbox.tsx": {
-		"text": 13
-	},
-	"src/features/home/TripSettingsDialog.tsx": {
-		"text": 5
-	},
-	"src/features/insights/ClimateCard.tsx": {
-		"text": 8
-	},
-	"src/features/insights/DateImpactList.tsx": {
-		"text": 7
-	},
-	"src/features/insights/DayHoursBadge.tsx": {
-		"text": 3
-	},
-	"src/features/insights/DaySun.tsx": {
-		"text": 2
-	},
-	"src/features/insights/dev/InsightsHarness.tsx": {
-		"text": 14
-	},
-	"src/features/insights/HolidaysEditor.tsx": {
-		"text": 5
-	},
-	"src/features/insights/HoursChip.tsx": {
-		"text": 2
-	},
-	"src/features/insights/HoursEditorDialog.tsx": {
-		"text": 17
-	},
-	"src/features/insights/HoursTable.tsx": {
-		"text": 11
-	},
-	"src/features/insights/ShiftTripDialog.tsx": {
-		"text": 10
-	},
-	"src/features/insights/ui.tsx": {
-		"text": 3
 	},
 	"src/features/landing/LandingPage.tsx": {
 		"text": 25,
 		"hex": 8
 	},
-	"src/features/lists/ListBoard.tsx": {
-		"text": 2
-	},
-	"src/features/lists/ListRow.tsx": {
-		"text": 2
-	},
-	"src/features/map/FallbackMap.tsx": {
-		"text": 3
-	},
-	"src/features/map/MapControls.tsx": {
-		"text": 10
-	},
-	"src/features/map/PinMarker.tsx": {
-		"text": 1
-	},
-	"src/features/media/components/embed-frame.tsx": {
-		"text": 1
-	},
 	"src/features/media/components/media-tile.tsx": {
-		"text": 10
+		"text": 1
 	},
 	"src/features/media/components/pdf-viewer.tsx": {
-		"text": 2,
 		"hex": 1
 	},
-	"src/features/media/components/upload-tile.tsx": {
-		"text": 1
-	},
-	"src/features/media/components/visibility-button.tsx": {
-		"text": 1
-	},
-	"src/features/media/MediaPanel.tsx": {
-		"text": 1
-	},
-	"src/features/media/ReceiptStrip.tsx": {
-		"text": 1
-	},
-	"src/features/money/Breakdown.tsx": {
-		"text": 1
-	},
-	"src/features/money/BudgetSection.tsx": {
-		"text": 3
-	},
-	"src/features/money/ExpenseEditor.tsx": {
-		"text": 3
-	},
-	"src/features/money/ExpenseRow.tsx": {
-		"text": 2
-	},
-	"src/features/money/money-ui.tsx": {
-		"text": 1
-	},
-	"src/features/money/MoneyPanel.tsx": {
-		"text": 3
-	},
-	"src/features/money/SettleUpDialog.tsx": {
-		"text": 2
-	},
-	"src/features/money/ShoppingRow.tsx": {
-		"text": 1
-	},
-	"src/features/money/Summary.tsx": {
-		"text": 8
-	},
-	"src/features/notes/NoteEditor.tsx": {
-		"text": 1
-	},
-	"src/features/notes/NotesTab.tsx": {
-		"text": 1
-	},
-	"src/features/outline/FilterMenu.tsx": {
-		"text": 3
-	},
-	"src/features/outline/IdeasBin.tsx": {
-		"text": 2
-	},
-	"src/features/outline/Outline.tsx": {
-		"text": 2
-	},
-	"src/features/outline/OutlineRows.tsx": {
-		"text": 3
-	},
-	"src/features/overview/DayByDay.tsx": {
-		"text": 2
-	},
-	"src/features/overview/Highlights.tsx": {
-		"text": 3
-	},
 	"src/features/overview/OverviewTab.tsx": {
-		"text": 1,
 		"hex": 8
 	},
 	"src/features/overview/PhaseHeader.tsx": {
-		"text": 9,
 		"hex": 1
 	},
 	"src/features/overview/RouteStrip.tsx": {
-		"text": 2,
 		"hex": 2
 	},
 	"src/features/overview/share/ShareButton.tsx": {
 		"palette": 2
 	},
-	"src/features/overview/TripSections.tsx": {
-		"text": 5
-	},
 	"src/features/overview/WhereThingsStand.tsx": {
-		"text": 2,
 		"palette": 2
 	},
-	"src/features/places/AddPlaceDialog.tsx": {
-		"text": 18
-	},
-	"src/features/places/DaysPerCityTable.tsx": {
-		"text": 6
-	},
-	"src/features/places/NodeOverview.tsx": {
-		"text": 17
-	},
 	"src/features/places/rate/PlaceMedia.tsx": {
-		"text": 6
-	},
-	"src/features/places/tab/PlacePanel.tsx": {
-		"text": 3
-	},
-	"src/features/places/tab/PlacesBoard.tsx": {
-		"text": 2
-	},
-	"src/features/places/tab/PlacesMap.tsx": {
 		"text": 1
-	},
-	"src/features/places/tab/PlacesSteps.tsx": {
-		"text": 3
-	},
-	"src/features/places/tab/PlacesTab.tsx": {
-		"text": 3
-	},
-	"src/features/places/tab/PlacesTable.tsx": {
-		"text": 6
-	},
-	"src/features/places/tab/PlacesToolbar.tsx": {
-		"text": 4
 	},
 	"src/features/places/tab/RateFeed.tsx": {
-		"text": 23,
 		"palette": 40
 	},
-	"src/features/places/tab/RatePill.tsx": {
-		"text": 1
-	},
-	"src/features/places/tab/ReminderLine.tsx": {
-		"text": 1
-	},
-	"src/features/places/tab/ScheduleNext.tsx": {
-		"text": 8
-	},
-	"src/features/places/tab/TimeNeeded.tsx": {
-		"text": 2
-	},
 	"src/features/places/tab/ui.tsx": {
-		"text": 3,
 		"palette": 4
-	},
-	"src/features/places/ui/member-ratings.tsx": {
-		"text": 3
 	},
 	"src/features/places/ui/mini-map.impl.tsx": {
 		"text": 1
 	},
-	"src/features/places/ui/place-facts.tsx": {
-		"text": 2
-	},
 	"src/features/places/ui/results-map.impl.tsx": {
-		"text": 2
-	},
-	"src/features/places/ui/zone-picker.tsx": {
-		"text": 2
-	},
-	"src/features/plan/day-split/SplitRows.tsx": {
-		"text": 2
-	},
-	"src/features/plan/DayChips.tsx": {
 		"text": 1
 	},
 	"src/features/plan/DayHeader.tsx": {
-		"text": 8
+		"text": 1
 	},
 	"src/features/plan/DayOverview.tsx": {
-		"text": 7
-	},
-	"src/features/plan/DaySection.tsx": {
-		"text": 2
+		"text": 1
 	},
 	"src/features/plan/FlightRows.tsx": {
-		"text": 7
+		"text": 1
 	},
 	"src/features/plan/ItemCard.tsx": {
-		"text": 8
-	},
-	"src/features/plan/ItemOverview.tsx": {
-		"text": 4
+		"text": 3
 	},
 	"src/features/plan/LegRow.tsx": {
-		"text": 4
-	},
-	"src/features/plan/rows.tsx": {
-		"text": 8
-	},
-	"src/features/plan/Unscheduled.tsx": {
-		"text": 1
-	},
-	"src/features/push/PushPromptCard.tsx": {
-		"text": 1
-	},
-	"src/features/shell/ActivityDialog.tsx": {
-		"text": 5
-	},
-	"src/features/shell/CenterPanel.tsx": {
-		"text": 1
+		"text": 2
 	},
 	"src/features/shell/cursors/presence-ui.tsx": {
-		"text": 2
-	},
-	"src/features/shell/DetailsPane.tsx": {
 		"text": 1
-	},
-	"src/features/shell/DigestBanner.tsx": {
-		"text": 1
-	},
-	"src/features/shell/form-presence-ui.tsx": {
-		"text": 2
-	},
-	"src/features/shell/InboxBell.tsx": {
-		"text": 3
-	},
-	"src/features/shell/InspectorBody.tsx": {
-		"text": 5
-	},
-	"src/features/shell/LensControl.tsx": {
-		"text": 3
-	},
-	"src/features/shell/MobileWorkspace.tsx": {
-		"text": 2
-	},
-	"src/features/shell/PanelToggles.tsx": {
-		"text": 1
-	},
-	"src/features/shell/ScopeBreadcrumb.tsx": {
-		"text": 1
-	},
-	"src/features/shell/StillToPlan.tsx": {
-		"text": 6
-	},
-	"src/features/shell/TopBar.tsx": {
-		"text": 1
-	},
-	"src/features/suggest/NoteSuggestions.tsx": {
-		"text": 1
-	},
-	"src/features/suggest/ProposalBar.tsx": {
-		"text": 2
-	},
-	"src/features/suggest/ProposalOverview.tsx": {
-		"text": 5
-	},
-	"src/features/suggest/ProposalRow.tsx": {
-		"text": 3
-	},
-	"src/features/suggest/ReviewDrawer.tsx": {
-		"text": 5
-	},
-	"src/features/suggest/SuggestModeControl.tsx": {
-		"text": 2
-	},
-	"src/features/transit/components/bits.tsx": {
-		"text": 2
-	},
-	"src/features/transit/components/CustomRouteBuilder.tsx": {
-		"text": 4
-	},
-	"src/features/transit/components/FlightForm.tsx": {
-		"text": 2
 	},
 	"src/features/transit/components/FlightSection.tsx": {
-		"text": 9
-	},
-	"src/features/transit/components/ModeControl.tsx": {
-		"text": 1
-	},
-	"src/features/transit/components/RouteOptionCard.tsx": {
 		"text": 1
 	},
 	"src/features/transit/components/TransitPanel.tsx": {
-		"text": 4
-	},
-	"src/features/transit/components/WalkPanel.tsx": {
-		"text": 2
-	},
-	"src/features/transit/EdgeOverview.tsx": {
 		"text": 1
-	},
-	"src/features/welcome/WelcomeDialog.tsx": {
-		"text": 9
-	},
-	"src/routes/(auth)/-components/auth-shell.tsx": {
-		"text": 1
-	},
-	"src/routes/(auth)/login.tsx": {
-		"text": 1
-	},
-	"src/routes/(auth)/welcome.tsx": {
-		"text": 2
 	}
 }

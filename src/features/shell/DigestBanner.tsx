@@ -75,7 +75,7 @@ export function DigestBanner() {
 		<div
 			data-testid={SHELL_TESTID.digestBanner}
 			role="status"
-			className="flex h-8 shrink-0 items-center gap-2 border-b bg-muted/50 px-4 text-[13px]"
+			className="flex h-8 shrink-0 items-center gap-2 border-b bg-muted/50 px-4 text-meta"
 		>
 			<History className="size-3.5 shrink-0 text-muted-foreground" />
 			<button
@@ -83,7 +83,7 @@ export function DigestBanner() {
 				onClick={() => setActivityOpen(true)}
 				className="min-w-0 truncate text-left text-foreground underline-offset-2 hover:underline"
 			>
-				<span className="font-mono tnum">{n > 99 ? "99+" : n}</span>{" "}
+				<span className="tnum">{n > 99 ? "99+" : n}</span>{" "}
 				{n === 1 ? "change" : "changes"} since you last looked
 			</button>
 			<button

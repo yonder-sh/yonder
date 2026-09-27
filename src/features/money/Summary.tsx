@@ -68,7 +68,7 @@ function Stat({
 	const shown = compact && short ? short : value;
 	return (
 		<div className="min-w-0">
-			<div className="text-[11px] leading-[14px] font-semibold tracking-[.06em] text-muted-foreground uppercase">
+			<div className="text-2xs leading-[14px] font-semibold tracking-[.06em] text-muted-foreground uppercase">
 				{label}
 			</div>
 			<div ref={box} className="relative mt-1 min-w-0">
@@ -80,7 +80,7 @@ function Stat({
 				>
 					<span
 						ref={probe}
-						className="inline-block font-mono text-lg leading-6 font-semibold whitespace-nowrap tnum sm:text-xl"
+						className="inline-block text-lg leading-6 font-semibold whitespace-nowrap tnum sm:text-xl"
 					>
 						{value}
 					</span>
@@ -162,7 +162,7 @@ export function SummaryStrip({
 					muted={s.remainingHome === 0}
 				/>
 			</div>
-			<div className="mt-3 space-y-1 text-[13px] leading-[18px] text-muted-foreground">
+			<div className="mt-3 space-y-1 text-meta leading-[18px] text-muted-foreground">
 				{mine ? (
 					<p>
 						Your share{" "}
@@ -275,7 +275,7 @@ export function PeopleTable({
 			 * sideways in its own box rather than clip Net.
 			 */}
 			<div className="-mx-1 overflow-x-auto px-1">
-				<table className="w-full text-[13px] leading-[18px]">
+				<table className="w-full text-meta leading-[18px]">
 					<thead>
 						<tr className="text-xs whitespace-nowrap text-muted-foreground">
 							<th className="w-full max-w-0 py-1 text-left font-normal">
@@ -414,14 +414,14 @@ export function NetPositions({
 			data-cursor-anchor="money:net"
 			className="px-4 pb-4"
 		>
-			<p className="text-[13px] leading-[18px] text-muted-foreground">
+			<p className="text-meta leading-[18px] text-muted-foreground">
 				<span className="text-foreground">Within {scopeName}:</span>{" "}
 				{nets.map((x, i) => phrase(x.id, x.net, i))}.
 			</p>
 			<Button
 				variant="link"
 				size="sm"
-				className="h-7 px-0 text-[13px] has-[>svg]:px-0"
+				className="h-7 px-0 text-meta has-[>svg]:px-0"
 				onClick={() => openSettle(true)}
 			>
 				Settle up for the whole trip <ArrowRight />
@@ -510,9 +510,9 @@ export function Balances({
 				Balances · whole trip
 			</Overline>
 			{view.transfers.length === 0 ? (
-				<p className="text-[13px] text-muted-foreground">Everyone is square.</p>
+				<p className="text-meta text-muted-foreground">Everyone is square.</p>
 			) : (
-				<div className="space-y-1 text-[13px] leading-[18px]">
+				<div className="space-y-1 text-meta leading-[18px]">
 					{mine.length ? (
 						<p>
 							{joined(
@@ -546,7 +546,7 @@ export function Balances({
 			{meId && after !== undefined && Math.abs(delta) >= 1 ? (
 				<p
 					data-testid={MONEY_TESTID.balanceNotice}
-					className="mt-2 rounded-md bg-muted px-3 py-2 text-[13px] leading-[18px]"
+					className="mt-2 rounded-md bg-muted px-3 py-2 text-meta leading-[18px]"
 				>
 					Balance changed since your last settlement:{" "}
 					<Num>{signed(delta, d.home)}</Num>

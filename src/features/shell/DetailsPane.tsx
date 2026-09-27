@@ -135,7 +135,7 @@ function DetailsRail({ onShow }: { onShow: () => void }) {
 						<PanelRightOpen className="size-4 shrink-0" />
 						<span
 							aria-hidden
-							className="max-h-[60svh] truncate text-[12px] font-medium [writing-mode:vertical-rl]"
+							className="max-h-[60svh] truncate text-xs font-medium [writing-mode:vertical-rl]"
 						>
 							{title}
 						</span>

@@ -140,7 +140,7 @@ function Section({
 	return (
 		<section className="grid gap-1.5" data-testid={testId}>
 			<div className="flex items-center gap-2">
-				<h3 className="text-[11px] font-semibold tracking-[.06em] text-muted-foreground uppercase">
+				<h3 className="text-2xs font-semibold tracking-[.06em] text-muted-foreground uppercase">
 					{title}
 				</h3>
 				{action ? <div className="ml-auto">{action}</div> : null}
@@ -154,7 +154,7 @@ function Row({ label, children }: { label: string; children: ReactNode }) {
 	return (
 		<div className="contents">
 			<dt className="pt-px text-xs text-muted-foreground">{label}</dt>
-			<dd className="min-w-0 text-[13px] break-words">{children}</dd>
+			<dd className="min-w-0 text-meta break-words">{children}</dd>
 		</div>
 	);
 }
@@ -198,10 +198,7 @@ function LocalTime({ tz, node }: { tz: string; node: GraphNode }) {
 	const now = Date.now();
 	return (
 		<span className="inline-flex flex-wrap items-center gap-x-2">
-			<span
-				className="font-mono text-xs tnum"
-				data-testid={PLACES_TESTID.localTimeNow}
-			>
+			<span className="text-xs tnum" data-testid={PLACES_TESTID.localTimeNow}>
 				<span className="font-sans text-muted-foreground">Now </span>
 				{formatTime(now, tz)} {tzLabel(tz, now)}
 			</span>
@@ -257,7 +254,7 @@ function Description({ node }: { node: GraphNode }) {
 					maxLength={500}
 					onChange={(e) => setDraft(e.target.value)}
 					placeholder="One line: what it is and why it's here"
-					className="min-h-16 text-[13px]"
+					className="min-h-16 text-meta"
 					onKeyDown={(e) => {
 						if (e.key === "Escape") setEditing(false);
 						if (e.key === "Enter" && (e.metaKey || e.ctrlKey))
@@ -294,7 +291,7 @@ function Description({ node }: { node: GraphNode }) {
 						setDraft(node.description ?? "");
 						setEditing(true);
 					}}
-					className="w-full rounded-md text-left text-[13px] leading-5 text-foreground/90 enabled:hover:bg-accent/60 disabled:cursor-text"
+					className="w-full rounded-md text-left text-meta leading-5 text-foreground/90 enabled:hover:bg-accent/60 disabled:cursor-text"
 					title={guard.disabled ? undefined : "Edit description"}
 				>
 					<MarkdownText md={node.description} />
@@ -306,7 +303,7 @@ function Description({ node }: { node: GraphNode }) {
 						setDraft("");
 						setEditing(true);
 					}}
-					className="text-[13px] text-muted-foreground hover:text-foreground"
+					className="text-meta text-muted-foreground hover:text-foreground"
 				>
 					Add a description
 				</button>
@@ -455,7 +452,7 @@ function PlaceOverview({ node }: { node: GraphNode }) {
 					) : null}
 					{rating ? (
 						<Row label="Rating">
-							<span className="font-mono text-xs tnum">{rating}</span>
+							<span className="text-xs tnum">{rating}</span>
 						</Row>
 					) : null}
 					{d.website ? (
@@ -502,7 +499,7 @@ function PlaceOverview({ node }: { node: GraphNode }) {
 									<button
 										type="button"
 										data-testid={PLACES_TESTID.occurrence}
-										className="flex w-full items-center gap-2 rounded px-1 py-0.5 text-left text-[13px] hover:bg-accent"
+										className="flex w-full items-center gap-2 rounded px-1 py-0.5 text-left text-meta hover:bg-accent"
 										onClick={() => nav.select({ kind: "item", id: it.id })}
 									>
 										<span className="font-medium">
@@ -511,7 +508,7 @@ function PlaceOverview({ node }: { node: GraphNode }) {
 										<span className="text-muted-foreground">
 											{day ? formatDayDate(day.date) : ""}
 										</span>
-										<span className="ml-auto font-mono text-xs tnum text-muted-foreground">
+										<span className="ml-auto text-xs tnum text-muted-foreground">
 											{s ? formatTime(s.start, s.tz) : ""}
 											{" · "}
 											{formatDuration(it.durationMin)}
@@ -524,7 +521,7 @@ function PlaceOverview({ node }: { node: GraphNode }) {
 							<li key={it.id}>
 								<button
 									type="button"
-									className="w-full rounded px-1 py-0.5 text-left text-[13px] text-muted-foreground hover:bg-accent"
+									className="w-full rounded px-1 py-0.5 text-left text-meta text-muted-foreground hover:bg-accent"
 									onClick={() => nav.select({ kind: "item", id: it.id })}
 								>
 									Unscheduled · {formatDuration(it.durationMin)}
@@ -535,7 +532,7 @@ function PlaceOverview({ node }: { node: GraphNode }) {
 							<li key={day.id}>
 								<button
 									type="button"
-									className="flex w-full items-center gap-2 rounded px-1 py-0.5 text-left text-[13px] hover:bg-accent"
+									className="flex w-full items-center gap-2 rounded px-1 py-0.5 text-left text-meta hover:bg-accent"
 									onClick={() => nav.select({ kind: "day", id: day.id })}
 								>
 									<BedDouble
@@ -562,7 +559,7 @@ function PlaceOverview({ node }: { node: GraphNode }) {
 								<li key={`${h.fromItemId}>${h.toItemId}`}>
 									<button
 										type="button"
-										className="flex w-full items-center gap-2 rounded px-1 py-0.5 text-left text-[13px] hover:bg-accent"
+										className="flex w-full items-center gap-2 rounded px-1 py-0.5 text-left text-meta hover:bg-accent"
 										onClick={() =>
 											nav.select({
 												kind: "leg",
@@ -581,7 +578,7 @@ function PlaceOverview({ node }: { node: GraphNode }) {
 										<span className="min-w-0 flex-1 truncate">
 											{h.leg?.mode ? `${h.leg.mode} ` : ""}
 											{h.minutes !== null ? (
-												<span className="font-mono text-xs tnum">
+												<span className="text-xs tnum">
 													{formatDuration(h.minutes)}
 													{h.estimate ? " est." : ""}
 												</span>
@@ -605,7 +602,7 @@ function PlaceOverview({ node }: { node: GraphNode }) {
 
 			<Section title="Filed under">
 				<div className="flex min-w-0 items-center gap-2">
-					<span className="min-w-0 flex-1 truncate text-[13px]">
+					<span className="min-w-0 flex-1 truncate text-meta">
 						{ancestorsOf(ix, node.id)
 							.map((n) => n.name)
 							.join(" › ") || "Top level"}
@@ -683,7 +680,7 @@ function CoarseOverview({ node }: { node: GraphNode }) {
 	return (
 		<>
 			{node.description ? (
-				<MarkdownText md={node.description} className="text-[13px]" />
+				<MarkdownText md={node.description} className="text-meta" />
 			) : null}
 
 			<Section title="Visits" testId={PLACES_TESTID.visits}>
@@ -696,7 +693,7 @@ function CoarseOverview({ node }: { node: GraphNode }) {
 							return (
 								<li
 									key={firstDay.id}
-									className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px]"
+									className="flex flex-wrap items-center gap-x-2 gap-y-1 text-meta"
 								>
 									<span className="font-medium">
 										{formatDateRange(firstDay.date, lastDay.date)}
@@ -713,7 +710,7 @@ function CoarseOverview({ node }: { node: GraphNode }) {
 												key={d.id}
 												type="button"
 												onClick={() => nav.select({ kind: "day", id: d.id })}
-												className="rounded-full bg-muted px-1.5 font-mono text-[11px] tnum text-muted-foreground hover:bg-accent hover:text-foreground"
+												className="rounded-full bg-muted px-1.5 text-2xs tnum text-muted-foreground hover:bg-accent hover:text-foreground"
 												title={formatDayDate(d.date)}
 											>
 												D{ix.dayNumber(d.id)}
@@ -725,7 +722,7 @@ function CoarseOverview({ node }: { node: GraphNode }) {
 						})}
 					</ul>
 				) : (
-					<p className="text-[13px] text-muted-foreground">
+					<p className="text-meta text-muted-foreground">
 						Not on the plan yet.
 					</p>
 				)}
@@ -738,13 +735,13 @@ function CoarseOverview({ node }: { node: GraphNode }) {
 					</Row>
 				) : null}
 				<Row label="Places">
-					<span className="text-[13px]">
-						<span className="font-mono tnum">{pc.places}</span>{" "}
+					<span className="text-meta">
+						<span className="tnum">{pc.places}</span>{" "}
 						{pc.places === 1 ? "place" : "places"}
 						{pc.ideas ? (
 							<>
 								{" · "}
-								<span className="font-mono tnum">{pc.ideas}</span>{" "}
+								<span className="tnum">{pc.ideas}</span>{" "}
 								{pc.ideas === 1 ? "idea" : "ideas"}
 							</>
 						) : null}
@@ -757,7 +754,7 @@ function CoarseOverview({ node }: { node: GraphNode }) {
 					<Row label="Lists">
 						<button
 							type="button"
-							className="text-[13px] text-primary hover:underline"
+							className="text-meta text-primary hover:underline"
 							onClick={() => {
 								nav.zoomTo(node.id);
 								nav.setTab("lists");
@@ -791,7 +788,7 @@ function CoarseOverview({ node }: { node: GraphNode }) {
 										)}
 									>
 										<TypeGlyph type={c.type} category={c.category} />
-										<span className="min-w-0 flex-1 truncate text-[13px]">
+										<span className="min-w-0 flex-1 truncate text-meta">
 											{c.name}
 										</span>
 										{c.type !== "place" ? (
@@ -800,7 +797,7 @@ function CoarseOverview({ node }: { node: GraphNode }) {
 												{n ? (
 													<>
 														{" · "}
-														<span className="font-mono tnum">{n}</span>
+														<span className="tnum">{n}</span>
 													</>
 												) : null}
 											</span>

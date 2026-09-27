@@ -107,9 +107,7 @@ function HoursChipView({
 								</span>
 							) : null}
 							{warnCount > 1 ? (
-								<span className="ml-1 font-mono tnum opacity-80">
-									+{warnCount - 1}
-								</span>
+								<span className="ml-1 tnum opacity-80">+{warnCount - 1}</span>
 							) : null}
 						</span>
 					) : null}
@@ -226,7 +224,7 @@ function IssueDetails({
 							)}
 							{issue.label}
 						</p>
-						<p className="text-[12px] leading-4 text-muted-foreground">
+						<p className="text-xs leading-4 text-muted-foreground">
 							{issueSentence(issue, { place, start, end, weekday })}
 						</p>
 					</li>
@@ -252,7 +250,7 @@ function IssueDetails({
 				</div>
 			) : null}
 			{eh || node ? (
-				<div className="flex items-center gap-2 border-t px-3.5 py-2 text-[11px] leading-4 text-muted-foreground">
+				<div className="flex items-center gap-2 border-t px-3.5 py-2 text-2xs leading-4 text-muted-foreground">
 					<span
 						className="min-w-0 flex-1"
 						data-testid={INSIGHTS_TESTID.hoursSource}

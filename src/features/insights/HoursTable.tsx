@@ -147,7 +147,7 @@ export function HoursTable({ nodeId }: { nodeId: string }) {
 									style={{ borderColor: presenceColor(p.author.color) }}
 									className="grid w-full gap-1 rounded-lg border-[1.5px] border-dashed px-2.5 py-2 text-left transition-colors hover:bg-accent/50 focus-visible:outline-2 focus-visible:outline-ring"
 								>
-									<span className="flex items-center gap-1.5 text-[12px] leading-4 text-muted-foreground">
+									<span className="flex items-center gap-1.5 text-xs leading-4 text-muted-foreground">
 										<MemberAvatar
 											size={16}
 											ring={false}
@@ -173,7 +173,7 @@ export function HoursTable({ nodeId }: { nodeId: string }) {
 										</span>
 									</span>
 									{rows.length ? (
-										<span className="grid grid-cols-[calc(5rem-11.5px)_1fr] text-[13px] leading-5">
+										<span className="grid grid-cols-[calc(5rem-11.5px)_1fr] text-meta leading-5">
 											{rows.map((r) => (
 												<span key={r.days} className="contents">
 													<span className="text-muted-foreground">
@@ -181,7 +181,7 @@ export function HoursTable({ nodeId }: { nodeId: string }) {
 													</span>
 													<span
 														className={cn(
-															"font-mono tnum",
+															"tnum",
 															r.state === "closed" && "text-muted-foreground",
 														)}
 													>
@@ -194,7 +194,7 @@ export function HoursTable({ nodeId }: { nodeId: string }) {
 									{changes.length ? (
 										<span
 											data-testid={INSIGHTS_TESTID.hoursSuggestedChange}
-											className="grid text-[13px] leading-5"
+											className="grid text-meta leading-5"
 										>
 											{changes.map((c) => (
 												<span
@@ -214,7 +214,7 @@ export function HoursTable({ nodeId }: { nodeId: string }) {
 										</span>
 									) : null}
 									{!rows.length && !changes.length ? (
-										<span className="text-[13px] leading-5">{text}</span>
+										<span className="text-meta leading-5">{text}</span>
 									) : null}
 								</button>
 							</li>
@@ -224,7 +224,7 @@ export function HoursTable({ nodeId }: { nodeId: string }) {
 			) : null}
 			{eh ? (
 				<>
-					<dl className="grid grid-cols-[5rem_1fr] gap-y-0.5 text-[13px] leading-[22px]">
+					<dl className="grid grid-cols-[5rem_1fr] gap-y-0.5 text-meta leading-[22px]">
 						{weekRows(eh.hours).map((r) => {
 							const visit = r.day <= 6 && visitDays.has(r.day);
 							const isToday = r.day === today;
@@ -256,7 +256,7 @@ export function HoursTable({ nodeId }: { nodeId: string }) {
 									</dt>
 									<dd
 										className={cn(
-											"font-mono tnum",
+											"tnum",
 											r.state === "closed" || r.state === "unknown"
 												? "text-muted-foreground"
 												: "text-foreground",
@@ -265,7 +265,7 @@ export function HoursTable({ nodeId }: { nodeId: string }) {
 									>
 										{r.text}
 										{r.lastEntry ? (
-											<span className="ml-2 font-sans text-[12px] font-normal text-muted-foreground">
+											<span className="ml-2 font-sans text-xs font-normal text-muted-foreground">
 												last entry {r.lastEntry}
 											</span>
 										) : null}
@@ -275,10 +275,10 @@ export function HoursTable({ nodeId }: { nodeId: string }) {
 						})}
 					</dl>
 					{eh.hours.exceptions?.length ? (
-						<ul className="grid gap-0.5 text-[12px] leading-4 text-muted-foreground">
+						<ul className="grid gap-0.5 text-xs leading-4 text-muted-foreground">
 							{eh.hours.exceptions.map((e) => (
 								<li key={e.date}>
-									<span className="font-mono text-foreground tnum">
+									<span className="text-foreground tnum">
 										{shortDate(e.date)}
 									</span>
 									{" · "}
@@ -293,13 +293,13 @@ export function HoursTable({ nodeId }: { nodeId: string }) {
 					{rulesInWords(eh).length ? (
 						<p
 							data-testid={INSIGHTS_TESTID.hoursRules}
-							className="text-[12px] leading-4 text-muted-foreground"
+							className="text-xs leading-4 text-muted-foreground"
 						>
 							{rulesInWords(eh).join(" · ")}
 						</p>
 					) : null}
 					{eh.hours.note ? (
-						<p className="text-[12px] leading-4 text-muted-foreground">
+						<p className="text-xs leading-4 text-muted-foreground">
 							{eh.hours.note}
 						</p>
 					) : null}
@@ -341,7 +341,7 @@ export function HoursTable({ nodeId }: { nodeId: string }) {
 				</>
 			) : (
 				<div className="grid gap-2">
-					<p className="font-display text-[15px] leading-6 font-medium">
+					<p className="font-display text-body leading-6 font-medium">
 						Hours unknown.
 					</p>
 					{raw ? (
@@ -415,7 +415,7 @@ function SourceLine({
 	return (
 		<p
 			data-testid={INSIGHTS_TESTID.hoursSource}
-			className="text-[12px] leading-4 text-muted-foreground"
+			className="text-xs leading-4 text-muted-foreground"
 		>
 			{label}
 			{raw ? (

@@ -110,7 +110,7 @@ export function DateImpactList({
 			<div
 				data-testid={TESTID.dateImpactList}
 				data-empty
-				className="px-1 py-2 text-[13px] text-muted-foreground"
+				className="px-1 py-2 text-meta text-muted-foreground"
 			>
 				Nothing booked or timed moves, and no place is closed on its new day.
 			</div>
@@ -140,7 +140,7 @@ export function DateImpactList({
 									{dayMonth(b.from)} → {dayMonth(b.to)}
 									{b.ref ? (
 										<span className="ml-2 text-muted-foreground max-sm:hidden">
-											ref <span className="font-mono">{b.ref}</span>
+											ref <span className="tnum">{b.ref}</span>
 										</span>
 									) : null}
 								</>
@@ -329,19 +329,19 @@ function Section({
 			className="grid gap-1"
 		>
 			<header className="flex items-baseline gap-2 px-1">
-				<h3 className="text-[11px] leading-[14px] font-semibold tracking-[.06em] text-muted-foreground uppercase">
+				<h3 className="text-2xs leading-[14px] font-semibold tracking-[.06em] text-muted-foreground uppercase">
 					{title}
 				</h3>
 				{count ? (
 					<span
-						className="font-mono text-[11px] text-muted-foreground tnum"
+						className="text-2xs text-muted-foreground tnum"
 						data-count={count}
 					>
 						{count}
 					</span>
 				) : null}
 				{hint ? (
-					<span className="ml-auto truncate text-[11px] text-muted-foreground/80">
+					<span className="ml-auto truncate text-2xs text-muted-foreground/80">
 						{hint}
 					</span>
 				) : null}
@@ -386,7 +386,7 @@ function Row({
 			>
 				{label}
 			</span>
-			<span className="shrink-0 text-[12px] text-foreground/80 tnum max-sm:max-w-[52%] max-sm:truncate">
+			<span className="shrink-0 text-xs text-foreground/80 tnum max-sm:max-w-[52%] max-sm:truncate">
 				{meta}
 			</span>
 		</>
@@ -400,12 +400,12 @@ function Row({
 				<button
 					type="button"
 					onClick={onClick}
-					className="flex min-h-9 min-w-0 flex-1 items-center gap-2.5 rounded-md px-1 text-left text-[13px] hover:bg-accent focus-visible:bg-accent focus-visible:outline-none"
+					className="flex min-h-9 min-w-0 flex-1 items-center gap-2.5 rounded-md px-1 text-left text-meta hover:bg-accent focus-visible:bg-accent focus-visible:outline-none"
 				>
 					{body}
 				</button>
 			) : (
-				<div className="flex min-h-9 min-w-0 flex-1 items-center gap-2.5 px-1 text-[13px]">
+				<div className="flex min-h-9 min-w-0 flex-1 items-center gap-2.5 px-1 text-meta">
 					{body}
 				</div>
 			)}

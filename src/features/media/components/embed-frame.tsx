@@ -62,7 +62,7 @@ export function EmbedFrame({
 					href={href}
 					target="_blank"
 					rel="noopener noreferrer nofollow"
-					className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-[13px] font-medium text-white/90 hover:bg-white/20 hover:text-white"
+					className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-meta font-medium text-white/90 hover:bg-white/20 hover:text-white"
 				>
 					Open on {label} <ExternalLink className="size-3.5" />
 				</a>

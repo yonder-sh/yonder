@@ -47,14 +47,12 @@ export function RatePill() {
 			aria-label={`${t.label}: ${left} to rate`}
 			style={style}
 			className={cn(
-				"fixed left-3 z-40 flex h-11 items-center gap-2 rounded-full bg-background/92 pr-4 pl-3.5 text-[15px] font-semibold text-foreground shadow-float backdrop-blur-md transition-[bottom,transform] duration-300 active:scale-95 motion-reduce:transition-none",
+				"fixed left-3 z-40 flex h-11 items-center gap-2 rounded-full bg-background/92 pr-4 pl-3.5 text-body font-semibold text-foreground shadow-float backdrop-blur-md transition-[bottom,transform] duration-300 active:scale-95 motion-reduce:transition-none",
 			)}
 		>
 			<Star className="size-[18px] fill-glow text-glow" strokeWidth={1.75} />
 			Rate
-			<span className="font-mono text-sm tnum text-muted-foreground">
-				{left}
-			</span>
+			<span className="text-sm tnum text-muted-foreground">{left}</span>
 		</a>
 	);
 }

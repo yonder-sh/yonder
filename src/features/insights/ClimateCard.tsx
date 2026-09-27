@@ -117,7 +117,7 @@ export function ClimateCard({ nodeId }: { nodeId: string }) {
 	const caption = (
 		<p
 			data-testid={INSIGHTS_TESTID.climateCaption}
-			className="text-[11px] leading-4 text-muted-foreground"
+			className="text-2xs leading-4 text-muted-foreground"
 		>
 			{q.data?.years ?? "2016–2025"} averages · Weather data by{" "}
 			<a
@@ -134,7 +134,7 @@ export function ClimateCard({ nodeId }: { nodeId: string }) {
 	const unavailable = (
 		<p
 			data-testid={INSIGHTS_TESTID.climateUnavailable}
-			className="text-[13px] text-muted-foreground"
+			className="text-meta text-muted-foreground"
 		>
 			Climate unavailable right now.
 		</p>
@@ -200,7 +200,7 @@ export function ClimateCard({ nodeId }: { nodeId: string }) {
 							<li
 								key={r.id}
 								data-testid={INSIGHTS_TESTID.climateRow}
-								className="grid grid-cols-[minmax(0,1fr)_2.25rem_4rem_4.5rem_auto] items-center gap-x-2 border-b border-border/60 py-1.5 text-[13px] last:border-b-0 max-sm:grid-cols-[minmax(0,1fr)_2.25rem_4rem_auto]"
+								className="grid grid-cols-[minmax(0,1fr)_2.25rem_4rem_4.5rem_auto] items-center gap-x-2 border-b border-border/60 py-1.5 text-meta last:border-b-0 max-sm:grid-cols-[minmax(0,1fr)_2.25rem_4rem_auto]"
 							>
 								<span className="truncate font-medium">{name}</span>
 								<span className="text-muted-foreground">
@@ -209,21 +209,19 @@ export function ClimateCard({ nodeId }: { nodeId: string }) {
 								{c ? (
 									<>
 										<span
-											className="font-mono tnum"
+											className="tnum"
 											title={`${f(c.tMaxC)}°F / ${f(c.tMinC)}°F`}
 										>
 											{deg(c.tMaxC)}/{deg(c.tMinC)}
 										</span>
 										<RangeBar lo={lo} hi={hi} min={c.tMinC} max={c.tMaxC} />
-										<span className="text-right text-[12px] text-muted-foreground">
-											<span className="font-mono tnum">
-												{Math.round(c.wetDays)}
-											</span>{" "}
-											wet days
+										<span className="text-right text-xs text-muted-foreground">
+											<span className="tnum">{Math.round(c.wetDays)}</span> wet
+											days
 										</span>
 									</>
 								) : (
-									<span className="col-span-3 text-[12px] text-muted-foreground max-sm:col-span-2">
+									<span className="col-span-3 text-xs text-muted-foreground max-sm:col-span-2">
 										Unavailable
 									</span>
 								)}
@@ -233,7 +231,7 @@ export function ClimateCard({ nodeId }: { nodeId: string }) {
 				</ul>
 			)}
 			{rows.length > MAX_ROWS ? (
-				<p className="text-[12px] text-muted-foreground">
+				<p className="text-xs text-muted-foreground">
 					+{rows.length - MAX_ROWS} more
 				</p>
 			) : null}
@@ -255,7 +253,7 @@ function MonthLine({ month, c }: { month: number; c: ClimateMonth }) {
 				aria-hidden
 			/>
 			<div className="grid min-w-0 gap-0.5">
-				<p className="text-[13px] leading-5">
+				<p className="text-meta leading-5">
 					<span className="text-muted-foreground">
 						Typical {MONTH_LONG[month - 1]} ·{" "}
 					</span>
@@ -266,15 +264,13 @@ function MonthLine({ month, c }: { month: number; c: ClimateMonth }) {
 						{deg(c.tMaxC)} / {deg(c.tMinC)}
 					</span>
 				</p>
-				<p className="text-[12px] leading-4 text-muted-foreground">
-					<span className="font-mono tnum">{Math.round(c.precipMm)}</span> mm ·{" "}
-					<span className="font-mono tnum">{Math.round(c.wetDays)}</span> wet
-					days
+				<p className="text-xs leading-4 text-muted-foreground">
+					<span className="tnum">{Math.round(c.precipMm)}</span> mm ·{" "}
+					<span className="tnum">{Math.round(c.wetDays)}</span> wet days
 					{c.sunHours !== null ? (
 						<>
 							{" "}
-							· <span className="font-mono tnum">{Math.round(c.sunHours)}</span>{" "}
-							h sun
+							· <span className="tnum">{Math.round(c.sunHours)}</span> h sun
 						</>
 					) : null}
 				</p>

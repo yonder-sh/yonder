@@ -262,7 +262,7 @@ function ParentPicker({
 					type="button"
 					data-testid={HOME_TESTID.shareParent}
 					aria-label={`Filed in ${label}. Change`}
-					className="inline-flex max-w-full items-center gap-1.5 justify-self-start rounded-full border bg-background px-2.5 text-[13px] leading-7 transition-colors hover:border-foreground/20"
+					className="inline-flex max-w-full items-center gap-1.5 justify-self-start rounded-full border bg-background px-2.5 text-meta leading-7 transition-colors hover:border-foreground/20"
 				>
 					<FolderTree className="size-3.5 shrink-0 text-muted-foreground" />
 					<span className="flex min-w-0 items-center gap-1">
@@ -563,11 +563,9 @@ function Saver({ entry }: { entry: SharedEntry }) {
 				<span className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-primary">
 					<Check className="size-5" />
 				</span>
-				<p className="font-display text-[17px] font-medium">{state.text}</p>
+				<p className="font-display text-lg font-medium">{state.text}</p>
 				{state.note ? (
-					<p className="-mt-2 text-[13px] text-muted-foreground">
-						{state.note}
-					</p>
+					<p className="-mt-2 text-meta text-muted-foreground">{state.note}</p>
 				) : null}
 				<div className="flex gap-2">
 					<Button asChild variant="outline">
@@ -619,7 +617,7 @@ function Saver({ entry }: { entry: SharedEntry }) {
 					<K.icon className="size-4" />
 				</span>
 				<div className="grid min-w-0 gap-0.5">
-					<span className="text-[11px] font-semibold tracking-[.06em] text-muted-foreground uppercase">
+					<span className="text-2xs font-semibold tracking-[.06em] text-muted-foreground uppercase">
 						{K.label}
 					</span>
 					<span className="truncate text-sm">
@@ -632,11 +630,11 @@ function Saver({ entry }: { entry: SharedEntry }) {
 									: (entry.text ?? "").slice(0, 120))}
 					</span>
 					{preview?.address ? (
-						<span className="truncate text-[12px] text-muted-foreground">
+						<span className="truncate text-xs text-muted-foreground">
 							{preview.address}
 						</span>
 					) : url ? (
-						<span className="truncate font-mono text-[11px] text-muted-foreground">
+						<span className="truncate tnum text-2xs text-muted-foreground">
 							{url}
 						</span>
 					) : null}
@@ -680,7 +678,7 @@ function Saver({ entry }: { entry: SharedEntry }) {
 			{duplicate ? (
 				<div
 					data-testid={HOME_TESTID.shareDuplicate}
-					className="rounded-lg bg-muted/60 p-3 text-[13px]"
+					className="rounded-lg bg-muted/60 p-3 text-meta"
 				>
 					Already in {trip?.name}:{" "}
 					<span className="font-medium">{duplicate.name}</span>
@@ -692,7 +690,7 @@ function Saver({ entry }: { entry: SharedEntry }) {
 					) : null}
 				</div>
 			) : unresolved ? (
-				<p className="rounded-lg bg-muted/60 p-3 text-[13px]">
+				<p className="rounded-lg bg-muted/60 p-3 text-meta">
 					Couldn't find that place — save it as a link, or pick where it goes.
 				</p>
 			) : null}
@@ -764,22 +762,22 @@ function Saver({ entry }: { entry: SharedEntry }) {
 				</div>
 			)}
 			{entry.files.length && !canUpload ? (
-				<p className="text-[13px] text-muted-foreground">
+				<p className="text-meta text-muted-foreground">
 					Photos need edit access. Ask the owner, or share a link instead.
 				</p>
 			) : trip?.role === "suggester" ? (
-				<p className="text-[13px] text-muted-foreground">
+				<p className="text-meta text-muted-foreground">
 					You can suggest on this trip: an editor reviews it first.
 				</p>
 			) : null}
 			{offline ? (
-				<p className="text-[13px] text-muted-foreground">
+				<p className="text-meta text-muted-foreground">
 					You're offline — it's kept on this device. Open Yonder later to
 					finish.
 				</p>
 			) : null}
 			{state.kind === "error" ? (
-				<p className="text-[13px] text-destructive" role="alert">
+				<p className="text-meta text-destructive" role="alert">
 					{state.text}
 				</p>
 			) : null}
@@ -916,7 +914,7 @@ export function ShareInbox({
 	return (
 		<Shell>
 			<div data-entry={id ?? ""} className="grid gap-4">
-				<h1 className="pt-2 font-display text-[22px] leading-7 font-semibold tracking-[-0.01em]">
+				<h1 className="pt-2 font-display text-2xl leading-7 font-semibold tracking-[-0.01em]">
 					Save to Yonder
 				</h1>
 				{loading ? (

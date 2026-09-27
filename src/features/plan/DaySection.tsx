@@ -241,7 +241,7 @@ function NowLine({ at, tz }: { at: number; tz: string }) {
 			role="img"
 		>
 			<span className="plan-now-dot" />
-			<span className="absolute top-0 left-[calc(var(--plan-rail-x)-44px)] -translate-y-1/2 rounded-full bg-glow px-1.5 font-mono text-[11px] leading-4 text-glow-foreground tnum">
+			<span className="absolute top-0 left-[calc(var(--plan-rail-x)-44px)] -translate-y-1/2 rounded-full bg-glow px-1.5 font-mono text-2xs leading-4 text-glow-foreground tnum">
 				{formatTime(at, tz)}
 			</span>
 		</div>
@@ -556,13 +556,13 @@ function DayBody({
 			{dayIndicator ? <Indicator /> : null}
 			{nowAt === "end" && sd ? <NowLine at={now} tz={sd.tz} /> : null}
 			{empty && section.hidden === 0 ? (
-				<p className="px-4 pt-1 pb-3 pl-[var(--plan-rail-col)] font-display text-[15px] text-muted-foreground">
+				<p className="px-4 pt-1 pb-3 pl-[var(--plan-rail-col)] font-display text-body text-muted-foreground">
 					A free day.
 				</p>
 			) : null}
 			{section.hidden > 0 && who ? (
 				<p className="flex items-center gap-1 pb-2 pl-[var(--plan-rail-col)] text-xs text-muted-foreground">
-					<span className="font-mono tnum">{section.hidden}</span> hidden ·
+					<span className="tnum">{section.hidden}</span> hidden ·
 					<button
 						type="button"
 						data-testid={PLAN_TESTID.dayHidden}

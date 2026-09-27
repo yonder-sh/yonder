@@ -96,7 +96,7 @@ function SettleUpBody() {
 	return (
 		<div className="grid gap-4">
 			{view.transfers.length === 0 ? (
-				<p className="font-display text-[17px] leading-6 font-medium">
+				<p className="font-display text-lg leading-6 font-medium">
 					Everyone is square.
 				</p>
 			) : (
@@ -248,7 +248,7 @@ function RecordForm({
 				<Input
 					aria-label="Amount"
 					inputMode="decimal"
-					className="font-mono tnum placeholder:font-sans"
+					className="tnum"
 					value={text}
 					onChange={(e) => setText(e.target.value)}
 				/>
@@ -349,7 +349,7 @@ function SettlementLine({ id }: { id: string }) {
 	return (
 		<li
 			data-testid={MONEY_TESTID.settlementRow}
-			className="flex items-center gap-2 border-t py-1.5 text-[13px]"
+			className="flex items-center gap-2 border-t py-1.5 text-meta"
 		>
 			<span className="min-w-0 flex-1 truncate">
 				{name(s.fromMemberId)} → {name(s.toMemberId)}

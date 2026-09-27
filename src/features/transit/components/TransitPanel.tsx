@@ -161,14 +161,14 @@ export function TransitPanel({ ed }: { ed: LegEditor }) {
 						className="text-sm text-muted-foreground"
 					>
 						Departing{" "}
-						<span className="font-mono text-foreground tnum">
+						<span className="text-foreground tnum">
 							{formatTime(sched.start, fromTz)}
 						</span>{" "}
 						{tzLabel(fromTz, sched.start)}
 					</p>
 				) : null}
 				{scheduleEstimate ? (
-					<span className="inline-flex h-5 items-center rounded-full bg-muted px-2 text-[11px] text-muted-foreground">
+					<span className="inline-flex h-5 items-center rounded-full bg-muted px-2 text-2xs text-muted-foreground">
 						typical schedule
 					</span>
 				) : null}
@@ -184,7 +184,7 @@ export function TransitPanel({ ed }: { ed: LegEditor }) {
 							◆
 						</span>
 						<span className="font-medium">Reserved</span>
-						<span className="font-mono text-xs text-muted-foreground tnum">
+						<span className="text-xs text-muted-foreground tnum">
 							dep {clockText(fixed.departLocal.slice(11))} →{" "}
 							{clockText(fixed.arriveLocal.slice(11))}
 							{fixed.arriveLocal.slice(0, 10) !== fixed.departLocal.slice(0, 10)
@@ -195,7 +195,7 @@ export function TransitPanel({ ed }: { ed: LegEditor }) {
 					{doorToDoorText ? (
 						<p
 							data-testid={TRANSIT_TESTID.transitDoorToDoor}
-							className="font-mono text-xs text-muted-foreground tnum"
+							className="text-xs text-muted-foreground tnum"
 						>
 							{doorToDoorText}
 						</p>
@@ -240,7 +240,7 @@ export function TransitPanel({ ed }: { ed: LegEditor }) {
 						aria-hidden
 					/>
 					<div className="grid gap-1">
-						<p className="text-[13px] leading-5">
+						<p className="text-meta leading-5">
 							Estimated from the rail network — no timetables.
 						</p>
 						<GoogleMapsLink ends={ends} label="Check times in Google Maps →" />
@@ -306,7 +306,7 @@ export function TransitPanel({ ed }: { ed: LegEditor }) {
 			{noProvider ? (
 				<div
 					data-testid={TRANSIT_TESTID.noProvider}
-					className="grid gap-1 rounded-lg bg-muted px-3 py-2.5 text-[13px]"
+					className="grid gap-1 rounded-lg bg-muted px-3 py-2.5 text-meta"
 				>
 					<p>No transit provider configured.</p>
 					{mapsUrl ? <GoogleMapsLink href={mapsUrl} /> : null}

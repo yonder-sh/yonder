@@ -109,9 +109,9 @@ export default function ResultsMapImpl({
 										onPick(p.ref);
 									}}
 									className={cn(
-										"grid cursor-pointer place-items-center rounded-full border-2 border-white font-mono font-semibold shadow-float transition-transform tnum",
+										"grid cursor-pointer place-items-center rounded-full border-2 border-white font-semibold shadow-float transition-transform tnum",
 										on
-											? "size-8 scale-110 bg-primary text-[13px] text-primary-foreground"
+											? "size-8 scale-110 bg-primary text-meta text-primary-foreground"
 											: "size-7 bg-foreground text-xs text-background hover:scale-110",
 									)}
 								>

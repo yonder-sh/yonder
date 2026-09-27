@@ -110,12 +110,12 @@ function DayHoursBadgeView({
 							onClick={() => nav.select({ kind: "item", id: r.item.id })}
 							className="group grid w-full grid-cols-[auto_1fr_auto] items-center gap-x-2.5 px-3.5 py-1.5 text-left hover:bg-accent focus-visible:bg-accent focus-visible:outline-none"
 						>
-							<span className="w-10 font-mono text-[12px] text-muted-foreground tnum">
+							<span className="w-10 text-xs text-muted-foreground tnum">
 								{r.time ?? "—"}
 							</span>
 							<span className="min-w-0">
 								<span className="block truncate font-medium">{r.name}</span>
-								<span className="block truncate text-[12px] text-warning">
+								<span className="block truncate text-xs text-warning">
 									{r.issue.label}
 								</span>
 							</span>
@@ -128,7 +128,7 @@ function DayHoursBadgeView({
 				))}
 			</ul>
 			{unknown.length ? (
-				<div className="flex items-center gap-2 border-t px-3.5 py-2 text-[12px] text-muted-foreground">
+				<div className="flex items-center gap-2 border-t px-3.5 py-2 text-xs text-muted-foreground">
 					<span className="flex-1">
 						Hours unknown for {unknown.length} stop
 						{unknown.length === 1 ? "" : "s"}

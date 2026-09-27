@@ -88,7 +88,7 @@ function Endpoint({
 				align === "right" && "justify-end",
 			)}
 		>
-			<span className="font-mono text-[15px] leading-5 font-semibold tnum">
+			<span className="text-body leading-5 font-semibold tnum">
 				{known ? (
 					formatTime(at, tz)
 				) : estimated ? (
@@ -99,17 +99,15 @@ function Endpoint({
 					</span>
 				)}
 				{nextDay ? (
-					<sup className="ml-px font-mono text-[9px] font-normal text-muted-foreground">
+					<sup className="ml-px tnum text-[9px] font-normal text-muted-foreground">
 						+1
 					</sup>
 				) : null}
 			</span>
-			<span className="text-[15px] leading-5 font-semibold tracking-wide">
+			<span className="text-body leading-5 font-semibold tracking-wide">
 				{iata}
 			</span>
-			<span className="text-[11px] text-muted-foreground">
-				{tzLabel(tz, at)}
-			</span>
+			<span className="text-2xs text-muted-foreground">{tzLabel(tz, at)}</span>
 		</span>
 	);
 }
@@ -208,7 +206,7 @@ export function FlightRows({
 									variant="ghost"
 									data-testid={PLAN_TESTID.legFix}
 									disabled={guard.disabled}
-									className="h-5 px-1.5 text-[11px] text-warning"
+									className="h-5 px-1.5 text-2xs text-warning"
 									onClick={() =>
 										actions.update.mutate({
 											itemId: fx.itemId,
@@ -264,7 +262,7 @@ export function FlightRows({
 								>
 									{name ?? "Flight"}
 								</span>
-								<span className="font-mono tnum">
+								<span className="tnum">
 									· {t.estimate ? "~" : ""}
 									{formatDuration(t.minutes, { compact: true })}
 									{t.estimate ? " est." : ""}
@@ -352,7 +350,7 @@ export function LayoverRow({ itemId }: { itemId: string }) {
 			>
 				<span className="truncate rounded bg-background/80 px-1.5">
 					Layover{" "}
-					<span className="font-mono text-foreground tnum">
+					<span className="text-foreground tnum">
 						{formatDuration(
 							s
 								? Math.round((s.end.getTime() - s.start.getTime()) / 60_000)
@@ -365,7 +363,7 @@ export function LayoverRow({ itemId }: { itemId: string }) {
 				{warn ? (
 					<span
 						data-testid={TESTID.conflictBadge}
-						className="shrink-0 rounded-full border border-warning-hairline bg-warning-wash px-2 py-0.5 text-[11px] font-medium text-warning"
+						className="shrink-0 rounded-full border border-warning-hairline bg-warning-wash px-2 py-0.5 text-2xs font-medium text-warning"
 					>
 						Tight connection
 					</span>
@@ -413,7 +411,7 @@ export function FlightContinued({
 				/>
 				<span className="truncate rounded bg-background/80 px-1.5">
 					→{" "}
-					<span className="font-mono text-[13px] font-semibold text-foreground tnum">
+					<span className="text-meta font-semibold text-foreground tnum">
 						{t.untimed
 							? "TBD"
 							: `${arrKnown ? "" : "~"}${formatTime(arr, f.to.tz)}`}

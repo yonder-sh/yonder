@@ -131,7 +131,7 @@ export function RejectButton({
 						}}
 					/>
 					<div className="mt-2 flex items-center justify-between gap-2">
-						<span className="font-mono text-[11px] text-muted-foreground tnum">
+						<span className="text-2xs text-muted-foreground tnum">
 							{note.length}/200
 						</span>
 						<div className="flex gap-1.5">
@@ -254,7 +254,7 @@ export function ConflictNote({
 			data-reason={conflict.reason}
 			className="mt-2 rounded-md border border-warning-hairline bg-warning-wash px-2.5 py-2"
 		>
-			<p className="flex items-start gap-1.5 text-[13px] leading-[18px] text-warning">
+			<p className="flex items-start gap-1.5 text-meta leading-[18px] text-warning">
 				<TriangleAlert className="mt-px size-3.5 shrink-0" strokeWidth={1.75} />
 				<span>{conflictLine(p, conflict, ix)}</span>
 			</p>
@@ -425,7 +425,7 @@ export function ProposalRow({
 				</p>
 			) : null}
 			{p.message ? (
-				<p className="mt-1 text-[13px] leading-[18px] text-muted-foreground italic">
+				<p className="mt-1 text-meta leading-[18px] text-muted-foreground italic">
 					“{p.message}”
 				</p>
 			) : null}

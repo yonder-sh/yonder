@@ -131,7 +131,7 @@ export function ListsTab() {
 					{counts[k] ? (
 						<span
 							className={cn(
-								"font-mono tnum",
+								"tnum",
 								kind === k ? "text-background/70" : "text-muted-foreground",
 							)}
 						>

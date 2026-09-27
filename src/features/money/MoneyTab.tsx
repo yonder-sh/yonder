@@ -159,9 +159,7 @@ export function MoneyTab() {
 						<div>
 							<Overline className="sticky top-0 z-20 border-b bg-background/95 px-4 backdrop-blur">
 								From the shopping list{" "}
-								<span className="font-mono font-normal tnum">
-									{view.shopping.length}
-								</span>
+								<span className="font-normal tnum">{view.shopping.length}</span>
 							</Overline>
 							<ul className="divide-y">
 								{view.shopping.map((r) => (
@@ -189,8 +187,7 @@ function RowGroup({ title, rows }: { title: string; rows: Row[] }) {
 	return (
 		<div data-cursor-anchor={`money:rows.${anchorKey(title)}`}>
 			<Overline className="sticky top-0 z-20 border-b bg-background/95 px-4 backdrop-blur">
-				{title}{" "}
-				<span className="font-mono font-normal tnum">{rows.length}</span>
+				{title} <span className="font-normal tnum">{rows.length}</span>
 			</Overline>
 			<ul className="divide-y">
 				{rows.map((r) => (

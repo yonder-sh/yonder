@@ -75,7 +75,7 @@ export function Num({
 	children: ReactNode;
 	className?: string;
 }) {
-	return <span className={cn("font-mono tnum", className)}>{children}</span>;
+	return <span className={cn("tnum", className)}>{children}</span>;
 }
 
 /** An 8px bar: `value` of `max`; `over` marks the part past a budget. */
@@ -140,7 +140,7 @@ export function Overline({
 }) {
 	return (
 		<div className={cn("flex min-h-7 items-center gap-2", className)}>
-			<h3 className="text-[11px] leading-[14px] font-semibold tracking-[.06em] text-muted-foreground uppercase">
+			<h3 className="text-2xs leading-[14px] font-semibold tracking-[.06em] text-muted-foreground uppercase">
 				{children}
 			</h3>
 			{right ? (

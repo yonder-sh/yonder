@@ -118,9 +118,7 @@ function activityTargetOf(
 function TabCount({ n }: { n: number }) {
 	if (!n) return null;
 	return (
-		<span className="font-mono text-[11px] font-normal text-muted-foreground tnum">
-			{n}
-		</span>
+		<span className="text-2xs font-normal text-muted-foreground tnum">{n}</span>
 	);
 }
 
@@ -150,7 +148,7 @@ function PlaceHeader({ node }: { node: GraphNode }) {
 	const { ix } = useWorkspace();
 	return (
 		<>
-			<h2 className="font-display text-[22px] leading-7 font-semibold text-balance">
+			<h2 className="font-display text-2xl leading-7 font-semibold text-balance">
 				{node.name}
 			</h2>
 			{node.localName ? (
@@ -164,13 +162,13 @@ function PlaceHeader({ node }: { node: GraphNode }) {
 					{node.localName}
 				</p>
 			) : null}
-			<div className="mt-0.5 flex min-w-0 flex-wrap items-center gap-x-1.5 text-[13px] text-muted-foreground">
+			<div className="mt-0.5 flex min-w-0 flex-wrap items-center gap-x-1.5 text-meta text-muted-foreground">
 				{node.parentId ? <Crumbs nodeIds={node.parentId} /> : null}
 				{node.parentId ? <span aria-hidden>·</span> : null}
 				{node.type === "place" ? (
 					<CategorySelect
 						node={node}
-						className="-ml-1.5 h-6 text-[13px] text-muted-foreground"
+						className="-ml-1.5 h-6 text-meta text-muted-foreground"
 					/>
 				) : (
 					<span>{NODE_TYPES[node.type].label}</span>
@@ -222,7 +220,7 @@ function Body({
 						<>
 							<h2
 								className={cn(
-									"text-[22px] leading-7 font-semibold text-balance",
+									"text-2xl leading-7 font-semibold text-balance",
 									header.display && "font-display",
 								)}
 							>
@@ -234,7 +232,7 @@ function Body({
 										className={cn(
 											"inline-flex h-[22px] items-center gap-1 rounded-full bg-muted px-2 text-xs text-muted-foreground",
 											// A place's type is a word; times and dates are data (DESIGN §2.6).
-											node ? "capitalize" : "font-mono tnum",
+											node ? "capitalize" : "tnum",
 										)}
 									>
 										{node ? (
@@ -474,7 +472,7 @@ function ActivityFooter({ target }: { target: ActivityTarget | null }) {
 				{last.actorName} {last.summary}
 			</span>
 			<span aria-hidden="true">·</span>
-			<span className="shrink-0 font-mono tnum">{timeAgo(last.at, now)}</span>
+			<span className="shrink-0 tnum">{timeAgo(last.at, now)}</span>
 		</button>
 	);
 }

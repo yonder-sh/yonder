@@ -122,7 +122,7 @@ type Member = SharingDto["members"][number];
 const ROLE_W = "min-w-[8.5rem]";
 /** A role that can't be changed here ("Owner"), in the role column. */
 const MEMBER_ROLE_TEXT = cn(
-	"shrink-0 text-[13px] text-muted-foreground",
+	"shrink-0 text-meta text-muted-foreground",
 	"sm:min-w-[8.5rem] sm:pr-3 sm:text-right min-[380px]:max-sm:px-2",
 );
 
@@ -138,7 +138,7 @@ function Section({
 	return (
 		<section className="grid gap-2">
 			<div className="flex items-center justify-between">
-				<h3 className="text-[11px] font-semibold tracking-[.06em] text-muted-foreground uppercase">
+				<h3 className="text-2xs font-semibold tracking-[.06em] text-muted-foreground uppercase">
 					{title}
 				</h3>
 				{aside}
@@ -313,7 +313,7 @@ function InviteRow({ tripId }: { tripId: string }) {
 				/>
 			) : null}
 			{error ? (
-				<p className="text-[13px] text-destructive" role="alert">
+				<p className="text-meta text-destructive" role="alert">
 					{error}
 				</p>
 			) : null}
@@ -353,7 +353,7 @@ function LinkNote({ tripId, note }: { tripId: string; note: string | null }) {
 				}
 			}}
 			data-testid={HOME_TESTID.linkNote}
-			className="h-8 text-[13px]"
+			className="h-8 text-meta"
 		/>
 	);
 }
@@ -643,7 +643,7 @@ function MemberRow({
 							) : null}
 						</span>
 						{placeholder || pending || m.email || !counted ? (
-							<span className="truncate text-[12px] text-muted-foreground">
+							<span className="truncate text-xs text-muted-foreground">
 								{pending ? (
 									<span className="text-foreground/80">Pending</span>
 								) : null}
@@ -776,7 +776,7 @@ function AddressRow({ url }: { url: string }) {
 				readOnly
 				value={url}
 				onFocus={(e) => e.currentTarget.select()}
-				className="h-8 min-w-0 font-mono text-xs"
+				className="h-8 min-w-0 tnum text-xs"
 				aria-label="Trip address"
 				data-testid={TESTID.shareLinkUrl}
 			/>
@@ -821,7 +821,7 @@ function TripLink({ tripId, data }: { tripId: string; data: SharingDto }) {
 					</span>
 					<span className="grid min-w-0 flex-1">
 						<span className="text-sm font-medium">Anyone with the link</span>
-						<span className="text-[12px] text-muted-foreground">
+						<span className="text-xs text-muted-foreground">
 							{on
 								? LINK_BLURB[role]
 								: "Off. Only the people above can open the trip."}
@@ -882,9 +882,7 @@ function TripLink({ tripId, data }: { tripId: string; data: SharingDto }) {
 								</span>
 							) : null}
 							{on && link?.useCount ? (
-								<span className="font-mono tnum">
-									· opened {link.useCount}×
-								</span>
+								<span className="tnum">· opened {link.useCount}×</span>
 							) : null}
 							{on && link?.expiresAt ? (
 								<Button
@@ -913,7 +911,7 @@ function TripLink({ tripId, data }: { tripId: string; data: SharingDto }) {
 						</Button>
 					</div>
 				) : (
-					<div className="flex flex-wrap items-center gap-2 rounded-lg bg-muted/60 px-3 py-2 text-[13px]">
+					<div className="flex flex-wrap items-center gap-2 rounded-lg bg-muted/60 px-3 py-2 text-meta">
 						<span className="flex-1">
 							{on
 								? "The trip gets a new address: the old one stops working, and everyone who joined with the link is removed. Reset?"
@@ -994,7 +992,7 @@ function Guests({ tripId, data }: { tripId: string; data: SharingDto }) {
 									</span>
 								) : null}
 							</span>
-							<span className="text-[12px] text-muted-foreground">
+							<span className="text-xs text-muted-foreground">
 								{roleLabel(g.role)} · joined with the link · {ago(g.lastSeenAt)}
 							</span>
 						</span>

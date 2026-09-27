@@ -110,7 +110,7 @@ function WelcomePage() {
 				data-testid={`welcome-${name === "firstName" ? "first" : "last"}-name`}
 			/>
 			{fieldErrors[name] ? (
-				<p id={`${ids[name]}-error`} className="text-[13px] text-destructive">
+				<p id={`${ids[name]}-error`} className="text-meta text-destructive">
 					{fieldErrors[name]}
 				</p>
 			) : null}
@@ -148,7 +148,7 @@ function WelcomePage() {
 					<p
 						id={ids.form}
 						role="alert"
-						className="text-[13px] text-destructive"
+						className="text-meta text-destructive"
 						data-testid="auth-error"
 					>
 						{formError}

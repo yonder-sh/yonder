@@ -69,7 +69,7 @@ export type AvatarPerson = {
 export const AVATAR_PX = {
 	16: "size-4 text-[8px]",
 	20: "size-5 text-[9px]",
-	28: "size-7 text-[11px]",
+	28: "size-7 text-2xs",
 	40: "size-10 text-sm",
 	64: "size-16 text-xl",
 	96: "size-24 text-3xl",

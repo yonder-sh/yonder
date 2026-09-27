@@ -312,7 +312,7 @@ export function ListRow({
 							{" · "}
 							{plan.place}
 							{plan.time && !closed ? (
-								<span className="ml-1 font-mono tnum">{plan.time}</span>
+								<span className="ml-1 tnum">{plan.time}</span>
 							) : null}
 						</>
 					) : (
@@ -486,7 +486,7 @@ export function ListRow({
 									</span>
 								) : null}
 								{row.status === "skipped" ? (
-									<span className="shrink-0 rounded-full bg-muted px-1.5 text-[11px] text-muted-foreground">
+									<span className="shrink-0 rounded-full bg-muted px-1.5 text-2xs text-muted-foreground">
 										skipped
 									</span>
 								) : null}
@@ -558,7 +558,7 @@ export function ListRow({
 								) : row.note ? (
 									<MarkdownText
 										md={row.note}
-										className="text-[13px] text-muted-foreground"
+										className="text-meta text-muted-foreground"
 									/>
 								) : null}
 							</div>
@@ -639,7 +639,7 @@ export function ListRow({
 								disabled={!editable || row.list !== "shopping"}
 								onClick={() => setPriceOpen(true)}
 								aria-label="Quantity and budget"
-								className="inline-flex items-center gap-2 rounded font-mono tnum disabled:cursor-default"
+								className="inline-flex items-center gap-2 rounded tnum disabled:cursor-default"
 							>
 								{row.quantity ? <span>×{row.quantity}</span> : null}
 								{row.priceAmount != null ? (
@@ -760,7 +760,7 @@ function DueChip({
 				due && state !== "later" && state !== "none" ? due.label : undefined
 			}
 			className={cn(
-				"inline-flex h-[22px] items-center gap-1.5 rounded-full px-2 font-mono text-xs whitespace-nowrap tnum",
+				"inline-flex h-[22px] items-center gap-1.5 rounded-full px-2 text-xs whitespace-nowrap tnum",
 				state === "overdue" && "text-warning",
 				(state === "today" || state === "soon") && "bg-primary/10 text-primary",
 				state === "open_now" && "bg-muted text-foreground",

@@ -145,7 +145,7 @@ export function ZonePicker({ node }: { node: GraphNode }) {
 						{zoneHint ? (
 							<span
 								data-testid={PLACES_TESTID.tzOffsets}
-								className="font-mono text-[11px] tnum"
+								className="text-2xs tnum"
 							>
 								{zoneHint}
 							</span>
@@ -183,13 +183,13 @@ export function ZonePicker({ node }: { node: GraphNode }) {
 											{z.replace(/_/g, " ")}
 										</span>
 										{offsets.get(z)?.includes("→") ? (
-											<span className="block font-mono text-[11px] tnum text-muted-foreground">
+											<span className="block text-2xs tnum text-muted-foreground">
 												{offsets.get(z)}
 											</span>
 										) : null}
 									</span>
 									{offsets.get(z)?.includes("→") ? null : (
-										<span className="font-mono text-xs tnum text-muted-foreground">
+										<span className="text-xs tnum text-muted-foreground">
 											{offsets.get(z)}
 										</span>
 									)}

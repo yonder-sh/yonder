@@ -45,7 +45,7 @@ export function LegChips({
 			{label ? (
 				<span
 					data-testid={TESTID.legSummaryLabel}
-					className="max-w-[16rem] truncate rounded-sm border border-border px-1 text-[11px] leading-4 text-foreground"
+					className="max-w-[16rem] truncate rounded-sm border border-border px-1 text-2xs leading-4 text-foreground"
 				>
 					{label}
 				</span>
@@ -107,7 +107,7 @@ export function LegSummary({
 			{unset && schedule?.suggestion?.estimateMin != null ? (
 				// DESIGN §7.1 "Estimate (unset) leg": the estimated minutes with
 				// "est." (the suggested mode is offered by the accept chips).
-				<span className="font-mono tnum">
+				<span className="tnum">
 					~{formatDuration(schedule.suggestion.estimateMin, { compact })} est.
 				</span>
 			) : null}
@@ -116,7 +116,7 @@ export function LegSummary({
 			) : null}
 			{!unset && !compact ? <LegChips details={details} /> : null}
 			{!unset && minutes !== null ? (
-				<span className="font-mono tnum">
+				<span className="tnum">
 					{flight?.estimate ? "~" : ""}
 					{formatDuration(minutes, { compact })}
 					{estimate ? " est." : ""}
@@ -124,7 +124,7 @@ export function LegSummary({
 			) : null}
 			{!unset && !compact && flight?.untimed ? <span>times TBD</span> : null}
 			{!unset && !compact && distance && leg?.distanceM ? (
-				<span className="font-mono tnum">{formatDistance(leg.distanceM)}</span>
+				<span className="tnum">{formatDistance(leg.distanceM)}</span>
 			) : null}
 		</span>
 	);

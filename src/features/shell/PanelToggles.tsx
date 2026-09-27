@@ -112,7 +112,7 @@ function Rail({
 					{icon}
 					<span
 						aria-hidden
-						className="text-[11px] font-semibold tracking-[.06em] uppercase [writing-mode:vertical-rl]"
+						className="text-2xs font-semibold tracking-[.06em] uppercase [writing-mode:vertical-rl]"
 					>
 						{word}
 					</span>

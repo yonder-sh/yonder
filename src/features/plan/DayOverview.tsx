@@ -79,7 +79,7 @@ function DayOverviewBody({ dayId }: { dayId: string }) {
 	return (
 		<div data-testid={TESTID.dayOverview} className="grid gap-4 text-sm">
 			{s && items.length ? (
-				<p className="font-mono text-xs text-muted-foreground tnum">
+				<p className="text-xs text-muted-foreground tnum">
 					Starts {day.startTime} · Activities {formatDuration(s.activitiesMin)}{" "}
 					· Travel {formatDuration(s.travelMin)} · ends{" "}
 					{formatTime(end?.at ?? s.end, end?.tz ?? s.tz)}
@@ -88,7 +88,7 @@ function DayOverviewBody({ dayId }: { dayId: string }) {
 					) : null}
 				</p>
 			) : (
-				<p className="font-display text-[15px] text-muted-foreground">
+				<p className="font-display text-body text-muted-foreground">
 					A free day.
 				</p>
 			)}
@@ -100,7 +100,7 @@ function DayOverviewBody({ dayId }: { dayId: string }) {
 				>
 					<div className="flex items-baseline justify-between text-xs">
 						<span className="text-muted-foreground">Your day</span>
-						<span className="font-mono tnum">
+						<span className="tnum">
 							{formatDuration(s.activitiesMin + s.travelMin, { compact: true })}{" "}
 							/ {formatDuration(s.capacityMin, { compact: true })}
 						</span>
@@ -207,7 +207,7 @@ function DayOverviewBody({ dayId }: { dayId: string }) {
 				{morning ? (
 					<>
 						<dt className="text-xs text-muted-foreground">Last night</dt>
-						<dd className="truncate text-[13px]">{morning.name}</dd>
+						<dd className="truncate text-meta">{morning.name}</dd>
 					</>
 				) : null}
 				<dt className="text-xs text-muted-foreground">Sun</dt>
@@ -219,7 +219,7 @@ function DayOverviewBody({ dayId }: { dayId: string }) {
 
 			{issues.length ? (
 				<section className="grid gap-1">
-					<h3 className="text-[11px] font-semibold tracking-[.06em] text-muted-foreground uppercase">
+					<h3 className="text-2xs font-semibold tracking-[.06em] text-muted-foreground uppercase">
 						Issues
 					</h3>
 					<ul className="grid gap-0.5">
@@ -227,7 +227,7 @@ function DayOverviewBody({ dayId }: { dayId: string }) {
 							<li
 								key={i.key}
 								className={cn(
-									"text-[13px]",
+									"text-meta",
 									i.conflict ? "text-warning" : "text-muted-foreground",
 								)}
 							>
@@ -240,8 +240,8 @@ function DayOverviewBody({ dayId }: { dayId: string }) {
 
 			{items.length ? (
 				<section className="grid gap-1">
-					<h3 className="text-[11px] font-semibold tracking-[.06em] text-muted-foreground uppercase">
-						Stops · <span className="font-mono tnum">{items.length}</span>
+					<h3 className="text-2xs font-semibold tracking-[.06em] text-muted-foreground uppercase">
+						Stops · <span className="tnum">{items.length}</span>
 					</h3>
 					<ol className="grid">
 						{items.map((it) => {
@@ -253,10 +253,10 @@ function DayOverviewBody({ dayId }: { dayId: string }) {
 										onClick={() => nav.select({ kind: "item", id: it.id })}
 										className="flex w-full items-center gap-3 rounded-md px-1 py-1 text-left hover:bg-accent/60"
 									>
-										<span className="w-11 shrink-0 font-mono text-xs text-muted-foreground tnum">
+										<span className="w-11 shrink-0 text-xs text-muted-foreground tnum">
 											{t ? formatTime(t.start, t.tz) : "—"}
 										</span>
-										<span className="truncate text-[13px]">
+										<span className="truncate text-meta">
 											{itemName(ix, it)}
 										</span>
 									</button>

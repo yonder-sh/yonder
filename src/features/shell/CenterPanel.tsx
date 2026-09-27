@@ -142,7 +142,7 @@ export function CenterTabBar({
 						{t === "places" && toDecide ? (
 							<span
 								// Amber is for conflicts only: places to decide aren't one.
-								className="rounded-full bg-accent px-1.5 text-[11px] font-medium text-accent-foreground tnum"
+								className="rounded-full bg-accent px-1.5 text-2xs font-medium text-accent-foreground tnum"
 								title={`${toDecide} ${toDecide === 1 ? "place" : "places"} to decide`}
 								data-testid={SHELL_TESTID.placesToDecide}
 							>
@@ -154,7 +154,7 @@ export function CenterTabBar({
 							</span>
 						) : null}
 						{count[t] ? (
-							<span className="font-mono text-xs font-normal text-muted-foreground tnum">
+							<span className="text-xs font-normal text-muted-foreground tnum">
 								{count[t]}
 							</span>
 						) : null}

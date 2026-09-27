@@ -249,10 +249,10 @@ function EditorBody({
 	return (
 		<ShowLastEntry.Provider value={showLast}>
 			<DialogHeader className="gap-1 border-b px-5 pt-5 pb-4 text-left">
-				<DialogTitle className="text-[17px] leading-6 font-semibold">
+				<DialogTitle className="text-lg leading-6 font-semibold">
 					Opening hours
 				</DialogTitle>
-				<DialogDescription className="truncate text-[13px]">
+				<DialogDescription className="truncate text-meta">
 					{node.name}
 				</DialogDescription>
 			</DialogHeader>
@@ -260,7 +260,7 @@ function EditorBody({
 				{banner ? (
 					<div
 						data-testid={INSIGHTS_TESTID.hoursEditorBanner}
-						className="grid gap-1 rounded-lg bg-muted/70 px-3 py-2.5 text-[12px] leading-4"
+						className="grid gap-1 rounded-lg bg-muted/70 px-3 py-2.5 text-xs leading-4"
 					>
 						<p className="font-medium text-foreground">{banner.title}</p>
 						{banner.raw ? (
@@ -270,7 +270,7 @@ function EditorBody({
 							<p className="text-muted-foreground">Not read: {banner.rest}</p>
 						) : null}
 						{banner.osm ? (
-							<p className="text-[11px] text-muted-foreground">
+							<p className="text-2xs text-muted-foreground">
 								<OsmAttribution />
 							</p>
 						) : null}
@@ -299,7 +299,7 @@ function EditorBody({
 						<WeeklyEditor draft={draft} update={update} />
 					) : draft.mode === "closedOnly" ? (
 						<div className="grid gap-2">
-							<p className="text-[13px] text-muted-foreground">
+							<p className="text-meta text-muted-foreground">
 								Hours unknown, closed on:
 							</p>
 							<div className="flex flex-wrap gap-1.5">
@@ -333,7 +333,7 @@ function EditorBody({
 							</div>
 						</div>
 					) : (
-						<p className="text-[13px] text-muted-foreground">
+						<p className="text-meta text-muted-foreground">
 							Open day and night. Special dates below still apply.
 						</p>
 					)}
@@ -343,7 +343,7 @@ function EditorBody({
 					<Overline>Rules</Overline>
 					<div className="grid gap-2">
 						{draft.closedNth.length ? (
-							<p className="text-[13px] text-muted-foreground">
+							<p className="text-meta text-muted-foreground">
 								Also closed on the
 							</p>
 						) : null}
@@ -352,7 +352,7 @@ function EditorBody({
 								// biome-ignore lint/suspicious/noArrayIndexKey: rows have no identity
 								key={i}
 								data-testid={INSIGHTS_TESTID.hoursEditorNth}
-								className="flex flex-wrap items-center gap-2 text-[13px]"
+								className="flex flex-wrap items-center gap-2 text-meta"
 							>
 								<Select
 									value={String(n.nth)}
@@ -424,7 +424,7 @@ function EditorBody({
 							</Button>
 						) : null}
 					</div>
-					<div className="flex flex-wrap items-center gap-2 text-[13px]">
+					<div className="flex flex-wrap items-center gap-2 text-meta">
 						<span className="text-muted-foreground">Last entry</span>
 						<Input
 							inputMode="numeric"
@@ -438,7 +438,7 @@ function EditorBody({
 								});
 							}}
 							placeholder="–"
-							className="h-8 w-16 text-center font-mono tnum"
+							className="h-8 w-16 text-center tnum"
 						/>
 						<span className="text-muted-foreground">min before close</span>
 						{draft.mode === "weekly" ? (
@@ -495,7 +495,7 @@ function EditorBody({
 					<p
 						role="alert"
 						data-testid={INSIGHTS_TESTID.hoursEditorError}
-						className="min-w-0 flex-1 text-[12px] leading-4 text-destructive"
+						className="min-w-0 flex-1 text-xs leading-4 text-destructive"
 					>
 						{error}
 					</p>
@@ -560,7 +560,7 @@ function WeeklyEditor({
 				data-testid={INSIGHTS_TESTID.hoursEditorHoliday}
 				className="mt-1 grid gap-2 border-t pt-3 sm:grid-cols-[3.75rem_1fr] sm:gap-x-2"
 			>
-				<span className="pt-1.5 text-[13px] font-medium">Holidays</span>
+				<span className="pt-1.5 text-meta font-medium">Holidays</span>
 				<div className="grid gap-1.5">
 					<Segmented
 						label="Holiday hours"
@@ -619,9 +619,7 @@ function DayRow({
 			data-state={dd.state}
 			className="grid grid-cols-[2.75rem_1fr] items-start gap-x-2 py-0.5"
 		>
-			<span className="pt-1.5 text-[13px] font-medium">
-				{WEEKDAY_SHORT[day]}
-			</span>
+			<span className="pt-1.5 text-meta font-medium">{WEEKDAY_SHORT[day]}</span>
 			<div className="flex flex-wrap items-start gap-x-2 gap-y-1.5">
 				<Select
 					value={dd.state}
@@ -658,7 +656,7 @@ function DayRow({
 						}
 					/>
 				) : (
-					<span className="pt-1.5 text-[13px] text-muted-foreground">
+					<span className="pt-1.5 text-meta text-muted-foreground">
 						{dd.state === "24h" ? "Open all day" : "Closed"}
 					</span>
 				)}
@@ -767,9 +765,9 @@ function ClockField({
 				if (n && n !== value) onChange(n);
 			}}
 			className={cn(
-				"h-8 w-[4.25rem] px-2 text-center font-mono text-[13px] tnum",
+				"h-8 w-[4.25rem] px-2 text-center text-meta tnum",
 				muted &&
-					"text-muted-foreground placeholder:font-sans placeholder:text-[12px]",
+					"text-muted-foreground placeholder:font-sans placeholder:text-xs",
 			)}
 		/>
 	);
@@ -881,13 +879,13 @@ function ExceptionsEditor({
 									})
 								}
 								placeholder="Why (Sports Day, renovation…)"
-								className="h-8 text-[13px]"
+								className="h-8 text-meta"
 							/>
 						</div>
 					))}
 				</div>
 			) : (
-				<p className="text-[13px] text-muted-foreground">
+				<p className="text-meta text-muted-foreground">
 					None. Add a holiday closure or a short day.
 				</p>
 			)}

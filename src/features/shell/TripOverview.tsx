@@ -38,7 +38,7 @@ export function TripOverview() {
 					{graph.days.length ? (
 						<span className="text-muted-foreground">
 							{" "}
-							· <span className="font-mono tnum">{graph.days.length}</span>{" "}
+							· <span className="tnum">{graph.days.length}</span>{" "}
 							{graph.days.length === 1 ? "day" : "days"}
 						</span>
 					) : null}
@@ -56,9 +56,9 @@ export function TripOverview() {
 				</dd>
 				<dt className="text-xs leading-5 text-muted-foreground">Places</dt>
 				<dd>
-					<span className="font-mono tnum">{places}</span>{" "}
+					<span className="tnum">{places}</span>{" "}
 					<span className="text-muted-foreground">
-						· <span className="font-mono tnum">{ideas}</span> ideas
+						· <span className="tnum">{ideas}</span> ideas
 					</span>
 				</dd>
 			</dl>

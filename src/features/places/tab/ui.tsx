@@ -35,9 +35,9 @@ export function ScoreChip({
 			title={`Group score ${formatScore(score)} (Must +3 … Nah −2; unrated counts as 0)`}
 			style={ratingVars(tier)}
 			className={cn(
-				"inline-flex shrink-0 items-center rounded-full font-mono font-semibold whitespace-nowrap tnum",
+				"inline-flex shrink-0 items-center rounded-full font-semibold whitespace-nowrap tnum",
 				RATING_FILL,
-				size === "sm" ? "h-5 px-1.5 text-[11px]" : "h-[22px] px-2 text-xs",
+				size === "sm" ? "h-5 px-1.5 text-2xs" : "h-[22px] px-2 text-xs",
 				className,
 			)}
 		>
@@ -113,7 +113,7 @@ export function SplitMark({ className }: { className?: string }) {
 			data-testid={PLACES_TAB_TESTID.splitMark}
 			title="Split: someone is keen, someone isn't. Talk about it."
 			className={cn(
-				"inline-flex h-5 shrink-0 items-center gap-1 rounded-full bg-warning-wash px-1.5 text-[11px] font-medium text-warning",
+				"inline-flex h-5 shrink-0 items-center gap-1 rounded-full bg-warning-wash px-1.5 text-2xs font-medium text-warning",
 				className,
 			)}
 		>
@@ -134,7 +134,7 @@ export function SectionLabel({
 	return (
 		<h3
 			className={cn(
-				"text-[11px] font-semibold tracking-[0.06em] text-muted-foreground uppercase",
+				"text-2xs font-semibold tracking-[0.06em] text-muted-foreground uppercase",
 				className,
 			)}
 		>

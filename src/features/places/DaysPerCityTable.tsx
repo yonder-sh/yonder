@@ -76,7 +76,7 @@ function PlannedInput({
 				}
 			}}
 			className={cn(
-				"h-7 w-12 rounded-md border border-transparent bg-transparent px-1.5 text-right font-mono text-[13px] tnum outline-none hover:border-input focus:border-ring focus:bg-background disabled:hover:border-transparent",
+				"h-7 w-12 rounded-md border border-transparent bg-transparent px-1.5 text-right text-meta tnum outline-none hover:border-input focus:border-ring focus:bg-background disabled:hover:border-transparent",
 				bad && "border-destructive",
 				className,
 			)}
@@ -92,7 +92,7 @@ export function PlannedDaysLine({ node }: { node: GraphNode }) {
 	const scheduled = row?.scheduled ?? 0;
 	return (
 		<span
-			className="-my-1 flex items-center gap-1 text-[13px] text-muted-foreground"
+			className="-my-1 flex items-center gap-1 text-meta text-muted-foreground"
 			data-testid={PLACES_TESTID.plannedDays}
 		>
 			<PlannedInput
@@ -100,8 +100,7 @@ export function PlannedDaysLine({ node }: { node: GraphNode }) {
 				label={`Planned days in ${node.name}`}
 				className="-ml-1.5 border-border text-left text-foreground"
 			/>
-			planned ·{" "}
-			<span className="font-mono tnum text-foreground">{scheduled}</span>{" "}
+			planned · <span className="tnum text-foreground">{scheduled}</span>{" "}
 			scheduled
 		</span>
 	);
@@ -120,7 +119,7 @@ export function DaysPerCityTable({
 	const table = cityDayTable(ix, schedule, scopeId);
 	if (!table.rows.length)
 		return (
-			<p className="text-[13px] text-muted-foreground">No cities here yet.</p>
+			<p className="text-meta text-muted-foreground">No cities here yet.</p>
 		);
 	// Group by country, in outline order.
 	const groups: { country: GraphNode | null; rows: typeof table.rows }[] = [];
@@ -137,9 +136,9 @@ export function DaysPerCityTable({
 			className={cn("grid gap-1", className)}
 			data-testid={PLACES_TESTID.daysTable}
 		>
-			<table className="w-full border-collapse text-[13px]">
+			<table className="w-full border-collapse text-meta">
 				<thead>
-					<tr className="text-[11px] tracking-[.06em] text-muted-foreground uppercase">
+					<tr className="text-2xs tracking-[.06em] text-muted-foreground uppercase">
 						<th className="py-1 text-left font-semibold">City</th>
 						<th className="w-16 py-1 pl-2 text-right font-semibold">Planned</th>
 						<th className="w-20 py-1 pl-2 text-right font-semibold">
@@ -164,10 +163,10 @@ export function DaysPerCityTable({
 											{g.country.name}
 										</span>
 									</td>
-									<td className="pt-2 pb-0.5 text-right font-mono text-xs tnum text-muted-foreground">
+									<td className="pt-2 pb-0.5 text-right text-xs tnum text-muted-foreground">
 										{formatDays(planned)}
 									</td>
-									<td className="pt-2 pb-0.5 text-right font-mono text-xs tnum text-muted-foreground">
+									<td className="pt-2 pb-0.5 text-right text-xs tnum text-muted-foreground">
 										{scheduled}
 									</td>
 								</tr>
@@ -204,7 +203,7 @@ export function DaysPerCityTable({
 										</td>
 										<td
 											className={cn(
-												"py-0.5 pr-1 text-right font-mono tnum",
+												"py-0.5 pr-1 text-right tnum",
 												diff ? "text-foreground" : "text-muted-foreground",
 											)}
 											title={
@@ -226,33 +225,26 @@ export function DaysPerCityTable({
 				<p
 					data-testid={PLACES_TESTID.daysUnallocated}
 					className={cn(
-						"mt-1 flex items-baseline justify-between gap-2 border-t pt-2 text-[13px]",
+						"mt-1 flex items-baseline justify-between gap-2 border-t pt-2 text-meta",
 						over && "text-warning",
 					)}
 				>
 					<span>
 						{over ? "Over-allocated" : "Unallocated"}{" "}
-						<span className="font-mono tnum font-medium">
+						<span className="tnum font-medium">
 							{formatDays(Math.abs(table.unallocated))}
 						</span>{" "}
 						{Math.abs(table.unallocated) === 1 ? "day" : "days"}
 					</span>
 					<span className="text-xs text-muted-foreground">
-						<span className="font-mono tnum">
-							{formatDays(table.plannedTotal)}
-						</span>{" "}
-						planned of <span className="font-mono tnum">{table.tripDays}</span>{" "}
-						trip days
+						<span className="tnum">{formatDays(table.plannedTotal)}</span>{" "}
+						planned of <span className="tnum">{table.tripDays}</span> trip days
 					</span>
 				</p>
 			) : compact ? null : (
 				<p className="mt-1 border-t pt-2 text-xs text-muted-foreground">
-					<span className="font-mono tnum">
-						{formatDays(table.plannedTotal)}
-					</span>{" "}
-					planned ·{" "}
-					<span className="font-mono tnum">{table.scheduledTotal}</span>{" "}
-					scheduled
+					<span className="tnum">{formatDays(table.plannedTotal)}</span> planned
+					· <span className="tnum">{table.scheduledTotal}</span> scheduled
 				</p>
 			)}
 		</div>

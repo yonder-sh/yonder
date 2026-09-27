@@ -44,8 +44,8 @@ export function OfflineBanner() {
 				{savedAt ? (
 					<>
 						Saved copy from{" "}
-						<span className="font-mono tnum">{savedAtLabel(savedAt)}</span> ·
-						editing paused
+						<span className="tnum">{savedAtLabel(savedAt)}</span> · editing
+						paused
 					</>
 				) : (
 					"Offline · editing paused"

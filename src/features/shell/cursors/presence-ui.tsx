@@ -279,7 +279,7 @@ export function ElsewhereChips({
 				);
 			})}
 			{rows.length > shown.length ? (
-				<li className="shrink-0 pl-1 text-[11px] text-muted-foreground">
+				<li className="shrink-0 pl-1 text-2xs text-muted-foreground">
 					+{rows.length - shown.length} more
 				</li>
 			) : null}

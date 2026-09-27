@@ -387,9 +387,9 @@ export function ListBoard(props: BoardProps) {
 			>
 				{headerStart}
 				{title ? (
-					<h3 className="text-[11px] font-semibold tracking-[.06em] text-muted-foreground uppercase">
+					<h3 className="text-2xs font-semibold tracking-[.06em] text-muted-foreground uppercase">
 						{title}
-						<span className="ml-1.5 font-mono tnum">{openCount || ""}</span>
+						<span className="ml-1.5 tnum">{openCount || ""}</span>
 					</h3>
 				) : null}
 				<div className="ml-auto flex flex-wrap items-center gap-1.5">
@@ -484,7 +484,7 @@ export function ListBoard(props: BoardProps) {
 				/>
 			) : null}
 			{!empty && view === "due" && !anyDated ? (
-				<p className="px-4 pt-2 pb-1 font-display text-[15px] text-muted-foreground">
+				<p className="px-4 pt-2 pb-1 font-display text-body text-muted-foreground">
 					Nothing dated. Add a date from any to-do's ⋯.
 				</p>
 			) : null}
@@ -535,8 +535,7 @@ export function ListBoard(props: BoardProps) {
 						"Hide dropped places"
 					) : (
 						<>
-							<span className="font-mono tnum">{droppedCount}</span> on dropped
-							places ·{" "}
+							<span className="tnum">{droppedCount}</span> on dropped places ·{" "}
 							<span className="underline underline-offset-3">Show</span>
 						</>
 					)}
@@ -688,7 +687,7 @@ function GroupBlock({
 						onClick={() => setDoneOpen(!doneOpen)}
 						className="flex h-8 items-center gap-1 px-4 text-xs text-muted-foreground hover:text-foreground"
 					>
-						<span className="font-mono tnum">{done.length}</span>{" "}
+						<span className="tnum">{done.length}</span>{" "}
 						{isDoneGroup ? "done" : "done"}
 						<ChevronRight
 							className={cn(
@@ -750,9 +749,7 @@ function GroupHead({
 				</span>
 			)}
 			{count ? (
-				<span className="font-mono text-xs text-muted-foreground tnum">
-					{count}
-				</span>
+				<span className="text-xs text-muted-foreground tnum">{count}</span>
 			) : null}
 			<span className="ml-auto flex shrink-0 items-center gap-0.5">
 				{onAdd ? (

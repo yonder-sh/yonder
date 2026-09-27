@@ -505,7 +505,7 @@ export function FeedMedia({
 				<span
 					data-testid={PLACES_TESTID.rateMediaFrom}
 					title={`Photo from ${s.from.name}`}
-					className="pointer-events-none absolute top-3 left-4 z-[3] inline-flex h-[22px] max-w-[calc(100%-2rem)] min-w-0 items-center gap-1 rounded-full bg-black/55 px-2 text-[11px] font-medium text-white backdrop-blur-sm"
+					className="pointer-events-none absolute top-3 left-4 z-[3] inline-flex h-[22px] max-w-[calc(100%-2rem)] min-w-0 items-center gap-1 rounded-full bg-black/55 px-2 text-2xs font-medium text-white backdrop-blur-sm"
 				>
 					<MapPin className="size-3 shrink-0" strokeWidth={2} />
 					<span className="truncate">{s.from.name}</span>
@@ -569,14 +569,14 @@ function CardContext({ row }: { row: PlaceRow }) {
 	return (
 		<div className="grid gap-4 text-sm">
 			<section className="grid gap-1">
-				<h3 className="text-[11px] font-semibold tracking-[0.06em] text-neutral-400 uppercase">
+				<h3 className="text-2xs font-semibold tracking-[0.06em] text-neutral-400 uppercase">
 					Where it fits
 				</h3>
 				<p className="text-neutral-200">{fitsText(row, ix)}</p>
 			</section>
 			{shared ? (
 				<section className="grid gap-1">
-					<h3 className="text-[11px] font-semibold tracking-[0.06em] text-neutral-400 uppercase">
+					<h3 className="text-2xs font-semibold tracking-[0.06em] text-neutral-400 uppercase">
 						Shared note
 					</h3>
 					<p className="line-clamp-[8] whitespace-pre-line text-neutral-200">
@@ -586,7 +586,7 @@ function CardContext({ row }: { row: PlaceRow }) {
 			) : null}
 			{mine ? (
 				<section className="grid gap-1">
-					<h3 className="text-[11px] font-semibold tracking-[0.06em] text-neutral-400 uppercase">
+					<h3 className="text-2xs font-semibold tracking-[0.06em] text-neutral-400 uppercase">
 						Your private note
 					</h3>
 					<p className="line-clamp-4 whitespace-pre-line text-neutral-300">
@@ -669,7 +669,7 @@ function PlaceCard({
 			data-testid={PLACES_TAB_TESTID.feedTag}
 			data-tone={tag.tone}
 			className={cn(
-				"inline-flex h-[30px] w-fit items-center gap-1.5 rounded-full px-3 text-[13px] font-semibold animate-in fade-in-0 zoom-in-95 duration-200 motion-reduce:animate-none",
+				"inline-flex h-[30px] w-fit items-center gap-1.5 rounded-full px-3 text-meta font-semibold animate-in fade-in-0 zoom-in-95 duration-200 motion-reduce:animate-none",
 				tag.tone === "split"
 					? "bg-warning text-black"
 					: "bg-white text-neutral-900",
@@ -685,10 +685,10 @@ function PlaceCard({
 	) : null;
 	const title = (
 		<div className="flex flex-col gap-0.5">
-			<h2 className="font-display text-[26px] leading-tight font-semibold text-white">
+			<h2 className="font-display text-2xl leading-tight font-semibold text-white">
 				{node.name}
 			</h2>
-			<p className="text-[13px] text-neutral-400">{meta}</p>
+			<p className="text-meta text-neutral-400">{meta}</p>
 		</div>
 	);
 	const buttons = (
@@ -834,7 +834,7 @@ function PlaceCard({
 							className="flex shrink-0 cursor-pointer items-center gap-3 px-4 pt-2.5 pb-[max(12px,env(safe-area-inset-bottom))] text-left"
 						>
 							<span className="min-w-0 flex-1">
-								<span className="block truncate font-display text-[19px] leading-tight font-semibold text-white">
+								<span className="block truncate font-display text-lg leading-tight font-semibold text-white">
 									{node.name}
 								</span>
 								<span className="block truncate text-xs text-neutral-300">
@@ -898,7 +898,7 @@ function Stat({ n, label }: { n: number | string; label: string }) {
 	return (
 		<div className="flex flex-col gap-1 rounded-2xl bg-neutral-900 p-4">
 			<span className="font-display text-3xl font-semibold tnum">{n}</span>
-			<span className="text-[13px] text-neutral-400">{label}</span>
+			<span className="text-meta text-neutral-400">{label}</span>
 		</div>
 	);
 }
@@ -945,10 +945,10 @@ function MilestoneCard({
 		.slice(0, 3);
 	return (
 		<Slate testid={PLACES_TAB_TESTID.feedMilestone} cardKey={cardKey}>
-			<span className="font-mono text-xs text-neutral-400 tnum">
+			<span className="text-xs text-neutral-400 tnum">
 				{n * 10} rated · {left} left
 			</span>
-			<h2 className="font-display text-[34px] leading-tight font-semibold">
+			<h2 className="font-display text-4xl leading-tight font-semibold">
 				10 more done.
 				<br />
 				Here's how it's going.
@@ -971,7 +971,7 @@ function MilestoneCard({
 					{rising.map((r) => (
 						<span
 							key={r.id}
-							className="flex items-center justify-between gap-3 text-[15px]"
+							className="flex items-center justify-between gap-3 text-body"
 						>
 							<span className="truncate">{r.name}</span>
 							<ScoreChip score={r.score} />
@@ -979,7 +979,7 @@ function MilestoneCard({
 					))}
 				</div>
 			) : null}
-			<span className="flex items-center gap-1.5 text-[13px] text-neutral-400">
+			<span className="flex items-center gap-1.5 text-meta text-neutral-400">
 				<ArrowDown className="size-3.5" />
 				Keep scrolling
 			</span>
@@ -990,14 +990,14 @@ function MilestoneCard({
 function SkippedCard({ count, cardKey }: { count: number; cardKey: string }) {
 	return (
 		<Slate testid={PLACES_TAB_TESTID.feedSkipped} cardKey={cardKey}>
-			<h2 className="font-display text-[32px] leading-tight font-semibold">
+			<h2 className="font-display text-3xl leading-tight font-semibold">
 				You skipped {count}.
 			</h2>
-			<p className="text-[15px] text-neutral-400">
+			<p className="text-body text-neutral-400">
 				Rate {count === 1 ? "it" : "them"} now:{" "}
 				{count === 1 ? "it's" : "they're"} just below.
 			</p>
-			<span className="flex items-center gap-1.5 text-[13px] text-neutral-400">
+			<span className="flex items-center gap-1.5 text-meta text-neutral-400">
 				<ArrowDown className="size-3.5" />
 				Keep scrolling
 			</span>
@@ -1031,10 +1031,10 @@ function EndCard({
 				<Check className="size-8" strokeWidth={2.6} />
 			</span>
 			<div className="flex flex-col gap-1.5">
-				<h2 className="font-display text-[32px] leading-tight font-semibold">
+				<h2 className="font-display text-3xl leading-tight font-semibold">
 					You're all caught up
 				</h2>
-				<p className="text-[15px] text-neutral-400">
+				<p className="text-body text-neutral-400">
 					{rated
 						? `You've rated all ${rated} ${rated === 1 ? "place" : "places"} here in ${where}.`
 						: `Nothing left to rate in ${where}.`}{" "}
@@ -1051,7 +1051,7 @@ function EndCard({
 					return (
 						<span
 							key={p.member.id}
-							className="flex items-center justify-between gap-2 text-[15px]"
+							className="flex items-center justify-between gap-2 text-body"
 						>
 							<span className="flex min-w-0 items-center gap-2">
 								<MemberAvatar memberId={p.member.id} size={20} ring={false} />
@@ -1068,7 +1068,7 @@ function EndCard({
 							<span className="flex shrink-0 items-center gap-2">
 								<span
 									className={cn(
-										"font-mono text-sm tnum",
+										"text-sm tnum",
 										p.rated === p.total
 											? "text-emerald-400"
 											: "text-neutral-400",
@@ -1090,7 +1090,7 @@ function EndCard({
 									<RemindButton
 										member={p.member}
 										left={p.total - p.rated}
-										className="text-[13px] text-sky-300 disabled:text-neutral-500"
+										className="text-meta text-sky-300 disabled:text-neutral-500"
 									/>
 								)}
 							</span>
@@ -1109,7 +1109,7 @@ function EndCard({
 						.map((r) => (
 							<span
 								key={r.id}
-								className="flex items-center justify-between gap-3 text-[15px]"
+								className="flex items-center justify-between gap-3 text-body"
 							>
 								<span className="truncate">{r.name}</span>
 								<ScoreChip score={r.score} />
@@ -1144,7 +1144,7 @@ function EndCard({
 							talk: 1,
 						})
 					}
-					className="inline-flex cursor-pointer items-center justify-center gap-1 text-[15px] text-sky-300 hover:underline"
+					className="inline-flex cursor-pointer items-center justify-center gap-1 text-body text-sky-300 hover:underline"
 				>
 					{split} {split === 1 ? "place" : "places"} the group disagrees on
 					<ChevronRight className="size-4" />
@@ -1423,9 +1423,9 @@ export default function RateFeed({ data }: { data: PlacesData }) {
 			)}
 		>
 			<div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-center gap-2.5 bg-gradient-to-b from-black/75 to-transparent px-4 pt-[max(12px,env(safe-area-inset-top))] pb-6">
-				<span className="font-display text-[17px] font-semibold">Rate</span>
+				<span className="font-display text-lg font-semibold">Rate</span>
 				<span
-					className="min-w-0 truncate text-[13px] text-neutral-400"
+					className="min-w-0 truncate text-meta text-neutral-400"
 					data-testid={PLACES_TAB_TESTID.feedRun}
 				>
 					{currentPlace
@@ -1436,7 +1436,7 @@ export default function RateFeed({ data }: { data: PlacesData }) {
 				</span>
 				<span className="ml-auto" />
 				<span
-					className="shrink-0 font-mono text-xs whitespace-nowrap text-neutral-400 tnum"
+					className="shrink-0 text-xs whitespace-nowrap text-neutral-400 tnum"
 					data-testid={PLACES_TAB_TESTID.feedLeft}
 				>
 					{left} left

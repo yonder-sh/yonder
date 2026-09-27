@@ -157,7 +157,7 @@ export function SchedulePicker({
 											pick({ dayId: d.id, label: `End of Day ${n}` })
 										}
 									>
-										<span className="w-12 shrink-0 font-mono text-xs tnum text-muted-foreground">
+										<span className="w-12 shrink-0 text-xs tnum text-muted-foreground">
 											Day {n}
 										</span>
 										<span className="shrink-0">{formatDayDate(d.date)}</span>

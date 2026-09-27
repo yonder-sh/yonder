@@ -66,7 +66,7 @@ function DateImpact({ p }: { p: ProposalDto }) {
 	if (!impact) return null;
 	return (
 		<section className="mt-5">
-			<h3 className="text-[11px] font-semibold tracking-[.06em] text-muted-foreground uppercase">
+			<h3 className="text-2xs font-semibold tracking-[.06em] text-muted-foreground uppercase">
 				What moves
 			</h3>
 			<div className="mt-2">
@@ -82,7 +82,7 @@ function Fields({ p }: { p: ProposalDto }) {
 	if (!rows.length) return null;
 	const isCreate = rows.every((r) => r.before === null);
 	return (
-		<dl className="mt-4 grid grid-cols-[88px_1fr] gap-x-3 gap-y-2 text-[13px] leading-[18px]">
+		<dl className="mt-4 grid grid-cols-[88px_1fr] gap-x-3 gap-y-2 text-meta leading-[18px]">
 			{rows.map((r) => (
 				<div
 					key={r.field}
@@ -143,7 +143,7 @@ export function ProposalOverview({ proposalId }: { proposalId: string }) {
 						guest: p.author.isGuest,
 					}}
 				/>
-				<p className="text-[13px] leading-[18px]">
+				<p className="text-meta leading-[18px]">
 					<span className="font-medium">{p.author.name}</span>
 					<span className="text-muted-foreground">
 						{" "}
@@ -160,12 +160,12 @@ export function ProposalOverview({ proposalId }: { proposalId: string }) {
 					} as CSSProperties
 				}
 			>
-				<p className="text-[15px] leading-[22px] font-medium text-balance">
+				<p className="text-body leading-[22px] font-medium text-balance">
 					{describeProposal(p, ix)}
 				</p>
 				<ScopeCrumb p={p} className="mt-1" />
 				{p.message ? (
-					<p className="mt-2 text-[13px] leading-[18px] text-muted-foreground italic">
+					<p className="mt-2 text-meta leading-[18px] text-muted-foreground italic">
 						“{p.message}”
 					</p>
 				) : null}

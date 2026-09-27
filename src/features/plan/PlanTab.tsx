@@ -239,13 +239,13 @@ function OverlayCard({ itemId }: { itemId: string }) {
 				tone !== "none" && "plan-tone pl-3.5",
 			)}
 		>
-			<span className="w-11 shrink-0 font-mono text-xs text-muted-foreground tnum">
+			<span className="w-11 shrink-0 text-xs text-muted-foreground tnum">
 				{s ? formatTime(s.start, s.tz) : "—"}
 			</span>
 			<span className="min-w-0 flex-1 truncate text-sm font-medium">
 				{itemName(ix, item)}
 			</span>
-			<span className="shrink-0 rounded-full bg-muted px-2 font-mono text-xs leading-[22px] tnum">
+			<span className="shrink-0 rounded-full bg-muted px-2 text-xs leading-[22px] tnum">
 				{formatDuration(item.durationMin, { compact: true })}
 			</span>
 		</div>
@@ -597,7 +597,7 @@ function PlanTabBody() {
 											className="flex items-center gap-1 text-xs text-muted-foreground"
 										>
 											Showing{" "}
-											<span className="font-mono text-foreground tnum">
+											<span className="text-foreground tnum">
 												{formatDateRange(days.from, days.to)}
 											</span>{" "}
 											·

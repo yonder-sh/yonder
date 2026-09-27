@@ -55,7 +55,7 @@ export function ShoppingRow({
 						inline
 						className="min-w-0 flex-1 truncate text-sm font-medium"
 					/>
-					<Num className="text-[13px] text-muted-foreground">
+					<Num className="text-meta text-muted-foreground">
 						~{formatMoney(row.amountMinor, row.currency)}
 					</Num>
 				</div>

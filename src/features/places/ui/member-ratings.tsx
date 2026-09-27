@@ -144,7 +144,7 @@ export function RatingCommentEditor({
 				<span
 					data-testid={PLACES_TESTID.ratingCommentCount}
 					className={cn(
-						"font-mono text-[11px] tnum text-muted-foreground",
+						"text-2xs tnum text-muted-foreground",
 						over && "text-destructive",
 					)}
 				>
@@ -210,7 +210,7 @@ function MemberRow({
 				}
 			>
 				<MemberAvatar memberId={member.id} size={16} />
-				<span className="min-w-0 flex-1 truncate text-[13px]">
+				<span className="min-w-0 flex-1 truncate text-meta">
 					{member.name}
 					{member.id === access.memberId ? (
 						<span className="text-muted-foreground"> (you)</span>
@@ -251,7 +251,7 @@ function MemberRow({
 					/>
 				</div>
 			) : comment ? (
-				<div className="flex items-start gap-1.5 pl-6 text-[13px] text-muted-foreground">
+				<div className="flex items-start gap-1.5 pl-6 text-meta text-muted-foreground">
 					<MessageSquare className="mt-0.5 size-3 shrink-0" strokeWidth={1.5} />
 					<MarkdownText
 						md={comment}

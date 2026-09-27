@@ -97,7 +97,7 @@ function DayChip({
 			) : (
 				<>
 					<span className={cn(!d.fits && "text-warning")}>
-						<span className="font-mono tnum">
+						<span className="tnum">
 							{formatDuration(d.freeMin, { compact: true })}
 						</span>{" "}
 						free
@@ -105,13 +105,10 @@ function DayChip({
 					{d.near ? (
 						d.near.walkMin <= 30 ? (
 							<span>
-								<span className="font-mono tnum">{d.near.walkMin}</span> min
-								walk
+								<span className="tnum">{d.near.walkMin}</span> min walk
 							</span>
 						) : (
-							<span className="font-mono tnum">
-								{formatDistance(d.near.km * 1000)}
-							</span>
+							<span className="tnum">{formatDistance(d.near.km * 1000)}</span>
 						)
 					) : null}
 				</>
@@ -119,7 +116,7 @@ function DayChip({
 		</>
 	);
 	const cls = cn(
-		"inline-flex h-6 shrink-0 items-center gap-1.5 rounded-full border px-2 text-[11px] whitespace-nowrap text-muted-foreground",
+		"inline-flex h-6 shrink-0 items-center gap-1.5 rounded-full border px-2 text-2xs whitespace-nowrap text-muted-foreground",
 		d.closed && "border-dashed opacity-70",
 		best && "border-primary/40 bg-primary/5 text-foreground",
 	);
@@ -184,7 +181,7 @@ function CandidateRow({ c }: { c: ScheduleCandidate }) {
 					<button
 						type="button"
 						onClick={() => nav.select({ kind: "node", id: row.id })}
-						className="min-w-0 cursor-pointer truncate text-left text-[15px] font-medium hover:underline"
+						className="min-w-0 cursor-pointer truncate text-left text-body font-medium hover:underline"
 					>
 						{row.name}
 					</button>
@@ -229,7 +226,7 @@ function CandidateRow({ c }: { c: ScheduleCandidate }) {
 						Add to {formatDayDate(c.best.date)}
 					</Button>
 				) : (
-					<span className="text-[13px] font-medium">
+					<span className="text-meta font-medium">
 						Best: {formatDayDate(c.best.date)}
 					</span>
 				)}
@@ -265,14 +262,14 @@ function WindowSection({ w }: { w: WindowPlan }) {
 						: `${formatDayDate(first ?? "")} – ${formatDayDate(last ?? "")}`}{" "}
 					· {nums}
 				</span>
-				<span className="ml-auto font-mono text-xs text-muted-foreground tnum">
+				<span className="ml-auto text-xs text-muted-foreground tnum">
 					{w.count} not on a day
 				</span>
 			</header>
 			{w.groups.map((g) => (
 				<div key={g.key}>
 					{g.label || w.groups.length > 1 ? (
-						<h4 className="pt-3 text-[13px] font-semibold">
+						<h4 className="pt-3 text-meta font-semibold">
 							{g.label || `Elsewhere in ${w.cityName}`}{" "}
 							<span className="font-normal text-muted-foreground">
 								· {g.items.length}
@@ -371,7 +368,7 @@ export function ScheduleNext({
 				data-testid={PLACES_TAB_TESTID.scheduleNeeds}
 				className="flex flex-col items-start gap-3 rounded-xl border border-dashed p-5"
 			>
-				<p className="max-w-prose text-[15px]">
+				<p className="max-w-prose text-body">
 					Your shortlist needs about:{" "}
 					<span className="font-medium">{needs}</span>
 				</p>
@@ -432,7 +429,7 @@ export function ScheduleNext({
 						{country ? (
 							<h2
 								data-testid={PLACES_TAB_TESTID.scheduleCountry}
-								className="-mb-4 font-display text-[15px] font-semibold text-muted-foreground"
+								className="-mb-4 font-display text-body font-semibold text-muted-foreground"
 							>
 								{headingText(country.name, country.days)}
 							</h2>
@@ -459,7 +456,7 @@ export function ScheduleNext({
 								}
 								className="flex flex-col gap-0.5 px-4 py-2.5"
 							>
-								<span className="text-[15px]">
+								<span className="text-body">
 									<span className="font-medium">{c.name}</span>
 									<span className="text-muted-foreground">
 										{" "}
@@ -510,7 +507,7 @@ export function ScheduleNext({
 									<button
 										type="button"
 										onClick={() => nav.select({ kind: "node", id: c.row.id })}
-										className="cursor-pointer text-[15px] font-medium hover:underline"
+										className="cursor-pointer text-body font-medium hover:underline"
 									>
 										{c.row.name}
 									</button>

@@ -47,7 +47,7 @@ export function DaySun({
 			<p
 				data-testid={TESTID.daySun}
 				data-full
-				className="flex items-center gap-1.5 text-[12px] leading-4 text-muted-foreground"
+				className="flex items-center gap-1.5 text-xs leading-4 text-muted-foreground"
 			>
 				<Sunrise className="size-3.5 shrink-0" strokeWidth={1.75} aria-hidden />
 				<span className="tnum">{detail}</span>
@@ -60,7 +60,7 @@ export function DaySun({
 					data-testid={TESTID.daySun}
 					data-compact={compact || undefined}
 					className={cn(
-						"inline-flex shrink-0 cursor-default items-center gap-1 rounded-sm font-mono text-[12px] leading-4 text-muted-foreground tnum focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+						"inline-flex shrink-0 cursor-default items-center gap-1 rounded-sm text-xs leading-4 text-muted-foreground tnum focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
 					)}
 				>
 					<Glyph className="size-3 shrink-0" strokeWidth={1.75} aria-hidden />

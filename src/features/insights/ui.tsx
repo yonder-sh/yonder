@@ -122,7 +122,7 @@ export function HoverPopover({
 				onClick={(e) => e.stopPropagation()}
 				collisionPadding={12}
 				className={cn(
-					"w-[280px] rounded-xl p-0 text-[13px] shadow-float",
+					"w-[280px] rounded-xl p-0 text-meta shadow-float",
 					className,
 				)}
 			>
@@ -143,7 +143,7 @@ export function Overline({
 	return (
 		<p
 			className={cn(
-				"text-[11px] leading-[14px] font-semibold tracking-[.06em] text-muted-foreground uppercase",
+				"text-2xs leading-[14px] font-semibold tracking-[.06em] text-muted-foreground uppercase",
 				className,
 			)}
 		>
@@ -275,7 +275,7 @@ export function DateField({
 					aria-label={label}
 					data-value={value || undefined}
 					className={cn(
-						"inline-flex h-8 items-center gap-1.5 rounded-md border border-input bg-transparent px-2.5 text-[13px] whitespace-nowrap shadow-xs transition-colors hover:bg-accent focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none disabled:opacity-50",
+						"inline-flex h-8 items-center gap-1.5 rounded-md border border-input bg-transparent px-2.5 text-meta whitespace-nowrap shadow-xs transition-colors hover:bg-accent focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none disabled:opacity-50",
 						!value && "text-muted-foreground",
 						className,
 					)}

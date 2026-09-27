@@ -78,7 +78,7 @@ export function ReceiptStrip({
 	return (
 		<section aria-label={label} className="space-y-2">
 			<div className="flex items-center gap-2">
-				<h3 className="text-[11px] font-semibold tracking-[.06em] text-muted-foreground uppercase">
+				<h3 className="text-2xs font-semibold tracking-[.06em] text-muted-foreground uppercase">
 					{label}
 				</h3>
 				<span className="ml-auto">

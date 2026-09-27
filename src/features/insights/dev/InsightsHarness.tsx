@@ -108,7 +108,7 @@ function HarnessBody({ nodeId, panel = "plan" }: HarnessOptions) {
 			className="flex min-h-full flex-col bg-background text-foreground"
 		>
 			<header className="sticky top-0 z-20 flex h-[52px] shrink-0 items-center gap-3 border-b bg-background/96 px-4 backdrop-blur">
-				<span className="min-w-0 truncate text-[17px] leading-6 font-semibold">
+				<span className="min-w-0 truncate text-lg leading-6 font-semibold">
 					{graph.trip.name}
 				</span>
 				<WhatIfChip />
@@ -118,7 +118,7 @@ function HarnessBody({ nodeId, panel = "plan" }: HarnessOptions) {
 					size="sm"
 					data-testid="harness-try-dates"
 					onClick={() => openShift(true)}
-					className="h-8 gap-1.5 text-[13px]"
+					className="h-8 gap-1.5 text-meta"
 				>
 					<CalendarRange className="size-4" strokeWidth={1.75} />
 					<span className="max-sm:hidden">Try other dates…</span>
@@ -132,7 +132,7 @@ function HarnessBody({ nodeId, panel = "plan" }: HarnessOptions) {
 						data-testid={`harness-tab-${t}`}
 						onClick={() => setTab(t)}
 						className={cn(
-							"h-8 rounded-full px-3 text-[13px] font-medium capitalize",
+							"h-8 rounded-full px-3 text-meta font-medium capitalize",
 							tab === t
 								? "bg-foreground text-background"
 								: "text-muted-foreground",
@@ -161,10 +161,10 @@ function HarnessBody({ nodeId, panel = "plan" }: HarnessOptions) {
 							)}
 						>
 							<div className="grid gap-0.5">
-								<h2 className="text-[22px] leading-7 font-semibold">
+								<h2 className="text-2xl leading-7 font-semibold">
 									{node.name}
 								</h2>
-								<p className="text-[12px] text-muted-foreground">
+								<p className="text-xs text-muted-foreground">
 									{ix
 										.path(node.id)
 										.slice(0, -1)
@@ -187,7 +187,7 @@ function HarnessBody({ nodeId, panel = "plan" }: HarnessOptions) {
 								tab === "settings" && "max-md:hidden",
 							)}
 						>
-							<p className="mb-3 text-[15px] font-semibold">{country.name}</p>
+							<p className="mb-3 text-body font-semibold">{country.name}</p>
 							<ClimateCard nodeId={country.id} />
 						</div>
 					) : null}
@@ -198,7 +198,7 @@ function HarnessBody({ nodeId, panel = "plan" }: HarnessOptions) {
 							tab === "inspector" && "max-md:hidden",
 						)}
 					>
-						<p className="mb-3 flex items-center gap-1.5 text-[15px] font-semibold">
+						<p className="mb-3 flex items-center gap-1.5 text-body font-semibold">
 							<Settings2 className="size-4" strokeWidth={1.75} /> Trip settings
 						</p>
 						<HolidaysEditor />
@@ -236,12 +236,10 @@ function PlanColumn() {
 					>
 						<header className="sticky top-[52px] z-10 border-b bg-background/96 px-4 py-2 backdrop-blur md:px-0">
 							<div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-								<h3 className="font-display text-[19px] leading-6 font-semibold">
+								<h3 className="font-display text-lg leading-6 font-semibold">
 									{dayLabel(day.date)}
 								</h3>
-								<span className="text-[13px] text-muted-foreground">
-									Day {n}
-								</span>
+								<span className="text-meta text-muted-foreground">Day {n}</span>
 								<span className="hidden sm:inline-flex">
 									<DaySun dayId={day.id} />
 								</span>
@@ -251,7 +249,7 @@ function PlanColumn() {
 							<div className="mt-0.5 flex items-center gap-2 sm:hidden">
 								<DaySun dayId={day.id} compact />
 								{sd ? (
-									<span className="text-[12px] text-muted-foreground">
+									<span className="text-xs text-muted-foreground">
 										<span aria-hidden className="mr-2">
 											·
 										</span>
@@ -294,7 +292,7 @@ function PlanColumn() {
 													"ring-2 ring-primary/70 ring-offset-1 ring-offset-background",
 											)}
 										>
-											<span className="grid text-right font-mono text-[12px] leading-4 text-muted-foreground tnum">
+											<span className="grid text-right font-mono text-xs leading-4 text-muted-foreground tnum">
 												{s ? (
 													<>
 														<span className="text-foreground">
@@ -308,11 +306,11 @@ function PlanColumn() {
 											</span>
 											<span className="flex min-w-0 items-center gap-2">
 												<span className="min-w-0 flex-1">
-													<span className="block truncate text-[14px] leading-5 font-medium">
+													<span className="block truncate text-sm leading-5 font-medium">
 														{item.title ?? node?.name ?? "Untitled"}
 													</span>
 													{node?.category ? (
-														<span className="flex items-center gap-1.5 text-[12px] text-muted-foreground max-sm:hidden">
+														<span className="flex items-center gap-1.5 text-xs text-muted-foreground max-sm:hidden">
 															<CategoryDot category={node.category} />
 															{PLACE_CATEGORIES[node.category].label}
 														</span>
@@ -328,7 +326,7 @@ function PlanColumn() {
 								);
 							})}
 							{items.length === 0 ? (
-								<li className="px-1 py-2 text-[13px] text-muted-foreground">
+								<li className="px-1 py-2 text-meta text-muted-foreground">
 									A free day.
 								</li>
 							) : null}

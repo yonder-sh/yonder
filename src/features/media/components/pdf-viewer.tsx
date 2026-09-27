@@ -163,7 +163,7 @@ export function PdfViewer({
 						<DialogTitle className="truncate text-sm font-medium text-white">
 							{item.title ?? "Document"}
 						</DialogTitle>
-						<DialogDescription className="truncate text-[11px] text-white/55 tnum">
+						<DialogDescription className="truncate text-2xs text-white/55 tnum">
 							{meta || "PDF"}
 						</DialogDescription>
 					</div>
@@ -258,7 +258,7 @@ export function PdfViewer({
 							) : (
 								<div className="flex max-w-xs flex-col items-center gap-3">
 									<FileText className="size-12 text-white/40" strokeWidth={1} />
-									<p className="font-display text-[17px] leading-6 font-medium">
+									<p className="font-display text-lg leading-6 font-medium">
 										No preview for this PDF.
 									</p>
 									<Button asChild variant="secondary" size="sm">
@@ -277,10 +277,7 @@ export function PdfViewer({
 
 				{pages > 0 ? (
 					<footer className="flex shrink-0 items-center justify-between gap-2 border-t border-white/10 px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] sm:px-4">
-						<span
-							className="font-mono text-xs text-white/70 tnum"
-							aria-live="polite"
-						>
+						<span className="text-xs text-white/70 tnum" aria-live="polite">
 							{page} / {item.pageCount ?? pages}
 						</span>
 						{onVisibility ? (
@@ -307,7 +304,7 @@ export function PdfViewer({
 								type="button"
 								onClick={() => setZoom(1)}
 								className={cn(
-									"h-7 min-w-14 rounded-md px-2 font-mono text-xs text-white/80 tnum hover:bg-white/10",
+									"h-7 min-w-14 rounded-md px-2 text-xs text-white/80 tnum hover:bg-white/10",
 								)}
 								title="Fit width"
 							>

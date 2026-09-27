@@ -76,7 +76,7 @@ export function ExpenseRow({
 						{original ? (
 							<Num
 								className={cn(
-									"text-[13px] font-medium",
+									"text-meta font-medium",
 									e.amountMinor !== null &&
 										e.amountMinor < 0 &&
 										"text-muted-foreground",
@@ -86,7 +86,7 @@ export function ExpenseRow({
 							</Num>
 						) : null}
 						{e.points ? (
-							<Num className="text-[13px] font-medium">
+							<Num className="text-meta font-medium">
 								{e.points.points.toLocaleString("en")} pts
 							</Num>
 						) : null}

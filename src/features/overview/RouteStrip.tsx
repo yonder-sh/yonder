@@ -176,7 +176,7 @@ export function RouteStrip({
 										<span className="absolute top-[5px] right-1.5 left-2 truncate text-xs font-semibold text-[#0b0b0b]">
 											{s.name}
 										</span>
-										<span className="absolute bottom-[5px] left-2 truncate font-mono text-[10px] text-[#0b0b0b]/80">
+										<span className="absolute bottom-[5px] left-2 truncate tnum text-2xs text-[#0b0b0b]/80">
 											{nightsText(n)}
 										</span>
 									</>
@@ -199,7 +199,7 @@ export function RouteStrip({
 				) : null}
 			</ul>
 			{compact ? (
-				<div className="flex justify-between gap-2 text-[11px] text-white/55">
+				<div className="flex justify-between gap-2 text-2xs text-white/55">
 					<span className="truncate">{route.stays[0]?.name}</span>
 					{hereStay !== null ? <span>you are here</span> : null}
 					<span className="truncate">

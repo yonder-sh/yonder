@@ -288,9 +288,7 @@ function LoginPage() {
 					{resendIn > 0 ? (
 						<span data-testid="otp-resend-countdown">
 							Resend in{" "}
-							<span className="font-mono tabular-nums">
-								{formatCountdown(resendIn)}
-							</span>
+							<span className="tnum">{formatCountdown(resendIn)}</span>
 						</span>
 					) : (
 						<button
@@ -322,7 +320,7 @@ function ErrorText({ id, message }: { id: string; message: string }) {
 		<p
 			id={id}
 			role="alert"
-			className="text-[13px] text-destructive"
+			className="text-meta text-destructive"
 			data-testid="auth-error"
 		>
 			{message}

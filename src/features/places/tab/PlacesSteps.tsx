@@ -84,8 +84,8 @@ export function PlacesSteps({
 							>
 								<span
 									className={cn(
-										"relative grid shrink-0 place-items-center rounded-full font-mono font-semibold tnum transition-colors",
-										phone ? "size-6 text-xs" : "size-7 text-[13px]",
+										"relative grid shrink-0 place-items-center rounded-full font-semibold tnum transition-colors",
+										phone ? "size-6 text-xs" : "size-7 text-meta",
 										on
 											? "bg-primary text-primary-foreground"
 											: "border border-border bg-background text-muted-foreground group-hover:text-foreground",
@@ -104,7 +104,7 @@ export function PlacesSteps({
 									<span
 										className={cn(
 											"truncate font-semibold",
-											phone ? "text-[13px] leading-4" : "text-sm leading-5",
+											phone ? "text-meta leading-4" : "text-sm leading-5",
 										)}
 									>
 										{STEP_LABEL[s]}
@@ -114,7 +114,7 @@ export function PlacesSteps({
 										title={counts[s]}
 										className={cn(
 											"truncate text-muted-foreground",
-											phone ? "text-[11px] leading-4" : "text-xs leading-4",
+											phone ? "text-2xs leading-4" : "text-xs leading-4",
 										)}
 									>
 										{counts[s]}

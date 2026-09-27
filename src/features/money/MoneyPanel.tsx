@@ -80,7 +80,7 @@ export function MoneyPanel({ target }: { target: BundleTarget }) {
 		>
 			<div className="flex items-center gap-2 px-4">
 				{s && view.rows.length ? (
-					<p className="text-[13px] text-muted-foreground">
+					<p className="text-meta text-muted-foreground">
 						<Num className="text-foreground">{total("planned")}</Num> planned ·{" "}
 						<Num className="text-foreground">{total("actual")}</Num> paid
 						{s.remainingHome ? (
@@ -91,7 +91,7 @@ export function MoneyPanel({ target }: { target: BundleTarget }) {
 						) : null}
 					</p>
 				) : (
-					<p className="text-[13px] text-muted-foreground">
+					<p className="text-meta text-muted-foreground">
 						{isLoading ? "Loading…" : "No expenses here yet."}
 					</p>
 				)}
@@ -109,7 +109,7 @@ export function MoneyPanel({ target }: { target: BundleTarget }) {
 				</EditGuard>
 			</div>
 			{s && mine && (mine.planned || mine.actual) ? (
-				<p className="px-4 text-[13px] text-muted-foreground">
+				<p className="px-4 text-meta text-muted-foreground">
 					Your share <Num className="text-foreground">{share("planned")}</Num>{" "}
 					planned · <Num className="text-foreground">{share("actual")}</Num>{" "}
 					paid

@@ -131,7 +131,7 @@ function Row({
 		<div className="grid gap-1.5 sm:grid-cols-[160px_1fr] sm:items-start sm:gap-4">
 			<Label
 				htmlFor={htmlFor}
-				className="text-[13px] text-muted-foreground sm:h-9"
+				className="text-meta text-muted-foreground sm:h-9"
 			>
 				{label}
 			</Label>
@@ -145,7 +145,7 @@ function Row({
 
 function Heading({ children }: { children: ReactNode }) {
 	return (
-		<h3 className="pt-2 text-[11px] font-semibold tracking-[.06em] text-muted-foreground uppercase">
+		<h3 className="pt-2 text-2xs font-semibold tracking-[.06em] text-muted-foreground uppercase">
 			{children}
 		</h3>
 	);
@@ -231,7 +231,7 @@ function DatesRow() {
 				</div>
 			</Row>
 			{changed ? (
-				<div className="grid gap-2 rounded-lg bg-muted/60 p-3 text-[13px] sm:ml-[176px]">
+				<div className="grid gap-2 rounded-lg bg-muted/60 p-3 text-meta sm:ml-[176px]">
 					{p?.blockedBy ? <p className="text-warning">{p.blockedBy}</p> : null}
 					{!p?.blockedBy && p?.notedDays?.length ? (
 						<DayNotesChoiceField
@@ -405,7 +405,7 @@ function LeaveTrip() {
 	const { disabled, reason } = useEditGuard();
 	const offlineOnly = disabled && reason !== "View only";
 	return confirm ? (
-		<div className="flex flex-wrap items-center gap-2 text-[13px]">
+		<div className="flex flex-wrap items-center gap-2 text-meta">
 			<span>Leave this trip? Someone on it can add you again.</span>
 			<Button
 				type="button"
@@ -762,7 +762,7 @@ export function TripSettingsDialog() {
 								</div>
 								{owner ? (
 									<div className="grid gap-2 rounded-lg border border-destructive/25 p-3">
-										<p className="text-[13px] font-medium">Danger zone</p>
+										<p className="text-meta font-medium">Danger zone</p>
 										<p className="text-xs text-muted-foreground">
 											Deleting removes the trip for everyone. It can't be
 											undone.

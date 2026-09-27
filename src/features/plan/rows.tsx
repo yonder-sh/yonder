@@ -44,7 +44,7 @@ export function GapRow({ minutes }: { minutes: number }) {
 				/>
 				<span
 					data-testid={TESTID.freeTime}
-					className="relative rounded-full border bg-card px-2 font-mono text-[11px] text-muted-foreground tnum"
+					className="relative rounded-full border bg-card px-2 text-2xs text-muted-foreground tnum"
 				>
 					{formatDuration(minutes)} free
 				</span>
@@ -99,9 +99,7 @@ export function FoldedItemLine({ itemId }: { itemId: string }) {
 			label={itemName(ix, item)}
 		>
 			<span className="flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
-				{s ? (
-					<span className="font-mono tnum">{formatTime(s.start, s.tz)}</span>
-				) : null}
+				{s ? <span className="tnum">{formatTime(s.start, s.tz)}</span> : null}
 				<span className="truncate">{itemName(ix, item)}</span>
 			</span>
 		</RowFrame>
@@ -151,7 +149,7 @@ export function DaysFoldRow({
 			<span aria-hidden className="h-px flex-1 bg-border" />
 			<span className="shrink-0">
 				{label}{" "}
-				<span className="font-mono tnum">
+				<span className="tnum">
 					{first ? `· ${formatDateRange(first, last)}` : ""}
 				</span>{" "}
 				{open ? "▴" : "⋯"}
@@ -257,9 +255,7 @@ function GhostLeg({ leg, scheduled }: { leg: GraphLeg; scheduled: number }) {
 			{timed && duration ? " " : ""}
 			{/* A clear gap: "NH 9 14h" must never read as "NH914h" (QA PLAN-R2-13). */}
 			{duration ? (
-				<span className={timed ? "ml-1 font-mono tnum" : "font-mono tnum"}>
-					{duration}
-				</span>
+				<span className={timed ? "ml-1 tnum" : "tnum"}>{duration}</span>
 			) : null}
 		</span>
 	);
@@ -323,7 +319,7 @@ export function UnlinkedRow({
 								size="xs"
 								variant="ghost"
 								disabled={guard.disabled || !candidates.length}
-								className="h-5 px-1.5 text-[11px]"
+								className="h-5 px-1.5 text-2xs"
 							>
 								Relink
 							</Button>
@@ -357,7 +353,7 @@ export function UnlinkedRow({
 							<Button
 								size="xs"
 								variant="destructive"
-								className="h-5 px-1.5 text-[11px]"
+								className="h-5 px-1.5 text-2xs"
 								onClick={() => actions.discard.mutate({ legId })}
 							>
 								Discard route
@@ -365,7 +361,7 @@ export function UnlinkedRow({
 							<Button
 								size="xs"
 								variant="ghost"
-								className="h-5 px-1.5 text-[11px]"
+								className="h-5 px-1.5 text-2xs"
 								onClick={() => setConfirm(false)}
 							>
 								Keep
@@ -376,7 +372,7 @@ export function UnlinkedRow({
 							size="xs"
 							variant="ghost"
 							disabled={guard.disabled}
-							className="h-5 px-1.5 text-[11px]"
+							className="h-5 px-1.5 text-2xs"
 							onClick={() => setConfirm(true)}
 						>
 							Discard
@@ -443,7 +439,7 @@ export function BlockHeader({
 					>
 						{rep?.name ?? "Elsewhere"}
 					</span>
-					<span className="min-w-0 shrink-[100] truncate font-mono text-xs text-muted-foreground tnum">
+					<span className="min-w-0 shrink-[100] truncate text-xs text-muted-foreground tnum">
 						· {stops} {stops === 1 ? "stop" : "stops"}
 						{span.start && span.end && span.tz
 							? ` · ${formatTime(span.start, span.tz)}–${formatTime(span.end, span.tz)}`
@@ -528,16 +524,16 @@ export function BandCard({
 								className="size-4"
 							/>
 						) : null}
-						<span className="truncate text-[17px] leading-[22px] font-semibold">
+						<span className="truncate text-lg leading-[22px] font-semibold">
 							{rep?.name ?? "Elsewhere"}
 						</span>
 						{visit.occurrence > 1 ? (
-							<span className="shrink-0 rounded-full bg-muted px-1.5 font-mono text-[11px] text-muted-foreground">
+							<span className="shrink-0 rounded-full bg-muted px-1.5 tnum text-2xs text-muted-foreground">
 								visit {visit.occurrence}
 							</span>
 						) : null}
 					</span>
-					<span className="mt-0.5 block truncate text-[13px] text-muted-foreground">
+					<span className="mt-0.5 block truncate text-meta text-muted-foreground">
 						{parts.join(" · ")}
 					</span>
 				</button>
@@ -606,14 +602,12 @@ export function BandLink({ transition }: { transition: Transition }) {
 				<LegChips details={d} max={2} />
 			) : null}
 			{minutes > 0 ? (
-				<span className="font-mono tnum">
+				<span className="tnum">
 					· {formatDuration(minutes, { compact: true })}
 					{estimate ? " est." : ""}
 				</span>
 			) : null}
-			{when ? (
-				<span className="hidden font-mono tnum @sm:inline">· {when}</span>
-			) : null}
+			{when ? <span className="hidden tnum @sm:inline">· {when}</span> : null}
 		</button>
 	);
 }

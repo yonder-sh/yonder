@@ -109,7 +109,7 @@ function Lead({ e }: { e: Entry }) {
 					/>
 					<p
 						data-testid={SUGGEST_TESTID.barText}
-						className="min-w-0 text-[13px] leading-[18px] text-pretty break-words"
+						className="min-w-0 text-meta leading-[18px] text-pretty break-words"
 					>
 						<span className="text-muted-foreground">Suggested by </span>
 						<span className="font-medium">{e.p.author.name}</span>
@@ -162,7 +162,7 @@ function Alternatives({ entries }: { entries: Entry[] }) {
 									guest: e.p.author.isGuest,
 								}}
 							/>
-							<p className="min-w-0 text-[13px] leading-[18px] text-pretty break-words">
+							<p className="min-w-0 text-meta leading-[18px] text-pretty break-words">
 								<span className="font-medium">{e.p.author.name}:</span>{" "}
 								{shortDescription(e.p, ix)}
 							</p>

@@ -122,7 +122,7 @@ export function AvatarStack({
 			{extra > 0 ? (
 				<span
 					className={cn(
-						"z-10 inline-flex items-center justify-center rounded-full bg-muted font-mono text-[11px] text-muted-foreground ring-2 ring-background",
+						"z-10 inline-flex items-center justify-center rounded-full bg-muted tnum text-2xs text-muted-foreground ring-2 ring-background",
 						AVATAR_PX[size],
 					)}
 				>

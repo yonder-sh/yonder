@@ -73,7 +73,7 @@ function Row({
 	return (
 		<>
 			<dt className="pt-1.5 text-xs text-muted-foreground">{label}</dt>
-			<dd className={cn("min-w-0 text-[13px]", className)}>{children}</dd>
+			<dd className={cn("min-w-0 text-meta", className)}>{children}</dd>
 		</>
 	);
 }
@@ -152,7 +152,7 @@ function DayValue({ dayId }: { dayId: string | null }) {
 		<span className="block min-w-0 truncate text-left">
 			{d ? (
 				<>
-					<span className="font-mono text-xs text-muted-foreground tnum">
+					<span className="text-xs text-muted-foreground tnum">
 						D{ix.dayNumber(d.id)}
 					</span>{" "}
 					{formatDayDate(d.date)}
@@ -363,7 +363,7 @@ function ItemOverviewBody({ itemId }: { itemId: string }) {
 					{/* One shrinkable column: an auto column would grow to the select's
 					    longest day label and push it past the panel's edge. */}
 					<div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-1.5">
-						<span className="font-mono tnum">
+						<span className="tnum">
 							{day && s
 								? `${formatDayDate(day.date)} · ${formatTime(s.start, s.tz)}–${formatTime(s.end, s.tz)}${s.endsNextDay ? "⁺¹" : ""} ${tzLabel(s.tz, s.start)}`
 								: "Unscheduled — no times"}
@@ -390,7 +390,7 @@ function ItemOverviewBody({ itemId }: { itemId: string }) {
 							<SelectContent className="max-h-72">
 								{ix.days.map((d) => (
 									<SelectItem key={d.id} value={d.id}>
-										<span className="font-mono text-xs text-muted-foreground tnum">
+										<span className="text-xs text-muted-foreground tnum">
 											D{ix.dayNumber(d.id)}
 										</span>{" "}
 										{formatDayDate(d.date)}
@@ -478,7 +478,7 @@ function ItemOverviewBody({ itemId }: { itemId: string }) {
 
 				{item.dayId ? (
 					<Row label="Booked">
-						<div className="flex items-center gap-2 pt-1 text-[13px]">
+						<div className="flex items-center gap-2 pt-1 text-meta">
 							<Switch
 								id={bookedId}
 								data-testid={PLAN_TESTID.overviewBooked}
@@ -623,7 +623,7 @@ function ItemOverviewBody({ itemId }: { itemId: string }) {
 			</dl>
 
 			<section className="grid gap-1.5" data-testid={PLAN_TESTID.overviewNote}>
-				<h3 className="text-[11px] font-semibold tracking-[.06em] text-muted-foreground uppercase">
+				<h3 className="text-2xs font-semibold tracking-[.06em] text-muted-foreground uppercase">
 					Note
 				</h3>
 				{editingNote ? (
@@ -649,7 +649,7 @@ function ItemOverviewBody({ itemId }: { itemId: string }) {
 						disabled={guard.disabled && !item.note}
 						onClick={() => !guard.disabled && setEditingNote(true)}
 						title={guard.reason ?? undefined}
-						className="min-h-9 rounded-md border border-transparent px-2 py-1.5 text-left text-[13px] hover:border-border disabled:cursor-default"
+						className="min-h-9 rounded-md border border-transparent px-2 py-1.5 text-left text-meta hover:border-border disabled:cursor-default"
 					>
 						{item.note ? (
 							<MarkdownText md={item.note} />

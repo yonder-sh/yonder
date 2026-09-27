@@ -140,7 +140,7 @@ function Card({
 					/>
 				</span>
 				{row.media ? (
-					<span className="absolute top-2 right-2 inline-flex items-center gap-1 rounded-md bg-background/85 px-1.5 py-0.5 font-mono text-[11px] tnum text-foreground">
+					<span className="absolute top-2 right-2 inline-flex items-center gap-1 rounded-md bg-background/85 px-1.5 py-0.5 text-2xs tnum text-foreground">
 						{cover?.kind === "video" ? <Film className="size-3" /> : null}
 						{row.media} media
 					</span>
@@ -148,7 +148,7 @@ function Card({
 			</div>
 			<div className="flex min-w-0 flex-1 flex-col gap-1.5 p-3">
 				<div className="flex items-start gap-2">
-					<span className="min-w-0 flex-1 text-[15px] leading-tight font-semibold">
+					<span className="min-w-0 flex-1 text-body leading-tight font-semibold">
 						{row.name}
 					</span>
 					{row.split ? <SplitMark /> : null}
@@ -184,7 +184,7 @@ function Card({
 				<span className="mt-auto truncate text-xs text-muted-foreground">
 					{row.when}
 					{" · "}
-					<span className="font-mono tnum">
+					<span className="tnum">
 						{row.timeMin === null ? "not set" : formatDuration(row.timeMin)}
 					</span>
 				</span>

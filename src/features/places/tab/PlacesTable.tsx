@@ -130,7 +130,7 @@ function RatingCell({ row, member }: { row: PlaceRow; member: GraphMember }) {
 	const label = (
 		<RatingDot
 			level={p}
-			className={cn("text-[13px]", !ratingsCount(member) && "opacity-50")}
+			className={cn("text-meta", !ratingsCount(member) && "opacity-50")}
 		/>
 	);
 	if (!editable && !placeholder)
@@ -204,7 +204,7 @@ function GroupHeader({
 							<ChevronDown className="size-4" />
 						)}
 					</button>
-					<span className="font-display text-[15px] font-semibold whitespace-nowrap">
+					<span className="font-display text-body font-semibold whitespace-nowrap">
 						{group.label}
 					</span>
 					{group.note ? (
@@ -337,7 +337,7 @@ export function PlacesTable({
 					nav.select({ kind: "node", id: r.id });
 				}}
 				className={cn(
-					"group/row h-12 cursor-pointer border-b text-[13px] outline-none",
+					"group/row h-12 cursor-pointer border-b text-meta outline-none",
 					"focus-visible:bg-accent/60",
 					selected ? "bg-accent" : "hover:bg-muted/40",
 				)}
@@ -370,7 +370,7 @@ export function PlacesTable({
 					>
 						<CategorySelect
 							node={r.node}
-							className="max-w-full text-[13px] text-muted-foreground"
+							className="max-w-full text-meta text-muted-foreground"
 						/>
 					</td>
 				) : (
@@ -420,7 +420,7 @@ export function PlacesTable({
 						onSet={(m) => act.setTime(r, m)}
 					/>
 				</td>
-				<td className="px-3 text-right font-mono tnum text-muted-foreground">
+				<td className="px-3 text-right tnum text-muted-foreground">
 					{r.media || "—"}
 				</td>
 			</tr>
@@ -453,7 +453,7 @@ export function PlacesTable({
 					<col style={{ width: W.media }} />
 				</colgroup>
 				<thead className="sticky top-0 z-[2] bg-background">
-					<tr className="h-9 text-left text-[11px] font-semibold tracking-[0.06em] text-muted-foreground uppercase">
+					<tr className="h-9 text-left text-2xs font-semibold tracking-[0.06em] text-muted-foreground uppercase">
 						<th
 							scope="col"
 							className="sticky left-0 z-[1] border-r border-b bg-background px-3"
@@ -534,7 +534,7 @@ export function PlacesTable({
 									<th
 										colSpan={cols}
 										scope="rowgroup"
-										className="border-b bg-background p-0 text-left text-[13px] font-semibold"
+										className="border-b bg-background p-0 text-left text-meta font-semibold"
 									>
 										<span className="sticky left-0 inline-block px-4 py-1.5 pl-11">
 											{s.label}

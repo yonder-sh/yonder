@@ -231,7 +231,7 @@ export function ProfileDialog() {
 											<SelectItem value={HOME}>
 												The trip's home currency
 												{homeCurrency ? (
-													<span className="font-mono text-xs text-muted-foreground">
+													<span className="tnum text-xs text-muted-foreground">
 														{homeCurrency}
 													</span>
 												) : null}
@@ -242,7 +242,7 @@ export function ProfileDialog() {
 											<SelectSeparator />
 											{HOME_CURRENCIES.map((c) => (
 												<SelectItem key={c} value={c}>
-													<span className="font-mono text-xs">{c}</span>{" "}
+													<span className="tnum text-xs">{c}</span>{" "}
 													{currencyName(c)}
 												</SelectItem>
 											))}
@@ -257,7 +257,7 @@ export function ProfileDialog() {
 						</>
 					)}
 					{error ? (
-						<p className="text-[13px] text-destructive" role="alert">
+						<p className="text-meta text-destructive" role="alert">
 							{error}
 						</p>
 					) : null}

@@ -137,7 +137,7 @@ function Composer({
 				className="min-h-24 resize-y text-sm"
 			/>
 			<div className="flex items-center gap-2">
-				<span className="font-mono text-[11px] text-muted-foreground tnum">
+				<span className="text-2xs text-muted-foreground tnum">
 					{md.length > NOTE_APPEND_MAX - 400
 						? `${md.length}/${NOTE_APPEND_MAX}`
 						: null}

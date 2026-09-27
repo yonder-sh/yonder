@@ -106,7 +106,7 @@ export function CurrencyPicker({
 						size="sm"
 						data-testid={testid}
 						aria-label={`Currency: ${value}`}
-						className={cn("gap-1 font-mono tnum", className)}
+						className={cn("gap-1 tnum", className)}
 					>
 						{value}
 						<ChevronDown className="size-3.5 opacity-60" />
@@ -181,7 +181,7 @@ function CurrencyItem({
 			value={`${code} ${name}`}
 			onSelect={() => onSelect(code)}
 		>
-			<span className="w-10 font-mono text-xs tnum">{code}</span>
+			<span className="w-10 text-xs tnum">{code}</span>
 			<span className="flex-1 truncate">{name}</span>
 			<span className="text-xs text-muted-foreground">
 				{currencySymbol(code)}

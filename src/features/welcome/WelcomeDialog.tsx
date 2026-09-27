@@ -213,7 +213,7 @@ function NameStep({ onDone }: { onDone: () => void }) {
 			data-testid={T.nameStep}
 			className="grid gap-4 p-6 max-sm:pt-[calc(env(safe-area-inset-top)+2.5rem)]"
 		>
-			<DialogTitle className="font-display text-[22px] leading-7 font-semibold">
+			<DialogTitle className="font-display text-2xl leading-7 font-semibold">
 				What should the group call you?
 			</DialogTitle>
 			<DialogDescription className="-mt-2">
@@ -234,12 +234,12 @@ function NameStep({ onDone }: { onDone: () => void }) {
 					}}
 				/>
 				{error ? (
-					<p className="text-[13px] text-destructive" role="alert">
+					<p className="text-meta text-destructive" role="alert">
 						{error}
 					</p>
 				) : null}
 			</div>
-			<p className="text-[13px] text-muted-foreground">
+			<p className="text-meta text-muted-foreground">
 				{graph.me.role === "rater"
 					? "Sign in to rate places and keep your ratings on other devices. "
 					: "Sign in to keep this trip on your other devices. "}
@@ -347,16 +347,16 @@ function MainStep({
 				{info?.note ? (
 					<figure
 						data-testid={T.note}
-						className="border-l-2 border-primary/50 pl-3 text-[15px]"
+						className="border-l-2 border-primary/50 pl-3 text-body"
 					>
 						<blockquote className="italic">“{info.note.text}”</blockquote>
-						<figcaption className="mt-0.5 text-[13px] text-muted-foreground">
+						<figcaption className="mt-0.5 text-meta text-muted-foreground">
 							— {info.note.by}
 						</figcaption>
 					</figure>
 				) : null}
 				<div className="grid gap-1">
-					<DialogTitle className="font-display text-[26px] leading-8 font-semibold text-balance break-words">
+					<DialogTitle className="font-display text-2xl leading-8 font-semibold text-balance break-words">
 						{graph.trip.name}
 					</DialogTitle>
 					<p className="text-sm text-muted-foreground" data-testid={T.dates}>
@@ -455,7 +455,7 @@ function AskAccess({
 		typeof navigator !== "undefined" && typeof navigator.share === "function";
 	return (
 		<div className="grid gap-2 rounded-lg bg-muted/60 p-3">
-			<p className="text-[13px] text-muted-foreground">
+			<p className="text-meta text-muted-foreground">
 				Only {owner} can change what you can do. Send them this, however you
 				usually talk:
 			</p>
@@ -524,7 +524,7 @@ function WelcomeNotify({ onShown }: { onShown: () => void }) {
 			<p
 				data-testid={T.notify}
 				data-kind="ios"
-				className="flex gap-2 rounded-lg bg-muted/60 p-3 text-[13px] text-muted-foreground"
+				className="flex gap-2 rounded-lg bg-muted/60 p-3 text-meta text-muted-foreground"
 			>
 				<Share className="mt-0.5 size-4 shrink-0 text-primary" />
 				<span>
@@ -557,7 +557,7 @@ function WelcomeNotify({ onShown }: { onShown: () => void }) {
 		}
 	};
 	return (
-		<div data-testid={T.notify} data-state={state} className="text-[13px]">
+		<div data-testid={T.notify} data-state={state} className="text-meta">
 			{state === "on" ? (
 				<p className="flex items-center gap-2 text-muted-foreground">
 					<BellRing className="size-4 text-primary" /> Notifications are on.

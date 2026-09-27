@@ -304,7 +304,7 @@ function AcceptChips({
 					data-mode={mode}
 					disabled={guard.disabled || busy !== null}
 					title={guard.reason ?? undefined}
-					className="h-5 rounded-full px-2 text-[11px] font-medium data-[extra]:hidden @md:data-[extra]:inline-flex"
+					className="h-5 rounded-full px-2 text-2xs font-medium data-[extra]:hidden @md:data-[extra]:inline-flex"
 					onClick={(e) => {
 						e.stopPropagation();
 						void run(mode);
@@ -337,7 +337,7 @@ function LegFixes({ legKey }: { legKey: string }) {
 						variant="ghost"
 						data-testid={PLAN_TESTID.legFix}
 						disabled={guard.disabled}
-						className="h-5 px-1.5 text-[11px] text-warning hover:text-warning"
+						className="h-5 px-1.5 text-2xs text-warning hover:text-warning"
 						onClick={(e) => {
 							e.stopPropagation();
 							actions.update.mutate({
@@ -398,14 +398,14 @@ function TimedLine({ leg }: { leg: GraphLeg }) {
 			<span className="max-w-full truncate font-medium text-foreground">
 				{timedLegName(ix, leg)}
 			</span>
-			<span className="font-mono text-muted-foreground tnum">
+			<span className="text-muted-foreground tnum">
 				dep {dep} → {arr}
 				{nextDay ? <sup className="text-[9px]">+1</sup> : null}
 			</span>
 			{minutes !== null ? (
 				<span
 					data-testid={PLAN_TESTID.timedDuration}
-					className="font-mono text-muted-foreground tnum"
+					className="text-muted-foreground tnum"
 				>
 					· {formatDuration(minutes)}
 				</span>
@@ -553,7 +553,7 @@ export function LegRow({
 							<ModeGlyph mode={s?.suggestion?.mode ?? null} colored={false} />
 							{s && s.minutes > 0 ? (
 								<span className="truncate">
-									<span className="font-mono tnum">
+									<span className="tnum">
 										~{formatDuration(s.minutes, { compact: true })}
 									</span>{" "}
 									est.
@@ -602,9 +602,7 @@ export function LegRow({
 				<span className="relative ml-auto flex shrink-0 items-center gap-2">
 					<LegMore>
 						{!unset && leg?.distanceM ? (
-							<span className="font-mono tnum">
-								{formatDistance(leg.distanceM)}
-							</span>
+							<span className="tnum">{formatDistance(leg.distanceM)}</span>
 						) : null}
 						{unset ? <AcceptChips target={target} s={s} /> : null}
 						{/* ADDENDUM §5 / FB-03: every leg with two located ends links to Google Maps. */}
@@ -729,9 +727,7 @@ export function TimedLegRow({
 			{continued && s && tz ? (
 				<span className="truncate text-xs text-muted-foreground">
 					→{" "}
-					<span className="font-mono text-foreground tnum">
-						{formatTime(s.end, tz)}
-					</span>{" "}
+					<span className="text-foreground tnum">{formatTime(s.end, tz)}</span>{" "}
 					{itemName(ix, ix.item(toItemId))} · {timedLegName(ix, leg)} continued
 				</span>
 			) : (

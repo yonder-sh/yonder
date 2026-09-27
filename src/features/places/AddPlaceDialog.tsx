@@ -669,8 +669,8 @@ function Palette({
 						<p
 							className={cn(
 								mode === "first"
-									? "font-display text-[22px] leading-7 font-semibold"
-									: "text-[15px] font-semibold",
+									? "font-display text-2xl leading-7 font-semibold"
+									: "text-body font-semibold",
 							)}
 						>
 							{title}
@@ -751,7 +751,7 @@ function Palette({
 								data-testid={PLACES_TESTID.paletteEmpty}
 								className="px-4 pt-5 pb-3 text-center"
 							>
-								<p className="font-display text-[15px] font-medium">
+								<p className="font-display text-body font-medium">
 									{canSearch
 										? "No matches. Try a broader name, or drop a pin."
 										: "No places in this trip match."}
@@ -762,7 +762,7 @@ function Palette({
 							<p
 								role="alert"
 								data-testid={PLACES_TESTID.coordsError}
-								className="px-4 pt-4 pb-2 text-[13px] text-destructive"
+								className="px-4 pt-4 pb-2 text-meta text-destructive"
 							>
 								{coords.error}
 							</p>
@@ -873,7 +873,7 @@ function Palette({
 											</span>
 											{/* Its pin's number on the results map. */}
 											{r.lat !== undefined && r.lng !== undefined ? (
-												<span className="ml-auto grid size-5 shrink-0 place-items-center rounded-full bg-muted font-mono text-[11px] text-muted-foreground tnum">
+												<span className="ml-auto grid size-5 shrink-0 place-items-center rounded-full bg-muted text-2xs text-muted-foreground tnum">
 													{i + 1}
 												</span>
 											) : null}
@@ -883,7 +883,7 @@ function Palette({
 							</CommandGroup>
 						) : null}
 						{search.isError && searching ? (
-							<p className="px-4 py-3 text-[13px] text-muted-foreground">
+							<p className="px-4 py-3 text-meta text-muted-foreground">
 								{humanError(search.error)}
 							</p>
 						) : null}
@@ -905,7 +905,7 @@ function Palette({
 									<MapPin strokeWidth={1.5} />
 									<span className="truncate">
 										{mode === "locate" ? "Use this location" : "Pin at"}
-										<span className="ml-1.5 font-mono text-xs tnum text-muted-foreground">
+										<span className="ml-1.5 text-xs tnum text-muted-foreground">
 											{coords.lat.toFixed(5)}, {coords.lng.toFixed(5)}
 										</span>
 									</span>
@@ -1080,7 +1080,7 @@ function Palette({
 				</div>
 				<div
 					data-testid={PLACES_TESTID.providerFooter}
-					className="flex items-center gap-3 border-t px-4 py-2 text-[11px] text-muted-foreground max-sm:pb-[max(env(safe-area-inset-bottom),8px)]"
+					className="flex items-center gap-3 border-t px-4 py-2 text-2xs text-muted-foreground max-sm:pb-[max(env(safe-area-inset-bottom),8px)]"
 				>
 					{provider === "google" ? (
 						<span>Powered by Google</span>
@@ -1136,7 +1136,7 @@ function EmptyHints({
 	mode: AddPlaceRequest["mode"];
 }) {
 	return (
-		<div className="grid gap-1 px-4 pt-5 pb-3 text-[13px] text-muted-foreground">
+		<div className="grid gap-1 px-4 pt-5 pb-3 text-meta text-muted-foreground">
 			<p className="flex items-center gap-2">
 				<Search className="size-3.5" strokeWidth={1.5} />
 				{mode === "first"
@@ -1163,7 +1163,7 @@ function DropPin({
 	const [at, setAt] = useState(start);
 	return (
 		<div className="grid gap-3 p-4">
-			<p className="text-[13px] text-muted-foreground">
+			<p className="text-meta text-muted-foreground">
 				Move the map until the pin sits on the spot.
 			</p>
 			<MiniMap
@@ -1176,7 +1176,7 @@ function DropPin({
 				label="Map for dropping a pin"
 			/>
 			<div className="flex items-center gap-2">
-				<span className="font-mono text-xs tnum text-muted-foreground">
+				<span className="text-xs tnum text-muted-foreground">
 					{at.lat.toFixed(5)}, {at.lng.toFixed(5)}
 				</span>
 				<Button
@@ -1288,7 +1288,7 @@ function FilingChip({
 	);
 	return (
 		<div
-			className="flex min-w-0 flex-wrap items-center gap-x-0.5 gap-y-1 text-[13px]"
+			className="flex min-w-0 flex-wrap items-center gap-x-0.5 gap-y-1 text-meta"
 			data-testid={PLACES_TESTID.filingChip}
 		>
 			<span className="mr-1 text-xs text-muted-foreground">Goes in</span>
@@ -1315,7 +1315,7 @@ function FilingChip({
 								<>
 									{s.name}
 									{s.isNew ? (
-										<span className="ml-1 text-[11px] text-muted-foreground italic">
+										<span className="ml-1 text-2xs text-muted-foreground italic">
 											(new)
 										</span>
 									) : null}
@@ -1351,7 +1351,7 @@ function PreviewPhoto({
 					className="aspect-[2/1] w-full rounded-xl bg-muted object-cover"
 				/>
 				{photo.attributions.length ? (
-					<figcaption className="truncate text-[11px] text-muted-foreground">
+					<figcaption className="truncate text-2xs text-muted-foreground">
 						Photo:{" "}
 						{photo.attributions.map((a, i) => (
 							<span key={a.name}>
@@ -1468,10 +1468,10 @@ function PreviewPane({
 				className="grid gap-2 p-6 text-center"
 				data-testid={PLACES_TESTID.previewCard}
 			>
-				<p className="font-display text-[17px] font-medium">
+				<p className="font-display text-lg font-medium">
 					{q.isError ? humanError(q.error) : "Couldn't find that place."}
 				</p>
-				<p className="text-[13px] text-muted-foreground">
+				<p className="text-meta text-muted-foreground">
 					Search by name, or drop a pin.
 				</p>
 			</div>
@@ -1735,13 +1735,13 @@ function PreviewBody({
 							<h3 className="text-xl leading-7 font-semibold text-balance">
 								{locating.name}
 							</h3>
-							<p className="font-mono text-xs tnum text-muted-foreground">
+							<p className="text-xs tnum text-muted-foreground">
 								{pin.lat.toFixed(5)}, {pin.lng.toFixed(5)}
 							</p>
 							{preview.address ? (
 								<p
 									data-testid={PLACES_TESTID.pinAddress}
-									className="text-[13px] text-muted-foreground"
+									className="text-meta text-muted-foreground"
 								>
 									Nearest address on the map: {preview.address}
 									{locating.address?.trim()
@@ -1769,7 +1769,7 @@ function PreviewBody({
 								{preview.name}
 							</h3>
 						)}
-						<div className="flex flex-wrap items-center gap-2 text-[13px] text-muted-foreground">
+						<div className="flex flex-wrap items-center gap-2 text-meta text-muted-foreground">
 							{level === "place" ? (
 								<span className="inline-flex h-[22px] items-center gap-1.5 rounded-full bg-muted px-2 text-xs text-foreground">
 									<CategoryDot category={category} />
@@ -1785,7 +1785,7 @@ function PreviewBody({
 								<FlagEmoji code={preview.countryCode} />
 							) : null}
 							{typeof preview.rating === "number" ? (
-								<span className="font-mono text-xs tnum">
+								<span className="text-xs tnum">
 									★ {preview.rating.toFixed(1)}
 									{preview.userRatingCount
 										? ` · ${preview.userRatingCount}`
@@ -1794,7 +1794,7 @@ function PreviewBody({
 							) : null}
 						</div>
 						{preview.address ? (
-							<p className="text-[13px] text-muted-foreground">
+							<p className="text-meta text-muted-foreground">
 								{preview.address}
 							</p>
 						) : null}
@@ -1807,7 +1807,7 @@ function PreviewBody({
 				)}
 
 				{existing ? (
-					<div className="flex items-center gap-2 rounded-lg bg-primary/5 px-3 py-2 text-[13px]">
+					<div className="flex items-center gap-2 rounded-lg bg-primary/5 px-3 py-2 text-meta">
 						<span className="min-w-0 flex-1">
 							Already in {graph.trip.name}:{" "}
 							<span className="font-medium">{existing.name}</span>

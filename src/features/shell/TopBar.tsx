@@ -135,7 +135,7 @@ export function TopBar({ bp }: { bp: Breakpoint }) {
 					// FB-25: others see this menu (anchored here) when it is open.
 					data-cursor-anchor="pane:tripmenu"
 					className={cn(
-						"flex shrink-0 items-center gap-1 rounded-md px-1.5 py-1 text-[17px] leading-6 font-semibold hover:bg-accent",
+						"flex shrink-0 items-center gap-1 rounded-md px-1.5 py-1 text-lg leading-6 font-semibold hover:bg-accent",
 						bp === "md" ? "max-w-32" : bp === "lg" ? "max-w-44" : "max-w-56",
 					)}
 				>

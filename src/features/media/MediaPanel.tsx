@@ -206,7 +206,7 @@ export function MediaPanel({ target }: { target: BundleTarget }) {
 			{inView.length === 0 && uploads.length === 0 ? (
 				<p
 					data-testid={MEDIA_TESTID.empty}
-					className="py-8 text-center font-display text-[15px] leading-6 font-medium text-muted-foreground"
+					className="py-8 text-center font-display text-body leading-6 font-medium text-muted-foreground"
 				>
 					No photos, videos, PDFs or links{" "}
 					{visitOnly && visitItemId

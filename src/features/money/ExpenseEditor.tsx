@@ -969,7 +969,7 @@ export function ExpenseEditor({
 			}}
 		>
 			<div className="flex items-center gap-2 px-5 pt-5 pb-3">
-				<h2 className="font-display text-[17px] leading-6 font-semibold">
+				<h2 className="font-display text-lg leading-6 font-semibold">
 					{title}
 				</h2>
 				{editing ? (
@@ -1013,7 +1013,7 @@ export function ExpenseEditor({
 							/>
 							<div className="relative flex-1">
 								{isRefund ? (
-									<span className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 font-mono text-2xl text-muted-foreground">
+									<span className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 tnum text-2xl text-muted-foreground">
 										−
 									</span>
 								) : null}
@@ -1025,7 +1025,7 @@ export function ExpenseEditor({
 									enterKeyHint="done"
 									placeholder={draft.points ? "Taxes & fees" : "0"}
 									className={cn(
-										"h-12 font-mono text-2xl tnum placeholder:font-sans placeholder:text-base md:text-2xl",
+										"h-12 text-2xl tnum placeholder:text-base md:text-2xl",
 										isRefund && "pl-7",
 									)}
 									value={draft.amount}
@@ -1152,7 +1152,7 @@ export function ExpenseEditor({
 										data-testid={MONEY_TESTID.payerAmount}
 										aria-invalid={isNegative(p.amount) || undefined}
 										inputMode="decimal"
-										className="h-8 flex-1 font-mono tnum placeholder:font-sans"
+										className="h-8 flex-1 tnum"
 										value={p.amount}
 										onChange={(e) =>
 											set({
@@ -1454,7 +1454,7 @@ export function ExpenseEditor({
 											<Input
 												id="exp-rate"
 												inputMode="decimal"
-												className="h-8 w-40 font-mono text-xs tnum placeholder:font-sans"
+												className="h-8 w-40 text-xs tnum"
 												placeholder={
 													rateToHome ? (1 / rateToHome).toPrecision(4) : "auto"
 												}
@@ -1888,7 +1888,7 @@ function SplitEditor({
 								aria-label={`${nameOf(id)}'s amount`}
 								data-testid={MONEY_TESTID.splitExactAmount}
 								inputMode="decimal"
-								className="h-8 w-32 font-mono tnum placeholder:font-sans"
+								className="h-8 w-32 tnum"
 								value={draft.exact[id] ?? ""}
 								aria-invalid={
 									(parseMoneyInput(draft.exact[id] ?? "", draft.currency) ??
@@ -1951,7 +1951,7 @@ function ItemizeEditor({
 							aria-label="Item amount"
 							data-testid={MONEY_TESTID.lineAmount}
 							inputMode="decimal"
-							className="h-8 w-28 font-mono tnum placeholder:font-sans"
+							className="h-8 w-28 tnum"
 							value={l.amount}
 							aria-invalid={
 								(parseMoneyInput(l.amount, draft.currency) ?? 0) < 0 ||
@@ -1988,7 +1988,7 @@ function ItemizeEditor({
 										})
 									}
 									className={cn(
-										"inline-flex h-6 cursor-pointer items-center gap-1 rounded-full border pr-2 pl-1 text-[11px]",
+										"inline-flex h-6 cursor-pointer items-center gap-1 rounded-full border pr-2 pl-1 text-2xs",
 										on
 											? "border-foreground/40 bg-accent"
 											: "text-muted-foreground",
@@ -2006,7 +2006,7 @@ function ItemizeEditor({
 								<button
 									type="button"
 									aria-label="Who had it"
-									className="inline-flex h-6 cursor-pointer items-center rounded-full px-1.5 text-[11px] text-muted-foreground hover:bg-accent hover:text-foreground"
+									className="inline-flex h-6 cursor-pointer items-center rounded-full px-1.5 text-2xs text-muted-foreground hover:bg-accent hover:text-foreground"
 								>
 									<Plus className="size-3" />
 								</button>
@@ -2067,7 +2067,7 @@ function ItemizeEditor({
 						aria-label="Fee value"
 						data-testid={MONEY_TESTID.feeValue}
 						inputMode="decimal"
-						className="h-8 w-20 font-mono tnum placeholder:font-sans"
+						className="h-8 w-20 tnum"
 						value={f.value}
 						onChange={(e) => setFee(f.key, { value: e.target.value })}
 					/>
@@ -2155,7 +2155,7 @@ function PointsEditor({
 					aria-label="Points"
 					placeholder="Points"
 					inputMode="numeric"
-					className="h-8 w-28 font-mono tnum placeholder:font-sans"
+					className="h-8 w-28 tnum"
 					value={draft.pts}
 					onChange={(e) => set({ pts: e.target.value.replace(/[^\d]/g, "") })}
 				/>
@@ -2174,7 +2174,7 @@ function PointsEditor({
 					aria-label="Source points"
 					placeholder="Points"
 					inputMode="numeric"
-					className="h-8 w-28 font-mono tnum placeholder:font-sans"
+					className="h-8 w-28 tnum"
 					value={draft.sourcePts}
 					onChange={(e) =>
 						set({ sourcePts: e.target.value.replace(/[^\d]/g, "") })
@@ -2192,7 +2192,7 @@ function PointsEditor({
 				<Input
 					aria-label="Cash price"
 					inputMode="decimal"
-					className="h-8 flex-1 font-mono tnum placeholder:font-sans"
+					className="h-8 flex-1 tnum"
 					value={draft.cashValue}
 					onChange={(e) => set({ cashValue: e.target.value })}
 				/>
@@ -2350,7 +2350,7 @@ function PaymentsEditor({
 							<Input
 								aria-label="Payment amount"
 								inputMode="decimal"
-								className="h-8 flex-1 font-mono tnum placeholder:font-sans"
+								className="h-8 flex-1 tnum"
 								value={p.amount}
 								onChange={(e) => {
 									const v = e.target.value;
@@ -2403,7 +2403,7 @@ function PaymentsEditor({
 											aria-label="Payer amount"
 											data-testid={MONEY_TESTID.paymentPayerAmount}
 											inputMode="decimal"
-											className="h-8 flex-1 font-mono tnum placeholder:font-sans"
+											className="h-8 flex-1 tnum"
 											value={x.amount}
 											onChange={(e) => setPayer(i, { amount: e.target.value })}
 										/>
@@ -2490,7 +2490,7 @@ function PaymentsEditor({
 									id={`pay-rate-${p.key}`}
 									data-testid={MONEY_TESTID.paymentRate}
 									inputMode="decimal"
-									className="h-7 w-28 font-mono text-xs tnum placeholder:font-sans"
+									className="h-7 w-28 text-xs tnum"
 									placeholder={
 										inherits
 											? String(costRate)

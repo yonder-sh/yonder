@@ -63,9 +63,7 @@ export function GroupSubhead({
 				<span className="text-xs text-foreground">{scope?.name ?? "Trip"}</span>
 			)}
 			{count !== undefined ? (
-				<span className="font-mono text-xs text-muted-foreground tnum">
-					{count}
-				</span>
+				<span className="text-xs text-muted-foreground tnum">{count}</span>
 			) : null}
 			{onZoom ? (
 				<button

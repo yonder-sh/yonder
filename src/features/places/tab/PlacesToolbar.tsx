@@ -162,7 +162,7 @@ export function RatingProgress({ data }: { data: PlacesData }) {
 					>
 						<MemberAvatar memberId={p.member.id} size={16} ring={false} />
 						<PersonMenu member={p.member}>{name}</PersonMenu>
-						<span className="font-mono tnum">
+						<span className="tnum">
 							{p.rated}/{p.total}
 						</span>
 						{behind ? (
@@ -221,7 +221,7 @@ function Pill({
 			title={title}
 			onClick={onClick}
 			className={cn(
-				"inline-flex h-7 shrink-0 cursor-pointer items-center gap-1.5 rounded-full border px-3 text-[13px] font-medium whitespace-nowrap transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring",
+				"inline-flex h-7 shrink-0 cursor-pointer items-center gap-1.5 rounded-full border px-3 text-meta font-medium whitespace-nowrap transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring",
 				on
 					? "border-primary bg-primary text-primary-foreground"
 					: "bg-background text-foreground hover:bg-accent",
@@ -307,10 +307,8 @@ function LevelControl({ bar }: { bar: ShortlistBar }) {
 				</RadioGroup>
 				<p className="mt-3 text-xs text-muted-foreground">
 					With {people} rating, a place needs{" "}
-					<span className="font-mono text-foreground tnum">
-						{formatScore(bar.bar)}
-					</span>
-					. Everyone who has rated at least half the places counts, so the
+					<span className="text-foreground tnum">{formatScore(bar.bar)}</span>.
+					Everyone who has rated at least half the places counts, so the
 					shortlist grows with the group.
 				</p>
 				<p className="mt-1.5 text-xs text-muted-foreground">
@@ -376,7 +374,7 @@ export function PlacesToolbar({
 							>
 								<SelectTrigger
 									size="sm"
-									className="h-8 min-w-24 gap-1 text-[13px]"
+									className="h-8 min-w-24 gap-1 text-meta"
 									data-testid={PLACES_TAB_TESTID.groupBy}
 									aria-label="Group by"
 								>
@@ -400,7 +398,7 @@ export function PlacesToolbar({
 							>
 								<SelectTrigger
 									size="sm"
-									className="h-8 min-w-24 text-[13px]"
+									className="h-8 min-w-24 text-meta"
 									data-testid={PLACES_TAB_TESTID.sortBy}
 									aria-label="Sort by"
 								>
@@ -432,7 +430,7 @@ export function PlacesToolbar({
 							placeholder="Search places, notes"
 							aria-label="Search places"
 							data-testid={PLACES_TAB_TESTID.search}
-							className={cn("h-8 pl-7 text-[13px]", compact ? "w-36" : "w-52")}
+							className={cn("h-8 pl-7 text-meta", compact ? "w-36" : "w-52")}
 						/>
 					</div>
 					<PlaceFilterButton
@@ -454,7 +452,7 @@ export function PlacesToolbar({
 							onClick={() => nav.setPlaces({ pst: k ?? undefined })}
 						>
 							{label}
-							<span className="font-mono text-xs opacity-75 tnum">
+							<span className="text-xs opacity-75 tnum">
 								{k === null ? counts.all : counts[k]}
 							</span>
 						</Pill>
@@ -466,9 +464,7 @@ export function PlacesToolbar({
 						onClick={() => nav.setPlaces({ talk: state.talk ? undefined : 1 })}
 					>
 						Talk about it
-						<span className="font-mono text-xs opacity-75 tnum">
-							{counts.talk}
-						</span>
+						<span className="text-xs opacity-75 tnum">{counts.talk}</span>
 					</Pill>
 				</div>
 				<RatingProgress data={data} />

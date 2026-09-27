@@ -85,7 +85,7 @@ export function HereBadge({
 			data-slot="here-badge"
 			style={{ "--here": color } as CSSProperties}
 			className={cn(
-				"inline-flex h-5 max-w-full shrink-0 items-center gap-1 rounded-full bg-(--here) py-0.5 pr-2 pl-0.5 text-[11px] font-semibold whitespace-nowrap text-white",
+				"inline-flex h-5 max-w-full shrink-0 items-center gap-1 rounded-full bg-(--here) py-0.5 pr-2 pl-0.5 text-2xs font-semibold whitespace-nowrap text-white",
 				className,
 			)}
 		>

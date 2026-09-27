@@ -84,7 +84,7 @@ function Overline({
 	return (
 		<h2
 			className={cn(
-				"mb-3 text-[11px] font-semibold tracking-[.06em] text-muted-foreground uppercase",
+				"mb-3 text-2xs font-semibold tracking-[.06em] text-muted-foreground uppercase",
 				className,
 			)}
 		>
@@ -152,7 +152,7 @@ function TripChips({ trip }: { trip: MyTrip }) {
 	return (
 		<span
 			data-testid={HOME_TESTID.tripCardChip}
-			className="flex min-w-0 items-center gap-1.5 text-[12px] text-muted-foreground"
+			className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground"
 		>
 			{dot ? (
 				<span
@@ -160,7 +160,7 @@ function TripChips({ trip }: { trip: MyTrip }) {
 					className="size-1.5 shrink-0 rounded-full bg-glow"
 				/>
 			) : null}
-			<span className="flex min-w-0 flex-wrap items-center gap-x-1.5 font-mono tnum">
+			<span className="flex min-w-0 flex-wrap items-center gap-x-1.5 tnum">
 				{parts.map((p, i) => (
 					<span key={p.key} className="flex items-center gap-1.5">
 						{i ? <span aria-hidden="true">·</span> : null}
@@ -230,7 +230,7 @@ function Hero({
 			</div>
 			<div className="flex min-w-0 flex-col gap-2 p-5 sm:p-6 md:order-1">
 				<div className="flex items-center justify-between gap-2">
-					<span className="text-[11px] font-semibold tracking-[.06em] text-muted-foreground uppercase">
+					<span className="text-2xs font-semibold tracking-[.06em] text-muted-foreground uppercase">
 						{running ? "On the road" : "Next trip"}
 					</span>
 					<span className="relative z-10">{menu}</span>
@@ -239,7 +239,7 @@ function Hero({
 					to="/t/$trip"
 					params={{ trip: trip.slug }}
 					data-testid={TESTID.tripCard}
-					className="text-[28px] leading-[34px] font-semibold text-balance after:absolute after:inset-0 after:content-[''] focus-visible:outline-none"
+					className="text-3xl leading-[34px] font-semibold text-balance after:absolute after:inset-0 after:content-[''] focus-visible:outline-none"
 				>
 					{trip.name}
 				</Link>
@@ -253,8 +253,8 @@ function Hero({
 					) : null}
 				</span>
 				{trip.viaLink || trip.role !== "owner" ? (
-					<span className="flex items-center gap-2 text-[13px] text-muted-foreground">
-						<span className="rounded-full border px-1.5 text-[11px] leading-[18px]">
+					<span className="flex items-center gap-2 text-meta text-muted-foreground">
+						<span className="rounded-full border px-1.5 text-2xs leading-[18px]">
 							{roleLabel(trip.role)}
 						</span>
 						{trip.ownerName ? `by ${trip.ownerName}` : null}
@@ -263,7 +263,7 @@ function Hero({
 				{when ? (
 					<span
 						data-testid={HOME_TESTID.heroWhen}
-						className="font-mono text-[13px] text-muted-foreground tnum"
+						className="text-meta text-muted-foreground tnum"
 					>
 						{when.kind === "countdown"
 							? `in ${dayCount(when.days)}`
@@ -277,7 +277,7 @@ function Hero({
 						{offline ? (
 							<span
 								data-testid={HOME_TESTID.offlineChip}
-								className="inline-flex h-[22px] items-center gap-1 rounded-full bg-muted px-2 text-[12px] text-muted-foreground"
+								className="inline-flex h-[22px] items-center gap-1 rounded-full bg-muted px-2 text-xs text-muted-foreground"
 							>
 								<Check className="size-3" /> Available offline
 							</span>
@@ -321,23 +321,23 @@ function TripCard({
 					</Link>
 					<span className="relative z-10 flex shrink-0 items-center gap-1">
 						{shared ? (
-							<span className="rounded-full border px-1.5 text-[11px] leading-[18px] text-muted-foreground">
+							<span className="rounded-full border px-1.5 text-2xs leading-[18px] text-muted-foreground">
 								{roleLabel(trip.role)}
 							</span>
 						) : null}
 						{menu}
 					</span>
 				</div>
-				<span className="text-[13px] text-muted-foreground">
+				<span className="text-meta text-muted-foreground">
 					{datesText(trip)}
 					{shared && trip.ownerName ? ` · by ${trip.ownerName}` : null}
 				</span>
 				<TripChips trip={trip} />
 				<div className="flex items-center justify-between pt-1">
 					<span className="flex items-center gap-2">
-						<Flags codes={trip.countryCodes} className="text-[14px]" />
+						<Flags codes={trip.countryCodes} className="text-sm" />
 						{offline ? (
-							<span className="text-[12px] text-muted-foreground">
+							<span className="text-xs text-muted-foreground">
 								<Check className="inline size-3" /> Offline
 							</span>
 						) : null}
@@ -393,7 +393,7 @@ function Deadlines() {
 					data-testid={HOME_TESTID.deadlinesEveryone}
 					onClick={() => setEveryone((v) => !v)}
 					className={cn(
-						"rounded-full border px-2.5 text-[12px] leading-6 transition-colors",
+						"rounded-full border px-2.5 text-xs leading-6 transition-colors",
 						everyone
 							? "border-foreground/20 bg-accent text-accent-foreground"
 							: "text-muted-foreground hover:text-foreground",
@@ -443,7 +443,7 @@ function Deadlines() {
 							/>
 							<span
 								className={cn(
-									"hidden shrink-0 rounded-full px-2 font-mono text-[12px] leading-[22px] tnum sm:inline",
+									"hidden shrink-0 rounded-full px-2 text-xs leading-[22px] tnum sm:inline",
 									warn
 										? "text-warning"
 										: soon
@@ -466,7 +466,7 @@ function Deadlines() {
 								    long label never cuts the trip name to "Asi…" (QA DASH). */}
 								<span
 									className={cn(
-										"truncate font-mono text-[12px] tnum sm:hidden",
+										"truncate text-xs tnum sm:hidden",
 										warn ? "text-warning" : "text-muted-foreground",
 									)}
 								>
@@ -475,7 +475,7 @@ function Deadlines() {
 								<span
 									data-testid={HOME_TESTID.deadlineTrip}
 									title={d.tripName}
-									className="truncate text-[12px] text-muted-foreground"
+									className="truncate text-xs text-muted-foreground"
 								>
 									{d.tripName}
 								</span>
@@ -502,7 +502,7 @@ function Deadlines() {
 				<button
 					type="button"
 					onClick={() => setAll((v) => !v)}
-					className="mt-2 text-[13px] font-medium text-primary hover:underline"
+					className="mt-2 text-meta font-medium text-primary hover:underline"
 				>
 					{all ? "Show fewer" : `Show all (${rows.length})`}
 				</button>
@@ -675,7 +675,7 @@ export function Dashboard({
 			</header>
 			<main className="mx-auto grid max-w-[1200px] grid-cols-1 gap-10 px-4 pt-4 pb-16 sm:px-8 sm:pt-6">
 				<div className="flex flex-wrap items-center justify-between gap-4">
-					<h1 className="font-display text-[26px] leading-8 font-semibold tracking-[-0.02em] sm:text-[32px] sm:leading-[38px]">
+					<h1 className="font-display text-2xl leading-8 font-semibold tracking-[-0.02em] sm:text-3xl sm:leading-[38px]">
 						{hello}, {viewer.firstName || viewer.name}
 					</h1>
 					{all.length ? <NewTripDialog /> : null}
@@ -765,7 +765,7 @@ export function Dashboard({
 											>
 												{t.name}
 											</Link>
-											<span className="flex shrink-0 items-center gap-3 text-[13px]">
+											<span className="flex shrink-0 items-center gap-3 text-meta">
 												<Flags
 													codes={t.countryCodes}
 													className="hidden sm:flex"

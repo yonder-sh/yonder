@@ -24,7 +24,7 @@ export function TimeNeededLabel({ row }: { row: PlaceRow }) {
 	if (row.timeMin === null)
 		return <span className="text-xs text-muted-foreground/70">not set</span>;
 	return (
-		<span className="inline-flex items-center gap-1 font-mono text-[13px] tnum">
+		<span className="inline-flex items-center gap-1 text-meta tnum">
 			{row.timeSource === "planned" ? (
 				<CalendarCheck
 					className="size-3 text-muted-foreground"
@@ -110,7 +110,7 @@ export function TimeNeededEditor({
 							key={m}
 							size="xs"
 							variant={own === m ? "default" : "outline"}
-							className="font-mono tnum"
+							className="tnum"
 							onClick={() => commit(m)}
 						>
 							{m === 540 ? "Full day" : formatDuration(m)}
@@ -131,7 +131,7 @@ export function TimeNeededEditor({
 						aria-label="Time needed"
 						aria-invalid={typed === null || undefined}
 						data-testid={PLACES_TAB_TESTID.timeInput}
-						className="h-8 flex-1 font-mono text-[13px] tnum"
+						className="h-8 flex-1 text-meta tnum"
 					/>
 					<Button size="sm" type="submit" disabled={!typed}>
 						Set

@@ -107,7 +107,7 @@ export function DateRangeField({
 									: formatDayDate(from, { year: true })}
 							</span>
 							{days ? (
-								<span className="font-mono text-xs text-muted-foreground tnum">
+								<span className="text-xs text-muted-foreground tnum">
 									{days} {days === 1 ? "day" : "days"}
 								</span>
 							) : null}

@@ -50,7 +50,7 @@ function PinFace({ pin }: { pin: PinView }) {
 				className="yonder-pin-face yonder-pin-country"
 				style={{ width: s, height: s }}
 			>
-				<span aria-hidden className="text-[14px] leading-none">
+				<span aria-hidden className="text-sm leading-none">
 					{flagEmoji(pin.countryCode) || "•"}
 				</span>
 			</span>

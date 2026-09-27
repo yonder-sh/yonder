@@ -103,9 +103,7 @@ function writeHintSeen(tripId: string) {
 	}
 }
 
-const count = (n: number) => (
-	<span className="font-mono text-xs tnum">{n}</span>
-);
+const count = (n: number) => <span className="text-xs tnum">{n}</span>;
 
 export function SuggestModeControl({
 	compact: compactProp,
@@ -202,7 +200,7 @@ export function SuggestModeControl({
 					onOpenAutoFocus={(e) => e.preventDefault()}
 				>
 					<p className="text-sm font-medium">You're suggesting</p>
-					<p className="mt-1 text-[13px] leading-[18px] text-muted-foreground">
+					<p className="mt-1 text-meta leading-[18px] text-muted-foreground">
 						Edit as usual — {line.charAt(0).toLowerCase()}
 						{line.slice(1)}
 					</p>
@@ -225,7 +223,7 @@ export function SuggestModeControl({
 			className="w-72"
 			data-testid={SUGGEST_TESTID.modeMenu}
 		>
-			<DropdownMenuLabel className="text-[11px] font-semibold tracking-[.06em] text-muted-foreground uppercase">
+			<DropdownMenuLabel className="text-2xs font-semibold tracking-[.06em] text-muted-foreground uppercase">
 				Mode
 			</DropdownMenuLabel>
 			<DropdownMenuRadioGroup
@@ -283,9 +281,7 @@ export function SuggestModeControl({
 				<ListChecks strokeWidth={1.5} />
 				<span className="flex-1">Review…</span>
 				{n ? (
-					<span className="font-mono text-xs text-muted-foreground tnum">
-						{n}
-					</span>
+					<span className="text-xs text-muted-foreground tnum">{n}</span>
 				) : null}
 			</DropdownMenuItem>
 		</DropdownMenuContent>

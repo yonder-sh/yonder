@@ -95,9 +95,9 @@ function FlowEmpty() {
 			className="grid flex-1 place-items-center overflow-y-auto p-6"
 		>
 			<div className="flex max-w-md flex-col items-start gap-4">
-				<TabPurpose tab="places" className="text-[15px] text-foreground" />
+				<TabPurpose tab="places" className="text-body text-foreground" />
 				<div className="flex flex-col gap-1">
-					<p className="font-display text-[17px] leading-6 font-medium text-balance">
+					<p className="font-display text-lg leading-6 font-medium text-balance">
 						No places in {where} yet.
 					</p>
 					<p className="text-sm text-muted-foreground">
@@ -108,7 +108,7 @@ function FlowEmpty() {
 				<ol className="flex flex-col gap-2 text-sm text-muted-foreground">
 					{steps.map(([step, text], i) => (
 						<li key={step} className="flex items-baseline gap-2.5">
-							<span className="grid size-5 shrink-0 translate-y-0.5 place-items-center rounded-full border font-mono text-[11px] font-semibold text-foreground tnum">
+							<span className="grid size-5 shrink-0 translate-y-0.5 place-items-center rounded-full border text-2xs font-semibold text-foreground tnum">
 								{i + 1}
 							</span>
 							<span>

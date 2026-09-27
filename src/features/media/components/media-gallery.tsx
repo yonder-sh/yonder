@@ -79,9 +79,7 @@ function TextSubhead({ text, count }: { text: string; count: number }) {
 	return (
 		<div className="sticky top-0 z-20 flex h-8 items-center gap-2 border-b bg-background/95 px-4 backdrop-blur">
 			<span className="truncate text-xs text-foreground">{text}</span>
-			<span className="font-mono text-xs text-muted-foreground tnum">
-				{count}
-			</span>
+			<span className="text-xs text-muted-foreground tnum">{count}</span>
 		</div>
 	);
 }

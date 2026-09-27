@@ -127,10 +127,10 @@ export function RouteOptionCard({
 				className="absolute inset-0 rounded-lg focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:cursor-default"
 			/>
 			<div className="pointer-events-none relative flex min-w-0 items-baseline gap-2">
-				<span className="font-mono text-sm font-semibold tnum">
+				<span className="text-sm font-semibold tnum">
 					{times ?? formatDuration(route.durationMin)}
 				</span>
-				<span className="min-w-0 truncate font-mono text-xs text-muted-foreground tnum">
+				<span className="min-w-0 truncate text-xs text-muted-foreground tnum">
 					{times
 						? formatDuration(route.durationMin)
 						: range
@@ -140,7 +140,7 @@ export function RouteOptionCard({
 				{fastest ? (
 					<span
 						data-testid={TRANSIT_TESTID.fastestBadge}
-						className="ml-auto inline-flex h-5 shrink-0 items-center rounded-full border border-foreground/25 px-1.5 text-[11px] font-medium text-foreground"
+						className="ml-auto inline-flex h-5 shrink-0 items-center rounded-full border border-foreground/25 px-1.5 text-2xs font-medium text-foreground"
 					>
 						Fastest
 					</span>
