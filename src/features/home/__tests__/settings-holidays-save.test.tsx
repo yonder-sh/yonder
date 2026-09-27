@@ -52,15 +52,15 @@ vi.mock("@/features/money/queries", () => ({
 vi.mock("../sharing.functions", () => ({ leaveTrip: vi.fn() }));
 vi.mock("../DuplicateTripDialog", () => ({ DuplicateTripDialog: () => null }));
 // The holiday's calendar popover isn't what's tested: one click picks 4 Oct.
-vi.mock("@/features/insights/ui", async (orig) => ({
-	...(await orig<typeof import("@/features/insights/ui")>()),
-	DateField: ({
+vi.mock("@/components/kit", async (orig) => ({
+	...(await orig<typeof import("@/components/kit")>()),
+	DateInput: ({
 		label,
 		value,
 		onChange,
 	}: {
 		label: string;
-		value: string;
+		value: string | null;
 		onChange: (iso: string) => void;
 	}) => (
 		<button

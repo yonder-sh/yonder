@@ -19,7 +19,7 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useEditGuard } from "@/components/common/edit-guard";
 import { useTripMutation } from "@/components/common/use-trip-mutation";
-import { Eyebrow } from "@/components/kit";
+import { DateInput, Eyebrow } from "@/components/kit";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -43,7 +43,6 @@ import { TESTID } from "@/lib/testids";
 import { cn } from "@/lib/utils";
 import { useWorkspaceOptional } from "@/lib/workspace/model-context";
 import { INSIGHTS_TESTID } from "./testids";
-import { DateField } from "./ui";
 /** One holiday row as edited (an unsaved row may be half filled in). */
 export type HolidayRow = { date: string; name: string; countryCode: string };
 type Row = HolidayRow;
@@ -185,7 +184,7 @@ export function HolidaysEditor({
 							data-testid={INSIGHTS_TESTID.holidayRow}
 							className="flex flex-wrap items-center gap-1.5"
 						>
-							<DateField
+							<DateInput
 								label="Holiday date"
 								value={r.date}
 								defaultMonth={tripStart}

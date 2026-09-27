@@ -16,7 +16,7 @@ import { toast } from "sonner";
 import { useEditGuard } from "@/components/common/edit-guard";
 import { undoToast } from "@/components/common/undo-toast";
 import { useTripMutation } from "@/components/common/use-trip-mutation";
-import { Eyebrow, Segmented } from "@/components/kit";
+import { DateInput, Eyebrow, Segmented } from "@/components/kit";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -60,7 +60,7 @@ import { setOpeningHours } from "./insights.functions";
 import { useLatestMount } from "./latest-mount";
 import { OsmAttribution, OsmObjectLink } from "./OsmHoursSource";
 import { INSIGHTS_TESTID } from "./testids";
-import { DateField, SHEET_ON_MOBILE } from "./ui";
+import { SHEET_ON_MOBILE } from "./ui";
 
 /** Whether ranges show their own last-entry field. */
 const ShowLastEntry = createContext(false);
@@ -823,7 +823,7 @@ function ExceptionsEditor({
 							className="grid gap-1.5 rounded-lg border px-2.5 py-2"
 						>
 							<div className="flex flex-wrap items-center gap-2">
-								<DateField
+								<DateInput
 									label="Special date"
 									value={e.date}
 									defaultMonth={tripStart}

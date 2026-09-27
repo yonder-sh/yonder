@@ -21,9 +21,9 @@ import {
 } from "react";
 import { toast } from "sonner";
 import { useTripMutation } from "@/components/common/use-trip-mutation";
+import { DateInput } from "@/components/kit";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { DateField } from "@/features/home/date-fields";
 import { cityDayTable } from "@/features/places/lib/days";
 import { raters } from "@/features/places/lib/rate";
 import { useMoveItem, useSetDayStay } from "@/features/places/mutations";
@@ -440,7 +440,8 @@ function SplitSuggestion({
 								<div className="flex items-center gap-2">
 									<span className="text-sm whitespace-nowrap">Starting on</span>
 									<div className="w-44">
-										<DateField
+										<DateInput
+											full
 											value={draft.start ?? null}
 											onChange={(start) => update({ start })}
 											testId={T.start}

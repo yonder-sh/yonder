@@ -8,7 +8,6 @@ import { useQuery } from "@tanstack/react-query";
 import { ExternalLink, Lock, UserPlus } from "lucide-react";
 import { useState } from "react";
 import { useAddPerson } from "@/components/common/member";
-import { TimeInput } from "@/components/common/time";
 import { Input } from "@/components/ui/input";
 import {
 	Tooltip,
@@ -87,43 +86,6 @@ export function GoogleMapsLink({
 			{iconOnly ? null : <span>{compact ? "Google Maps" : label}</span>}
 			<ExternalLink className="size-3" strokeWidth={1.75} aria-hidden />
 		</a>
-	);
-}
-
-/**
- * F's 24-hour `HH:mm` field (DESIGN §2.6: never the browser's 12-hour native
- * picker) with a test id. The `<label>` wrapper carries the id, so tests can
- * `fill()` it (Playwright retargets a label to its control).
- */
-export function TimeField({
-	testId,
-	value,
-	onChange,
-	disabled,
-	label,
-	step = 5,
-	className,
-}: {
-	testId?: string;
-	value: string;
-	onChange: (hhmm: string) => void;
-	disabled?: boolean;
-	label: string;
-	step?: number;
-	className?: string;
-}) {
-	return (
-		// biome-ignore lint/a11y/noLabelWithoutControl: TimeInput renders its <input> inside this label.
-		<label data-testid={testId} className="contents">
-			<TimeInput
-				value={value}
-				onChange={onChange}
-				step={step}
-				disabled={disabled}
-				aria-label={label}
-				className={className}
-			/>
-		</label>
 	);
 }
 

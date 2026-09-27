@@ -11,6 +11,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { Copy } from "lucide-react";
 import { type FormEvent, useEffect, useId, useState } from "react";
 import { toast } from "sonner";
+import { DateInput } from "@/components/kit";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -29,7 +30,7 @@ import { formatDayDate } from "@/lib/format";
 import { meKeys } from "@/lib/query/keys";
 import { useOnline } from "@/lib/realtime/connection";
 import { duplicateTrip } from "./dashboard.functions";
-import { DateField, dayCount } from "./date-fields";
+import { dayCount } from "./date-fields";
 import { HOME_TESTID } from "./testids";
 
 type Include = {
@@ -157,7 +158,8 @@ export function DuplicateTripDialog({
 					{trip.startDate ? (
 						<div className="grid gap-2">
 							<Label htmlFor={ids.start}>Starts</Label>
-							<DateField
+							<DateInput
+								full
 								id={ids.start}
 								value={start}
 								onChange={setStart}

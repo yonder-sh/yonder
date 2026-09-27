@@ -2,7 +2,6 @@
  * Small UI pieces WP-Insights shares between its components.
  */
 
-import { CalendarDays } from "lucide-react";
 import {
 	type ReactElement,
 	type ReactNode,
@@ -11,7 +10,6 @@ import {
 	useRef,
 	useState,
 } from "react";
-import { Calendar } from "@/components/ui/calendar";
 import {
 	Popover,
 	PopoverContent,
@@ -139,29 +137,6 @@ export function HoverPopover({
 export const SHEET_ON_MOBILE =
 	"flex max-h-[min(90dvh,820px)] flex-col gap-0 overflow-hidden p-0 max-sm:top-auto max-sm:bottom-0 max-sm:left-0 max-sm:w-full max-sm:max-w-full max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-b-none max-sm:rounded-t-2xl max-sm:data-[state=closed]:slide-out-to-bottom max-sm:data-[state=open]:slide-in-from-bottom max-sm:data-[state=closed]:zoom-out-100 max-sm:data-[state=open]:zoom-in-100";
 
-const WD = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-const MO = [
-	"Jan",
-	"Feb",
-	"Mar",
-	"Apr",
-	"May",
-	"Jun",
-	"Jul",
-	"Aug",
-	"Sep",
-	"Oct",
-	"Nov",
-	"Dec",
-];
-
-/** "Mon 11 Oct 2027" (DESIGN §12: dates read "Thu 15 Apr"). */
-export function longDate(iso: string): string {
-	const d = new Date(`${iso}T00:00:00Z`);
-	if (Number.isNaN(d.getTime())) return iso;
-	return `${WD[d.getUTCDay()]} ${d.getUTCDate()} ${MO[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
-}
-
 /** A calendar date (`YYYY-MM-DD`) as the local-midnight Date the day picker works in. */
 export function pickerDate(iso: string): Date {
 	const [y, m, d] = iso.split("-").map(Number);
@@ -171,67 +146,4 @@ export function pickerDate(iso: string): Date {
 /** The day picker's local date → `YYYY-MM-DD`. */
 export function isoOfPicked(d: Date): string {
 	return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-}
-
-/** A date field that reads "Mon 11 Oct 2027" and opens a calendar (no locale-shaped 10/11/2027). */
-export function DateField({
-	value,
-	onChange,
-	label,
-	defaultMonth,
-	disabled,
-	className,
-}: {
-	value: string;
-	onChange: (iso: string) => void;
-	label: string;
-	/** `YYYY-MM-DD` to open on when empty (the trip's start). */
-	defaultMonth?: string | null;
-	disabled?: boolean;
-	className?: string;
-}) {
-	const [open, setOpen] = useState(false);
-	const month = value || defaultMonth || null;
-	return (
-		<Popover open={open} onOpenChange={setOpen}>
-			<PopoverTrigger asChild disabled={disabled}>
-				<button
-					type="button"
-					aria-label={label}
-					data-value={value || undefined}
-					className={cn(
-						"inline-flex h-8 items-center gap-1.5 rounded-md border border-input bg-transparent px-2.5 text-meta whitespace-nowrap shadow-xs transition-colors hover:bg-accent focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none disabled:opacity-50",
-						!value && "text-muted-foreground",
-						className,
-					)}
-				>
-					<CalendarDays
-						className="size-3.5 text-muted-foreground"
-						strokeWidth={1.75}
-						aria-hidden
-					/>
-					<span className="tnum">
-						{value ? longDate(value) : "Pick a date"}
-					</span>
-				</button>
-			</PopoverTrigger>
-			<PopoverContent
-				className="w-auto p-0"
-				align="start"
-				collisionPadding={12}
-			>
-				<Calendar
-					mode="single"
-					weekStartsOn={1}
-					{...(month ? { defaultMonth: pickerDate(month) } : {})}
-					{...(value ? { selected: pickerDate(value) } : {})}
-					onSelect={(d) => {
-						if (!d) return;
-						onChange(isoOfPicked(d));
-						setOpen(false);
-					}}
-				/>
-			</PopoverContent>
-		</Popover>
-	);
 }

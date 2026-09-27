@@ -18,7 +18,7 @@ import { ChevronDown, Plus, X } from "lucide-react";
 import { useId, useMemo, useState } from "react";
 import { useEditGuard } from "@/components/common/edit-guard";
 import { assignableMembers, MemberAvatar } from "@/components/common/member";
-import { Chip, SectionHeader } from "@/components/kit";
+import { Chip, SectionHeader, TimeInput } from "@/components/kit";
 import { Button } from "@/components/ui/button";
 import {
 	Collapsible,
@@ -60,7 +60,7 @@ import { mergeRide, stationLabel } from "../lib/custom-route";
 import { TRANSIT_TESTID } from "../testids";
 import { railRide, searchRail } from "../transit.functions";
 import type { LegEditor } from "../use-leg-editor";
-import { AddPersonRow, Masked, TimeField } from "./bits";
+import { AddPersonRow, Masked } from "./bits";
 import { SuggestInput } from "./SuggestInput";
 
 type StepMode = SegmentMode | "taxi";
@@ -720,12 +720,13 @@ export function CustomRouteBuilder({
 										<span className="text-xs text-muted-foreground">
 											Departs
 										</span>
-										<TimeField
-											label={`Step ${i + 1} departs`}
+										<TimeInput
+											aria-label={`Step ${i + 1} departs`}
 											testId={TRANSIT_TESTID.customRouteStepDepart}
 											value={s.depart}
 											disabled={disabled}
 											onChange={(depart) => update(s.key, { depart })}
+											step={5}
 										/>
 										{s.stopCount ? (
 											<span className="text-xs text-muted-foreground">
@@ -799,12 +800,13 @@ export function CustomRouteBuilder({
 								}}
 								className="h-8 tnum"
 							/>
-							<TimeField
+							<TimeInput
 								testId={TRANSIT_TESTID.customRouteDepartTime}
-								label="Departure time"
+								aria-label="Departure time"
 								value={depTime}
 								disabled={disabled}
 								onChange={setDepTime}
+								step={5}
 							/>
 							<span className="text-xs text-muted-foreground">Arrives</span>
 							<Input
@@ -816,12 +818,13 @@ export function CustomRouteBuilder({
 								onChange={(e) => setArrDate(e.target.value)}
 								className="h-8 tnum"
 							/>
-							<TimeField
+							<TimeInput
 								testId={TRANSIT_TESTID.customRouteArriveTime}
-								label="Arrival time"
+								aria-label="Arrival time"
 								value={arrTime}
 								disabled={disabled}
 								onChange={setArrTime}
+								step={5}
 							/>
 						</div>
 						<p className="text-xs text-muted-foreground">

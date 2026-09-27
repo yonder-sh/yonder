@@ -15,7 +15,7 @@ import { Plus, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useEditGuard } from "@/components/common/edit-guard";
 import { assignableMembers, MemberAvatar } from "@/components/common/member";
-import { SectionHeader } from "@/components/kit";
+import { SectionHeader, TimeInput } from "@/components/kit";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -67,7 +67,7 @@ import {
 	validateFlight,
 } from "../lib/flight";
 import { TRANSIT_TESTID } from "../testids";
-import { AddPersonRow, Masked, TimeField } from "./bits";
+import { AddPersonRow, Masked } from "./bits";
 import { CAPS_INPUT, SuggestInput } from "./SuggestInput";
 
 const CABINS: { value: Cabin; label: string }[] = [
@@ -1061,13 +1061,14 @@ function AirportRowFields({
 					onChange={(e) => onDate(e.target.value)}
 					className="h-8 min-w-0 font-mono tnum"
 				/>
-				<TimeField
+				<TimeInput
 					testId={testIds.time}
-					label={`${side === "From" ? "Departure" : "Arrival"} time`}
+					aria-label={`${side === "From" ? "Departure" : "Arrival"} time`}
 					value={time}
 					disabled={disabled}
 					onChange={onTime}
 					className="w-full"
+					step={5}
 				/>
 			</div>
 			{airport && !dateError && repeated ? (

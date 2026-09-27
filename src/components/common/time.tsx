@@ -245,6 +245,8 @@ export function TimeInput({
 	step = 15,
 	disabled,
 	className,
+	id,
+	testId,
 	"aria-label": ariaLabel = "Time",
 }: {
 	value: string;
@@ -252,6 +254,8 @@ export function TimeInput({
 	step?: number;
 	disabled?: boolean;
 	className?: string;
+	id?: string;
+	testId?: string;
 	"aria-label"?: string;
 }) {
 	const [text, setText] = useState(value);
@@ -272,6 +276,8 @@ export function TimeInput({
 			spellCheck={false}
 			placeholder="HH:mm"
 			maxLength={8}
+			id={id}
+			data-testid={testId}
 			value={text}
 			disabled={disabled}
 			aria-label={ariaLabel}
