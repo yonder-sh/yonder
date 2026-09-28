@@ -16,7 +16,7 @@ import { toast } from "sonner";
 import { v7 as uuidv7 } from "uuid";
 import { undoToast } from "@/components/common/undo-toast";
 import { useTripMutation } from "@/components/common/use-trip-mutation";
-import { createItem, deleteItem } from "@/functions/items.functions";
+import { createItem, deleteItem, moveItem } from "@/functions/items.functions";
 import {
 	createNode,
 	deleteNode,
@@ -381,6 +381,26 @@ export function useOutlineActions(announce?: Announce) {
 			},
 		},
 	);
+	// A place's stop off its day goes back on one, with its time and note.
+	const moveBackM = useTripMutation(
+		({ itemId, dayId }: { itemId: string; dayId: string; label: string }) =>
+			moveItem({ data: { itemId, dayId } }),
+		{
+			keys: [graphKey, countsKey],
+			tripId,
+			onSuccess: (_r, v) => {
+				announce?.(v.label);
+				undoToast(v.label, async () => {
+					try {
+						await moveItem({ data: { itemId: v.itemId, dayId: null } });
+					} catch (e) {
+						toast.error(humanError(e));
+					}
+					await refresh();
+				});
+			},
+		},
+	);
 	/** The day **A** adds to (DESIGN §13): the selected day, the selected item's day, else the first day of the range. */
 	const focusedDayId = useCallback((): string | null => {
 		if (sel?.kind === "day") return sel.id;
@@ -426,13 +446,16 @@ export function useOutlineActions(announce?: Announce) {
 					? `Day ${ix.dayNumber(target)} · ${formatDayDate(day.date)}`
 					: "that day"
 			}`;
-			createItemM.mutate({ dayId: target, nodeId, label });
+			const spare = ix.unscheduled.find((it) => it.nodeId === nodeId);
+			if (spare) moveBackM.mutate({ itemId: spare.id, dayId: target, label });
+			else createItemM.mutate({ dayId: target, nodeId, label });
 			return true;
 		},
 		[
 			ix,
 			focusedDayId,
 			createItemM,
+			moveBackM,
 			openAddPlace,
 			announce,
 			proposals.marks,

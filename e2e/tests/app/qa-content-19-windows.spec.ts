@@ -90,6 +90,6 @@ test("relative windows follow item moves, trip shifts; gone anchor → Date TBD"
 	await expectLive(page);
 	console.log("AFTER DELETE", JSON.stringify(await chips(), null, 1));
 	await shot(page, "19-windows-after-delete");
-	// Unschedule instead (restore + move to Unscheduled).
+	// Take it off its day instead (restore + back to the ideas).
 	expect(c1).not.toEqual(c0);
 });

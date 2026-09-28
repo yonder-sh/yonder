@@ -71,7 +71,7 @@ test("trip settings: home currency, dates preview, and the owner's tools", async
 	);
 	expect(currency).toBe("JPY");
 
-	// Dates: shrinking the end previews what moves to Unscheduled (TRIP-02).
+	// Dates: shrinking the end previews what goes back to the ideas (TRIP-02).
 	await openMenuItem(page, false, "Trip settings");
 	await dialog.getByTestId(HOME_TESTID.settingsDates).click();
 	const days = page.locator('[data-slot="popover-content"] button[data-day]');
@@ -79,7 +79,7 @@ test("trip settings: home currency, dates preview, and the owner's tools", async
 	await days.filter({ hasText: /^4$/ }).first().click();
 	await expect(dialog.getByTestId(HOME_TESTID.datesConfirm)).toBeVisible();
 	// Either what moves, or why it can't (a flight holds the day).
-	await expect(dialog).toContainText(/move to Unscheduled|Nothing moves|holds/);
+	await expect(dialog).toContainText(/go back to the ideas|No stop loses its day|holds/);
 	await page.screenshot({
 		path: shotPath("home/trip-settings-dates-desktop.png"),
 		animations: "disabled",

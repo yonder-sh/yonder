@@ -170,7 +170,7 @@ function DayValue({ dayId }: { dayId: string | null }) {
 					{d.title ? ` · ${d.title}` : ""}
 				</>
 			) : (
-				"Unscheduled"
+				"No day yet"
 			)}
 		</span>
 	);
@@ -483,7 +483,7 @@ function ItemOverviewBody({ itemId }: { itemId: string }) {
 							<span className="tnum">
 								{day && s
 									? `${formatDayDate(day.date)} · ${formatTime(s.start, s.tz)}–${formatTime(s.end, s.tz)}${s.endsNextDay ? "⁺¹" : ""} ${tzLabel(s.tz, s.start)}`
-									: "Unscheduled"}
+									: "No day yet"}
 							</span>
 							<span aria-hidden className="text-muted-foreground">
 								·
@@ -754,7 +754,7 @@ function ItemOverviewBody({ itemId }: { itemId: string }) {
 									{d.title ? ` · ${d.title}` : ""}
 								</SelectItem>
 							))}
-							<SelectItem value={UNSCHEDULED}>Unscheduled</SelectItem>
+							<SelectItem value={UNSCHEDULED}>Back to the ideas</SelectItem>
 						</SelectContent>
 					</Select>
 					{money ? (

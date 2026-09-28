@@ -234,7 +234,7 @@ export function applyProposals(
 							afterId: null,
 							toLabel: toDay
 								? (dayLabel.get(toDay) ?? "another day")
-								: "Unscheduled",
+								: "the ideas",
 						},
 					});
 			} else if (p.op === "node.move") {

@@ -116,7 +116,7 @@ describe("describeProposal", () => {
 			],
 			[
 				{ op: "item.move", payload: { itemId: itoya, dayId: null } },
-				"Move Itoya Ginza to Unscheduled",
+				"Take Itoya Ginza off its day",
 			],
 			[
 				{ op: "item.move", payload: { itemId: itoya, dayId: demo.D.d2 ?? "" } },

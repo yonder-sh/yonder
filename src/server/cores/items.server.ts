@@ -89,7 +89,7 @@ function itemLabel(ix: GraphIndex, itemId: string): string {
 }
 
 function dayLabel(ix: GraphIndex, dayId: string | null): string {
-	return dayId ? `Day ${ix.dayNumber(dayId)}` : "Unscheduled";
+	return dayId ? `Day ${ix.dayNumber(dayId)}` : "the ideas";
 }
 
 /** A node that items may point at: live, in this trip, not dropped when scheduling. */
@@ -274,7 +274,7 @@ export async function moveItemCore(
 					: "item.move",
 		summary:
 			data.dayId === null
-				? `moved ${itemLabel(ix, item.id)} to Unscheduled`
+				? `took ${itemLabel(ix, item.id)} off its day`
 				: `moved ${itemLabel(ix, item.id)} to ${dayLabel(ix, data.dayId)}`,
 		itemId: item.id,
 		nodeId: item.nodeId,

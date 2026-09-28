@@ -610,7 +610,7 @@ export function formatValue(
 	ix: GraphIndex,
 ): string {
 	if (value === undefined || value === null || value === "") {
-		if (field === "dayId") return "Unscheduled";
+		if (field === "dayId") return "No day";
 		if (field === "parentId") return "Top level";
 		if (field === "pinnedStart") return "Not pinned";
 		if (field === "nightNodeId") return "No stay";

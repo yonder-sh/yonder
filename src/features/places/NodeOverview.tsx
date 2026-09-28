@@ -522,7 +522,7 @@ function PlaceOverview({ node }: { node: GraphNode }) {
 									className="w-full rounded px-1 py-0.5 text-left text-meta text-muted-foreground hover:bg-accent"
 									onClick={() => nav.select({ kind: "item", id: it.id })}
 								>
-									Unscheduled · {formatDuration(it.durationMin)}
+									No day yet · {formatDuration(it.durationMin)}
 								</button>
 							</li>
 						))}

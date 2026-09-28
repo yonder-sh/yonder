@@ -24,7 +24,13 @@ describe("PlanTab", () => {
 			search: { lens: "place" },
 		});
 		const cards = screen.getAllByTestId(TESTID.timelineItem);
-		expect(cards.length).toBe(demoGraph.items.length);
+		expect(cards.length).toBe(demoGraph.items.filter((i) => i.dayId).length);
+		// The stop off its day waits in the ideas dock (its place is on a day too).
+		expect(
+			screen
+				.getAllByTestId(PLAN_TESTID.dockStop)
+				.map((c) => c.getAttribute("data-item-id")),
+		).toEqual([I.backup]);
 		const schedule = ws().schedule;
 		for (const card of cards) {
 			const id = card.getAttribute("data-item-id") as string;
@@ -144,6 +150,24 @@ describe("PlanTab", () => {
 		expect(ws().days).toBeNull();
 	});
 
+	it("a place's stop off its day waits on its idea card in the dock, with its time", () => {
+		const g = structuredClone(demoGraph);
+		const meiji = g.items.find((i) => i.id === I.meiji);
+		if (!meiji) throw new Error("fixture: Meiji");
+		meiji.dayId = null;
+		renderWithWorkspace(<PlanTab />, { graph: g, search: { lens: "place" } });
+		const dock = screen.getByTestId(PLAN_TESTID.ideas);
+		const idea = dock.querySelector(`[data-node-id="${meiji.nodeId}"]`);
+		expect(idea).not.toBeNull();
+		expect(idea?.textContent).toMatch(/\d+(h|m)/);
+		// Not a second card for the same stop.
+		expect(
+			within(dock)
+				.queryAllByTestId(PLAN_TESTID.dockStop)
+				.map((c) => c.getAttribute("data-item-id")),
+		).not.toContain(I.meiji);
+	});
+
 	it("the person filter shows only that person's cards and says how many are hidden", () => {
 		const g = structuredClone(demoGraph);
 		const me = g.me.memberId as string;
@@ -164,10 +188,8 @@ describe("PlanTab", () => {
 		expect(screen.getAllByTestId(PLAN_TESTID.dayHidden).length).toBeGreaterThan(
 			0,
 		);
-		// The unassigned idea hides from Unscheduled too.
-		expect(screen.getByTestId(PLAN_TESTID.unscheduled).textContent).toMatch(
-			/Unscheduled ·\s*0/,
-		);
+		// The unassigned stop off its day hides from the ideas dock too.
+		expect(screen.queryAllByTestId(PLAN_TESTID.dockStop)).toHaveLength(0);
 	});
 
 	it("when the person filter hides everything: “Nothing assigned to Audrey here.”", () => {
@@ -182,7 +204,7 @@ describe("PlanTab", () => {
 		fireEvent.click(screen.getByRole("button", { name: "Show everyone" }));
 		expect(ws().who).toBeNull();
 		expect(screen.getAllByTestId(TESTID.timelineItem).length).toBe(
-			demoGraph.items.length,
+			demoGraph.items.filter((i) => i.dayId).length,
 		);
 	});
 

@@ -12,7 +12,7 @@
  * Kyoto" for the day in view, the ideas as cards in a row that scrolls
  * sideways, each with + to add it to that day; folded on a phone at first.
  */
-import { useDndMonitor, useDraggable } from "@dnd-kit/core";
+import { useDndMonitor, useDraggable, useDroppable } from "@dnd-kit/core";
 import {
 	ArrowDownUp,
 	ArrowRight,
@@ -52,8 +52,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { isRateable } from "@/features/places/lib/rate";
 import { cardTone } from "@/features/plan/card-tone";
+import { DockStop } from "@/features/plan/DockStop";
+import { hiddenByWho } from "@/features/plan/plan-rows";
 import { PLAN_TESTID } from "@/features/plan/testids";
 import type { GraphNode } from "@/lib/engine/types";
+import { formatDuration } from "@/lib/format";
 import { bool, oneOf, useFollowValue } from "@/lib/realtime/view-ui";
 import { TESTID } from "@/lib/testids";
 import { cn } from "@/lib/utils";
@@ -113,6 +116,7 @@ function IdeaRow({
 	registerRef,
 	onAdd,
 	card = false,
+	stopMin = null,
 }: {
 	entry: IdeaEntry;
 	instance: string;
@@ -125,6 +129,8 @@ function IdeaRow({
 	onAdd?: (nodeId: string) => void;
 	/** The Plan's dock: a card in a row (icon, name, rating and where). */
 	card?: boolean;
+	/** Its stop off a day, waiting here: that stop's minutes. */
+	stopMin?: number | null;
 }) {
 	const { nav, sel, ix, proposals } = useWorkspace();
 	const guard = useEditGuard();
@@ -215,6 +221,9 @@ function IdeaRow({
 						<span className="flex min-w-0 items-center gap-1 text-meta text-muted-foreground">
 							{top && !ghost ? <RatingPill level={top} size="sm" /> : null}
 							{ghost ? <span>suggested</span> : null}
+							{stopMin ? (
+								<span className="shrink-0 tnum">{formatDuration(stopMin)}</span>
+							) : null}
 							{parent && parent.id !== scopeId ? (
 								<span className="truncate">{parent.name}</span>
 							) : null}
@@ -324,7 +333,8 @@ function IdeasBinInner({
 	scopeId?: string | null;
 	plan?: boolean;
 }) {
-	const { ix, scope, proposals, access, mode, graph } = useWorkspace();
+	const { ix, scope, proposals, access, mode, graph, who, sel, days } =
+		useWorkspace();
 	const { filter, ctx, active: filtering, clear } = usePlaceFilter();
 	const openAddPlace = useUi((s) => s.openAddPlace);
 	const actions = useOutlineActions();
@@ -375,6 +385,44 @@ function IdeasBinInner({
 		() => ideasFor({ ix, scopeId, filter, ctx, sort, ghosts }),
 		[ix, scopeId, filter, ctx, sort, ghosts],
 	);
+	// The Plan's dock also holds the stops off their day (One Yonder: anything
+	// without a day is an idea): a place's stop on its card, the rest on their own.
+	const { stopMin, loose } = useMemo(() => {
+		const min = new Map<string, number>();
+		const rest: string[] = [];
+		if (!plan) return { stopMin: min, loose: rest };
+		const shown = new Set(ideas.map((e) => e.node.id));
+		for (const it of ix.unscheduled) {
+			if (hiddenByWho(it, who)) continue;
+			if (it.nodeId && shown.has(it.nodeId)) {
+				if (!min.has(it.nodeId)) min.set(it.nodeId, it.durationMin);
+			} else if (!it.nodeId || !scopeId || ix.isWithin(it.nodeId, scopeId))
+				rest.push(it.id);
+		}
+		return { stopMin: min, loose: rest };
+	}, [plan, ideas, ix, who, scopeId]);
+	// The day + adds a stop to: the selected day or stop's, else the first in view.
+	const addDayId =
+		sel?.kind === "day"
+			? sel.id
+			: sel?.kind === "item"
+				? (ix.item(sel.id)?.dayId ?? null)
+				: days
+					? (ix.dayOfDate(days.from)?.id ?? null)
+					: null;
+	// A card dropped on the dock comes off its day (it waits here).
+	const { setNodeRef: setDropRef, isOver } = useDroppable({
+		id: `ideas-dock:${instance}`,
+		disabled: !plan,
+		data: {
+			panel: "plan",
+			dayId: null,
+			unscheduled: true,
+			kbSkip: true,
+			dock: true,
+			label: "Ideas",
+		},
+	});
 
 	// The lifted row in the shared DragOverlay while an idea is dragged.
 	useDndMonitor({
@@ -437,13 +485,19 @@ function IdeasBinInner({
 		access.mode !== "read" &&
 		ideas.some((e) => !e.proposalId && isRateable(e.node));
 	const countText =
-		filtering && total ? `${ideas.length} of ${total}` : String(total);
+		filtering && total
+			? `${ideas.length + loose.length} of ${total + loose.length}`
+			: String(total + loose.length);
 	const where = scopeId ? ix.node(scopeId)?.name : undefined;
 
 	return (
 		<section
-			ref={dock}
+			ref={(el) => {
+				dock.current = el;
+				if (plan) setDropRef(el);
+			}}
 			data-testid={plan ? PLAN_TESTID.ideas : TESTID.ideasBin}
+			data-over={(plan && isOver) || undefined}
 			aria-label={plan ? `Ideas in ${where ?? graph.trip.name}` : "Ideas"}
 			className={cn(
 				"flex shrink-0 flex-col",
@@ -451,6 +505,7 @@ function IdeasBinInner({
 				plan
 					? "sticky bottom-0 z-20 mt-6 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/85"
 					: "border-t",
+				plan && isOver && "bg-primary/5 ring-2 ring-primary/40 ring-inset",
 				!plan && !embedded && "max-h-[40%]",
 			)}
 		>
@@ -490,7 +545,7 @@ function IdeasBinInner({
 					>
 						{countText}
 					</span>
-					{plan && total > 0 && !guard.disabled ? (
+					{plan && total + loose.length > 0 && !guard.disabled ? (
 						<span className="truncate text-meta text-muted-foreground max-sm:hidden">
 							· drag onto a day or tap +
 						</span>
@@ -539,7 +594,7 @@ function IdeasBinInner({
 				</DropdownMenu>
 			</div>
 			{open ? (
-				ideas.length ? (
+				ideas.length || loose.length ? (
 					<div
 						role="listbox"
 						aria-label={where ? `Ideas in ${where}` : "Ideas"}
@@ -563,7 +618,11 @@ function IdeasBinInner({
 								registerRef={registerRef}
 								onAdd={plan ? (id) => actions.schedule(id) : undefined}
 								card={plan}
+								stopMin={stopMin.get(entry.node.id) ?? null}
 							/>
+						))}
+						{loose.map((id) => (
+							<DockStop key={id} itemId={id} dayId={addDayId} />
 						))}
 					</div>
 				) : filtering && total > 0 ? (

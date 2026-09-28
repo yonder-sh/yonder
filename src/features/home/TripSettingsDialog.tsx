@@ -243,8 +243,8 @@ function DatesRow() {
 								.slice(0, 3)
 								.map((d) => formatDayDate(d))
 								.join(", ")}
-							{(p?.removedDays.length ?? 0) > 3 ? "…" : ""} move to Unscheduled.
-							Nothing is deleted.
+							{(p?.removedDays.length ?? 0) > 3 ? "…" : ""} go back to the
+							ideas. Nothing is deleted.
 							<span className="mt-1 block truncate text-muted-foreground">
 								{items
 									.slice(0, 4)
@@ -257,7 +257,7 @@ function DatesRow() {
 						<p className="text-muted-foreground">
 							{preview.isPending
 								? "Checking what moves…"
-								: "Nothing moves to Unscheduled."}
+								: "No stop loses its day."}
 						</p>
 					)}
 					<div className="flex gap-2">

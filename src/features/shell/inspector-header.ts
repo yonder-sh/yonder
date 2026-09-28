@@ -49,7 +49,7 @@ export function inspectorHeader(ws: Workspace): InspectorHeader {
 				day && s
 					? `Day ${ix.dayNumber(day.id)} · ${formatTime(s.start, s.tz)}–${formatTime(s.end, s.tz)}`
 					: it
-						? `Unscheduled · ${formatDuration(it.durationMin)}`
+						? `No day yet · ${formatDuration(it.durationMin)}`
 						: null;
 			return { title: nameOfItem(sel.id), chip };
 		}

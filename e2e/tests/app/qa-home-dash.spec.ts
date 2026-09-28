@@ -201,7 +201,7 @@ test("TRIP-01: create a trip with 35 dated days; invalid input refused", async (
 	await ctx.close();
 });
 
-test("TRIP-02: shrinking dates warns, confirms into Unscheduled, cancel changes nothing", async ({ browser }) => {
+test("TRIP-02: shrinking dates warns, sends stops back to the ideas, cancel changes nothing", async ({ browser }) => {
 	const { ctx, page } = await userPage(browser, `qa-home-t2-${uniq()}@asia2027.test`, "Dennis", "Tester");
 	await page.goto("/dashboard");
 	const t = await callFn(page, "/src/functions/trips.functions.ts", "createTrip", { name: "Shrink me", startDate: "2027-11-02", endDate: "2027-11-05" });
@@ -232,7 +232,7 @@ test("TRIP-02: shrinking dates warns, confirms into Unscheduled, cancel changes 
 		await pop.locator('button[data-day="11/4/2027"]').first().click();
 	};
 	await pick();
-	await expect(settings).toContainText(/move to Unscheduled/, { timeout: 10_000 });
+	await expect(settings).toContainText(/go back to the ideas/, { timeout: 10_000 });
 	await shot(page, "t02-preview");
 	const txt = await settings.innerText();
 	expect(txt).toMatch(/2 items on .*Nov/);

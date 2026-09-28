@@ -79,7 +79,6 @@ import {
 } from "./plan-window";
 import { BandCard, BandLink, DaysFoldRow, TripProposalBanner } from "./rows";
 import { PLAN_TESTID } from "./testids";
-import { UnscheduledSection } from "./Unscheduled";
 import {
 	FLIGHT_MOVE_MESSAGE,
 	itemName,
@@ -404,6 +403,20 @@ function PlanTabBody() {
 					if (plan.reason === "flight") toast(FLIGHT_MOVE_MESSAGE);
 					return;
 				}
+				// Dropped back on the ideas dock: it's there already.
+				if (!plan.dayId) return;
+				// Its stop off a day comes back, with its time and note.
+				const spare = ix.unscheduled.find((it) => it.nodeId === data.nodeId);
+				if (spare) {
+					actions.move.mutate({
+						itemId: spare.id,
+						dayId: plan.dayId,
+						...(plan.afterItemId ? { afterItemId: plan.afterItemId } : {}),
+						...(plan.beforeItemId ? { beforeItemId: plan.beforeItemId } : {}),
+						undo: slotOf(ix, spare.id),
+					});
+					return;
+				}
 				actions.create.mutate({
 					dayId: plan.dayId,
 					nodeId: data.nodeId,
@@ -411,7 +424,7 @@ function PlanTabBody() {
 					...(plan.beforeItemId ? { beforeItemId: plan.beforeItemId } : {}),
 				});
 			}),
-		[dnd, drop, actions.create],
+		[dnd, drop, actions.create, actions.move, ix],
 	);
 	useEffect(() => {
 		dnd.setOverlay("item", (data) =>
@@ -637,7 +650,6 @@ function PlanTabBody() {
 								/>
 							</>
 						)}
-						<UnscheduledSection itemIds={model.unscheduled} />
 						{/* One Yonder (D03): what's saved but not planned, for the day in
 						    view; while filling a day (D04) the ideas are beside it instead. */}
 						{(ws.search.fill && days) || (!days && nights) ? null : (

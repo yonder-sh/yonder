@@ -44,7 +44,7 @@ const MONTHS = [
 
 /** "3 Oct" (no weekday) for the compact from → to pairs. */
 export function dayMonth(date: string): string {
-	if (!date) return "Unscheduled";
+	if (!date) return "No day";
 	const [, m, d] = date.split("-");
 	return `${Number(d)} ${MONTHS[Number(m) - 1] ?? ""}`;
 }

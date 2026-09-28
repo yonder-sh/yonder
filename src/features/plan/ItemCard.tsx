@@ -713,7 +713,7 @@ function ItemMenuContent({
 					disabled={guard.disabled}
 					onSelect={leaving(() => actions.unschedule(item.id))}
 				>
-					Unschedule
+					Take off the day
 				</DropdownMenuItem>
 			) : null}
 			<DropdownMenuSeparator />

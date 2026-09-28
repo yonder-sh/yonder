@@ -16,6 +16,8 @@ export const PLAN_TESTID = {
 	fillIdea: "plan-fill-idea",
 	fillAdd: "plan-fill-add",
 	fillBar: "plan-fill-bar",
+	dockStop: "plan-dock-stop",
+	dockStopAdd: "plan-dock-stop-add",
 	/** "35 days · Sat 2 Oct – Fri 5 Nov · 7 days planned" (D02). */
 	planMeta: "plan-meta",
 	dayMenu: "plan-day-menu",
@@ -61,7 +63,6 @@ export const PLAN_TESTID = {
 	band: "plan-band",
 	bandLink: "plan-band-link",
 	nowLine: "plan-now-line",
-	unscheduled: "plan-unscheduled",
 	whoFilter: "plan-who-filter",
 	rangeBar: "plan-range-bar",
 	dropIndicator: "plan-drop-indicator",

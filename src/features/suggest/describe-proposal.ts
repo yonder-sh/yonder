@@ -132,7 +132,7 @@ function describeLive(p: ProposalDto, ix: GraphIndex): string | null {
 				pStr(pay, "title") ?? nodeName(ix, pStr(pay, "nodeId")) ?? null;
 			if (!label) return null;
 			const day = dayLabel(ix, pStr(pay, "dayId"));
-			return day ? `Add ${label} to ${day}` : `Add ${label} to Unscheduled`;
+			return day ? `Add ${label} to ${day}` : `Add ${label} to the ideas`;
 		}
 		case "item.update": {
 			if (!name) return null;
@@ -174,7 +174,7 @@ function describeLive(p: ProposalDto, ix: GraphIndex): string | null {
 					? (p.before.dayId as string | null)
 					: (ix.item(p.entityId)?.dayId ?? null);
 			const toDay = pay.dayId === null ? null : pStr(pay, "dayId");
-			if (pay.dayId === null) return `Move ${name} to Unscheduled`;
+			if (pay.dayId === null) return `Take ${name} off its day`;
 			const label = dayLabel(ix, toDay);
 			if (!label) return null;
 			if (fromDay === toDay) return `Reorder ${name} on ${label}`;

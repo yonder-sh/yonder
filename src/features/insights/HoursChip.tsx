@@ -194,7 +194,7 @@ function IssueDetails({
 				undoToast(
 					where
 						? `${place} moved to ${where}`
-						: `${place} moved to Unscheduled`,
+						: `${place} went back to the ideas`,
 					() => move.mutate(from),
 				);
 			},

@@ -16,7 +16,8 @@
  *   pointer over no panel has NO target (the drop is a no-op; never the
  *   closest droppable elsewhere). Keyboard drags have no pointer: they stay in
  *   the active item's panel. Over a modal (Organize places) only its own
- *   droppables count, never the Plan behind it.
+ *   droppables count, never the Plan behind it. Over the Plan's ideas dock
+ *   (`data.dock`), the dock wins over the days under it.
  * - Packages may also subscribe with dnd-kit's `useDndMonitor` (onDragOver /
  *   onDragMove: tree depth projection, cross-day previews) inside this context.
  * - Features register behaviour with `useDnd().onDrop(type, handler)`; drag
@@ -191,6 +192,12 @@ const collisions: CollisionDetection = (raw) => {
 		);
 	}
 	const within = pointerWithin(args);
+	// The Plan's ideas dock sits over the days' foot: over it, it wins.
+	const dock = within.find(
+		(c) =>
+			args.droppableContainers.find((d) => d.id === c.id)?.data.current?.dock,
+	);
+	if (dock) return [dock];
 	const panel = within
 		.map((c) => args.droppableContainers.find((d) => d.id === c.id))
 		.find((d) => d?.data.current?.panel)?.data.current?.panel as

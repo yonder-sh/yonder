@@ -325,15 +325,17 @@ test("unschedule and reschedule; insert and delete a day never lose items", asyn
 	await expectLive(page);
 	const before = await graphOf(page);
 
+	// Off its day, the stop waits in the ideas dock on its place's card (One Yonder).
 	await openItemMenu(page, I.meiji as string);
-	await page.getByRole("menuitem", { name: "Unschedule" }).click();
-	const unscheduled = page.getByTestId(PLAN_TESTID.unscheduled);
-	await expect(unscheduled.locator(`[data-item-id="${I.meiji}"]`)).toBeVisible();
-	await expect(unscheduled.locator(`[data-item-id="${I.meiji}"]`).getByTestId(TESTID.itemStart)).toHaveCount(0);
+	await page.getByRole("menuitem", { name: "Take off the day" }).click();
+	const meijiNode = (before.items.find((i) => i.id === I.meiji) as unknown as { nodeId: string }).nodeId;
+	const meijiIdea = page.getByTestId(PLAN_TESTID.ideas).locator(`[data-node-id="${meijiNode}"]`);
+	await expect(meijiIdea).toBeVisible();
+	await expect(card(page, I.meiji as string)).toHaveCount(0);
 
-	await openItemMenu(page, I.meiji as string);
-	await page.getByRole("menuitem", { name: "Schedule on" }).click();
-	await page.getByRole("menuitem", { name: /D2/ }).click();
+	// + with a Day 2 card selected: the same stop goes back, onto Day 2.
+	await card(page, I.itoya as string).click();
+	await meijiIdea.getByTestId(OUTLINE_TESTID.ideaAdd).click();
 	await expect
 		.poll(async () => (await graphOf(page)).items.find((i) => i.id === I.meiji)?.dayId)
 		.toBe(c.ids.days.d2);

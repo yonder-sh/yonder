@@ -10,6 +10,7 @@ import { join, relative } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const BANNED: [RegExp, string][] = [
+	[/\bunschedul(ed?|e)\b/i, "the ideas / Take off the day"],
 	[/\bto decide\b/i, "Ideas"],
 	[/\bnot on (a|the) (day|plan)\b/i, "Ideas"],
 	[/\b(my )?priorit(y|ies)\b/i, "Rating"],
@@ -29,9 +30,7 @@ const BANNED: [RegExp, string][] = [
 ];
 
 /** `file` (relative) and the text it may keep. */
-const ALLOW: [string, RegExp][] = [
-	// Retired words the owner hasn't settled yet: the Plan's "Unscheduled" stops.
-];
+const ALLOW: [string, RegExp][] = [];
 
 /** What a person reads in one TSX file: [line, text]. */
 export function visibleText(src: string): [number, string][] {

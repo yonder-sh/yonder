@@ -155,7 +155,7 @@ export type RoutedChange = {
 };
 
 const slotLabel = (s: Slot) =>
-	s.d ? `${shortDate(s.d)}${s.t ? ` · ${s.t}` : ""}` : "Unscheduled";
+	s.d ? `${shortDate(s.d)}${s.t ? ` · ${s.t}` : ""}` : "no day";
 /** "Tue 5 Oct · 10:40" from a local date-time. */
 const localLabel = (v: string | null) =>
 	v
