@@ -250,7 +250,7 @@ export function CenterTabContent({
 				{active === "plan" ? <PlanTab /> : null}
 				{active === "places" ? <PlacesTab phone={phone} /> : null}
 				{active === "media" ? <MediaView /> : null}
-				{active === "lists" ? <ListsTab /> : null}
+				{active === "lists" ? <ListsTab phone={phone} /> : null}
 				{active === "money" ? <MoneyTab /> : null}
 			</div>
 			{/* FB-17a: where the others are when they aren't on this screen (a

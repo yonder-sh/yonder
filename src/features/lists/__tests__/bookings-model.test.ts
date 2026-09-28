@@ -1,6 +1,7 @@
 /**
- * The Bookings tab's model (One Yonder D12): the groups, what a booking is
- * for, and the words its rows and details use.
+ * The Bookings tab's model (One Yonder D12): the groups (a to-do whose stop
+ * is booked counts as booked), what a booking is for and can be for, and the
+ * words its rows and details use.
  */
 import { describe, expect, it } from "vitest";
 import { dueCtxOf, effectiveDue } from "@/lib/engine/due";
@@ -9,10 +10,14 @@ import { computeSchedule } from "@/lib/engine/schedule";
 import type { TripGraph } from "@/lib/engine/types";
 import { demo } from "@/lib/fixtures/demo";
 import {
+	bookedStopOf,
 	bookingCategory,
 	bookingFor,
 	bookingGroups,
+	bookingStopId,
 	dayBits,
+	forOptions,
+	isBooked,
 	longDate,
 	movesWith,
 	nightsAt,
@@ -128,6 +133,79 @@ describe("bookingGroups", () => {
 		expect(g.map((x) => x.entries.map((e) => e.id))).toEqual([
 			["sky", "ryokan"],
 		]);
+	});
+
+	it("an open to-do whose stop is booked shows once, under Booked, carrying the stop", () => {
+		const open = row({
+			id: "ryokan",
+			dueDate: "2026-10-12",
+			target: { kind: "item", itemId: I.dropBags as string },
+		});
+		const g = bookingGroups(ix, [open], booked, { dueCtx, now });
+		expect(g.map((x) => [x.key, x.entries.map((e) => e.id)])).toEqual([
+			["booked", ["ryokan"]],
+		]);
+		const [e] = g[0]?.entries ?? [];
+		expect(e?.kind === "todo" && e.stop?.id).toBe(I.dropBags);
+		expect(e && isBooked(e)).toBe(true);
+		// Its stop not booked: a window like any other.
+		const free = row({
+			id: "sky",
+			dueDate: "2026-10-12",
+			target: { kind: "item", itemId: I.sky as string },
+		});
+		const [soon] = bookingGroups(ix, [free], booked, { dueCtx, now });
+		expect(soon?.key).toBe("soon");
+		expect(soon?.entries[0] && isBooked(soon.entries[0])).toBe(false);
+	});
+
+	it("a leg books no stop: a ticked train doesn't stand for the stop it leaves from", () => {
+		const itoya = graph.items.map((it) =>
+			it.id === I.itoya ? { ...it, fixedDate: true } : it,
+		);
+		const ix2 = indexGraph({ ...graph, items: itoya });
+		const train = row({
+			id: "train",
+			status: "done",
+			target: { kind: "leg", legId: L.fuji as string },
+		});
+		expect(bookingStopId(ix2, train)).toBeNull();
+		expect(bookedStopOf(ix2, train)).toBeNull();
+		const stops = itoya.filter((i) => i.fixedDate);
+		const g = bookingGroups(ix2, [train], stops, { dueCtx, now });
+		// Itoya stays a booked stop of its own, beside the train (both Day 2).
+		expect(g[0]?.entries.map((e) => e.id)).toEqual([
+			"train",
+			I.itoya,
+			I.dropBags,
+		]);
+	});
+});
+
+describe("what a booking can be for", () => {
+	it("each day's stops, each followed by the travel it leaves on (never a walk)", () => {
+		const days = forOptions(ix);
+		expect(days.map((d) => d.dayId)).toEqual(ix.days.map((d) => d.id));
+		const day2 = days[1]?.options.map((o) => o.label);
+		expect(day2).toEqual([
+			"Senso-ji",
+			"Kama-asa (knives)",
+			"Itoya Ginza",
+			"Leg · Fuji Excursion 7",
+		]);
+		const flight = days[4]?.options.find((o) => o.target.kind === "leg");
+		expect(flight).toMatchObject({
+			target: { kind: "leg", legId: L.flight },
+			mode: "flight",
+		});
+		// Hands → Loft is a walk.
+		expect(days[0]?.options.some((o) => o.target.kind === "leg")).toBe(false);
+		expect(
+			forOptions(ix, {
+				kind: "leg",
+				legId: L.handsLoft as string,
+			})[0]?.options.some((o) => o.target.kind === "leg"),
+		).toBe(true);
 	});
 });
 

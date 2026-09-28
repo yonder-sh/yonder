@@ -463,6 +463,9 @@ test("mobile: the Lists tab", async ({ page }, info) => {
 	const sheet = page.getByTestId(TESTID.mobileSheet);
 	await expect(sheet.getByTestId(TESTID.listsTab)).toBeVisible();
 	await expect(sheet.getByText("Get a Suica card")).toBeVisible();
+	// The four tabs keep their words whole; the counts move to their titles.
+	await expect(sheet.getByTestId(L.kindBookings)).toHaveText("Bookings");
+	await expect(sheet.getByTestId(L.kindTodo)).toHaveAttribute("title", /^To-dos · \d+$/);
 	await expectNoHorizontalOverflow(page);
 	await page.screenshot({ path: shotPath("lists/root-mobile.png"), animations: "disabled" });
 	await sheet.getByTestId(L.kindShopping).click();

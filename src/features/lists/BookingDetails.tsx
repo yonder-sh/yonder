@@ -1,10 +1,10 @@
 /**
  * A booking's details (One Yonder D12), beside the Bookings list when wide
  * and under its row on a phone: what it is for (the stop or leg, its time
- * and day), when booking opens (and the rule it follows), the reminders,
- * the confirmation, the booking reference, the expense, and Edit · Mark
- * booked · Open the site. A booked stop shows what it is for, its
- * confirmation and its expense.
+ * and day; the For picker links it to another), when booking opens (and the
+ * rule it follows), the reminders, the confirmation, the booking reference,
+ * the expense, and Edit · Mark booked · Open the site. A booked stop shows
+ * what it is for, its confirmation, its expense and Not booked yet.
  */
 
 import {
@@ -35,6 +35,7 @@ import {
 	bookingCategory,
 	bookingFor,
 	dayBits,
+	isBooked,
 	movesWith,
 	nightsAt,
 	opensIn,
@@ -44,6 +45,7 @@ import {
 import { DueEditor } from "./DueEditor";
 import { plainOf } from "./format";
 import { itemName, legSelTarget } from "./list-model";
+import { ForPicker } from "./pickers";
 import { LISTS_TESTID } from "./testids";
 import { useBookingActions } from "./use-booking-actions";
 import { useListActions } from "./use-list-actions";
@@ -81,9 +83,11 @@ export function BookingDetails({
 			? plainOf(entry.row.text)
 			: itemName(ix, entry.item.id);
 	const due = row ? effectiveDue(row, dueCtx) : null;
-	const booked = !row || row.status === "done";
+	const booked = isBooked(entry);
+	const stop = entry.kind === "stop" ? entry.item : entry.stop;
 	const [editing, setEditing] = useState(false);
 	const [dueOpen, setDueOpen] = useState(false);
+	const [forOpen, setForOpen] = useState(false);
 	// A new selection starts out of Edit.
 	// biome-ignore lint/correctness/useExhaustiveDependencies: reset per booking.
 	useEffect(() => setEditing(false), [entry.id]);
@@ -163,7 +167,31 @@ export function BookingDetails({
 				/>
 			) : null}
 
-			<Section title="For" testId={LISTS_TESTID.bookingFor}>
+			<Section
+				title="For"
+				testId={LISTS_TESTID.bookingFor}
+				action={
+					row && canEdit ? (
+						<ForPicker
+							open={forOpen}
+							onOpenChange={setForOpen}
+							value={row.target}
+							onPick={(target) => {
+								setForOpen(false);
+								actions.move(row.id, { target });
+							}}
+						>
+							<Button
+								size="xs"
+								variant="ghost"
+								data-testid={LISTS_TESTID.bookingForPick}
+							>
+								{f ? "Change" : "Choose"}
+							</Button>
+						</ForPicker>
+					) : undefined
+				}
+			>
 				{f ? (
 					<div className="flex flex-col gap-0.5 text-body">
 						<button
@@ -178,9 +206,7 @@ export function BookingDetails({
 								f.kind === "leg" ? f.when : null,
 								...dayBits(ix, f.dayId),
 								f.kind === "item" && f.when ? f.when : null,
-								entry.kind === "stop"
-									? nightsLabel(nightsAt(ix, entry.item))
-									: null,
+								stop ? nightsLabel(nightsAt(ix, stop)) : null,
 							]}
 						/>
 						{f.extra ? <Line bits={[f.extra]} /> : null}
@@ -219,9 +245,7 @@ export function BookingDetails({
 						<div className="flex flex-col gap-1 text-body">
 							<div className="flex flex-wrap items-center gap-2">
 								<span className="tnum">{opensLabel(due)}</span>
-								{row.status === "open" ? (
-									<Chip size="sm">{opensIn(due, now)}</Chip>
-								) : null}
+								{booked ? null : <Chip size="sm">{opensIn(due, now)}</Chip>}
 							</div>
 							{row.dueRule ? (
 								<Line
@@ -231,14 +255,14 @@ export function BookingDetails({
 									]}
 								/>
 							) : null}
-							{row.status === "open" ? (
+							{booked ? null : (
 								<p
 									data-testid={LISTS_TESTID.bookingReminders}
 									className="text-meta text-muted-foreground"
 								>
 									Reminders {REMINDERS_LABEL}
 								</p>
-							) : null}
+							)}
 						</div>
 					) : (
 						<p className="text-meta text-muted-foreground">
@@ -310,9 +334,9 @@ export function BookingDetails({
 				</Section>
 			) : null}
 
-			{row && (canEdit || row.url) ? (
+			{canEdit || row?.url ? (
 				<div className="flex flex-wrap gap-2 border-t pt-4">
-					{canEdit ? (
+					{row && canEdit ? (
 						<Button
 							size="sm"
 							variant="outline"
@@ -343,7 +367,7 @@ export function BookingDetails({
 							</Button>
 						)
 					) : null}
-					{row.url ? (
+					{row?.url ? (
 						<Button asChild size="sm" variant="outline">
 							<a
 								href={row.url}

@@ -17,6 +17,8 @@ export type SegmentedOption<T extends string> = {
 	disabled?: boolean;
 	/** The option's name when its label is an icon or truncates. */
 	ariaLabel?: string;
+	/** Its tooltip ("To-dos · 12", when a phone leaves the count out). */
+	title?: string;
 	testId?: string;
 };
 
@@ -70,6 +72,7 @@ export function Segmented<T extends string>({
 					value={o.value}
 					disabled={o.disabled}
 					aria-label={o.ariaLabel}
+					title={o.title}
 					data-testid={o.testId}
 					data-value={o.value}
 					className={cn(

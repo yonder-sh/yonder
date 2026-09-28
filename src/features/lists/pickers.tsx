@@ -2,12 +2,13 @@
  * Controlled pickers the list rows open from their ⋯ menu (the common
  * `MemberPicker`/`TreePicker` own their trigger, which a menu item can't
  * open): people (members only, never guests; a typed name adds a person,
- * ADDENDUM §8 via `useAddPerson`) and places (Move to…, candidate shops).
+ * ADDENDUM §8 via `useAddPerson`), places (Move to…, candidate shops) and
+ * what a booking is for (a stop or a travel leg, One Yonder D12).
  */
 
-import { Check, House, UserPlus } from "lucide-react";
+import { Check, Clock, House, UserPlus } from "lucide-react";
 import { type ReactNode, useState } from "react";
-import { TypeGlyph } from "@/components/common/glyphs";
+import { ModeGlyph, TypeGlyph } from "@/components/common/glyphs";
 import {
 	assignableMembers,
 	MemberAvatar,
@@ -31,8 +32,12 @@ import {
 	normalizePersonName,
 	PLACEHOLDER_NAME_MAX,
 } from "@/lib/schemas/people";
+import type { BundleTarget } from "@/lib/schemas/targets";
 import { cn } from "@/lib/utils";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
+import { forOptions } from "./bookings-model";
+import { dayLabel } from "./list-model";
+import { LISTS_TESTID } from "./testids";
 
 type Controlled = {
 	open: boolean;
@@ -56,7 +61,8 @@ function Shell({
 	asAnchor,
 	content,
 	label,
-}: Controlled & { content: ReactNode; label: string }) {
+	testId,
+}: Controlled & { content: ReactNode; label: string; testId?: string }) {
 	return (
 		<Popover open={open} onOpenChange={onOpenChange}>
 			{asAnchor === "wrap" ? (
@@ -70,7 +76,12 @@ function Shell({
 			) : (
 				<PopoverTrigger asChild>{children}</PopoverTrigger>
 			)}
-			<PopoverContent className="w-64 p-0" align="end" aria-label={label}>
+			<PopoverContent
+				className="w-64 p-0"
+				align="end"
+				aria-label={label}
+				data-testid={testId}
+			>
 				{content}
 			</PopoverContent>
 		</Popover>
@@ -206,6 +217,65 @@ export function PlacePicker({
 								);
 							})}
 						</CommandGroup>
+					</CommandList>
+				</Command>
+			}
+		/>
+	);
+}
+
+/** What a booking is for (D12): a stop on a day, or the travel it leaves on. */
+export function ForPicker({
+	value,
+	onPick,
+	...shell
+}: Controlled & {
+	value: BundleTarget;
+	onPick: (target: BundleTarget) => void;
+}) {
+	const { ix } = useWorkspace();
+	const days = shell.open ? forOptions(ix, value) : [];
+	const key = (t: BundleTarget) =>
+		t.kind === "item" ? t.itemId : t.kind === "leg" ? t.legId : null;
+	return (
+		<Shell
+			{...shell}
+			label="What it's for"
+			testId={LISTS_TESTID.bookingForPicker}
+			content={
+				<Command>
+					<CommandInput placeholder="Search stops and travel…" />
+					<CommandList className="max-h-[50vh]">
+						<CommandEmpty>No matches.</CommandEmpty>
+						{days.map((d) => (
+							<CommandGroup key={d.dayId} heading={dayLabel(ix, d.dayId)}>
+								{d.options.map((o) => {
+									const node = ix.node(o.nodeId);
+									const id = key(o.target);
+									return (
+										<CommandItem
+											key={id}
+											value={`${o.label} ${id}`}
+											onSelect={() => onPick(o.target)}
+										>
+											{o.mode ? (
+												<ModeGlyph mode={o.mode} />
+											) : node ? (
+												<TypeGlyph type={node.type} category={node.category} />
+											) : (
+												<Clock
+													aria-hidden
+													strokeWidth={1.5}
+													className="size-3.5 shrink-0 text-muted-foreground"
+												/>
+											)}
+											<span className="flex-1 truncate">{o.label}</span>
+											{id === key(value) ? <Check className="size-4" /> : null}
+										</CommandItem>
+									);
+								})}
+							</CommandGroup>
+						))}
 					</CommandList>
 				</Command>
 			}

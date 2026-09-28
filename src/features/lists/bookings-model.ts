@@ -2,8 +2,9 @@
  * The Bookings tab's model (One Yonder D12). Pure: booking to-dos (a to-do
  * whose date is when booking opens) and stops booked for their date, grouped
  * Opening soon · Later · Booked · No date yet; what a booking is for (its
- * stop or leg); and the words its row and details use ("Opens Mon 12 Oct
- * 2026 · 09:00 JST", "355 days before", "Opens in 15 days", "1 night").
+ * stop or leg, and what the For picker offers); and the words its row and
+ * details use ("Opens Mon 12 Oct 2026 · 09:00 JST", "355 days before",
+ * "Opens in 15 days", "1 night").
  */
 import { Temporal } from "temporal-polyfill";
 import {
@@ -16,8 +17,8 @@ import {
 } from "@/lib/engine/due";
 import { type GraphIndex, pairKey } from "@/lib/engine/graph-index";
 import { hhmm, tzLabel } from "@/lib/engine/time";
-import type { GraphItem, ScheduleResult } from "@/lib/engine/types";
-import type { ExpenseCategory } from "@/lib/schemas/enums";
+import type { GraphItem, GraphLeg, ScheduleResult } from "@/lib/engine/types";
+import type { ExpenseCategory, LegMode } from "@/lib/schemas/enums";
 import type { DueRule } from "@/lib/schemas/lists";
 import type { BundleTarget } from "@/lib/schemas/targets";
 import { isBookingTodo, itemName, legLabel } from "./list-model";
@@ -33,10 +34,18 @@ export function isBookedStop(it: GraphItem): boolean {
 	return it.fixedDate === true && it.dayId !== null;
 }
 
-/** A row of the Bookings tab: a booking to-do, or a booked stop. */
+/**
+ * A row of the Bookings tab: a booking to-do (with the stop it is for when
+ * that stop is booked for its date), or a booked stop on its own.
+ */
 export type BookingEntry =
-	| { kind: "todo"; id: string; row: ListItemDto }
+	| { kind: "todo"; id: string; row: ListItemDto; stop?: GraphItem }
 	| { kind: "stop"; id: string; item: GraphItem };
+
+/** Booked: a ticked to-do, one whose stop is booked for its date, or a booked stop. */
+export function isBooked(e: BookingEntry): boolean {
+	return e.kind === "stop" || e.row.status === "done" || !!e.stop;
+}
 
 export type BookingGroupKey = "soon" | "later" | "booked" | "none";
 
@@ -71,6 +80,30 @@ export function bookingItemId(
 	return row.dueRule?.itemId ?? firstVisit(ix, row.target);
 }
 
+/**
+ * The stop a booking to-do books (what Mark booked marks "Booked for this
+ * date"): the visit it hangs on, else the stop its window counts back from,
+ * else the first visit to its place. A leg books no stop.
+ */
+export function bookingStopId(
+	ix: GraphIndex,
+	row: Pick<ListItemDto, "target" | "dueRule">,
+): string | null {
+	const t = row.target;
+	if (t.kind === "item") return t.itemId;
+	if (t.kind === "leg") return null;
+	return row.dueRule?.itemId ?? firstVisit(ix, t);
+}
+
+/** The stop a booking to-do books, when it is already booked for its date. */
+export function bookedStopOf(
+	ix: GraphIndex,
+	row: Pick<ListItemDto, "target" | "dueRule">,
+): GraphItem | null {
+	const it = ix.item(bookingStopId(ix, row));
+	return it && isBookedStop(it) ? it : null;
+}
+
 /** The first visit on a day to a place (not a city or area) a row hangs on. */
 function firstVisit(ix: GraphIndex, t: BundleTarget): string | null {
 	if (t.kind !== "node" || ix.node(t.nodeId)?.type !== "place") return null;
@@ -87,9 +120,10 @@ export function bookingDayId(ix: GraphIndex, e: BookingEntry): string | null {
 
 /**
  * Opening soon (within 30 days, or already open) · Later · Booked · No date
- * yet. Windows sort by when they open; Booked by day, the booked stops a
- * ticked to-do already stands for left out. Skipped to-dos stay in To-dos.
- * Empty groups are left out.
+ * yet. Windows sort by when they open; Booked by day. A to-do whose stop is
+ * booked for its date counts as booked: one row under Booked, carrying the
+ * to-do and the stop (never the stop again on its own). Skipped to-dos stay
+ * in To-dos. Empty groups are left out.
  */
 export function bookingGroups(
 	ix: GraphIndex,
@@ -105,10 +139,16 @@ export function bookingGroups(
 	const covered = new Set<string>();
 	for (const row of todos) {
 		if (!isBookingTodo(row) || row.status === "skipped") continue;
-		const e: BookingEntry = { kind: "todo", id: row.id, row };
-		if (row.status === "done") {
+		const stop = bookedStopOf(ix, row);
+		const e: BookingEntry = {
+			kind: "todo",
+			id: row.id,
+			row,
+			...(stop ? { stop } : {}),
+		};
+		if (row.status === "done" || stop) {
 			booked.push(e);
-			const it = bookingItemId(ix, row);
+			const it = bookingStopId(ix, row);
 			if (it) covered.add(it);
 			continue;
 		}
@@ -355,4 +395,56 @@ export function bookingCategory(
 	const nodeId =
 		f?.target.kind === "item" ? ix.item(f.target.itemId)?.nodeId : null;
 	return ix.node(nodeId)?.category === "lodging" ? "lodging" : "activities";
+}
+
+/** A stop or a travel leg a booking can be for (the For picker). */
+export type ForOption = {
+	target: BundleTarget;
+	/** "Shibuya Sky", "Leg · Fuji Excursion 7", "Flight · KE 724 KIX → ICN". */
+	label: string;
+	/** A stop's place (its glyph). */
+	nodeId: string | null;
+	/** A leg's mode (its glyph). */
+	mode: LegMode | null;
+};
+
+/**
+ * What a booking can be for, day by day: each stop, and after it the travel
+ * it leaves on (a flight, or a train, bus or ferry someone has set; never a
+ * walk). The booking's own stop or leg is always there.
+ */
+export function forOptions(
+	ix: GraphIndex,
+	current?: BundleTarget,
+): { dayId: string; options: ForOption[] }[] {
+	const mine = current?.kind === "leg" ? current.legId : null;
+	const legFrom = new Map<string, GraphLeg>();
+	for (const p of ix.pairs) {
+		const leg = ix.legByPair.get(p.key);
+		if (!leg) continue;
+		const travel =
+			leg.mode === "flight" ||
+			(!!leg.mode && leg.mode !== "walk" && ix.isSignificant(leg));
+		if (travel || leg.id === mine) legFrom.set(p.fromItemId, leg);
+	}
+	return ix.days.flatMap((d) => {
+		const options: ForOption[] = [];
+		for (const it of ix.itemsByDay.get(d.id) ?? []) {
+			options.push({
+				target: { kind: "item", itemId: it.id },
+				label: itemName(ix, it.id),
+				nodeId: it.nodeId,
+				mode: null,
+			});
+			const leg = legFrom.get(it.id);
+			if (leg)
+				options.push({
+					target: { kind: "leg", legId: leg.id },
+					label: legLabel(ix, leg.id),
+					nodeId: null,
+					mode: leg.mode,
+				});
+		}
+		return options.length ? [{ dayId: d.id, options }] : [];
+	});
 }

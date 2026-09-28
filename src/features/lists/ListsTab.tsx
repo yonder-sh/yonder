@@ -3,7 +3,8 @@
  * to-dos, bookings, shopping and packing rolled up over the scope (SPEC §8.4;
  * the rollup toggle "Everything inside · Only Tokyo" above is the shell's).
  * One Yonder D12: one list at a time, the switch its tabs (each with its
- * count), under "Lists" and "Add a booking" when wide. At the trip root
+ * count; a phone keeps only the words, the counts in each tab's title),
+ * under "Lists" and "Add a booking" when wide. At the trip root
  * To-dos open in View = Due: the MAIN list of everything, overdue first. The
  * list is the URL's `list=todo|bookings|shopping|packing` (the inbox
  * deep-links with it).
@@ -20,6 +21,7 @@ import { TESTID } from "@/lib/testids";
 import { LISTS_TABS, type ListsTabKey } from "@/lib/workspace/search";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { BookingsBoard } from "./BookingsBoard";
+import { bookedStopOf } from "./bookings-model";
 import { ListBoard } from "./ListBoard";
 import { type ScopeOptions, tabCounts } from "./list-model";
 import { PackingBoard } from "./PackingBoard";
@@ -47,7 +49,7 @@ const TAB_TESTID: Record<ListsTabKey, string> = {
 	packing: LISTS_TESTID.kindPacking,
 };
 
-export function ListsTab() {
+export function ListsTab({ phone = false }: { phone?: boolean } = {}) {
 	const ws = useWorkspace();
 	const { graph, scope, only, days, lens, model, search, who, nav } = ws;
 	const { items, loading } = useListItems();
@@ -112,7 +114,7 @@ export function ListsTab() {
 	);
 	const where = scope?.name ?? graph.trip.name;
 	const counts = useMemo(
-		() => tabCounts(ws.ix, items, opts),
+		() => tabCounts(ws.ix, items, opts, (r) => !!bookedStopOf(ws.ix, r)),
 		[ws.ix, items, opts],
 	);
 
@@ -127,7 +129,7 @@ export function ListsTab() {
 	};
 
 	const switcher = (
-		// Four tabs with counts: a phone scrolls them rather than squeezing them.
+		// A phone's 390px keeps the four words whole: the counts are in the titles.
 		<div className="max-w-full overflow-x-auto">
 			<Segmented
 				label="Which list"
@@ -140,7 +142,8 @@ export function ListsTab() {
 				options={LISTS_TABS.map((k) => ({
 					value: k,
 					label: TAB_LABEL[k],
-					count: counts[k],
+					count: phone ? null : counts[k],
+					title: `${TAB_LABEL[k]} · ${counts[k]}`,
 					testId: TAB_TESTID[k],
 				}))}
 			/>

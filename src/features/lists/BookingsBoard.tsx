@@ -4,12 +4,21 @@
  * Opening soon · Later · Booked · No date yet. A row reads when it opens,
  * the rule it follows and its day ("Opens Mon 12 Oct 2026 · 09:00 JST · 355
  * days before · Day 1", "Opens in 15 days"); a booked one its confirmation,
- * nights and day. Selecting one opens its details beside the list when wide,
- * under its row on a phone. "Add a booking…" adds a to-do that opens.
+ * nights and day. A to-do whose stop is booked shows once, under Booked.
+ * Selecting one opens its details beside the list when wide (their own
+ * scroll, at most the pane's height, so the actions stay in view), under its
+ * row on a phone. "Add a booking…" adds a to-do that opens.
  */
 
 import { CalendarCheck } from "lucide-react";
-import { type ReactNode, useEffect, useMemo, useState } from "react";
+import {
+	type ReactNode,
+	type RefObject,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from "react";
 import { useEditGuard } from "@/components/common/edit-guard";
 import { EmptyState } from "@/components/common/empty-state";
 import { Chip, type ChipTone } from "@/components/kit";
@@ -35,6 +44,7 @@ import {
 	bookingFor,
 	bookingGroups,
 	dayBits,
+	isBooked,
 	isBookedStop,
 	nightsAt,
 	opensIn,
@@ -56,6 +66,9 @@ import { LISTS_TESTID } from "./testids";
 import { useBookingActions } from "./use-booking-actions";
 import { useListActions } from "./use-list-actions";
 import { useNow } from "./use-now";
+
+/** The details beside the list are never squeezed below this. */
+const FIT_MIN_PX = 240;
 
 export function BookingsBoard({
 	items,
@@ -166,6 +179,8 @@ export function BookingsBoard({
 	};
 
 	const empty = !loading && groups.length === 0;
+	const aside = useRef<HTMLElement>(null);
+	useFitToPane(aside, beside && !!details);
 
 	return (
 		<section
@@ -266,7 +281,7 @@ export function BookingsBoard({
 										canEdit={editable(e)}
 										onSelect={() => setSelId(e.id === selId ? null : e.id)}
 										onToggle={() =>
-											e.kind === "todo" && e.row.status === "done"
+											isBooked(e)
 												? booking.notBooked(e)
 												: booking.markBooked(e, bookingFor(ix, schedule, e))
 										}
@@ -279,7 +294,14 @@ export function BookingsBoard({
 					))}
 				</div>
 				{beside && details ? (
-					<aside className="sticky top-0 border-l px-5 py-3">{details}</aside>
+					// Its own scroll, at most the pane's height: Mark booked stays in view.
+					<aside
+						ref={aside}
+						data-testid={LISTS_TESTID.bookingAside}
+						className="sticky top-0 max-h-[calc(100dvh_-_var(--topbar-h))] overflow-y-auto overscroll-contain border-l px-5 py-3"
+					>
+						{details}
+					</aside>
 				) : null}
 			</div>
 		</section>
@@ -318,14 +340,15 @@ function BookingRow({
 		entry.kind === "todo"
 			? plainOf(entry.row.text)
 			: itemName(ix, entry.item.id);
-	const booked = !row || row.status === "done";
+	const booked = isBooked(entry);
+	const stop = entry.kind === "stop" ? entry.item : entry.stop;
 	const due = row ? effectiveDue(row, dueCtx) : null;
 	const dayId = bookingDayId(ix, entry);
 	const day = dayBits(ix, dayId);
 	const meta = booked
 		? [
 				confirmed ? "Confirmation attached" : null,
-				entry.kind === "stop" ? nights(nightsAt(ix, entry.item)) : null,
+				stop ? nights(nightsAt(ix, stop)) : null,
 				...day,
 			]
 		: [
@@ -369,7 +392,7 @@ function BookingRow({
 				{row ? (
 					<RowCheckbox
 						data-testid={LISTS_TESTID.bookingCheck}
-						checked={row.status === "done"}
+						checked={booked}
 						disabled={!canEdit}
 						onCheckedChange={onToggle}
 						aria-label={`Booked: ${label}`}
@@ -391,7 +414,7 @@ function BookingRow({
 					<span
 						className={cn(
 							"block leading-5",
-							row?.status === "done" && "text-muted-foreground",
+							row && booked && "text-muted-foreground",
 						)}
 					>
 						{label}
@@ -422,4 +445,34 @@ function BookingRow({
 
 function nights(n: number): string | null {
 	return n ? `${n} night${n === 1 ? "" : "s"}` : null;
+}
+
+/**
+ * Keeps the details beside the list inside the visible part of the pane that
+ * scrolls the page (they scroll inside), so their actions stay in view.
+ */
+function useFitToPane(ref: RefObject<HTMLElement | null>, on: boolean) {
+	useEffect(() => {
+		const el = ref.current;
+		if (!on || !el) return;
+		let pane = el.parentElement;
+		while (pane && !/auto|scroll/.test(getComputedStyle(pane).overflowY))
+			pane = pane.parentElement;
+		if (!pane) return;
+		const p = pane;
+		const refit = () => {
+			const top =
+				el.getBoundingClientRect().top - p.getBoundingClientRect().top;
+			el.style.maxHeight = `${Math.max(FIT_MIN_PX, p.clientHeight - Math.max(0, top))}px`;
+		};
+		refit();
+		p.addEventListener("scroll", refit, { passive: true });
+		const ro =
+			typeof ResizeObserver === "undefined" ? null : new ResizeObserver(refit);
+		ro?.observe(p);
+		return () => {
+			p.removeEventListener("scroll", refit);
+			ro?.disconnect();
+		};
+	}, [ref, on]);
 }

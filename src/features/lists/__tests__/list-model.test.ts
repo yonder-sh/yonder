@@ -331,6 +331,15 @@ describe("views", () => {
 		});
 		expect(isBookingTodo(r[1] as ListItemDto)).toBe(true);
 		expect(isBookingTodo({ list: "shopping", dueKind: "opens" })).toBe(false);
+		// A window whose stop is booked already isn't one to book (still a to-do).
+		expect(
+			tabCounts(
+				ix,
+				r,
+				{ scopeId: null, lens: "country" },
+				(x) => x.id === "window",
+			),
+		).toMatchObject({ todo: 2, bookings: 0 });
 	});
 
 	it("Person puts a shared row under each assignee, me first, Unassigned last", () => {

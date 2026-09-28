@@ -294,6 +294,9 @@ export function useListActions() {
 			create.mutate({ ...shareCopyOf(row), id: uuidv7() }),
 		/** Silent: the checkbox (and `x`) never toasts. */
 		setStatus: (id: string, s: Status) => status.mutate({ id, status: s }),
+		/** The same, resolving with the result (a proposal when suggested). */
+		setStatusAsync: (id: string, s: Status) =>
+			status.mutateAsync({ id, status: s }),
 		/** Skip keeps an Undo (EXTENSIONS §7). */
 		skip: (row: ListItemDto) => {
 			status.mutate(

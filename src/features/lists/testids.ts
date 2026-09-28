@@ -14,9 +14,13 @@ export const LISTS_TESTID = {
 	bookingOpen: "booking-row-open",
 	bookingCheck: "booking-row-check",
 	bookingChip: "booking-row-chip",
-	/** A booking's details and their parts. */
+	/** A booking's details and their parts; wide, they sit in the aside beside the list. */
 	bookingDetails: "booking-details",
+	bookingAside: "booking-aside",
 	bookingFor: "booking-for",
+	/** The For section's Choose / Change and its picker of stops and travel. */
+	bookingForPick: "booking-for-pick",
+	bookingForPicker: "booking-for-picker",
 	bookingOpens: "booking-opens",
 	bookingReminders: "booking-reminders",
 	bookingConfirmation: "booking-confirmation",

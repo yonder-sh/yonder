@@ -56,6 +56,7 @@ import type { ListKind } from "@/lib/schemas/enums";
 import type { BundleTarget } from "@/lib/schemas/targets";
 import { cn } from "@/lib/utils";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
+import { bookedStopOf } from "./bookings-model";
 import { ListRow, type RowCtx } from "./ListRow";
 import {
 	defaultView,
@@ -63,6 +64,7 @@ import {
 	filterRows,
 	groupRows,
 	groupTarget,
+	isBookingTodo,
 	type ListGroup,
 	type ListsView,
 	nearAnchor,
@@ -76,6 +78,7 @@ import type { ListItemDto } from "./lists.functions";
 import { PlacePicker } from "./pickers";
 import { sameTarget } from "./queries";
 import { LISTS_TESTID } from "./testids";
+import { useBookingActions } from "./use-booking-actions";
 import { useListActions } from "./use-list-actions";
 import { useNow } from "./use-now";
 import { useShowDone } from "./use-show-done";
@@ -166,6 +169,7 @@ export function ListBoard(props: BoardProps) {
 			? editGuard
 			: { disabled: true, reason: "Preview only" as string | null };
 	const actions = useListActions();
+	const booking = useBookingActions();
 	const now = useNow();
 	const hours = useHoursIssues();
 	const [view, setView, showView] = useListsView(
@@ -307,11 +311,14 @@ export function ListBoard(props: BoardProps) {
 					}, LINGER_MS),
 				);
 			} else {
-				actions.setStatus(row.id, "open");
+				// D12: unticking a booking clears its stop's "Booked for this date" too.
+				if (isBookingTodo(row) && bookedStopOf(ix, row))
+					booking.notBooked({ kind: "todo", id: row.id, row });
+				else actions.setStatus(row.id, "open");
 				setLingering(({ [row.id]: _gone, ...rest }) => rest);
 			}
 		},
-		[actions],
+		[actions, booking, ix],
 	);
 
 	// Drag to reorder (Place view): before the row it lands on when moving up,

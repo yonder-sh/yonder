@@ -179,18 +179,20 @@ export function isBookingTodo(r: Pick<ListItemDto, "list" | "dueKind">) {
 
 /**
  * Open rows in view per Lists tab (the switch's counts). To-dos count every
- * to-do; Bookings the windows still to book (they are to-dos too).
+ * to-do; Bookings the windows still to book (they are to-dos too), leaving
+ * out the ones `booked` says are booked already (their stop is).
  */
 export function tabCounts(
 	ix: GraphIndex,
 	rows: readonly ListItemDto[],
 	opts: ScopeOptions,
+	booked: (row: ListItemDto) => boolean = () => false,
 ): Record<ListsTabKey, number> {
 	const c = { todo: 0, bookings: 0, shopping: 0, packing: 0 };
 	for (const { row } of rowsInView(ix, rows, opts)) {
 		if (row.status !== "open") continue;
 		c[row.list] += 1;
-		if (isBookingTodo(row)) c.bookings += 1;
+		if (isBookingTodo(row) && !booked(row)) c.bookings += 1;
 	}
 	return c;
 }
