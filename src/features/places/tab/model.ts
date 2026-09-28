@@ -6,6 +6,7 @@
  * `usePlaces()` feeds it the workspace.
  */
 import type { CityDaysTable } from "@/features/places/lib/days";
+import { decidedIds } from "@/features/places/lib/decided";
 import { isRateable } from "@/features/places/lib/rate";
 import type { GraphIndex } from "@/lib/engine/graph-index";
 import type {
@@ -32,6 +33,8 @@ export type PlaceRow = Groupable & {
 	info: StatusInfo;
 	/** Dropped by hand (the node, an ancestor, or its lifecycle decision). */
 	droppedByHand: boolean;
+	/** Covered by a "decided" mark (its own, above it or the trip's; `lib/decided.ts`): it asks no one. */
+	decided: boolean;
 	/** Scheduled items of this place (or inside it), in trip order. */
 	occurrences: GraphItem[];
 	/** "Kyoto › Higashiyama". */
@@ -130,6 +133,7 @@ export function buildRows(
 		else byNode.set(it.nodeId, [it]);
 	}
 	const cityRows = opts.cityDays?.rows ?? [];
+	const decided = decidedIds(ix, nodes);
 	const rowOf = (nodeId: string) => {
 		let best: (typeof cityRows)[number] | undefined;
 		let depth = -1;
@@ -199,6 +203,7 @@ export function buildRows(
 			status: info.status,
 			info,
 			droppedByHand,
+			decided: decided.has(node.id),
 			tripOrder: first ? ix.orderOf(first.id) : null,
 			occurrences: inside,
 			where,
@@ -230,7 +235,7 @@ export function countRows(rows: readonly PlaceRow[]): PlacesCounts {
 	for (const r of rows) {
 		out[r.status] += 1;
 		if (r.status !== "dropped") out.all += 1;
-		if (r.split && r.status !== "dropped") out.talk += 1;
+		if (r.split && !r.decided && r.status !== "dropped") out.talk += 1;
 		if (r.status === "idea" || r.status === "shortlist") out.toDecide += 1;
 	}
 	return out;
@@ -272,7 +277,7 @@ export function filterRows(
 	return rows.filter(
 		(r) =>
 			(f.status ? r.status === f.status : r.status !== "dropped") &&
-			(!f.talk || r.split) &&
+			(!f.talk || (r.split && !r.decided)) &&
 			matchesFilter(r.node, f.filter, f.ctx) &&
 			matchesText(r, f.q ?? "", f.extra),
 	);

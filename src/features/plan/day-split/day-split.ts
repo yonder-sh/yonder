@@ -115,9 +115,10 @@ export function splitCities(
 			by.set(city.id, c);
 		}
 		const listed = row.status === "shortlist" || row.status === "scheduled";
-		const unrated = opts.raterIds.some(
-			(m) => row.node.priorities[m] === undefined,
-		);
+		// A place marked decided asks no one.
+		const unrated =
+			!row.decided &&
+			opts.raterIds.some((m) => row.node.priorities[m] === undefined);
 		if (listed) {
 			c.shortlisted += 1;
 			c.minutes += defaultItemDuration(row.node);
@@ -752,9 +753,9 @@ export type LeftToRate = {
 	count: number;
 };
 
-/** Places each rater hasn't rated (not dropped), you first; only those with some left. */
+/** Places each rater hasn't rated (not dropped, not decided), you first; only those with some left. */
 export function leftToRate(
-	rows: readonly Pick<PlaceRow, "status" | "node">[],
+	rows: readonly (Pick<PlaceRow, "status" | "node"> & { decided?: boolean })[],
 	raters: readonly Pick<GraphMember, "id" | "name" | "firstName">[],
 	me: string | null,
 ): LeftToRate[] {
@@ -763,7 +764,10 @@ export function leftToRate(
 		name: m.firstName ?? m.name,
 		you: m.id === me,
 		count: rows.filter(
-			(r) => r.status !== "dropped" && r.node.priorities[m.id] === undefined,
+			(r) =>
+				r.status !== "dropped" &&
+				!r.decided &&
+				r.node.priorities[m.id] === undefined,
 		).length,
 	}));
 	return out

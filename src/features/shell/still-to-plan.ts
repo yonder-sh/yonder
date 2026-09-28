@@ -30,6 +30,7 @@
 import { dayLabel, itemName, legLabel } from "@/features/lists/list-model";
 import type { ListItemDto } from "@/features/lists/lists.functions";
 import { cityDayTable } from "@/features/places/lib/days";
+import { decidedIds } from "@/features/places/lib/decided";
 import {
 	isRateable as isRateableNode,
 	rateableNodes,
@@ -410,8 +411,11 @@ export function stillToPlan(input: StillToPlanInput): StillToPlan {
 			target: li.target,
 			due,
 		}));
-	// The Rate screen's own set, so "You 47 of 125" here reads "You 78/125" there.
-	const rateable = rateableNodes(ix, null, { liveIds: input.liveIds });
+	// The Rate screen's own set, so "You 47 of 125" here reads "You 78/125" there
+	// (places marked decided ask no one).
+	const all = rateableNodes(ix, null, { liveIds: input.liveIds });
+	const decided = decidedIds(ix, all);
+	const rateable = all.filter((n) => !decided.has(n.id));
 	// People who rate: members and placeholders who can edit, suggest or rate
 	// (a viewer can't set a priority, PLACES §1c; invites haven't joined yet).
 	const unrated = members

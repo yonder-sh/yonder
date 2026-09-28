@@ -93,6 +93,7 @@ import { cn } from "@/lib/utils";
 import { type AddPlaceRequest, useUi } from "@/lib/workspace/ui-store";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { resultKind } from "./lib/categorize";
+import { decidedIds } from "./lib/decided";
 import { findDuplicate } from "./lib/filing";
 import {
 	fallbackName,
@@ -557,9 +558,14 @@ function Palette({
 		return rateableNodes(ix, rateScope?.id ?? null, { liveIds });
 	}, [showRate, graph.nodes, ix, rateScope?.id]);
 	const me = access.memberId;
-	const unratedByMe = me
-		? toRate.filter((n) => n.priorities[me] === undefined).length
-		: 0;
+	// Places marked decided ask no one.
+	const unratedByMe = useMemo(() => {
+		if (!me) return 0;
+		const decided = decidedIds(ix, toRate);
+		return toRate.filter(
+			(n) => n.priorities[me] === undefined && !decided.has(n.id),
+		).length;
+	}, [me, ix, toRate]);
 	// docs/PLACES.md §1b: the Places tab's Rate feed at that scope.
 	const openRate = () => {
 		onClose();

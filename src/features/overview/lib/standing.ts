@@ -9,9 +9,10 @@
  *   ○ Where you're staying: 3 nights not set yet
  *
  * Favourites are the shortlist (on a day or not); people are those whose
- * ratings count. Pure.
+ * ratings count; places marked decided are left to no one. Pure.
  */
 import { cityDayTable, cityRowNodes } from "@/features/places/lib/days";
+import { decidedIds } from "@/features/places/lib/decided";
 import { raters } from "@/features/places/lib/rate";
 import { buildRows, openPlaces } from "@/features/places/tab/model";
 import { nightsWithoutStay } from "@/features/shell/still-to-plan";
@@ -161,9 +162,14 @@ export function whereThingsStand(input: StandingInput): Standing {
 	const { ix, me } = input;
 	const places = openPlaces(ix, input.liveIds);
 	const counted = raters(input.members, places);
+	// Places marked decided ask no one: nobody has them left.
+	const decided = decidedIds(ix, places);
 	const people: RatingPerson[] = counted.map((m) => {
 		const rated = places.filter((n) => n.priorities[m.id] != null).length;
-		return { member: m, rated, left: places.length - rated };
+		const left = places.filter(
+			(n) => n.priorities[m.id] == null && !decided.has(n.id),
+		).length;
+		return { member: m, rated, left };
 	});
 	const mine = people.find((p) => p.member.id === me);
 	const rows = buildRows(ix, places, {

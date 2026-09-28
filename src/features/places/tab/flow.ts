@@ -57,20 +57,23 @@ export function viewOfStep(
 export type FlowTally = {
 	/** Every place collected (not dropped). */
 	ideas: number;
-	/** Places you haven't rated (not dropped); null when you can't rate. */
+	/** Places you haven't rated (not dropped, not decided); null when you can't rate. */
 	toRate: number | null;
 	/** On the shortlist, scheduled or not. */
 	shortlisted: number;
 	/** Shortlisted and not on a day yet. */
 	notOnDay: number;
-	/** Split ratings to talk through (not dropped). */
+	/** Split ratings to talk through (not dropped, not decided). */
 	talk: number;
+	/** Marked decided (not dropped): they ask no one. */
+	decided: number;
 };
 
 export function flowTally(
 	rows: readonly {
 		status: PlaceStatus;
 		split?: boolean;
+		decided?: boolean;
 		node: { priorities: Readonly<Record<string, unknown>> };
 	}[],
 	opts: { me: string | null; canRate: boolean },
@@ -81,15 +84,21 @@ export function flowTally(
 		shortlisted: 0,
 		notOnDay: 0,
 		talk: 0,
+		decided: 0,
 	};
 	for (const r of rows) {
 		if (r.status === "dropped") continue;
 		out.ideas += 1;
-		if (out.toRate !== null && opts.me && r.node.priorities[opts.me] == null)
-			out.toRate += 1;
 		if (r.status === "shortlist" || r.status === "scheduled")
 			out.shortlisted += 1;
 		if (r.status === "shortlist") out.notOnDay += 1;
+		// A decided place stops asking: not to rate, not to talk through.
+		if (r.decided) {
+			out.decided += 1;
+			continue;
+		}
+		if (out.toRate !== null && opts.me && r.node.priorities[opts.me] == null)
+			out.toRate += 1;
 		if (r.split) out.talk += 1;
 	}
 	return out;
@@ -147,9 +156,11 @@ export function stepCounts(t: FlowTally): Record<FlowStep, string> {
 			? "View only"
 			: t.toRate
 				? `${t.toRate} to rate`
-				: t.ideas
-					? "All rated"
-					: "Nothing to rate";
+				: t.ideas && t.decided === t.ideas
+					? "All decided"
+					: t.ideas
+						? "All rated"
+						: "Nothing to rate";
 	const decide = t.talk
 		? `${plural(t.talk, "place")} to talk through`
 		: `${t.shortlisted} shortlisted`;

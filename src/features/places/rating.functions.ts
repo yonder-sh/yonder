@@ -28,6 +28,7 @@ import { requireDirect } from "@/server/proposals/proposable.server";
 import { actorOf } from "@/server/proposals/types";
 import { mutationMeta, withTripTx } from "@/server/tx.server";
 import { lockMember } from "../home/server/people.server";
+import { decidedIds } from "./lib/decided";
 import { openPlaces } from "./tab/model";
 
 /** A member is reminded at most once per trip in this long. */
@@ -141,8 +142,12 @@ export const remindToRate = createServerFn({ method: "POST" })
 			return fail("VALIDATION", `${target.name}'s ratings aren't counted.`);
 		if (target.role === "viewer")
 			return fail("VALIDATION", `${target.name} can't rate.`);
-		const left = openPlaces(indexGraph(graph)).filter(
-			(n) => n.priorities[target.id] === undefined,
+		const ix = indexGraph(graph);
+		const places = openPlaces(ix);
+		// Places marked decided ask no one.
+		const decided = decidedIds(ix, places);
+		const left = places.filter(
+			(n) => n.priorities[target.id] === undefined && !decided.has(n.id),
 		).length;
 		if (!left)
 			return fail("VALIDATION", `${target.name} has rated every place.`);

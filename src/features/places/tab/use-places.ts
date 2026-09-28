@@ -11,6 +11,7 @@ import { useCallback, useEffect, useMemo } from "react";
 import { create } from "zustand";
 import { noteFor, tripNotesQuery } from "@/features/notes/queries";
 import { cityDayTable } from "@/features/places/lib/days";
+import { decidedIds } from "@/features/places/lib/decided";
 import {
 	raters,
 	ratingMembers,
@@ -220,19 +221,16 @@ export function usePlaces(q = "") {
 		[groups],
 	);
 	useFollowSplit(split, cities);
-	const progress = useMemo<MemberProgress[]>(
-		() =>
-			allRaters.map((m) => ({
-				member: m,
-				rated: ratedCount(
-					rows.filter((r) => r.status !== "dropped"),
-					m.id,
-				),
-				total: tally.all,
-				counted: ratingsCount(m),
-			})),
-		[allRaters, rows, tally.all],
-	);
+	// Decided places ask no one: they're left out of everyone's progress.
+	const progress = useMemo<MemberProgress[]>(() => {
+		const asking = rows.filter((r) => r.status !== "dropped" && !r.decided);
+		return allRaters.map((m) => ({
+			member: m,
+			rated: ratedCount(asking, m.id),
+			total: asking.length,
+			counted: ratingsCount(m),
+		}));
+	}, [allRaters, rows]);
 	return {
 		state,
 		rows,
@@ -254,7 +252,8 @@ export type PlacesData = ReturnType<typeof usePlaces>;
 
 /**
  * The tab's count badge: places in the scope still to decide (not on a day,
- * not dropped by hand, not everyone-said-Nah). Cheaper than `usePlaces`.
+ * not dropped by hand, not everyone-said-Nah, not marked decided). Cheaper
+ * than `usePlaces`.
  */
 export function usePlacesToDecide(): number {
 	const { ix, graph, scope } = useWorkspace();
@@ -262,10 +261,12 @@ export function usePlacesToDecide(): number {
 		const liveIds = new Set(graph.nodes.map((n) => n.id));
 		const nodes = placesInScope(ix, scope?.id ?? null, liveIds);
 		const memberIds = raters(graph.members, nodes).map((m) => m.id);
+		const decided = decidedIds(ix, nodes);
 		let n = 0;
 		for (const node of nodes) {
 			if (node.ideaStatus === "dropped" || ix.isDropped(node.id)) continue;
 			if (ix.scheduledNodeIds.has(node.id)) continue;
+			if (decided.has(node.id)) continue;
 			if (
 				node.shortlistPin !== "pinned" &&
 				memberIds.length > 0 &&

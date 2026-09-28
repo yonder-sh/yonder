@@ -14,17 +14,20 @@ import { computeSchedule } from "@/lib/engine/schedule";
 import type { GraphNode, Priority, TripGraph } from "@/lib/engine/types";
 import { DEMO_MEMBERS } from "@/lib/fixtures/demo";
 import type { OpeningHours } from "@/lib/schemas/hours";
+import { EMPTY_FILTER } from "@/lib/workspace/filter";
+import { filterContextOf } from "@/lib/workspace/filter-match";
 import {
 	type FlowTally,
 	flowTally,
 	nextStep,
 	pickStep,
 	reviewViewOf,
+	stepBadges,
 	stepCounts,
 	stepOfView,
 	viewOfStep,
 } from "../flow";
-import { buildRows, placesInScope } from "../model";
+import { buildRows, countRows, filterRows, placesInScope } from "../model";
 import {
 	bestSpot,
 	cityRowOf,
@@ -63,6 +66,7 @@ const tally = (t: Partial<FlowTally>): FlowTally => ({
 	talk: 0,
 	shortlisted: 0,
 	notOnDay: 0,
+	decided: 0,
 	...t,
 });
 const EDIT = { canEdit: true, hasDays: true };
@@ -120,6 +124,9 @@ describe("the steps' counts", () => {
 		});
 		expect(stepCounts(tally({ toRate: null })).rate).toBe("View only");
 		expect(stepCounts(tally({ toRate: 0 })).rate).toBe("All rated");
+		expect(stepCounts(tally({ toRate: 0, decided: 10 })).rate).toBe(
+			"All decided",
+		);
 		expect(stepCounts(tally({ shortlisted: 3 })).decide).toBe("3 shortlisted");
 	});
 });
@@ -310,6 +317,78 @@ describe("the counts from the rows", () => {
 		expect(flowTally(rows, { me: A, canRate: true }).toRate).toBe(t.ideas - 2);
 		expect(flowTally(rows, { me: D, canRate: false }).toRate).toBeNull();
 		expect(s.N.tower).toBeDefined();
+	});
+});
+
+describe("places marked decided (owner, 2026-09-28)", () => {
+	const row = (r: {
+		priorities?: Record<string, string>;
+		split?: boolean;
+		decided?: boolean;
+		status?: "idea" | "shortlist" | "dropped";
+	}) => ({
+		status: r.status ?? ("idea" as const),
+		split: r.split ?? false,
+		decided: r.decided ?? false,
+		node: { priorities: r.priorities ?? {} },
+	});
+
+	it("stop counting as to rate and to talk through, and stay among the places", () => {
+		const rows = [
+			row({}),
+			row({ decided: true }),
+			row({ split: true, priorities: { [D]: "must" } }),
+			row({ split: true, decided: true, status: "shortlist" }),
+			row({ decided: true, status: "dropped" }),
+		];
+		const t = flowTally(rows, { me: D, canRate: true });
+		expect(t).toMatchObject({
+			ideas: 4,
+			toRate: 1,
+			talk: 1,
+			decided: 2,
+			shortlisted: 1,
+		});
+		const badges = stepBadges(t);
+		expect(badges).toEqual({
+			review: "4",
+			rate: "1 left",
+			decide: "1 to talk",
+		});
+		const all = flowTally([row({ decided: true })], { me: D, canRate: true });
+		expect(nextStep(all)).toBeNull();
+		expect(stepBadges(all).rate).toBeNull();
+	});
+
+	it("the rows know it, and the Disagreements count and pill leave them out", () => {
+		const { s, rows } = trip();
+		const ix = indexGraph({
+			...s.graph,
+			nodes: s.graph.nodes.map((n) =>
+				n.id === s.N.kyoto ? { ...n, decidedAt: "2030-01-01T00:00:00Z" } : n,
+			),
+		});
+		const marked = buildRows(
+			ix,
+			rows.map((r) => r.node),
+			{ memberIds: [D, A], threshold: 3 },
+		);
+		const kyoto = marked.filter((r) => ix.isWithin(r.id, s.N.kyoto ?? null));
+		expect(kyoto.length).toBeGreaterThan(0);
+		expect(kyoto.every((r) => r.decided)).toBe(true);
+		expect(marked.filter((r) => r.decided)).toHaveLength(kyoto.length);
+		// Nishiki (Kyoto, decided) and Tokyo Tower both split: only the tower is to talk through.
+		const split = marked.map((r) =>
+			r.id === s.N.nishiki || r.id === s.N.tower ? { ...r, split: true } : r,
+		);
+		expect(countRows(split).talk).toBe(1);
+		const shown = filterRows(split, {
+			status: null,
+			talk: true,
+			filter: EMPTY_FILTER,
+			ctx: filterContextOf(ix, D),
+		});
+		expect(shown.map((r) => r.name)).toEqual(["Tokyo Tower"]);
 	});
 });
 

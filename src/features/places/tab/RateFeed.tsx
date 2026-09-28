@@ -1336,11 +1336,19 @@ export default function RateFeed({ data }: { data: PlacesData }) {
 		(id: string) => !!me && !!data.byId.get(id)?.node.priorities[me],
 		[me, data.byId],
 	);
-	// The pile: the filtered places I haven't rated (dropped ones never).
+	// Done with: rated, or marked decided since (it stops asking).
+	const isSettled = useCallback(
+		(id: string) => isRated(id) || !!data.byId.get(id)?.decided,
+		[isRated, data.byId],
+	);
+	// The pile: the filtered places I haven't rated (dropped and decided ones never).
 	const candidates = useMemo(
 		() =>
 			data.visible.filter(
-				(r) => r.status !== "dropped" && !(me && r.node.priorities[me]),
+				(r) =>
+					r.status !== "dropped" &&
+					!r.decided &&
+					!(me && r.node.priorities[me]),
 			),
 		[data.visible, me],
 	);
@@ -1440,8 +1448,8 @@ export default function RateFeed({ data }: { data: PlacesData }) {
 	// The end of the pile: skipped places come back, once.
 	useEffect(() => {
 		if (currentItem?.kind !== "end" || session.skipped !== null) return;
-		setState((st) => ({ ...st, s: reachEnd(st.s, isRated) }));
-	}, [currentItem?.kind, session.skipped, isRated]);
+		setState((st) => ({ ...st, s: reachEnd(st.s, isSettled) }));
+	}, [currentItem?.kind, session.skipped, isSettled]);
 
 	const scrollToKey = useCallback(
 		(key: string, smooth = true) => {
@@ -1557,7 +1565,7 @@ export default function RateFeed({ data }: { data: PlacesData }) {
 		return () => window.removeEventListener("keydown", onKey, true);
 	}, [currentItem, rate, step, setPeeked]);
 
-	const left = leftCount(session, isRated);
+	const left = leftCount(session, isSettled);
 	const run = currentPlace ? live.runs.get(currentPlace.id) : undefined;
 	const ratedHere = session.pile.filter(isRated).length;
 
