@@ -671,6 +671,26 @@ describe("Bookings", () => {
 		expect(aside).toHaveClass("sticky", "overflow-y-auto");
 		expect(within(aside).getByTestId(L.bookingMarkBooked)).toBeInTheDocument();
 	});
+
+	it("a to-do whose stop is booked carries the stop's expense", async () => {
+		const user = userEvent.setup();
+		const tickets = row({
+			id: ID(35),
+			text: "Kiyomizu night tickets",
+			dueKind: "opens",
+			target: { kind: "item", itemId: I.kiyomizu as string },
+		});
+		mount({ list: "bookings" }, [tickets]);
+		const r = screen
+			.getAllByTestId(L.bookingRow)
+			.find((x) => x.dataset.id === ID(35)) as HTMLElement;
+		await user.click(within(r).getByTestId(L.bookingOpen));
+		const d = await screen.findByTestId(L.bookingDetails);
+		expect(within(d).getByTestId(L.bookingExpense)).toHaveTextContent("¥1,000");
+		expect(within(d).getByTestId(L.bookingMarkBooked)).toHaveTextContent(
+			"Not booked yet",
+		);
+	});
 });
 
 describe("Packing", () => {

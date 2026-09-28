@@ -101,15 +101,16 @@ export function BookingDetails({
 		? ` · assigned to ${assignees.slice(0, -1).join(", ")}${assignees.length > 1 ? " and " : ""}${assignees.at(-1)}`
 		: "";
 
-	// The linked expense (a to-do's "Add expense", or one on the booked stop).
+	// The linked expense (a to-do's "Add expense"), else one on the booked stop.
 	const moneyOn = seesMoney(graph.me) && can(graph.me, "manageExpenses");
-	const expense = moneyOn
-		? money.data?.expenses.find((e) =>
-				row
-					? e.listItemId === row.id
-					: e.target.kind === "item" && e.target.itemId === entry.id,
-			)
-		: undefined;
+	const expenses = moneyOn ? (money.data?.expenses ?? []) : [];
+	const expense =
+		(row ? expenses.find((e) => e.listItemId === row.id) : undefined) ??
+		(stop
+			? expenses.find(
+					(e) => e.target.kind === "item" && e.target.itemId === stop.id,
+				)
+			: undefined);
 	const others = (expense?.shares ?? [])
 		.map((s) => s.memberId)
 		.filter((id) => id !== ws.access.memberId)
