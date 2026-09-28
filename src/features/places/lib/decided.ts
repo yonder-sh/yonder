@@ -99,12 +99,14 @@ export function decidedIds(
 /**
  * Decide's header for a scope: "Mark Kyoto decided" (open), "Decided ·
  * Undo" (marked here), or "Decided with Japan" (marked above; its undo
- * lives there, never a second mark).
+ * lives there, never a second mark). `remark` moves that one mark to now
+ * for the places added since: "Mark them decided" here, "Mark Japan's new
+ * places decided" inside Japan.
  */
 export type ScopeDecision =
 	| { kind: "open"; label: string }
-	| { kind: "decided"; mark: DecidedMark }
-	| { kind: "inherited"; mark: DecidedMark; label: string };
+	| { kind: "decided"; mark: DecidedMark; remark: string }
+	| { kind: "inherited"; mark: DecidedMark; label: string; remark: string };
 
 export function scopeDecision(
 	ix: Ix,
@@ -114,10 +116,18 @@ export function scopeDecision(
 	if (!first)
 		return { kind: "open", label: `Mark ${whereName(scope)} decided` };
 	if (first.scopeId === (scope?.id ?? null))
-		return { kind: "decided", mark: first };
+		return { kind: "decided", mark: first, remark: "Mark them decided" };
 	return {
 		kind: "inherited",
 		mark: first,
 		label: `Decided with ${first.name}`,
+		remark: `Mark ${first.name}'s new places decided`,
 	};
+}
+
+/** The places a decided scope still asks about: added since its mark (dropped ones aside). */
+export function addedSince(
+	rows: readonly { status: string; decided: boolean }[],
+): number {
+	return rows.filter((r) => r.status !== "dropped" && !r.decided).length;
 }

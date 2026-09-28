@@ -25,7 +25,12 @@ import { humanError } from "@/lib/errors";
 import { formatDuration } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
-import { scopeDecision, whereName } from "../lib/decided";
+import {
+	addedSince,
+	type DecidedMark,
+	scopeDecision,
+	whereName,
+} from "../lib/decided";
 import { commentVisibleText } from "../lib/rate";
 import { useSetDecided } from "../mutations";
 import type { PlaceRow } from "./model";
@@ -192,9 +197,15 @@ function DecideStrip({ data }: { data: PlacesData }) {
 	);
 }
 
+/** The header's text buttons (Undo, Mark them decided). */
+const TEXT_BUTTON =
+	"cursor-pointer text-primary hover:underline disabled:cursor-default disabled:opacity-50 disabled:no-underline";
+
 /**
  * "Mark Kyoto decided" (editors); once marked, "Decided · Undo"; inside a
  * decided scope, "Decided with Japan", which goes there (the undo lives there).
+ * Places added since the mark still ask: "Mark them decided" moves the mark
+ * to now (inside Japan, "Mark Japan's new places decided": the same mark).
  */
 export function DecidedControl({ data }: { data: PlacesData }) {
 	const { ix, scope, graph, nav } = useWorkspace();
@@ -216,11 +227,38 @@ export function DecidedControl({ data }: { data: PlacesData }) {
 			},
 		});
 	};
+	// The mark moves to now; Undo puts its old stamp back.
+	const remark = (m: DecidedMark) => {
+		if (guard.disabled) return;
+		const vars = { nodeId: m.scopeId, decided: true, by: graph.me.userId };
+		set.mutate(vars, {
+			onError: (e) => toast.error(humanError(e)),
+			onSuccess: () =>
+				undoToast(`Marked ${m.name}'s new places decided`, () =>
+					set.mutate({ ...vars, at: m.at }),
+				),
+		});
+	};
+	// Added since the mark: they still ask.
+	const since = addedSince(data.rows);
+	const remarkButton =
+		state.kind !== "open" && since ? (
+			<>
+				<span className="tnum">· {since} added since</span>
+				<span aria-hidden>·</span>
+				<EditGuard kind="edit-only">
+					<button
+						type="button"
+						data-testid={PLACES_TAB_TESTID.decideRemark}
+						onClick={() => remark(state.mark)}
+						className={TEXT_BUTTON}
+					>
+						{state.remark}
+					</button>
+				</EditGuard>
+			</>
+		) : null;
 	if (state.kind === "decided") {
-		// Added since the mark: they still ask.
-		const since = data.rows.filter(
-			(r) => r.status !== "dropped" && !r.decided,
-		).length;
 		const who = graph.members.find(
 			(m) => m.userId && m.userId === state.mark.by,
 		);
@@ -228,18 +266,18 @@ export function DecidedControl({ data }: { data: PlacesData }) {
 			<span
 				data-testid={PLACES_TAB_TESTID.decideDecided}
 				title={who ? `Marked decided by ${who.name}` : undefined}
-				className="inline-flex items-center gap-1.5"
+				className="inline-flex flex-wrap items-center gap-1.5"
 			>
 				<CircleCheck className="size-3.5 text-primary" aria-hidden />
 				<span className="font-medium text-foreground">Decided</span>
-				{since ? <span className="tnum">· {since} added since</span> : null}
+				{remarkButton}
 				<span aria-hidden>·</span>
 				<EditGuard kind="edit-only">
 					<button
 						type="button"
 						data-testid={PLACES_TAB_TESTID.decideUndo}
 						onClick={() => mark(false)}
-						className="cursor-pointer text-primary hover:underline disabled:cursor-default disabled:opacity-50 disabled:no-underline"
+						className={TEXT_BUTTON}
 					>
 						Undo
 					</button>
@@ -249,21 +287,24 @@ export function DecidedControl({ data }: { data: PlacesData }) {
 	}
 	if (state.kind === "inherited")
 		return (
-			<Button
-				size="sm"
-				variant="outline"
-				data-testid={PLACES_TAB_TESTID.decideDecidedWith}
-				title={`Marked in ${state.mark.name}: undo it there`}
-				onClick={() =>
-					nav.openPlaces({
-						scopeId: state.mark.scopeId,
-						patch: { pv: "decide" },
-					})
-				}
-			>
-				<CircleCheck className="text-primary" />
-				{state.label}
-			</Button>
+			<span className="inline-flex flex-wrap items-center gap-1.5">
+				<Button
+					size="sm"
+					variant="outline"
+					data-testid={PLACES_TAB_TESTID.decideDecidedWith}
+					title={`Marked in ${state.mark.name}: undo it there`}
+					onClick={() =>
+						nav.openPlaces({
+							scopeId: state.mark.scopeId,
+							patch: { pv: "decide" },
+						})
+					}
+				>
+					<CircleCheck className="text-primary" />
+					{state.label}
+				</Button>
+				{remarkButton}
+			</span>
 		);
 	return (
 		<EditGuard kind="edit-only">

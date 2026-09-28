@@ -9,6 +9,7 @@ import { indexGraph } from "@/lib/engine/graph-index";
 import type { GraphNode, TripGraph } from "@/lib/engine/types";
 import { demoGraph, N } from "@/lib/fixtures/demo";
 import {
+	addedSince,
 	coveredBy,
 	decidedIds,
 	decidedMarkOf,
@@ -160,11 +161,14 @@ describe("Decide's header for a scope", () => {
 		expect(scopeDecision(ix, japan)).toMatchObject({
 			kind: "decided",
 			mark: { scopeId: N.japan, at: T3 },
+			remark: "Mark them decided",
 		});
+		// Places added since re-mark the one mark, Japan's.
 		expect(scopeDecision(ix, kyoto)).toMatchObject({
 			kind: "inherited",
 			label: "Decided with Japan",
 			mark: { scopeId: N.japan },
+			remark: "Mark Japan's new places decided",
 		});
 		// Outside Japan, nothing changes.
 		expect(scopeDecision(ix, ix.node(N.seoul) as GraphNode).kind).toBe("open");
@@ -181,6 +185,29 @@ describe("Decide's header for a scope", () => {
 		expect(scopeDecision(whole, null).kind).toBe("decided");
 		expect(
 			scopeDecision(whole, whole.node(N.tokyo) as GraphNode),
-		).toMatchObject({ kind: "inherited", label: "Decided with the trip" });
+		).toMatchObject({
+			kind: "inherited",
+			label: "Decided with the trip",
+			remark: "Mark the trip's new places decided",
+		});
+	});
+
+	it("counts the places added since the mark, not the dropped ones", () => {
+		expect(
+			addedSince([
+				{ status: "idea", decided: false },
+				{ status: "shortlist", decided: false },
+				{ status: "dropped", decided: false },
+				{ status: "idea", decided: true },
+			]),
+		).toBe(2);
+		expect(addedSince([])).toBe(0);
+	});
+
+	it("re-marking moves the stamp: the places added before now are covered", () => {
+		const before = trip({ [N.kyoto as string]: T1 });
+		expect(isDecided(indexGraph(before), node(before, NISHIKI))).toBe(false);
+		const after = trip({ [N.kyoto as string]: T3 });
+		expect(isDecided(indexGraph(after), node(after, NISHIKI))).toBe(true);
 	});
 });

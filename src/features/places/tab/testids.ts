@@ -94,6 +94,8 @@ export const PLACES_TAB_TESTID = {
 	decideUndo: "places-decide-undo",
 	decideDecidedWith: "places-decide-decided-with",
 	decideSettled: "places-decide-settled",
+	/** "Mark them decided" / "Mark Japan's new places decided": the mark moves to now. */
+	decideRemark: "places-decide-remark",
 	step: "places-step",
 	stepCount: "places-step-count",
 	stepDot: "places-step-dot",

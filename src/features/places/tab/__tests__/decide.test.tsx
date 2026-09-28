@@ -8,7 +8,16 @@ import { decideColumn } from "../PlacesDecide";
 import { PlacesTab } from "../PlacesTab";
 import { PLACES_TAB_TESTID as T } from "../testids";
 
-const calls = vi.hoisted(() => ({ setDecided: [] as unknown[] }));
+const calls = vi.hoisted(() => ({
+	setDecided: [] as unknown[],
+	undo: [] as { label: string; undo: () => unknown }[],
+}));
+vi.mock("@/components/common/undo-toast", () => ({
+	undoToast: (label: string, undo: () => unknown) => {
+		calls.undo.push({ label, undo });
+		return 1;
+	},
+}));
 vi.mock("@/functions/nodes.functions", () => ({
 	setDecided: async (opts: { data: unknown }) => {
 		calls.setDecided.push(opts.data);
@@ -97,6 +106,7 @@ function marked(marks: Record<string, string>): TripGraph {
 describe("Mark decided (D08)", () => {
 	beforeEach(() => {
 		calls.setDecided.length = 0;
+		calls.undo.length = 0;
 	});
 
 	it("marks the Where picker's scope: Kyoto, or the trip at the root", async () => {
@@ -164,8 +174,81 @@ describe("Mark decided (D08)", () => {
 			search: { tab: "places", pv: "decide" },
 		});
 		expect(screen.getByTestId(T.decideDecided)).toHaveTextContent(
-			"Decided· 1 added since·Undo",
+			"Decided· 1 added since·Mark them decided·Undo",
 		);
+	});
+
+	it("'Mark them decided' moves the mark to now; its Undo puts the old stamp back", async () => {
+		const graph = marked({ [N.kyoto as string]: "2026-09-10T00:00:00.000Z" });
+		graph.nodes = graph.nodes.map((n) =>
+			n.id === N.kiyomizu ? { ...n, createdAt: "2026-09-20T00:00:00.000Z" } : n,
+		);
+		renderWithWorkspace(<PlacesTab />, {
+			graph,
+			splat: "japan/kyoto",
+			search: { tab: "places", pv: "decide" },
+		});
+		fireEvent.click(screen.getByTestId(T.decideRemark));
+		await waitFor(() =>
+			expect(calls.setDecided).toEqual([
+				{ tripId: demoGraph.trip.id, nodeId: N.kyoto, decided: true },
+			]),
+		);
+		await waitFor(() => expect(calls.undo).toHaveLength(1));
+		expect(calls.undo[0]?.label).toBe("Marked Kyoto's new places decided");
+		calls.undo[0]?.undo();
+		await waitFor(() =>
+			expect(calls.setDecided[1]).toEqual({
+				tripId: demoGraph.trip.id,
+				nodeId: N.kyoto,
+				decided: true,
+				at: "2026-09-10T00:00:00.000Z",
+			}),
+		);
+	});
+
+	it("inside Japan's mark, places added since re-mark Japan", async () => {
+		const graph = marked({ [N.japan as string]: "2026-09-10T00:00:00.000Z" });
+		graph.nodes = graph.nodes.map((n) =>
+			n.id === N.kiyomizu ? { ...n, createdAt: "2026-09-20T00:00:00.000Z" } : n,
+		);
+		renderWithWorkspace(<PlacesTab />, {
+			graph,
+			splat: "japan/kyoto",
+			search: { tab: "places", pv: "decide" },
+		});
+		expect(screen.getByTestId(T.decideDecidedWith)).toHaveTextContent(
+			/^Decided with Japan$/,
+		);
+		const remark = screen.getByTestId(T.decideRemark);
+		expect(remark).toHaveTextContent("Mark Japan's new places decided");
+		expect(remark.parentElement).toHaveTextContent(
+			"Decided with Japan· 1 added since·Mark Japan's new places decided",
+		);
+		fireEvent.click(remark);
+		await waitFor(() =>
+			expect(calls.setDecided).toEqual([
+				{ tripId: demoGraph.trip.id, nodeId: N.japan, decided: true },
+			]),
+		);
+		await waitFor(() =>
+			expect(calls.undo[0]?.label).toBe("Marked Japan's new places decided"),
+		);
+	});
+
+	it("re-marking is for editors only too", () => {
+		const graph = marked({ [N.kyoto as string]: "2026-09-10T00:00:00.000Z" });
+		graph.nodes = graph.nodes.map((n) =>
+			n.id === N.kiyomizu ? { ...n, createdAt: "2026-09-20T00:00:00.000Z" } : n,
+		);
+		graph.me = { ...graph.me, role: "suggester" };
+		renderWithWorkspace(<PlacesTab />, {
+			graph,
+			splat: "japan/kyoto",
+			search: { tab: "places", pv: "decide" },
+		});
+		expect(screen.getByTestId(T.decideRemark)).toBeDisabled();
+		expect(screen.getByTestId(T.decideUndo)).toBeDisabled();
 	});
 
 	it("inside a decided scope: 'Decided with Japan', which goes there", () => {
@@ -175,6 +258,8 @@ describe("Mark decided (D08)", () => {
 			search: { tab: "places", pv: "decide" },
 		});
 		expect(screen.queryByTestId(T.decideMark)).toBeNull();
+		// Nothing added since: nothing to re-mark.
+		expect(screen.queryByTestId(T.decideRemark)).toBeNull();
 		const withJapan = screen.getByTestId(T.decideDecidedWith);
 		expect(withJapan).toHaveTextContent("Decided with Japan");
 		fireEvent.click(withJapan);

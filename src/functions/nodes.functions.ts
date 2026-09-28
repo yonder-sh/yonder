@@ -86,7 +86,7 @@ export const setNodePriority = createServerFn({ method: "POST" })
 	.validator(proposable.input(SetNodePriorityInput))
 	.handler(proposable.run("node.priority"));
 
-/** "Mark decided" at a node or the whole trip (edit-only, never a proposal); `decided: false` undoes it. Keys: graph. */
+/** "Mark decided" at a node or the whole trip (edit-only, never a proposal); again moves the stamp to now; `decided: false` undoes it. Keys: graph. */
 export const setDecided = createServerFn({ method: "POST" })
 	.middleware([withNamedUser])
 	.validator(SetDecidedInput)

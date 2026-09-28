@@ -173,13 +173,16 @@ export const SetNodePriorityInput = z
 
 /**
  * "Mark decided" (owner, 2026-09-28): a node, or the whole trip when
- * `nodeId` is null. `decided: false` is the undo (it clears the mark).
+ * `nodeId` is null. `decided: false` is the undo (it clears the mark);
+ * marking a marked scope again moves the stamp to now.
  */
 export const SetDecidedInput = z
 	.object({
 		tripId: z.uuid(),
 		nodeId: z.uuid().nullable(),
 		decided: z.boolean(),
+		/** The undo of a re-mark: its earlier stamp back (never later than now). */
+		at: z.iso.datetime({ offset: true }).optional(),
 	})
 	.strict();
 
@@ -771,8 +774,11 @@ export async function setDecidedCore(
 	ctx: Pick<CoreCtx, "user" | "actor">,
 ): Promise<{ decidedAt: string | null }> {
 	// The database's clock, like `created_at`: the mark covers what was added before it.
+	const stamp = data.at
+		? sql`least(${data.at}::timestamptz, now())`
+		: sql`now()`;
 	const set = {
-		decidedAt: data.decided ? sql`now()` : null,
+		decidedAt: data.decided ? stamp : null,
 		decidedBy: data.decided ? ctx.user.id : null,
 		updatedAt: sql`now()`,
 	};
