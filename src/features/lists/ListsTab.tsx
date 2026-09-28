@@ -127,7 +127,11 @@ export function ListsTab() {
 			<Segmented
 				label="Which list"
 				value={kind}
-				onValueChange={pickKind}
+				onValueChange={(k) => {
+					// Only "Add a booking" lands on the add row.
+					setAddTick(0);
+					pickKind(k);
+				}}
 				options={LISTS_TABS.map((k) => ({
 					value: k,
 					label: TAB_LABEL[k],
