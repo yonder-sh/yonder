@@ -96,7 +96,7 @@ describe("item Overview layout", () => {
 		expect(summary.className).toContain("[&>*]:whitespace-nowrap");
 	});
 
-	it("COLLAB-R2-11: the Day select fits the panel and cuts its label with an ellipsis", () => {
+	it("COLLAB-R2-11: the Day select fits the panel (One Yonder: 'Change day', the day is on the When line)", () => {
 		const g = structuredClone(demoGraph);
 		const d2 = g.days.find((d) => d.id === D.d2);
 		if (d2)
@@ -106,14 +106,8 @@ describe("item Overview layout", () => {
 		});
 		const trigger = screen.getByTestId(PLAN_TESTID.overviewDay);
 		expect(trigger.className).toMatch(/\bmin-w-0\b/);
-		expect(trigger.className).toMatch(/\bw-full\b/);
-		// One shrinkable column (an auto column grows to the longest label).
-		expect(trigger.parentElement?.className).toContain(
-			"grid-cols-[minmax(0,1fr)]",
-		);
-		const value = within(trigger).getByText(/Mt\. Fuji · Shinjuku/);
-		expect(value.className).toMatch(/\btruncate\b/);
-		expect(value.textContent).toMatch(/^D2 Mon 4 Oct · Mt\. Fuji/);
+		expect(trigger.className).toMatch(/\bmax-w-full\b/);
+		expect(trigger).toHaveTextContent("Change day");
 	});
 });
 

@@ -8,10 +8,16 @@
  * disabled, with the reason.
  */
 import { useQuery } from "@tanstack/react-query";
-import { ArrowDownLeft, ArrowUpRight, Wallet } from "lucide-react";
+import {
+	ArrowDownLeft,
+	ArrowUpRight,
+	CalendarDays,
+	Timer,
+	Wallet,
+} from "lucide-react";
 import { type ReactNode, useEffect, useId, useRef, useState } from "react";
 import { EditGuard, useEditGuard } from "@/components/common/edit-guard";
-import { TypeGlyph } from "@/components/common/glyphs";
+import { CategoryIcon, TypeGlyph } from "@/components/common/glyphs";
 import { LegSummary } from "@/components/common/leg-summary";
 import { MarkdownText } from "@/components/common/markdown-text";
 import {
@@ -22,8 +28,14 @@ import {
 import { DurationInput, TimeInput } from "@/components/common/time";
 import { TreePicker } from "@/components/common/tree-picker";
 import { useDraftField } from "@/components/common/use-draft-field";
+import { Eyebrow } from "@/components/kit";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+	Popover,
+	PopoverContent,
+	PopoverTrigger,
+} from "@/components/ui/popover";
 import {
 	Select,
 	SelectContent,
@@ -36,6 +48,7 @@ import { HoursChip } from "@/features/insights/HoursChip";
 import { MentionInput } from "@/features/notes/MentionInput";
 import { LegMapsLink } from "@/features/transit/LegMapsLink";
 import { can } from "@/lib/auth/roles";
+import { PLACE_CATEGORIES } from "@/lib/domain/taxonomy";
 import { pairKey } from "@/lib/engine/graph-index";
 import { conflictFixes } from "@/lib/engine/suggest";
 import { hhmm, tzLabel } from "@/lib/engine/time";
@@ -48,12 +61,8 @@ import { TESTID } from "@/lib/testids";
 import { cn } from "@/lib/utils";
 import { useUi } from "@/lib/workspace/ui-store";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
-import {
-	DURATION_PRESETS,
-	focusAfterLeaving,
-	focusWhenReady,
-	isBooked,
-} from "./ItemCard";
+import { cardTone } from "./card-tone";
+import { DURATION_PRESETS, ItemMenu, isBooked } from "./ItemCard";
 import { PLAN_TESTID } from "./testids";
 import {
 	itemName,
@@ -162,6 +171,89 @@ function DayValue({ dayId }: { dayId: string | null }) {
 				"Unscheduled"
 			)}
 		</span>
+	);
+}
+
+/**
+ * The details header's ⋯ for a stop (One Yonder D03): the card's own menu
+ * (move, pin, expense, unschedule, delete). "Pin start time…" opens the
+ * overview's "Set a time".
+ */
+export function ItemDetailsMenu({ itemId }: { itemId: string }) {
+	const { ix } = useWorkspace();
+	const item = ix.item(itemId);
+	if (!item) return null;
+	return (
+		<PlanActionsProvider>
+			<ItemMenu
+				item={item}
+				onPin={() =>
+					document
+						.querySelector<HTMLElement>(
+							`[data-testid="${PLAN_TESTID.overviewPin}"] button:last-of-type`,
+						)
+						?.click()
+				}
+				className="-mt-0.5"
+			/>
+		</PlanActionsProvider>
+	);
+}
+
+/** A stop's icon in its family colour (as its card and pin) and "Food & Drink · Shinjuku, Tokyo". */
+export function ItemHeadline({
+	itemId,
+	children,
+}: {
+	itemId: string;
+	/** The title and its chips. */
+	children: ReactNode;
+}) {
+	const { ix } = useWorkspace();
+	const node = ix.node(ix.item(itemId)?.nodeId);
+	const cat =
+		node?.type === "place" && node.category
+			? PLACE_CATEGORIES[node.category].label
+			: null;
+	const up = node
+		? ix
+				.path(node.id)
+				.slice(0, -1)
+				.reverse()
+				.slice(0, 2)
+				.map((n) => n.name)
+		: [];
+	const line = [cat, up.join(", ")].filter(Boolean).join(" · ");
+	return (
+		<div
+			className="plan-card flex min-w-0 items-start gap-3"
+			data-family={cardTone(node)}
+		>
+			<span
+				aria-hidden
+				className="plan-icon mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-full"
+			>
+				{node?.type === "place" && node.category ? (
+					<CategoryIcon category={node.category} className="size-5" />
+				) : node ? (
+					<TypeGlyph
+						type={node.type}
+						tinted={false}
+						className="size-5 text-current"
+					/>
+				) : (
+					<Timer className="size-5" strokeWidth={1.5} />
+				)}
+			</span>
+			<div className="min-w-0 flex-1">
+				{children}
+				{line ? (
+					<p className="mt-0.5 truncate text-meta text-muted-foreground">
+						{line}
+					</p>
+				) : null}
+			</div>
+		</div>
 	);
 }
 
@@ -322,307 +414,347 @@ function ItemOverviewBody({ itemId }: { itemId: string }) {
 				</div>
 			) : null}
 
-			<dl className="grid grid-cols-[88px_minmax(0,1fr)] items-start gap-x-3 gap-y-2.5">
-				<Row label="Title">
-					<Input
-						data-testid={PLAN_TESTID.overviewTitle}
-						value={title.draft}
-						placeholder={node?.name ?? "Untitled"}
-						disabled={guard.disabled}
-						title={guard.reason ?? undefined}
-						maxLength={200}
-						onChange={(e) => title.setDraft(e.target.value)}
-						onFocus={() => {
-							title.onFocus();
-							setEditing({ kind: "item", id: item.id, field: "title" });
-						}}
-						onBlur={() => {
-							title.onBlur();
-							setEditing(null);
-						}}
-						onKeyDown={(e) =>
-							e.key === "Enter" && (e.target as HTMLInputElement).blur()
-						}
-					/>
-					{title.remoteChanged ? (
-						<p className="mt-1 text-xs text-muted-foreground">
-							{title.remoteChanged.name} changed this ·{" "}
-							<button
-								type="button"
-								className="text-primary hover:underline"
-								onClick={title.useTheirs}
-							>
-								Use theirs
-							</button>
-						</p>
-					) : null}
-				</Row>
-
-				<Row label="When">
-					{/* One shrinkable column: an auto column would grow to the select's
-					    longest day label and push it past the panel's edge. */}
-					<div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-1.5">
-						<span className="tnum">
-							{day && s
-								? `${formatDayDate(day.date)} · ${formatTime(s.start, s.tz)}–${formatTime(s.end, s.tz)}${s.endsNextDay ? "⁺¹" : ""} ${tzLabel(s.tz, s.start)}`
-								: "Unscheduled — no times"}
-						</span>
-						<Select
-							value={item.dayId ?? UNSCHEDULED}
-							disabled={guard.disabled}
-							onValueChange={(v) =>
-								v === UNSCHEDULED
-									? actions.unschedule(item.id)
-									: actions.moveToDay(item.id, v)
-							}
-						>
-							<SelectTrigger
-								data-testid={PLAN_TESTID.overviewDay}
-								size="sm"
-								className="w-full min-w-0 max-w-full"
-								aria-label="Day"
-							>
-								<SelectValue>
-									<DayValue dayId={item.dayId} />
-								</SelectValue>
-							</SelectTrigger>
-							<SelectContent className="max-h-72">
-								{ix.days.map((d) => (
-									<SelectItem key={d.id} value={d.id}>
-										<span className="text-xs text-muted-foreground tnum">
-											D{ix.dayNumber(d.id)}
-										</span>{" "}
-										{formatDayDate(d.date)}
-										{d.title ? ` · ${d.title}` : ""}
-									</SelectItem>
-								))}
-								<SelectItem value={UNSCHEDULED}>Unscheduled</SelectItem>
-							</SelectContent>
-						</Select>
-					</div>
-				</Row>
-
-				{item.dayId ? (
-					<Row label="Start">
-						<div
-							className="flex flex-wrap items-center gap-2"
-							data-testid={PLAN_TESTID.overviewPin}
-						>
-							<TimeInput
-								value={pin}
-								onChange={setPin}
+			{/* One Yonder (D03): read first; each fact is one click to change. */}
+			<section className="grid gap-2" data-section="when">
+				<Eyebrow as="h3">When & travel</Eyebrow>
+				<dl className="grid grid-cols-[88px_minmax(0,1fr)] items-start gap-x-3 gap-y-2.5">
+					{/* A block of time (or a stop with its own name) keeps its title here;
+					    a place's is the place's own. */}
+					{!node || item.title ? (
+						<Row label="Title">
+							<Input
+								data-testid={PLAN_TESTID.overviewTitle}
+								value={title.draft}
+								placeholder={node?.name ?? "Untitled"}
 								disabled={guard.disabled}
-								aria-label="Pinned start"
-							/>
-							<Button
-								size="sm"
-								variant={item.pinnedStart === pin ? "secondary" : "outline"}
-								disabled={
-									guard.disabled ||
-									!/^\d{2}:\d{2}$/.test(pin) ||
-									item.pinnedStart === pin
+								title={guard.reason ?? undefined}
+								maxLength={200}
+								onChange={(e) => title.setDraft(e.target.value)}
+								onFocus={() => {
+									title.onFocus();
+									setEditing({ kind: "item", id: item.id, field: "title" });
+								}}
+								onBlur={() => {
+									title.onBlur();
+									setEditing(null);
+								}}
+								onKeyDown={(e) =>
+									e.key === "Enter" && (e.target as HTMLInputElement).blur()
 								}
-								onClick={() =>
+							/>
+							{title.remoteChanged ? (
+								<p className="mt-1 text-xs text-muted-foreground">
+									{title.remoteChanged.name} changed this ·{" "}
+									<button
+										type="button"
+										className="text-primary hover:underline"
+										onClick={title.useTheirs}
+									>
+										Use theirs
+									</button>
+								</p>
+							) : null}
+						</Row>
+					) : null}
+
+					<Row label="When">
+						<span className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1 pt-1">
+							<span className="tnum">
+								{day && s
+									? `${formatDayDate(day.date)} · ${formatTime(s.start, s.tz)}–${formatTime(s.end, s.tz)}${s.endsNextDay ? "⁺¹" : ""} ${tzLabel(s.tz, s.start)}`
+									: "Unscheduled"}
+							</span>
+							<span aria-hidden className="text-muted-foreground">
+								·
+							</span>
+							<DurationInput
+								value={item.durationMin}
+								presets={DURATION_PRESETS}
+								disabled={guard.disabled}
+								onChange={(m) =>
 									actions.update.mutate({
 										itemId: item.id,
-										patch: { pinnedStart: pin },
+										patch: { durationMin: m },
 									})
 								}
+								className="-mx-1 h-5 rounded-md border-0 bg-transparent px-1 text-meta font-normal shadow-none hover:bg-accent dark:bg-transparent"
+							/>
+							<HoursChip itemId={item.id} />
+						</span>
+					</Row>
+
+					{item.dayId ? (
+						<Row label="Start">
+							<div
+								className="flex flex-wrap items-center gap-2"
+								data-testid={PLAN_TESTID.overviewPin}
 							>
-								{item.pinnedStart
-									? item.pinnedStart === pin
-										? "◆ Pinned"
-										: "Update pin"
-									: "Pin"}
-							</Button>
-							{item.pinnedStart ? (
-								<Button
-									size="sm"
-									variant="ghost"
+								{item.pinnedStart ? (
+									<>
+										<span className="tnum">
+											<span className="text-primary" aria-hidden>
+												◆
+											</span>{" "}
+											Pinned at {item.pinnedStart}
+										</span>
+										<Button
+											size="xs"
+											variant="ghost"
+											disabled={guard.disabled}
+											onClick={() =>
+												actions.update.mutate({
+													itemId: item.id,
+													patch: { pinnedStart: null },
+												})
+											}
+										>
+											Unpin
+										</Button>
+									</>
+								) : (
+									<span className="text-muted-foreground">
+										Flows from the stop before
+									</span>
+								)}
+								<Popover>
+									<PopoverTrigger asChild>
+										<Button
+											size="xs"
+											variant="outline"
+											className="ml-auto"
+											disabled={guard.disabled}
+										>
+											{item.pinnedStart ? "Change" : "Set a time"}
+										</Button>
+									</PopoverTrigger>
+									<PopoverContent align="end" className="w-60 p-3">
+										<form
+											className="flex gap-2"
+											onSubmit={(e) => {
+												e.preventDefault();
+												if (!/^\d{2}:\d{2}$/.test(pin)) return;
+												actions.update.mutate({
+													itemId: item.id,
+													patch: { pinnedStart: pin },
+												});
+											}}
+										>
+											<TimeInput
+												value={pin}
+												onChange={setPin}
+												aria-label="Pinned start"
+											/>
+											<Button
+												type="submit"
+												size="sm"
+												disabled={!/^\d{2}:\d{2}$/.test(pin)}
+											>
+												Pin
+											</Button>
+										</form>
+									</PopoverContent>
+								</Popover>
+							</div>
+						</Row>
+					) : null}
+
+					{inLeg && prev ? (
+						<Row label="Before">
+							<TravelRow
+								target={{
+									kind: "pair",
+									fromItemId: prev.id,
+									toItemId: item.id,
+								}}
+							>
+								<ArrowDownLeft
+									className="mt-0.5 size-3.5 shrink-0 text-muted-foreground"
+									strokeWidth={1.5}
+									aria-label="In"
+								/>
+								<span className={TRAVEL_LINE}>
+									<TravelSummary legKey={inLeg} />
+									<span className={TRAVEL_END}>from {itemName(ix, prev)}</span>
+								</span>
+							</TravelRow>
+						</Row>
+					) : null}
+					{outLeg && next ? (
+						<Row label="After">
+							<TravelRow
+								target={{
+									kind: "pair",
+									fromItemId: item.id,
+									toItemId: next.id,
+								}}
+							>
+								<ArrowUpRight
+									className="mt-0.5 size-3.5 shrink-0 text-muted-foreground"
+									strokeWidth={1.5}
+									aria-label="Out"
+								/>
+								<span className={TRAVEL_LINE}>
+									<TravelSummary legKey={outLeg} />
+									<span className={TRAVEL_END}>to {itemName(ix, next)}</span>
+								</span>
+							</TravelRow>
+						</Row>
+					) : null}
+
+					{item.dayId ? (
+						<Row label="Booked">
+							<div className="flex items-center gap-2 pt-1 text-meta">
+								<Switch
+									id={bookedId}
+									data-testid={PLAN_TESTID.overviewBooked}
+									checked={booked}
 									disabled={guard.disabled}
-									onClick={() =>
+									onCheckedChange={(v) =>
 										actions.update.mutate({
 											itemId: item.id,
-											patch: { pinnedStart: null },
+											patch: { fixedDate: v },
 										})
 									}
-								>
-									Unpin
-								</Button>
+								/>
+								<label htmlFor={bookedId} className="text-muted-foreground">
+									Booked for this date
+								</label>
+							</div>
+						</Row>
+					) : null}
+
+					<Row label="Who">
+						<div
+							className="flex min-w-0 flex-wrap items-center gap-1.5"
+							data-testid={PLAN_TESTID.overviewAssignees}
+						>
+							{item.assigneeIds.length ? (
+								item.assigneeIds.map((id) => (
+									<span
+										key={id}
+										className="inline-flex items-center gap-1 rounded-full bg-muted py-0.5 pr-2 pl-0.5 text-xs"
+									>
+										<MemberAvatar memberId={id} size={16} ring={false} />
+										<MemberName memberId={id} />
+									</span>
+								))
 							) : (
-								<span className="text-xs text-muted-foreground">
-									Flows from the previous stop
-								</span>
+								<span className="text-muted-foreground">Everyone</span>
 							)}
-						</div>
-					</Row>
-				) : null}
-
-				<Row label="Duration">
-					<div className="flex items-center gap-2">
-						<DurationInput
-							value={item.durationMin}
-							presets={DURATION_PRESETS}
-							disabled={guard.disabled}
-							onChange={(m) =>
-								actions.update.mutate({
-									itemId: item.id,
-									patch: { durationMin: m },
-								})
-							}
-						/>
-						<HoursChip itemId={item.id} />
-					</div>
-				</Row>
-
-				{item.dayId ? (
-					<Row label="Booked">
-						<div className="flex items-center gap-2 pt-1 text-meta">
-							<Switch
-								id={bookedId}
-								data-testid={PLAN_TESTID.overviewBooked}
-								checked={booked}
+							<MemberPicker
+								value={item.assigneeIds}
 								disabled={guard.disabled}
-								onCheckedChange={(v) =>
-									actions.update.mutate({
-										itemId: item.id,
-										patch: { fixedDate: v },
-									})
+								onChange={(memberIds) =>
+									actions.assign.mutate({ itemId: item.id, memberIds })
 								}
-							/>
-							<label htmlFor={bookedId} className="text-muted-foreground">
-								Booked for this date
-							</label>
-						</div>
-					</Row>
-				) : null}
-
-				<Row label="Place">
-					<div className="flex min-w-0 items-center gap-2">
-						{node ? (
-							<button
-								type="button"
-								className="flex min-w-0 items-center gap-1.5 text-primary hover:underline"
-								onClick={() => nav.select({ kind: "node", id: node.id })}
-							>
-								<TypeGlyph type={node.type} category={node.category} />
-								<span className="truncate">{node.name}</span>
-							</button>
-						) : (
-							<span className="text-muted-foreground">
-								No place — a block of time
-							</span>
-						)}
-						<EditGuard>
-							<TreePicker
-								value={item.nodeId}
-								onChange={(nodeId) =>
-									actions.update.mutate({ itemId: item.id, patch: { nodeId } })
-								}
-								filter={(n) => n.status === "active"}
 								trigger={
 									<Button
 										size="xs"
 										variant="ghost"
-										className="ml-auto shrink-0 text-muted-foreground"
+										className="text-muted-foreground"
 										disabled={guard.disabled}
 									>
-										{node ? "Change" : "Link a place"}
+										{item.assigneeIds.length ? "Edit" : "Assign"}
 									</Button>
 								}
 							/>
-						</EditGuard>
-					</div>
-				</Row>
-
-				<Row label="Who">
-					<div
-						className="flex min-w-0 flex-wrap items-center gap-1.5"
-						data-testid={PLAN_TESTID.overviewAssignees}
-					>
-						{item.assigneeIds.length ? (
-							item.assigneeIds.map((id) => (
-								<span
-									key={id}
-									className="inline-flex items-center gap-1 rounded-full bg-muted py-0.5 pr-2 pl-0.5 text-xs"
-								>
-									<MemberAvatar memberId={id} size={16} ring={false} />
-									<MemberName memberId={id} />
-								</span>
-							))
-						) : (
-							<span className="text-muted-foreground">Everyone</span>
-						)}
-						<MemberPicker
-							value={item.assigneeIds}
-							disabled={guard.disabled}
-							onChange={(memberIds) =>
-								actions.assign.mutate({ itemId: item.id, memberIds })
-							}
-							trigger={
-								<Button
-									size="xs"
-									variant="ghost"
-									className="text-muted-foreground"
-									disabled={guard.disabled}
-								>
-									{item.assigneeIds.length ? "Edit" : "Assign"}
-								</Button>
-							}
-						/>
-					</div>
-				</Row>
-
-				{inLeg || outLeg ? (
-					<Row label="Travel">
-						<div className="grid gap-1">
-							{inLeg && prev ? (
-								<TravelRow
-									target={{
-										kind: "pair",
-										fromItemId: prev.id,
-										toItemId: item.id,
-									}}
-								>
-									<ArrowDownLeft
-										className="mt-0.5 size-3.5 shrink-0 text-muted-foreground"
-										strokeWidth={1.5}
-										aria-label="In"
-									/>
-									<span className={TRAVEL_LINE}>
-										<TravelSummary legKey={inLeg} />
-										<span className={TRAVEL_END}>
-											from {itemName(ix, prev)}
-										</span>
-									</span>
-								</TravelRow>
-							) : null}
-							{outLeg && next ? (
-								<TravelRow
-									target={{
-										kind: "pair",
-										fromItemId: item.id,
-										toItemId: next.id,
-									}}
-								>
-									<ArrowUpRight
-										className="mt-0.5 size-3.5 shrink-0 text-muted-foreground"
-										strokeWidth={1.5}
-										aria-label="Out"
-									/>
-									<span className={TRAVEL_LINE}>
-										<TravelSummary legKey={outLeg} />
-										<span className={TRAVEL_END}>to {itemName(ix, next)}</span>
-									</span>
-								</TravelRow>
-							) : null}
 						</div>
 					</Row>
-				) : null}
-			</dl>
+
+					<Row label="Place">
+						<div className="flex min-w-0 items-center gap-2">
+							{node ? (
+								<button
+									type="button"
+									className="flex min-w-0 items-center gap-1.5 text-primary hover:underline"
+									onClick={() => nav.select({ kind: "node", id: node.id })}
+								>
+									<TypeGlyph type={node.type} category={node.category} />
+									<span className="truncate">{node.name}</span>
+								</button>
+							) : (
+								<span className="text-muted-foreground">
+									No place — a block of time
+								</span>
+							)}
+							<EditGuard>
+								<TreePicker
+									value={item.nodeId}
+									onChange={(nodeId) =>
+										actions.update.mutate({
+											itemId: item.id,
+											patch: { nodeId },
+										})
+									}
+									filter={(n) => n.status === "active"}
+									trigger={
+										<Button
+											size="xs"
+											variant="ghost"
+											className="ml-auto shrink-0 text-muted-foreground"
+											disabled={guard.disabled}
+										>
+											{node ? "Change" : "Link a place"}
+										</Button>
+									}
+								/>
+							</EditGuard>
+						</div>
+					</Row>
+				</dl>
+				<div className="flex min-w-0 flex-wrap items-center gap-2 pt-1">
+					<Select
+						value={item.dayId ?? UNSCHEDULED}
+						disabled={guard.disabled}
+						onValueChange={(v) =>
+							v === UNSCHEDULED
+								? actions.unschedule(item.id)
+								: actions.moveToDay(item.id, v)
+						}
+					>
+						<SelectTrigger
+							data-testid={PLAN_TESTID.overviewDay}
+							size="sm"
+							className="w-auto max-w-full min-w-0"
+							aria-label="Day"
+						>
+							<CalendarDays className="size-4 text-muted-foreground" />
+							<SelectValue>
+								{item.dayId ? "Change day" : <DayValue dayId={item.dayId} />}
+							</SelectValue>
+						</SelectTrigger>
+						<SelectContent className="max-h-72">
+							{ix.days.map((d) => (
+								<SelectItem key={d.id} value={d.id}>
+									<span className="text-xs text-muted-foreground tnum">
+										D{ix.dayNumber(d.id)}
+									</span>{" "}
+									{formatDayDate(d.date)}
+									{d.title ? ` · ${d.title}` : ""}
+								</SelectItem>
+							))}
+							<SelectItem value={UNSCHEDULED}>Unscheduled</SelectItem>
+						</SelectContent>
+					</Select>
+					{money ? (
+						<Button
+							size="sm"
+							variant="outline"
+							onClick={() =>
+								openAddExpense({
+									target: { kind: "item", itemId: item.id },
+									title: itemName(ix, item),
+								})
+							}
+						>
+							<Wallet className="size-4" strokeWidth={1.5} /> Add expense
+						</Button>
+					) : null}
+				</div>
+			</section>
 
 			<section className="grid gap-1.5" data-testid={PLAN_TESTID.overviewNote}>
-				<h3 className="eyebrow">Note</h3>
+				<Eyebrow as="h3">Note</Eyebrow>
 				{editingNote ? (
 					<MentionInput
 						multiline
@@ -656,52 +788,6 @@ function ItemOverviewBody({ itemId }: { itemId: string }) {
 					</button>
 				)}
 			</section>
-
-			<div className="flex flex-wrap items-center gap-2 border-t pt-3">
-				{money ? (
-					<Button
-						size="sm"
-						variant="outline"
-						onClick={() =>
-							openAddExpense({
-								target: { kind: "item", itemId: item.id },
-								title: itemName(ix, item),
-							})
-						}
-					>
-						<Wallet className="size-4" strokeWidth={1.5} /> Add expense
-					</Button>
-				) : null}
-				{item.dayId ? (
-					<EditGuard>
-						<Button
-							size="sm"
-							variant="ghost"
-							data-testid={PLAN_TESTID.overviewUnschedule}
-							onClick={() => actions.unschedule(item.id)}
-						>
-							Unschedule
-						</Button>
-					</EditGuard>
-				) : null}
-				<EditGuard>
-					<Button
-						size="sm"
-						variant="ghost"
-						data-testid={PLAN_TESTID.overviewDelete}
-						className="ml-auto text-destructive hover:text-destructive"
-						onClick={() => {
-							// QA A11Y-02: the focus goes to the next card, not <body>.
-							const find = focusAfterLeaving(item.id);
-							actions.deleteItem(item.id);
-							nav.select(null);
-							focusWhenReady(find);
-						}}
-					>
-						Delete
-					</Button>
-				</EditGuard>
-			</div>
 		</div>
 	);
 }

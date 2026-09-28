@@ -54,7 +54,11 @@ import {
 import { PLACES_TAB_TESTID } from "@/features/places/tab/testids";
 import { CategorySelect } from "@/features/places/ui/category-select";
 import { DayOverview } from "@/features/plan/DayOverview";
-import { ItemOverview } from "@/features/plan/ItemOverview";
+import {
+	ItemDetailsMenu,
+	ItemHeadline,
+	ItemOverview,
+} from "@/features/plan/ItemOverview";
 import { ProposalBar } from "@/features/suggest/ProposalBar";
 import { ProposalOverview } from "@/features/suggest/ProposalOverview";
 import { EdgeOverview } from "@/features/transit/EdgeOverview";
@@ -151,6 +155,21 @@ export function InspectorBody(props: InspectorProps) {
 	return <Body {...props} />;
 }
 
+/** A stop's title and chips beside its family icon (D03); anything else as it is. */
+function ItemHeadlineOf({
+	itemId,
+	children,
+}: {
+	itemId: string | null;
+	children: ReactNode;
+}) {
+	return itemId ? (
+		<ItemHeadline itemId={itemId}>{children}</ItemHeadline>
+	) : (
+		<>{children}</>
+	);
+}
+
 /** A place's header: its name, local name, where it's filed and category, then the Places parts. */
 function PlaceHeader({ node }: { node: GraphNode }) {
 	const { ix } = useWorkspace();
@@ -215,7 +234,7 @@ function Body({
 				{place ? (
 					<PlaceHeader node={place} />
 				) : (
-					<>
+					<ItemHeadlineOf itemId={sel?.kind === "item" ? sel.id : null}>
 						<h2
 							className={cn(
 								"text-2xl leading-7 font-semibold text-balance",
@@ -247,7 +266,7 @@ function Body({
 								</span>
 							) : null}
 						</div>
-					</>
+					</ItemHeadlineOf>
 				)}
 				{/* FB-24: someone has an editor open on this. */}
 				<InspectorFormChips
@@ -256,6 +275,7 @@ function Body({
 				/>
 			</div>
 			{node ? <DetailsNodeMenu node={node} /> : null}
+			{sel?.kind === "item" ? <ItemDetailsMenu itemId={sel.id} /> : null}
 			{onCollapse ? (
 				<button
 					type="button"
