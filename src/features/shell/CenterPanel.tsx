@@ -208,7 +208,7 @@ export function CenterTabContent({
 }: {
 	/** FB-17a "where are they" chips at the panel's foot (phones show them with the pills). */
 	whereChips?: boolean;
-	/** The phone's sheet (the Places tab lays out for it). */
+	/** The phone's sheet (the Places and Lists tabs lay out for it). */
 	phone?: boolean;
 } = {}) {
 	const { tab, graph, mode } = useWorkspace();

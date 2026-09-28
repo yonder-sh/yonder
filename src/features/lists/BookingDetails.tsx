@@ -190,6 +190,7 @@ export function BookingDetails({
 								size="xs"
 								variant="ghost"
 								data-testid={LISTS_TESTID.bookingForPick}
+								aria-label={f ? "Change what it's for" : "Choose what it's for"}
 							>
 								{f ? "Change" : "Choose"}
 							</Button>

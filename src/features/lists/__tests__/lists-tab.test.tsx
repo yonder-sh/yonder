@@ -625,6 +625,7 @@ describe("Bookings", () => {
 		expect(forSection).toHaveTextContent("Not linked to a stop yet.");
 		const pick = within(forSection).getByTestId(L.bookingForPick);
 		expect(pick).toHaveTextContent("Choose");
+		expect(pick).toHaveAccessibleName("Choose what it's for");
 		await user.click(pick);
 		const picker = await screen.findByTestId(L.bookingForPicker);
 		// Day by day: the stops, the train from Itoya and the flight (never a walk).

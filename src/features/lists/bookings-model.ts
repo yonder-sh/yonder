@@ -411,7 +411,7 @@ export type ForOption = {
 /**
  * What a booking can be for, day by day: each stop, and after it the travel
  * it leaves on (a flight, or a train, bus or ferry someone has set; never a
- * walk). The booking's own stop or leg is always there.
+ * walk, unless it is the booking's own leg).
  */
 export function forOptions(
 	ix: GraphIndex,
