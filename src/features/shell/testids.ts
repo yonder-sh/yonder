@@ -5,6 +5,8 @@
  * Never rename an id.
  */
 export const SHELL_TESTID = {
+	/** The phone header's Map / List button (One Yonder: the map is a button). */
+	mobileMapToggle: "mobile-map-toggle",
 	/** The full gallery's way back to the Plan (`tab=media`). */
 	mediaBack: "media-back",
 	/** The Where button in the top bar ("Japan › Tokyo"). */
@@ -65,7 +67,6 @@ export const SHELL_TESTID = {
 	rateMenuItem: "rate-menu-item",
 	// Phone chrome (COLLAB-R3-03, VIS3-09)
 	mobileWhatIf: "mobile-what-if",
-	mobileEmptyPeek: "mobile-empty-peek",
 	// FB-17 live cursors (the overlay's own nodes: remote-cursor, remote-cursor-chat,
 	// remote-cursor-edge, remote-reaction, remote-tap)
 	cursorLayer: "cursor-layer",

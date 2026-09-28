@@ -13,7 +13,6 @@ import { renderWithWorkspace } from "@/test/render-workspace";
 import { CenterTabBar } from "./CenterPanel";
 import { InspectorSheet } from "./DesktopWorkspace";
 import { InboxBell } from "./InboxBell";
-import { LensControl } from "./LensControl";
 import { useShell } from "./shell-store";
 import { SHELL_TESTID } from "./testids";
 
@@ -47,13 +46,6 @@ describe("phone touch targets (VIS-02, MOB-07)", () => {
 	it("desktop tabs keep the 40px bar", () => {
 		renderWithWorkspace(<CenterTabBar />);
 		expect(screen.getByTestId(TESTID.centerTabs)).not.toHaveClass("h-[45px]");
-	});
-
-	it("the scrollable lens segments are 44px tall", () => {
-		renderWithWorkspace(<LensControl scrollable />, { splat: "japan" });
-		const radios = screen.getAllByRole("radio");
-		expect(radios.length).toBeGreaterThan(1);
-		for (const r of radios) expect(r).toHaveClass("h-11", "min-w-11");
 	});
 
 	it("the bell takes the pill's 44px size", () => {

@@ -12,28 +12,21 @@ import { Star } from "lucide-react";
 import type { CSSProperties, MouseEvent } from "react";
 import { useRateTarget } from "@/features/shell/rate-entry";
 import { cn } from "@/lib/utils";
-import { useUi } from "@/lib/workspace/ui-store";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { PLACES_TAB_TESTID } from "./testids";
 import { useFlowTally } from "./use-flow";
 
-/** The pill's bottom edge for a sheet snap (the sheet's snaps: 120px, 0.5, 0.92). */
-export function ratePillBottom(snap: string | number | null): string {
-	if (typeof snap === "number" && snap >= 0.9)
-		return "max(16px, calc(env(safe-area-inset-bottom) + 12px))";
-	if (typeof snap === "number") return `calc(${snap * 100}svh + 12px)`;
-	const px = typeof snap === "string" ? Number.parseFloat(snap) : 120;
-	return `${(Number.isFinite(px) ? px : 120) + 12}px`;
-}
+/** The pill's bottom edge: just above the phone's 56px tab bar (One Yonder). */
+export const RATE_PILL_BOTTOM =
+	"calc(56px + env(safe-area-inset-bottom) + 12px)";
 
 export function RatePill() {
 	const { tab, search } = useWorkspace();
 	const t = useRateTarget();
 	const left = useFlowTally(t.scopeId).toRate ?? 0;
-	const snap = useUi((s) => s.sheetSnap);
 	const feedOpen = tab === "places" && search.pv === "rate";
 	if (!left || feedOpen) return null;
-	const style: CSSProperties = { bottom: ratePillBottom(snap) };
+	const style: CSSProperties = { bottom: RATE_PILL_BOTTOM };
 	return (
 		<a
 			href={t.href}

@@ -561,7 +561,6 @@ export default function MapCanvas({
 	// The phone's sheet covers its map: the route shows beside the Plan only.
 	const route = variant === "desktop" && splitRoute?.length ? splitRoute : null;
 	const padding = useUi((s) => s.mapPadding);
-	const sheetSnap = useUi((s) => s.sheetSnap);
 	const setMapZoom = useUi((s) => s.setMapZoom);
 	const openAddPlace = useUi((s) => s.openAddPlace);
 	const [filter, setFilter] = useSharedFilter();
@@ -713,22 +712,13 @@ export default function MapCanvas({
 	 * right. `clearPadding` shrinks only the soft part when the map is narrow.
 	 */
 	const fitPadding = useMemo((): { hard: Insets; soft: Insets } => {
-		if (variant === "mobile") {
-			const h = typeof window === "undefined" ? 800 : window.innerHeight;
-			const bottom =
-				typeof sheetSnap === "number" && sheetSnap <= 1
-					? Math.round(sheetSnap * h) + 24
-					: 150;
+		// The phone's map is its own page between the header and the tab bar
+		// (One Yonder): only the controls column on the right to keep clear.
+		if (variant === "mobile")
 			return {
 				hard: NO_INSETS,
-				soft: {
-					top: 140,
-					bottom: Math.min(bottom, h * 0.6),
-					left: 40,
-					right: 56,
-				},
+				soft: { top: 24, bottom: 24, left: 24, right: 56 },
 			};
-		}
 		return {
 			hard: {
 				top: padding.top,
@@ -738,7 +728,7 @@ export default function MapCanvas({
 			},
 			soft: { top: 36, right: 36 + 40, bottom: 36, left: 36 },
 		};
-	}, [variant, padding, sheetSnap]);
+	}, [variant, padding]);
 
 	// The whole trip at the country lens frames every country, ideas included
 	// (FB-10), on a globe when they span more than one country (`wantsGlobe`).
@@ -1426,23 +1416,14 @@ export default function MapCanvas({
 	const { awareness } = useTripAwareness();
 	const following = useUi((s) => s.following);
 	const visibleInsets = useMemo(() => {
-		if (variant === "mobile") {
-			const h = typeof window === "undefined" ? 800 : window.innerHeight;
-			const sheet =
-				typeof sheetSnap === "number" && sheetSnap <= 1
-					? Math.round(sheetSnap * h)
-					: typeof sheetSnap === "string" && sheetSnap.endsWith("px")
-						? Number.parseFloat(sheetSnap) || 150
-						: 150;
-			return { top: 112, right: 0, bottom: Math.min(sheet, h * 0.6), left: 0 };
-		}
+		if (variant === "mobile") return { top: 0, right: 0, bottom: 0, left: 0 };
 		return {
 			top: padding.top,
 			right: padding.right,
 			bottom: padding.bottom,
 			left: padding.left,
 		};
-	}, [variant, padding, sheetSnap]);
+	}, [variant, padding]);
 	useCameraFollow({
 		map: loaded ? (mapRef.current?.getMap() ?? null) : null,
 		awareness: ws.mode === "live" ? awareness : null,
