@@ -43,7 +43,7 @@ import {
 	ensureDatabase,
 	migrateDatabase,
 } from "@/db/migrate.server";
-import { user } from "@/db/schema";
+import { items, user } from "@/db/schema";
 import { deleteDay } from "@/functions/days.functions";
 import { moveItem, setItemDone } from "@/functions/items.functions";
 import type { AuthUser } from "@/server/auth.server";
@@ -134,8 +134,10 @@ const mark = (
 	});
 
 async function doneMark(itemId: string) {
-	const [row] = await q<{ at: Date | null; by: string | null }>(sql`
-		select done_at as at, done_by as by from items where id = ${itemId}`);
+	const [row] = await getDb()
+		.select({ at: items.doneAt, by: items.doneBy })
+		.from(items)
+		.where(sql`${items.id} = ${itemId}`);
 	return row;
 }
 
