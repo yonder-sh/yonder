@@ -218,12 +218,12 @@ const money: MoneyDto = {
 	],
 };
 
-function mount(search: WorkspaceSearch = {}) {
+function mount(search: WorkspaceSearch = {}, extra: ListItemDto[] = []) {
 	const queryClient = new QueryClient({
 		defaultOptions: { queries: { retry: false, staleTime: Infinity } },
 	});
 	server.items = [...items];
-	queryClient.setQueryData(tripKeys.lists(TRIP), items);
+	queryClient.setQueryData(tripKeys.lists(TRIP), [...items, ...extra]);
 	queryClient.setQueryData(tripKeys.media(TRIP), [pdf(I.kiyomizu as string)]);
 	queryClient.setQueryData(tripKeys.money(TRIP), money);
 	return renderWithWorkspace(<ListsTab />, {
@@ -383,6 +383,25 @@ describe("Bookings", () => {
 				{ itemId: I.sky, patch: { fixedDate: true } },
 			]),
 		);
+	});
+
+	it("a suggested booking reads only until it's accepted", async () => {
+		const user = userEvent.setup();
+		const ghost = {
+			...row({ id: ID(20), text: "teamLab tickets", dueKind: "opens" }),
+			ghostOf: ID(21),
+		};
+		mount({ list: "bookings" }, [ghost]);
+		const r = screen
+			.getAllByTestId(L.bookingRow)
+			.find((x) => x.dataset.id === ID(20)) as HTMLElement;
+		expect(r).toHaveAttribute("data-ghost");
+		expect(within(r).getByTestId(L.bookingCheck)).toBeDisabled();
+		await user.click(within(r).getByTestId(L.bookingOpen));
+		const d = await screen.findByTestId(L.bookingDetails);
+		expect(within(d).getByTestId(L.bookingRef)).toBeDisabled();
+		expect(within(d).queryByTestId(L.bookingMarkBooked)).toBeNull();
+		expect(within(d).queryByTestId(L.bookingEdit)).toBeNull();
 	});
 
 	it("the booking reference saves on Enter", async () => {

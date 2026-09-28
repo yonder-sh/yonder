@@ -50,6 +50,7 @@ import {
 	type ScopeOptions,
 } from "./list-model";
 import type { ListItemDto } from "./lists.functions";
+import { isGhost } from "./queries";
 import { RowCheckbox } from "./RowCheckbox";
 import { LISTS_TESTID } from "./testids";
 import { useBookingActions } from "./use-booking-actions";
@@ -135,13 +136,16 @@ export function BookingsBoard({
 		return out;
 	}, [groups, ix, schedule, media]);
 
+	// A suggested booking (a ghost) reads only until it's accepted.
+	const editable = (e: BookingEntry) =>
+		canEdit && !(e.kind === "todo" && isGhost(e.row));
 	const [selId, setSelId] = useState<string | null>(null);
 	const selected =
 		groups.flatMap((g) => g.entries).find((e) => e.id === selId) ?? null;
 	const details = selected ? (
 		<BookingDetails
 			entry={selected}
-			canEdit={canEdit}
+			canEdit={editable(selected)}
 			onClose={() => setSelId(null)}
 		/>
 	) : null;
@@ -259,7 +263,7 @@ export function BookingsBoard({
 										dueCtx={dueCtx}
 										confirmed={confirmed.has(e.id)}
 										selected={e.id === selId}
-										canEdit={canEdit}
+										canEdit={editable(e)}
 										onSelect={() => setSelId(e.id === selId ? null : e.id)}
 										onToggle={() =>
 											e.kind === "todo" && e.row.status === "done"
@@ -309,6 +313,7 @@ function BookingRow({
 }) {
 	const { ix } = useWorkspace();
 	const row = entry.kind === "todo" ? entry.row : null;
+	const ghost = !!row && isGhost(row);
 	const label =
 		entry.kind === "todo"
 			? plainOf(entry.row.text)
@@ -351,12 +356,14 @@ function BookingRow({
 			data-kind={entry.kind}
 			data-group={group}
 			data-selected={selected ? "" : undefined}
+			data-ghost={ghost ? "" : undefined}
 			aria-label={label}
 		>
 			<div
 				className={cn(
 					"flex min-h-11 items-start gap-3 px-4 py-1.5 text-sm md:min-h-9",
 					selected ? "bg-accent" : "hover:bg-accent/40",
+					ghost && "opacity-80",
 				)}
 			>
 				{row ? (
