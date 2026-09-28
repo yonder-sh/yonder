@@ -54,7 +54,8 @@ export function ListsTab() {
 	const editGuard = useEditGuard();
 	const canAdd = ws.mode === "live" && !editGuard.disabled;
 	const root = useRef<HTMLDivElement>(null);
-	const [width, setWidth] = useState(0);
+	// 0 narrow, 1 wide enough for the heading, 2 for details beside the list.
+	const [size, setSize] = useState(0);
 	// "Add a booking" focuses the Bookings add row (a new tick each time).
 	const [addTick, setAddTick] = useState(0);
 	// The list is in the URL (`list`, so a deep link or the inbox opens the
@@ -84,11 +85,15 @@ export function ListsTab() {
 	useEffect(() => {
 		const el = root.current;
 		if (!el || typeof ResizeObserver === "undefined") return;
-		const ro = new ResizeObserver(([e]) => setWidth(e?.contentRect.width ?? 0));
+		// Only the size class re-renders the lists, not every pixel of a resize.
+		const ro = new ResizeObserver(([e]) => {
+			const w = e?.contentRect.width ?? 0;
+			setSize(w >= BESIDE_PX ? 2 : w >= HEADING_PX ? 1 : 0);
+		});
 		ro.observe(el);
 		return () => ro.disconnect();
 	}, []);
-	const wide = width >= HEADING_PX;
+	const wide = size >= 1;
 
 	const scopeId = scope?.id ?? null;
 	const opts = useMemo<ScopeOptions>(
@@ -176,7 +181,7 @@ export function ListsTab() {
 				<BookingsBoard
 					{...common}
 					headerStart={switcher}
-					beside={width >= BESIDE_PX}
+					beside={size === 2}
 					focusAdd={addTick}
 				/>
 			) : kind === "packing" ? (
