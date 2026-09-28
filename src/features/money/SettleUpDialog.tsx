@@ -11,7 +11,7 @@ import { toast } from "sonner";
 import { EditGuard, useEditGuard } from "@/components/common/edit-guard";
 import { PersonAvatar, resolveMember } from "@/components/common/member";
 import { useTripMutation } from "@/components/common/use-trip-mutation";
-import { SectionHeader } from "@/components/kit";
+import { EmptyState, SectionHeader } from "@/components/kit";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -97,9 +97,7 @@ function SettleUpBody() {
 	return (
 		<div className="grid gap-4">
 			{view.transfers.length === 0 ? (
-				<p className="font-display text-lg leading-6 font-medium">
-					Everyone is square.
-				</p>
+				<EmptyState line="Everyone is square." className="py-6" />
 			) : (
 				<ul className="grid gap-2">
 					{view.transfers.map((t, i) => (
@@ -269,7 +267,7 @@ function RecordForm({
 					<SelectTrigger
 						id="settle-tag"
 						size="sm"
-						className="h-8 min-w-0 flex-1 text-xs"
+						className="min-w-0 flex-1 text-xs"
 						aria-label="Tag it to a place or a day"
 					>
 						<SelectValue />
