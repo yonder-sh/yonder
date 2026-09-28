@@ -162,3 +162,38 @@ export function openListCounts(
 export function ancestorsOf(ix: GraphIndex, nodeId: string): GraphNode[] {
 	return ix.path(nodeId).slice(0, -1);
 }
+
+/**
+ * A level's line (One Yonder D09): its dates, nights, cities and stops,
+ * "3–13 Oct · 11 nights · 16 cities · 45 stops". Null when it isn't on
+ * any day.
+ */
+export function levelSummary(
+	ix: GraphIndex,
+	nodeId: string,
+	range: (from: string, to: string) => string,
+): string | null {
+	const visits = visitsOf(ix, nodeId);
+	const first = visits[0]?.days[0];
+	const last = visits.at(-1)?.days.at(-1);
+	if (!first || !last) return null;
+	const nights = visits.reduce((n, v) => n + v.nights, 0);
+	const stops = visits.reduce((n, v) => n + v.stops, 0);
+	const cities = ix.outline.filter(
+		(n) =>
+			n.type === "city" &&
+			n.status !== "dropped" &&
+			n.id !== nodeId &&
+			ix.isWithin(n.id, nodeId),
+	).length;
+	const plural = (n: number, one: string, many = `${one}s`) =>
+		`${n} ${n === 1 ? one : many}`;
+	return [
+		range(first.date, last.date),
+		nights ? plural(nights, "night") : null,
+		cities ? plural(cities, "city", "cities") : null,
+		plural(stops, "stop"),
+	]
+		.filter(Boolean)
+		.join(" · ");
+}

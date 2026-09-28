@@ -43,6 +43,7 @@ import { MediaPanel } from "@/features/media/MediaPanel";
 import { MoneyPanel } from "@/features/money/MoneyPanel";
 import { NotesInside, useNotesInside } from "@/features/notes/NotesInside";
 import { NotesPanel } from "@/features/notes/NotesPanel";
+import { levelSummary } from "@/features/places/lib/node-facts";
 import { isRateable } from "@/features/places/lib/rate";
 import { NodeOverview } from "@/features/places/NodeOverview";
 import {
@@ -66,7 +67,7 @@ import { LegOverview } from "@/features/transit/LegOverview";
 import { seesMoney } from "@/lib/auth/roles";
 import { NODE_TYPES } from "@/lib/domain/taxonomy";
 import type { GraphNode } from "@/lib/engine/types";
-import { langFor } from "@/lib/format";
+import { formatDateRange, langFor } from "@/lib/format";
 import { type ActivityTarget, activityQuery } from "@/lib/query/trip-queries";
 import type { BundleTarget } from "@/lib/schemas/targets";
 import { TESTID } from "@/lib/testids";
@@ -223,6 +224,8 @@ function Body({
 	const bundleTabs = target !== null || pendingLeg !== null;
 	const showMoney = seesMoney(graph.me) && target !== null;
 	const node = sel?.kind === "node" ? ix.node(sel.id) : undefined;
+	// A country, region, city or area (D09), not a place.
+	const level = node && node.type !== "place" ? node : undefined;
 	const counts = useInspectorCounts(target);
 	const scroller = useRef<HTMLDivElement>(null);
 	useSectionLink(sel, scroller);
@@ -315,6 +318,7 @@ function Body({
 			{top}
 			{target?.kind === "node" ? <CoverStrip target={target} /> : null}
 			{node ? <NodeActions node={node}>{headerRow}</NodeActions> : headerRow}
+			{level ? <LevelLine nodeId={level.id} /> : null}
 			{place ? (
 				<div className="grid gap-2 px-4 pt-2">
 					<PlaceHeadStatus />
@@ -329,45 +333,85 @@ function Body({
 				ref={scroller}
 				className="mt-3 min-h-0 flex-1 overflow-y-auto border-t px-4"
 			>
-				<div
-					data-testid={SHELL_TESTID.detailsSection}
-					data-section="overview"
-					className="py-4"
-				>
-					<Overview />
-				</div>
+				{/* D09: a level leads with what's said and saved about it; its facts follow. */}
+				{level ? null : (
+					<div
+						data-testid={SHELL_TESTID.detailsSection}
+						data-section="overview"
+						className="py-4"
+					>
+						<Overview />
+					</div>
+				)}
 				{bundleTabs ? (
 					<>
-						<Section
-							name="media"
-							testId={SHELL_TESTID.detailsSection}
-							title={
-								<>
-									Photos &amp; links
-									<Count n={counts.media} />
-								</>
-							}
-						>
-							{target ? (
-								<MediaPanel target={target} section />
-							) : pendingLeg ? (
-								<LegBundleGate target={pendingLeg} tab="media" />
-							) : null}
-						</Section>
-						<Section
-							name="notes"
-							testId={SHELL_TESTID.detailsSection}
-							title="Notes"
-						>
-							{target ? (
-								<>
-									<NotesPanel target={target} />
-									<NotesInsideTarget target={target} />
-								</>
-							) : pendingLeg ? (
-								<LegBundleGate target={pendingLeg} tab="notes" />
-							) : null}
-						</Section>
+						{level ? (
+							<>
+								<Section
+									name="notes"
+									testId={SHELL_TESTID.detailsSection}
+									title="Notes"
+								>
+									{target ? (
+										<>
+											<NotesPanel target={target} />
+											<NotesInsideTarget target={target} />
+										</>
+									) : pendingLeg ? (
+										<LegBundleGate target={pendingLeg} tab="notes" />
+									) : null}
+								</Section>
+								<Section
+									name="media"
+									testId={SHELL_TESTID.detailsSection}
+									title={
+										<>
+											Photos &amp; links
+											<Count n={counts.media} />
+										</>
+									}
+								>
+									{target ? (
+										<MediaPanel target={target} section />
+									) : pendingLeg ? (
+										<LegBundleGate target={pendingLeg} tab="media" />
+									) : null}
+								</Section>
+							</>
+						) : (
+							<>
+								<Section
+									name="media"
+									testId={SHELL_TESTID.detailsSection}
+									title={
+										<>
+											Photos &amp; links
+											<Count n={counts.media} />
+										</>
+									}
+								>
+									{target ? (
+										<MediaPanel target={target} section />
+									) : pendingLeg ? (
+										<LegBundleGate target={pendingLeg} tab="media" />
+									) : null}
+								</Section>
+								<Section
+									name="notes"
+									testId={SHELL_TESTID.detailsSection}
+									title="Notes"
+								>
+									{target ? (
+										<>
+											<NotesPanel target={target} />
+											<NotesInsideTarget target={target} />
+										</>
+									) : pendingLeg ? (
+										<LegBundleGate target={pendingLeg} tab="notes" />
+									) : null}
+								</Section>
+							</>
+						)}
 						<Section
 							name="lists"
 							testId={SHELL_TESTID.detailsSection}
@@ -398,8 +442,33 @@ function Body({
 						) : null}
 					</>
 				) : null}
+				{level ? (
+					<div
+						data-testid={SHELL_TESTID.detailsSection}
+						data-section="overview"
+						className="py-4"
+					>
+						<Overview />
+					</div>
+				) : null}
 			</div>
 			<ActivityFooter target={activityTargetOf(sel, target)} />
+		</div>
+	);
+}
+
+/** D09: "3–13 Oct · 11 nights · 16 cities · 45 stops", and what the details hold. */
+function LevelLine({ nodeId }: { nodeId: string }) {
+	const { ix } = useWorkspace();
+	const line = levelSummary(ix, nodeId, (a, b) => formatDateRange(a, b));
+	const name = ix.node(nodeId)?.name ?? "";
+	return (
+		<div className="grid gap-1 px-4 pt-2 text-meta">
+			{line ? <p className="font-medium tnum">{line}</p> : null}
+			<p className="text-muted-foreground">
+				Everything about {name}: its own notes and photos first, then what's
+				saved on the places inside it.
+			</p>
 		</div>
 	);
 }

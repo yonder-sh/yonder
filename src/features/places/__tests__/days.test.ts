@@ -5,6 +5,7 @@ import type { TripGraph } from "@/lib/engine/types";
 import { demoGraph, N, scenario } from "@/lib/fixtures/demo";
 import { cityDayTable, cityRowNodes, formatDays, parseDays } from "../lib/days";
 import {
+	levelSummary,
 	openListCounts,
 	placeCounts,
 	stayNightsOf,
@@ -123,6 +124,13 @@ describe("node facts (DESIGN §4.4)", () => {
 		const fuji = visitsOf(ix, N.mtFuji as string);
 		expect(fuji[0]?.nights).toBe(1);
 		expect(fuji[0]?.days).toHaveLength(2);
+	});
+	it("sums a level up in one line (D09)", () => {
+		const range = (a: string, b: string) => `${a}..${b}`;
+		expect(levelSummary(ix, N.tokyo as string, range)).toBe(
+			"2027-10-03..2027-10-04 · 7 stops",
+		);
+		expect(levelSummary(ix, N.mtFuji as string, range)).toMatch(/1 night · /);
 	});
 	it("counts places and ideas", () => {
 		expect(placeCounts(ix, N.tokyo ?? null)).toEqual({
