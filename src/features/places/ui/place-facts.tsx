@@ -77,6 +77,16 @@ export function KindChip({
 const WEEK = [1, 2, 3, 4, 5, 6, 0] as const;
 const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
+/** Whether `HoursSummary` has anything to show. */
+export function hasHours(node: GraphNode, ix: GraphIndex): boolean {
+	const h = effectiveHours(node, ix.trip.settings)?.hours;
+	return (
+		!!(h && (h.alwaysOpen || h.periods.length)) ||
+		!!node.details.hours?.weekdayDescriptions?.length ||
+		!!node.details.openHoursText
+	);
+}
+
 /** A compact week of opening hours (structured when known, else the text we have). */
 export function HoursSummary({
 	node,

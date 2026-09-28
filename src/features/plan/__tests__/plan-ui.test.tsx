@@ -10,7 +10,7 @@ import { useUi } from "@/lib/workspace/ui-store";
 import { renderWithWorkspace } from "@/test/render-workspace";
 import { DayChips } from "../DayChips";
 import { DayOverview } from "../DayOverview";
-import { ItemOverview } from "../ItemOverview";
+import { ItemHeadline, ItemOverview } from "../ItemOverview";
 import { NowNext } from "../NowNext";
 import { PlanTab } from "../PlanTab";
 import { PLAN_TESTID } from "../testids";
@@ -222,6 +222,28 @@ describe("Overviews and mobile", () => {
 		expect(
 			screen.getByTestId(PLAN_TESTID.overviewAssignees).textContent,
 		).toMatch(/Everyone/);
+	});
+
+	it("the item's headline chips say when, and About says what the place is (D03)", () => {
+		const graph = structuredClone(demoGraph);
+		const item = graph.items.find((i) => i.id === I.hands);
+		const node = graph.nodes.find((n) => n.id === item?.nodeId);
+		if (!item || !node) throw new Error("fixture: Hands");
+		node.description = "Seven floors of craft supplies.";
+		node.timeNeededMin = 45;
+		renderWithWorkspace(
+			<>
+				<ItemHeadline itemId={item.id}>Hands</ItemHeadline>
+				<ItemOverview itemId={item.id} />
+			</>,
+			{ graph },
+		);
+		expect(screen.getByTestId(PLAN_TESTID.overviewChips).textContent).toMatch(
+			/^\w{3} \d{1,2} · 09:00/,
+		);
+		const about = screen.getByTestId(PLAN_TESTID.overviewAbout);
+		expect(about).toHaveTextContent("Seven floors of craft supplies.");
+		expect(about).toHaveTextContent(/Takes\s*45m/);
 	});
 
 	it("DayOverview shows the capacity and stops", () => {

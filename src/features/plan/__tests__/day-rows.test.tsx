@@ -38,7 +38,12 @@ describe("the Plan's days (D02)", () => {
 		// Every anchor is a registered day anchor, and none is drawn twice.
 		expect(anchors.every((a) => a.startsWith("day:"))).toBe(true);
 		expect(new Set(anchors).size).toBe(anchors.length);
-		const byDay = Map.groupBy(rows, (r) => r.dataset.dayId);
+		const byDay = new Map<string, HTMLElement[]>();
+		for (const r of rows)
+			byDay.set(r.dataset.dayId ?? "", [
+				...(byDay.get(r.dataset.dayId ?? "") ?? []),
+				r,
+			]);
 		const split = [...byDay.values()].find((rs) => rs.length > 1);
 		if (!split) return; // the fixture has no day across two countries
 		const [a, b] = split as [HTMLElement, HTMLElement];

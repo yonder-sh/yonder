@@ -74,6 +74,8 @@ export const PLAN_TESTID = {
 	overviewUnschedule: "plan-overview-unschedule",
 	overviewDelete: "plan-overview-delete",
 	overviewNote: "plan-overview-note",
+	overviewAbout: "plan-overview-about",
+	overviewChips: "plan-overview-chips",
 	overviewDeleted: "plan-overview-deleted",
 	dayOverviewStay: "plan-day-overview-stay",
 	dayOverviewCapacity: "plan-day-overview-capacity",

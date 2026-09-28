@@ -28,7 +28,7 @@ import {
 import { DurationInput, TimeInput } from "@/components/common/time";
 import { TreePicker } from "@/components/common/tree-picker";
 import { useDraftField } from "@/components/common/use-draft-field";
-import { Eyebrow } from "@/components/kit";
+import { Eyebrow, RatingPill } from "@/components/kit";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -46,19 +46,26 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { HoursChip } from "@/features/insights/HoursChip";
 import { MentionInput } from "@/features/notes/MentionInput";
+import { HoursSummary, hasHours } from "@/features/places/ui/place-facts";
 import { LegMapsLink } from "@/features/transit/LegMapsLink";
 import { can } from "@/lib/auth/roles";
 import { PLACE_CATEGORIES } from "@/lib/domain/taxonomy";
 import { pairKey } from "@/lib/engine/graph-index";
 import { conflictFixes } from "@/lib/engine/suggest";
 import { hhmm, tzLabel } from "@/lib/engine/time";
-import { formatDayDate, formatDuration, formatTime } from "@/lib/format";
+import {
+	formatDayDate,
+	formatDayShort,
+	formatDuration,
+	formatTime,
+} from "@/lib/format";
 import { activityQuery } from "@/lib/query/trip-queries";
 import { useFormPresence } from "@/lib/realtime/form-presence";
 import { useSetEditing } from "@/lib/realtime/presence";
 import type { LegTarget } from "@/lib/schemas/targets";
 import { TESTID } from "@/lib/testids";
 import { cn } from "@/lib/utils";
+import { ratingOf } from "@/lib/workspace/filter-match";
 import { useUi } from "@/lib/workspace/ui-store";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { cardTone } from "./card-tone";
@@ -209,8 +216,13 @@ export function ItemHeadline({
 	/** The title and its chips. */
 	children: ReactNode;
 }) {
-	const { ix } = useWorkspace();
-	const node = ix.node(ix.item(itemId)?.nodeId);
+	const { ix, schedule } = useWorkspace();
+	const item = ix.item(itemId);
+	const node = ix.node(item?.nodeId);
+	const day = ix.day(item?.dayId);
+	const s = schedule.items[itemId];
+	// The group's best rating, as the ideas show it.
+	const top = node ? ratingOf(node, "max") : null;
 	const cat =
 		node?.type === "place" && node.category
 			? PLACE_CATEGORIES[node.category].label
@@ -252,6 +264,26 @@ export function ItemHeadline({
 						{line}
 					</p>
 				) : null}
+				{/* D03's chips: when, the group's rating, who. */}
+				<div
+					className="mt-2 flex flex-wrap items-center gap-1.5"
+					data-testid={PLAN_TESTID.overviewChips}
+				>
+					<span className="inline-flex h-6 items-center gap-1 rounded-full bg-muted px-2 text-xs font-medium tnum">
+						<CalendarDays className="size-3.5 text-muted-foreground" />
+						{day
+							? `${formatDayShort(day.date)}${s ? ` · ${hhmm(s.start, s.tz)}` : ""}`
+							: "Not on a day"}
+					</span>
+					{top ? <RatingPill level={top} size="sm" /> : null}
+					{item?.assigneeIds.length ? (
+						<span className="inline-flex items-center -space-x-1">
+							{item.assigneeIds.map((id) => (
+								<MemberAvatar key={id} memberId={id} size={20} />
+							))}
+						</span>
+					) : null}
+				</div>
 			</div>
 		</div>
 	);
@@ -752,6 +784,32 @@ function ItemOverviewBody({ itemId }: { itemId: string }) {
 					) : null}
 				</div>
 			</section>
+
+			{node &&
+			(node.description || node.timeNeededMin || hasHours(node, ix)) ? (
+				<section
+					className="grid gap-2"
+					data-section="about"
+					data-testid={PLAN_TESTID.overviewAbout}
+				>
+					<Eyebrow as="h3">About</Eyebrow>
+					{node.description ? (
+						<p className="text-meta text-foreground/90">{node.description}</p>
+					) : null}
+					<dl className="grid grid-cols-[88px_minmax(0,1fr)] items-start gap-x-3 gap-y-2">
+						{hasHours(node, ix) ? (
+							<Row label="Hours">
+								<HoursSummary node={node} ix={ix} className="pt-1" />
+							</Row>
+						) : null}
+						{node.timeNeededMin ? (
+							<Row label="Takes" className="pt-1 tnum">
+								{formatDuration(node.timeNeededMin)}
+							</Row>
+						) : null}
+					</dl>
+				</section>
+			) : null}
 
 			<section className="grid gap-1.5" data-testid={PLAN_TESTID.overviewNote}>
 				<Eyebrow as="h3">Note</Eyebrow>
