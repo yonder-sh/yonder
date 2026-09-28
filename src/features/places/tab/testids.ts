@@ -84,6 +84,7 @@ export const PLACES_TAB_TESTID = {
 	decide: "places-decide",
 	decideColumn: "places-decide-column",
 	decideCard: "places-decide-card",
+	decideOpen: "places-decide-open",
 	decideKeep: "places-decide-keep",
 	decideDrop: "places-decide-drop",
 	decideBack: "places-decide-back",

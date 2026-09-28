@@ -26,6 +26,15 @@ describe("RatingButtons", () => {
 		expect(onRate).toHaveBeenLastCalledWith("must");
 	});
 
+	it("each button keeps its full name, and Sure, why not has a short label for narrow panels", () => {
+		renderWithWorkspace(<RatingButtons value={null} onRate={() => {}} />);
+		expect(
+			screen.getByRole("button", { name: "Sure, why not" }),
+		).toHaveAttribute("data-priority", "sure_why_not");
+		expect(button("sure_why_not")).toHaveTextContent(/^Sure/);
+		expect(button("sure_why_not").className).toMatch(/\bpx-2\b/);
+	});
+
 	it("disabled buttons don't rate", () => {
 		const onRate = vi.fn();
 		renderWithWorkspace(

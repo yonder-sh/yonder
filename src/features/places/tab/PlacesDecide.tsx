@@ -289,7 +289,10 @@ function DecideCard({
 	column: Column;
 }) {
 	const act = usePlaceActions();
+	const { sel, nav } = useWorkspace();
 	const node = row.node;
+	const selected = sel?.kind === "node" && sel.id === node.id;
+	const open = () => nav.select({ kind: "node", id: node.id });
 	const comments = data.memberIds
 		.map((id) => ({ id, text: node.ratingComments[id] }))
 		.filter((c): c is { id: string; text: string } => !!c.text);
@@ -300,11 +303,20 @@ function DecideCard({
 		.filter(Boolean)
 		.join(" · ");
 	return (
+		// biome-ignore lint/a11y/useKeyWithClickEvents: the name is the card's keyboard way in
 		<article
 			data-testid={PLACES_TAB_TESTID.decideCard}
 			data-place={node.id}
 			data-cursor-anchor={`place:${node.id}`}
-			className="plan-card flex flex-col gap-2.5 rounded-lg border bg-card p-3"
+			aria-current={selected || undefined}
+			// A click anywhere but its buttons opens the place (its details).
+			onClick={(e) => {
+				if (!(e.target as HTMLElement).closest("button,a,input")) open();
+			}}
+			className={cn(
+				"plan-card flex cursor-pointer flex-col gap-2.5 rounded-lg border bg-card p-3 transition-colors hover:border-foreground/20",
+				selected && "border-primary ring-1 ring-primary",
+			)}
 			data-family={cardTone(node)}
 		>
 			<div className="flex min-w-0 items-start gap-2.5">
@@ -320,7 +332,16 @@ function DecideCard({
 					/>
 				</span>
 				<div className="min-w-0">
-					<h4 className="truncate font-semibold">{row.name}</h4>
+					<h4 className="truncate font-semibold">
+						<button
+							type="button"
+							data-testid={PLACES_TAB_TESTID.decideOpen}
+							onClick={open}
+							className="max-w-full cursor-pointer truncate rounded-sm text-left outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
+						>
+							{row.name}
+						</button>
+					</h4>
 					{meta ? (
 						<p className="truncate text-meta text-muted-foreground">{meta}</p>
 					) : null}

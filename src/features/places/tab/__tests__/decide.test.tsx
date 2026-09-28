@@ -215,4 +215,16 @@ describe("Mark decided (D08)", () => {
 			.find((b) => b.dataset.step === "decide");
 		expect(decide).toHaveTextContent("1 to talk");
 	});
+
+	it("a card opens its place; its buttons don't", () => {
+		const { ws } = renderWithWorkspace(<PlacesTab />, {
+			search: { tab: "places", pv: "decide" },
+		});
+		const card = screen.getAllByTestId(T.decideCard)[0] as HTMLElement;
+		fireEvent.click(within(card).getByTestId(T.decideKeep));
+		expect(ws().sel).toBeNull();
+		fireEvent.click(card);
+		expect(ws().sel).toEqual({ kind: "node", id: card.dataset.place });
+		expect(card).toHaveAttribute("aria-current", "true");
+	});
 });

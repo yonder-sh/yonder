@@ -194,7 +194,7 @@ export function RatingButtons({
 	const buttons = (
 		<fieldset
 			className={cn(
-				"m-0 grid min-w-0 grid-cols-3 gap-2 border-0 p-0",
+				"@container m-0 grid min-w-0 grid-cols-3 gap-2 border-0 p-0",
 				className,
 			)}
 		>
@@ -214,9 +214,11 @@ export function RatingButtons({
 						data-priority={p}
 						data-picked-by={who.join(" ") || undefined}
 						onClick={() => onRate(on ? null : p)}
+						// The full name, whichever label fits on screen.
+						aria-label={def.label}
 						style={ratingVars(p)}
 						className={cn(
-							"relative flex cursor-pointer items-center justify-center gap-1.5 rounded-xl text-sm font-semibold transition-[opacity,transform,box-shadow] duration-150 outline-none select-none focus-visible:ring-2 focus-visible:ring-ring active:scale-[.97] disabled:cursor-not-allowed",
+							"relative flex min-w-0 cursor-pointer items-center justify-center gap-1.5 rounded-xl px-2 text-sm font-semibold transition-[opacity,transform,box-shadow] duration-150 outline-none select-none focus-visible:ring-2 focus-visible:ring-ring active:scale-[.97] disabled:cursor-not-allowed",
 							filled
 								? cn(
 										"h-12 pointer-coarse:h-[52px]",
@@ -247,7 +249,17 @@ export function RatingButtons({
 								)}
 							/>
 						) : null}
-						{p === "sure_why_not" && filled ? "Sure" : def.label}
+						{p !== "sure_why_not" ? (
+							def.label
+						) : filled ? (
+							"Sure"
+						) : (
+							// Three to a row in a narrow panel: "Sure, why not" doesn't fit.
+							<>
+								<span className="@[26rem]:hidden">Sure</span>
+								<span className="hidden @[26rem]:inline">{def.label}</span>
+							</>
+						)}
 						{keys ? (
 							<span
 								aria-hidden
