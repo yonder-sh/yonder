@@ -351,6 +351,21 @@ describe("ReviewDrawer", () => {
 		open();
 		expect(await screen.findByText("No conflicts.")).toBeInTheDocument();
 	});
+
+	it("the filter is the kit's segmented control: Open · Mine · Conflicts", async () => {
+		renderSuggest(<ReviewDrawer />);
+		open();
+		const filter = await screen.findByTestId(SUGGEST_TESTID.filter);
+		expect(filter).toHaveAttribute("data-slot", "segmented");
+		const openOne = within(filter).getByRole("radio", { name: /Open/ });
+		expect(openOne).toHaveAttribute("data-state", "on");
+		expect(openOne).toHaveTextContent("7");
+		fireEvent.click(within(filter).getByRole("radio", { name: /Mine/ }));
+		expect(useReviewStore.getState().filter).toBe("mine");
+		expect(
+			await screen.findByText("You haven't suggested anything yet."),
+		).toBeInTheDocument();
+	});
 });
 
 describe("ProposalBar", () => {
