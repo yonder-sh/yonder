@@ -814,10 +814,15 @@ export function PersonFilter({
 				size="sm"
 				data-testid={LISTS_TESTID.who}
 				aria-label="Who it's for"
-				className={cn("h-7 gap-1 px-2.5 text-xs", who && "border-foreground")}
+				title="Who it's for"
+				className={cn(
+					"h-7 gap-1 px-2.5 text-xs",
+					who && "border-foreground",
+					// Narrow boards: just the icon until someone is picked, so it fits beside a phone's four tabs.
+					!who && "@max-md:[&>svg:last-child]:hidden",
+				)}
 			>
 				<User className="size-3.5" strokeWidth={1.5} />
-				{/* Narrow boards: just the icon until someone is picked. */}
 				<span className={cn(!who && "@max-md:sr-only")}>
 					<SelectValue />
 				</span>

@@ -672,7 +672,7 @@ describe("Bookings", () => {
 		expect(aside).toHaveClass("sticky", "overflow-y-auto");
 		// Mark booked and Open the site stick to the foot of that scroll.
 		const acts = within(aside).getByTestId(L.bookingActions);
-		expect(acts).toHaveClass("sticky", "bottom-0");
+		expect(acts).toHaveClass("sticky", "-bottom-3");
 		expect(within(acts).getByTestId(L.bookingMarkBooked)).toBeInTheDocument();
 	});
 

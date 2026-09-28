@@ -345,7 +345,8 @@ export function BookingDetails({
 					data-testid={LISTS_TESTID.bookingActions}
 					className={cn(
 						"flex flex-wrap gap-2 border-t pt-4",
-						beside && "sticky bottom-0 -mb-3 bg-background pb-3",
+						// -bottom-3: past the panel's py-3, so nothing shows below it.
+						beside && "sticky -bottom-3 -mb-3 bg-background pb-3",
 					)}
 				>
 					{row && canEdit ? (

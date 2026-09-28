@@ -218,7 +218,7 @@ export function RatingButtons({
 						aria-label={def.label}
 						style={ratingVars(p)}
 						className={cn(
-							"relative flex min-w-0 cursor-pointer items-center justify-center gap-1.5 rounded-xl px-2 text-sm font-semibold transition-[opacity,transform,box-shadow] duration-150 outline-none select-none focus-visible:ring-2 focus-visible:ring-ring active:scale-[.97] disabled:cursor-not-allowed",
+							"relative flex min-w-0 cursor-pointer items-center justify-center gap-1 rounded-xl px-1.5 text-sm whitespace-nowrap @[26rem]:gap-1.5 @[26rem]:px-2 font-semibold transition-[opacity,transform,box-shadow] duration-150 outline-none select-none focus-visible:ring-2 focus-visible:ring-ring active:scale-[.97] disabled:cursor-not-allowed",
 							filled
 								? cn(
 										"h-12 pointer-coarse:h-[52px]",
@@ -263,7 +263,8 @@ export function RatingButtons({
 						{keys ? (
 							<span
 								aria-hidden
-								className="text-2xs leading-none opacity-60 tnum pointer-coarse:hidden"
+								// Only where "Really want 2" still fits on one line.
+								className="hidden text-2xs leading-none opacity-60 tnum @[22rem]:pointer-fine:inline"
 							>
 								{i + 1}
 							</span>
