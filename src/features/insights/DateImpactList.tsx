@@ -18,6 +18,7 @@ import {
 	TrainFront,
 } from "lucide-react";
 import type { ReactNode } from "react";
+import { Eyebrow } from "@/components/kit";
 import { Button } from "@/components/ui/button";
 import type { DateImpact } from "@/lib/engine/date-impact";
 import { shortDate } from "@/lib/engine/hours";
@@ -194,7 +195,7 @@ export function DateImpactList({
 											e.stopPropagation();
 											onMarkBooked(t.id);
 										}}
-										className="h-7 shrink-0 px-2 text-xs"
+										className="shrink-0"
 									>
 										Mark booked
 									</Button>
@@ -329,7 +330,7 @@ function Section({
 			className="grid gap-1"
 		>
 			<header className="flex items-baseline gap-2 px-1">
-				<h3 className="eyebrow">{title}</h3>
+				<Eyebrow>{title}</Eyebrow>
 				{count ? (
 					<span
 						className="text-2xs text-muted-foreground tnum"

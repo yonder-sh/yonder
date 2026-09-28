@@ -40,7 +40,6 @@ import type {
 	TripSettingsPatch,
 } from "@/lib/schemas/trips";
 import { TESTID } from "@/lib/testids";
-import { cn } from "@/lib/utils";
 import { useWorkspaceOptional } from "@/lib/workspace/model-context";
 import { INSIGHTS_TESTID } from "./testids";
 /** One holiday row as edited (an unsaved row may be half filled in). */
@@ -171,7 +170,7 @@ export function HolidaysEditor({
 		<section data-testid={TESTID.holidaysEditor} className="grid gap-2.5">
 			<div className="grid gap-1">
 				<Eyebrow as="p">Public holidays</Eyebrow>
-				<p className="text-xs leading-4 text-muted-foreground">
+				<p className="text-xs text-muted-foreground">
 					Places use their holiday hours on these days.
 				</p>
 			</div>
@@ -215,9 +214,8 @@ export function HolidaysEditor({
 								}
 							>
 								<SelectTrigger
-									size="sm"
 									aria-label="Country"
-									className="h-8 w-[7.5rem] text-meta"
+									className="w-[7.5rem] text-meta"
 								>
 									<SelectValue />
 								</SelectTrigger>
@@ -230,15 +228,17 @@ export function HolidaysEditor({
 									))}
 								</SelectContent>
 							</Select>
-							<button
+							<Button
 								type="button"
+								variant="ghost"
+								size="icon"
 								aria-label="Remove this holiday"
 								disabled={guard.disabled}
 								onClick={() => setRows(current.filter((_, j) => j !== i))}
-								className="inline-flex size-8 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-50"
+								className="text-muted-foreground"
 							>
 								<X className="size-3.5" />
-							</button>
+							</Button>
 						</li>
 					))}
 				</ul>
@@ -264,9 +264,9 @@ export function HolidaysEditor({
 							},
 						])
 					}
-					className="h-7 gap-1 px-2 text-xs text-muted-foreground"
+					className="text-muted-foreground"
 				>
-					<Plus className="size-3.5" /> Add holiday
+					<Plus /> Add holiday
 				</Button>
 				<span className="flex-1" />
 				{error && dirty ? (
@@ -278,7 +278,6 @@ export function HolidaysEditor({
 							type="button"
 							variant="ghost"
 							size="sm"
-							className="h-7 px-2 text-xs"
 							onClick={() => setRows(null)}
 						>
 							Cancel
@@ -289,7 +288,6 @@ export function HolidaysEditor({
 							data-testid={INSIGHTS_TESTID.holidaySave}
 							disabled={!canSave}
 							onClick={submit}
-							className={cn("h-7 px-3 text-xs")}
 						>
 							{save.isPending ? "Saving…" : "Save holidays"}
 						</Button>
