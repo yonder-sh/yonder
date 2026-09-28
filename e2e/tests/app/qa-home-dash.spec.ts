@@ -237,7 +237,7 @@ test("TRIP-02: shrinking dates warns, moves stops to Ideas, cancel changes nothi
 	const txt = await settings.innerText();
 	expect(txt).toMatch(/2 stops on .*Nov/);
 	expect(txt).toContain("Arrive home");
-	await settings.getByRole("button", { name: /^cancel$/i }).click();
+	await settings.getByRole("button", { name: "Keep the current dates" }).click();
 	const g1 = await graphOf(page);
 	expect(g1.trip.endDate).toBe("2027-11-05");
 	await pick();

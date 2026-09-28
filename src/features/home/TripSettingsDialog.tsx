@@ -303,7 +303,7 @@ function DatesRow() {
 								setTo(trip.endDate);
 							}}
 						>
-							Cancel
+							Keep the current dates
 						</Button>
 					</div>
 				</div>
