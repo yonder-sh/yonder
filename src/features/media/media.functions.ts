@@ -29,6 +29,7 @@ import { z } from "zod";
 import { db } from "@/db/db.server";
 import { attachments } from "@/db/schema";
 import { mustRedact } from "@/lib/auth/roles";
+import { HttpUrl } from "@/lib/schemas/common";
 import { AttachmentVisibility } from "@/lib/schemas/enums";
 import {
 	AttachmentTarget,
@@ -819,7 +820,7 @@ export type LinkPeek = {
  */
 export const peekLink = createServerFn({ method: "GET" })
 	.middleware([withNamedUser])
-	.validator(z.object({ tripId: z.uuid(), url: z.url().max(2000) }).strict())
+	.validator(z.object({ tripId: z.uuid(), url: HttpUrl.max(2000) }).strict())
 	.handler(async ({ data, context }): Promise<LinkPeek> => {
 		await requireTripCapability(data.tripId, "propose", context.user);
 		await rateLimit(`links:peek:${context.user.id}`, 30);
