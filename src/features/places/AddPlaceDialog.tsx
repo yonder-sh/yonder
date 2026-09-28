@@ -5,7 +5,8 @@
  *
  * Groups: **In this trip** (Enter jumps, ⌘Enter schedules), **Places** from
  * Google or OpenStreetMap, **Actions** (Pick on the map…, a new node by name, Go to
- * Day N, a pasted Google Maps link). Picking a place opens the preview (a
+ * Day N, a pasted Google Maps link); any other pasted link goes on a place
+ * or makes a new one (D10, `ui/link-chooser`). Picking a place opens the preview (a
  * right pane ≥ 768px, full-screen below): photo or map, name, category,
  * address, the filing chip (`TreePicker` per segment), category chips, and
  * Save to Ideas / Schedule (a split button). Modes: `search`, `schedule`
@@ -15,6 +16,7 @@
 
 import {
 	keepPreviousData,
+	queryOptions,
 	useQuery,
 	useQueryClient,
 } from "@tanstack/react-query";
@@ -67,6 +69,8 @@ import {
 } from "@/components/ui/dialog";
 import { Kbd } from "@/components/ui/kbd";
 import { Spinner } from "@/components/ui/spinner";
+import { cleanShareName } from "@/features/home/share-classify";
+import { peekLink } from "@/features/media/media.functions";
 import { addLinkAndCache } from "@/features/media/use-media-actions";
 import { can } from "@/lib/auth/roles";
 import {
@@ -89,6 +93,12 @@ import { type AddPlaceRequest, useUi } from "@/lib/workspace/ui-store";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { resultKind } from "./lib/categorize";
 import { findDuplicate } from "./lib/filing";
+import {
+	fallbackName,
+	filedUnder,
+	linkParent,
+	linkTargets,
+} from "./lib/link-targets";
 import { locateBiasNode, locationPatch, pinKeepsIdentity } from "./lib/locate";
 import { parseMapsUrl } from "./lib/maps-url";
 import type {
@@ -115,6 +125,7 @@ import {
 } from "./places.functions";
 import { stepOfView } from "./tab/flow";
 import { PLACES_TESTID } from "./testids";
+import { LINK_NEW, LINK_TO, LinkChooser, LinkKeys } from "./ui/link-chooser";
 import { MiniMap } from "./ui/mini-map";
 import { type ResultPin, ResultsMap } from "./ui/results-map";
 import {
@@ -234,6 +245,15 @@ type Selection =
 	| { kind: "link"; url: string };
 
 const DEBOUNCE_MS = 300;
+
+/** A pasted link's title and caption (D10), cached like a preview. */
+const peekQuery = (tripId: string, url: string) =>
+	queryOptions({
+		queryKey: ["links", "peek", tripId, url],
+		queryFn: () => peekLink({ data: { tripId, url } }),
+		staleTime: 10 * 60_000,
+		retry: false,
+	});
 
 function toLatLng(
 	c: [number, number] | null,
@@ -394,9 +414,13 @@ function Palette({
 	const dayHit =
 		dayQuery !== null && dayQuery >= 1 ? ix.days[dayQuery - 1] : undefined;
 	const mapsLink = looksLikeUrl(q) && parseMapsUrl(q.trim()) ? q.trim() : null;
-	// Any other link (a reel, a guide) is never a place name: it goes on the
-	// open place, or to the share page (new idea or an existing place).
+	// Any other link (a reel, a guide) is never a place name: it goes on a
+	// place or makes a new one (D10), else to the share page.
 	const otherLink = looksLikeUrl(q) && !mapsLink ? q.trim() : null;
+	const linking =
+		otherLink !== null &&
+		access.canEdit &&
+		(mode === "search" || mode === "schedule");
 	const openNode = ix.node(
 		ws.sel?.kind === "node"
 			? ws.sel.id
@@ -408,6 +432,61 @@ function Palette({
 		onClose();
 		void navigate({ to: "/share", search: url ? { url } : {} });
 	};
+	// The preview waits for the text to settle (a typed URL, not a paste).
+	const peekUrl =
+		linking && ws.mode === "live" && debounced === otherLink ? otherLink : null;
+	const peek = useQuery({
+		...peekQuery(tripId, peekUrl ?? ""),
+		enabled: peekUrl !== null,
+	});
+	const peekText = peek.data
+		? [peek.data.title, peek.data.description].filter(Boolean).join(" ")
+		: null;
+	const peekLoading =
+		linking &&
+		ws.mode === "live" &&
+		!peek.data &&
+		!peek.isError &&
+		(peekUrl === null || peek.isFetching);
+	const [linkFind, setLinkFind] = useState("");
+	const [linkParentPick, setLinkParentPick] = useState<
+		string | null | undefined
+	>(undefined);
+	const [linkBusy, setLinkBusy] = useState(false);
+	const linkDayId = linking
+		? (defaultSchedulePick(ix, { request, sel: ws.sel, days: ws.days })
+				?.dayId ?? null)
+		: null;
+	const linkAll = useMemo(
+		() =>
+			linking
+				? linkTargets(ix, {
+						text: peekText,
+						openId: openNode?.id ?? null,
+						dayId: linkDayId,
+						scopeId: scope?.id ?? null,
+						query: "",
+					})
+				: [],
+		[linking, ix, peekText, openNode?.id, linkDayId, scope?.id],
+	);
+	const linkShown = useMemo(
+		() =>
+			linking && linkFind.trim()
+				? linkTargets(ix, {
+						text: null,
+						openId: null,
+						dayId: null,
+						scopeId: null,
+						query: linkFind,
+					})
+				: linkAll,
+		[linking, ix, linkFind, linkAll],
+	);
+	const linkParentId =
+		linkParentPick !== undefined
+			? linkParentPick
+			: linkParent(ix, request.parentId ?? scope?.id ?? null);
 	// EMPTY-05 / DESIGN §12: a finished search that found nothing says so
 	// (the Actions group always has items, so cmdk's own empty never shows).
 	const settled =
@@ -510,7 +589,10 @@ function Palette({
 	const steered = useRef(false);
 	// The highlighted result (keys or pointer), for its pin on the map. The
 	// dialog's content mounts after the palette, so the list arrives by ref.
-	const [highlight, setHighlight] = useState<string | null>(null);
+	const [highlighted, setHighlighted] = useState<string | null>(null);
+	const highlight = highlighted?.startsWith("place:")
+		? highlighted.slice(6)
+		: null;
 	const [cmdRoot, setCmdRoot] = useState<HTMLDivElement | null>(null);
 	const setCommandRef = useCallback((el: HTMLDivElement | null) => {
 		commandRef.current = el;
@@ -519,12 +601,12 @@ function Palette({
 	useEffect(() => {
 		const root = cmdRoot;
 		if (!root) return;
-		const read = () => {
-			const v = root
-				.querySelector('[cmdk-item][data-selected="true"]')
-				?.getAttribute("data-value");
-			setHighlight(v?.startsWith("place:") ? v.slice(6) : null);
-		};
+		const read = () =>
+			setHighlighted(
+				root
+					.querySelector('[cmdk-item][data-selected="true"]')
+					?.getAttribute("data-value") ?? null,
+			);
 		read();
 		const obs = new MutationObserver(read);
 		obs.observe(root, {
@@ -539,6 +621,7 @@ function Palette({
 		legHits.map((h) => h.leg.id).join(),
 		results.map((r) => r.ref).join(),
 		rateItem && q.trim() ? "rate" : "",
+		linking ? `link:${linkShown.map((t) => t.node.id).join()}` : "",
 	].join("|");
 	// biome-ignore lint/correctness/useExhaustiveDependencies: runs when the options change.
 	useLayoutEffect(() => {
@@ -633,6 +716,84 @@ function Palette({
 		);
 	};
 
+	// ---- a pasted link (D10) ------------------------------------------------
+	const addLinkTo = (n: GraphNode) => {
+		const url = otherLink;
+		if (!url) return;
+		onClose();
+		void addLinkAndCache(qc, tripId, {
+			target: { kind: "node", nodeId: n.id },
+			url,
+		})
+			.then((added) => {
+				// A suggestion says so itself.
+				if (added) toast(`Link added to ${n.name}`);
+			})
+			.catch((e) => toast.error(humanError(e)));
+	};
+	// As the share page does: a place named after the link, then the link on it.
+	const newPlaceFromLink = async () => {
+		const url = otherLink;
+		if (!url || !linking || linkBusy) return;
+		setLinkBusy(true);
+		// The title names it: wait a moment when it's still on its way.
+		const meta =
+			peek.data ??
+			(ws.mode === "live" && !peek.isError
+				? await Promise.race([
+						qc.fetchQuery(peekQuery(tripId, url)).catch(() => undefined),
+						new Promise<undefined>((r) => setTimeout(r, 3000)),
+					])
+				: undefined);
+		// Closed while it waited: nothing is made.
+		if (!commandRef.current?.isConnected) return;
+		const name = cleanShareName(meta?.title, null) || fallbackName(url);
+		const parentId = linkParentId;
+		const id = newId();
+		const open = opensAdded(ws);
+		createNamed.mutate(
+			{
+				chain: [
+					...(parentId ? ix.path(parentId).map((n) => ({ id: n.id })) : []),
+					{ type: "place", name, category: "other" },
+				],
+				ids: [id],
+			},
+			{
+				onSuccess: () => {
+					void addLinkAndCache(qc, tripId, {
+						target: { kind: "node", nodeId: id },
+						url,
+					}).catch((e) => toast.error(humanError(e)));
+					const where = ix.node(parentId)?.name ?? graph.trip.name;
+					if (open) {
+						onClose("inspector");
+						nav.select({ kind: "node", id });
+						toast(`Saved to ${where} ideas`);
+						return;
+					}
+					onClose();
+					toast(`Saved to ${where} ideas`, {
+						action: {
+							label: "Show",
+							onClick: () => nav.select({ kind: "node", id }),
+						},
+					});
+				},
+				onError: (e) => {
+					setLinkBusy(false);
+					toast.error(humanError(e));
+				},
+			},
+		);
+	};
+	const linkEnter =
+		highlighted === LINK_NEW
+			? null
+			: ((highlighted?.startsWith(LINK_TO)
+					? ix.node(highlighted.slice(LINK_TO.length))
+					: undefined) ?? linkShown[0]?.node);
+
 	return (
 		<DialogContent
 			data-testid={TESTID.addPlaceDialog}
@@ -662,6 +823,17 @@ function Palette({
 				onKeyDown={(e) => {
 					if (!OURS.has(e.nativeEvent) && steersHighlight(e))
 						steered.current = true;
+					// ⌘Enter with a pasted link: a new place (a picker's own Enter is taken).
+					if (
+						linking &&
+						e.key === "Enter" &&
+						(e.metaKey || e.ctrlKey) &&
+						!e.defaultPrevented &&
+						!e.nativeEvent.isComposing
+					) {
+						e.preventDefault();
+						void newPlaceFromLink();
+					}
 				}}
 				className="flex h-full max-h-[min(640px,85svh)] flex-col rounded-none bg-popover max-sm:max-h-none"
 			>
@@ -889,141 +1061,160 @@ function Palette({
 							</p>
 						) : null}
 
-						<CommandGroup heading="Actions">
-							{coords?.ok && canSearch ? (
-								<CommandItem
-									value="action:coords"
-									data-testid={PLACES_TESTID.coordsResult}
-									onSelect={() => {
-										setPinning(false);
-										setSelected({
-											kind: "pin",
-											lat: coords.lat,
-											lng: coords.lng,
-										});
-									}}
-								>
-									<MapPin strokeWidth={1.5} />
-									<span className="truncate">
-										{mode === "locate" ? "Use this location" : "Pin at"}
-										<span className="ml-1.5 text-xs tnum text-muted-foreground">
-											{coords.lat.toFixed(5)}, {coords.lng.toFixed(5)}
+						{linking && otherLink ? (
+							<LinkChooser
+								url={otherLink}
+								peek={peek.data}
+								loading={peekLoading}
+								named={linkAll
+									.filter((t) => t.why === "named")
+									.map((t) => t.node)}
+								targets={linkShown}
+								openId={openNode?.id ?? null}
+								find={linkFind}
+								onFind={(v) => {
+									setLinkFind(v);
+									steered.current = false;
+								}}
+								filed={filedUnder(ix, linkParentId)}
+								parentId={linkParentId}
+								onParent={setLinkParentPick}
+								newName={
+									cleanShareName(peek.data?.title, null) ||
+									(peekLoading ? "" : fallbackName(otherLink))
+								}
+								busy={linkBusy}
+								onAdd={addLinkTo}
+								onNew={() => void newPlaceFromLink()}
+							/>
+						) : null}
+
+						{linking ? null : (
+							<CommandGroup heading="Actions">
+								{coords?.ok && canSearch ? (
+									<CommandItem
+										value="action:coords"
+										data-testid={PLACES_TESTID.coordsResult}
+										onSelect={() => {
+											setPinning(false);
+											setSelected({
+												kind: "pin",
+												lat: coords.lat,
+												lng: coords.lng,
+											});
+										}}
+									>
+										<MapPin strokeWidth={1.5} />
+										<span className="truncate">
+											{mode === "locate" ? "Use this location" : "Pin at"}
+											<span className="ml-1.5 text-xs tnum text-muted-foreground">
+												{coords.lat.toFixed(5)}, {coords.lng.toFixed(5)}
+											</span>
 										</span>
-									</span>
-								</CommandItem>
-							) : null}
-							{mapsLink && canSearch ? (
-								<CommandItem
-									value="action:link"
-									onSelect={() => setSelected({ kind: "link", url: mapsLink })}
-								>
-									<Link2 strokeWidth={1.5} />
-									Save the place in this Maps link
-								</CommandItem>
-							) : null}
-							{otherLink && openNode && access.canEdit ? (
-								<CommandItem
-									value="action:link-to"
-									data-testid={PLACES_TESTID.addLinkTo}
-									onSelect={() => {
-										const name = openNode.name;
-										onClose();
-										void addLinkAndCache(qc, tripId, {
-											target: { kind: "node", nodeId: openNode.id },
-											url: otherLink,
-										})
-											.then(() => toast(`Link added to ${name}`))
-											.catch((e) => toast.error(humanError(e)));
-									}}
-								>
-									<Link2 strokeWidth={1.5} />
-									<span className="truncate">
-										Add this link to {openNode.name}
-									</span>
-								</CommandItem>
-							) : null}
-							{otherLink ? (
-								<CommandItem
-									value="action:save-link"
-									data-testid={PLACES_TESTID.saveLink}
-									onSelect={() => saveLink(otherLink)}
-								>
-									<Link2 strokeWidth={1.5} />
-									Save this link…
-								</CommandItem>
-							) : null}
-							{!q.trim() && canSearch && mode !== "first" ? (
-								<CommandItem
-									value="action:paste"
-									onSelect={async () => {
-										// E8 on iOS (no share target): paste a link.
-										let text = "";
-										try {
-											text = (await navigator.clipboard.readText()).trim();
-										} catch {
-											// No clipboard access: the share page has a paste box.
+									</CommandItem>
+								) : null}
+								{mapsLink && canSearch ? (
+									<CommandItem
+										value="action:link"
+										onSelect={() =>
+											setSelected({ kind: "link", url: mapsLink })
 										}
-										if (looksLikeUrl(text) && parseMapsUrl(text)) {
-											setQ(text);
-											setSelected({ kind: "link", url: text });
-											return;
-										}
-										// Any other link (a video, a guide): WP-Home's share page
-										// saves it in one tap (EXTENSIONS §10 iOS path).
-										saveLink(looksLikeUrl(text) ? text : undefined);
-									}}
-								>
-									<Link2 strokeWidth={1.5} />
-									Paste link to save…
-								</CommandItem>
-							) : null}
-							{dayHit ? (
-								<CommandItem
-									value="action:day"
-									onSelect={() => {
-										onClose("inspector");
-										nav.select({ kind: "day", id: dayHit.id });
-									}}
-								>
-									<CalendarDays strokeWidth={1.5} />
-									Go to Day {dayQuery} · {formatDayDate(dayHit.date)}
-								</CommandItem>
-							) : null}
-							{canSearch ? (
-								<CommandItem
-									value="action:pin"
-									data-testid={PLACES_TESTID.dropPin}
-									onSelect={() => {
-										setSelected(null);
-										setPinning(true);
-									}}
-								>
-									<MapPin strokeWidth={1.5} />
-									Pick on the map…
-								</CommandItem>
-							) : null}
-							{q.trim() &&
-							newType &&
-							access.canEdit &&
-							mode !== "locate" &&
-							!coords &&
-							!mapsLink &&
-							!otherLink ? (
-								<CommandItem
-									value="action:add"
-									onSelect={addNamed}
-									disabled={createNamed.isPending}
-								>
-									<Plus strokeWidth={1.5} />
-									<span className="truncate">
-										Add “{q.trim()}” as a new{" "}
-										{NODE_TYPES[newType].label.toLowerCase()}
-										{parentForNew ? ` in ${ix.node(parentForNew)?.name}` : ""}
-									</span>
-								</CommandItem>
-							) : null}
-							{q.trim() ? null : rateItem}
-						</CommandGroup>
+									>
+										<Link2 strokeWidth={1.5} />
+										Save the place in this Maps link
+									</CommandItem>
+								) : null}
+								{otherLink && !linking ? (
+									<CommandItem
+										value="action:save-link"
+										data-testid={PLACES_TESTID.saveLink}
+										onSelect={() => saveLink(otherLink)}
+									>
+										<Link2 strokeWidth={1.5} />
+										Save this link…
+									</CommandItem>
+								) : null}
+								{!q.trim() && canSearch && mode !== "first" ? (
+									<CommandItem
+										value="action:paste"
+										onSelect={async () => {
+											// E8 on iOS (no share target): paste a link.
+											let text = "";
+											try {
+												text = (await navigator.clipboard.readText()).trim();
+											} catch {
+												// No clipboard access: the share page has a paste box.
+											}
+											if (looksLikeUrl(text) && parseMapsUrl(text)) {
+												setQ(text);
+												setSelected({ kind: "link", url: text });
+												return;
+											}
+											// Any other link (a video, a guide): its place, or a
+											// new one, right here (D10).
+											if (
+												looksLikeUrl(text) &&
+												access.canEdit &&
+												mode !== "locate"
+											) {
+												setQ(text);
+												return;
+											}
+											saveLink(looksLikeUrl(text) ? text : undefined);
+										}}
+									>
+										<Link2 strokeWidth={1.5} />
+										Paste link to save…
+									</CommandItem>
+								) : null}
+								{dayHit ? (
+									<CommandItem
+										value="action:day"
+										onSelect={() => {
+											onClose("inspector");
+											nav.select({ kind: "day", id: dayHit.id });
+										}}
+									>
+										<CalendarDays strokeWidth={1.5} />
+										Go to Day {dayQuery} · {formatDayDate(dayHit.date)}
+									</CommandItem>
+								) : null}
+								{canSearch ? (
+									<CommandItem
+										value="action:pin"
+										data-testid={PLACES_TESTID.dropPin}
+										onSelect={() => {
+											setSelected(null);
+											setPinning(true);
+										}}
+									>
+										<MapPin strokeWidth={1.5} />
+										Pick on the map…
+									</CommandItem>
+								) : null}
+								{q.trim() &&
+								newType &&
+								access.canEdit &&
+								mode !== "locate" &&
+								!coords &&
+								!mapsLink &&
+								!otherLink ? (
+									<CommandItem
+										value="action:add"
+										onSelect={addNamed}
+										disabled={createNamed.isPending}
+									>
+										<Plus strokeWidth={1.5} />
+										<span className="truncate">
+											Add “{q.trim()}” as a new{" "}
+											{NODE_TYPES[newType].label.toLowerCase()}
+											{parentForNew ? ` in ${ix.node(parentForNew)?.name}` : ""}
+										</span>
+									</CommandItem>
+								) : null}
+								{q.trim() ? null : rateItem}
+							</CommandGroup>
+						)}
 					</CommandList>
 
 					{showMap ? (
@@ -1083,7 +1274,11 @@ function Palette({
 					data-testid={PLACES_TESTID.providerFooter}
 					className="flex items-center gap-3 border-t px-4 py-2 text-2xs text-muted-foreground max-sm:pb-[max(env(safe-area-inset-bottom),8px)]"
 				>
-					{provider === "google" ? (
+					{linking ? (
+						<span className="min-w-0 truncate">
+							Works with Instagram, TikTok, YouTube, Maps and any web page
+						</span>
+					) : provider === "google" ? (
 						<span>Powered by Google</span>
 					) : (
 						<span>
@@ -1098,11 +1293,19 @@ function Palette({
 							</a>
 						</span>
 					)}
-					<span className="ml-auto hidden items-center gap-1 sm:inline-flex">
-						<Kbd>
-							<CornerDownLeft className="size-3" />
-						</Kbd>
-						{mode === "locate" ? "choose" : "open"}
+					<span className="ml-auto hidden shrink-0 items-center gap-1 sm:inline-flex">
+						{linking ? (
+							<LinkKeys
+								enter={linkEnter ? `Add to ${linkEnter.name}` : "New place"}
+							/>
+						) : (
+							<>
+								<Kbd>
+									<CornerDownLeft className="size-3" />
+								</Kbd>
+								{mode === "locate" ? "choose" : "open"}
+							</>
+						)}
 						{tripHits.length && mode !== "locate" ? (
 							<>
 								<Kbd className="ml-2">⌘</Kbd>

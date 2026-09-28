@@ -16,9 +16,15 @@ export const PLACES_TESTID = {
 	scheduleMenu: "places-schedule-menu",
 	useLocation: "places-use-location",
 	dropPin: "places-drop-pin",
-	/** ⌘K with a pasted link: onto the open place, or to the share page. */
+	/** ⌘K with a pasted link: the open place's row, or the share page (read-only, first, locate). */
 	addLinkTo: "places-add-link-to",
 	saveLink: "places-save-link",
+	/** D10: the pasted link's preview, its other places, the search, New place. */
+	linkPreview: "places-link-preview",
+	linkTarget: "places-link-target",
+	linkSearch: "places-link-search",
+	linkNewPlace: "places-link-new-place",
+	linkFiling: "places-link-filing",
 	dropPinUse: "places-drop-pin-use",
 	providerFooter: "places-provider-footer",
 	paletteEmpty: "places-palette-empty",
