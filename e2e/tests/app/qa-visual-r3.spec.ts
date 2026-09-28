@@ -271,7 +271,7 @@ test.describe("1100 (lg)", () => {
 test.describe("phone 390", () => {
 	test.use({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
 
-	test("guard (WP-Shell): a link with ?tab=lists opens the sheet far enough to show the Lists tab", async ({ page }) => {
+	test("guard (WP-Shell): a link with ?tab=lists shows the Lists tab", async ({ page }) => {
 		await signInDennis(page);
 		await openTrip(page, `/t/${TRIP}/japan/tokyo?tab=lists`);
 		const top = await page.getByTestId("mobile-sheet").evaluate((s) => Math.round(s.getBoundingClientRect().top));
@@ -281,7 +281,7 @@ test.describe("phone 390", () => {
 			const r = p.getBoundingClientRect();
 			return r.top < innerHeight - 80 && r.height > 0;
 		});
-		// Fixed: it opens to the half snap (it stayed at the 120px peek, top 724 of 844).
+		// Fixed: once it stayed at the sheet's 120px peek (top 724 of 844); the page shows it now.
 		expect(listsVisible, `sheet top ${top}`).toBe(true);
 	});
 });

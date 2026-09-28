@@ -9,6 +9,7 @@ import { expect, type Page, test } from "@playwright/test";
 import { MAP_TESTID } from "../../../src/features/map/testids";
 import { TESTID } from "../../../src/lib/testids";
 import { loginViaApi } from "./_helpers/auth";
+import { openPhoneMap } from "./_helpers/page";
 
 const TRIP = "asia-2027";
 
@@ -43,7 +44,7 @@ test.beforeEach(async ({ page }) => {
 
 async function open(page: Page, url: string, lens?: string) {
 	await page.goto(url);
-	await expect(page.getByTestId("workspace")).toBeVisible({ timeout: 30_000 });
+	await openPhoneMap(page);
 	await expect(page.getByTestId(MAP_TESTID.canvas)).toBeVisible({ timeout: 30_000 });
 	await expect
 		.poll(
@@ -177,7 +178,7 @@ test("MT-13: cluster chips never overlap at a day's default fit (GRAN-09)", asyn
 test("SEC-R1-16 / ERR-06: blocked tiles say 'Map tiles couldn't load', pins stay", async ({ page }) => {
 	await page.route(/tiles\.openfreemap\.org/, (r) => r.abort());
 	await page.goto(`/t/${TRIP}/japan/tokyo`);
-	await expect(page.getByTestId("workspace")).toBeVisible({ timeout: 30_000 });
+	await openPhoneMap(page);
 	await expect(page.getByTestId(MAP_TESTID.tilesError)).toBeVisible({ timeout: 20_000 });
 	await expect(page.getByTestId(MAP_TESTID.tilesError)).toContainText("Map tiles couldn't load");
 	await expect(page.getByTestId(TESTID.pin).first()).toBeVisible();
