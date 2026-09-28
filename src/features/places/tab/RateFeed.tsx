@@ -22,6 +22,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
 	ArrowDown,
 	Check,
+	ChevronLeft,
 	ChevronRight,
 	ChevronUp,
 	Eye,
@@ -75,7 +76,7 @@ import { cn } from "@/lib/utils";
 import { useUi } from "@/lib/workspace/ui-store";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { commentVisibleText, priorityForKey } from "../lib/rate";
-import { type Slide, usePlaceMedia } from "../rate/PlaceMedia";
+import { LinkPreview, type Slide, usePlaceMedia } from "../rate/PlaceMedia";
 import { PLACES_TESTID } from "../testids";
 import { RatingCommentEditor } from "../ui/member-ratings";
 import { MiniMap } from "../ui/mini-map";
@@ -658,6 +659,60 @@ function GroupList({ row, data }: { row: PlaceRow; data: PlacesData }) {
 	);
 }
 
+type CardSteps = {
+	n: number;
+	of: number;
+	prev: (() => void) | null;
+	next: (() => void) | null;
+};
+
+/** "12 of 47" and a thin bar: where this card is in the pile. */
+function StepProgress({ steps }: { steps: CardSteps }) {
+	return (
+		<div className="flex items-center gap-3 text-meta text-muted-foreground">
+			<span className="tnum" data-testid={PLACES_TAB_TESTID.feedPos}>
+				{steps.n} of {steps.of}
+			</span>
+			<span className="h-1 flex-1 overflow-hidden rounded-full bg-muted">
+				<span
+					className="block h-full rounded-full bg-primary"
+					style={{ width: `${(100 * steps.n) / Math.max(1, steps.of)}%` }}
+				/>
+			</span>
+		</div>
+	);
+}
+
+/** Previous / Next at the details' foot (↑ ↓ or k j do the same). */
+function StepButtons({ steps }: { steps: CardSteps }) {
+	return (
+		<div className="mt-auto flex items-center justify-between gap-2 pt-2">
+			<Button
+				variant="outline"
+				size="sm"
+				disabled={!steps.prev}
+				title="Previous (↑)"
+				data-testid={PLACES_TAB_TESTID.feedPrev}
+				onClick={() => steps.prev?.()}
+			>
+				<ChevronLeft />
+				Previous
+			</Button>
+			<Button
+				variant="outline"
+				size="sm"
+				disabled={!steps.next}
+				title="Next (↓)"
+				data-testid={PLACES_TAB_TESTID.feedNext}
+				onClick={() => steps.next?.()}
+			>
+				Next
+				<ChevronRight />
+			</Button>
+		</div>
+	);
+}
+
 function PlaceCard({
 	row,
 	data,
@@ -670,6 +725,7 @@ function PlaceCard({
 	onRate,
 	phone,
 	wide,
+	steps,
 }: {
 	row: PlaceRow;
 	data: PlacesData;
@@ -684,6 +740,8 @@ function PlaceCard({
 	phone: boolean;
 	/** The feed is wide enough for the media beside the details. */
 	wide: boolean;
+	/** Wide (D07): "12 of 47" and Previous / Next (null at either end). */
+	steps: CardSteps;
 }) {
 	const act = usePlaceActions();
 	const me = act.me;
@@ -714,8 +772,15 @@ function PlaceCard({
 	const tag = me && mine ? revealTag(row, data, me) : null;
 	const [commenting, setCommenting] = useState(false);
 	const comment = me ? node.ratingComments[me] : undefined;
-	// The time needed is in the card's context, below.
-	const meta = [row.where, categoryLabel(row)].filter(Boolean).join(" · ");
+	// "Shopping street · Asakusa, Tokyo · on Day 3" (D07); the time needed is
+	// in the card's context, below.
+	const meta = [
+		categoryLabel(row),
+		row.where.split(" › ").reverse().join(", "),
+		row.status === "scheduled" ? `on ${row.when.split(" · ")[0]}` : null,
+	]
+		.filter(Boolean)
+		.join(" · ");
 
 	const tagChip = tag ? (
 		<span
@@ -844,9 +909,22 @@ function PlaceCard({
 					/>
 					{/* D07: the place, what it is, then your rating and the group. */}
 					<div className="flex min-h-0 flex-col gap-5 overflow-y-auto p-1">
+						<StepProgress steps={steps} />
 						{tagChip}
 						{title}
 						{line ? <p className="text-body text-foreground">{line}</p> : null}
+						{links.length ? (
+							<ul
+								className="grid gap-1.5"
+								data-testid={PLACES_TAB_TESTID.feedLinks}
+							>
+								{links.slice(0, 3).map((m) => (
+									<li key={m.id}>
+										<LinkPreview m={m} />
+									</li>
+								))}
+							</ul>
+						) : null}
 						{active ? <CardContext row={row} /> : null}
 						<section className="grid gap-2.5">
 							<h3 className="flex items-baseline justify-between text-sm font-semibold">
@@ -859,6 +937,7 @@ function PlaceCard({
 							{commentRow}
 						</section>
 						{shown ? <GroupList row={row} data={data} /> : null}
+						<StepButtons steps={steps} />
 					</div>
 				</div>
 			) : (
@@ -1314,6 +1393,11 @@ export default function RateFeed({ data }: { data: PlacesData }) {
 		items.findIndex((it) => it.key === current),
 	);
 	const currentItem = items[currentIndex];
+	// Each card's place number in the pile ("12 of 47").
+	const placeNo = useMemo(() => {
+		let n = 0;
+		return items.map((it) => (it.kind === "place" ? ++n : n));
+	}, [items]);
 	const currentPlace =
 		currentItem?.kind === "place" ? data.byId.get(currentItem.id) : undefined;
 
@@ -1560,6 +1644,8 @@ export default function RateFeed({ data }: { data: PlacesData }) {
 					if (it.kind === "place") {
 						const row = data.byId.get(it.id);
 						if (!row) return null;
+						const prevKey = items[i - 1]?.key;
+						const nextKey = items[i + 1]?.key;
 						return (
 							<PlaceCard
 								key={it.key}
@@ -1578,6 +1664,12 @@ export default function RateFeed({ data }: { data: PlacesData }) {
 								onRate={(p) => rate(it.id, it.key, p)}
 								phone={phone}
 								wide={wide}
+								steps={{
+									n: placeNo[i] ?? 0,
+									of: placeNo.at(-1) ?? 0,
+									prev: prevKey ? () => scrollToKey(prevKey) : null,
+									next: nextKey ? () => scrollToKey(nextKey) : null,
+								}}
 							/>
 						);
 					}

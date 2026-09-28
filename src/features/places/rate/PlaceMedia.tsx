@@ -387,7 +387,7 @@ function HideOnError({ src, className }: { src: string; className?: string }) {
 }
 
 /** A guide link with its preview: image, site, title and description. */
-function LinkPreview({ m }: { m: MediaDto }) {
+export function LinkPreview({ m }: { m: MediaDto }) {
 	const x = extras(m);
 	const host = hostOf(m.url);
 	return (

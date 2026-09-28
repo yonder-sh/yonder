@@ -53,6 +53,10 @@ export const PLACES_TAB_TESTID = {
 	feedTime: "places-feed-time",
 	/** D07: "The group", after you rate. */
 	feedGroup: "places-feed-group",
+	feedPos: "places-feed-pos",
+	feedPrev: "places-feed-prev",
+	feedNext: "places-feed-next",
+	feedLinks: "places-feed-links",
 	feedPeek: "places-feed-peek",
 	feedLeft: "places-feed-left",
 	feedRun: "places-feed-run",

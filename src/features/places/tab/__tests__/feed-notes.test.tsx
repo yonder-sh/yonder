@@ -5,7 +5,7 @@
  */
 import { QueryClient } from "@tanstack/react-query";
 import { fireEvent, screen, within } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type { NoteDto } from "@/features/notes/notes.functions";
 import { demoGraph } from "@/lib/fixtures/demo";
 import { tripKeys } from "@/lib/query/keys";
@@ -113,6 +113,45 @@ describe("the group on the Rate card (D07)", () => {
 		const group = await within(card).findByTestId(T.feedGroup);
 		expect(group).toHaveTextContent("The group");
 		expect(group).toHaveTextContent("Want");
+	});
+});
+
+describe("the wide Rate card (D07)", () => {
+	it("says where you are in the pile; Previous / Next step through it", async () => {
+		// Wide: the feed is at least 960px and wider than tall.
+		const w = vi
+			.spyOn(HTMLElement.prototype, "clientWidth", "get")
+			.mockReturnValue(1400);
+		const h = vi
+			.spyOn(HTMLElement.prototype, "clientHeight", "get")
+			.mockReturnValue(800);
+		const scrolled: string[] = [];
+		const into = vi
+			.spyOn(Element.prototype, "scrollIntoView")
+			.mockImplementation(function (this: Element) {
+				scrolled.push(this.getAttribute("data-key") ?? "");
+			});
+		try {
+			renderWithWorkspace(<PlacesTab />, {
+				search: { tab: "places", pv: "rate" },
+			});
+			const cards = await screen.findAllByTestId(
+				T.feedCard,
+				{},
+				{ timeout: 5000 },
+			);
+			const [first, second] = cards as [HTMLElement, HTMLElement];
+			expect(within(first).getByTestId(T.feedPos)).toHaveTextContent(
+				/^1 of \d+$/,
+			);
+			expect(within(first).getByTestId(T.feedPrev)).toBeDisabled();
+			fireEvent.click(within(first).getByTestId(T.feedNext));
+			expect(scrolled).toContain(second.getAttribute("data-key"));
+		} finally {
+			w.mockRestore();
+			h.mockRestore();
+			into.mockRestore();
+		}
 	});
 });
 
