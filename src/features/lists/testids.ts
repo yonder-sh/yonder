@@ -21,6 +21,8 @@ export const LISTS_TESTID = {
 	/** The For section's Choose / Change and its picker of stops and travel. */
 	bookingForPick: "booking-for-pick",
 	bookingForPicker: "booking-for-picker",
+	/** The picker's "Not linked to a stop". */
+	bookingForUnlink: "booking-for-unlink",
 	bookingOpens: "booking-opens",
 	/** Edit · Mark booked · Open the site (beside the list: stuck to the details' foot). */
 	bookingActions: "booking-actions",

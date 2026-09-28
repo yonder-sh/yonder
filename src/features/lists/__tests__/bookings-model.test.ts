@@ -16,6 +16,7 @@ import {
 	bookingGroups,
 	bookingStopId,
 	dayBits,
+	forIdeas,
 	forOptions,
 	isBooked,
 	longDate,
@@ -24,6 +25,7 @@ import {
 	opensIn,
 	opensLabel,
 	ruleLabel,
+	unlinkedTarget,
 } from "../bookings-model";
 import type { ListItemDto } from "../lists.functions";
 
@@ -206,6 +208,22 @@ describe("what a booking can be for", () => {
 				legId: L.handsLoft as string,
 			})[0]?.options.some((o) => o.target.kind === "leg"),
 		).toBe(true);
+	});
+
+	it("the stops waiting in Ideas, and unlinking: a stop's booking keeps its place", () => {
+		expect(ix.unscheduled.length).toBeGreaterThan(0);
+		expect(forIdeas(ix).map((o) => o.target)).toEqual(
+			ix.unscheduled.map((it) => ({ kind: "item", itemId: it.id })),
+		);
+		const sky = ix.item(I.sky ?? "");
+		expect(unlinkedTarget(ix, { kind: "item", itemId: I.sky ?? "" })).toEqual({
+			kind: "node",
+			nodeId: sky?.nodeId,
+		});
+		expect(unlinkedTarget(ix, { kind: "leg", legId: L.flight ?? "" })).toEqual({
+			kind: "trip",
+		});
+		expect(unlinkedTarget(ix, { kind: "trip" })).toBeNull();
 	});
 });
 

@@ -448,3 +448,30 @@ export function forOptions(
 		return options.length ? [{ dayId: d.id, options }] : [];
 	});
 }
+
+/** The stops waiting in Ideas (off their day): a booking can be for one too. */
+export function forIdeas(ix: GraphIndex): ForOption[] {
+	return ix.unscheduled.map((it) => ({
+		target: { kind: "item", itemId: it.id },
+		label: itemName(ix, it.id),
+		nodeId: it.nodeId,
+		mode: null,
+	}));
+}
+
+/**
+ * "Not linked to a stop": a stop's booking stays with its place, a leg's
+ * goes to the whole trip. Null when it isn't linked.
+ */
+export function unlinkedTarget(
+	ix: GraphIndex,
+	current: BundleTarget,
+): BundleTarget | null {
+	if (current.kind === "item") {
+		const nodeId = ix.item(current.itemId)?.nodeId;
+		return nodeId && ix.node(nodeId)
+			? { kind: "node", nodeId }
+			: { kind: "trip" };
+	}
+	return current.kind === "leg" ? { kind: "trip" } : null;
+}

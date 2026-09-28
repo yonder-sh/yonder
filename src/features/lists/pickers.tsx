@@ -3,10 +3,10 @@
  * `MemberPicker`/`TreePicker` own their trigger, which a menu item can't
  * open): people (members only, never guests; a typed name adds a person,
  * ADDENDUM §8 via `useAddPerson`), places (Move to…, candidate shops) and
- * what a booking is for (a stop or a travel leg, One Yonder D12).
+ * what a booking is for (a stop, one waiting in Ideas, a travel leg, or none; One Yonder D12).
  */
 
-import { Check, Clock, House, UserPlus } from "lucide-react";
+import { Check, Clock, House, Unlink, UserPlus } from "lucide-react";
 import { type ReactNode, useState } from "react";
 import { ModeGlyph, TypeGlyph } from "@/components/common/glyphs";
 import {
@@ -35,7 +35,12 @@ import {
 import type { BundleTarget } from "@/lib/schemas/targets";
 import { cn } from "@/lib/utils";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
-import { forOptions } from "./bookings-model";
+import {
+	type ForOption,
+	forIdeas,
+	forOptions,
+	unlinkedTarget,
+} from "./bookings-model";
 import { dayLabel } from "./list-model";
 import { LISTS_TESTID } from "./testids";
 
@@ -235,8 +240,35 @@ export function ForPicker({
 }) {
 	const { ix } = useWorkspace();
 	const days = shell.open ? forOptions(ix, value) : [];
+	const ideas = shell.open ? forIdeas(ix) : [];
+	const unlinked = unlinkedTarget(ix, value);
 	const key = (t: BundleTarget) =>
 		t.kind === "item" ? t.itemId : t.kind === "leg" ? t.legId : null;
+	const option = (o: ForOption) => {
+		const node = ix.node(o.nodeId);
+		const id = key(o.target);
+		return (
+			<CommandItem
+				key={id}
+				value={`${o.label} ${id}`}
+				onSelect={() => onPick(o.target)}
+			>
+				{o.mode ? (
+					<ModeGlyph mode={o.mode} />
+				) : node ? (
+					<TypeGlyph type={node.type} category={node.category} />
+				) : (
+					<Clock
+						aria-hidden
+						strokeWidth={1.5}
+						className="size-3.5 shrink-0 text-muted-foreground"
+					/>
+				)}
+				<span className="flex-1 truncate">{o.label}</span>
+				{id === key(value) ? <Check className="size-4" /> : null}
+			</CommandItem>
+		);
+	};
 	return (
 		<Shell
 			{...shell}
@@ -247,35 +279,30 @@ export function ForPicker({
 					<CommandInput placeholder="Search stops and travel…" />
 					<CommandList className="max-h-[50vh]">
 						<CommandEmpty>No matches.</CommandEmpty>
+						{unlinked ? (
+							<CommandGroup>
+								<CommandItem
+									value="Not linked to a stop"
+									data-testid={LISTS_TESTID.bookingForUnlink}
+									onSelect={() => onPick(unlinked)}
+								>
+									<Unlink
+										aria-hidden
+										strokeWidth={1.5}
+										className="size-3.5 shrink-0 text-muted-foreground"
+									/>
+									<span className="flex-1 truncate">Not linked to a stop</span>
+								</CommandItem>
+							</CommandGroup>
+						) : null}
 						{days.map((d) => (
 							<CommandGroup key={d.dayId} heading={dayLabel(ix, d.dayId)}>
-								{d.options.map((o) => {
-									const node = ix.node(o.nodeId);
-									const id = key(o.target);
-									return (
-										<CommandItem
-											key={id}
-											value={`${o.label} ${id}`}
-											onSelect={() => onPick(o.target)}
-										>
-											{o.mode ? (
-												<ModeGlyph mode={o.mode} />
-											) : node ? (
-												<TypeGlyph type={node.type} category={node.category} />
-											) : (
-												<Clock
-													aria-hidden
-													strokeWidth={1.5}
-													className="size-3.5 shrink-0 text-muted-foreground"
-												/>
-											)}
-											<span className="flex-1 truncate">{o.label}</span>
-											{id === key(value) ? <Check className="size-4" /> : null}
-										</CommandItem>
-									);
-								})}
+								{d.options.map(option)}
 							</CommandGroup>
 						))}
+						{ideas.length ? (
+							<CommandGroup heading="Ideas">{ideas.map(option)}</CommandGroup>
+						) : null}
 					</CommandList>
 				</Command>
 			}
