@@ -5,17 +5,23 @@
  *
  * - Done stops end when they were marked Done. A stop that isn't Done keeps
  *   you there until now, even past its planned end (you're still there).
+ * - A custom stop with no place and no start time ("Dinner") floats: it
+ *   keeps its time in the flow, but it's never Now; it's Next "whenever you
+ *   like" until it's Done.
  * - The rest re-times from there: each stop starts at the previous one's
  *   actual end plus the schedule's travel between them (never re-routed).
  *   Flexible stops flow as soon as possible; fixed ones hold their time: a
  *   start time, or the arrival of a timed departure (a flight, a train).
- * - Pace: the next stop's re-timed arrival against the plan's.
+ * - Pace: the next stop's re-timed arrival against the plan's (the next one
+ *   with a place or a time: a floating stop has none to keep).
  * - Risks: a fixed stop or departure the flow reaches late, or with little
  *   room left (within `PACE_MIN` of the plan's own is on time), with up to
  *   two fixes: shorten the longest flexible stop before it, skip the nearest
  *   place.
- * - Free time: room before the next fixed stop, and the ideas nearby that
- *   fit it (open then, a short walk away, the group's favourites first).
+ * - Free time: room before the next fixed stop, less the stops with a place
+ *   before it (a floating stop's time is part of it), when that stop isn't
+ *   at risk; and the ideas nearby that fit it (open then, a short walk away,
+ *   the group's favourites first).
  *
  * `todayDayId` picks the day being lived; `computeToday` builds the view;
  * `stopHere` is "Looks like you're at Bic Camera?".
@@ -103,6 +109,8 @@ export interface TodayStop {
 	mode: LegMode | null;
 	/** Holds its time: a set start time, or the arrival of a timed departure. */
 	fixed: boolean;
+	/** No place and no start time ("Dinner"): Next whenever you like, never Now. */
+	floating: boolean;
 	/** "Booked for this date". */
 	booked: boolean;
 	/** The timed departure that takes you there, if it leaves today (an overnight one only holds the time). */
@@ -147,11 +155,8 @@ export interface TodayRisk {
 	fixes: TodayFix[];
 }
 
-/** "2 h 40 free before 19:50" · "Leave for Bar Benfiddich by 19:50 (booked for 20:00, 10 min walk)". */
-export interface TodayFree {
-	minutes: number;
-	/** When it starts (the flexible stops before are over). */
-	from: number;
+/** "Leave for Bar Benfiddich by 19:50 (booked for 20:00, 10 min walk)": the next fixed stop or departure. */
+export interface TodayLeave {
 	/** When you must leave for the fixed stop. */
 	before: number;
 	/** The fixed stop (for a departure, the stop it takes you to). */
@@ -164,6 +169,13 @@ export interface TodayFree {
 	travelMin: number;
 	mode: LegMode | null;
 	departure: TodayDeparture | null;
+}
+
+/** "2 h 40 free before 19:50": a floating stop's time is part of it. */
+export interface TodayFree extends TodayLeave {
+	minutes: number;
+	/** When it starts (the stops with a place before are over). */
+	from: number;
 }
 
 /** An idea that fits the free time: "Omoide Yokocho · 6 min walk · open till late". */
@@ -210,9 +222,9 @@ export interface TodayView {
 	done: TodayStop[];
 	/** Not Done, but a later stop is: passed over, out of the flow. */
 	passed: TodayStop[];
-	/** Now: the first stop not Done that has started and you've reached ("Now · since 14:40": its `start`, or `arrive` when later). */
+	/** Now: the first stop not Done that has started and you've reached ("Now · since 14:40": its `start`, or `arrive` when later); never a floating one. */
 	current: TodayStop | null;
-	/** Next: the stop after it (before anything started: the day's first stop). */
+	/** Next: the stop after it (before anything started, or with a floating stop first: that stop). */
 	next: TodayStop | null;
 	/** "Rest of today", after `next`. */
 	rest: TodayStop[];
@@ -222,7 +234,9 @@ export interface TodayView {
 	ended: boolean;
 	pace: TodayPace;
 	risks: TodayRisk[];
-	/** Room before the next fixed stop (at least `FREE_MIN`), else null. */
+	/** The next fixed stop or departure after Now, and when to leave for it. */
+	leave: TodayLeave | null;
+	/** Room before it (at least `FREE_MIN`), else null. */
 	free: TodayFree | null;
 	/** Up to three ideas for the free time (empty without it). */
 	ideas: TodayIdea[];
@@ -496,6 +510,7 @@ export function computeToday(
 		const plannedStart = s.start.getTime();
 		const plannedEnd = s.end.getTime();
 		const fixed = s.pinned || t.held;
+		const floating = !it.nodeId && !fixed;
 		// The plan's own arrival: before a start time's free room, after a late one.
 		const plannedArriveHere =
 			plannedStart -
@@ -515,6 +530,7 @@ export function computeToday(
 			travelMin: t.minutes,
 			mode: t.mode,
 			fixed,
+			floating,
 			booked: it.fixedDate === true,
 			departure: t.departure,
 		};
@@ -588,15 +604,18 @@ export function computeToday(
 		});
 	}
 
-	// Started, and you're there: a booking you're still walking to is Next (and late), not Now.
-	const currentAt = rows.findIndex(
+	// Started, and you're there: a booking you're still walking to is Next (and
+	// late), not Now; a floating stop is Next whenever its time comes.
+	const reachedAt = rows.findIndex(
 		(r) => Math.max(r.stop.start, r.stop.arrive) <= now,
 	);
+	const currentAt = rows[reachedAt]?.stop.floating ? -1 : reachedAt;
 	const current = currentAt >= 0 ? rows[currentAt] : undefined;
-	const nextRow = rows[currentAt >= 0 ? currentAt + 1 : 0];
+	const nextRow = rows[currentAt + 1];
 
 	// ---- pace --------------------------------------------------------------
-	const drift = nextRow ? round(nextRow.flowArrive - nextRow.plannedArrive) : 0;
+	const paced = rows.slice(currentAt + 1).find((r) => !r.stop.floating);
+	const drift = paced ? round(paced.flowArrive - paced.plannedArrive) : 0;
 	const pace: TodayPace =
 		drift >= PACE_MIN
 			? { kind: "behind", minutes: drift }
@@ -716,10 +735,9 @@ export function computeToday(
 	const fixesFor = (target: Target, spare: number, plannedSpare: number) => {
 		const need = Math.min(TIGHT_MIN, plannedSpare) - spare;
 		const want = Math.max(need, Math.min(plannedSpare, COMFORT_MIN) - spare);
+		// Not started, or under way (the stop you're at, a floating one in its time).
 		const open = target.before.filter(
-			(r) =>
-				!r.stop.booked &&
-				(r.stop.start >= now || (r === current && r.stop.end > now)),
+			(r) => !r.stop.booked && (r.stop.start >= now || r.stop.end > now),
 		);
 		const fixes: TodayFix[] = [];
 		// The longest first; on a tie, the one nearer the fixed stop.
@@ -735,10 +753,7 @@ export function computeToday(
 				Math.floor((dur - want) / 15) * 15,
 			);
 			if (toMin >= dur) continue;
-			const newEnd = Math.max(
-				r === current ? now : r.stop.start,
-				r.stop.start + toMin * MS_PER_MINUTE,
-			);
+			const newEnd = Math.max(now, r.stop.start + toMin * MS_PER_MINUTE);
 			const recoverMin = round(r.stop.end - newEnd);
 			if (recoverMin >= need) {
 				fixes.push({
@@ -767,11 +782,13 @@ export function computeToday(
 		return fixes;
 	};
 	const risks: TodayRisk[] = [];
+	const risky = new Set<Target>();
 	for (const t of targets) {
 		const spare = round(t.at - t.arrive);
 		const plannedSpare = round(t.at - t.plannedArrive);
 		// Within `PACE_MIN` of the plan's own room is on time, as the pace says.
 		if (spare >= TIGHT_MIN || plannedSpare - spare < PACE_MIN) continue;
+		risky.add(t);
 		risks.push({
 			itemId: t.itemId,
 			departure: t.departure,
@@ -787,26 +804,37 @@ export function computeToday(
 		});
 	}
 
-	// ---- free time before the next fixed stop, and ideas for it --------------
+	// ---- the next fixed stop, free time before it, and ideas for it -----------
+	let leave: TodayLeave | null = null;
 	let free: TodayFree | null = null;
 	let ideas: TodayIdea[] = [];
 	const first = targets[0];
 	if (first) {
-		const minutes = round(first.at - first.arrive);
-		if (minutes >= FREE_MIN) {
-			const before = first.at - first.travelMin * MS_PER_MINUTE;
+		leave = {
+			before: first.at - first.travelMin * MS_PER_MINUTE,
+			itemId: first.itemId,
+			name: first.name,
+			at: first.at,
+			tz: first.tz,
+			booked: first.booked,
+			travelMin: first.travelMin,
+			mode: first.mode,
+			departure: first.departure,
+		};
+		const spare = round(first.at - first.arrive);
+		// A floating stop happens in the free time: what's left of it counts.
+		const minutes = first.before.reduce(
+			(m, r) =>
+				r.stop.floating
+					? m + round(r.stop.end - Math.max(r.stop.start, now))
+					: m,
+			spare,
+		);
+		if (spare >= 0 && !risky.has(first) && minutes >= FREE_MIN) {
 			free = {
+				...leave,
 				minutes,
-				from: before - minutes * MS_PER_MINUTE,
-				before,
-				itemId: first.itemId,
-				name: first.name,
-				at: first.at,
-				tz: first.tz,
-				booked: first.booked,
-				travelMin: first.travelMin,
-				mode: first.mode,
-				departure: first.departure,
+				from: leave.before - minutes * MS_PER_MINUTE,
 			};
 			// Where you'll be: here, else the last place before it.
 			const prev = first.row ? list[first.row.index - 1] : list.at(-1);
@@ -894,6 +922,7 @@ export function computeToday(
 		ended,
 		pace,
 		risks,
+		leave,
 		free,
 		ideas,
 		tonight,

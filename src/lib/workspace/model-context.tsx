@@ -24,7 +24,13 @@ import {
 	phaseDays,
 	tripPhase,
 } from "@/features/overview/lib/phase";
-import { can, canRateOwn, type EditMode, editModeOf } from "@/lib/auth/roles";
+import {
+	can,
+	canRateOwn,
+	type EditMode,
+	editModeOf,
+	followsAlong,
+} from "@/lib/auth/roles";
 import { type GraphIndex, indexGraph } from "@/lib/engine/graph-index";
 import { lensOptions as lensOptionsOf, resolveLens } from "@/lib/engine/lens";
 import {
@@ -169,7 +175,7 @@ export interface Workspace {
 	lens: Lens;
 	lensOptions: { lens: Lens; enabled: boolean; visible: boolean }[];
 	tab: Tab;
-	/** The trip is on (its days, or `?asOf` on one): Today replaces the Overview. */
+	/** The trip is on (its days, or `?asOf` on one): Today replaces the Overview (a follower keeps both). */
 	underway: boolean;
 	days: DayRange | null;
 	sel: Sel | null;
@@ -267,6 +273,7 @@ export function WorkspaceModelProvider({
 	);
 	const schedule = useMemo(() => computeSchedule(ix), [ix]);
 	const underway = useUnderway(ix, schedule, route.search.asOf ?? null);
+	const follower = followsAlong(graph.me);
 
 	const { splat, search, go, href } = route;
 	const resolved = useMemo(
@@ -289,8 +296,8 @@ export function WorkspaceModelProvider({
 	const filter = useMemo(() => parseFilter(search.f), [search.f]);
 
 	const state: N.NavState = useMemo(
-		() => ({ ix, scopeId, lens, search, days, underway }),
-		[ix, scopeId, lens, search, days, underway],
+		() => ({ ix, scopeId, lens, search, days, underway, follower }),
+		[ix, scopeId, lens, search, days, underway, follower],
 	);
 
 	const run = useCallback(
@@ -346,7 +353,7 @@ export function WorkspaceModelProvider({
 			scopeResolved: resolved.complete,
 			lens,
 			lensOptions,
-			tab: tabOf(scopeId, search, underway),
+			tab: tabOf(scopeId, search, { underway, follower }),
 			underway,
 			days,
 			sel,
@@ -380,6 +387,7 @@ export function WorkspaceModelProvider({
 			nav,
 			scopeId,
 			underway,
+			follower,
 		],
 	);
 

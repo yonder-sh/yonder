@@ -148,29 +148,63 @@ describe("computeToday: running early (board P18)", () => {
 	const s = tokyoDay(marks);
 	const { v } = view(s, at("17:10"));
 
-	it("Bic Camera is done at 17:10; Dinner starts right away and the bar is next, 30 min ahead", () => {
+	it("Bic Camera is done at 17:10; Dinner has no place, so it floats: Next whenever you like, never Now; 30 min ahead", () => {
 		expect(v.done.map((d) => `${d.name} ${t(d.doneAt as number)}`).at(-1)).toBe(
 			"Bic Camera 17:10",
 		);
-		expect(v.current?.name).toBe("Dinner");
-		expect(v.next?.name).toBe("Bar Benfiddich");
+		expect(v.current).toBeNull();
+		expect(v.next).toMatchObject({
+			itemId: s.I.dinner,
+			name: "Dinner",
+			nodeId: null,
+			floating: true,
+			fixed: false,
+		});
+		expect(names(v.rest)).toEqual(["Bar Benfiddich", "Golden Gai"]);
+		expect(v.rest.map((r) => r.floating)).toEqual([false, false]);
+		expect(v.starting).toBe(false);
 		expect(v.pace).toEqual({ kind: "ahead", minutes: 30 });
 		expect(v.risks).toEqual([]);
 	});
 
-	it("1 h 10 free before 19:50: leave for Bar Benfiddich by 19:50 (booked for 20:00, 10 min walk)", () => {
-		expect(v.free).toMatchObject({
-			minutes: 70,
+	it("2 h 40 free before 19:50, Dinner's time in it: leave for Bar Benfiddich by 19:50 (booked for 20:00, 10 min walk)", () => {
+		const bar = {
 			itemId: s.I.bar,
 			name: "Bar Benfiddich",
 			booked: true,
 			travelMin: 10,
 			mode: "walk",
 			departure: null,
-		});
-		expect(t(v.free?.from as number)).toBe("18:40");
+		};
+		expect(v.leave).toMatchObject(bar);
+		expect(t(v.leave?.before as number)).toBe("19:50");
+		expect(t(v.leave?.at as number)).toBe("20:00");
+		expect(v.free).toMatchObject({ ...bar, minutes: 160 });
+		expect(t(v.free?.from as number)).toBe("17:10");
 		expect(t(v.free?.before as number)).toBe("19:50");
 		expect(t(v.free?.at as number)).toBe("20:00");
+	});
+
+	it("later, Dinner is still Next and the free time is what's left of it", () => {
+		const { v: v2 } = view(s, at("18:00"));
+		expect(v2.current).toBeNull();
+		expect(v2.next?.name).toBe("Dinner");
+		expect(v2.free?.minutes).toBe(110);
+		expect(t(v2.free?.from as number)).toBe("18:00");
+		expect(v2.pace).toEqual({ kind: "ahead", minutes: 30 });
+	});
+
+	it("Done on Dinner moves you on: the bar is Next, the free time before it without Dinner", () => {
+		const { v: v2 } = view(
+			tokyoDay({ ...marks, dinner: done("18:30") }),
+			at("18:30"),
+		);
+		expect(names(v2.done).at(-1)).toBe("Dinner");
+		expect(v2.current).toBeNull();
+		expect(v2.next).toMatchObject({ name: "Bar Benfiddich", fixed: true });
+		expect(t(v2.next?.leaveBy as number)).toBe("19:50");
+		expect(v2.free?.minutes).toBe(80);
+		expect(v2.pace).toEqual({ kind: "ahead", minutes: 40 });
 	});
 
 	it("ideas nearby: open then, a short walk, the group's favourites first, at most three", () => {
@@ -272,7 +306,7 @@ describe("computeToday: following your pace, not the clock", () => {
 		expect(t(v.next?.start as number)).toBe("10:50");
 	});
 
-	it("reaching a booking late: a late risk; the only fix left is to shorten the dinner you're at", () => {
+	it("reaching a booking late: a late risk; the only fix left is to shorten dinner, Next in its time", () => {
 		const s = tokyoDay({
 			cha: done("09:50"),
 			broadway: done("14:00"),
@@ -280,7 +314,8 @@ describe("computeToday: following your pace, not the clock", () => {
 			bic: done("19:00"),
 		});
 		const { v } = view(s, at("19:30"));
-		expect(v.current?.name).toBe("Dinner");
+		expect(v.current).toBeNull();
+		expect(v.next?.name).toBe("Dinner");
 		const r = v.risks[0];
 		expect(r).toMatchObject({
 			name: "Bar Benfiddich",
@@ -301,7 +336,7 @@ describe("computeToday: following your pace, not the clock", () => {
 		]);
 	});
 
-	it("a booking whose time has come while you're still at dinner is late, not gone", () => {
+	it("a booking whose time has come before dinner is Done is late, not gone", () => {
 		const s = tokyoDay({
 			cha: done("09:50"),
 			broadway: done("14:00"),
@@ -309,8 +344,10 @@ describe("computeToday: following your pace, not the clock", () => {
 			bic: done("17:10"),
 		});
 		const { v } = view(s, at("20:05"));
-		expect(v.current?.name).toBe("Dinner");
-		expect(v.next?.name).toBe("Bar Benfiddich");
+		expect(v.current).toBeNull();
+		expect(v.next?.name).toBe("Dinner");
+		expect(v.rest[0]?.name).toBe("Bar Benfiddich");
+		expect(t(v.leave?.before as number)).toBe("19:50");
 		expect(v.risks[0]).toMatchObject({
 			name: "Bar Benfiddich",
 			late: true,
@@ -453,6 +490,54 @@ describe("computeToday: following your pace, not the clock", () => {
 		);
 		const { v } = view(s, at("16:40"));
 		expect(v.risks[0]?.fixes).toEqual([]);
+	});
+
+	it("a day of floating stops only: each is Next in turn until it's Done; no time to keep, nothing to leave for", () => {
+		// Planned: Breakfast 09:00–09:45, Wander 09:45–11:45, Dinner 11:45–13:15.
+		const floats = (marks: Record<string, LocalAt> = {}) =>
+			scenario({
+				firstDate: DAY,
+				days: [
+					{
+						items: [
+							{
+								k: "breakfast",
+								title: "Breakfast",
+								min: 45,
+								done: marks.breakfast,
+							},
+							{ k: "wander", title: "Wander", min: 120, done: marks.wander },
+							{ k: "dinner", title: "Dinner", min: 90 },
+						],
+					},
+				],
+			});
+		const { v } = view(floats(), at("11:00"), {}, "d1");
+		expect(v.current).toBeNull();
+		expect(v.next).toMatchObject({ name: "Breakfast", floating: true });
+		expect(names(v.rest)).toEqual(["Wander", "Dinner"]);
+		expect(t(v.rest[0]?.start as number)).toBe("11:00");
+		expect(v.starting).toBe(true);
+		expect(v.pace).toEqual({ kind: "on_time", minutes: 0 });
+		expect(v.leave).toBeNull();
+		expect(v.free).toBeNull();
+		expect(v.risks).toEqual([]);
+		const { v: v2 } = view(
+			floats({ breakfast: done("10:00") }),
+			at("11:00"),
+			{},
+			"d1",
+		);
+		expect(v2.next?.name).toBe("Wander");
+		expect(v2.starting).toBe(false);
+		const { v: v3 } = view(
+			floats({ breakfast: done("10:00"), wander: done("12:00") }),
+			at("12:00"),
+			{},
+			"d1",
+		);
+		expect(v3.next?.name).toBe("Dinner");
+		expect(v3.ended).toBe(false);
 	});
 });
 

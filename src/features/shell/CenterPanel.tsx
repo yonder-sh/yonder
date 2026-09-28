@@ -32,7 +32,7 @@ import { ReminderLine } from "@/features/places/tab/ReminderLine";
 import { usePlacesToDecide } from "@/features/places/tab/use-places";
 import { PlanTab } from "@/features/plan/PlanTab";
 import { TodayTab } from "@/features/today/TodayTab";
-import { seesMoney } from "@/lib/auth/roles";
+import { followsAlong, seesMoney } from "@/lib/auth/roles";
 import { TESTID } from "@/lib/testids";
 import { cn } from "@/lib/utils";
 import type { Tab } from "@/lib/workspace/search";
@@ -58,7 +58,8 @@ const TAB_LABEL: Record<Tab, string> = {
 /**
  * The tabs this viewer gets (One Yonder: five; Media and Notes live in each
  * place's details): Money only for those who pay (`seesMoney`); Today in the
- * Overview's place while the trip is on.
+ * Overview's place while the trip is on, or next to it for a follower, who
+ * opens on the Overview (flow 11).
  */
 export function visibleTabs(
 	me: {
@@ -67,13 +68,12 @@ export function visibleTabs(
 	},
 	underway = false,
 ): Tab[] {
-	const all: Tab[] = [
-		underway ? "today" : "overview",
-		"plan",
-		"places",
-		"lists",
-		"money",
-	];
+	const first: Tab[] = !underway
+		? ["overview"]
+		: followsAlong(me)
+			? ["overview", "today"]
+			: ["today"];
+	const all: Tab[] = [...first, "plan", "places", "lists", "money"];
 	return seesMoney(me) ? all : all.filter((t) => t !== "money");
 }
 
@@ -108,7 +108,7 @@ export function CenterTabBar({
 	const tabs = visibleTabs(ws.graph.me, ws.underway);
 	// A guest's URL may still say `tab=money`: show the plan instead.
 	// The full gallery (`tab=media`) isn't in the bar: no tab is lit for it;
-	// the Overview during the trip is Today's.
+	// the Overview during the trip is Today's (but a follower's own tab).
 	const active = tabs.includes(ws.tab)
 		? ws.tab
 		: ws.tab === "media"

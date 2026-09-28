@@ -308,16 +308,17 @@ function TripWorkspace({
 /**
  * Someone who can only rate lands on Rate: a bare trip link, once per open
  * (owner, 2026-09-27). Going to the Overview afterwards stays there. Not
- * while the trip is on: planning steps back, Today comes first.
+ * while the trip is on: planning steps back and a rater lands on Today, like
+ * everyone but a follower ("Can view"), who lands on the Overview (flow 11).
  */
 function RaterLanding({ tripId, slug }: { tripId: string; slug: string }) {
-	const { graph, scope, search, tab } = useWorkspace();
+	const { graph, scope, search, tab, underway } = useWorkspace();
 	const navigate = useNavigate();
 	const landed = useRef<string | null>(null);
 	useEffect(() => {
 		if (landed.current === tripId) return;
 		landed.current = tripId;
-		if (graph.me.role !== "rater" || scope) return;
+		if (graph.me.role !== "rater" || scope || underway) return;
 		if (search.tab || tab !== "overview") return;
 		void navigate({
 			to: "/t/$trip",
@@ -325,7 +326,7 @@ function RaterLanding({ tripId, slug }: { tripId: string; slug: string }) {
 			search: { ...search, tab: "places", pv: "rate" },
 			replace: true,
 		});
-	}, [tripId, graph.me.role, scope, search, tab, slug, navigate]);
+	}, [tripId, graph.me.role, scope, search, tab, underway, slug, navigate]);
 	return null;
 }
 

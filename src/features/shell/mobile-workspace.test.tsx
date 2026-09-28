@@ -6,6 +6,7 @@
 import { act, fireEvent, screen, within } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { demoGraph } from "@/lib/fixtures/demo";
 import { useFollowedStore } from "@/lib/realtime/view-ui";
 import { TESTID } from "@/lib/testids";
 import { useUi } from "@/lib/workspace/ui-store";
@@ -46,6 +47,26 @@ describe("the phone", () => {
 			"money",
 		]);
 		expect(screen.queryByTestId("map-stub")).toBeNull();
+	});
+
+	it("a follower during the trip: the Overview lit, Today next to it (P17)", () => {
+		renderWithWorkspace(<MobileWorkspace />, {
+			graph: { ...demoGraph, me: { ...demoGraph.me, role: "viewer" } },
+			search: { asOf: "2027-10-05T11:00" },
+		});
+		const tabs = within(screen.getByTestId(TESTID.centerTabs)).getAllByRole(
+			"tab",
+		);
+		expect(tabs.map((t) => t.getAttribute("data-tab"))).toEqual([
+			"overview",
+			"today",
+			"plan",
+			"places",
+			"lists",
+		]);
+		expect(
+			tabs.filter((t) => t.getAttribute("aria-selected") === "true"),
+		).toEqual([tabs[0]]);
 	});
 
 	it("opens the map from the header, and a tab brings the page back", () => {

@@ -270,9 +270,12 @@ function BottomTabs() {
 		>
 			{tabs.map((t) => {
 				const Icon = TAB_ICON[t];
-				// The Overview during the trip sits under Today.
+				// The Overview during the trip sits under Today (a follower has it as its own tab).
 				const selected =
-					ws.tab === t || (t === "today" && ws.tab === "overview");
+					ws.tab === t ||
+					(t === "today" &&
+						ws.tab === "overview" &&
+						!tabs.includes("overview"));
 				return (
 					<button
 						key={t}

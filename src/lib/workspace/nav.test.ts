@@ -218,15 +218,16 @@ describe("Today during the trip (One Yonder phase 5)", () => {
 		...state(scopeId, search),
 		underway: true,
 	});
+	const ON = { underway: true };
 	const tab = (t: nav.NavTarget, scopeId: string | null) =>
-		tabOf(scopeId, t.search, true);
+		tabOf(scopeId, t.search, ON);
 
 	it("a bare trip link is Today; Overview and Plan links keep working", () => {
-		expect(tabOf(null, {}, true)).toBe("today");
-		expect(tabOf(null, { tab: "overview" }, true)).toBe("overview");
-		expect(tabOf(null, { tab: "plan" }, true)).toBe("plan");
-		expect(tabOf(null, { days: "2027-10-05" }, true)).toBe("plan");
-		expect(tabOf(N.tokyo ?? null, {}, true)).toBe("plan");
+		expect(tabOf(null, {}, ON)).toBe("today");
+		expect(tabOf(null, { tab: "overview" }, ON)).toBe("overview");
+		expect(tabOf(null, { tab: "plan" }, ON)).toBe("plan");
+		expect(tabOf(null, { days: "2027-10-05" }, ON)).toBe("plan");
+		expect(tabOf(N.tokyo ?? null, {}, ON)).toBe("plan");
 		// Outside the trip a Today link shows the Overview.
 		expect(tabOf(null, { tab: "today" })).toBe("overview");
 	});
@@ -260,6 +261,39 @@ describe("Today during the trip (One Yonder phase 5)", () => {
 		expect(
 			tab(nav.setDays(s0, { from: "2027-10-05", to: "2027-10-05" }), null),
 		).toBe("plan");
+	});
+});
+
+describe("a follower during the trip (flow 11, P17)", () => {
+	const AT = { underway: true, follower: true };
+	const on = (scopeId: string | null, search: WorkspaceSearch = {}) => ({
+		...state(scopeId, search),
+		...AT,
+	});
+	const tab = (t: nav.NavTarget, scopeId: string | null) =>
+		tabOf(scopeId, t.search, AT);
+
+	it("a bare trip link is the Overview; Today is named in the URL", () => {
+		expect(tabOf(null, {}, AT)).toBe("overview");
+		expect(tabOf(null, { tab: "today" }, AT)).toBe("today");
+		expect(tabOf(N.tokyo ?? null, {}, AT)).toBe("plan");
+		const today = nav.setTab(on(null), "today");
+		expect(today.search).toEqual({ tab: "today" });
+		const back = nav.setTab(on(null, today.search), "overview");
+		expect(back.search).toEqual({});
+		// Outside the trip, the Overview as for everyone.
+		expect(tabOf(null, { tab: "today" }, { follower: true })).toBe("overview");
+	});
+
+	it("a stop's details open over Today, and closing them stays there", () => {
+		const item = demoGraph.items[0]?.id ?? "";
+		const picked = nav.select(on(null, { tab: "today" }), {
+			kind: "item",
+			id: item,
+		});
+		expect(picked.search).toEqual({ tab: "today", sel: `i.${item}` });
+		const closed = nav.escapeChain(on(null, picked.search));
+		expect(closed && tab(closed, null)).toBe("today");
 	});
 });
 

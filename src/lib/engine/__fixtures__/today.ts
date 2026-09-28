@@ -148,9 +148,9 @@ export const NODES = [
 /**
  * Tue 5 Oct (Day 4 in the boards): Cha no Ikedaya 09:10–09:55, Nakano
  * Broadway 10:15–13:55, Yodobashi 14:05–16:05, Bic Camera 16:10–17:40,
- * Dinner 17:40–19:10, Bar Benfiddich booked for 20:00 (40 min spare),
- * Golden Gai 21:05–22:35; the night at Hotel Gracery. Wed 6 Oct starts at
- * Meiji Jingu.
+ * Dinner 17:40–19:10 (no place yet: it floats), Bar Benfiddich booked for
+ * 20:00 (40 min spare), Golden Gai 21:05–22:35; the night at Hotel Gracery.
+ * Wed 6 Oct starts at Meiji Jingu.
  */
 export function tokyoDay(marks: Record<string, LocalAt> = {}): Scenario {
 	const s = scenario({
@@ -171,7 +171,13 @@ export function tokyoDay(marks: Record<string, LocalAt> = {}): Scenario {
 						done: marks.yodobashi,
 					},
 					{ k: "bic", node: "bic", min: 90, done: marks.bic },
-					{ k: "dinner", title: "Dinner", min: 90, done: marks.dinner },
+					{
+						k: "dinner",
+						title: "Dinner",
+						note: "near Shinjuku, or Omoide Yokocho",
+						min: 90,
+						done: marks.dinner,
+					},
 					{
 						k: "bar",
 						node: "benfiddich",

@@ -1,10 +1,12 @@
 /**
  * Today's words (boards P15–P18): "35 min behind", "Leave by 16:40 · 5 min
  * walk", "Tight before Bar Benfiddich · 20:00, booked", "Shorten dinner to
- * 1 h". Pure; times in the stop's own zone.
+ * 1 h", "Leave for Bar Benfiddich by 19:50 (booked for 20:00, 10 min walk)".
+ * Pure; times in the stop's own zone.
  */
 import type {
 	TodayFix,
+	TodayLeave,
 	TodayPace,
 	TodayRisk,
 	TodayStop,
@@ -41,6 +43,17 @@ export function travelLine(stop: TodayStop): string | null {
 	if (d) return `${d.name} at ${formatTime(d.depMs, d.tz)}`;
 	if (!stop.travelMin) return null;
 	return travelWords(stop.travelMin, stop.mode);
+}
+
+/** "Leave for Bar Benfiddich by 19:50 (booked for 20:00, 10 min walk)", "Leave for NH 9 by 21:30"; "now" once that's past. */
+export function leaveLine(leave: TodayLeave, now: number): string {
+	const by =
+		leave.before > now ? `by ${formatTime(leave.before, leave.tz)}` : "now";
+	if (leave.departure) return `Leave for ${leave.name} ${by}`;
+	const travel = leave.travelMin
+		? `, ${travelWords(leave.travelMin, leave.mode)}`
+		: "";
+	return `Leave for ${leave.name} ${by} (${leave.booked ? "booked for" : "at"} ${formatTime(leave.at, leave.tz)}${travel})`;
 }
 
 /** A custom stop's title reads as a word in a sentence ("Shorten dinner"); a place keeps its name. */

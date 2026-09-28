@@ -240,6 +240,15 @@ export function seesMoney(access: Pick<TripAccess, "role" | "isGuest">) {
 }
 
 /**
+ * Follows along ("Can view": a member, or a guest on a view link): during the
+ * trip they open on the Overview (route, today's plan, photos), with Today
+ * next to it; everyone else opens on Today (flow 11, board P17).
+ */
+export function followsAlong(access: Pick<TripAccess, "role">) {
+	return access.role === "viewer";
+}
+
+/**
  * The workspace's edit mode (EXTENSIONS §2.3): `edit` applies directly,
  * `suggest` turns changes into proposals, `read` shows everything disabled.
  * `suggesting` is the editor's own "Suggesting" toggle.

@@ -14,7 +14,8 @@
  *   bare trip root, `defaultTab`). The Overview is trip-level: zooming into a
  *   place, selecting something or picking days from it opens the Plan.
  * - Today (during the trip) is trip-level too, except that a selection opens
- *   its details over it.
+ *   its details over it. A bare trip link is Today then, but for a follower
+ *   ("Can view"), who opens on the Overview (flow 11).
  */
 import type { GraphIndex } from "@/lib/engine/graph-index";
 import {
@@ -33,6 +34,7 @@ import {
 	serializeDays,
 	serializeSel,
 	type Tab,
+	type TabContext,
 	tabOf,
 	tabParam,
 	type WorkspaceSearch,
@@ -77,6 +79,8 @@ export type NavState = {
 	days: DayRange | null;
 	/** The trip is on: a bare trip link is Today (`defaultTab`). */
 	underway?: boolean;
+	/** Follows along ("Can view"): a bare trip link stays the Overview. */
+	follower?: boolean;
 };
 
 /** The URL tail for a scope (`japan/tokyo`), '' for the root. */
@@ -104,21 +108,21 @@ function chosen(
 }
 
 /** The tab the current URL shows. */
-const tabNow = (s: NavState): Tab => tabOf(s.scopeId, s.search, s.underway);
+const tabNow = (s: NavState): Tab => tabOf(s.scopeId, s.search, s);
 
 /** `t` showing `tab` at `scopeId` (the `tab` param only when it isn't the default there). */
 function withTab(
 	t: NavTarget,
 	scopeId: string | null,
 	tab: Tab,
-	underway = false,
+	at: TabContext = {},
 ): NavTarget {
 	const rest = { ...t.search, tab: undefined };
 	return {
 		splat: t.splat,
 		search: cleanSearch({
 			...rest,
-			tab: tabParam(scopeId, tab, rest, underway),
+			tab: tabParam(scopeId, tab, rest, at),
 		}),
 	};
 }
@@ -142,7 +146,7 @@ export function zoomIn(s: NavState, nodeId: string): NavTarget {
 		},
 		nodeId,
 		fromOverview(tabNow(s), true),
-		s.underway,
+		s,
 	);
 }
 
@@ -164,7 +168,7 @@ export function zoomOut(s: NavState): NavTarget | null {
 		},
 		parentId,
 		fromOverview(tabNow(s), parentId !== null),
-		s.underway,
+		s,
 	);
 }
 
@@ -186,7 +190,7 @@ export function zoomTo(
 		},
 		nodeId,
 		fromOverview(tabNow(s), nodeId !== null),
-		s.underway,
+		s,
 	);
 }
 
@@ -206,7 +210,7 @@ const here = (
 		},
 		s.scopeId,
 		patch.tab ?? fromOverview(tabNow(s), toPlan),
-		s.underway,
+		s,
 	);
 
 export const setLens = (s: NavState, lens: Lens) => here(s, { lens });
@@ -253,7 +257,7 @@ export const openDetails = (s: NavState, section: InspectorTabParam) =>
  * gallery (`tab=media`, no longer in the tab bar).
  */
 export function showMedia(s: NavState, nodeId: string | null): NavTarget {
-	return withTab(zoomTo(s, nodeId), nodeId, "media", s.underway);
+	return withTab(zoomTo(s, nodeId), nodeId, "media", s);
 }
 
 /**
@@ -266,7 +270,7 @@ export function setTab(s: NavState, tab: Tab): NavTarget {
 		? zoomTo(s, null)
 		: here(s, { sel: undefined, itab: undefined });
 	const search = { ...base.search, days: undefined, sel: undefined };
-	return withTab({ splat: base.splat, search }, null, tab, s.underway);
+	return withTab({ splat: base.splat, search }, null, tab, s);
 }
 
 /**
@@ -370,6 +374,6 @@ export function openPlaces(
 		},
 		stay ? s.scopeId : (opts.scopeId ?? null),
 		"places",
-		s.underway,
+		s,
 	);
 }

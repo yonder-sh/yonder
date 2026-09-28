@@ -1,7 +1,7 @@
 /** Today's words and its Directions links (One Yonder phase 5). */
 import { describe, expect, it } from "vitest";
 import { zonedEpoch } from "@/lib/engine/time";
-import type { TodayRisk, TodayStop } from "@/lib/engine/today";
+import type { TodayLeave, TodayRisk, TodayStop } from "@/lib/engine/today";
 import {
 	directionsUrl,
 	isAppleDevice,
@@ -10,6 +10,7 @@ import {
 } from "../lib/directions";
 import {
 	fixLabel,
+	leaveLine,
 	paceLabel,
 	riskTitle,
 	spokenMin,
@@ -106,6 +107,34 @@ describe("words", () => {
 			booked: false,
 		} as unknown as TodayRisk;
 		expect(riskTitle(risk)).toBe("Tight before CI 157 · leaves 16:00");
+	});
+
+	it("when to leave for the next fixed stop; now once that's past", () => {
+		const at = (time: string) => zonedEpoch("2027-10-05", time, "Asia/Tokyo");
+		const bar: TodayLeave = {
+			before: at("19:50"),
+			itemId: "b",
+			name: "Bar Benfiddich",
+			at: at("20:00"),
+			tz: "Asia/Tokyo",
+			booked: true,
+			travelMin: 10,
+			mode: "walk",
+			departure: null,
+		};
+		expect(leaveLine(bar, at("17:10"))).toBe(
+			"Leave for Bar Benfiddich by 19:50 (booked for 20:00, 10 min walk)",
+		);
+		expect(leaveLine({ ...bar, booked: false }, at("19:50"))).toBe(
+			"Leave for Bar Benfiddich now (at 20:00, 10 min walk)",
+		);
+		const nh9 = {
+			...bar,
+			name: "NH 9",
+			travelMin: 0,
+			departure: { name: "NH 9" },
+		} as unknown as TodayLeave;
+		expect(leaveLine(nh9, at("17:10"))).toBe("Leave for NH 9 by 19:50");
 	});
 
 	it("a custom stop reads as a word in the fix; a place keeps its name", () => {

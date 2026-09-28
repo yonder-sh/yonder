@@ -5,13 +5,15 @@
  * - the stats; `?asOf` shows the before / during / after headers (during
  *   the trip a bare link opens Today: `tab=overview` names the Overview);
  * - a stay on the route strip opens its days in the Plan;
- * - a view-link guest lands on it too;
+ * - a view-link guest lands on it too, during the trip as well (a follower,
+ *   flow 11: Today next to it, read-only);
  * - on a phone it is stacked, at full height (during the trip, under Today);
  * - screenshots in `e2e/shots/overview/`.
  */
 import { expect, type Page, test } from "@playwright/test";
 import { OVERVIEW_TESTID as O } from "../../../src/features/overview/testids";
 import { SHELL_TESTID } from "../../../src/features/shell/testids";
+import { TODAY_TESTID } from "../../../src/features/today/testids";
 import { TESTID } from "../../../src/lib/testids";
 import { shotPath, storageStateOf } from "./_helpers/env";
 import { cloneFixtureTrip } from "./_helpers/fixture";
@@ -132,6 +134,18 @@ test("a view-link guest lands on the Overview", async ({ browser, page }, info) 
 	console.log("guest me:", JSON.stringify({ role: me.role, isGuest: me.isGuest }));
 	expect(me.isGuest).toBe(true);
 	await expect(guest.getByTestId(TESTID.centerTabs).locator("[data-tab=money]")).toHaveCount(0);
+
+	// During the trip a follower still lands on the Overview, with Today next to it.
+	await guest.goto(`/t/${c.slug}?asOf=2027-10-05T11:00`);
+	await expect(guest.getByTestId(O.page)).toBeVisible();
+	await expect(guest.getByTestId(O.header)).toHaveAttribute("data-phase", "during");
+	await expect(activeTab(guest)).toHaveAttribute("data-tab", "overview");
+	const tabs = guest.getByTestId(TESTID.centerTabs).getByRole("tab");
+	await expect(tabs.nth(1)).toHaveAttribute("data-tab", "today");
+	await tabs.nth(1).click();
+	await expect(guest).toHaveURL(/[?&]tab=today(&|$)/);
+	await expect(guest.getByTestId(TODAY_TESTID.page)).toBeVisible();
+	await expect(guest.getByTestId(TODAY_TESTID.done)).toHaveCount(0);
 	await guestCtx.close();
 });
 

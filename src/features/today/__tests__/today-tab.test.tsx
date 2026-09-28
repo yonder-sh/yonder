@@ -1,8 +1,9 @@
 /**
  * Today on the road (One Yonder phase 5, boards P15–P18), on Tue 5 Oct in
  * Shinjuku at an `?asOf` local time: running late (a risk and its fixes),
- * running early (free time and ideas), the first stop, the end of the day,
- * a day without stops, the driver's address, and read-only for viewers.
+ * running early (Dinner, with no place, Next whenever you like; free time
+ * and ideas), the first stop, the end of the day, a day without stops, the
+ * driver's address, and read-only for viewers.
  */
 import { fireEvent, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -205,20 +206,39 @@ describe("Today, running early (P18)", () => {
 				expect.objectContaining({ itemId: s.I.bic, done: false }),
 			]),
 		);
-		expect(screen.getByTestId(T.now)).toHaveTextContent("Dinner");
-		expect(screen.getByTestId(T.next)).toHaveTextContent(
-			"Next · 20:00, booked",
-		);
 		expect(screen.queryByTestId(T.risk)).toBeNull();
 	});
 
-	it("shows the free time and ideas nearby; Add puts one on today after Dinner", async () => {
+	it("Dinner has no place: Next whenever you like, with when to leave for the bar and its own Done", async () => {
 		render(s, "2027-10-05T17:10");
-		const free = screen.getByTestId(T.free);
-		expect(free).toHaveTextContent("1 h 10 free before 19:50");
-		expect(free).toHaveTextContent(
+		expect(screen.queryByTestId(T.now)).toBeNull();
+		const next = screen.getByTestId(T.next);
+		expect(next).toHaveAttribute("data-item", s.I.dinner);
+		expect(next).toHaveTextContent("Next · Dinner, whenever you like");
+		expect(next).toHaveTextContent(
+			"No place yet · your note: near Shinjuku, or Omoide Yokocho",
+		);
+		expect(next).not.toHaveTextContent("planned");
+		expect(within(next).getByTestId(T.leave)).toHaveTextContent(
 			"Leave for Bar Benfiddich by 19:50 (booked for 20:00, 10 min walk)",
 		);
+		expect(within(next).queryByTestId(T.directions)).toBeNull();
+		expect(rows()).toEqual(["20:00Bar Benfiddichbooked", "21:05Golden Gai"]);
+		fireEvent.click(within(next).getByTestId(T.done));
+		await vi.waitFor(() =>
+			expect(calls.done).toEqual([
+				expect.objectContaining({ itemId: s.I.dinner, done: true }),
+			]),
+		);
+	});
+
+	it("shows the free time, Dinner's in it, and ideas nearby; Add puts one on today after Dinner", async () => {
+		render(s, "2027-10-05T17:10");
+		const free = screen.getByTestId(T.free);
+		expect(free).toHaveTextContent("2 h 40 free before 19:50");
+		expect(free).toHaveTextContent("from your ideas nearby");
+		// The Next card says when to leave.
+		expect(within(free).queryByTestId(T.leave)).toBeNull();
 		const ideas = within(free).getAllByTestId(T.idea);
 		expect(ideas.map((i) => i.textContent)).toEqual([
 			expect.stringContaining("Fuunji"),
@@ -241,6 +261,18 @@ describe("Today, running early (P18)", () => {
 			nodeId: s.N.omoide,
 			afterItemId: s.I.dinner,
 		});
+	});
+
+	it("once Dinner is Done, the bar is Next and the free time says when to leave", () => {
+		render(tokyoDay({ ...EARLY, dinner: done("18:30") }), "2027-10-05T18:30");
+		expect(screen.getByTestId(T.next)).toHaveTextContent(
+			"Next · 20:00, booked",
+		);
+		const free = screen.getByTestId(T.free);
+		expect(free).toHaveTextContent("1 h 20 free before 19:50");
+		expect(within(free).getByTestId(T.leave)).toHaveTextContent(
+			"Leave for Bar Benfiddich by 19:50 (booked for 20:00, 10 min walk)",
+		);
 	});
 });
 
@@ -323,6 +355,7 @@ describe("Today read-only", () => {
 		});
 		expect(screen.getByTestId(T.doneRow)).toBeInTheDocument();
 		expect(screen.queryByTestId(T.undo)).toBeNull();
+		expect(screen.queryByTestId(T.done)).toBeNull();
 		expect(screen.getAllByTestId(T.idea)).toHaveLength(3);
 		expect(screen.queryByTestId(T.ideaAdd)).toBeNull();
 	});
@@ -351,7 +384,7 @@ describe("Today for screen readers", () => {
 			"Now: Yodobashi Camera. Next: Bic Camera. Running late.",
 		);
 		expect(live(EARLY, "2027-10-05T17:10")).toBe(
-			"Now: Dinner. Next: Bar Benfiddich. Running early.",
+			"Next: Dinner. Running early.",
 		);
 		expect(live({}, "2027-10-05T08:00")).toBe("Next: Cha no Ikedaya.");
 	});

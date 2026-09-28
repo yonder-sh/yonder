@@ -1,11 +1,13 @@
 /**
  * Today, on the road (One Yonder phase 5, flow 10; boards P15–P18): during
- * the trip it takes the Overview's place. It follows your pace, not the
- * clock (`computeToday`): Now with Done, Next with when to leave, Directions
- * and the driver's Address, what's at risk with a fix when you run late, the
- * free time and ideas nearby when you run early, the rest of the day
- * re-timed from now, and where you sleep tonight. Tapping a stop opens its
- * details. Raters, viewers and link guests see it without buttons.
+ * the trip it takes the Overview's place (a follower lands on the Overview,
+ * flow 11). It follows your pace, not the clock (`computeToday`): Now with
+ * Done, Next with when to leave, Directions and the driver's Address, what's
+ * at risk with a fix when you run late, the free time and ideas nearby when
+ * you run early, the rest of the day re-timed from now, and where you sleep
+ * tonight. A stop with no place and no start time is Next "whenever you
+ * like", with its own Done. Tapping a stop opens its details. Raters,
+ * viewers and link guests see it without buttons.
  *
  * - The first stop of the day, the end of it and a day without stops are
  *   their own simple states.
@@ -37,6 +39,7 @@ import type { LngLat } from "@/lib/engine/geo";
 import {
 	stopHere,
 	type TodayIdea,
+	type TodayLeave,
 	type TodayRisk,
 	type TodayStop,
 	type TodayView,
@@ -54,6 +57,7 @@ import {
 } from "./lib/directions";
 import {
 	fixLabel,
+	leaveLine,
 	moved,
 	paceLabel,
 	riskLine,
@@ -275,7 +279,8 @@ function Day({
 		to === view.next
 			? Math.max(cur.start, view.now - to.travelMin * 60_000)
 			: view.now;
-	const later = [view.next, ...view.rest].filter(
+	// A floating Next has no time to list.
+	const later = [view.next?.floating ? null : view.next, ...view.rest].filter(
 		(s): s is TodayStop => s !== null,
 	);
 	return (
@@ -299,6 +304,8 @@ function Day({
 					stop={view.next}
 					first={state === "starting"}
 					now={view.now}
+					leave={view.leave}
+					act={act}
 					onAddress={onAddress}
 				/>
 			) : null}
@@ -466,32 +473,46 @@ function NextCard({
 	stop,
 	first,
 	now,
+	leave,
+	act,
 	onAddress,
 }: {
 	stop: TodayStop;
 	/** The day's first stop (nothing started yet). */
 	first: boolean;
 	now: number;
+	/** The next fixed stop: a floating stop's card says when to leave for it. */
+	leave: TodayLeave | null;
+	act: TodayActions;
 	onAddress: (s: TodayStop) => void;
 }) {
 	const { ix, nav } = useWorkspace();
 	const item = ix.item(stop.itemId);
 	const coord = stop.nodeId ? ix.coordOf(stop.nodeId) : null;
 	const at = time(stop.start, stop.tz);
-	const label = first
-		? `First stop · ${at}`
-		: stop.fixed
-			? `Next · ${at}${stop.booked ? ", booked" : ""}`
-			: `Next · about ${at}`;
+	const label = stop.floating
+		? `${first ? "First stop" : "Next"} · ${stop.name}, whenever you like`
+		: first
+			? `First stop · ${at}`
+			: stop.fixed
+				? `Next · ${at}${stop.booked ? ", booked" : ""}`
+				: `Next · about ${at}`;
 	const travel = travelLine(stop);
-	const leave =
+	const leaveBy =
 		travel === null
 			? null
 			: stop.leaveBy > now
 				? `Leave by ${time(stop.leaveBy, stop.departure?.tz ?? stop.tz)}`
 				: "Leave now";
 	const note = item?.note ? plainText(item.note).split("\n")[0] : null;
-	const line = [leave, travel, note].filter(Boolean).join(" · ");
+	// "No place yet · your note: near Shinjuku" (P18).
+	const line = (
+		stop.floating
+			? ["No place yet", note ? `your note: ${note}` : null]
+			: [leaveBy, travel, note]
+	)
+		.filter(Boolean)
+		.join(" · ");
 	return (
 		<section
 			data-testid={T.next}
@@ -504,32 +525,59 @@ function NextCard({
 				<span className="min-w-0 flex-1 truncate text-meta font-semibold text-glow-foreground tnum dark:text-glow">
 					{label}
 				</span>
-				{moved(stop) ? (
+				{moved(stop) && !stop.floating ? (
 					<span className="shrink-0 text-meta text-muted-foreground line-through tnum">
 						planned {time(stop.plannedStart, stop.tz)}
 					</span>
 				) : null}
 			</div>
-			<button
-				type="button"
-				onClick={() => nav.select({ kind: "item", id: stop.itemId })}
-				className={cn(
-					"mt-3 flex w-full min-w-0 items-center gap-3 text-left",
-					TAP,
-				)}
-			>
-				<StopGlyph nodeId={stop.nodeId} name={stop.name} size="lg" />
-				<span className="min-w-0 flex-1">
-					<span className="block truncate font-display text-2xl font-semibold">
-						{stop.name}
-					</span>
-					{line ? (
-						<span className="line-clamp-2 text-body text-muted-foreground tnum">
-							{line}
+			<div className="mt-3 flex items-center gap-3">
+				<button
+					type="button"
+					onClick={() => nav.select({ kind: "item", id: stop.itemId })}
+					className={cn(
+						"flex min-w-0 flex-1 items-center gap-3 text-left",
+						TAP,
+					)}
+				>
+					<StopGlyph nodeId={stop.nodeId} name={stop.name} size="lg" />
+					<span className="min-w-0 flex-1">
+						<span className="block truncate font-display text-2xl font-semibold">
+							{stop.name}
 						</span>
-					) : null}
-				</span>
-			</button>
+						{line ? (
+							<span className="line-clamp-2 text-body text-muted-foreground tnum">
+								{line}
+							</span>
+						) : null}
+					</span>
+				</button>
+				{stop.floating && act.mayMarkDone ? (
+					<Button
+						variant="outline"
+						size="lg"
+						data-testid={T.done}
+						disabled={act.offline}
+						onClick={() => act.done(stop.itemId)}
+					>
+						<Check />
+						Done
+					</Button>
+				) : null}
+			</div>
+			{stop.floating && leave ? (
+				<p
+					data-testid={T.leave}
+					className="mt-3 flex items-start gap-2 text-body tnum"
+				>
+					<Clock
+						className="mt-0.5 size-4 shrink-0 text-muted-foreground"
+						strokeWidth={1.75}
+						aria-hidden
+					/>
+					{leaveLine(leave, now)}
+				</p>
+			) : null}
 			{coord && stop.nodeId ? (
 				<div className="mt-4 flex gap-3">
 					<Button asChild size="xl" className="flex-1">
@@ -605,12 +653,6 @@ function RiskCard({ risk, act }: { risk: TodayRisk; act: TodayActions }) {
 function Free({ view, act }: { view: TodayView; act: TodayActions }) {
 	const free = view.free;
 	if (!free) return null;
-	const travel = free.travelMin
-		? `, ${travelWords(free.travelMin, free.mode)}`
-		: "";
-	const leave = free.departure
-		? `Leave for ${free.name} by ${time(free.before, free.tz)}`
-		: `Leave for ${free.name} by ${time(free.before, free.tz)} (${free.booked ? "booked for" : "at"} ${time(free.at, free.tz)}${travel})`;
 	// The idea goes after the stop you're at, else before the next fixed one.
 	const anchor = view.current
 		? { afterItemId: view.current.itemId }
@@ -636,14 +678,20 @@ function Free({ view, act }: { view: TodayView; act: TodayActions }) {
 					{spokenMin(free.minutes)} free before {time(free.before, free.tz)}
 				</span>
 			</SectionHeader>
-			<p className="flex items-start gap-2 py-1 text-sm text-muted-foreground tnum">
-				<Clock
-					className="mt-0.5 size-4 shrink-0"
-					strokeWidth={1.75}
-					aria-hidden
-				/>
-				{leave}
-			</p>
+			{/* A floating Next says when to leave in its own card. */}
+			{view.next?.floating ? null : (
+				<p
+					data-testid={T.leave}
+					className="flex items-start gap-2 py-1 text-sm text-muted-foreground tnum"
+				>
+					<Clock
+						className="mt-0.5 size-4 shrink-0"
+						strokeWidth={1.75}
+						aria-hidden
+					/>
+					{leaveLine(free, view.now)}
+				</p>
+			)}
 			{view.ideas.length ? (
 				<ul className="divide-y">
 					{view.ideas.map((i) => (

@@ -137,6 +137,7 @@ export interface ItemSpec {
 	/** Node key or id; omit for an unlocated block ("Lunch"). */
 	node?: string;
 	title?: string;
+	note?: string;
 	min?: number;
 	pin?: string;
 	/** "Booked for this date". */
@@ -231,7 +232,7 @@ function buildScenario(spec: ScenarioSpec): Scenario {
 			dayId,
 			nodeId: nodeId(s.node),
 			title: s.title ?? (s.node ? null : s.k),
-			note: null,
+			note: s.note ?? null,
 			position: pos(i),
 			durationMin: s.min ?? 60,
 			pinnedStart: s.pin ?? null,

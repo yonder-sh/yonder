@@ -10,7 +10,7 @@ export const TODAY_TESTID = {
 	pace: "today-pace",
 	/** The Now row; `data-item`. */
 	now: "today-now",
-	/** Done on the Now row. */
+	/** Done on the Now row, or on a floating Next card. */
 	done: "today-done",
 	/** "Bic Camera · done 17:10 · Undo"; `data-item`. */
 	doneRow: "today-done-row",
@@ -24,6 +24,8 @@ export const TODAY_TESTID = {
 	/** A fix button; `data-kind`: shorten · skip. */
 	fix: "today-fix",
 	free: "today-free",
+	/** "Leave for Bar Benfiddich by 19:50 (booked for 20:00, 10 min walk)". */
+	leave: "today-leave",
 	/** `data-node`. */
 	idea: "today-idea",
 	ideaAdd: "today-idea-add",

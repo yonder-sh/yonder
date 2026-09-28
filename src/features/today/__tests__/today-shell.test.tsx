@@ -1,8 +1,9 @@
 /**
  * Where Today lives (One Yonder phase 5): during the trip it takes the
  * Overview's place in the tab bar and a bare trip link opens it; `tab=overview`
- * still opens the Overview (under Today). Outside the trip nothing changes.
- * Planning prompts step back: no Rate pill but on Places.
+ * still opens the Overview (under Today). A follower ("Can view") lands on the
+ * Overview, with Today next to it (flow 11, P17). Outside the trip nothing
+ * changes. Planning prompts step back: no Rate pill but on Places.
  */
 import { fireEvent, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
@@ -10,7 +11,9 @@ import { OVERVIEW_TESTID } from "@/features/overview/testids";
 import { RatePill } from "@/features/places/tab/RatePill";
 import { PLACES_TAB_TESTID } from "@/features/places/tab/testids";
 import { CenterTabBar, CenterTabContent } from "@/features/shell/CenterPanel";
-import { demo } from "@/lib/fixtures/demo";
+import type { TripRole } from "@/lib/auth/roles";
+import type { TripGraph } from "@/lib/engine/types";
+import { demo, demoGraph } from "@/lib/fixtures/demo";
 import { TESTID } from "@/lib/testids";
 import { renderWithWorkspace } from "@/test/render-workspace";
 import { StopActions } from "../StopActions";
@@ -57,6 +60,75 @@ describe("the tab bar", () => {
 		});
 		expect(ws().underway).toBe(false);
 		expect(tabs()[0]?.dataset.tab).toBe("overview");
+		expect(lit()).toBe("overview");
+	});
+});
+
+describe("who lands where during the trip (flow 11, P17)", () => {
+	const as = (role: TripRole, isGuest = false): TripGraph => ({
+		...demoGraph,
+		me: { ...demoGraph.me, role, isGuest },
+	});
+
+	it("a follower (Can view) lands on the Overview, with Today next to it", () => {
+		const { ws } = renderWithWorkspace(<CenterTabBar />, {
+			graph: as("viewer"),
+			search: { asOf: DURING },
+		});
+		expect(ws().tab).toBe("overview");
+		expect([...tabs()].map((t) => t.dataset.tab)).toEqual([
+			"overview",
+			"today",
+			"plan",
+			"places",
+			"lists",
+		]);
+		expect(lit()).toBe("overview");
+		fireEvent.click(tabs()[1] as HTMLElement);
+		expect(ws().tab).toBe("today");
+		expect(ws().search.tab).toBe("today");
+		expect(lit()).toBe("today");
+		// The Overview is the bare link again.
+		fireEvent.click(tabs()[0] as HTMLElement);
+		expect(ws().search.tab).toBeUndefined();
+		expect(lit()).toBe("overview");
+	});
+
+	it("a guest on a view link too: the page is the Overview", () => {
+		renderWithWorkspace(<CenterTabContent phone />, {
+			graph: as("viewer", true),
+			search: { asOf: DURING },
+		});
+		expect(screen.getByTestId(OVERVIEW_TESTID.page)).toBeInTheDocument();
+		expect(screen.queryByTestId(T.page)).toBeNull();
+	});
+
+	it("everyone else lands on Today: owners, editors, suggesters, raters, edit-link guests", () => {
+		const others: [TripRole, boolean][] = [
+			["owner", false],
+			["editor", false],
+			["suggester", false],
+			["rater", false],
+			["editor", true],
+		];
+		for (const [role, isGuest] of others) {
+			const { ws, unmount } = renderWithWorkspace(<CenterTabBar />, {
+				graph: as(role, isGuest),
+				search: { asOf: DURING },
+			});
+			expect(ws().tab).toBe("today");
+			expect(tabs()[0]?.dataset.tab).toBe("today");
+			expect(lit()).toBe("today");
+			unmount();
+		}
+	});
+
+	it("before the trip a follower lands on the Overview, without Today", () => {
+		renderWithWorkspace(<CenterTabBar />, {
+			graph: as("viewer"),
+			search: { asOf: "2027-09-30" },
+		});
+		expect([...tabs()].map((t) => t.dataset.tab)).not.toContain("today");
 		expect(lit()).toBe("overview");
 	});
 });
