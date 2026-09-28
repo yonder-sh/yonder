@@ -517,7 +517,10 @@ export async function rehomeFlightBlock(
 			{ ...where, exclude: [...block] },
 		);
 		await tx.execute(
-			sql`update items set day_id = ${dayId}, position = ${position as string}, updated_at = now()
+			// A stop moved to another day isn't Done any more (Today).
+			sql`update items set day_id = ${dayId}, position = ${position as string}, updated_at = now(),
+			       done_at = case when day_id is distinct from ${dayId} then null else done_at end,
+			       done_by = case when day_id is distinct from ${dayId} then null else done_by end
 			     where id = ${id} and trip_id = ${tripId}`,
 		);
 		prevId = id;

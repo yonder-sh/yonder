@@ -43,6 +43,19 @@ describe("WorkspaceSearch (SPEC §12.1)", () => {
 			}),
 		).toEqual({});
 	});
+
+	it("asOf: a date, or a local time on it (Today's demos); nothing else", () => {
+		const asOf = (v: string) => WorkspaceSearch.parse({ asOf: v }).asOf;
+		expect(asOf("2027-10-05")).toBe("2027-10-05");
+		expect(asOf("2027-10-05T14:40")).toBe("2027-10-05T14:40");
+		expect(asOf("2027-10-05T00:00")).toBe("2027-10-05T00:00");
+		for (const bad of [
+			"2027-10-05T24:00",
+			"2027-10-05T14:60",
+			"2027-10-05T9:40",
+		])
+			expect(asOf(bad)).toBeUndefined();
+	});
 });
 
 describe("sel encoding", () => {

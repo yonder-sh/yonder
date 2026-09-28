@@ -46,7 +46,12 @@ import { cn } from "@/lib/utils";
 import { ratingOf } from "@/lib/workspace/filter-match";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { DriverSheet } from "./DriverSheet";
-import { directionsUrl, type TravelBy, travelBy } from "./lib/directions";
+import {
+	directionsUrl,
+	type TravelBy,
+	travelBy,
+	travelTo,
+} from "./lib/directions";
 import {
 	fixLabel,
 	moved,
@@ -55,6 +60,7 @@ import {
 	riskTitle,
 	spokenMin,
 	travelLine,
+	travelWords,
 } from "./lib/words";
 import { TODAY_TESTID as T } from "./testids";
 import { useMyLocation } from "./use-location";
@@ -63,6 +69,9 @@ import { type TodayActions, useTodayActions } from "./use-today-actions";
 
 /** A Done stays on screen (with its Undo) this long. */
 const RECENT_DONE_MS = 30 * 60_000;
+/** A row or card that opens details: a visible focus ring, as the kit's buttons. */
+const TAP =
+	"rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-ring";
 
 export function TodayTab({ phone = false }: { phone?: boolean }) {
 	return (
@@ -100,7 +109,7 @@ function TodayPage({ phone }: { phone: boolean }) {
 	const { view } = data;
 	const state = stateOf(view);
 	const openAddress = (s: TodayStop) =>
-		s.nodeId && setDriver({ nodeId: s.nodeId, by: travelBy(s.mode) });
+		s.nodeId && setDriver({ nodeId: s.nodeId, by: travelTo(s) });
 	return (
 		<div
 			data-testid={T.page}
@@ -111,6 +120,9 @@ function TodayPage({ phone }: { phone: boolean }) {
 			)}
 		>
 			<Header data={data} state={state} />
+			<p aria-live="polite" className="sr-only">
+				{spoken(view)}
+			</p>
 			{view && state !== "empty" ? (
 				<Day
 					view={view}
@@ -178,6 +190,22 @@ function TodayPage({ phone }: { phone: boolean }) {
 	);
 }
 
+/** The live region's words: they change with Now, Next and the pace's kind, not every minute. */
+function spoken(v: TodayView | null): string {
+	if (!v) return "";
+	return [
+		v.current ? `Now: ${v.current.name}.` : null,
+		v.next ? `Next: ${v.next.name}.` : null,
+		v.pace.kind === "behind"
+			? "Running late."
+			: v.pace.kind === "ahead"
+				? "Running early."
+				: null,
+	]
+		.filter(Boolean)
+		.join(" ");
+}
+
 // ---- header ---------------------------------------------------------------------
 
 function Header({ data, state }: { data: TodayData; state: DayState }) {
@@ -239,9 +267,14 @@ function Day({
 		.filter((d) => d.doneAt !== null && view.now - d.doneAt < RECENT_DONE_MS)
 		.sort((a, b) => (a.doneAt ?? 0) - (b.doneAt ?? 0))
 		.at(-1);
-	// "Looks like you're at Bic Camera?": Yes marks the Now stop Done.
+	// "Looks like you're at Bic Camera?": Yes marks the Now stop Done as you
+	// left it (the walk there ago), so the stop you're at is Now at once.
 	const at =
 		here && view.current && act.mayMarkDone ? stopHere(ix, view, here) : null;
+	const left = (cur: TodayStop, to: TodayStop) =>
+		to === view.next
+			? Math.max(cur.start, view.now - to.travelMin * 60_000)
+			: view.now;
 	const later = [view.next, ...view.rest].filter(
 		(s): s is TodayStop => s !== null,
 	);
@@ -251,7 +284,10 @@ function Day({
 				<HereBanner
 					stop={at}
 					act={act}
-					currentId={view.current.itemId}
+					onYes={() =>
+						view.current &&
+						act.done(view.current.itemId, left(view.current, at))
+					}
 					onNo={() => setNotHere(at.itemId)}
 				/>
 			) : null}
@@ -323,13 +359,13 @@ const time = (ms: number, tz: string) => formatTime(ms, tz);
 
 function HereBanner({
 	stop,
-	currentId,
 	act,
+	onYes,
 	onNo,
 }: {
 	stop: TodayStop;
-	currentId: string;
 	act: TodayActions;
+	onYes: () => void;
 	onNo: () => void;
 }) {
 	return (
@@ -350,7 +386,7 @@ function HereBanner({
 				size="sm"
 				data-testid={T.hereYes}
 				disabled={act.offline}
-				onClick={() => act.done(currentId)}
+				onClick={onYes}
 			>
 				Yes
 			</Button>
@@ -401,10 +437,10 @@ function NowRow({ stop, act }: { stop: TodayStop; act: TodayActions }) {
 			<button
 				type="button"
 				onClick={() => nav.select({ kind: "item", id: stop.itemId })}
-				className="min-w-0 flex-1 text-left"
+				className={cn("min-w-0 flex-1 text-left", TAP)}
 			>
 				<span className="block text-meta font-semibold text-good tnum">
-					Now · since {time(stop.start, stop.tz)}
+					Now · since {time(Math.max(stop.start, stop.arrive), stop.tz)}
 				</span>
 				<span className="block truncate text-lg font-semibold">
 					{stop.name}
@@ -452,7 +488,7 @@ function NextCard({
 		travel === null
 			? null
 			: stop.leaveBy > now
-				? `Leave by ${time(stop.leaveBy, stop.tz)}`
+				? `Leave by ${time(stop.leaveBy, stop.departure?.tz ?? stop.tz)}`
 				: "Leave now";
 	const note = item?.note ? plainText(item.note).split("\n")[0] : null;
 	const line = [leave, travel, note].filter(Boolean).join(" · ");
@@ -477,7 +513,10 @@ function NextCard({
 			<button
 				type="button"
 				onClick={() => nav.select({ kind: "item", id: stop.itemId })}
-				className="mt-3 flex w-full min-w-0 items-center gap-3 text-left"
+				className={cn(
+					"mt-3 flex w-full min-w-0 items-center gap-3 text-left",
+					TAP,
+				)}
 			>
 				<StopGlyph nodeId={stop.nodeId} name={stop.name} size="lg" />
 				<span className="min-w-0 flex-1">
@@ -495,7 +534,7 @@ function NextCard({
 				<div className="mt-4 flex gap-3">
 					<Button asChild size="xl" className="flex-1">
 						<a
-							href={directionsUrl(coord, travelBy(stop.mode))}
+							href={directionsUrl(coord, travelTo(stop))}
 							target="_blank"
 							rel="noopener noreferrer"
 							data-testid={T.directions}
@@ -567,7 +606,7 @@ function Free({ view, act }: { view: TodayView; act: TodayActions }) {
 	const free = view.free;
 	if (!free) return null;
 	const travel = free.travelMin
-		? `, ${spokenMin(free.travelMin)} ${free.mode === "walk" || !free.mode ? "walk" : "away"}`
+		? `, ${travelWords(free.travelMin, free.mode)}`
 		: "";
 	const leave = free.departure
 		? `Leave for ${free.name} by ${time(free.before, free.tz)}`
@@ -647,7 +686,7 @@ function IdeaRow({
 			<button
 				type="button"
 				onClick={() => nav.select({ kind: "node", id: idea.nodeId })}
-				className="flex min-w-0 flex-1 items-center gap-3 text-left"
+				className={cn("flex min-w-0 flex-1 items-center gap-3 text-left", TAP)}
 			>
 				<StopGlyph nodeId={idea.nodeId} name={idea.name} />
 				<span className="grid min-w-0 flex-1 gap-0.5">
@@ -701,7 +740,10 @@ function Rest({ stops }: { stops: TodayStop[] }) {
 							data-item={s.itemId}
 							data-moved={moved(s) || undefined}
 							onClick={() => nav.select({ kind: "item", id: s.itemId })}
-							className="flex min-h-14 w-full items-center gap-3 py-2 text-left"
+							className={cn(
+								"flex min-h-14 w-full items-center gap-3 py-2 text-left",
+								TAP,
+							)}
 						>
 							<span className="w-12 shrink-0 tnum">
 								<span className="block text-body font-semibold">
@@ -762,9 +804,20 @@ function Tonight({ view }: { view: TodayView }) {
 	const { nav } = useWorkspace();
 	const night = view.tonight;
 	if (!night) return null;
+	// Without the evening's mode: a walk when it's short.
 	const far = (night.travelMin ?? 0) > 20;
-	const sub: ReactNode = night.travelMin
-		? `${spokenMin(night.travelMin)} ${far ? "away" : "walk"} from the last stop`
+	const by: TravelBy = night.mode
+		? travelBy(night.mode)
+		: far
+			? "transit"
+			: "walking";
+	const travel = night.travelMin
+		? night.mode
+			? travelWords(night.travelMin, night.mode)
+			: `${spokenMin(night.travelMin)} ${far ? "away" : "walk"}`
+		: null;
+	const sub: ReactNode = travel
+		? `${travel} from the last stop`
 		: "Where you sleep";
 	return (
 		<section data-testid={T.tonight} className="grid gap-1">
@@ -775,7 +828,10 @@ function Tonight({ view }: { view: TodayView }) {
 				<button
 					type="button"
 					onClick={() => nav.select({ kind: "node", id: night.nodeId })}
-					className="flex min-w-0 flex-1 items-center gap-3 text-left"
+					className={cn(
+						"flex min-w-0 flex-1 items-center gap-3 text-left",
+						TAP,
+					)}
 				>
 					<StopGlyph nodeId={night.nodeId} name={night.name} />
 					<span className="grid min-w-0 gap-0.5">
@@ -790,7 +846,7 @@ function Tonight({ view }: { view: TodayView }) {
 				{night.coord ? (
 					<Button asChild variant="outline" size="lg">
 						<a
-							href={directionsUrl(night.coord, far ? "transit" : "walking")}
+							href={directionsUrl(night.coord, by)}
 							target="_blank"
 							rel="noopener noreferrer"
 							data-testid={T.tonightDirections}

@@ -326,6 +326,35 @@ describe("Today read-only", () => {
 		expect(screen.getAllByTestId(T.idea)).toHaveLength(3);
 		expect(screen.queryByTestId(T.ideaAdd)).toBeNull();
 	});
+
+	it("link guests too, even on a Can edit link", () => {
+		const s = tokyoDay(LATE);
+		render(s, "2027-10-05T16:40", {
+			...s.graph,
+			me: { ...s.graph.me, role: "editor", isGuest: true },
+		});
+		expect(screen.getByTestId(T.risk)).toBeInTheDocument();
+		expect(screen.queryByTestId(T.done)).toBeNull();
+		expect(screen.queryByTestId(T.fix)).toBeNull();
+	});
+});
+
+describe("Today for screen readers", () => {
+	it("a live region says Now, Next and whether you run late or early", () => {
+		const live = (marks: Record<string, LocalAt>, asOf: string) => {
+			const { container, unmount } = render(tokyoDay(marks), asOf);
+			const text = container.querySelector("[aria-live=polite]")?.textContent;
+			unmount();
+			return text;
+		};
+		expect(live(LATE, "2027-10-05T16:40")).toBe(
+			"Now: Yodobashi Camera. Next: Bic Camera. Running late.",
+		);
+		expect(live(EARLY, "2027-10-05T17:10")).toBe(
+			"Now: Dinner. Next: Bar Benfiddich. Running early.",
+		);
+		expect(live({}, "2027-10-05T08:00")).toBe("Next: Cha no Ikedaya.");
+	});
 });
 
 describe("Use my location (opt-in, on the device)", () => {
@@ -333,7 +362,7 @@ describe("Use my location (opt-in, on the device)", () => {
 		Reflect.deleteProperty(navigator, "geolocation");
 	});
 
-	it("near the next stop: “Looks like you're at Bic Camera?” and Yes marks the Now stop Done", async () => {
+	it("near the next stop: “Looks like you're at Bic Camera?”; Yes marks the Now stop Done as you left it, and you're at Bic Camera", async () => {
 		const clearWatch = vi.fn();
 		const watchPosition = vi.fn((ok: PositionCallback) => {
 			ok({
@@ -355,9 +384,14 @@ describe("Use my location (opt-in, on the device)", () => {
 		expect(here).toHaveAttribute("data-item", s.I.bic);
 		expect(here).toHaveTextContent("Looks like you're at Bic Camera?");
 		fireEvent.click(within(here).getByTestId(T.hereYes));
+		// Left Yodobashi the 5 min walk ago (16:35 in Tokyo), so Bic Camera is Now at once.
 		await vi.waitFor(() =>
 			expect(calls.done).toEqual([
-				expect.objectContaining({ itemId: s.I.yodobashi, done: true }),
+				expect.objectContaining({
+					itemId: s.I.yodobashi,
+					done: true,
+					at: "2027-10-05T07:35:00.000Z",
+				}),
 			]),
 		);
 		// Stop: the watch ends.

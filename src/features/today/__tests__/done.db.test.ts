@@ -5,7 +5,7 @@
  * database's clock, by the marker, with no activity line; the trip's version
  * moves (the live event). Undo clears it; the Undo of an Undo puts the earlier
  * stamp back (never a later one). A stop in Ideas can't be Done, and a stop
- * moved to another day stops being Done.
+ * moved to another day (or off a removed day) stops being Done.
  */
 import { randomUUID } from "node:crypto";
 import { sql } from "drizzle-orm";
@@ -44,6 +44,7 @@ import {
 	migrateDatabase,
 } from "@/db/migrate.server";
 import { user } from "@/db/schema";
+import { deleteDay } from "@/functions/days.functions";
 import { moveItem, setItemDone } from "@/functions/items.functions";
 import type { AuthUser } from "@/server/auth.server";
 import { errorCode } from "@/server/authz/errors";
@@ -306,5 +307,15 @@ describe("setItemDone", () => {
 		await mark(owner, hands, true);
 		await call(moveItem, owner, { itemId: hands, dayId: null });
 		expect(await doneMark(hands)).toEqual({ at: null, by: null });
+	});
+
+	it("a removed day's stops wait in Ideas without their Done", async () => {
+		const sensoji = c.ids.items.sensoji as string;
+		await mark(owner, sensoji, true);
+		await call(deleteDay, owner, { dayId: c.ids.days.d2 });
+		const [row] = await q<{ dayId: string | null }>(sql`
+			select day_id as "dayId" from items where id = ${sensoji}`);
+		expect(row?.dayId).toBeNull();
+		expect(await doneMark(sensoji)).toEqual({ at: null, by: null });
 	});
 });

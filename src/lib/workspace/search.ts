@@ -111,7 +111,7 @@ export const WorkspaceSearch = z.object({
 	 */
 	asOf: z
 		.string()
-		.regex(/^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2})?$/)
+		.regex(/^\d{4}-\d{2}-\d{2}(T([01]\d|2[0-3]):[0-5]\d)?$/)
 		.optional()
 		.catch(undefined),
 	/** One day or an inclusive range. */

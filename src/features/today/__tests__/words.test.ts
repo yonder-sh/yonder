@@ -1,7 +1,21 @@
 /** Today's words and its Directions links (One Yonder phase 5). */
 import { describe, expect, it } from "vitest";
-import { directionsUrl, isAppleDevice, travelBy } from "../lib/directions";
-import { fixLabel, paceLabel, spokenMin } from "../lib/words";
+import { zonedEpoch } from "@/lib/engine/time";
+import type { TodayRisk, TodayStop } from "@/lib/engine/today";
+import {
+	directionsUrl,
+	isAppleDevice,
+	travelBy,
+	travelTo,
+} from "../lib/directions";
+import {
+	fixLabel,
+	paceLabel,
+	riskTitle,
+	spokenMin,
+	travelLine,
+	travelWords,
+} from "../lib/words";
 
 describe("directions", () => {
 	const nakano: [number, number] = [139.665512, 35.709031];
@@ -26,6 +40,11 @@ describe("directions", () => {
 		expect(travelBy(null)).toBe("walking");
 		expect(travelBy("transit")).toBe("transit");
 		expect(travelBy("other")).toBe("driving");
+		// A train or a flight takes you there: by transit.
+		expect(travelTo({ mode: null, departure: { name: "Nozomi 7" } })).toBe(
+			"transit",
+		);
+		expect(travelTo({ mode: "walk", departure: null })).toBe("walking");
 	});
 
 	it("knows an iPhone, an iPad and a Mac", () => {
@@ -55,6 +74,38 @@ describe("words", () => {
 		expect(paceLabel({ kind: "behind", minutes: 35 })).toBe("35 min behind");
 		expect(paceLabel({ kind: "ahead", minutes: 30 })).toBe("30 min ahead");
 		expect(paceLabel({ kind: "on_time", minutes: 0 })).toBe("On time");
+	});
+
+	it("the travel, and a departure's time where you board", () => {
+		expect(travelWords(5, "walk")).toBe("5 min walk");
+		expect(travelWords(20, "transit")).toBe("20 min by transit");
+		expect(travelWords(15, "other")).toBe("15 min by car");
+		// CI 157 leaves Osaka at 16:00 for Taipei, an hour behind.
+		const departure = {
+			legId: "l",
+			name: "CI 157",
+			readyBy: zonedEpoch("2027-10-05", "14:00", "Asia/Tokyo"),
+			depMs: zonedEpoch("2027-10-05", "16:00", "Asia/Tokyo"),
+			flight: true,
+			tz: "Asia/Tokyo",
+		};
+		expect(
+			travelLine({
+				departure,
+				tz: "Asia/Taipei",
+				travelMin: 0,
+				mode: null,
+			} as unknown as TodayStop),
+		).toBe("CI 157 at 16:00");
+		const risk = {
+			late: false,
+			departure,
+			name: "CI 157",
+			at: departure.readyBy,
+			tz: "Asia/Tokyo",
+			booked: false,
+		} as unknown as TodayRisk;
+		expect(riskTitle(risk)).toBe("Tight before CI 157 · leaves 16:00");
 	});
 
 	it("a custom stop reads as a word in the fix; a place keeps its name", () => {

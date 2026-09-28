@@ -27,8 +27,7 @@ export function useMyLocation(): MyLocation {
 	const set = useLocating((s) => s.set);
 	const [here, setHere] = useState<LngLat | null>(null);
 	const [problem, setProblem] = useState<string | null>(null);
-	const supported =
-		typeof navigator !== "undefined" && "geolocation" in navigator;
+	const supported = typeof navigator !== "undefined" && !!navigator.geolocation;
 	useEffect(() => {
 		if (!on || !supported) {
 			setHere(null);

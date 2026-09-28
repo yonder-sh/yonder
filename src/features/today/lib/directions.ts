@@ -14,6 +14,14 @@ export function travelBy(mode: LegMode | null): TravelBy {
 	return "walking";
 }
 
+/** How to get to a stop: by transit when a train or flight takes you there. */
+export function travelTo(stop: {
+	mode: LegMode | null;
+	departure: unknown;
+}): TravelBy {
+	return stop.departure ? "transit" : travelBy(stop.mode);
+}
+
 const APPLE_FLAG: Record<TravelBy, string> = {
 	walking: "w",
 	transit: "r",

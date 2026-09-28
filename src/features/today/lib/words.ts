@@ -9,6 +9,7 @@ import type {
 	TodayRisk,
 	TodayStop,
 } from "@/lib/engine/today";
+import type { LegMode } from "@/lib/engine/types";
 import { formatTime } from "@/lib/format";
 
 /** 35 → "35 min", 60 → "1 h", 160 → "2 h 40". */
@@ -26,15 +27,20 @@ export function paceLabel(pace: TodayPace): string {
 	return `${spokenMin(pace.minutes)} ${pace.kind}`;
 }
 
-/** The travel into a stop: "5 min walk", "20 min by transit", "Nozomi 7 at 10:03". */
+/** "5 min walk", "20 min by transit", "15 min by car" (on foot when unknown). */
+export function travelWords(minutes: number, mode: LegMode | null): string {
+	const t = spokenMin(minutes);
+	if (mode === "walk" || !mode) return `${t} walk`;
+	if (mode === "other") return `${t} by car`;
+	return `${t} by transit`;
+}
+
+/** The travel into a stop: "5 min walk", "20 min by transit", "Nozomi 7 at 10:03" (where you board). */
 export function travelLine(stop: TodayStop): string | null {
 	const d = stop.departure;
-	if (d) return `${d.name} at ${formatTime(d.depMs, stop.tz)}`;
+	if (d) return `${d.name} at ${formatTime(d.depMs, d.tz)}`;
 	if (!stop.travelMin) return null;
-	const t = spokenMin(stop.travelMin);
-	if (stop.mode === "walk" || !stop.mode) return `${t} walk`;
-	if (stop.mode === "other") return `${t} by car`;
-	return `${t} by transit`;
+	return travelWords(stop.travelMin, stop.mode);
 }
 
 /** A custom stop's title reads as a word in a sentence ("Shorten dinner"); a place keeps its name. */

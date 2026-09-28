@@ -179,19 +179,28 @@ export const getLocalAddress = createServerFn({ method: "POST" })
 			} catch {
 				return { localAddress: null };
 			}
-			const f = await photonReverseLocal(lat, lng);
-			const localAddress = f
-				? localAddressOf(f.properties, {
-						exact: isExactResult(f, { lat, lng, osmRef: node.osmRef }),
-					})
-				: null;
-			// Only for the spot it was looked up for (a move meanwhile clears it).
-			if (localAddress)
-				await db
-					.update(nodes)
-					.set({ localAddress })
-					.where(and(where, eq(nodes.lat, lat), eq(nodes.lng, lng)));
-			return { localAddress };
+			try {
+				const f = await photonReverseLocal(lat, lng);
+				const localAddress = f
+					? localAddressOf(f.properties, {
+							exact: isExactResult(f, { lat, lng, osmRef: node.osmRef }),
+						})
+					: null;
+				// Only for the spot it was looked up for (a move meanwhile clears it).
+				if (localAddress)
+					await db
+						.update(nodes)
+						.set({ localAddress })
+						.where(and(where, eq(nodes.lat, lat), eq(nodes.lng, lng)));
+				return { localAddress };
+			} catch (e) {
+				// An odd answer or a failed save: no address this time, never an error.
+				console.warn(
+					"[places] local address:",
+					e instanceof Error ? e.message : e,
+				);
+				return { localAddress: null };
+			}
 		},
 	);
 

@@ -11,8 +11,9 @@
  *   start time, or the arrival of a timed departure (a flight, a train).
  * - Pace: the next stop's re-timed arrival against the plan's.
  * - Risks: a fixed stop or departure the flow reaches late, or with little
- *   room left, with up to two fixes (shorten the longest flexible stop before
- *   it, skip the nearest one).
+ *   room left (within `PACE_MIN` of the plan's own is on time), with up to
+ *   two fixes: shorten the longest flexible stop before it, skip the nearest
+ *   place.
  * - Free time: room before the next fixed stop, and the ideas nearby that
  *   fit it (open then, a short walk away, the group's favourites first).
  *
@@ -75,6 +76,8 @@ export interface TodayDeparture {
 	/** The departure itself. */
 	depMs: number;
 	flight: boolean;
+	/** The zone you board in (its times read there, not at the other end). */
+	tz: string;
 }
 
 /** One stop of today. Times are epoch ms. */
@@ -102,7 +105,7 @@ export interface TodayStop {
 	fixed: boolean;
 	/** "Booked for this date". */
 	booked: boolean;
-	/** The timed departure that takes you there, if any. */
+	/** The timed departure that takes you there, if it leaves today (an overnight one only holds the time). */
 	departure: TodayDeparture | null;
 	/** When it was marked Done (a stamp outside the day reads as now) and by whom (a user id). */
 	doneAt: number | null;
@@ -181,8 +184,9 @@ export interface TodayNight {
 	nodeId: string;
 	name: string;
 	coord: LngLat | null;
-	/** From the day's last stop (the schedule's evening travel), when it applies. */
+	/** From the day's last stop (the schedule's evening travel), when it applies, and how. */
 	travelMin: number | null;
+	mode: LegMode | null;
 }
 
 /** The first stop of the next day with stops (when today is over). */
@@ -206,7 +210,7 @@ export interface TodayView {
 	done: TodayStop[];
 	/** Not Done, but a later stop is: passed over, out of the flow. */
 	passed: TodayStop[];
-	/** Now: the first stop not Done that has started ("Now · since 14:40" = its `start`). */
+	/** Now: the first stop not Done that has started and you've reached ("Now · since 14:40": its `start`, or `arrive` when later). */
 	current: TodayStop | null;
 	/** Next: the stop after it (before anything started: the day's first stop). */
 	next: TodayStop | null;
@@ -246,17 +250,26 @@ function nameOf(ix: GraphIndex, it: GraphItem): string {
 type Travel = {
 	minutes: number;
 	mode: LegMode | null;
+	/** A timed departure into the stop that leaves on this day (from `since`). */
 	departure: TodayDeparture | null;
+	/** Reached by a timed departure, even one that left the day before: it holds its time. */
+	held: boolean;
 };
 
-/** The travel the schedule placed right before a stop: the morning's from the stay, the pair leg in. */
+/**
+ * The travel the schedule placed right before a stop: the morning's from the
+ * stay, the pair leg in. A departure before `since` (an overnight flight
+ * that left yesterday) still holds the stop's time, but there's nothing to
+ * leave for today.
+ */
 function travelInto(
 	ix: GraphIndex,
 	schedule: ScheduleResult,
 	dayId: string,
 	it: GraphItem,
+	since: number,
 ): Travel {
-	const out: Travel = { minutes: 0, mode: null, departure: null };
+	const out: Travel = { minutes: 0, mode: null, departure: null, held: false };
 	if (!it.nodeId) return out;
 	const add = (s: ScheduledLeg | undefined, mode: LegMode | null) => {
 		if (!s) return;
@@ -273,15 +286,19 @@ function travelInto(
 		const key = pairKey(p.id, it.id);
 		const s = schedule.legs[key];
 		const row = ix.legByPair.get(key);
-		if (s?.timed && row?.depAt)
-			out.departure = {
-				legId: row.id,
-				name: timedLegName(ix, row),
-				readyBy: s.start.getTime(),
-				depMs: s.flight?.depMs ?? Date.parse(row.depAt),
-				flight: !!s.flight,
-			};
-		else if (s && s.kind !== "overnight") add(s, row?.mode ?? null);
+		if (s?.timed && row?.depAt) {
+			out.held = true;
+			const depMs = s.flight?.depMs ?? Date.parse(row.depAt);
+			if (depMs >= since)
+				out.departure = {
+					legId: row.id,
+					name: timedLegName(ix, row),
+					readyBy: s.start.getTime(),
+					depMs,
+					flight: !!s.flight,
+					tz: schedule.items[p.id]?.tz ?? ix.defaultTz,
+				};
+		} else if (s && s.kind !== "overnight") add(s, row?.mode ?? null);
 	}
 	return out;
 }
@@ -475,10 +492,10 @@ export function computeToday(
 	for (const [i, it] of list.entries()) {
 		const s = schedule.items[it.id];
 		if (!s) continue;
-		const t = travelInto(ix, schedule, dayId, it);
+		const t = travelInto(ix, schedule, dayId, it, midnight);
 		const plannedStart = s.start.getTime();
 		const plannedEnd = s.end.getTime();
-		const fixed = s.pinned || t.departure !== null;
+		const fixed = s.pinned || t.held;
 		// The plan's own arrival: before a start time's free room, after a late one.
 		const plannedArriveHere =
 			plannedStart -
@@ -539,7 +556,7 @@ export function computeToday(
 		const plannedArrive = t.departure
 			? (plannedBefore ?? t.departure.readyBy)
 			: plannedArriveHere;
-		const arrive: number = t.departure ? plannedStart : flowArrive;
+		const arrive: number = t.held ? plannedStart : flowArrive;
 		const start = fixed ? plannedStart : arrive;
 		let end: number = fixed
 			? Math.max(plannedEnd, arrive)
@@ -571,7 +588,10 @@ export function computeToday(
 		});
 	}
 
-	const currentAt = rows.findIndex((r) => r.stop.start <= now);
+	// Started, and you're there: a booking you're still walking to is Next (and late), not Now.
+	const currentAt = rows.findIndex(
+		(r) => Math.max(r.stop.start, r.stop.arrive) <= now,
+	);
 	const current = currentAt >= 0 ? rows[currentAt] : undefined;
 	const nextRow = rows[currentAt >= 0 ? currentAt + 1 : 0];
 
@@ -611,7 +631,7 @@ export function computeToday(
 				itemId: r.stop.itemId,
 				name: r.stop.departure?.name ?? r.stop.name,
 				at: r.target,
-				tz: r.stop.tz,
+				tz: r.stop.departure?.tz ?? r.stop.tz,
 				booked: r.stop.booked,
 				arrive: r.flowArrive,
 				plannedArrive: r.plannedArrive,
@@ -643,6 +663,7 @@ export function computeToday(
 				readyBy: s.start.getTime(),
 				depMs: s.flight?.depMs ?? Date.parse(row.depAt),
 				flight: !!s.flight,
+				tz: schedule.items[last.id]?.tz ?? tz,
 			};
 			targets.push({
 				row: null,
@@ -650,7 +671,7 @@ export function computeToday(
 				itemId: onward.id,
 				name: departure.name,
 				at: departure.readyBy,
-				tz: schedule.items[onward.id]?.tz ?? tz,
+				tz: departure.tz,
 				booked: onward.fixedDate === true,
 				arrive: cursor ?? departure.readyBy,
 				plannedArrive:
@@ -665,11 +686,13 @@ export function computeToday(
 	// ---- risks and their fixes -----------------------------------------------
 	/**
 	 * Minutes a skip gives back: the stop, and its travel in and out less the
-	 * new direct hop (a straight-line estimate). Null where you board a departure.
+	 * new direct hop (a straight-line estimate). Null where you board a
+	 * departure, and for a stop without a place ("Dinner": shortened, never
+	 * sent to Ideas, which hold places).
 	 */
 	const skipSaves = (r: Row, target: Target): number | null => {
+		if (!r.item.nodeId) return null;
 		let saved = round(r.stop.end - r.stop.start);
-		if (!r.item.nodeId) return saved;
 		const tin = r.stop.travelMin;
 		const n = ix.nextLocated(r.item.id);
 		const nRow = n ? rows.find((x) => x.item.id === n.id) : undefined;
@@ -747,7 +770,8 @@ export function computeToday(
 	for (const t of targets) {
 		const spare = round(t.at - t.arrive);
 		const plannedSpare = round(t.at - t.plannedArrive);
-		if (spare >= TIGHT_MIN || spare >= plannedSpare) continue;
+		// Within `PACE_MIN` of the plan's own room is on time, as the pace says.
+		if (spare >= TIGHT_MIN || plannedSpare - spare < PACE_MIN) continue;
 		risks.push({
 			itemId: t.itemId,
 			departure: t.departure,
@@ -818,18 +842,30 @@ export function computeToday(
 				name: night.name,
 				coord: ix.coordOf(night.id),
 				travelMin: evening ? evening.minutes : null,
+				mode: evening
+					? (ix.legByStay.get(stayKey(dayId, "end"))?.mode ??
+						evening.suggestion?.mode ??
+						null)
+					: null,
 			}
 		: null;
 	const ended = !current && !nextRow;
 	let tomorrow: TodayNextDay | null = null;
 	if (ended && day) {
-		const later = ix.days.find(
-			(d) => d.date > day.date && (ix.itemsByDay.get(d.id)?.length ?? 0) > 0,
-		);
-		const it = later ? ix.itemsByDay.get(later.id)?.[0] : undefined;
+		// The next day with a timed stop, and that stop.
+		const firstTimed = (id: string) =>
+			(ix.itemsByDay.get(id) ?? []).find((it) => schedule.items[it.id]);
+		const later = ix.days.find((d) => d.date > day.date && firstTimed(d.id));
+		const it = later ? firstTimed(later.id) : undefined;
 		const s = it ? schedule.items[it.id] : undefined;
 		if (later && it && s) {
-			const t = travelInto(ix, schedule, later.id, it);
+			const t = travelInto(
+				ix,
+				schedule,
+				later.id,
+				it,
+				zonedEpoch(later.date, "00:00", schedule.days[later.id]?.tz ?? s.tz),
+			);
 			tomorrow = {
 				dayId: later.id,
 				date: later.date,

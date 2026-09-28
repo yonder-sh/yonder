@@ -225,7 +225,9 @@ export async function evacuateDay(
 		);
 		for (const [i, r] of rows.entries()) {
 			await tx.execute(
-				sql`update items set day_id = null, position = ${keys[i] as string}, updated_at = now() where id = ${r.id}`,
+				// Off its day, a stop isn't Done any more (Today).
+				sql`update items set day_id = null, position = ${keys[i] as string}, updated_at = now(),
+				       done_at = null, done_by = null where id = ${r.id}`,
 			);
 		}
 	}

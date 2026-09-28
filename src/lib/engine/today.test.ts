@@ -66,6 +66,7 @@ describe("computeToday: before the day starts", () => {
 			name: "Hotel Gracery",
 			coord: [139.702, 35.6955],
 			travelMin: 8,
+			mode: "walk",
 		});
 		expect(v.tomorrow).toBeNull();
 	});
@@ -318,6 +319,29 @@ describe("computeToday: following your pace, not the clock", () => {
 		expect(v.free).toBeNull();
 	});
 
+	it("a booking whose time has come while you walk there is Next and late, with its Directions", () => {
+		const s = tokyoDay({
+			cha: done("09:50"),
+			broadway: done("14:00"),
+			yodobashi: done("16:00"),
+			bic: done("17:30"),
+			dinner: done("20:00"),
+		});
+		const { v } = view(s, at("20:05"));
+		expect(v.current).toBeNull();
+		expect(v.next?.name).toBe("Bar Benfiddich");
+		expect(t(v.next?.arrive as number)).toBe("20:10");
+		expect(v.risks[0]).toMatchObject({
+			name: "Bar Benfiddich",
+			late: true,
+			spareMin: -10,
+		});
+		// Once there, it's Now since you arrived.
+		const { v: v2 } = view(s, at("20:15"));
+		expect(v2.current?.name).toBe("Bar Benfiddich");
+		expect(v2.risks).toEqual([]);
+	});
+
 	it("a shorten is offered only if it gives back enough, and never below 30 min", () => {
 		const shortDay = (bicMin: number, chaDone = "10:00") =>
 			scenario({
@@ -357,6 +381,69 @@ describe("computeToday: following your pace, not the clock", () => {
 		const r2 = view(s2, at("10:05"), {}, "d1").v.risks[0];
 		expect(r2).toMatchObject({ spareMin: 5, plannedSpareMin: 30 });
 		expect(r2?.fixes.map((f) => f.kind)).toEqual(["skip"]);
+	});
+
+	it("within 5 min of the plan's own room is on time, not a risk", () => {
+		// Planned: Cha 09:00–09:40, Bic 09:45–10:25, at the bar 10:35 for 10:50 (15 min spare).
+		const tight = (chaDone: string) =>
+			scenario({
+				firstDate: DAY,
+				nodes: NODES,
+				days: [
+					{
+						items: [
+							{ k: "cha", node: "cha", min: 40, done: done(chaDone) },
+							{ k: "bic", node: "bic", min: 40 },
+							{ k: "bar", node: "benfiddich", min: 60, pin: "10:50" },
+						],
+					},
+				],
+				legs: [
+					{ from: "cha", to: "bic", mode: "walk", min: 5 },
+					{ from: "bic", to: "bar", mode: "walk", min: 10 },
+				],
+			});
+		// 3 min later than the plan: 12 min spare instead of 15.
+		const { v } = view(tight("09:43"), at("09:43"), {}, "d1");
+		expect(v.risks).toEqual([]);
+		expect(v.pace).toEqual({ kind: "on_time", minutes: 0 });
+		// 5 min later: 10 instead of 15, a risk.
+		const { v: v2 } = view(tight("09:45"), at("09:45"), {}, "d1");
+		expect(v2.risks[0]).toMatchObject({ spareMin: 10, plannedSpareMin: 15 });
+	});
+
+	it("a stop without a place is shortened, never skipped: Skip takes the nearest place", () => {
+		// Planned: Cha 09:00–09:40, Lunch 09:40–10:40, Bic 10:45–11:30, the bar at 12:30 (50 min spare).
+		const s = scenario({
+			firstDate: DAY,
+			nodes: NODES,
+			days: [
+				{
+					items: [
+						{ k: "cha", node: "cha", min: 40, done: done("10:30") },
+						{ k: "lunch", title: "Lunch", min: 60 },
+						{ k: "bic", node: "bic", min: 45 },
+						{ k: "bar", node: "benfiddich", min: 60, pin: "12:30" },
+					],
+				},
+			],
+			legs: [
+				{ from: "cha", to: "bic", mode: "walk", min: 5 },
+				{ from: "bic", to: "bar", mode: "walk", min: 10 },
+			],
+		});
+		const r = view(s, at("10:30"), {}, "d1").v.risks[0];
+		expect(r).toMatchObject({ spareMin: 0, plannedSpareMin: 50 });
+		expect(r?.fixes).toEqual([
+			{
+				kind: "shorten",
+				itemId: s.I.lunch,
+				name: "Lunch",
+				toMin: 30,
+				recoverMin: 30,
+			},
+			expect.objectContaining({ kind: "skip", itemId: s.I.bic }),
+		]);
 	});
 
 	it("a booked stop is never shortened or skipped", () => {
@@ -465,13 +552,14 @@ describe("computeToday: timed departures", () => {
 		expect(t(v.free?.before as number)).toBe("11:50");
 	});
 
-	it("an overnight flight from the day's last stop is a departure too", () => {
-		const s = scenario({
+	/** Itoya, then KIX for NH 9 at 23:30, landing at Incheon 01:50 the next day. */
+	const redEye = (itoyaDone?: LocalAt) =>
+		scenario({
 			firstDate: DAY,
 			days: [
 				{
 					items: [
-						{ k: "itoya", node: "itoya", min: 60, done: done("22:10") },
+						{ k: "itoya", node: "itoya", min: 60, done: itoyaDone },
 						{ k: "kix", node: "kix", min: 60 },
 					],
 				},
@@ -506,6 +594,9 @@ describe("computeToday: timed departures", () => {
 				},
 			],
 		});
+
+	it("an overnight flight from the day's last stop is a departure too", () => {
+		const s = redEye(done("22:10"));
 		const { v } = view(s, at("22:10"), {}, "d1");
 		expect(v.next?.name).toBe("Kansai Airport (KIX)");
 		const r = v.risks[0];
@@ -514,10 +605,92 @@ describe("computeToday: timed departures", () => {
 			name: "NH 9",
 			late: true,
 			spareMin: -40,
+			tz: TOKYO,
 		});
-		expect(r?.departure).toMatchObject({ legId: s.L.flight, flight: true });
+		expect(r?.departure).toMatchObject({
+			legId: s.L.flight,
+			flight: true,
+			tz: TOKYO,
+		});
 		// Shorten the airport stop to 30: back to 10 min short; not enough to clear it, so no fix; the airport is where you board.
 		expect(r?.fixes).toEqual([]);
+	});
+
+	it("the morning after, the landing holds its time with nothing to leave for", () => {
+		const s = redEye();
+		const { v } = view(
+			s,
+			zonedEpoch("2027-10-06", "01:00", "Asia/Seoul"),
+			{},
+			"d2",
+		);
+		expect(v.starting).toBe(true);
+		expect(v.next).toMatchObject({
+			name: "Incheon (ICN)",
+			fixed: true,
+			departure: null,
+			travelMin: 0,
+		});
+		expect(v.next?.leaveBy).toBe(v.next?.start);
+		expect(v.next?.start).toBeGreaterThanOrEqual(
+			zonedEpoch("2027-10-06", "01:50", "Asia/Seoul"),
+		);
+		expect(v.risks).toEqual([]);
+		expect(v.free).toBeNull();
+	});
+
+	it("a departure's times read where you board, not where you land", () => {
+		// Itoya, then KIX, for CI 157 to Taipei (an hour behind Tokyo) at 16:00.
+		const s = scenario({
+			firstDate: DAY,
+			days: [
+				{
+					items: [
+						{ k: "itoya", node: "itoya", min: 60, done: done("13:00") },
+						{ k: "kix", node: "kix", min: 30 },
+						{ k: "tpe", node: "tpe", min: 30 },
+					],
+				},
+			],
+			legs: [
+				{ from: "itoya", to: "kix", mode: "transit", min: 60 },
+				{
+					k: "flight",
+					from: "kix",
+					to: "tpe",
+					mode: "flight",
+					dep: [`${DAY}T16:00`, TOKYO],
+					arr: [`${DAY}T18:00`, "Asia/Taipei"],
+					details: flightDetails({
+						number: "CI157",
+						from: {
+							iata: "KIX",
+							tz: TOKYO,
+							country: "JP",
+							at: [34.432, 135.2304],
+						},
+						to: {
+							iata: "TPE",
+							tz: "Asia/Taipei",
+							country: "TW",
+							at: [25.0797, 121.2342],
+						},
+						dep: `${DAY}T16:00`,
+						arr: `${DAY}T18:00`,
+					}),
+				},
+			],
+		});
+		const { v } = view(s, at("13:00"), {}, "d1");
+		const tpe = v.rest[0];
+		expect(tpe).toMatchObject({ name: "Taoyuan (TPE)", tz: "Asia/Taipei" });
+		expect(tpe?.departure?.tz).toBe(TOKYO);
+		expect(hhmm(tpe?.departure?.depMs as number, TOKYO)).toBe("16:00");
+		// The free time before boarding is in Tokyo's time, like the risk would be.
+		expect(v.free).toMatchObject({ name: "CI 157", tz: TOKYO });
+		expect(hhmm(v.free?.before as number, v.free?.tz as string)).toBe(
+			t(tpe?.departure?.readyBy as number),
+		);
 	});
 });
 
@@ -569,6 +742,33 @@ describe("todayDayId", () => {
 		expect(todayDayId(ix, schedule, at("00:40", "2027-10-06"))).toBe(s.D.d1);
 		expect(todayDayId(ix, schedule, at("01:10", "2027-10-06"))).toBe(s.D.d2);
 	});
+
+	it("past midnight the day runs on: still there, and a Done after midnight is its own time", () => {
+		const late = (mark?: LocalAt) =>
+			scenario({
+				firstDate: DAY,
+				days: [
+					{
+						items: [
+							{ k: "sensoji", node: "sensoji", min: 60, done: done("22:50") },
+							{ k: "late", node: "itoya", pin: "23:30", min: 90, done: mark },
+						],
+					},
+					{ items: [{ k: "next", node: "sensoji", min: 60 }] },
+				],
+			});
+		const { v } = view(late(), at("00:40", "2027-10-06"));
+		expect(t(v.done[0]?.doneAt as number)).toBe("22:50");
+		expect(v.current?.name).toBe("Itoya Ginza");
+		expect(t(v.current?.start as number)).toBe("23:30");
+		expect(t(v.current?.end as number)).toBe("01:00");
+		const { v: v2 } = view(
+			late(done("00:20", "2027-10-06")),
+			at("00:40", "2027-10-06"),
+		);
+		expect(t(v2.done[1]?.doneAt as number)).toBe("00:20");
+		expect(v2.ended).toBe(true);
+	});
 });
 
 describe("stopHere", () => {
@@ -579,5 +779,16 @@ describe("stopHere", () => {
 		// Still at Yodobashi, or nowhere on the plan: nothing to ask.
 		expect(stopHere(ix, v, [139.6975, 35.6905])).toBeNull();
 		expect(stopHere(ix, v, [139.8, 35.6])).toBeNull();
+	});
+
+	it("Yes: Yodobashi Done as you left it, the walk ago, makes Bic Camera Now at once", () => {
+		const s = tokyoDay({
+			cha: done("09:50"),
+			broadway: done("14:30"),
+			yodobashi: done("16:35"),
+		});
+		const { v } = view(s, at("16:40"));
+		expect(v.current?.name).toBe("Bic Camera");
+		expect(t(v.current?.start as number)).toBe("16:40");
 	});
 });

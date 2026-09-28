@@ -24,11 +24,12 @@ import { useSetItemDone } from "./mutations";
 export interface TodayActions {
 	/** Done and Undo are shown. */
 	mayMarkDone: boolean;
-	/** The fixes and Add are shown (edits, or suggestions in suggest mode). */
+	/** The fixes and Add are shown (edits, or suggestions in suggest mode); never for link guests. */
 	mayChange: boolean;
 	/** Offline: the buttons wait (shown, disabled). */
 	offline: boolean;
-	done(itemId: string): void;
+	/** `at`: an earlier moment it was done (epoch ms), else now. */
+	done(itemId: string, at?: number): void;
 	undo(itemId: string): void;
 	skip(itemId: string): void;
 	shorten(itemId: string, toMin: number): void;
@@ -46,11 +47,19 @@ export function useTodayActions(): TodayActions {
 	const plan = usePlanActions();
 	const places = usePlaceActions();
 	const by = graph.me.userId;
+	const mayMarkDone = can(graph.me, "markDone");
 	return {
-		mayMarkDone: can(graph.me, "markDone"),
-		mayChange: access.mode !== "read",
+		mayMarkDone,
+		// Those who travel: raters, viewers and link guests follow along.
+		mayChange: mayMarkDone && access.mode !== "read",
 		offline: connection === "offline",
-		done: (itemId) => setDone.mutate({ itemId, done: true, by }),
+		done: (itemId, at) =>
+			setDone.mutate({
+				itemId,
+				done: true,
+				by,
+				...(at === undefined ? {} : { at: new Date(at).toISOString() }),
+			}),
 		undo: (itemId) => setDone.mutate({ itemId, done: false, by }),
 		// "Bic Camera moved to Ideas · Undo" (a leg it leaves behind rejoins on Undo).
 		skip: (itemId) => {
