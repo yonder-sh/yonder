@@ -47,6 +47,7 @@ export function DayRow({ dayId }: { dayId: string }) {
 			: 0;
 	const selected = sel?.kind === "day" && sel.id === dayId;
 	const open = () => nav.setDays({ from: day.date, to: day.date });
+	const fill = () => nav.fillDay(day.date);
 	const [weekday, date] = formatDayShort(day.date).split(" ");
 	return (
 		<div
@@ -107,7 +108,7 @@ export function DayRow({ dayId }: { dayId: string }) {
 						variant="outline"
 						size="sm"
 						className="shrink-0"
-						onClick={open}
+						onClick={fill}
 					>
 						<Plus />
 						Fill this day

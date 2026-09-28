@@ -33,6 +33,7 @@ import {
 	usePlacesMapView,
 	usePlacesWide,
 } from "@/features/places/tab/PlacesTab";
+import { FillDay } from "@/features/plan/FillDay";
 import { BRAND } from "@/lib/brand";
 import { TESTID } from "@/lib/testids";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
@@ -117,7 +118,9 @@ export function DesktopWorkspace({ bp }: { bp: Exclude<Breakpoint, "sm"> }) {
 	// One Yonder (D06): the Places tab is a page, the map's width included.
 	const placesWide = usePlacesWide();
 	const overview = useOverviewTakesAll();
-	const { sel } = useWorkspace();
+	const { sel, search, days, tab } = useWorkspace();
+	// D04: a day's ideas in the map's place ("Fill this day").
+	const filling = !!search.fill && !!days && tab === "plan";
 	const winW = useWindowWidth();
 	// One Yonder: a laptop-wide window takes the tabs into the top bar's row.
 	const tabsTop = winW >= TABS_IN_TOP_BAR_PX;
@@ -174,6 +177,20 @@ export function DesktopWorkspace({ bp }: { bp: Exclude<Breakpoint, "sm"> }) {
 							<CenterPanel tabs={!tabsTop} />
 						</div>
 						<InspectorSheet />
+					</>
+				) : filling ? (
+					<>
+						<div className="h-full w-[min(560px,45%)] min-w-0 shrink-0 border-r">
+							<CenterPanel tabs={!tabsTop} />
+						</div>
+						<div className="h-full min-w-0 flex-1">
+							<FillDay />
+						</div>
+						{bp === "md" ? (
+							<InspectorSheet />
+						) : details ? (
+							<DetailsPane width={detailsW} maxWidth={detailsW} />
+						) : null}
 					</>
 				) : mapHidden || placesMap || placesWide || foldMap ? (
 					<>

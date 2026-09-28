@@ -11,6 +11,11 @@ export const PLAN_TESTID = {
 	dayHeader: "plan-day-header",
 	/** One Yonder D02: a day in the trip-level list. */
 	dayRow: "plan-day-row",
+	/** One Yonder D04: Fill a day (the day's ideas in the map's place). */
+	fillDay: "plan-fill-day",
+	fillIdea: "plan-fill-idea",
+	fillAdd: "plan-fill-add",
+	fillBar: "plan-fill-bar",
 	/** "35 days · Sat 2 Oct – Fri 5 Nov · 7 days planned" (D02). */
 	planMeta: "plan-meta",
 	dayMenu: "plan-day-menu",

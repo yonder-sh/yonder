@@ -57,6 +57,17 @@ describe("navigation semantics (SPEC §8.5)", () => {
 		expect(s3?.splat).toBe("japan");
 	});
 
+	it("Fill this day opens the day with its ideas; All days closes them (D04)", () => {
+		const t = nav.fillDay(state(null), "2027-10-05");
+		expect(t.search).toEqual({ days: "2027-10-05", fill: 1 });
+		expect(tabOf(null, t.search)).toBe("plan");
+		expect(
+			nav.fillDay(state(null, t.search), null).search.fill,
+		).toBeUndefined();
+		const all = nav.setDays(state(null, t.search), null);
+		expect(all.search.fill).toBeUndefined();
+	});
+
 	it("a change of days keeps the URL's lens (none: the workspace picks the day's, D03)", () => {
 		const tokyo = N.tokyo ?? null;
 		const day = { from: "2027-10-03", to: "2027-10-03" };
@@ -142,6 +153,7 @@ describe("history (QA MOB-02)", () => {
 		expect(push).toEqual([
 			"escape",
 			"extendDays",
+			"fillDay",
 			"openPlaces",
 			"setDays",
 			"setTab",

@@ -122,6 +122,8 @@ export interface WorkspaceNav {
 	setDays(r: DayRange | null): void;
 	extendDays(date: string): void;
 	setOnly(v: boolean): void;
+	/** D04: open a day with its ideas beside it; null closes them. */
+	fillDay(date: string | null): void;
 	setWho(memberId: string | null): void;
 	/** The shared place filter (`f`, ADDENDUM §10; replace navigation). Null or empty clears it. */
 	setFilter(f: WorkspaceFilter | null): void;
@@ -301,6 +303,7 @@ export function WorkspaceModelProvider({
 			setDays: (r) => run(N.setDays(state, r), R.setDays),
 			extendDays: (date) => run(N.extendDays(state, date), R.extendDays),
 			setOnly: (v) => run(N.setOnly(state, v), R.setOnly),
+			fillDay: (d) => run(N.fillDay(state, d), R.fillDay),
 			setWho: (m) => run(N.setWho(state, m), R.setWho),
 			setFilter: (f) => run(N.setFilter(state, f), R.setFilter),
 			setMediaFilter: (mf) =>

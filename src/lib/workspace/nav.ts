@@ -55,6 +55,7 @@ export const REPLACES_HISTORY = {
 	stepLens: true,
 	select: true,
 	setOnly: true,
+	fillDay: false,
 	setWho: true,
 	setFilter: true,
 	setMediaFilter: true,
@@ -256,13 +257,24 @@ export function setTab(s: NavState, tab: Tab): NavTarget {
  * (the place lens) and All days as the scope's own (model-context).
  */
 export const setDays = (s: NavState, range: DayRange | null) =>
-	here(s, { days: serializeDays(range) }, range !== null);
+	here(
+		s,
+		// All days: nothing to fill (D04).
+		{ days: serializeDays(range), ...(range ? {} : { fill: undefined }) },
+		range !== null,
+	);
 
 export const extendDays = (s: NavState, date: string) =>
 	here(s, { days: serializeDays(extendRange(s.days, date)) }, true);
 
 export const setOnly = (s: NavState, only: boolean) =>
 	here(s, { only: only ? 1 : undefined });
+
+/** "Fill this day" (D04): the day, with its ideas in the map's place. */
+export const fillDay = (s: NavState, date: string | null) =>
+	date
+		? here(s, { days: serializeDays({ from: date, to: date }), fill: 1 }, true)
+		: here(s, { fill: undefined });
 
 export const setWho = (s: NavState, memberId: string | null) =>
 	here(s, { who: memberId ?? undefined });

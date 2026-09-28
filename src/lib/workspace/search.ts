@@ -117,6 +117,8 @@ export const WorkspaceSearch = z.object({
 		.catch(undefined),
 	/** Rollup "Only <scope>". */
 	only: z.literal(1).optional().catch(undefined),
+	/** One Yonder D04: the day's ideas in the map's place ("Fill this day"). */
+	fill: z.literal(1).optional().catch(undefined),
 	list: z.enum(["todo", "shopping"]).optional().catch(undefined),
 	/** Media filter; `documents` = PDFs (ADDENDUM §9). */
 	mf: z

@@ -40,6 +40,7 @@ import { useListsOverdue } from "@/features/lists/use-lists-overdue";
 import { OfflineBanner } from "@/features/offline/OfflineBanner";
 import { RatePill } from "@/features/places/tab/RatePill";
 import { usePlacesToDecide } from "@/features/places/tab/use-places";
+import { FillDay } from "@/features/plan/FillDay";
 import { NowNext } from "@/features/plan/NowNext";
 import { MuteTripMenuItem } from "@/features/push/MuteTripMenuItem";
 import { NotificationsDialog } from "@/features/push/NotificationsDialog";
@@ -398,7 +399,7 @@ function Fab() {
 }
 
 export function MobileWorkspace() {
-	const { tab } = useWorkspace();
+	const { tab, search, days } = useWorkspace();
 	const [mapOpen, setMapOpen] = useMapOpen();
 	// Lock the page while the trip is open on a phone (see `app-locked`).
 	useEffect(() => {
@@ -411,6 +412,7 @@ export function MobileWorkspace() {
 		if (useUi.getState().sheetSnap === null) setMapOpen(false);
 	}, [setMapOpen]);
 	// Follow: the leader on their map (or their page) takes mine there too.
+	const filling = !!search.fill && !!days && tab === "plan";
 	const following = useUi((s) => s.following);
 	const focus = useFollowedStore((s) => s.focus);
 	const held = useFollowPause((s) => s.sheet);
@@ -446,6 +448,9 @@ export function MobileWorkspace() {
 						<div className="absolute inset-0 bg-basemap-land">
 							<MapRegion variant="mobile" />
 						</div>
+					) : filling ? (
+						// D04: the day's ideas take the page ("Show map" or the tabs leave).
+						<FillDay />
 					) : (
 						<CenterTabContent whereChips={false} phone />
 					)}
