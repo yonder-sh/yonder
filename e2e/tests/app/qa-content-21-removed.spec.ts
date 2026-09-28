@@ -75,7 +75,7 @@ test("TAG-04 / MENT-03 Kai removed: greyed former-member tag, plain-text mention
 	await d.page.reload();
 	await expectLive(d.page);
 	// TAG-04: the overview shows him greyed as a former member.
-	await d.page.goto(`/t/asia-2027?sel=i.${sky.id}`);
+	await d.page.goto(`/t/asia-2027?tab=plan&lens=place&sel=i.${sky.id}`);
 	await expectLive(d.page);
 	const who = d.page.getByTestId(PLAN_TESTID.overviewAssignees);
 	console.log("TAG-04 overview who:", (await who.innerText()).replace(/\n/g, " "));
