@@ -580,28 +580,28 @@ function CardContext({ row }: { row: PlaceRow }) {
 					className="grid gap-1"
 					data-testid={PLACES_TAB_TESTID.feedTime}
 				>
-					<h3 className="text-2xs font-semibold tracking-[0.06em] text-neutral-400 uppercase">
+					<h3 className="text-2xs font-semibold tracking-[0.06em] text-muted-foreground uppercase">
 						Time needed
 					</h3>
-					<p className="text-neutral-200 tnum">{time}</p>
+					<p className="text-foreground tnum">{time}</p>
 				</section>
 			) : null}
 			{shared ? (
 				<section className="grid gap-1">
-					<h3 className="text-2xs font-semibold tracking-[0.06em] text-neutral-400 uppercase">
+					<h3 className="text-2xs font-semibold tracking-[0.06em] text-muted-foreground uppercase">
 						Shared note
 					</h3>
-					<p className="line-clamp-[8] whitespace-pre-line text-neutral-200">
+					<p className="line-clamp-[8] whitespace-pre-line text-foreground">
 						{shared}
 					</p>
 				</section>
 			) : null}
 			{mine ? (
 				<section className="grid gap-1">
-					<h3 className="text-2xs font-semibold tracking-[0.06em] text-neutral-400 uppercase">
+					<h3 className="text-2xs font-semibold tracking-[0.06em] text-muted-foreground uppercase">
 						Your private note
 					</h3>
-					<p className="line-clamp-4 whitespace-pre-line text-neutral-300">
+					<p className="line-clamp-4 whitespace-pre-line text-muted-foreground">
 						{mine}
 					</p>
 				</section>
@@ -677,7 +677,7 @@ function PlaceCard({
 				"inline-flex h-[30px] w-fit items-center gap-1.5 rounded-full px-3 text-meta font-semibold animate-in fade-in-0 zoom-in-95 duration-200 motion-reduce:animate-none",
 				tag.tone === "split"
 					? "bg-warning text-black"
-					: "bg-white text-neutral-900",
+					: "bg-foreground text-background",
 			)}
 		>
 			{tag.tone === "split" ? (
@@ -690,10 +690,10 @@ function PlaceCard({
 	) : null;
 	const title = (
 		<div className="flex flex-col gap-0.5">
-			<h2 className="font-display text-2xl leading-tight font-semibold text-white">
+			<h2 className="font-display text-2xl leading-tight font-semibold">
 				{node.name}
 			</h2>
-			<p className="text-meta text-neutral-400">{meta}</p>
+			<p className="text-meta text-muted-foreground">{meta}</p>
 		</div>
 	);
 	const buttons = (
@@ -714,7 +714,7 @@ function PlaceCard({
 				data-testid={PLACES_TAB_TESTID.feedPeek}
 				onClick={onPeek}
 				className={cn(
-					"z-[3] inline-flex h-8 w-fit cursor-pointer items-center gap-1.5 rounded-full border border-white/25 bg-black/55 px-3 text-xs font-medium text-white backdrop-blur-sm hover:bg-black/70",
+					"z-[3] inline-flex h-8 w-fit cursor-pointer items-center gap-1.5 rounded-full border bg-background/90 px-3 text-xs font-medium text-foreground backdrop-blur-sm hover:bg-muted",
 					wide && "absolute top-14 right-4",
 				)}
 			>
@@ -724,7 +724,7 @@ function PlaceCard({
 		) : null;
 	const commentRow = (
 		<>
-			<div className="flex min-h-7 flex-wrap items-center gap-2 text-xs text-neutral-400">
+			<div className="flex min-h-7 flex-wrap items-center gap-2 text-xs text-muted-foreground">
 				{shown && others.length === 0 && !mine ? (
 					<span>Nobody else has rated it yet.</span>
 				) : null}
@@ -733,7 +733,7 @@ function PlaceCard({
 						<button
 							type="button"
 							onClick={() => setCommenting(true)}
-							className="inline-flex max-w-full cursor-pointer items-center gap-1 truncate hover:text-white"
+							className="inline-flex max-w-full cursor-pointer items-center gap-1 truncate hover:text-foreground"
 						>
 							<MessageSquare className="size-3 shrink-0" />
 							{/* As it reads: a mention is its "@Name", never its stored token. */}
@@ -743,7 +743,7 @@ function PlaceCard({
 						<button
 							type="button"
 							onClick={() => setCommenting(true)}
-							className="inline-flex cursor-pointer items-center gap-1 hover:text-white"
+							className="inline-flex cursor-pointer items-center gap-1 hover:text-foreground"
 						>
 							<MessageSquare className="size-3" />
 							Add a comment
@@ -752,7 +752,7 @@ function PlaceCard({
 				) : null}
 			</div>
 			{commenting && mine && me ? (
-				<div className="rounded-lg bg-neutral-900 p-2">
+				<div className="rounded-lg bg-muted p-2">
 					<RatingCommentEditor
 						node={node}
 						memberId={me}
@@ -769,7 +769,7 @@ function PlaceCard({
 		<div className="flex flex-col gap-3">
 			{tagChip}
 			{line ? (
-				<p className="line-clamp-2 text-sm text-neutral-300">{line}</p>
+				<p className="line-clamp-2 text-sm text-muted-foreground">{line}</p>
 			) : null}
 			{title}
 			{buttons}
@@ -806,7 +806,7 @@ function PlaceCard({
 						ahead={ahead}
 						className="h-full rounded-2xl"
 					/>
-					<div className="flex min-h-0 flex-col gap-5 overflow-y-auto rounded-2xl bg-neutral-950 p-5 ring-1 ring-white/10">
+					<div className="flex min-h-0 flex-col gap-5 overflow-y-auto p-1">
 						{active ? <CardContext row={row} /> : null}
 						<div className="mt-auto">{details}</div>
 					</div>
@@ -859,10 +859,12 @@ function PlaceCard({
 					<div
 						ref={info}
 						data-testid={PLACES_TAB_TESTID.feedInfo}
-						className="flex snap-end snap-always flex-col gap-4 border-t border-white/10 bg-neutral-950 px-4 pt-5 pb-[max(18px,env(safe-area-inset-bottom))]"
+						className="flex snap-end snap-always flex-col gap-4 border-t bg-background px-4 pt-5 pb-[max(18px,env(safe-area-inset-bottom))]"
 					>
 						{/* The bar just above names it. */}
-						{line ? <p className="text-sm text-neutral-300">{line}</p> : null}
+						{line ? (
+							<p className="text-sm text-muted-foreground">{line}</p>
+						) : null}
 						<CardContext row={row} />
 						{tagChip}
 						{commentRow}
@@ -890,7 +892,7 @@ function Slate({
 			data-testid={testid}
 			data-key={cardKey}
 			data-cursor-anchor={`sec:feed.${anchorKey(cardKey)}`}
-			className="flex h-full w-full shrink-0 snap-start snap-always flex-col justify-center overflow-y-auto bg-neutral-950 px-6 py-16 text-white"
+			className="flex h-full w-full shrink-0 snap-start snap-always flex-col justify-center overflow-y-auto bg-background px-6 py-16 text-foreground"
 		>
 			<div className="mx-auto flex w-full max-w-md flex-col gap-5">
 				{children}
@@ -901,9 +903,9 @@ function Slate({
 
 function Stat({ n, label }: { n: number | string; label: string }) {
 	return (
-		<div className="flex flex-col gap-1 rounded-2xl bg-neutral-900 p-4">
+		<div className="flex flex-col gap-1 rounded-2xl bg-muted p-4">
 			<span className="font-display text-3xl font-semibold tnum">{n}</span>
-			<span className="text-meta text-neutral-400">{label}</span>
+			<span className="text-meta text-muted-foreground">{label}</span>
 		</div>
 	);
 }
@@ -950,7 +952,7 @@ function MilestoneCard({
 		.slice(0, 3);
 	return (
 		<Slate testid={PLACES_TAB_TESTID.feedMilestone} cardKey={cardKey}>
-			<span className="text-xs text-neutral-400 tnum">
+			<span className="text-xs text-muted-foreground tnum">
 				{n * 10} rated · {left} left
 			</span>
 			<h2 className="font-display text-4xl leading-tight font-semibold">
@@ -970,7 +972,7 @@ function MilestoneCard({
 			</div>
 			{rising.length ? (
 				<div className="flex flex-col gap-2">
-					<span className="text-xs font-semibold tracking-[0.08em] text-neutral-400 uppercase">
+					<span className="text-xs font-semibold tracking-[0.08em] text-muted-foreground uppercase">
 						Rising to the top
 					</span>
 					{rising.map((r) => (
@@ -984,7 +986,7 @@ function MilestoneCard({
 					))}
 				</div>
 			) : null}
-			<span className="flex items-center gap-1.5 text-meta text-neutral-400">
+			<span className="flex items-center gap-1.5 text-meta text-muted-foreground">
 				<ArrowDown className="size-3.5" />
 				Keep scrolling
 			</span>
@@ -998,11 +1000,11 @@ function SkippedCard({ count, cardKey }: { count: number; cardKey: string }) {
 			<h2 className="font-display text-3xl leading-tight font-semibold">
 				You skipped {count}.
 			</h2>
-			<p className="text-body text-neutral-400">
+			<p className="text-body text-muted-foreground">
 				Rate {count === 1 ? "it" : "them"} now:{" "}
 				{count === 1 ? "it's" : "they're"} just below.
 			</p>
-			<span className="flex items-center gap-1.5 text-meta text-neutral-400">
+			<span className="flex items-center gap-1.5 text-meta text-muted-foreground">
 				<ArrowDown className="size-3.5" />
 				Keep scrolling
 			</span>
@@ -1039,7 +1041,7 @@ function EndCard({
 				<h2 className="font-display text-3xl leading-tight font-semibold">
 					You're all caught up
 				</h2>
-				<p className="text-body text-neutral-400">
+				<p className="text-body text-muted-foreground">
 					{rated
 						? `You've rated all ${rated} ${rated === 1 ? "place" : "places"} here in ${where}.`
 						: `Nothing left to rate in ${where}.`}{" "}
@@ -1047,8 +1049,8 @@ function EndCard({
 					anything you rated this session.
 				</p>
 			</div>
-			<div className="flex flex-col gap-2.5 rounded-2xl bg-neutral-900 p-4">
-				<span className="text-xs font-semibold tracking-[0.08em] text-neutral-400 uppercase">
+			<div className="flex flex-col gap-2.5 rounded-2xl bg-muted p-4">
+				<span className="text-xs font-semibold tracking-[0.08em] text-muted-foreground uppercase">
 					The group
 				</span>
 				{data.progress.map((p) => {
@@ -1064,9 +1066,15 @@ function EndCard({
 									{p.member.name}
 									{p.member.id === me ? " (you)" : ""}
 									{!p.counted ? (
-										<span className="text-neutral-500"> · not counted</span>
+										<span className="text-muted-foreground/70">
+											{" "}
+											· not counted
+										</span>
 									) : noAccount ? (
-										<span className="text-neutral-500"> · no account yet</span>
+										<span className="text-muted-foreground/70">
+											{" "}
+											· no account yet
+										</span>
 									) : null}
 								</span>
 							</span>
@@ -1076,7 +1084,7 @@ function EndCard({
 										"text-sm tnum",
 										p.rated === p.total
 											? "text-emerald-400"
-											: "text-neutral-400",
+											: "text-muted-foreground",
 									)}
 								>
 									{p.rated}/{p.total}
@@ -1095,7 +1103,7 @@ function EndCard({
 									<RemindButton
 										member={p.member}
 										left={p.total - p.rated}
-										className="text-meta text-sky-300 disabled:text-neutral-500"
+										className="text-meta text-primary disabled:text-muted-foreground"
 									/>
 								)}
 							</span>
@@ -1105,7 +1113,7 @@ function EndCard({
 			</div>
 			{best ? (
 				<div className="flex flex-col gap-2">
-					<span className="text-xs font-semibold tracking-[0.08em] text-neutral-400 uppercase">
+					<span className="text-xs font-semibold tracking-[0.08em] text-muted-foreground uppercase">
 						Where you and {best.member.firstName ?? best.member.name} agree
 					</span>
 					{best.agree
@@ -1423,14 +1431,22 @@ export default function RateFeed({ data }: { data: PlacesData }) {
 			data-testid={PLACES_TAB_TESTID.feed}
 			data-left={left}
 			className={cn(
-				"dark relative flex min-h-0 flex-1 flex-col bg-black text-white",
+				"relative flex min-h-0 flex-1 flex-col bg-background text-foreground",
 				phone && "fixed inset-0 z-[60]",
 			)}
 		>
-			<div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-center gap-2.5 bg-gradient-to-b from-black/75 to-transparent px-4 pt-[max(12px,env(safe-area-inset-top))] pb-6">
+			{/* Wide (D07): on the page, in the theme. Narrow: over the media, light on its dark. */}
+			<div
+				className={cn(
+					"pointer-events-none absolute inset-x-0 top-0 z-10 flex items-center gap-2.5 px-4 pt-[max(12px,env(safe-area-inset-top))]",
+					wide
+						? "bg-background pb-3"
+						: "dark bg-gradient-to-b from-black/75 to-transparent pb-6 text-white",
+				)}
+			>
 				<span className="font-display text-lg font-semibold">Rate</span>
 				<span
-					className="min-w-0 truncate text-meta text-neutral-400"
+					className="min-w-0 truncate text-meta text-muted-foreground"
 					data-testid={PLACES_TAB_TESTID.feedRun}
 				>
 					{currentPlace
@@ -1441,7 +1457,7 @@ export default function RateFeed({ data }: { data: PlacesData }) {
 				</span>
 				<span className="ml-auto" />
 				<span
-					className="shrink-0 text-xs whitespace-nowrap text-neutral-400 tnum"
+					className="shrink-0 text-xs whitespace-nowrap text-muted-foreground tnum"
 					data-testid={PLACES_TAB_TESTID.feedLeft}
 				>
 					{left} left
@@ -1453,7 +1469,10 @@ export default function RateFeed({ data }: { data: PlacesData }) {
 					>
 						<SelectTrigger
 							size="sm"
-							className="h-7 border-white/20 bg-black/40 text-xs text-white"
+							className={cn(
+								"h-7 text-xs",
+								!wide && "border-white/20 bg-black/40 text-white",
+							)}
 							aria-label="Order"
 							data-testid={PLACES_TAB_TESTID.feedOrder}
 						>

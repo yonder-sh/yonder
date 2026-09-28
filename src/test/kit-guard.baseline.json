@@ -37,15 +37,12 @@
 		"text": 1
 	},
 	"src/features/places/tab/RateFeed.tsx": {
-		"palette": 40
+		"palette": 7
 	},
 	"src/features/places/ui/mini-map.impl.tsx": {
 		"text": 1
 	},
 	"src/features/places/ui/results-map.impl.tsx": {
-		"text": 1
-	},
-	"src/features/plan/DayHeader.tsx": {
 		"text": 1
 	},
 	"src/features/plan/DayOverview.tsx": {
