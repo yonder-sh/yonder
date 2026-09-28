@@ -40,6 +40,7 @@ export const PLACES_VIEWS = [
 	"board",
 	"map",
 	"rate",
+	"decide",
 	"schedule",
 ] as const;
 export type PlacesView = (typeof PLACES_VIEWS)[number];

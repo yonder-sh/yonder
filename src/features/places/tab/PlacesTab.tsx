@@ -35,6 +35,7 @@ import {
 	viewOfStep,
 } from "./flow";
 import { PlacesBoard } from "./PlacesBoard";
+import { PlacesDecide } from "./PlacesDecide";
 import { PlacesSteps } from "./PlacesSteps";
 import { PlacesTable } from "./PlacesTable";
 import { AddPlaceButton, PlacesToolbar, RatingProgress } from "./PlacesToolbar";
@@ -174,7 +175,9 @@ function Body({
 	return (
 		<div className="flex min-h-0 flex-1">
 			<div className="flex min-w-0 flex-1 flex-col">
-				{step === "schedule" ? (
+				{step === "decide" ? (
+					<PlacesDecide data={data} />
+				) : step === "schedule" ? (
 					<ScheduleNext
 						data={data}
 						tally={tally}

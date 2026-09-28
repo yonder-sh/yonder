@@ -14,7 +14,7 @@
 import type { PlacesView } from "@/lib/workspace/search";
 import type { PlaceStatus } from "./lifecycle";
 
-export const FLOW_STEPS = ["rate", "review", "schedule"] as const;
+export const FLOW_STEPS = ["rate", "review", "decide", "schedule"] as const;
 export type FlowStep = (typeof FLOW_STEPS)[number];
 
 /** The Review step's own views (its switcher). */
@@ -25,6 +25,8 @@ export const STEP_LABEL: Record<FlowStep, string> = {
 	rate: "Rate",
 	// One Yonder (D06): the Review step is the page of all places.
 	review: "All places",
+	// One Yonder (D08): shortlist, disagreements and not going, side by side.
+	decide: "Decide",
 	schedule: "Schedule",
 };
 
@@ -32,6 +34,7 @@ export const STEP_LABEL: Record<FlowStep, string> = {
 export function stepOfView(pv: PlacesView | null | undefined): FlowStep | null {
 	if (!pv) return null;
 	if (pv === "rate") return "rate";
+	if (pv === "decide") return "decide";
 	if (pv === "schedule") return "schedule";
 	return "review";
 }
@@ -61,11 +64,14 @@ export type FlowTally = {
 	shortlisted: number;
 	/** Shortlisted and not on a day yet. */
 	notOnDay: number;
+	/** Split ratings to talk through (not dropped). */
+	talk: number;
 };
 
 export function flowTally(
 	rows: readonly {
 		status: PlaceStatus;
+		split?: boolean;
 		node: { priorities: Readonly<Record<string, unknown>> };
 	}[],
 	opts: { me: string | null; canRate: boolean },
@@ -75,6 +81,7 @@ export function flowTally(
 		toRate: opts.canRate && opts.me ? 0 : null,
 		shortlisted: 0,
 		notOnDay: 0,
+		talk: 0,
 	};
 	for (const r of rows) {
 		if (r.status === "dropped") continue;
@@ -84,6 +91,7 @@ export function flowTally(
 		if (r.status === "shortlist" || r.status === "scheduled")
 			out.shortlisted += 1;
 		if (r.status === "shortlist") out.notOnDay += 1;
+		if (r.split) out.talk += 1;
 	}
 	return out;
 }
@@ -129,6 +137,7 @@ export function stepBadges(t: FlowTally): Record<FlowStep, string | null> {
 	return {
 		review: t.ideas ? String(t.ideas) : null,
 		rate: t.toRate ? `${t.toRate} left` : null,
+		decide: t.talk ? `${t.talk} to talk` : null,
 		schedule: t.notOnDay ? `${t.notOnDay} to place` : null,
 	};
 }
@@ -157,5 +166,8 @@ export function stepCounts(
 		schedule = t.notOnDay
 			? `${t.shortlisted} shortlisted · ${t.notOnDay} not on a day`
 			: `${t.shortlisted} shortlisted · all on a day`;
-	return { rate, review, schedule };
+	const decide = t.talk
+		? `${plural(t.talk, "place")} to talk through`
+		: `${t.shortlisted} shortlisted`;
+	return { rate, review, decide, schedule };
 }

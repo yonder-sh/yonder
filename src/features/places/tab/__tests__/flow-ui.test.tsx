@@ -65,11 +65,12 @@ describe("the Places tab's steps", () => {
 		expect(all.map((s) => s.dataset.step)).toEqual([
 			"review",
 			"rate",
+			"decide",
 			"schedule",
 		]);
 		expect(all[0]).toHaveAttribute("aria-current", "step");
 		// In the flow's order from here on: Rate, All places, Schedule.
-		const steps = [all[1], all[0], all[2]] as HTMLElement[];
+		const steps = [all[1], all[0], all[3]] as HTMLElement[];
 		expect(steps.map((s) => s.getAttribute("title"))).toEqual([
 			`Rate · ${rateable} to rate`,
 			`All places · ${rateable} places`,

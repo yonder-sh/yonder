@@ -67,6 +67,13 @@ export const PLACES_TAB_TESTID = {
 	feedInfo: "places-feed-info",
 	// the flow: rate → review → schedule (owner, 2026-09-25)
 	steps: "places-steps",
+	/** One Yonder D08: the Decide view, its columns and cards. */
+	decide: "places-decide",
+	decideColumn: "places-decide-column",
+	decideCard: "places-decide-card",
+	decideKeep: "places-decide-keep",
+	decideDrop: "places-decide-drop",
+	decideBack: "places-decide-back",
 	step: "places-step",
 	stepCount: "places-step-count",
 	stepDot: "places-step-dot",

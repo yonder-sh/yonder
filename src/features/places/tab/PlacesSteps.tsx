@@ -18,7 +18,7 @@ import {
 import { PLACES_TAB_TESTID } from "./testids";
 
 /** D06's order: the places first, then rating, then onto the days. */
-const ORDER: readonly FlowStep[] = ["review", "rate", "schedule"];
+const ORDER: readonly FlowStep[] = ["review", "rate", "decide", "schedule"];
 
 export function PlacesSteps({
 	step,

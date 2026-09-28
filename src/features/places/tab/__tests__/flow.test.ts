@@ -59,6 +59,7 @@ describe("the step in the URL", () => {
 const tally = (t: Partial<FlowTally>): FlowTally => ({
 	ideas: 10,
 	toRate: 0,
+	talk: 0,
 	shortlisted: 0,
 	notOnDay: 0,
 	...t,
@@ -101,11 +102,12 @@ describe("which step Places opens on", () => {
 describe("the steps' counts", () => {
 	it('"12 to rate", "48 places", "9 shortlisted · 4 not on a day"', () => {
 		const c = stepCounts(
-			tally({ ideas: 48, toRate: 12, shortlisted: 9, notOnDay: 4 }),
+			tally({ ideas: 48, toRate: 12, shortlisted: 9, notOnDay: 4, talk: 2 }),
 		);
 		expect(c).toEqual({
 			rate: "12 to rate",
 			review: "48 places",
+			decide: "2 places to talk through",
 			schedule: "9 shortlisted · 4 not on a day",
 		});
 		expect(
@@ -118,6 +120,7 @@ describe("the steps' counts", () => {
 		expect(stepCounts(tally({ ideas: 0 }))).toEqual({
 			rate: "Nothing to rate",
 			review: "No places yet",
+			decide: "0 shortlisted",
 			schedule: "Nothing shortlisted",
 		});
 		expect(stepCounts(tally({ toRate: null })).rate).toBe("View only");
