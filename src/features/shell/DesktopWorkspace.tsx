@@ -117,8 +117,8 @@ export function DesktopWorkspace({ bp }: { bp: Exclude<Breakpoint, "sm"> }) {
 	const placesMap = usePlacesMapView();
 	// One Yonder (D06): the Places tab is a page, the map's width included.
 	const { sel, search, days, tab } = useWorkspace();
-	// …and so is Money (D11: the balance first, no map).
-	const placesWide = usePlacesWide() || tab === "money";
+	// …and so are Money (D11: the balance first, no map) and Lists (D12).
+	const placesWide = usePlacesWide() || tab === "money" || tab === "lists";
 	const overview = useOverviewTakesAll();
 	// D04: a day's ideas in the map's place ("Fill this day").
 	const filling = !!search.fill && !!days && tab === "plan";

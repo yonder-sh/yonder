@@ -146,6 +146,15 @@ export function ListsTab() {
 	return (
 		<div ref={root} data-testid={TESTID.listsTab} className="pb-16">
 			{wide ? (
+				// D12: on a page of its own, "Lists" and where heads it.
+				<h2 className="flex items-baseline gap-2 px-6 pt-4 pb-1">
+					<span className="font-display text-2xl leading-8 font-semibold">
+						Lists
+					</span>
+					<span className="text-meta text-muted-foreground">{where}</span>
+				</h2>
+			) : null}
+			{wide ? (
 				<div className="grid grid-cols-2 divide-x">
 					<ListBoard {...common} kind="todo" title="To-do" />
 					<ListBoard {...common} kind="shopping" title="Shopping" />
