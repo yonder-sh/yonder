@@ -47,6 +47,7 @@ import {
 	resolveProposal,
 } from "@/functions/proposals.functions";
 import { mentionToken } from "@/lib/notes/mentions";
+import { REDACTED_BOOKING_REF } from "@/lib/schemas/legs";
 import { isProposed, type ProposalDto } from "@/lib/schemas/proposals";
 import type { AuthUser } from "@/server/auth.server";
 import { errorCode } from "@/server/authz/errors";
@@ -1019,5 +1020,165 @@ describe("mentions", () => {
 			U.maya,
 		);
 		expect(mine.every((m) => m.tab !== "notes" || m.sel)).toBe(true);
+	});
+});
+
+describe("One Yonder D12: booking references, booking links and packing", () => {
+	it("a booking reference saves, reads back for members and is hidden from link guests", async () => {
+		const c = await freshTrip();
+		const booking = await call<ListItemDto>(createListItem, U.owner, {
+			tripId: c.tripId,
+			target: { kind: "item", itemId: c.ids.items.dropBags },
+			list: "todo",
+			text: "Fuji Excursion train seats",
+			dueKind: "opens",
+			bookingRef: "E7K2Q9",
+		});
+		expect(booking.bookingRef).toBe("E7K2Q9");
+		const [col] = await q<{ ref: string | null }>(
+			sql`select booking_ref as ref from list_items where id = ${booking.id}`,
+		);
+		expect(col?.ref).toBe("E7K2Q9");
+		const refOf = async (u: AuthUser) =>
+			(await list(u, c.tripId)).find((r) => r.id === booking.id)?.bookingRef;
+		// Members read it, a "Can view" member too; link guests read the mask.
+		expect(await refOf(U.owner)).toBe("E7K2Q9");
+		expect(await refOf(U.maya)).toBe("E7K2Q9");
+		expect(await refOf(U.viewer)).toBe("E7K2Q9");
+		expect(await refOf(U.guestEditor)).toBe(REDACTED_BOOKING_REF);
+		expect(await refOf(U.guestViewer)).toBe(REDACTED_BOOKING_REF);
+
+		// A guest editor saving the mask back (or anything else) keeps the real one.
+		await call(updateListItem, U.guestEditor, {
+			id: booking.id,
+			patch: {
+				text: "Fuji Excursion 7 seats",
+				bookingRef: REDACTED_BOOKING_REF,
+			},
+		});
+		expect(await refOf(U.owner)).toBe("E7K2Q9");
+		expect(
+			(await list(U.owner, c.tripId)).find((r) => r.id === booking.id)?.text,
+		).toBe("Fuji Excursion 7 seats");
+
+		// Changed, then cleared.
+		await call(updateListItem, U.maya, {
+			id: booking.id,
+			patch: { bookingRef: "QX-4411" },
+		});
+		expect(await refOf(U.owner)).toBe("QX-4411");
+		expect(await refOf(U.guestViewer)).toBe(REDACTED_BOOKING_REF);
+		await call(updateListItem, U.owner, {
+			id: booking.id,
+			patch: { bookingRef: null },
+		});
+		expect(await refOf(U.owner)).toBeNull();
+		// Nothing to hide: a guest reads null, not the mask.
+		expect(await refOf(U.guestViewer)).toBeNull();
+	});
+
+	it("a booking window in the inbox opens Bookings; once its stop is booked it says nothing", async () => {
+		const c = await freshTrip();
+		const soon = new Date(Date.now() + 3 * 86_400_000)
+			.toISOString()
+			.slice(0, 10);
+		const sky = c.ids.items.sky as string;
+		const booking = await call<ListItemDto>(createListItem, U.owner, {
+			tripId: c.tripId,
+			target: { kind: "item", itemId: sky },
+			list: "todo",
+			text: "Shibuya Sky sunset slot",
+			dueKind: "opens",
+			dueDate: soon,
+		});
+		const dueOf = async () =>
+			(await loadInbox(U.owner.id, { tripId: c.tripId })).items.find(
+				(i) => i.kind === "due" && i.listItemId === booking.id,
+			);
+		expect((await dueOf())?.link).toEqual({
+			tripSlug: c.slug,
+			tab: "lists",
+			list: "bookings",
+			sel: `i.${sky}`,
+		});
+		// "Booked for this date" on its stop: the to-do counts as booked.
+		await getDb().execute(
+			sql`update items set fixed_date = true where id = ${sky}`,
+		);
+		expect(await dueOf()).toBeUndefined();
+	});
+
+	it("packing: shared rows for everyone, a Just mine row only for its author", async () => {
+		const c = await freshTrip();
+		const adapter = await call<ListItemDto>(createListItem, U.owner, {
+			tripId: c.tripId,
+			target: { kind: "trip" },
+			list: "packing",
+			text: "Travel adapter",
+		});
+		const gift = await call<ListItemDto>(createListItem, U.owner, {
+			tripId: c.tripId,
+			target: { kind: "trip" },
+			list: "packing",
+			text: "Birthday card for Maya",
+			isPrivate: true,
+		});
+		expect(adapter).toMatchObject({
+			list: "packing",
+			isPrivate: false,
+			status: "open",
+			mine: true,
+		});
+		expect(gift).toMatchObject({ list: "packing", isPrivate: true });
+		const [col] = await q<{ list: string }>(
+			sql`select list::text as list from list_items where id = ${adapter.id}`,
+		);
+		expect(col?.list).toBe("packing");
+
+		const packingOf = async (u: AuthUser) =>
+			(await list(u, c.tripId))
+				.filter((r) => r.list === "packing")
+				.map((r) => r.id);
+		expect(await packingOf(U.owner)).toEqual(
+			expect.arrayContaining([adapter.id, gift.id]),
+		);
+		for (const u of [U.maya, U.viewer, U.guestViewer]) {
+			const ids = await packingOf(u);
+			expect(ids).toContain(adapter.id);
+			expect(ids).not.toContain(gift.id);
+		}
+		// Anyone but its author meets it as missing; its author packs it.
+		expect(
+			await codeOf(
+				call(setListItemStatus, U.maya, { id: gift.id, status: "done" }),
+			),
+		).toBe("NOT_FOUND");
+		await call(setListItemStatus, U.owner, { id: gift.id, status: "done" });
+		expect(
+			(await list(U.owner, c.tripId)).find((r) => r.id === gift.id)?.status,
+		).toBe("done");
+		// Maya ticks the shared one for everyone.
+		await call(setListItemStatus, U.maya, { id: adapter.id, status: "done" });
+		expect(
+			(await list(U.owner, c.tripId)).find((r) => r.id === adapter.id)?.status,
+		).toBe("done");
+		// Its activity names the Packing list; the private row writes none.
+		const acts = await call<{ summary: string }[]>(listActivity, U.maya, {
+			tripId: c.tripId,
+		});
+		expect(acts.some((a) => a.summary.includes("to packing"))).toBe(true);
+		expect(acts.some((a) => a.summary.includes("Birthday card"))).toBe(false);
+		// A link guest can't keep a Just mine row.
+		expect(
+			await codeOf(
+				call(createListItem, U.guestEditor, {
+					tripId: c.tripId,
+					target: { kind: "trip" },
+					list: "packing",
+					text: "Earplugs",
+					isPrivate: true,
+				}),
+			),
+		).toBe("VALIDATION");
 	});
 });
