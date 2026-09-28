@@ -41,7 +41,7 @@ export function WhatIfChip() {
 			</button>
 			<button
 				type="button"
-				aria-label="Discard the what-if"
+				aria-label="Don't shift"
 				data-testid={INSIGHTS_TESTID.whatIfClear}
 				onClick={() => setDraft(null)}
 				className="ml-1 inline-flex size-6 items-center justify-center rounded-full hover:bg-primary/15 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"

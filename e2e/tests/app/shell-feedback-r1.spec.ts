@@ -269,7 +269,7 @@ test.describe("phone 390", () => {
 		await expect(dlg).toBeVisible();
 		await page.keyboard.press("Escape");
 		await expect(dlg).toBeHidden();
-		await page.getByTestId(TESTID.whatIfChip).getByRole("button", { name: /Discard/ }).tap();
+		await page.getByTestId(TESTID.whatIfChip).getByRole("button", { name: "Don't shift" }).tap();
 		await expect(page.getByTestId(TESTID.whatIfChip)).toHaveCount(0);
 	});
 
