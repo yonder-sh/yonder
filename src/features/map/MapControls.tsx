@@ -135,7 +135,7 @@ export function MapControls(p: MapControlsProps) {
 			style={p.style}
 		>
 			<ControlButton
-				label="Fit to the scope"
+				label="Zoom to fit"
 				testId={MAP_TESTID.fit}
 				onClick={p.onFit}
 			>

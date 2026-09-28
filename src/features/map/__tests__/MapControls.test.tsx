@@ -40,7 +40,7 @@ describe("MapControls", () => {
 		const phone = screen.getByTestId(MAP_TESTID.controls);
 		expect(phone.classList.contains("is-touch")).toBe(true);
 		for (const name of [
-			"Fit to the scope",
+			"Zoom to fit",
 			"Map layers and legend",
 			"Filter places",
 		])

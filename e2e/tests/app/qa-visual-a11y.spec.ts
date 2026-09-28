@@ -379,7 +379,7 @@ test.describe("phone", () => {
 		await check("day stepper", '[data-testid="plan-range-bar"] button');
 		await check("bottom tab", '[data-testid="center-tabs"] [role="tab"]');
 		await page.getByTestId("mobile-map-toggle").tap();
-		await check("map: fit", '[aria-label="Fit to the scope"]');
+		await check("map: fit", '[aria-label="Zoom to fit"]');
 		await check("map: layers", '[aria-label="Map layers and legend"]');
 		expect(small, small.join("\n")).toEqual([]);
 	});
