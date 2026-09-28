@@ -24,8 +24,7 @@ import {
 } from "lucide-react";
 import { type ReactNode, useId, useState } from "react";
 import { toast } from "sonner";
-import { EmptyState } from "@/components/common/empty-state";
-import { MemberAvatar } from "@/components/common/member";
+import { Chip, EmptyState, Eyebrow, MemberAvatar } from "@/components/kit";
 import { Button } from "@/components/ui/button";
 import {
 	Drawer,
@@ -38,6 +37,7 @@ import {
 	PopoverContent,
 	PopoverTrigger,
 } from "@/components/ui/popover";
+import { Skeleton } from "@/components/ui/skeleton";
 import { OpenSuggestions } from "@/features/suggest/ReviewDrawer";
 import { openReview } from "@/features/suggest/review-store";
 import { markInboxRead } from "@/functions/inbox.functions";
@@ -99,24 +99,23 @@ export function InboxBell({
 	if (guest) return null;
 	const unread = q.data?.unread ?? 0;
 	const trigger = (
-		<button
-			type="button"
+		<Button
+			variant="ghost"
+			size="icon"
 			data-testid={TESTID.inboxBell}
 			data-unread={unread}
 			aria-label={unread ? `Inbox, ${unread} unread` : "Inbox"}
-			className={cn(
-				"relative flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground",
-				className,
-			)}
+			className={cn("relative text-muted-foreground", className)}
 		>
-			<Bell className="size-4" strokeWidth={1.75} />
+			<Bell strokeWidth={1.75} />
 			{unread ? (
+				// On the bell's top-right corner, whatever the button's size.
 				<span
 					data-testid={SHELL_TESTID.inboxDot}
-					className="absolute top-1.5 right-1.5 size-1.5 rounded-full bg-glow ring-2 ring-background"
+					className="absolute top-1/2 left-1/2 -mt-2.5 ml-1 size-1.5 rounded-full bg-glow ring-2 ring-background"
 				/>
 			) : null}
-		</button>
+		</Button>
 	);
 	const panel = (
 		<InboxPanel
@@ -204,7 +203,7 @@ function InboxPanel({
 				<Button
 					variant="ghost"
 					size="sm"
-					className="-mr-2 h-7 text-xs text-muted-foreground"
+					className="-mr-2 text-muted-foreground"
 					disabled={!unread || mark.isPending}
 					onClick={() =>
 						mark.mutate(tripId ? { all: true, tripId } : { all: true })
@@ -216,11 +215,20 @@ function InboxPanel({
 			</div>
 			<div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
 				{loading ? (
-					<div className="grid gap-2 p-4" aria-busy="true">
+					<ul aria-busy="true" className="py-1">
 						{[0, 1, 2].map((i) => (
-							<div key={i} className="h-12 animate-pulse rounded-lg bg-muted" />
+							<li key={i} className="flex items-start gap-3 px-4 py-2.5">
+								<Skeleton className="size-7 shrink-0 rounded-full" />
+								<div className="grid flex-1 gap-1.5 pt-0.5">
+									<Skeleton
+										className="h-3.5"
+										style={{ maxWidth: `${85 - i * 15}%` }}
+									/>
+									<Skeleton className="h-3 w-12" />
+								</div>
+							</li>
 						))}
-					</div>
+					</ul>
 				) : error && !items.length ? (
 					<EmptyState line="Couldn't load your inbox." className="py-8" />
 				) : !items.length ? (
@@ -236,9 +244,9 @@ function InboxPanel({
 				) : (
 					groups.map((g) => (
 						<section key={g.key} aria-label={INBOX_GROUP_LABEL[g.key]}>
-							<h3 className="eyebrow sticky top-0 z-10 bg-popover/95 px-4 pt-3 pb-1 backdrop-blur">
+							<Eyebrow className="sticky top-0 z-10 bg-popover/95 px-4 pt-3 pb-1 backdrop-blur">
 								{INBOX_GROUP_LABEL[g.key]}
-							</h3>
+							</Eyebrow>
 							{/* D14: in a trip, its suggestions right here, to accept or reject. */}
 							{g.key === "suggestions" && tripId ? (
 								<OpenSuggestions onAfterShow={onDone} />
@@ -349,7 +357,7 @@ function InboxRow({
 			<span className="min-w-0 flex-1">
 				<span
 					className={cn(
-						"block text-meta leading-[18px] text-pretty",
+						"block text-meta text-pretty",
 						i.read ? "text-muted-foreground" : "font-medium text-foreground",
 					)}
 				>
@@ -368,17 +376,17 @@ function InboxRow({
 				) : null}
 				<span className="mt-0.5 flex items-center gap-1.5 text-2xs text-muted-foreground">
 					{i.kind === "due" ? (
-						<span
-							className={cn(
-								"rounded-full px-1.5 leading-4",
-								// Due-soon uses the neutral/primary tint (ADDENDUM §10), never amber.
+						<Chip
+							size="sm"
+							// Due-soon uses the neutral/primary tint (ADDENDUM §10), never amber.
+							tone={
 								i.state === "overdue" || i.state === "open_now"
-									? "bg-accent text-accent-foreground"
-									: "bg-muted",
-							)}
+									? "accent"
+									: "neutral"
+							}
 						>
 							{DUE_LABEL[i.state]}
-						</span>
+						</Chip>
 					) : null}
 					<span className="tnum">{timeAgo(i.at, now)}</span>
 				</span>
