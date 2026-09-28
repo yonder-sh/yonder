@@ -103,12 +103,13 @@ export const WorkspaceSearch = z.object({
 	/** Absent = `defaultTab()`: the Overview at a bare trip root, else the Plan. */
 	tab: z.enum(TABS).optional().catch(undefined),
 	/**
-	 * docs/OVERVIEW.md: "today" for the Overview (`YYYY-MM-DD`), so demos and
-	 * e2e can see it before, during and after the trip. Nothing else reads it.
+	 * docs/OVERVIEW.md: "today" for the Overview and Today, so demos and e2e
+	 * can see it before, during and after the trip: `YYYY-MM-DD` (noon) or a
+	 * local time on it, `YYYY-MM-DDTHH:mm` (`nowFor`).
 	 */
 	asOf: z
 		.string()
-		.regex(/^\d{4}-\d{2}-\d{2}$/)
+		.regex(/^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2})?$/)
 		.optional()
 		.catch(undefined),
 	/** One day or an inclusive range. */

@@ -63,6 +63,8 @@ export const MUTATION_POLICY = {
 	deleteItem: "proposable",
 	restoreItem: "edit-only",
 	setItemAssignees: "proposable",
+	/** Today: Done on a stop, shared by the group (travel state, never a proposal). */
+	setItemDone: { direct: "markDone" },
 
 	// ---- days (F) ----
 	insertDay: "proposable",
@@ -104,6 +106,8 @@ export const MUTATION_POLICY = {
 	searchPlaces: { direct: "searchPlaces" },
 	getPlacePreview: { direct: "searchPlaces" },
 	reverseGeocode: { direct: "searchPlaces" },
+	/** Today's "Show this to the driver": fills a place's cached address once. */
+	getLocalAddress: { direct: "read" },
 	/** Writes Google hours/details onto the node. */
 	getPlaceMoreDetails: "edit-only",
 

@@ -426,14 +426,14 @@ export function TodayList({
 	);
 }
 
-/** "Sun 10 Oct · 07:12" (the day's own zone; no clock on an `?asOf` day). */
+/** "Sun 10 Oct · 07:12" (the day's own zone; no clock on an `?asOf` date without a time). */
 export function dayClock(
 	date: string,
 	tz: string,
 	now: number,
 	asOf: string | null,
 ): string {
-	return asOf
+	return asOf && !asOf.includes("T")
 		? formatDayDate(date)
 		: `${formatDayDate(date)} · ${formatTime(now, tz)}`;
 }

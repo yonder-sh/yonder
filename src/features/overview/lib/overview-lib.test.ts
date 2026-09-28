@@ -15,7 +15,7 @@ import {
 	type HighlightCandidate,
 	pickHighlights,
 } from "./highlights";
-import { tripPhase } from "./phase";
+import { asOfDate, nowFor, tripPhase } from "./phase";
 import { tripRoute } from "./trip-route";
 
 describe("tripPhase", () => {
@@ -57,6 +57,41 @@ describe("tripPhase", () => {
 			kind: "during",
 			index: 2,
 		});
+		// A local time on the day (Today's demos) is that day too.
+		expect(tripPhase(days, now, "2027-10-03T14:40")).toEqual({
+			kind: "during",
+			index: 1,
+			today: "2027-10-03",
+		});
+	});
+});
+
+describe("nowFor (`?asOf=`)", () => {
+	it("a date means noon there; a local date-time means that time there", () => {
+		expect(nowFor("2027-10-05", "Asia/Tokyo")).toBe(
+			zonedEpoch("2027-10-05", "12:00", "Asia/Tokyo"),
+		);
+		expect(nowFor("2027-10-05T14:40", "Asia/Tokyo")).toBe(
+			zonedEpoch("2027-10-05", "14:40", "Asia/Tokyo"),
+		);
+	});
+
+	it("takes the zone of the day it names", () => {
+		const zoneOf = (date: string) =>
+			date === "2027-10-02" ? "America/New_York" : "Asia/Tokyo";
+		expect(nowFor("2027-10-02T18:00", zoneOf)).toBe(
+			zonedEpoch("2027-10-02", "18:00", "America/New_York"),
+		);
+		expect(nowFor("2027-10-03", zoneOf)).toBe(
+			zonedEpoch("2027-10-03", "12:00", "Asia/Tokyo"),
+		);
+	});
+
+	it("is the real clock without one", () => {
+		const t = Date.now();
+		expect(nowFor(null, "Asia/Tokyo")).toBeGreaterThanOrEqual(t);
+		expect(asOfDate("2027-10-05T14:40")).toBe("2027-10-05");
+		expect(asOfDate(null)).toBeNull();
 	});
 });
 

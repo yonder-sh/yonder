@@ -15,11 +15,14 @@ import {
 	RestoreItemInput,
 	restoreItemCore,
 	SetItemAssigneesInput,
+	SetItemDoneInput,
+	setItemDoneCore,
 	UpdateItemInput,
 } from "@/server/cores/items.server";
 import { tripOf } from "@/server/perms.server";
 import {
 	proposable,
+	requireDirect,
 	requireEditOnly,
 } from "@/server/proposals/proposable.server";
 import { actorOf } from "@/server/proposals/types";
@@ -79,3 +82,20 @@ export const setItemAssignees = createServerFn({ method: "POST" })
 	.middleware([withNamedUser])
 	.validator(proposable.input(SetItemAssigneesInput))
 	.handler(proposable.run("item.assignees"));
+
+/** Today: Done on a stop for the whole group (owners, editors, suggesters; never a proposal); `done: false` undoes it. Keys: graph. */
+export const setItemDone = createServerFn({ method: "POST" })
+	.middleware([withNamedUser])
+	.validator(SetItemDoneInput)
+	.handler(async ({ data, context }): Promise<{ doneAt: string | null }> => {
+		const access = await requireDirect(
+			"setItemDone",
+			data.tripId,
+			context.user,
+		);
+		return withTripTx(
+			data.tripId,
+			(tx, out) => setItemDoneCore(tx, out, data, { user: context.user }),
+			mutationMeta(access, context.user),
+		);
+	});

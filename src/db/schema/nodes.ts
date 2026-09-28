@@ -60,6 +60,8 @@ export const nodes = pgTable(
 		/** ISO 3166-1 alpha-2. */
 		countryCode: text(),
 		address: text(),
+		/** The address in local script for a driver (東京都中野区…), filled on demand from Photon; cleared on relocate. */
+		localAddress: text(),
 		/** The ONLY Google identifier stored permanently (ToS, §14.1). */
 		googlePlaceId: text(),
 		/** OSM reference from Photon, e.g. `N123456` / `W789` / `R42`. */

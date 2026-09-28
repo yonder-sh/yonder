@@ -29,6 +29,7 @@ import {
 import { actorOf } from "@/server/proposals/types";
 import { mutationMeta, withTripTx } from "@/server/tx.server";
 import { findDuplicate } from "./lib/filing";
+import { isExactResult, localAddressOf } from "./lib/local-address";
 import {
 	GOOGLE_PLACE_ID_RE,
 	googlePhotos,
@@ -53,6 +54,7 @@ import {
 	googlePhotoMeta,
 	googleSearch,
 	photonReverse,
+	photonReverseLocal,
 	photonSearch,
 	provider,
 } from "./server/providers.server";
@@ -141,6 +143,57 @@ export const reverseGeocode = createServerFn({ method: "POST" })
 			await filingNodes(data.tripId),
 		);
 	});
+
+/**
+ * Today's "Show this to the driver" (P16): the place's address in local
+ * script. Looked up once from Photon (`lang=default`) and kept on the place
+ * (a cache: no activity, no live event). Best-effort: null when unknown,
+ * never a provider error.
+ */
+export const getLocalAddress = createServerFn({ method: "POST" })
+	.middleware([withUser])
+	.validator(z.object({ tripId: z.uuid(), nodeId: z.uuid() }).strict())
+	.handler(
+		async ({ data, context }): Promise<{ localAddress: string | null }> => {
+			await requireDirect("getLocalAddress", data.tripId, context.user);
+			const where = and(
+				eq(nodes.id, data.nodeId),
+				eq(nodes.tripId, data.tripId),
+				isNull(nodes.deletedAt),
+			);
+			const [node] = await db
+				.select({
+					lat: nodes.lat,
+					lng: nodes.lng,
+					osmRef: nodes.osmRef,
+					localAddress: nodes.localAddress,
+				})
+				.from(nodes)
+				.where(where);
+			if (!node) return fail("NOT_FOUND");
+			if (node.localAddress) return { localAddress: node.localAddress };
+			const { lat, lng } = node;
+			if (lat === null || lng === null) return { localAddress: null };
+			try {
+				await rateLimit(`places:local:${context.user.id}`, DETAILS_PER_MIN);
+			} catch {
+				return { localAddress: null };
+			}
+			const f = await photonReverseLocal(lat, lng);
+			const localAddress = f
+				? localAddressOf(f.properties, {
+						exact: isExactResult(f, { lat, lng, osmRef: node.osmRef }),
+					})
+				: null;
+			// Only for the spot it was looked up for (a move meanwhile clears it).
+			if (localAddress)
+				await db
+					.update(nodes)
+					.set({ localAddress })
+					.where(and(where, eq(nodes.lat, lat), eq(nodes.lng, lng)));
+			return { localAddress };
+		},
+	);
 
 const ENTERPRISE_REFRESH_MS = 30 * 24 * 60 * 60 * 1000;
 

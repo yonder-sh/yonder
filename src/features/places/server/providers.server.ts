@@ -30,6 +30,8 @@ import {
 } from "../lib/providers";
 
 const TIMEOUT_MS = 8_000;
+/** A driver's address is a nice-to-have: Today never waits long for it. */
+const LOCAL_TIMEOUT_MS = 3_000;
 const PHOTON_TTL = 10 * 60;
 const PHOTON_FEATURE_TTL = 60 * 60;
 const GOOGLE_PHOTO_TTL = 55 * 60; // "no more than 1 hour" (§14.1)
@@ -51,13 +53,17 @@ function hash(...parts: unknown[]): string {
 		.slice(0, 32);
 }
 
-async function getJson<T>(url: string, init: RequestInit): Promise<T> {
+async function getJson<T>(
+	url: string,
+	init: RequestInit,
+	timeoutMs = TIMEOUT_MS,
+): Promise<T> {
 	let res: Response;
 	try {
 		res = await fetch(url, {
 			...init,
 			redirect: "error",
-			signal: AbortSignal.timeout(TIMEOUT_MS),
+			signal: AbortSignal.timeout(timeoutMs),
 		});
 	} catch (e) {
 		console.warn(
@@ -189,6 +195,47 @@ export async function photonReverse(
 	const preview = f ? photonPreview(f) : null;
 	await cacheSet(["photon", "rev", key], preview ?? { none: true }, PHOTON_TTL);
 	return preview;
+}
+
+/**
+ * The nearest OSM object with its names and address in local script
+ * (`lang=default`), for a driver's address. Best-effort: a short timeout,
+ * null when Photon is slow, busy or knows nothing; never throws.
+ */
+export async function photonReverseLocal(
+	lat: number,
+	lng: number,
+): Promise<PhotonFeature | null> {
+	const key = hash("local", lat.toFixed(5), lng.toFixed(5));
+	const cached = await cacheGet<PhotonFeature | { none: true }>(
+		"photon",
+		"revlocal",
+		key,
+	);
+	if (cached) return "none" in cached ? null : cached;
+	try {
+		await photonPace();
+		const body = await getJson<{ features?: PhotonFeature[] }>(
+			photonUrl("/reverse", {
+				lat: String(lat),
+				lon: String(lng),
+				lang: "default",
+				limit: "1",
+			}),
+			{ headers: { "User-Agent": osmUserAgent(), Accept: "application/json" } },
+			LOCAL_TIMEOUT_MS,
+		);
+		const f = body.features?.[0];
+		const ok = !!f?.properties && Array.isArray(f.geometry?.coordinates);
+		await cacheSet(
+			["photon", "revlocal", key],
+			ok ? f : { none: true },
+			PHOTON_TTL,
+		);
+		return ok && f ? f : null;
+	} catch {
+		return null;
+	}
 }
 
 // ---------------------------------------------------------------------------

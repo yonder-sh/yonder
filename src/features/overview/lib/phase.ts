@@ -21,6 +21,13 @@ export type TripPhase =
 	| { kind: "during"; index: number; today: string }
 	| { kind: "after"; daysSince: number };
 
+/** The date an `asOf` stands for: a date, or a local date-time on it ("2027-10-05T14:40"). */
+export function asOfDate(asOf: string): string;
+export function asOfDate(asOf: string | null | undefined): string | null;
+export function asOfDate(asOf: string | null | undefined): string | null {
+	return asOf ? asOf.slice(0, 10) : null;
+}
+
 /** The phase of a trip whose days (in order) are `days`, at `now`. */
 export function tripPhase(
 	days: readonly PhaseDay[],
@@ -30,7 +37,8 @@ export function tripPhase(
 	const first = days[0];
 	const last = days.at(-1);
 	if (!first || !last) return { kind: "empty" };
-	const todayAt = (d: PhaseDay) => asOf ?? localDateOf(now, d.tz);
+	const date = asOfDate(asOf);
+	const todayAt = (d: PhaseDay) => date ?? localDateOf(now, d.tz);
 	const t0 = todayAt(first);
 	if (t0 < first.date)
 		return { kind: "before", daysToGo: daysUntil(first.date, t0) };
@@ -46,9 +54,17 @@ export function tripPhase(
 }
 
 /**
- * The instant "now" stands for: the real one, or noon on `asOf` in the
- * trip's zone (so a demo of Day 9 shows the morning's stops as done).
+ * The instant "now" stands for: the real one, or `asOf` in the zone of that
+ * day (`tz`, or a function of the date: the trip day's own zone). A date
+ * alone means noon (a demo of Day 9 shows the morning's stops as done);
+ * `2027-10-05T14:40` is 14:40 there (Today's demos and e2e).
  */
-export function nowFor(asOf: string | null | undefined, tz: string): number {
-	return asOf ? zonedEpoch(asOf, "12:00", tz) : Date.now();
+export function nowFor(
+	asOf: string | null | undefined,
+	tz: string | ((date: string) => string),
+): number {
+	if (!asOf) return Date.now();
+	const date = asOfDate(asOf);
+	const time = asOf.length > 10 ? asOf.slice(11, 16) : "12:00";
+	return zonedEpoch(date, time, typeof tz === "string" ? tz : tz(date));
 }

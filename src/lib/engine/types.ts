@@ -139,6 +139,8 @@ export interface GraphNode {
 	tz: string | null;
 	countryCode: string | null;
 	address: string | null;
+	/** The address in local script for a driver (`getLocalAddress` fills it); absent = not looked up. */
+	localAddress?: string | null;
 	googlePlaceId: string | null;
 	/**
 	 * OpenStreetMap ref of a Photon result (`N123`, `W45`; `nodes.osm_ref`), for
@@ -189,6 +191,12 @@ export interface GraphItem {
 	 * "Needs rebooking". Always present from `loadTripGraph`; absent = false.
 	 */
 	fixedDate?: boolean;
+	/**
+	 * Today: when the group marked it Done (ISO), and who (a user id). Always
+	 * present from `loadTripGraph`; absent = not done.
+	 */
+	doneAt?: string | null;
+	doneBy?: string | null;
 	assigneeIds: string[];
 	updatedAt: string;
 }

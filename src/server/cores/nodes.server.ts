@@ -455,6 +455,8 @@ export async function updateNodeCore(
 		set.lat = p.lat;
 		set.lng = p.lng;
 		set.tz = await tzAt(p.lat, p.lng);
+		// The driver's address was for the old spot: looked up again on demand.
+		if (p.lat !== node.lat || p.lng !== node.lng) set.localAddress = null;
 		enqueueClimateCell(out, {
 			type: p.type ?? node.type,
 			lat: p.lat,

@@ -139,6 +139,10 @@ export interface ItemSpec {
 	title?: string;
 	min?: number;
 	pin?: string;
+	/** "Booked for this date". */
+	booked?: boolean;
+	/** Marked Done at this wall time (Today). */
+	done?: LocalAt;
 }
 
 export interface DaySpec {
@@ -231,6 +235,9 @@ function buildScenario(spec: ScenarioSpec): Scenario {
 			position: pos(i),
 			durationMin: s.min ?? 60,
 			pinnedStart: s.pin ?? null,
+			...(s.booked ? { fixedDate: true } : {}),
+			doneAt: iso(s.done),
+			doneBy: s.done ? "user-dennis" : null,
 			assigneeIds: [],
 			updatedAt: T0,
 		};

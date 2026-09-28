@@ -83,6 +83,7 @@ const EXPECTED: Record<string, Capability[]> = {
 		"addPeople",
 		"linkPeople",
 		"rate",
+		"markDone",
 	],
 	editor: [
 		"read",
@@ -103,6 +104,7 @@ const EXPECTED: Record<string, Capability[]> = {
 		"addPeople",
 		"linkPeople",
 		"rate",
+		"markDone",
 	],
 	suggester: [
 		"read",
@@ -115,6 +117,7 @@ const EXPECTED: Record<string, Capability[]> = {
 		"setMediaVisibility",
 		"addPeople",
 		"rate",
+		"markDone",
 	],
 	// PLACES §1c: exactly a viewer, plus rating.
 	rater: [
@@ -202,6 +205,7 @@ describe("permission matrix (SPEC §11.3, EXTENSIONS §3.1)", () => {
 				"addPeople",
 				"linkPeople",
 				"rate",
+				"markDone",
 			] as const) {
 				expect(can(access, cap)).toBe(false);
 			}

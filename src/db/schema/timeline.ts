@@ -82,6 +82,9 @@ export const items = pgTable(
 		pinnedStart: text(),
 		/** E2 "Booked for this date": a date shift lists it under Needs rebooking. */
 		fixedDate: boolean().notNull().default(false),
+		/** Today (One Yonder phase 5): Done on the road, shared by the group; null = not done. */
+		doneAt: timestamp({ withTimezone: true }),
+		doneBy: text().references(() => user.id, { onDelete: "set null" }),
 		createdBy: text().references(() => user.id, { onDelete: "set null" }),
 		createdAt: createdAt(),
 		updatedAt: updatedAt(),

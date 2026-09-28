@@ -197,10 +197,10 @@ export async function duplicateTripCore(
 			) select id from live) x`);
 	await tx.execute(sql`
 		insert into nodes (id, trip_id, parent_id, type, category, status, name, local_name, slug, description,
-		                   position, lat, lng, tz, country_code, address, google_place_id, osm_ref, bbox,
+		                   position, lat, lng, tz, country_code, address, local_address, google_place_id, osm_ref, bbox,
 		                   time_needed_min, idea_status, shortlist_pin, details, created_by)
 		select d.new, ${tripId}, pd.new, n.type, n.category, n.status, n.name, n.local_name, n.slug, n.description,
-		       n.position, n.lat, n.lng, n.tz, n.country_code, n.address, n.google_place_id, n.osm_ref, n.bbox,
+		       n.position, n.lat, n.lng, n.tz, n.country_code, n.address, n.local_address, n.google_place_id, n.osm_ref, n.bbox,
 		       n.time_needed_min, n.idea_status, n.shortlist_pin, n.details, ${userId}
 		  from nodes n join dup_map d on d.old = n.id left join dup_map pd on pd.old = n.parent_id
 		 where n.trip_id = ${srcId}`);

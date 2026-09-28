@@ -170,7 +170,7 @@ export async function loadTripGraph(
 			rows(sql`
 				select n.id, n.parent_id as "parentId", n.type::text as type, n.category::text as category,
 				       n.status::text as status, n.name, n.local_name as "localName", n.slug, n.description,
-				       n.position, n.lat, n.lng, n.tz, n.country_code as "countryCode", n.address,
+				       n.position, n.lat, n.lng, n.tz, n.country_code as "countryCode", n.address, n.local_address as "localAddress",
 				       n.google_place_id as "googlePlaceId", n.osm_ref as "osmRef", n.bbox, n.time_needed_min as "timeNeededMin",
 				       n.idea_status::text as "ideaStatus", n.shortlist_pin::text as "shortlistPin",
 				       n.details, n.decided_at as "decidedAt", n.decided_by as "decidedBy",
@@ -186,7 +186,8 @@ export async function loadTripGraph(
 		() =>
 			rows(sql`
 				select i.id, i.day_id as "dayId", i.node_id as "nodeId", i.title, i.note, i.position,
-				       i.duration_min as "durationMin", i.pinned_start as "pinnedStart", i.fixed_date as "fixedDate", i.updated_at as "updatedAt",
+				       i.duration_min as "durationMin", i.pinned_start as "pinnedStart", i.fixed_date as "fixedDate",
+				       i.done_at as "doneAt", i.done_by as "doneBy", i.updated_at as "updatedAt",
 				       coalesce((select array_agg(a.member_id::text order by a.member_id)
 				                   from item_assignees a where a.item_id = i.id), '{}') as "assigneeIds"
 				  from items i
@@ -282,6 +283,7 @@ export async function loadTripGraph(
 		tz: str(n.tz),
 		countryCode: str(n.countryCode),
 		address: str(n.address),
+		localAddress: str(n.localAddress),
 		googlePlaceId: str(n.googlePlaceId),
 		osmRef: str(n.osmRef),
 		bbox: (n.bbox ?? null) as GraphNode["bbox"],
@@ -311,6 +313,8 @@ export async function loadTripGraph(
 		durationMin: Number(i.durationMin ?? 0),
 		pinnedStart: str(i.pinnedStart),
 		fixedDate: Boolean(i.fixedDate),
+		doneAt: iso(i.doneAt),
+		doneBy: str(i.doneBy),
 		assigneeIds: (i.assigneeIds as string[] | null) ?? [],
 		updatedAt: isoNN(i.updatedAt),
 	}));

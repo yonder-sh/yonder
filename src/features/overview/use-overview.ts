@@ -58,7 +58,13 @@ export function useOverview(): OverviewData {
 	const { ix, graph, schedule, search } = useWorkspace();
 	const asOf = search.asOf ?? null;
 	const minute = useMinute();
-	const now = asOf ? nowFor(asOf, ix.defaultTz) : minute || Date.now();
+	const now = asOf
+		? nowFor(
+				asOf,
+				(date) =>
+					schedule.days[ix.dayOfDate(date)?.id ?? ""]?.tz ?? ix.defaultTz,
+			)
+		: minute || Date.now();
 	const route = useMemo(() => tripRoute(ix), [ix]);
 	const lines = useMemo(() => dayLines(ix, route), [ix, route]);
 	const phase = useMemo(

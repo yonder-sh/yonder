@@ -47,6 +47,8 @@ export type TripMutationOptions<TVars, TData = unknown> = {
 	onProposed?: (proposed: Proposed["proposed"], vars: TVars) => void;
 	/** The trip, for the proposals cache (required for proposable mutations). */
 	tripId?: string;
+	/** Never a proposal (Today's Done): the optimistic write runs even while suggesting. */
+	direct?: boolean;
 	/** Undo of a proposal ("Suggested — … · Undo"); defaults to `withdrawProposal`. */
 	withdraw?: (proposalId: string) => Promise<unknown>;
 	/**
@@ -90,7 +92,7 @@ export function useTripMutation<TVars, TData>(
 			);
 			const snapshot: Snapshot = opts.keys.map((k) => [k, qc.getQueryData(k)]);
 			// A suggestion changes nothing yet: no optimistic write.
-			if (!useUi.getState().suggesting)
+			if (opts.direct || !useUi.getState().suggesting)
 				opts.optimistic?.(qc, swapPendingPeople(vars));
 			return snapshot;
 		},

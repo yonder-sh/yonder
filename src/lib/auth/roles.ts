@@ -112,6 +112,8 @@ export const CAPABILITIES = [
 	// PLACES §1c: set your OWN rating and rating comment (members only: a
 	// rating belongs to a member row, and link guests have none).
 	"rate",
+	// One Yonder phase 5: Done on a stop in Today (travel state, never a proposal).
+	"markDone",
 ] as const;
 export type Capability = (typeof CAPABILITIES)[number];
 
@@ -174,6 +176,8 @@ const MATRIX: Record<Capability, readonly Who[]> = {
 	linkPeople: ["owner", "editor"],
 	// Plain viewers never rate: sharing "just to look" stays view-only.
 	rate: ["owner", "editor", "suggester", "rater"],
+	// The members who travel and plan; raters, viewers and link guests follow along.
+	markDone: ["owner", "editor", "suggester"],
 };
 
 /**

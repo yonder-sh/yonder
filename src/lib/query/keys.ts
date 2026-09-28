@@ -68,6 +68,9 @@ export const tripKeys = {
 		["trip", tripId, "leg", legKey] as const,
 	/** Prefix of every `leg` query of a trip. */
 	legs: (tripId: string) => ["trip", tripId, "leg"] as const,
+	/** `getLocalAddress` (Today): one place's address in local script, looked up once. */
+	localAddress: (tripId: string, nodeId: string) =>
+		["trip", tripId, "localAddress", nodeId] as const,
 } as const;
 
 /** Per-user (not per-trip) queries. */

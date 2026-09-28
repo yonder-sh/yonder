@@ -80,6 +80,22 @@ export const SetItemAssigneesInput = z
 	.object({ itemId: z.uuid(), memberIds: z.array(z.uuid()).max(50) })
 	.strict();
 
+/**
+ * Today (One Yonder phase 5): Done on a stop, one mark for the whole group.
+ * `done: false` is the Undo; `at` puts an earlier stamp back.
+ */
+export const SetItemDoneInput = z
+	.object({
+		tripId: z.uuid(),
+		itemId: z.uuid(),
+		done: z.boolean(),
+		/** An earlier stamp (the Undo of an Undo, or "done at 16:50"): never later than now. */
+		at: z.iso.datetime({ offset: true }).optional(),
+		/** With `at`: who marked it then (kept while they're a member). */
+		by: z.string().min(1).max(100).optional(),
+	})
+	.strict();
+
 type In<S extends z.ZodType> = z.output<S>;
 
 /** "Itoya Ginza", "Lunch", … for activity lines. */
@@ -254,9 +270,12 @@ export async function moveItemCore(
 			exclude: moving,
 		},
 	);
+	// Done belongs to the visit on its day: a stop moved to another day (or to Ideas) isn't done.
 	for (const [i, id] of moving.entries()) {
 		await tx.execute(sql`
-			update items set day_id = ${data.dayId}, position = ${keys[i] as string}, updated_at = now()
+			update items set day_id = ${data.dayId}, position = ${keys[i] as string}, updated_at = now(),
+			       done_at = case when day_id is distinct from ${data.dayId} then null else done_at end,
+			       done_by = case when day_id is distinct from ${data.dayId} then null else done_by end
 			 where id = ${id} and trip_id = ${tripId}`);
 	}
 	const { detachedLegIds } = await reconcileLegs(tx, out, tripId, ix, {
@@ -409,4 +428,38 @@ export async function setItemAssigneesCore(
 	);
 	out.emit({ entity: "item", ids: [data.itemId] });
 	return { ok: true as const };
+}
+
+/**
+ * setItemDone (owners, editors, suggesters; never a proposal): stamps or
+ * clears Done on a stop on a day. Travel state, not a plan edit: no activity
+ * line and `updated_at` stays. Keys: graph.
+ */
+export async function setItemDoneCore(
+	tx: Tx,
+	out: TxOutbox,
+	data: In<typeof SetItemDoneInput>,
+	ctx: Pick<CoreCtx, "user">,
+): Promise<{ doneAt: string | null }> {
+	// The database's clock, like `decided_at`.
+	const stamp = data.at
+		? sql`least(${data.at}::timestamptz, now())`
+		: sql`now()`;
+	const by =
+		data.at && data.by
+			? sql`coalesce((select user_id from trip_members where trip_id = ${data.tripId} and user_id = ${data.by} and status = 'active' limit 1), ${ctx.user.id})`
+			: ctx.user.id;
+	const [row] = await tx
+		.update(items)
+		.set({
+			doneAt: data.done ? stamp : null,
+			doneBy: data.done ? by : null,
+		})
+		.where(
+			sql`${items.id} = ${data.itemId} and ${items.tripId} = ${data.tripId} and ${items.deletedAt} is null and ${items.dayId} is not null`,
+		)
+		.returning({ doneAt: items.doneAt });
+	if (!row) return fail("NOT_FOUND");
+	out.emit({ entity: "item", ids: [data.itemId] });
+	return { doneAt: row.doneAt?.toISOString() ?? null };
 }
