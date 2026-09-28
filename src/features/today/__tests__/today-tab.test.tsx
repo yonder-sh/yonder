@@ -60,6 +60,8 @@ const EARLY = {
 };
 
 afterEach(() => {
+	// "No" to "Still at …?" is kept per day on this device.
+	localStorage.clear();
 	calls.done = [];
 	calls.move = [];
 	calls.update = [];
@@ -482,6 +484,19 @@ describe("Today before anyone taps Done, a stop's time is up (the imported day a
 		);
 		expect(screen.queryByTestId(T.checkIn)).toBeNull();
 		expect(screen.getByTestId(T.hint)).toBeInTheDocument();
+	});
+
+	it("No quiets the question for the rest of the day on this device", () => {
+		const first = render(s, "2027-10-05T10:20");
+		fireEvent.click(
+			within(screen.getByTestId(T.checkIn)).getByRole("button", {
+				name: "No",
+			}),
+		);
+		first.unmount();
+		// Yodobashi Camera's time is up at 16:15, but nobody is asked again today.
+		render(s, "2027-10-05T16:15");
+		expect(screen.queryByTestId(T.checkIn)).toBeNull();
 	});
 });
 

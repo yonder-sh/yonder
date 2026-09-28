@@ -271,9 +271,9 @@ function Day({
 }) {
 	const { ix } = useWorkspace();
 	const [notHere, setNotHere] = useState<string | null>(null);
-	const [notStill, setNotStill] = useState<string | null>(null);
-	const ask =
-		act.mayMarkDone && view.checkIn?.itemId !== notStill ? view.checkIn : null;
+	// "No" to "Still at …?" stops the question for the rest of the day, on this device.
+	const [quiet, setQuiet] = useState(() => quietToday(view.dayId));
+	const ask = act.mayMarkDone && !quiet ? view.checkIn : null;
 	// Before the day's first Done: say once, quietly, what Done does.
 	const hint = act.mayMarkDone && !view.done.length && !ask;
 	const recent = [...view.done]
@@ -307,7 +307,14 @@ function Day({
 			) : null}
 			{recent ? <DoneRow stop={recent} act={act} /> : null}
 			{ask ? (
-				<CheckIn stop={ask} act={act} onNo={() => setNotStill(ask.itemId)} />
+				<CheckIn
+					stop={ask}
+					act={act}
+					onNo={() => {
+						setQuiet(true);
+						keepQuiet(view.dayId);
+					}}
+				/>
 			) : null}
 			{state === "ended" ? <Ended view={view} /> : null}
 			{view.current ? <NowRow stop={view.current} act={act} /> : null}
@@ -982,4 +989,23 @@ function Tonight({ view }: { view: TodayView }) {
 			</div>
 		</section>
 	);
+}
+
+const quietKey = (dayId: string) => `yonder:today-quiet:${dayId}`;
+
+/** Whether "Still at …?" was answered No today on this device. */
+function quietToday(dayId: string): boolean {
+	try {
+		return globalThis.localStorage?.getItem(quietKey(dayId)) === "1";
+	} catch {
+		return false;
+	}
+}
+
+function keepQuiet(dayId: string) {
+	try {
+		globalThis.localStorage?.setItem(quietKey(dayId), "1");
+	} catch {
+		// Private mode or storage off: quiet for this visit only.
+	}
 }

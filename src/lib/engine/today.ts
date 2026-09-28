@@ -79,6 +79,8 @@ export const FREE_SOON_MIN = 10;
  * missed tap never reads as more than this much late.
  */
 export const OVERRUN_MAX_MIN = 45;
+/** How long "Still at …?" stays up once a stop is past its time. */
+export const ASK_MIN = 30;
 /** Ideas at most this many minutes' walk away. */
 export const IDEA_WALK_MIN = 15;
 /** A shortened stop keeps at least this long. */
@@ -643,7 +645,7 @@ export function computeToday(
 			// Over, by the plan; for a while its Done still says you left late.
 			const stop = stopAt(start, end, arrive);
 			passed.push(stop);
-			if (now - end <= OVERRUN_MAX_MIN * MS_PER_MINUTE) checkIn = stop;
+			if (now - end <= ASK_MIN * MS_PER_MINUTE) checkIn = stop;
 			cursor = end;
 			continue;
 		} else if (paced && Math.max(start, arrive) <= now && end < now) {
@@ -651,7 +653,8 @@ export function computeToday(
 				// Its Done was likely forgotten: follow the plan from here, and ask for a while.
 				const stop = stopAt(start, end, arrive);
 				passed.push(stop);
-				if (now - end <= 2 * OVERRUN_MAX_MIN * MS_PER_MINUTE) checkIn = stop;
+				if (now - end <= (OVERRUN_MAX_MIN + ASK_MIN) * MS_PER_MINUTE)
+					checkIn = stop;
 				paced = false;
 				cursor = end;
 				continue;

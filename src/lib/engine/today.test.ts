@@ -183,7 +183,7 @@ describe("computeToday: no Done yet, the plan by the clock (the imported day)", 
 			}
 	});
 
-	it("a stop's time is up: “Still at Cha no Ikedaya?” for 45 min while the day follows the plan; a stop with no place isn't asked about", () => {
+	it("a stop's time is up: “Still at Cha no Ikedaya?” for 30 min while the day follows the plan; a stop with no place isn't asked about", () => {
 		const { v } = view(s, at("10:05"));
 		expect(v.checkIn).toMatchObject({
 			itemId: s.I.cha,
@@ -191,11 +191,11 @@ describe("computeToday: no Done yet, the plan by the clock (the imported day)", 
 		});
 		expect(v.current).toBeNull();
 		expect(v.next?.name).toBe("Nakano Broadway");
-		const { v: v2 } = view(s, at("10:45"));
+		const { v: v2 } = view(s, at("10:30"));
 		expect(v2.checkIn?.name).toBe("Cha no Ikedaya");
 		expect(v2.current?.name).toBe("Nakano Broadway");
 		expect([v.pace, v2.pace]).toEqual([null, null]);
-		expect(view(s, at("10:50")).v.checkIn).toBeNull();
+		expect(view(s, at("10:40")).v.checkIn).toBeNull();
 		// Breakfast has no place: nothing to ask.
 		expect(view(s, at("09:35")).v.checkIn).toBeNull();
 	});
@@ -257,7 +257,7 @@ describe("computeToday: after a Done, your pace within reason (the imported day)
 	});
 
 	it("past that, the Done was likely forgotten: “Still at Nakano Broadway?”, and the day follows the plan by the clock again", () => {
-		for (const time of ["14:15", "14:55"]) {
+		for (const time of ["14:15", "14:35"]) {
 			const { v } = view(s, at(time));
 			expect(v.checkIn).toMatchObject({
 				itemId: s.I.broadway,
