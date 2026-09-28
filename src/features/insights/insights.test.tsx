@@ -414,7 +414,10 @@ describe("WhatIfChip", () => {
 		);
 		fireEvent.click(screen.getByTestId(INSIGHTS_TESTID.whatIfReview));
 		expect(useUi.getState().shiftOpen).toBe(true);
-		fireEvent.click(screen.getByTestId(INSIGHTS_TESTID.whatIfClear));
+		const clear = screen.getByTestId(INSIGHTS_TESTID.whatIfClear);
+		// The same words as the dates dialog's button.
+		expect(clear).toHaveAccessibleName("Don't shift");
+		fireEvent.click(clear);
 		expect(useUi.getState().dateDraft).toBeNull();
 		expect(screen.queryByTestId(TESTID.whatIfChip)).toBeNull();
 	});

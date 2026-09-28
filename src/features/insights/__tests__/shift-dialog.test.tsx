@@ -153,3 +153,16 @@ describe("ShiftTripDialog expectedVersion", () => {
 		expect(screen.queryByTestId(T.shiftConflict)).toBeNull();
 	});
 });
+
+describe("ShiftTripDialog's plain words", () => {
+	it("Decide later keeps the what-if; Don't shift drops it", () => {
+		openDialog(graphAt(40));
+		expect(screen.queryByRole("button", { name: "Decide later" })).toBeNull();
+		fireEvent.click(screen.getByTestId(T.shiftPlus));
+		fireEvent.click(screen.getByRole("button", { name: "Decide later" }));
+		expect(useUi.getState().dateDraft).toEqual({ deltaDays: 1 });
+		act(() => useUi.getState().openShiftTrip(true));
+		fireEvent.click(screen.getByRole("button", { name: "Don't shift" }));
+		expect(useUi.getState().dateDraft).toBeNull();
+	});
+});
