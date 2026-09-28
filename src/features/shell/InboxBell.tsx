@@ -38,6 +38,7 @@ import {
 	PopoverContent,
 	PopoverTrigger,
 } from "@/components/ui/popover";
+import { OpenSuggestions } from "@/features/suggest/ReviewDrawer";
 import { openReview } from "@/features/suggest/review-store";
 import { markInboxRead } from "@/functions/inbox.functions";
 import type { GraphIndex } from "@/lib/engine/graph-index";
@@ -189,8 +190,16 @@ function InboxPanel({
 			className="flex min-h-0 flex-1 flex-col"
 		>
 			<div className="flex h-11 shrink-0 items-center justify-between border-b px-4">
-				<p id={headingId} className="text-sm font-semibold">
+				<p
+					id={headingId}
+					className="flex items-baseline gap-2 text-sm font-semibold"
+				>
 					Inbox
+					{unread ? (
+						<span className="text-xs font-normal text-muted-foreground tnum">
+							{unread} new
+						</span>
+					) : null}
 				</p>
 				<Button
 					variant="ghost"
@@ -230,20 +239,26 @@ function InboxPanel({
 							<h3 className="eyebrow sticky top-0 z-10 bg-popover/95 px-4 pt-3 pb-1 backdrop-blur">
 								{INBOX_GROUP_LABEL[g.key]}
 							</h3>
+							{/* D14: in a trip, its suggestions right here, to accept or reject. */}
+							{g.key === "suggestions" && tripId ? (
+								<OpenSuggestions onAfterShow={onDone} />
+							) : null}
 							<ul className="pb-1">
-								{g.items.map((i) => (
-									<li key={i.key}>
-										<InboxRow
-											item={i}
-											now={now}
-											onOpen={() => {
-												if (!i.read) mark.mutate({ keys: [i.key] });
-												onDone();
-												open(i.link, i.kind);
-											}}
-										/>
-									</li>
-								))}
+								{g.items
+									.filter((i) => !(tripId && i.kind === "review"))
+									.map((i) => (
+										<li key={i.key}>
+											<InboxRow
+												item={i}
+												now={now}
+												onOpen={() => {
+													if (!i.read) mark.mutate({ keys: [i.key] });
+													onDone();
+													open(i.link, i.kind);
+												}}
+											/>
+										</li>
+									))}
 							</ul>
 						</section>
 					))

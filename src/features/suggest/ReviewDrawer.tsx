@@ -157,6 +157,48 @@ function GroupHeader({ batch }: { batch: Batch }) {
 	);
 }
 
+/**
+ * The open suggestions by person, each with Accept / Reject and the batch's
+ * "Accept all" (One Yonder D14: in the inbox). Null when none are open.
+ */
+export function OpenSuggestions({ onAfterShow }: { onAfterShow: () => void }) {
+	const { nav } = useWorkspace();
+	const { show } = useProposalActions();
+	const lists = useReviewLists();
+	const groups = batches(lists.open);
+	if (!groups.length) return null;
+	return (
+		<div className="divide-y">
+			{groups.map((b) => (
+				<section
+					key={b.key}
+					data-testid={SUGGEST_TESTID.group}
+					aria-label={`${b.author.name}'s suggestions`}
+				>
+					<GroupHeader batch={b} />
+					<ul>
+						{b.proposals.map((p) => (
+							<ProposalRow
+								key={p.id}
+								p={p}
+								stacked={lists.stacked.has(p.id)}
+								onShow={(x) => {
+									show(x);
+									onAfterShow();
+								}}
+								onDetails={(x) => {
+									nav.select({ kind: "proposal", id: x.id });
+									onAfterShow();
+								}}
+							/>
+						))}
+					</ul>
+				</section>
+			))}
+		</div>
+	);
+}
+
 function ReviewBody({ onAfterShow }: { onAfterShow: () => void }) {
 	const { proposals, graph, access, nav } = useWorkspace();
 	const filter = useReviewStore((s) => s.filter);
