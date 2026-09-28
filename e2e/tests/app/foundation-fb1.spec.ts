@@ -226,7 +226,7 @@ test("QA TL-02 (R3): the duration chip opens with the field focused; '3h' + Ente
 	test.skip(info.project.name === "mobile", "desktop card chip");
 	await loginViaApi(page.request, `tl02-${rand()}@example.com`, { first: "Dur", last: "Ation" });
 	const c = await cloneFixtureTrip(page.request);
-	await page.goto(`/t/${c.slug}?tab=plan`);
+	await page.goto(`/t/${c.slug}?tab=plan&lens=place`);
 	await expectLive(page);
 	const chip = page.getByTestId("plan-item-duration").first().getByRole("button");
 	await hydrated(chip);
