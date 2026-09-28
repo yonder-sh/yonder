@@ -19,7 +19,9 @@
  *   host (OSRM, the jsDelivr FX API, Open-Meteo, Photon…) reached
  *   `res.json()` still compressed. The one `setGlobalDispatcher` below pins
  *   the global to an HTTP/1.1 Agent, whose path decodes correctly (found at
- *   integration; `safe-fetch.test.ts` checks the pin).
+ *   integration; `safe-fetch.test.ts` checks the pin). That's the worker's;
+ *   the web server loads this only through `peek.server.ts`, which puts its
+ *   own global fetch back.
  */
 import dns from "node:dns";
 import net from "node:net";

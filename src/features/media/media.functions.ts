@@ -75,6 +75,7 @@ import {
 	toDto,
 } from "./server/dto.server";
 import { logMediaAdd } from "./server/media-activity.server";
+import { peekMeta } from "./server/peek.server";
 import {
 	AddLinkInput,
 	DeleteAttachmentInput,
@@ -824,10 +825,8 @@ export const peekLink = createServerFn({ method: "GET" })
 	.handler(async ({ data, context }): Promise<LinkPeek> => {
 		await requireTripCapability(data.tripId, "propose", context.user);
 		await rateLimit(`links:peek:${context.user.id}`, 30);
-		// Loaded on first use: it brings undici and pins the global fetch
-		// dispatcher to HTTP/1.1, as the worker already runs.
-		const { linkMeta } = await import("./server/preview.server");
-		const m = await linkMeta(data.url);
+		// The SSRF-safe fetch's own agent; this process's global fetch stays as it is.
+		const m = await peekMeta(data.url);
 		return {
 			title: m.title,
 			description: m.description,
