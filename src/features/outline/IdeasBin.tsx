@@ -484,10 +484,12 @@ function IdeasBinInner({
 		!!access.memberId &&
 		access.mode !== "read" &&
 		ideas.some((e) => !e.proposalId && isRateable(e.node));
+	// A filter narrows places: stops without one wait until it's cleared.
+	const stops = filtering ? [] : loose;
 	const countText =
 		filtering && total
-			? `${ideas.length + loose.length} of ${total + loose.length}`
-			: String(total + loose.length);
+			? `${ideas.length} of ${total}`
+			: String(total + stops.length);
 	const where = scopeId ? ix.node(scopeId)?.name : undefined;
 
 	return (
@@ -545,7 +547,7 @@ function IdeasBinInner({
 					>
 						{countText}
 					</span>
-					{plan && total + loose.length > 0 && !guard.disabled ? (
+					{plan && total + stops.length > 0 && !guard.disabled ? (
 						<span className="truncate text-meta text-muted-foreground max-sm:hidden">
 							· drag onto a day or tap +
 						</span>
@@ -594,7 +596,7 @@ function IdeasBinInner({
 				</DropdownMenu>
 			</div>
 			{open ? (
-				ideas.length || loose.length ? (
+				ideas.length || stops.length ? (
 					<div
 						role="listbox"
 						aria-label={where ? `Ideas in ${where}` : "Ideas"}
@@ -621,7 +623,7 @@ function IdeasBinInner({
 								stopMin={stopMin.get(entry.node.id) ?? null}
 							/>
 						))}
-						{loose.map((id) => (
+						{stops.map((id) => (
 							<DockStop key={id} itemId={id} dayId={addDayId} />
 						))}
 					</div>

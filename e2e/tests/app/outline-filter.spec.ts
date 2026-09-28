@@ -150,7 +150,7 @@ test("layouts: Organize places on the desktop, a tablet and the phone (44px rows
 		await expectLive(page);
 		const ideas = page.getByTestId(PLAN_TESTID.ideas);
 		await expect(ideas.getByTestId(OUTLINE_TESTID.ideaRow).first()).toBeVisible();
-		await expect(ideas.locator(".border-dashed")).toHaveCount(0);
+		await expect(ideas.getByTestId(OUTLINE_TESTID.ideaRow).locator(".border-dashed")).toHaveCount(0);
 		await page.screenshot({ path: shotPath("outline/ideas-1440.png"), animations: "disabled" });
 		await page.setViewportSize({ width: 1100, height: 800 });
 		await openOrganize(page);

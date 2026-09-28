@@ -97,7 +97,7 @@ test("FB-02: clickable things show the pointer", async ({ page }, info) => {
 	test.skip(info.project.name === "mobile", "hover cursors are a desktop concern");
 	await loginViaApi(page.request, `fb2-${rand()}@example.com`, { first: "Point", last: "Er" });
 	const c = await cloneFixtureTrip(page.request);
-	await page.goto(`/t/${c.slug}?tab=plan`);
+	await page.goto(`/t/${c.slug}?tab=plan&lens=place`);
 	await expect(page.getByTestId("workspace")).toBeVisible({ timeout: 30_000 });
 	const cursor = (sel: string) =>
 		page.locator(sel).first().evaluate((el) => getComputedStyle(el).cursor);

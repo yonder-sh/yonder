@@ -257,7 +257,7 @@ test.describe("on a copy of Asia 2027", () => {
 		await card.getByTestId("plan-item-menu").click();
 		await page.getByRole("menuitem", { name: "Set start time…" }).click();
 		// Breakfast ending after the 08:30 departure misses it by hours.
-		await page.getByLabel("Start time").fill("09:30");
+		await page.getByLabel("Start time", { exact: true }).fill("09:30");
 		await page.getByRole("button", { name: "Set", exact: true }).click();
 		const leg = page.getByTestId("leg").filter({ hasText: "Fuji Excursion 7" }).first();
 		await expect(leg).toContainText(/Misses Fuji Excursion 7 \(dep 08:30\) by \d+h( \d+m)?/);
