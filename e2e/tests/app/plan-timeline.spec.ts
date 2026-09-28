@@ -455,8 +455,9 @@ test("mobile: the plan at 390×844", async ({ page }, info) => {
 	await page.setViewportSize({ width: 390, height: 844 });
 	await page.goto(`/t/${c.slug}?lens=place`);
 	await expectLive(page);
-	await expect(page.getByTestId(TESTID.dayChips)).toBeVisible();
-	await expect(page.getByTestId(TESTID.nowNext)).toContainText("Starts in");
+	// No day chips or countdown before the trip (One Yonder P09/P10: the day rows and the Overview).
+	await expect(page.getByTestId(TESTID.dayChips)).toHaveCount(0);
+	await expect(page.getByTestId(TESTID.nowNext)).toHaveCount(0);
 	await expect(page.getByTestId(TESTID.mobileSheet).getByTestId(TESTID.timelineItem).first()).toBeVisible();
 	await page.waitForTimeout(400);
 	await page.screenshot({ path: shotPath("plan/mobile-plan-390.png"), animations: "disabled" });

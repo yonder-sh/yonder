@@ -375,7 +375,7 @@ test.describe("phone", () => {
 		await check("inbox bell", '[data-testid="mobile-pills"] [data-testid="inbox-bell"]');
 		await check("where", '[data-testid="where-button"]');
 		await check("map button", '[data-testid="mobile-map-toggle"]');
-		await check("day chip", '[data-testid="day-chips"] button');
+		await check("day stepper", '[data-testid="plan-range-bar"] button');
 		await check("bottom tab", '[data-testid="center-tabs"] [role="tab"]');
 		await page.getByTestId("mobile-map-toggle").tap();
 		await check("map: fit", '[aria-label="Fit to the scope"]');

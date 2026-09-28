@@ -207,7 +207,7 @@ test("VIS2-14: the ⋯ menu offers Move up / Move down", async ({ page }) => {
 	await page.keyboard.press("Escape");
 });
 
-test("VIS2-12: the Next strip counts down from the viewer's own date", async ({ browser }) => {
+test("VIS2-12: the countdown counts from the viewer's own date", async ({ browser }) => {
 	const ctx = await browser.newContext({
 		viewport: { width: 390, height: 844 },
 		isMobile: true,
@@ -229,7 +229,9 @@ test("VIS2-12: the Next strip counts down from the viewer's own date", async ({ 
 			return Math.round((Date.parse(`${start}T00:00:00Z`) - Date.parse(`${today}T00:00:00Z`)) / 86_400_000);
 		});
 		test.skip(expected <= 0, "the trip has started");
-		await expect(page.getByTestId(TESTID.nowNext)).toContainText(`Starts in ${expected} days`, { timeout: 15_000 });
+		// One Yonder: the countdown is the Overview's ("Planning · 370 days to go").
+		await page.goto(`/t/${TRIP}?tab=overview`);
+		await expect(page.getByTestId("overview-phase-chip")).toContainText(`${expected} days to go`, { timeout: 15_000 });
 	} finally {
 		await ctx.close();
 	}

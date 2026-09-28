@@ -40,7 +40,6 @@ import { useListsOverdue } from "@/features/lists/use-lists-overdue";
 import { OfflineBanner } from "@/features/offline/OfflineBanner";
 import { RatePill } from "@/features/places/tab/RatePill";
 import { usePlacesToDecide } from "@/features/places/tab/use-places";
-import { DayChips } from "@/features/plan/DayChips";
 import { NowNext } from "@/features/plan/NowNext";
 import { MuteTripMenuItem } from "@/features/push/MuteTripMenuItem";
 import { NotificationsDialog } from "@/features/push/NotificationsDialog";
@@ -430,10 +429,11 @@ export function MobileWorkspace() {
 			<div className="shrink-0 empty:hidden">
 				<OfflineBanner />
 			</div>
+			{/* One Yonder (P09/P10): the Plan's own stepper and day rows move
+			    between days; on the road, what's now and next. */}
 			{!mapOpen && tab === "plan" ? (
-				<div className="shrink-0 border-b">
-					<DayChips />
-					<NowNext />
+				<div className="shrink-0 border-b empty:hidden">
+					<NowNext underway />
 				</div>
 			) : null}
 			{/* The phone's page: the tab (or the map) and the tab bar. */}

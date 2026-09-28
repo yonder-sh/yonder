@@ -564,7 +564,7 @@ function PlanTabBody() {
 											<Button
 												variant="ghost"
 												size="xs"
-												className="text-muted-foreground"
+												className="text-muted-foreground max-sm:hidden"
 												onClick={() =>
 													setCollapsedBands(
 														allCollapsed ? new Set() : new Set(bandKeys),

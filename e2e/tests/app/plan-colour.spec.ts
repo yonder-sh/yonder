@@ -166,7 +166,7 @@ async function openQaPlanPhone(page: Page): Promise<boolean> {
 	const res = await page.goto(`/t/${QA_TRIP}?tab=plan&lens=place&days=2027-10-03`);
 	if (!res || res.status() >= 400) return false;
 	await expectLive(page, 30_000);
-	await expect(page.getByTestId(TESTID.dayChips)).toBeVisible();
+	await expect(page.getByTestId(PLAN_TESTID.rangeBar)).toBeVisible();
 	await expect(page.getByTestId(TESTID.mobileSheet).getByTestId(TESTID.timelineItem).first()).toBeVisible();
 	return true;
 }

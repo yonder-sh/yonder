@@ -29,7 +29,12 @@ export function nextDay(
 	return `${formatDayDate(date)} · `;
 }
 
-export function NowNext() {
+export function NowNext({
+	underway = false,
+}: {
+	/** Only once the trip has begun (the phone's Plan; the Overview counts down). */
+	underway?: boolean;
+} = {}) {
 	const { ix, schedule, graph, nav } = useWorkspace();
 	const now = useNow(30_000);
 	const first = ix.ordered[0];
@@ -45,6 +50,7 @@ export function NowNext() {
 	// York the Tokyo day 1 is already under way.
 	const firstStart = schedule.items[first.id]?.start.getTime();
 	const begun = now > 0 && firstStart !== undefined && now >= firstStart;
+	if (underway && !begun) return null;
 
 	let pill = "Next";
 	let text: string;

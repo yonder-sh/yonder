@@ -45,6 +45,7 @@ export function DayStepper() {
 				variant="outline"
 				size="icon-sm"
 				aria-label="Previous day"
+				className="pointer-coarse:size-11"
 				title="Previous day · shift-click to add it"
 				disabled={!prev}
 				onClick={(e) => prev && go(prev.date, e)}
@@ -55,6 +56,7 @@ export function DayStepper() {
 				variant="outline"
 				size="icon-sm"
 				aria-label="Next day"
+				className="pointer-coarse:size-11"
 				title="Next day · shift-click to add it"
 				disabled={!next}
 				onClick={(e) => next && go(next.date, e)}
@@ -154,14 +156,17 @@ export function WhoMenu() {
 					) : (
 						<Users />
 					)}
-					{who === null ? (
-						"Everyone"
-					) : who === me ? (
-						"Me"
-					) : (
-						<MemberName memberId={who} className="max-w-24 truncate" />
-					)}
-					<span aria-hidden className="text-muted-foreground">
+					{/* A phone keeps the icon (the button's name says whose). */}
+					<span className="max-sm:sr-only">
+						{who === null ? (
+							"Everyone"
+						) : who === me ? (
+							"Me"
+						) : (
+							<MemberName memberId={who} className="max-w-24 truncate" />
+						)}
+					</span>
+					<span aria-hidden className="text-muted-foreground max-sm:hidden">
 						▾
 					</span>
 				</Button>

@@ -247,7 +247,7 @@ test("mobile: the long trip in the sheet at 390×844", async ({ page }, info) =>
 	await page.setViewportSize({ width: 390, height: 844 });
 	await page.goto(`/t/${c.slug}?lens=place`);
 	await expectLive(page);
-	await expect(page.getByTestId(TESTID.dayChips)).toBeVisible();
+	await expect(page.getByTestId(TESTID.planTab)).toBeVisible();
 	await expect(page.getByTestId(TESTID.mobileSheet).getByTestId(TESTID.timelineItem).first()).toBeVisible();
 	await page.waitForTimeout(400);
 	await page.screenshot({ path: shotPath("plan/scale-mobile-390.png"), animations: "disabled" });

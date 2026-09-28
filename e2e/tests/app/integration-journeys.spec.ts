@@ -822,7 +822,7 @@ test("J8 mobile 390×844: the map button, long-press reorders, pin tap opens the
 	await page.goto(`/t/${c.slug}/japan/tokyo?lens=place&days=2027-10-03`);
 	await expectLive(page);
 	const sheet = page.getByTestId(TESTID.mobileSheet);
-	await expect(page.getByTestId(TESTID.dayChips)).toBeVisible();
+	await expect(page.getByTestId(PLAN_TESTID.rangeBar)).toBeVisible();
 	await expect(sheet.getByTestId(TESTID.timelineItem).first()).toBeVisible();
 	await shot(page, "j8-01-plan");
 
