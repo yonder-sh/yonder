@@ -27,6 +27,7 @@ import { dueCtxOf, effectiveDue } from "@/lib/engine/due";
 import { formatMoney } from "@/lib/engine/money";
 import { BOOKING_LEADS } from "@/lib/push/reminders";
 import { isRedactedRef } from "@/lib/schemas/legs";
+import { cn } from "@/lib/utils";
 import { useUi } from "@/lib/workspace/ui-store";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { BookingConfirmation } from "./BookingConfirmation";
@@ -61,11 +62,14 @@ export const REMINDERS_LABEL = BOOKING_LEADS.map((l) =>
 export function BookingDetails({
 	entry,
 	canEdit,
+	beside = false,
 	onClose,
 }: {
 	entry: BookingEntry;
 	/** The edit guard allows writes (live, not view-only). */
 	canEdit: boolean;
+	/** Beside the list, in their own scroll: the actions stick to its foot. */
+	beside?: boolean;
 	onClose: () => void;
 }) {
 	const ws = useWorkspace();
@@ -336,7 +340,13 @@ export function BookingDetails({
 			) : null}
 
 			{canEdit || row?.url ? (
-				<div className="flex flex-wrap gap-2 border-t pt-4">
+				<div
+					data-testid={LISTS_TESTID.bookingActions}
+					className={cn(
+						"flex flex-wrap gap-2 border-t pt-4",
+						beside && "sticky bottom-0 -mb-3 bg-background pb-3",
+					)}
+				>
 					{row && canEdit ? (
 						<Button
 							size="sm"

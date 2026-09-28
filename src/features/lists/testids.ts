@@ -22,6 +22,8 @@ export const LISTS_TESTID = {
 	bookingForPick: "booking-for-pick",
 	bookingForPicker: "booking-for-picker",
 	bookingOpens: "booking-opens",
+	/** Edit · Mark booked · Open the site (beside the list: stuck to the details' foot). */
+	bookingActions: "booking-actions",
 	bookingReminders: "booking-reminders",
 	bookingConfirmation: "booking-confirmation",
 	bookingRef: "booking-ref",

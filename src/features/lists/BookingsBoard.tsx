@@ -159,6 +159,7 @@ export function BookingsBoard({
 		<BookingDetails
 			entry={selected}
 			canEdit={editable(selected)}
+			beside={beside}
 			onClose={() => setSelId(null)}
 		/>
 	) : null;
@@ -294,7 +295,7 @@ export function BookingsBoard({
 					))}
 				</div>
 				{beside && details ? (
-					// Its own scroll, at most the pane's height: Mark booked stays in view.
+					// Its own scroll, at most the pane's height; Mark booked sticks to its foot.
 					<aside
 						ref={aside}
 						data-testid={LISTS_TESTID.bookingAside}

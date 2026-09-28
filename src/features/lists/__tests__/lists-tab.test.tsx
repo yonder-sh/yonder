@@ -669,10 +669,13 @@ describe("Bookings", () => {
 		await user.click(within(sky).getByTestId(L.bookingOpen));
 		const aside = await screen.findByTestId(L.bookingAside);
 		expect(aside).toHaveClass("sticky", "overflow-y-auto");
-		expect(within(aside).getByTestId(L.bookingMarkBooked)).toBeInTheDocument();
+		// Mark booked and Open the site stick to the foot of that scroll.
+		const acts = within(aside).getByTestId(L.bookingActions);
+		expect(acts).toHaveClass("sticky", "bottom-0");
+		expect(within(acts).getByTestId(L.bookingMarkBooked)).toBeInTheDocument();
 	});
 
-	it("a to-do whose stop is booked carries the stop's expense", async () => {
+	it("a to-do whose stop is booked carries the stop's expense; under its row nothing sticks", async () => {
 		const user = userEvent.setup();
 		const tickets = row({
 			id: ID(35),
@@ -687,6 +690,7 @@ describe("Bookings", () => {
 		await user.click(within(r).getByTestId(L.bookingOpen));
 		const d = await screen.findByTestId(L.bookingDetails);
 		expect(within(d).getByTestId(L.bookingExpense)).toHaveTextContent("¥1,000");
+		expect(within(d).getByTestId(L.bookingActions)).not.toHaveClass("sticky");
 		expect(within(d).getByTestId(L.bookingMarkBooked)).toHaveTextContent(
 			"Not booked yet",
 		);
