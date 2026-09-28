@@ -7,15 +7,16 @@
  * - Still to plan's unrated counts (`StillToPlan.tsx`);
  * - ⌘K "Rate places" is WP-Places' palette (`AddPlaceDialog`, same target).
  *
- * Inside a scope that has places to rate it opens on that scope ("Rate places
- * in Tokyo"), else on the whole trip. The top bar's Rate shows how many are
- * left for you there (the flow, owner 2026-09-25); the phone has the Places
- * tab's floating Rate pill instead.
+ * Inside a scope that has places to rate (not all marked decided) it opens
+ * on that scope ("Rate places in Tokyo"), else on the whole trip. The top
+ * bar's Rate shows how many are left for you there (the flow, owner
+ * 2026-09-25); the phone has the Places tab's floating Rate pill instead.
  */
 import { Star } from "lucide-react";
 import { type MouseEvent, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import { decidedIds } from "@/features/places/lib/decided";
 import { rateableNodes } from "@/features/places/lib/rate";
 import { useFlowTally } from "@/features/places/tab/use-flow";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
@@ -34,12 +35,11 @@ export type RateTarget = {
 export function useRateTarget(): RateTarget {
 	const { ix, graph, scope, nav } = useWorkspace();
 	return useMemo(() => {
-		// The feed's set: live places only (no proposal ghosts).
+		// The feed's set: live places only (no proposal ghosts); decided ones ask no one.
 		const liveIds = new Set(graph.nodes.map((n) => n.id));
+		const here = scope ? rateableNodes(ix, scope.id, { liveIds }) : [];
 		const inScope =
-			scope &&
-			liveIds.has(scope.id) &&
-			rateableNodes(ix, scope.id, { liveIds }).length > 0
+			scope && liveIds.has(scope.id) && here.length > decidedIds(ix, here).size
 				? scope
 				: null;
 		const opts = {

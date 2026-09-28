@@ -73,6 +73,16 @@ describe("decided places leave the to-rate counts", () => {
 		expect(screen.queryByTestId(T.ratePill)).toBeNull();
 	});
 
+	it("inside a decided scope, Rate opens the whole trip", () => {
+		renderWithWorkspace(<RateButton />, {
+			graph: marked("tokyo"),
+			splat: "japan/tokyo",
+		});
+		const a = screen.getByTestId(SHELL_TESTID.rateButton);
+		expect(a).toHaveAttribute("title", "Rate places");
+		expect(a).toHaveAttribute("data-count", String(OUTSIDE));
+	});
+
 	it("the Places tab badge", () => {
 		function Badge() {
 			return <span data-testid="badge">{usePlacesToDecide()}</span>;
