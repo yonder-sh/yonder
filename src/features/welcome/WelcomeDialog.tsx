@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/dialog";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { TripSketch } from "@/features/home/TripSketch";
 import { tripRoute } from "@/features/overview/lib/trip-route";
 import { useStanding } from "@/features/overview/use-standing";
@@ -459,14 +460,14 @@ function AskAccess({
 				Only {owner} can change what you can do. Send them this, however you
 				usually talk:
 			</p>
-			<textarea
+			<Textarea
 				readOnly
 				value={text}
 				rows={3}
 				onFocus={(e) => e.currentTarget.select()}
 				data-testid={T.askText}
 				aria-label={`Message to ${owner}`}
-				className="w-full resize-none rounded-md border bg-background px-2.5 py-2 text-sm"
+				className="resize-none bg-background px-2.5"
 			/>
 			<div className="flex gap-2">
 				<Button

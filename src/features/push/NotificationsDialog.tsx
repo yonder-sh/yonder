@@ -7,6 +7,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { BellOff } from "lucide-react";
 import { useId, useState } from "react";
 import { toast } from "sonner";
+import { SectionHeader } from "@/components/kit";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -142,7 +143,7 @@ export function NotificationsDialog({
 				data-testid={PUSH_TESTID.dialog}
 			>
 				<DialogHeader>
-					<DialogTitle className="text-xl">Notifications</DialogTitle>
+					<DialogTitle>Notifications</DialogTitle>
 					<DialogDescription>
 						What Yonder tells you about, on the devices where you turn it on.
 					</DialogDescription>
@@ -193,7 +194,7 @@ export function NotificationsDialog({
 						<>
 							<Separator />
 							<div className="grid gap-2">
-								<h3 className="text-sm font-medium">Muted trips</h3>
+								<SectionHeader as="h3">Muted trips</SectionHeader>
 								<ul className="grid gap-1.5">
 									{data.mutedTrips.map((t) => (
 										<li
