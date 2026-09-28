@@ -197,6 +197,7 @@ test.describe("200% zoom (1280×720 → 640×360)", () => {
 		await openTrip(page, `/t/${TRIP}/japan/tokyo?days=2027-10-05&lens=place`);
 		// At 640 px it's the phone layout: its map from the header.
 		await openPhoneMap(page);
+		await expect(page.getByRole("button", { name: /^Fit to the scope/ })).toBeVisible();
 		const covered = await page.evaluate(() =>
 			["Fit to the scope", "Map layers and legend", "Filter"].flatMap((label) => {
 				const b = document.querySelector(`[aria-label^="${label}"]`);

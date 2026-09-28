@@ -45,6 +45,7 @@ import {
 	Title,
 	TodayList,
 } from "./PhaseHeader";
+import { Favourites, NextForYou, PlanningHero } from "./PlanningOverview";
 import { RouteStrip } from "./RouteStrip";
 import { ShareButton } from "./share/ShareButton";
 import { Deadlines, People, Recent } from "./TripSections";
@@ -105,6 +106,7 @@ export function OverviewTab({ phone = false }: { phone?: boolean }) {
 	const tomorrowLine =
 		phase.kind === "during" ? (lines[phase.index + 1] ?? null) : null;
 	const after = phase.kind === "after";
+	const standing = useStanding();
 	// Day by day marks today (and opens its country) only during the trip.
 	const dayMark = phase.kind === "during" ? phase.today : null;
 	const hasRoute = route.stays.length > 0;
@@ -142,6 +144,68 @@ export function OverviewTab({ phone = false }: { phone?: boolean }) {
 			covers={covers}
 		/>
 	);
+
+	// One Yonder (D01): planning on a wide screen is a working page.
+	if (wide && phase.kind === "before" && hasRoute)
+		return (
+			<div
+				ref={ref}
+				data-testid={OVERVIEW_TESTID.page}
+				data-phase={phase.kind}
+				data-layout="wide"
+				className="relative min-h-full bg-background"
+			>
+				<PlanningHero
+					data={data}
+					firstDate={firstDate}
+					lastDate={lastDate}
+					globe={
+						<OverviewGlobe
+							route={route}
+							fallbackPoints={fallbackPoints}
+							today={null}
+							hereStay={data.hereStay}
+							focus={focus}
+							interactive
+							className="h-full w-full"
+						/>
+					}
+				/>
+				<div className="border-b bg-card px-6 py-4">
+					<RouteStrip
+						route={route}
+						compact={false}
+						focus={focus}
+						onFocus={setFocus}
+						hereStay={data.hereStay}
+						firstDate={firstDate}
+						lastDate={lastDate}
+					/>
+				</div>
+				<div className="grid grid-cols-[minmax(0,1fr)_minmax(300px,360px)] gap-7 px-6 pt-6 pb-12 text-foreground">
+					<div className="flex min-w-0 flex-col gap-6">
+						<NextForYou standing={standing} />
+						<Favourites
+							candidates={data.highlights}
+							covers={covers}
+							total={standing.favourites}
+						/>
+						<WhereThingsStand standing={standing} />
+						<DayByDay route={route} lines={lines} today={null} narrow={false} />
+					</div>
+					<div className="flex min-w-0 flex-col gap-6">
+						<Deadlines />
+						<div className="rounded-2xl border bg-card p-4">
+							<StillToPlan followPath="overview.still" />
+						</div>
+						<ClimateCard nodeId="root" />
+						<People />
+						<Recent />
+					</div>
+				</div>
+				<span className="sr-only">{graph.trip.name} overview</span>
+			</div>
+		);
 
 	return (
 		<div
@@ -305,7 +369,7 @@ function Header({
 			) : (
 				<span className="ml-auto" />
 			)}
-			<ShareButton variant="toolbar" />
+			<ShareButton variant="toolbar" slug={graph.trip.slug} />
 		</div>
 	);
 	const dates = dateLine(firstDate, lastDate);

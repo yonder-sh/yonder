@@ -138,10 +138,8 @@ export async function openPhoneMap(page: import("@playwright/test").Page): Promi
 		m.useUi.getState().setSheetSnap("120px"); // SHEET_SNAPS[0]: the map
 	});
 	await expect(toggle).toHaveAttribute("aria-pressed", "true");
-	// The map mounts on demand: wait for it and its controls.
-	await expect(page.getByTestId("trip-map").getByRole("button", { name: /^Fit to the scope/ })).toBeVisible({
-		timeout: 20_000,
-	});
+	// The map mounts on demand: wait for its canvas.
+	await expect(page.getByTestId("map-canvas")).toBeVisible({ timeout: 20_000 });
 }
 
 /** Organize places (One Yonder: the Outline's tree, from the Where picker): the open dialog. */

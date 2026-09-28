@@ -29,6 +29,8 @@ export const OVERVIEW_TESTID = {
 	highlights: "overview-highlights",
 	highlight: "overview-highlight",
 	favourites: "overview-favourites",
+	next: "overview-next",
+	nextAction: "overview-next-action",
 	empty: "overview-empty",
 	openPlan: "overview-open-plan",
 	seePlaces: "overview-see-places",

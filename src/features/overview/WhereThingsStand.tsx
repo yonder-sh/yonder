@@ -25,7 +25,7 @@ import { STANDING_TESTID } from "./testids-standing";
 type Action = { label: string; run: () => void };
 
 /** Where each line opens, and the next line's action (null when you can't). */
-function useStandingNav(standing: Standing) {
+export function useStandingNav(standing: Standing) {
 	const { nav, access, ix } = useWorkspace();
 	const openAddPlace = useUi((s) => s.openAddPlace);
 	const setSettingsOpen = useUi((s) => s.setSettingsOpen);

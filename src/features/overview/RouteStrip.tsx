@@ -97,7 +97,7 @@ export function RouteStrip({
 			className="flex flex-col gap-2"
 		>
 			{compact ? null : (
-				<div className="flex items-baseline justify-between gap-4 text-xs text-white/55">
+				<div className="flex items-baseline justify-between gap-4 text-xs text-muted-foreground">
 					<span className="truncate">
 						{[firstDate ? formatDayDate(firstDate) : null, start]
 							.filter(Boolean)
@@ -145,7 +145,7 @@ export function RouteStrip({
 								<ModeIcon
 									mode={s.modeIn}
 									className={cn(
-										"text-white",
+										"text-foreground",
 										compact ? "mr-0.5 size-3" : "mr-1.5",
 										s.modeIn === "flight" && "rotate-45",
 									)}
@@ -163,11 +163,11 @@ export function RouteStrip({
 								onBlur={() => onFocus(null)}
 								onClick={() => open(s)}
 								className={cn(
-									"relative min-w-0 flex-1 cursor-pointer overflow-hidden text-left transition-[filter,opacity,box-shadow] outline-none hover:brightness-110 focus-visible:ring-2 focus-visible:ring-white",
+									"relative min-w-0 flex-1 cursor-pointer overflow-hidden text-left transition-[filter,opacity,box-shadow] outline-none hover:brightness-110 focus-visible:ring-2 focus-visible:ring-ring",
 									compact ? "h-[30px] rounded-md" : "h-11 rounded-[9px]",
 									past && "opacity-45",
 									(now || focus === i) &&
-										"shadow-[0_0_0_2px_#fff] brightness-110",
+										"shadow-[0_0_0_2px_var(--foreground)] brightness-110",
 								)}
 								style={{ background: s.color }}
 							>
@@ -190,7 +190,7 @@ export function RouteStrip({
 						<ModeIcon
 							mode={route.modeOut}
 							className={cn(
-								"text-white",
+								"text-foreground",
 								compact ? "ml-1 size-3" : "ml-1.5",
 								route.modeOut === "flight" && "rotate-45",
 							)}
@@ -199,7 +199,7 @@ export function RouteStrip({
 				) : null}
 			</ul>
 			{compact ? (
-				<div className="flex justify-between gap-2 text-2xs text-white/55">
+				<div className="flex justify-between gap-2 text-2xs text-muted-foreground">
 					<span className="truncate">{route.stays[0]?.name}</span>
 					{hereStay !== null ? <span>you are here</span> : null}
 					<span className="truncate">

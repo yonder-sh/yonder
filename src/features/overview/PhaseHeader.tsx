@@ -105,8 +105,9 @@ export function dateLine(firstDate: string | null, lastDate: string | null) {
 }
 
 /** Poster type that shrinks with a long name (≤ 2 lines in the header column). */
-export function titlePx(text: string, size: "hero" | "phone"): number {
+export function titlePx(text: string, size: "hero" | "band" | "phone"): number {
 	const n = Math.max(6, text.length);
+	if (size === "band") return Math.max(36, Math.min(64, Math.round(900 / n)));
 	return size === "hero"
 		? Math.max(40, Math.min(78, Math.round(1150 / n)))
 		: Math.max(32, Math.min(46, Math.round(640 / n)));
@@ -117,7 +118,7 @@ export function Title({
 	size,
 }: {
 	children: string;
-	size: "hero" | "phone";
+	size: "hero" | "band" | "phone";
 }) {
 	return (
 		<h1
@@ -172,10 +173,13 @@ export function Stats({
 	data,
 	cols,
 	after,
+	row = false,
 }: {
 	data: OverviewData;
 	cols: 2 | 3;
 	after: boolean;
+	/** One line of numbers, no boxes (D01's hero). */
+	row?: boolean;
 }) {
 	const { stats, rows } = data.route;
 	const oneCountry = stats.countries === 1 ? rows[0]?.countryName : null;
@@ -205,6 +209,30 @@ export function Stats({
 		{ k: "km", v: fmt(stats.km), label: "km travelled" },
 		{ k: "media", v: fmt(data.media), label: "photos & videos saved" },
 	];
+	if (row)
+		return (
+			<dl
+				data-testid={OVERVIEW_TESTID.stats}
+				data-cursor-anchor="sec:ov.stats"
+				className="flex flex-wrap gap-x-7 gap-y-3 pt-2"
+			>
+				{items
+					.filter((s) => s.k !== "media")
+					.map((s) => (
+						<div
+							key={s.k}
+							data-testid={OVERVIEW_TESTID.stat}
+							data-stat={s.k}
+							className="flex flex-col-reverse gap-1"
+						>
+							<dt className="text-meta text-white/70">{s.label}</dt>
+							<dd className="font-display text-3xl leading-none font-semibold text-white tnum">
+								{s.v}
+							</dd>
+						</div>
+					))}
+			</dl>
+		);
 	return (
 		<div
 			data-testid={OVERVIEW_TESTID.stats}
