@@ -20,6 +20,7 @@ import { expect, type Page, test } from "@playwright/test";
 import { MAP_TESTID } from "../../../src/features/map/testids";
 import { loginViaApi } from "./_helpers/auth";
 import { cloneFixtureTrip } from "./_helpers/fixture";
+import { openPhoneMap } from "./_helpers/page";
 
 const QA_TRIP = "asia-2027";
 const QA_COUNTRIES = ["USA", "Japan", "South Korea", "Taiwan", "Vietnam", "Türkiye"];
@@ -53,6 +54,7 @@ test.beforeEach(async ({}, info) => {
 });
 
 async function mapReady(page: Page, lens?: string) {
+	await openPhoneMap(page);
 	await expect(page.getByTestId("workspace")).toBeVisible({ timeout: 30_000 });
 	await expect(page.getByTestId(MAP_TESTID.canvas)).toBeVisible({ timeout: 30_000 });
 	await expect

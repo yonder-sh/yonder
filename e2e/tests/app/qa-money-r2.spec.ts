@@ -808,13 +808,6 @@ test("phone: Money tab and the add sheet at 412px", async ({ browser }) => {
 	await page.goto(`/t/${c.slug}/japan/kyoto?tab=money`);
 	await waitLive(page);
 	await page.waitForTimeout(800);
-	// pull the sheet up to 92%
-	await page.mouse.move(206, 812);
-	await page.mouse.down();
-	await page.mouse.move(206, 500, { steps: 8 });
-	await page.mouse.move(206, 90, { steps: 8 });
-	await page.mouse.up();
-	await page.waitForTimeout(800);
 	await page.getByRole("tab", { name: /Money/ }).first().click().catch(() => undefined);
 	await page.waitForTimeout(800);
 	await page.screenshot({ path: `${SHOTS}/r2-phone-money.png` });

@@ -93,12 +93,14 @@ test("a cross-site POST to a server function is refused (CSRF)", async ({ page }
 	expect(wrongOrigin.status()).toBe(403);
 });
 
-test("mobile: the peek sheet hides the tab bar instead of cutting it", async ({ page }, info) => {
+test("mobile: the bottom tabs sit at the foot of the screen", async ({ page }, info) => {
 	test.skip(info.project.name !== "mobile", "mobile layout");
 	const c = await cloneFixtureTrip(page.request);
 	await page.goto(`/t/${c.slug}?tab=plan`);
 	await expectLive(page);
 	const tabs = page.getByTestId(TESTID.mobileSheet).getByTestId(TESTID.centerTabs);
-	await expect(tabs.locator("xpath=..")).toHaveAttribute("aria-hidden", "true");
-	await page.screenshot({ path: shotPath("foundation/mobile-peek.png"), animations: "disabled" });
+	await expect(tabs).toBeInViewport({ ratio: 1 });
+	const box = await tabs.boundingBox();
+	expect(Math.round((box?.y ?? 0) + (box?.height ?? 0))).toBe(page.viewportSize()?.height);
+	await page.screenshot({ path: shotPath("foundation/mobile-plan.png"), animations: "disabled" });
 });

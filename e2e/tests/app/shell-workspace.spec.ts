@@ -7,10 +7,10 @@
  *   survives a reload;
  * - the trip overview: "Still to plan" (nights, still to book, city moves,
  *   unrated per member) linking to filtered views, and upcoming deadlines;
- * - the global mounts (ShiftTripDialog via "Try other dates…", the ⌘\ Outline
- *   toggle, the `?` sheet, the Money tab) and the mobile FAB menu with Expense;
- * - on phones the always-open sheet is non-modal (the pills stay reachable by
- *   role) and View settings opens from the ⋯ menu;
+ * - the global mounts (ShiftTripDialog via "Try other dates…", the `?`
+ *   sheet, the Money tab) and the mobile FAB menu with Expense;
+ * - on phones the header's buttons stay reachable by role, and View settings
+ *   opens from the ⋯ menu;
  * - screenshots at 1440×900 and 390×844 in `e2e/shots/shell/`.
  */
 import { expect, type Page, test } from "@playwright/test";

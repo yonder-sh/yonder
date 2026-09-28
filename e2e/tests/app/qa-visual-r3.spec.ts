@@ -219,15 +219,15 @@ test.describe("desktop 1440", () => {
 		await expect(page.getByTestId("workspace")).toBeVisible({ timeout: 30_000 });
 		await page.waitForTimeout(5000);
 		const worst: string[] = [];
-		for (const lens of ["Region", "City", "Country", "Area", "Country"]) {
+		for (const lens of ["]", "]", "[", "]", "]", "[", "["]) {
 			const lt = await page.evaluate(
 				(lens) =>
 					new Promise<number[]>((resolve) => {
 						const out: number[] = [];
 						const po = new PerformanceObserver((l) => out.push(...l.getEntries().map((e) => Math.round(e.duration))));
 						po.observe({ type: "longtask" });
-						const btn = [...document.querySelectorAll('[data-testid="lens-control"] button')].find((b) => b.textContent?.trim() === lens) as HTMLElement;
-						btn.click();
+						// The lens keys (no lens control since One Yonder): ] finer, [ coarser.
+						document.body.dispatchEvent(new KeyboardEvent("keydown", { key: lens, code: lens === "]" ? "BracketRight" : "BracketLeft", bubbles: true }));
 						setTimeout(() => {
 							po.disconnect();
 							resolve(out);

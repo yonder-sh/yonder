@@ -17,8 +17,8 @@
  *   drags, menus or editors;
  * - follow the view (a desktop leader, a 390 px phone follower): the card
  *   the leader points at deep in the Overview comes into the phone's view;
- *   a list scrolled with no pointer moves the phone's; map or panel moves
- *   its sheet (its own drag pauses that); satellite follows, never saved as
+ *   a list scrolled with no pointer moves the phone's; map or panel shows
+ *   its map or page (its own switch pauses that); satellite follows, never saved as
  *   the phone's; the day split's panel and an opened city follow; a form's
  *   typed value never reaches it.
  * Awareness and what each page received are exposed under VITE_E2E=1
@@ -226,13 +226,14 @@ test("FB-22: the map camera follows at other window sizes; my own move pauses it
 	await mapUp(a.page);
 	const b = await open(browser, "maya", url, { viewport: { width: 1000, height: 640 } });
 	await mapUp(b.page);
-	// A phone joins through Spotlight (the map sits behind the sheet there).
+	// A phone joins through Spotlight, its map open (the header's map button).
 	const phone = await browser.newContext({ ...devices["Pixel 7"] });
 	await loginViaApi(phone.request, `pia-${randomBytes(3).toString("hex")}@example.com`, { first: "Pia", last: "Phone" });
 	const pp = await phone.newPage();
 	await openLink(pp, trip.slug, "editor");
 	await expect(pp).toHaveURL(new RegExp(`/t/${trip.slug}`), { timeout: 20_000 });
 	await expectLive(pp);
+	await pp.getByTestId(S.mobileMapToggle).click();
 	await mapUp(pp);
 	await follow(b.page);
 	await spotlight(a.page, [pp]);
@@ -302,13 +303,11 @@ test("FB-22: the map camera follows at other window sizes; my own move pauses it
 			return c2 ? Math.hypot(c2.c[0] - ca2.c[0], c2.c[1] - ca2.c[1]) < 0.01 : false;
 		}, { timeout: 10_000 })
 		.toBe(true);
-	// The phone's sheet rises (A opens the Lists tab): the phone refits A's
-	// view into the part of its map the sheet leaves.
+	// A opens the Lists tab: the phone turns to its page, on Lists.
 	await a.page.getByRole("tab", { name: /Lists/ }).click();
 	await expect(pp).toHaveURL(/tab=lists/, { timeout: 10_000 });
-	await pp.waitForTimeout(800);
-	await expect.poll(() => fits(pp, ca2), { timeout: 10_000 }).toBe("fits");
-	await pp.screenshot({ path: shotPath("follow-r4/phone-map-refit-sheet.png") });
+	await expect(pp.getByTestId(S.mobileMapToggle)).toHaveAttribute("aria-pressed", "false", { timeout: 10_000 });
+	await pp.screenshot({ path: shotPath("follow-r4/phone-lists.png") });
 	await a.page.getByTestId(S.spotlightEnd).click();
 	await phone.close();
 	await a.ctx.close();
@@ -615,10 +614,9 @@ function shows(p: Page, selector: string): Promise<boolean> {
 	}, selector);
 }
 
-/** The top of the phone's sheet, as a fraction of its window (peek ≈ 0.86, half 0.5). */
-async function sheetAt(p: Page): Promise<number> {
-	const box = await p.getByTestId(TESTID.mobileSheet).boundingBox();
-	return box ? Math.round((box.y / PHONE.height) * 100) / 100 : 1;
+/** The phone shows its map (else its page): the header's map button is pressed. */
+async function mapOpen(p: Page): Promise<boolean> {
+	return (await p.getByTestId(S.mobileMapToggle).getAttribute("aria-pressed")) === "true";
 }
 
 /** Dev leads on a desktop at `url`; Maya's 390 px phone follows through Spotlight. */
@@ -665,20 +663,20 @@ test("follow the view on a phone: a list scrolled with no pointer, map or panel,
 	const paneA = a.page.locator('[data-cursor-anchor="pane:plan"]');
 	await expect(mapA).toBeVisible({ timeout: 30_000 });
 
-	// Map or panel: the leader's wheel over the map → the phone's sheet down to its peek…
+	// Map or panel: the leader's wheel over the map → the phone shows its map…
 	const mb = await mapA.boundingBox();
 	if (!mb) throw new Error("no map");
 	await a.page.mouse.move(mb.x + mb.width / 2, mb.y + mb.height / 2);
 	await a.page.mouse.wheel(0, -120);
-	await expect.poll(() => sheetAt(p.page), { timeout: 10_000 }).toBeGreaterThan(0.8);
-	await p.page.screenshot({ path: shotPath("follow-view/phone-sheet-map.png") });
-	// …over the plan → up to its half.
+	await expect.poll(() => mapOpen(p.page), { timeout: 10_000 }).toBe(true);
+	await p.page.screenshot({ path: shotPath("follow-view/phone-map.png") });
+	// …over the plan → its page.
 	const pb = await paneA.boundingBox();
 	if (!pb) throw new Error("no plan");
 	await a.page.mouse.move(pb.x + pb.width / 2, pb.y + pb.height / 2);
 	await a.page.mouse.wheel(0, 120);
-	await expect.poll(() => sheetAt(p.page), { timeout: 10_000 }).toBeLessThan(0.6);
-	await p.page.screenshot({ path: shotPath("follow-view/phone-sheet-panel.png") });
+	await expect.poll(() => mapOpen(p.page), { timeout: 10_000 }).toBe(false);
+	await p.page.screenshot({ path: shotPath("follow-view/phone-page.png") });
 
 	// A long list scrolled with no pointer (a trackpad, a phone): the phone's plan follows.
 	await a.page.evaluate(() =>
@@ -709,27 +707,26 @@ test("follow the view on a phone: a list scrolled with no pointer, map or panel,
 		.toBe(true);
 	await p.page.screenshot({ path: shotPath("follow-view/phone-plan-scrolled.png") });
 
-	// Don't fight the follower: the phone drags its sheet itself → the sheet stops following.
-	const sheet = p.page.getByTestId(TESTID.mobileSheet);
-	const sb = await sheet.boundingBox();
-	if (!sb) throw new Error("no sheet");
-	await p.page.mouse.move(PHONE.width / 2, sb.y + 8);
-	await p.page.mouse.down();
-	await p.page.mouse.move(PHONE.width / 2, sb.y + 260, { steps: 12 });
-	await p.page.mouse.up();
+	// Don't fight the follower: the phone opens its map itself → it stops following there.
+	await p.page.getByTestId(S.mobileMapToggle).click();
 	await expect(p.page.getByTestId(S.followResume)).toBeVisible({ timeout: 5_000 });
-	const held = await sheetAt(p.page);
+	expect(await mapOpen(p.page)).toBe(true);
 	await a.page.mouse.move(mb.x + mb.width / 2, mb.y + mb.height / 2);
 	await a.page.mouse.wheel(0, -120);
 	await a.page.mouse.move(pb.x + pb.width / 2, pb.y + pb.height / 2);
 	await a.page.mouse.wheel(0, 60);
 	await p.page.waitForTimeout(1_200);
-	expect(Math.abs((await sheetAt(p.page)) - held)).toBeLessThan(0.05);
-	// Resume: it follows again (the leader is on the panel: half).
+	expect(await mapOpen(p.page)).toBe(true);
+	// Resume: it follows again (the leader is on the panel: the page).
 	await p.page.getByTestId(S.followResume).click();
 	await expect(p.page.getByTestId(S.followResume)).toBeHidden();
+	await expect.poll(() => mapOpen(p.page), { timeout: 10_000 }).toBe(false);
 
-	// Satellite: the phone shows the leader's basemap, never saved as its own.
+	// Satellite: the phone shows the leader's basemap, never saved as its own
+	// (the leader on the map: the phone's map opens).
+	await a.page.mouse.move(mb.x + mb.width / 2, mb.y + mb.height / 2);
+	await a.page.mouse.wheel(0, -60);
+	await expect.poll(() => mapOpen(p.page), { timeout: 10_000 }).toBe(true);
 	const mapP = p.page.getByTestId(MAP_TESTID.canvas);
 	const own = await mapP.getAttribute("data-map-style");
 	expect(own).not.toBe("satellite");
@@ -748,6 +745,7 @@ test("follow the view on a phone: a list scrolled with no pointer, map or panel,
 	await a.page.getByTestId(S.spotlightEnd).click();
 	await p.page.reload();
 	await expectLive(p.page);
+	await p.page.getByTestId(S.mobileMapToggle).click();
 	await expect(p.page.getByTestId(MAP_TESTID.canvas)).toHaveAttribute("data-map-style", own as string, {
 		timeout: 30_000,
 	});

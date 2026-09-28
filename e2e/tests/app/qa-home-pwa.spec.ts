@@ -168,7 +168,7 @@ test("PWA-03/04/06: last trip offline — reload, other days/scopes, read-only, 
 		await expect(page.getByTestId("workspace")).toBeVisible({ timeout: 30_000 });
 		await page.waitForTimeout(1500);
 		await shot(page, "03-offline-fuji");
-		console.log("PWA-03 fuji url:", page.url(), (await page.getByTestId("scope-breadcrumb").first().innerText().catch(() => "")).replace(/\n/g, " > "));
+		console.log("PWA-03 fuji url:", page.url(), (await page.getByTestId("where-button").first().innerText().catch(() => "")));
 		// notes and lists offline
 		await page.goto("/t/asia-2027?tab=notes");
 		await expect(page.getByTestId("workspace")).toBeVisible({ timeout: 30_000 });

@@ -5,6 +5,7 @@
 import { mkdirSync } from "node:fs";
 import path from "node:path";
 import { type APIRequestContext, type Browser, type Page, expect, request, test } from "@playwright/test";
+import { openPhoneMap } from "./_helpers/page";
 
 export const APP = process.env.APP_URL ?? "http://localhost:5330";
 export const OUT =
@@ -70,6 +71,7 @@ export type Drawn = {
 };
 
 export async function mapReady(page: Page, lens?: string) {
+	await openPhoneMap(page);
 	await expect(page.locator(".maplibregl-map")).toBeVisible({ timeout: 45_000 });
 	await expect
 		.poll(

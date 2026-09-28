@@ -192,7 +192,7 @@ test.describe("desktop", () => {
 	});
 });
 
-test("phone: the ★ Rate pill floats above the sheet and opens the feed", async ({ page, isMobile }) => {
+test("phone: the ★ Rate pill floats above the tabs and opens the feed", async ({ page, isMobile }) => {
 	test.skip(!isMobile, "phone layout");
 	const c = await cloneFixtureTrip(page.request);
 	await page.goto(`/t/${c.slug}?tab=plan`);
@@ -200,10 +200,10 @@ test("phone: the ★ Rate pill floats above the sheet and opens the feed", async
 	const pill = page.getByTestId(T.ratePill);
 	await expect(pill).toBeVisible();
 	await expect(pill).toContainText(/Rate\s*\d+/);
-	// Above the sheet (its top edge), clear of the (+) on the right.
-	const sheet = await page.getByTestId("mobile-sheet").boundingBox();
+	// Above the bottom tabs, clear of the (+) on the right.
+	const tabs = await page.getByTestId("center-tabs").boundingBox();
 	const box = await pill.boundingBox();
-	expect(box && sheet && box.y + box.height <= sheet.y).toBe(true);
+	expect(box && tabs && box.y + box.height <= tabs.y).toBe(true);
 	await page.waitForTimeout(400);
 	await page.screenshot({ path: shot("phone-pill"), animations: "disabled" });
 	await pill.tap();

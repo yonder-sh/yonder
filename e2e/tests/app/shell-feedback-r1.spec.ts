@@ -272,20 +272,15 @@ test.describe("phone 390", () => {
 		await expect(page.getByTestId(TESTID.whatIfChip)).toHaveCount(0);
 	});
 
-	test("VIS3-03: a link with ?tab=lists opens the sheet at half, the Lists tab in view", async ({ page }, info) => {
+	test("VIS3-03: a link with ?tab=lists opens the Lists tab, its bottom tab in view", async ({ page }, info) => {
 		test.skip(info.project.name !== "chromium", "chromium project (the viewport is set here)");
 		await signIn(page);
 		for (const tab of ["lists", "money"] as const) {
 			await openTrip(page, `/t/${TRIP}/japan/tokyo?tab=${tab}`);
-			const sheet = page.getByTestId(TESTID.mobileSheet);
-			await expect
-				.poll(() => sheet.evaluate((s) => Math.round(s.getBoundingClientRect().top)), { message: `?tab=${tab}` })
-				.toBeLessThan(480);
-			const selected = sheet.getByRole("tablist", { name: "Views" }).getByRole("tab", { selected: true });
+			const selected = page.getByRole("tablist", { name: "Views" }).getByRole("tab", { selected: true });
 			await expect(selected).toHaveAttribute("data-tab", tab);
 			await expect(selected).toBeInViewport();
 		}
-		await expect(page.getByTestId(TESTID.mobileSheet).getByRole("tablist", { name: "Views" }).getByRole("tab", { selected: true })).toBeInViewport();
 		await settle(page);
 		await page.screenshot({ path: shotPath("shell/vis3-03-phone-tab-money.png"), animations: "disabled" });
 		await openTrip(page, `/t/${TRIP}/japan/tokyo?tab=lists`);
@@ -293,13 +288,9 @@ test.describe("phone 390", () => {
 		await expect(page.getByTestId(TESTID.listsTab)).toBeInViewport();
 		await settle(page);
 		await page.screenshot({ path: shotPath("shell/vis3-03-phone-tab-lists.png"), animations: "disabled" });
-		// The default tab still opens at the peek.
-		await openTrip(page, `/t/${TRIP}/japan/tokyo`);
-		await settle(page);
-		expect(await page.getByTestId(TESTID.mobileSheet).evaluate((s) => Math.round(s.getBoundingClientRect().top))).toBeGreaterThan(700);
 	});
 
-	test("VIS3-09: a new trip's peek says 'Where to first?', and the map's empty card stays clear of the sheet", async ({ page }, info) => {
+	test("VIS3-09: a new trip's Plan says 'Where to first?'; with a place but no dates it asks how long in each city", async ({ page }, info) => {
 		test.skip(info.project.name !== "chromium", "chromium project (the viewport is set here)");
 		await signIn(page);
 		await page.goto("/dashboard");
@@ -309,47 +300,26 @@ test.describe("phone 390", () => {
 		});
 		const slug = (created as { slug: string }).slug;
 		await openTrip(page, `/t/${slug}?tab=plan`);
-		const peek = page.getByTestId(SHELL_TESTID.mobileEmptyPeek);
-		await expect(peek).toBeVisible();
-		await expect(peek).toContainText("Where to first?");
-		await expect(peek).toBeInViewport();
-		const card = page.getByTestId("map-empty");
-		await expect(card).toBeVisible();
-		const clear = () =>
-			page.evaluate(() => {
-				const c = document.querySelector('[data-testid="map-empty"]')?.getBoundingClientRect();
-				const s = document.querySelector('[data-testid="mobile-sheet"]')?.getBoundingClientRect();
-				return c && s ? Math.round(s.top - c.bottom) : null;
-			});
-		await expect.poll(clear).toBeGreaterThan(0);
+		const plan = page.getByTestId(TESTID.mobileSheet).getByTestId(TESTID.planTab);
+		await expect(plan).toContainText("Where to first?");
+		await expect(plan.getByRole("button", { name: /Search places/ })).toBeInViewport();
 		await settle(page);
-		await page.screenshot({ path: shotPath("shell/vis3-09-phone-empty-peek.png"), animations: "disabled" });
+		await page.screenshot({ path: shotPath("shell/vis3-09-phone-empty.png"), animations: "disabled" });
 		// "Search places" opens "Where to first?".
-		await peek.getByRole("button", { name: /Search places/ }).tap();
+		await plan.getByRole("button", { name: /Search places/ }).tap();
 		await expect(page.getByTestId(TESTID.addPlaceDialog)).toBeVisible();
 		await expect(page.getByTestId(TESTID.addPlaceDialog)).toContainText("Where to first?");
 		await page.keyboard.press("Escape");
-		// At half (a tab in the link), the card still sits above the sheet.
-		await openTrip(page, `/t/${slug}?tab=lists`);
-		await expect
-			.poll(() => page.getByTestId(TESTID.mobileSheet).evaluate((s) => Math.round(s.getBoundingClientRect().top)))
-			.toBeLessThan(480);
-		await expect.poll(clear).toBeGreaterThan(0);
-		await settle(page);
-		await page.screenshot({ path: shotPath("shell/vis3-09-phone-empty-half.png"), animations: "disabled" });
-		// A place but no dates: the peek asks how long in each city, and opens the Plan.
+		// The map's empty card shows with the map open.
+		await page.getByTestId(SHELL_TESTID.mobileMapToggle).tap();
+		await expect(page.getByTestId("map-empty")).toBeInViewport();
+		// A place but no dates: the Plan asks how long in each city.
 		const tripId = (created as { tripId: string }).tripId;
 		await page.evaluate(async (tripId) => {
 			const m = await import(/* @vite-ignore */ "/src/functions/nodes.functions.ts");
 			await m.createNode({ data: { tripId, id: crypto.randomUUID(), parentId: null, type: "city", name: "Kyoto", lat: 35.01, lng: 135.77 } });
 		}, tripId);
 		await openTrip(page, `/t/${slug}?tab=plan`);
-		await expect(peek).toContainText("How long in each city?", { timeout: 15_000 });
-		await peek.getByRole("button", { name: "Plan the days" }).tap();
-		// The sheet opens full on the Plan, where it asks about how many days.
-		await expect
-			.poll(() => page.getByTestId(TESTID.mobileSheet).evaluate((s) => Math.round(s.getBoundingClientRect().top)))
-			.toBeLessThan(200);
-		await expect(page).toHaveURL(/tab=plan/);
+		await expect(page.getByTestId(TESTID.planTab)).toContainText("How long in each city?", { timeout: 15_000 });
 	});
 });

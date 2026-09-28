@@ -296,20 +296,6 @@ test.describe("desktop", () => {
 	});
 });
 
-/** Phones: pull the sheet up so the Plan fills the screen (the map is behind it). */
-async function pullSheetUp(page: Page) {
-	const sheet = page.getByTestId("mobile-sheet");
-	const box = await sheet.boundingBox();
-	if (!box) throw new Error("no sheet");
-	const x = (page.viewportSize()?.width ?? 390) / 2;
-	await page.mouse.move(x, box.y + 12);
-	await page.mouse.down();
-	await page.mouse.move(x, box.y - 250, { steps: 8 });
-	await page.mouse.move(x, 60, { steps: 8 });
-	await page.mouse.up();
-	await page.waitForTimeout(800);
-}
-
 test("phone: the split at 390 px, Move up, Use these days, then the line", async ({ page, isMobile }) => {
 	test.skip(!isMobile, "phone layout");
 	await page.setViewportSize({ width: 390, height: 844 });
@@ -318,7 +304,6 @@ test("phone: the split at 390 px, Move up, Use these days, then the line", async
 	const split = page.getByTestId(T.split);
 	await expect(split).toBeVisible({ timeout: 30_000 });
 	await expectLive(page);
-	await pullSheetUp(page);
 	await expect(page.getByTestId(T.splitUse)).toBeInViewport();
 	await expect(rowOf(page, t.city.tokyo)).toHaveAttribute("data-days", "4");
 	await expectNoOverflow(page, T.split);

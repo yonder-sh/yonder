@@ -11,7 +11,7 @@
  * - a relative booking window follows its item to another day (ADDENDUM §10,
  *   QA DUE-09);
  * - the inspector's Lists tab for a place rolls up "Everything inside";
- * - mobile: the Lists tab in the sheet at 390 px, no sideways scroll.
+ * - mobile: the Lists tab at 390 px, no sideways scroll.
  * Screenshots → e2e/shots/lists/.
  */
 import { expect, type Page, test } from "@playwright/test";
@@ -433,25 +433,13 @@ test("a wide panel shows both lists side by side", async ({ page }, info) => {
 	await page.screenshot({ path: shotPath("lists/side-by-side-1920.png"), animations: "disabled" });
 });
 
-test("mobile: the Lists tab in the sheet", async ({ page }, info) => {
+test("mobile: the Lists tab", async ({ page }, info) => {
 	test.skip(info.project.name !== "mobile", "mobile layout");
 	await page.setViewportSize({ width: 390, height: 844 });
 	const c = await cloneFixtureTrip(page.request);
 	await page.goto(`/t/${c.slug}?tab=lists`);
 	await expectLive(page);
 	const sheet = page.getByTestId(TESTID.mobileSheet);
-	// The tab content is inert (and aria-hidden) at the peek: drag the sheet up
-	// from its handle until it isn't.
-	const content = sheet.getByTestId(TESTID.centerTabs).locator("xpath=..");
-	await expect(async () => {
-		const box = await sheet.boundingBox();
-		if (!box) throw new Error("no sheet");
-		await page.mouse.move(box.x + box.width / 2, box.y + 8);
-		await page.mouse.down();
-		await page.mouse.move(box.x + box.width / 2, 120, { steps: 12 });
-		await page.mouse.up();
-		await expect(content).not.toHaveAttribute("aria-hidden", "true", { timeout: 2_000 });
-	}).toPass({ timeout: 20_000 });
 	await expect(sheet.getByTestId(TESTID.listsTab)).toBeVisible();
 	await expect(sheet.getByText("Get a Suica card")).toBeVisible();
 	await expectNoHorizontalOverflow(page);

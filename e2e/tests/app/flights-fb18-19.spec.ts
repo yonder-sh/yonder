@@ -100,19 +100,10 @@ async function moveItem(page: Page, t: TestTrip, itemId: string, where: { afterI
 	);
 }
 
-/** Phones: pull the Plan sheet up so the timeline shows (the map is behind it). */
+/** Phones: the Plan is the page (the map folded away) once its timeline shows. */
 async function showPlan(page: Page, project: string) {
 	if (project !== "mobile") return;
-	const sheet = page.getByTestId(TESTID.mobileSheet);
-	const box = await sheet.boundingBox();
-	if (!box) throw new Error("no sheet");
-	const x = (page.viewportSize()?.width ?? 400) / 2;
-	await page.mouse.move(x, box.y + 12);
-	await page.mouse.down();
-	await page.mouse.move(x, box.y - 250, { steps: 8 });
-	await page.mouse.move(x, 60, { steps: 8 });
-	await page.mouse.up();
-	await page.waitForTimeout(800);
+	await expect(page.getByTestId(TESTID.mobileSheet).getByTestId(TESTID.timelineItem).first()).toBeVisible();
 }
 
 // One account per test: parallel projects never read each other's OTP, and

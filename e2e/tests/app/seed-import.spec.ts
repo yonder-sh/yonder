@@ -19,19 +19,6 @@ import { collectConsole, expectLive, expectNoHorizontalOverflow } from "./_helpe
 
 const exec = promisify(execFile);
 
-/** Drags the mobile plan sheet from its peek up to the top snap (compact layouts). */
-async function expandSheet(page: Page): Promise<void> {
-	const sheet = page.getByTestId(TESTID.mobileSheet);
-	const box = await sheet.boundingBox();
-	if (!box) return;
-	const x = box.width / 2;
-	const y0 = box.y + 8;
-	await page.mouse.move(x, y0);
-	await page.mouse.down();
-	for (let i = 1; i <= 20; i++) await page.mouse.move(x, y0 - (i * (y0 - 120)) / 20);
-	await page.mouse.up();
-	await expect.poll(async () => (await sheet.boundingBox())?.y ?? 9999).toBeLessThan(200);
-}
 
 test.use({ storageState: storageStateOf("dev") });
 test.describe.configure({ mode: "serial" });
@@ -163,7 +150,6 @@ test("SEED-03/05/TL-10: days, durations, travel legs and the backup list", async
 	// The ryokan night (§7.6) and the Plan shows the day's items.
 	const ryokan = g.nodes.find((n) => n.name === "Kawaguchiko Ryokan");
 	expect(day("2027-10-07").nightNodeId).toBe(ryokan?.id);
-	if (info.project.name === "mobile") await expandSheet(page);
 	const items = page.getByTestId(TESTID.timelineItem);
 	await expect(items.filter({ hasText: "Drop bags at ryokan" }).first()).toBeVisible();
 	await expect(items.filter({ hasText: "Oishi Park" }).first()).toBeVisible();
@@ -187,7 +173,6 @@ test("SEED-05: Travel rows show their route in the Plan (line or label chip)", a
 	await page.setViewportSize({ width: 390, height: 844 });
 	await page.goto(`/t/${slug}?days=2027-10-08`);
 	await expectLive(page);
-	await expandSheet(page);
 	await expect(page.getByTestId(TESTID.legSummaryLabel).filter({ hasText: "Bus → Shiraito Falls" })).toBeVisible();
 	await expectNoHorizontalOverflow(page);
 	await page.screenshot({ path: shotPath("seed/import-day6-legs-390.png"), animations: "disabled" });

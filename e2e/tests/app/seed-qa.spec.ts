@@ -20,19 +20,6 @@ import { openLink } from "./_helpers/link";
 
 const exec = promisify(execFile);
 
-/** Drags the mobile plan sheet from its peek up to the top snap (compact layouts). */
-async function expandSheet(page: Page): Promise<void> {
-	const sheet = page.getByTestId(TESTID.mobileSheet);
-	const box = await sheet.boundingBox();
-	if (!box) return;
-	const x = box.width / 2;
-	const y0 = box.y + 8;
-	await page.mouse.move(x, y0);
-	await page.mouse.down();
-	for (let i = 1; i <= 20; i++) await page.mouse.move(x, y0 - (i * (y0 - 120)) / 20);
-	await page.mouse.up();
-	await expect.poll(async () => (await sheet.boundingBox())?.y ?? 9999).toBeLessThan(200);
-}
 const qaState = (handle: string) => path.join(E2E_ROOT, ".auth", `qa-${handle}.json`);
 
 test.describe.configure({ mode: "serial" });
@@ -112,7 +99,6 @@ test("F1/F4-a: Dennis owns Asia 2027 and NH 9 lands at 05:00", async ({ browser 
 	await page.setViewportSize({ width: 390, height: 844 });
 	await page.goto("/t/asia-2027?days=2027-10-07");
 	await expectLive(page);
-	await expandSheet(page);
 	await expect(page.getByTestId(TESTID.timelineItem).filter({ hasText: "Drop bags at ryokan" })).toBeVisible();
 	await page.screenshot({ path: shotPath("seed/qa-day5-390.png"), animations: "disabled" });
 	expect(logs.messages).toEqual([]);

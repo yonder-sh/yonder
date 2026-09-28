@@ -214,8 +214,7 @@ test.describe("desktop", () => {
 
 	test("UX-04 guard: scope, day, lens and the open panel survive a copied URL", async ({ page, browser }) => {
 		await signIn(page, "dennis");
-		await openTrip(page, `/t/${TRIP}/${GOLDEN_GAI_PATH}`);
-		await page.getByTestId("lens-control").getByRole("radio", { name: "Place", exact: true }).click();
+		await openTrip(page, `/t/${TRIP}/${GOLDEN_GAI_PATH}?lens=place`);
 		// "Show only …" filters to the day; its date only selects it (FB-08).
 		await page.getByRole("button", { name: "Show only Tue 5 Oct" }).first().click();
 		await page.locator('[data-testid="timeline-item"]').filter({ hasText: "Golden Gai" }).first().click();
@@ -228,7 +227,7 @@ test.describe("desktop", () => {
 		await signIn(other, "audrey");
 		await openTrip(other, url);
 		await expect(other.getByTestId("inspector")).toContainText("Golden Gai");
-		await expect(other.getByTestId("scope-breadcrumb")).toContainText("Shinjuku");
+		await expect(other.getByTestId("where-button")).toContainText("Shinjuku");
 		await ctx.close();
 	});
 
@@ -374,25 +373,21 @@ test.describe("phone", () => {
 		};
 		await check("pills ⋯ More", '[data-testid="mobile-pills"] [aria-label="More"]');
 		await check("inbox bell", '[data-testid="mobile-pills"] [data-testid="inbox-bell"]');
-		await check("lens segment", '[data-testid="lens-control"] [role="radio"]');
+		await check("where", '[data-testid="where-button"]');
+		await check("map button", '[data-testid="mobile-map-toggle"]');
 		await check("day chip", '[data-testid="day-chips"] button');
+		await check("bottom tab", '[data-testid="center-tabs"] [role="tab"]');
+		await page.getByTestId("mobile-map-toggle").tap();
 		await check("map: fit", '[aria-label="Fit to the scope"]');
 		await check("map: layers", '[aria-label="Map layers and legend"]');
 		expect(small, small.join("\n")).toEqual([]);
 	});
 
-	test("DEFECT MOB-02: browser Back after switching sheet tabs stays in the trip", async ({ page }) => {
+	test("DEFECT MOB-02: browser Back after switching tabs stays in the trip", async ({ page }) => {
 		await signIn(page, "dennis");
 		await page.goto("/dashboard");
 		await openTrip(page, `/t/${TRIP}/japan/tokyo?days=2027-10-05`);
 		const sheet = page.getByTestId("mobile-sheet");
-		const b = await sheet.boundingBox();
-		if (!b) throw new Error("no sheet");
-		await page.mouse.move(200, b.y + 8);
-		await page.mouse.down();
-		await page.mouse.move(200, b.y - 330, { steps: 15 });
-		await page.mouse.up();
-		await page.waitForTimeout(800);
 		await sheet.getByRole("tab", { name: /Lists/ }).click();
 		await expect(page).toHaveURL(/tab=lists/);
 		await sheet.getByRole("tab", { name: /Places/ }).click();

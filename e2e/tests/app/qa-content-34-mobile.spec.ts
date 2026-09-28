@@ -27,16 +27,9 @@ test.beforeAll(async ({ browser }) => {
 	await ctx.close();
 });
 
+/** The phone's page (the map folded away) shows the tab. */
 async function pullSheet(page: Page) {
-	const sheet = page.getByTestId(TESTID.mobileSheet);
-	const box = await sheet.boundingBox();
-	if (!box) throw new Error("no sheet");
-	await page.mouse.move(195, box.y + 12);
-	await page.mouse.down();
-	await page.mouse.move(195, box.y - 250, { steps: 8 });
-	await page.mouse.move(195, 60, { steps: 8 });
-	await page.mouse.up();
-	await page.waitForTimeout(800);
+	await expect(page.getByTestId(TESTID.mobileSheet)).toBeVisible();
 }
 
 test("phone: lists main view, row checkbox hit area, add row", async ({ page }) => {

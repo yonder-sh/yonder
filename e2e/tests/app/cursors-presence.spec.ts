@@ -145,11 +145,6 @@ test("a phone never hovers: taps ripple on the desktop, a long press reacts on a
 	const url = `/t/${trip.slug}?tab=plan`;
 	const a = await open(browser, "dev", url);
 	const phone = await open(browser, "maya", url, { ...devices["Pixel 7"] });
-	// The plan in the phone's sheet.
-	await phone.page.evaluate(async () => {
-		const m = await import(/* @vite-ignore */ "/src/lib/workspace/ui-store.ts");
-		m.useUi.getState().setSheetSnap(0.92);
-	});
 	const meiji = trip.ids.items.meiji as string;
 	const cardP = phone.page.locator(`[data-cursor-anchor="item:${meiji}"]`);
 	await cardP.scrollIntoViewIfNeeded();
@@ -180,20 +175,22 @@ test("a phone never hovers: taps ripple on the desktop, a long press reacts on a
 	await a.page.waitForTimeout(250);
 	await a.page.screenshot({ path: shotPath("cursors/a-sees-phone-reaction.png") });
 
-	// A tap: a ripple on A's screen, over the same card; touch never draws a hovering arrow.
+	// A tap on the card's title: a ripple on A's screen, over the same card;
+	// touch never draws a hovering arrow.
 	const now = await cardP.boundingBox();
-	if (!now) throw new Error("no card on the phone");
-	await phone.page.touchscreen.tap(now.x + now.width * 0.3, now.y + now.height / 2);
+	const main = await cardP.locator("[data-card-main]").boundingBox();
+	if (!now || !main) throw new Error("no card on the phone");
+	const fx = (main.x + main.width / 2 - now.x) / now.width;
+	await phone.page.touchscreen.tap(now.x + now.width * fx, now.y + now.height / 2);
 	const ripple = a.page.getByTestId("remote-tap");
 	await expect(ripple).toHaveCount(1, { timeout: 5_000 });
 	const rp = await ripple.evaluate((el) => ({ x: Number.parseFloat((el as HTMLElement).style.left), y: Number.parseFloat((el as HTMLElement).style.top) }));
-	expect(Math.abs(rp.x - (cardA.x + cardA.width * 0.3))).toBeLessThan(3);
+	expect(Math.abs(rp.x - (cardA.x + cardA.width * fx))).toBeLessThan(3);
 	expect(Math.abs(rp.y - (cardA.y + cardA.height / 2))).toBeLessThan(3);
 	await a.page.waitForTimeout(200);
 	await a.page.screenshot({ path: shotPath("cursors/a-sees-phone-tap.png") });
 	await expect(a.page.locator(`[data-testid="remote-cursor"][data-user-id="${mayaId}"][data-state="on"]`)).toHaveCount(0);
-	// She selects the card on the phone: A sees her selection ring on it.
-	await cardP.locator("[data-card-main]").tap();
+	// The tap selected the card on the phone: A sees her selection ring on it.
 	await expect(phone.page).toHaveURL(new RegExp(`sel=i\\.${meiji}`));
 	await expect
 		.poll(() =>

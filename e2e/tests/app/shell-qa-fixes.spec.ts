@@ -2,14 +2,14 @@
  * WP-Shell fixes from QA round 1, on the QA seed (`pnpm db:seed:qa`, trip
  * `asia-2027`). Read-only on the seeded trip.
  *
- * - VIS-02 / MOB-07: the phone chrome's own controls (pills ⋯, bell, lens
- *   segments, sheet tabs) are at least 44×44.
+ * - VIS-02 / MOB-07: the phone chrome's own controls (the header's buttons,
+ *   the Where picker, the bottom tabs) are at least 44×44.
  * - VIS-13: the md Inspector Sheet shows `inspector-close` next to the title,
  *   below the cover photo.
  * - COLLAB-4: the trip root overview has the visited cities' climate table.
  * - COLLAB-9 / PLAN-I2-15: every timed deadline chip carries its zone label.
  * - PLAN-I2-13: "Days per city" header and table footer are one number.
- * - PLAN-I2-11: at Golden Gai depth (6 crumbs) nothing is squeezed.
+ * - PLAN-I2-11: at Golden Gai depth the Where button shows its name in full.
  *
  *   APP_URL=http://localhost:<port> DEV_FIXED_OTP=000000 \
  *     N pnpm e2e -- tests/app/shell-qa-fixes.spec.ts --project chromium
@@ -147,18 +147,14 @@ test.describe("desktop", () => {
 		await expect(page).toHaveURL(/list=todo/);
 	});
 
-	test("PLAN-I2-11: six crumbs stay readable", async ({ page }) => {
+	test("PLAN-I2-11: a deep scope's name shows in full in the Where button", async ({ page }) => {
 		await signIn(page);
 		await openTrip(page, `/t/${TRIP}/japan/tokyo/shinjuku/golden-gai`);
-		const crumb = page.getByTestId("scope-breadcrumb");
-		await expect(crumb).toContainText("Golden Gai");
-		const cut = await crumb
-			.locator("[data-crumb-label]")
-			.evaluateAll((els) =>
-				els
-					.filter((e) => e.clientWidth > 0 && e.scrollWidth > e.clientWidth + 1)
-					.map((e) => e.textContent),
-			);
+		const where = page.getByTestId("where-button");
+		await expect(where).toContainText("Golden Gai");
+		const cut = await where
+			.locator(".truncate")
+			.evaluateAll((els) => els.filter((e) => e.scrollWidth > e.clientWidth + 1).map((e) => e.textContent));
 		expect(cut).toEqual([]);
 	});
 });
@@ -221,31 +217,17 @@ test.describe("phone", () => {
 				"your trips",
 				'[data-testid="mobile-pills"] [aria-label="Your trips"]',
 			)),
-			...(await boxes(
-				page,
-				"zoom out",
-				'[data-testid="mobile-pills"] [aria-label="Zoom out"]',
-			)),
+			...(await boxes(page, "where", '[data-testid="where-button"]')),
+			...(await boxes(page, "map toggle", '[data-testid="mobile-map-toggle"]')),
 			...(await boxes(
 				page,
 				"inbox bell",
 				'[data-testid="mobile-pills"] [data-testid="inbox-bell"]',
 			)),
-			...(await boxes(page, "lens", '[data-testid="lens-control"] [role="radio"]')),
+			...(await boxes(page, "tab", '[data-testid="center-tabs"] [role="tab"][data-tab]')),
 		];
-		// Bring the sheet to half so its tab bar shows.
-		const sheet = page.getByTestId("mobile-sheet");
-		const b = await sheet.boundingBox();
-		if (!b) throw new Error("no sheet");
-		await page.mouse.move(200, b.y + 8);
-		await page.mouse.down();
-		await page.mouse.move(200, b.y - 330, { steps: 15 });
-		await page.mouse.up();
-		await page.waitForTimeout(800);
-		all.push(
-			...(await boxes(page, "sheet tab", '[data-testid="mobile-sheet"] [role="tab"][data-tab]')),
-		);
-		expect(all.filter((x) => x.label.startsWith("sheet tab")).length).toBeGreaterThan(3);
+		expect(all.filter((x) => x.label.startsWith("tab")).length).toBeGreaterThan(3);
+		expect(all.filter((x) => x.label.startsWith("where")).length).toBe(1);
 		const small = all.filter((x) => x.w < 44 || x.h < 44);
 		expect(small, small.map((s) => `${s.label} ${s.w}×${s.h}`).join("\n")).toEqual(
 			[],

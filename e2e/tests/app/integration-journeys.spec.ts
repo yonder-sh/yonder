@@ -29,7 +29,7 @@ import { loginViaApi } from "./_helpers/auth";
 import { shotPath, storageStateOf } from "./_helpers/env";
 import { cloneFixtureTrip } from "./_helpers/fixture";
 import { logOffset, readOtpFromLog } from "./_helpers/otp";
-import { collectConsole, detailsSection, expectLive, goWhere, hydrated, notesView } from "./_helpers/page";
+import { collectConsole, detailsSection, expectLive, expectNoHorizontalOverflow, goWhere, hydrated, notesView } from "./_helpers/page";
 import { openLink } from "./_helpers/link";
 
 const MAP_NOISE = [/GL Driver Message|WebGL|layers\[[^\]]+\]\.filter/];
@@ -809,12 +809,13 @@ test("J6 photo, video, TikTok and guide link roll up at Tokyo, Japan and on the 
 });
 
 // ---------------------------------------------------------------------------
-// Journey 8: mobile 390×844. The sheet snaps, tapping a pin opens the
-// inspector drawer, long-press reorders, and the lens control scrolls.
+// Journey 8: mobile 390×844. The map button swaps the page and the map,
+// long-press reorders, tapping a pin opens the inspector drawer, and the
+// Where picker goes to a city.
 // ---------------------------------------------------------------------------
 test.describe("J8 as dev", () => {
 test.use({ storageState: storageStateOf("dev") });
-test("J8 mobile 390×844: sheet snaps, pin tap opens the drawer, long-press reorders, lens control scrolls", async ({ page }, info) => {
+test("J8 mobile 390×844: the map button, long-press reorders, pin tap opens the drawer, Where goes to a city", async ({ page }, info) => {
 	test.skip(info.project.name !== "mobile", "phone journey");
 	test.setTimeout(180_000);
 	const logs = collectConsole(page, MAP_NOISE);
@@ -824,29 +825,18 @@ test("J8 mobile 390×844: sheet snaps, pin tap opens the drawer, long-press reor
 	await page.goto(`/t/${c.slug}/japan/tokyo?lens=place&days=2027-10-03`);
 	await expectLive(page);
 	const sheet = page.getByTestId(TESTID.mobileSheet);
-	await expect(sheet.getByTestId(TESTID.dayChips)).toBeVisible();
-	const top = async () => (await sheet.boundingBox())?.y ?? 0;
-	await expect.poll(top).toBeGreaterThan(680); // the 120 px peek
-	await shot(page, "j8-01-peek");
-
-	// The sheet snaps: half, then full.
-	const dragSheet = async (toY: number) => {
-		const y = await top();
-		await page.mouse.move(195, y + 8);
-		await page.mouse.down();
-		await page.mouse.move(195, y - 40, { steps: 6 });
-		await page.mouse.move(195, toY, { steps: 10 });
-		await page.mouse.up();
-		await page.waitForTimeout(600);
-	};
-	await dragSheet(430);
-	await expect.poll(top).toBeGreaterThan(844 * 0.5 - 40);
-	await expect.poll(top).toBeLessThan(844 * 0.5 + 40);
-	await shot(page, "j8-02-half");
-	await dragSheet(60);
-	await expect.poll(top).toBeLessThan(844 * 0.08 + 40);
+	await expect(page.getByTestId(TESTID.dayChips)).toBeVisible();
 	await expect(sheet.getByTestId(TESTID.timelineItem).first()).toBeVisible();
-	await shot(page, "j8-03-full");
+	await shot(page, "j8-01-plan");
+
+	// The header's map button swaps the page and the map.
+	const mapButton = page.getByTestId(SHELL_TESTID.mobileMapToggle);
+	await mapButton.tap();
+	await expect(page.getByTestId(TESTID.tripMap)).toBeVisible();
+	await expect(sheet.getByTestId(TESTID.timelineItem)).toHaveCount(0);
+	await shot(page, "j8-02-map");
+	await mapButton.tap();
+	await expect(sheet.getByTestId(TESTID.timelineItem).first()).toBeVisible();
 
 	// Long-press reorders: Shibuya Loft above Hands Shibuya (touch, 250 ms hold).
 	const card = (id: string) => sheet.locator(`[data-testid="${TESTID.timelineItem}"][data-item-id="${id}"]`).first();
@@ -880,6 +870,7 @@ test("J8 mobile 390×844: sheet snaps, pin tap opens the drawer, long-press reor
 	// Tapping a pin opens the inspector drawer.
 	await page.goto(`/t/${c.slug}/japan?lens=city`);
 	await expectLive(page);
+	await mapButton.tap();
 	const kyoto = page.locator(`[data-testid="${TESTID.pin}"][data-rep-id="${c.ids.nodes.kyoto}"]`);
 	await expect(kyoto).toBeVisible({ timeout: 20_000 });
 	await kyoto.tap();
@@ -891,19 +882,12 @@ test("J8 mobile 390×844: sheet snaps, pin tap opens the drawer, long-press reor
 	await page.keyboard.press("Escape");
 	await expect(drawer).toBeHidden();
 
-	// The lens control scrolls sideways when its options don't fit.
-	const lens = page.getByTestId(TESTID.lensControl).first();
-	await expect(lens).toBeVisible();
-	const m = await lens.evaluate((el) => {
-		const s = (el.closest("[data-scrollable]") as HTMLElement | null) ?? el;
-		const before = { sw: s.scrollWidth, cw: s.clientWidth, ox: getComputedStyle(s).overflowX };
-		s.scrollLeft = 10_000;
-		return { ...before, left: s.scrollLeft };
-	});
-	expect(["auto", "scroll"]).toContain(m.ox);
-	if (m.sw > m.cw) expect(m.left).toBeGreaterThan(0);
-	await expect(page.getByTestId(TESTID.lensControl).getByText("Place").first()).toBeAttached();
-	await shot(page, "j8-06-lens");
+	// The Where picker goes to a city; its name heads the header.
+	await goWhere(page, "Tokyo");
+	await expect(page).toHaveURL(new RegExp(`/t/${c.slug}/japan/tokyo`));
+	await expect(page.getByTestId(SHELL_TESTID.whereButton)).toContainText("Tokyo");
+	await expectNoHorizontalOverflow(page);
+	await shot(page, "j8-06-where");
 	expect(logs.messages).toEqual([]);
 });
 });

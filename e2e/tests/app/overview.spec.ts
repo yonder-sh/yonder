@@ -134,7 +134,7 @@ test("a view-link guest lands on the Overview", async ({ browser, page }, info) 
 	await guestCtx.close();
 });
 
-test("phone: the Overview is the sheet's first tab, stacked and full height", async ({ page }, info) => {
+test("phone: the Overview is the first tab, stacked and full height", async ({ page }, info) => {
 	test.skip(info.project.name !== "mobile", "phone layout");
 	const c = await cloneFixtureTrip(page.request);
 	await page.goto(`/t/${c.slug}?asOf=2027-10-05`);
@@ -152,7 +152,7 @@ test("phone: the Overview is the sheet's first tab, stacked and full height", as
 	const strip = await page.getByTestId(O.strip).boundingBox();
 	const vw = page.viewportSize()?.width ?? 0;
 	expect((strip?.x ?? 0) + (strip?.width ?? 0)).toBeLessThanOrEqual(vw);
-	// The sheet opened high: the header is well up the screen.
+	// The header is well up the screen.
 	const header = await page.getByTestId(O.header).boundingBox();
 	expect(header?.y ?? 9999).toBeLessThan(260);
 	await page.waitForTimeout(3500);

@@ -26,7 +26,7 @@ test("profile lens changes on the whole trip", async ({ page }) => {
 	await cdp.send("Profiler.setSamplingInterval", { interval: 200 });
 	const byFile = new Map<string, number>();
 	const byFn = new Map<string, number>();
-	for (const lens of ["Region", "City", "Country", "Area", "Country"]) {
+	for (const lens of ["]", "]", "[", "]", "]", "[", "["]) {
 		await cdp.send("Profiler.start");
 		const lt = await page.evaluate(
 			(lens) =>
@@ -34,10 +34,8 @@ test("profile lens changes on the whole trip", async ({ page }) => {
 					const out: number[] = [];
 					const po = new PerformanceObserver((l) => out.push(...l.getEntries().map((e) => Math.round(e.duration))));
 					po.observe({ type: "longtask" });
-					const btn = [...document.querySelectorAll('[data-testid="lens-control"] button, [role=radio]')].find(
-						(b) => b.textContent?.trim() === lens,
-					) as HTMLElement;
-					btn.click();
+					// The lens keys (no lens control since One Yonder): ] finer, [ coarser.
+					document.body.dispatchEvent(new KeyboardEvent("keydown", { key: lens, code: lens === "]" ? "BracketRight" : "BracketLeft", bubbles: true }));
 					setTimeout(() => {
 						po.disconnect();
 						resolve(out);
@@ -159,15 +157,15 @@ async function run(page: Page): Promise<number[]> {
 	await expect(page.getByTestId("workspace")).toBeVisible({ timeout: 30_000 });
 	await page.waitForTimeout(5000);
 	const totals: number[] = [];
-	for (const lens of ["Region", "City", "Country", "Area", "Country"]) {
+	for (const lens of ["]", "]", "[", "]", "]", "[", "["]) {
 		const lt = await page.evaluate(
 			(lens) =>
 				new Promise<number[]>((resolve) => {
 					const out: number[] = [];
 					const po = new PerformanceObserver((l) => out.push(...l.getEntries().map((e) => Math.round(e.duration))));
 					po.observe({ type: "longtask" });
-					const btn = [...document.querySelectorAll("[role=radio]")].find((b) => b.textContent?.trim() === lens) as HTMLElement;
-					btn.click();
+					// The lens keys (no lens control since One Yonder): ] finer, [ coarser.
+					document.body.dispatchEvent(new KeyboardEvent("keydown", { key: lens, code: lens === "]" ? "BracketRight" : "BracketLeft", bubbles: true }));
 					setTimeout(() => {
 						po.disconnect();
 						resolve(out);

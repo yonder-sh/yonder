@@ -10,7 +10,7 @@ import { MAP_TESTID } from "../../../src/features/map/testids";
 import { TESTID } from "../../../src/lib/testids";
 import { shotPath, storageStateOf } from "./_helpers/env";
 import { cloneFixtureTrip } from "./_helpers/fixture";
-import { collectConsole } from "./_helpers/page";
+import { collectConsole, openPhoneMap } from "./_helpers/page";
 
 test.use({ storageState: storageStateOf("dev") });
 
@@ -35,6 +35,7 @@ type MapWindow = {
 };
 
 async function mapReady(page: Page, lens?: string) {
+	await openPhoneMap(page);
 	await expect(page.getByTestId(MAP_TESTID.canvas)).toBeVisible({ timeout: 30_000 });
 	await expect
 		.poll(

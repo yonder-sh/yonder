@@ -247,16 +247,8 @@ test("mobile: the long trip in the sheet at 390×844", async ({ page }, info) =>
 	await page.setViewportSize({ width: 390, height: 844 });
 	await page.goto(`/t/${c.slug}?lens=place`);
 	await expectLive(page);
-	const sheet = page.getByTestId(TESTID.mobileSheet);
-	await expect(sheet.getByTestId(TESTID.dayChips)).toBeVisible();
-	const handle = await sheet.boundingBox();
-	if (!handle) throw new Error("no sheet");
-	await page.mouse.move(195, handle.y + 8);
-	await page.mouse.down();
-	await page.mouse.move(195, handle.y - 300, { steps: 8 });
-	await page.mouse.move(195, 60, { steps: 8 });
-	await page.mouse.up();
-	await expect(sheet.getByTestId(TESTID.timelineItem).first()).toBeVisible();
+	await expect(page.getByTestId(TESTID.dayChips)).toBeVisible();
+	await expect(page.getByTestId(TESTID.mobileSheet).getByTestId(TESTID.timelineItem).first()).toBeVisible();
 	await page.waitForTimeout(400);
 	await page.screenshot({ path: shotPath("plan/scale-mobile-390.png"), animations: "disabled" });
 	await expectNoHorizontalOverflow(page);

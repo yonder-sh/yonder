@@ -20,7 +20,7 @@ import { expect, type Page, test } from "@playwright/test";
 import { MAP_TESTID } from "../../../src/features/map/testids";
 import { TESTID } from "../../../src/lib/testids";
 import { loginViaApi } from "./_helpers/auth";
-import { openOrganize } from "./_helpers/page";
+import { openOrganize, openPhoneMap } from "./_helpers/page";
 
 const QA_TRIP = "asia-2027";
 const REAL_TRIP = process.env.E2E_REAL_TRIP ?? "asia-2027-real";
@@ -49,6 +49,7 @@ test.beforeEach(async ({ page }) => {
 });
 
 async function mapReady(page: Page, lens?: string) {
+	await openPhoneMap(page);
 	await expect(page.getByTestId("workspace")).toBeVisible({ timeout: 30_000 });
 	await expect(page.getByTestId(MAP_TESTID.canvas)).toBeVisible({ timeout: 30_000 });
 	await expect

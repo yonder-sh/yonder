@@ -123,6 +123,14 @@ export async function goWhere(page: import("@playwright/test").Page, name: strin
 		.click();
 }
 
+/** Phones show their page first (One Yonder): open the map from the header. A no-op on a desktop. */
+export async function openPhoneMap(page: import("@playwright/test").Page): Promise<void> {
+	const { expect } = await import("@playwright/test");
+	await expect(page.getByTestId("workspace")).toBeVisible({ timeout: 30_000 });
+	const toggle = page.getByTestId("mobile-map-toggle");
+	if ((await toggle.count()) && (await toggle.getAttribute("aria-pressed")) !== "true") await toggle.click();
+}
+
 /** Organize places (One Yonder: the Outline's tree, from the Where picker): the open dialog. */
 export async function openOrganize(page: import("@playwright/test").Page): Promise<Locator> {
 	const dialog = page.getByTestId("organize-places");
