@@ -56,7 +56,8 @@ function Page({
 			style={{ aspectRatio: aspect }}
 		>
 			{failed ? (
-				<span className="absolute inset-0 grid place-items-center text-xs text-muted-foreground">
+				// On the white page, so not the viewer's light-on-dark grey.
+				<span className="absolute inset-0 grid place-items-center text-xs text-black/55">
 					Page {n} isn't available offline.
 				</span>
 			) : (
