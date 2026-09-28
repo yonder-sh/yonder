@@ -8,6 +8,7 @@ import { Chip } from "@/components/kit";
 import { Button } from "@/components/ui/button";
 import { isIdea } from "@/features/outline/ideas";
 import { formatDayDate, formatDayShort } from "@/lib/format";
+import { copyAnchorId } from "@/lib/realtime/cursor-protocol";
 import { cn } from "@/lib/utils";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { dayCity, titleBesideCity } from "./DayHeader";
@@ -29,12 +30,23 @@ function dayCityId(
 	);
 }
 
-export function DayRow({ dayId }: { dayId: string }) {
+export function DayRow({
+	dayId,
+	only = null,
+	copy,
+}: {
+	dayId: string;
+	/** A day in two bands: this band's stops. */
+	only?: ReadonlySet<string> | null;
+	/** That drawing's anchor copy (`copyAnchorId`). */
+	copy?: string;
+}) {
 	const { ix, sel, nav } = useWorkspace();
 	const day = ix.day(dayId);
 	if (!day) return null;
 	const n = ix.dayNumber(dayId);
-	const items = ix.itemsByDay.get(dayId) ?? [];
+	const all = ix.itemsByDay.get(dayId) ?? [];
+	const items = only ? all.filter((i) => only.has(i.id)) : all;
 	const empty = items.length === 0;
 	const cityId = dayCityId(ix, day.nightNodeId);
 	const city = dayCity(ix, dayId) ?? (cityId ? ix.node(cityId)?.name : null);
@@ -53,7 +65,8 @@ export function DayRow({ dayId }: { dayId: string }) {
 		<div
 			data-testid={PLAN_TESTID.dayRow}
 			data-day-id={dayId}
-			data-cursor-anchor={`dayrow:${dayId}`}
+			// The day's own anchor: a cursor here lands on that day's section at a finer lens.
+			data-cursor-anchor={copyAnchorId(`day:${dayId}`, copy)}
 			className={cn(
 				"flex min-h-14 items-center gap-3 rounded-lg border px-3 py-2 transition-colors",
 				empty ? "border-dashed" : "bg-card hover:border-foreground/20",

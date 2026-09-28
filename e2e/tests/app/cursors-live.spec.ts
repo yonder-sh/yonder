@@ -231,8 +231,9 @@ test("A's cursor lands on the same card and the same map spot on B's differently
 test("a day drawn in two bands: A's cursor on its second drawing lands on B's second drawing", async ({ browser }) => {
 	// Day 5 (KIX → ICN) crosses Japan and South Korea: at the country lens it
 	// is drawn under both bands. Each drawing has its own anchor id (QA verify72:
-	// B drew A on the FIRST drawing, 244 px off).
-	const url = `/t/${trip.slug}?lens=country`;
+	// B drew A on the FIRST drawing, 244 px off). With Day 5 in view: its
+	// timeline, not the list of days.
+	const url = `/t/${trip.slug}?lens=country&days=2027-10-07`;
 	const a = await open(browser, "dev", url, A_SIZE);
 	const b = await open(browser, "maya", url, B_SIZE);
 	const d5 = trip.ids.days.d5 as string;

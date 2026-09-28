@@ -516,7 +516,12 @@ function PlanTabBody() {
 						{open && dayRows ? (
 							<div className="grid grid-cols-[minmax(0,1fr)] gap-1.5 px-4 pb-2">
 								{e.days.map((d) => (
-									<DayRow key={`${e.key}:${d.dayId}`} dayId={d.dayId} />
+									<DayRow
+										key={`${e.key}:${d.dayId}`}
+										dayId={d.dayId}
+										only={d.only}
+										copy={d.copy}
+									/>
 								))}
 							</div>
 						) : open ? (

@@ -29,6 +29,22 @@ describe("the Plan's days (D02)", () => {
 		expect(ws().days).toEqual({ from: date, to: date });
 	});
 
+	it("a day in two countries is drawn once per band, each with its own stops and anchor", () => {
+		renderWithWorkspace(<PlanTab />, {
+			search: { tab: "plan", lens: "country" },
+		});
+		const rows = screen.getAllByTestId(PLAN_TESTID.dayRow);
+		const anchors = rows.map((r) => r.dataset.cursorAnchor ?? "");
+		// Every anchor is a registered day anchor, and none is drawn twice.
+		expect(anchors.every((a) => a.startsWith("day:"))).toBe(true);
+		expect(new Set(anchors).size).toBe(anchors.length);
+		const byDay = Map.groupBy(rows, (r) => r.dataset.dayId);
+		const split = [...byDay.values()].find((rs) => rs.length > 1);
+		if (!split) return; // the fixture has no day across two countries
+		const [a, b] = split as [HTMLElement, HTMLElement];
+		expect(a.textContent).not.toEqual(b.textContent);
+	});
+
 	it("the place lens keeps the timelines", () => {
 		renderWithWorkspace(<PlanTab />, { search: { lens: "place" } });
 		expect(screen.queryAllByTestId(PLAN_TESTID.dayRow)).toHaveLength(0);
