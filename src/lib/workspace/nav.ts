@@ -4,7 +4,8 @@
  * wraps them with the router; tests can call them directly.
  *
  * - zoomIn(node): scope = node; lens = the next finer level if usable there,
- *   else the new scope's default; `sel` cleared; `days` kept.
+ *   else the new scope's default (with a day in view, the day's: the place
+ *   lens, model-context); `sel` cleared; `days` kept.
  * - zoomOut(): scope = parent (or root); lens = the next coarser level if
  *   usable, else the default.
  * - Esc: clears `sel`, then `days`, then zooms out.
@@ -107,7 +108,8 @@ export function zoomIn(s: NavState, nodeId: string): NavTarget {
 			splat: splatFor(s.ix, nodeId),
 			search: cleanSearch({
 				...s.search,
-				lens: lensAfterZoomIn(s.ix, s.lens, nodeId),
+				// A day in view keeps the day's lens (model-context).
+				lens: s.days ? undefined : lensAfterZoomIn(s.ix, s.lens, nodeId),
 				sel: undefined,
 				itab: undefined,
 			}),
@@ -126,7 +128,7 @@ export function zoomOut(s: NavState): NavTarget | null {
 			splat: splatFor(s.ix, parentId),
 			search: cleanSearch({
 				...s.search,
-				lens: lensAfterZoomOut(s.ix, s.lens, parentId),
+				lens: s.days ? undefined : lensAfterZoomOut(s.ix, s.lens, parentId),
 				sel: undefined,
 				itab: undefined,
 			}),
@@ -147,7 +149,8 @@ export function zoomTo(
 			splat: splatFor(s.ix, nodeId),
 			search: cleanSearch({
 				...s.search,
-				lens: resolveLens(s.ix, nodeId, opts.lens ?? null),
+				lens:
+					opts.lens ?? (s.days ? undefined : resolveLens(s.ix, nodeId, null)),
 				sel: serializeSel(opts.sel ?? null),
 				itab: undefined,
 			}),
@@ -234,8 +237,12 @@ export function setTab(s: NavState, tab: Tab): NavTarget {
 	return withTab({ splat: base.splat, search }, null, "overview");
 }
 
+/**
+ * The lens goes with a change of days: a day in view reads as its stops (the
+ * place lens, model-context), All days as the scope's own lens.
+ */
 export const setDays = (s: NavState, range: DayRange | null) =>
-	here(s, { days: serializeDays(range) }, range !== null);
+	here(s, { days: serializeDays(range), lens: undefined }, range !== null);
 
 export const extendDays = (s: NavState, date: string) =>
 	here(s, { days: serializeDays(extendRange(s.days, date)) }, true);
@@ -261,7 +268,7 @@ export const setList = (s: NavState, list: WorkspaceSearch["list"] | null) =>
 /** The Esc chain: selection, then the day range, then zoom out. Null = nothing to do. */
 export function escapeChain(s: NavState): NavTarget | null {
 	if (s.search.sel) return here(s, { sel: undefined, itab: undefined });
-	if (s.search.days) return here(s, { days: undefined });
+	if (s.search.days) return setDays(s, null);
 	return zoomOut(s);
 }
 

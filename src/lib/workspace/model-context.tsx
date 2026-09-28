@@ -263,9 +263,11 @@ export function WorkspaceModelProvider({
 	);
 	const scope = resolved.node;
 	const scopeId = scope?.id ?? null;
-	const lens = resolveLens(ix, scopeId, search.lens);
 	const daysKey = search.days ?? "";
 	const days = useMemo(() => parseDays(daysKey), [daysKey]);
+	// One Yonder (D03): a day in view reads as its stops (areas as eyebrows,
+	// the day's places on the map) unless the URL names a lens.
+	const lens = resolveLens(ix, scopeId, search.lens ?? (days ? "place" : null));
 	const model = useMemo(
 		() => buildModel(ix, scopeId, lens, days),
 		[ix, scopeId, lens, days],

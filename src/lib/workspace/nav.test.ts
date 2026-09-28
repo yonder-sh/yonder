@@ -21,15 +21,17 @@ const state = (
 describe("navigation semantics (SPEC §8.5)", () => {
 	it("zoomIn: scope = node, next finer lens, sel cleared, days kept", () => {
 		const t = nav.zoomIn(
-			state(N.japan ?? null, {
-				lens: "city",
-				sel: `n.${N.tokyo}`,
-				days: "2027-10-03",
-			}),
+			state(N.japan ?? null, { lens: "city", sel: `n.${N.tokyo}` }),
 			N.tokyo as string,
 		);
 		expect(t.splat).toBe("japan/tokyo");
-		expect(t.search).toEqual({ lens: "area", days: "2027-10-03" });
+		expect(t.search).toEqual({ lens: "area" });
+		// With a day in view the lens is the day's (the workspace's place lens).
+		const d = nav.zoomIn(
+			state(N.japan ?? null, { lens: "city", days: "2027-10-03" }),
+			N.tokyo as string,
+		);
+		expect(d.search).toEqual({ days: "2027-10-03" });
 	});
 
 	it("zoomOut: parent scope, next coarser lens", () => {
@@ -47,10 +49,22 @@ describe("navigation semantics (SPEC §8.5)", () => {
 		});
 		const s1 = nav.escapeChain(s0);
 		expect(s1?.search).toEqual({ lens: "area", days: "2027-10-03" });
+		// Out of the day, the lens is the scope's own again.
 		const s2 = nav.escapeChain(state(N.tokyo ?? null, s1?.search));
-		expect(s2?.search).toEqual({ lens: "area" });
+		expect(s2?.search).toEqual({});
 		const s3 = nav.escapeChain(state(N.tokyo ?? null, s2?.search));
 		expect(s3?.splat).toBe("japan");
+	});
+
+	it("the lens goes with a change of days (the workspace picks the day's, D03)", () => {
+		const tokyo = N.tokyo ?? null;
+		const day = nav.setDays(state(tokyo, { lens: "area" }), {
+			from: "2027-10-03",
+			to: "2027-10-03",
+		});
+		expect(day.search).toEqual({ days: "2027-10-03" });
+		const all = nav.setDays(state(tokyo, day.search), null);
+		expect(all.search).toEqual({});
 	});
 
 	it("stepLens skips levels that aren't usable and stays at the ends", () => {

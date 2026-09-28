@@ -37,7 +37,7 @@ import {
 	useState,
 } from "react";
 import { useEditGuard } from "@/components/common/edit-guard";
-import { CategoryIcon } from "@/components/common/glyphs";
+import { CategoryIcon, TypeGlyph } from "@/components/common/glyphs";
 import { MarkdownText } from "@/components/common/markdown-text";
 import { MemberAvatar, presenceColor } from "@/components/common/member";
 import { ProposalGhost } from "@/components/common/proposal-ghost";
@@ -136,13 +136,7 @@ function BlockGlyph({ title }: { title: string }) {
 			: /rest|nap|sleep|check.?in|hotel/.test(t)
 				? BedDouble
 				: Timer;
-	return (
-		<Icon
-			className="size-3.5 shrink-0 text-muted-foreground"
-			strokeWidth={1.5}
-			aria-hidden
-		/>
-	);
+	return <Icon className="size-4 shrink-0" strokeWidth={1.5} aria-hidden />;
 }
 
 function add(a: Counts | undefined, b: Counts | undefined) {
@@ -843,11 +837,9 @@ export function ItemCard({
 			onMouseLeave={() => setPlanHover({ kind: "item", id: item.id }, false)}
 			data-family={tone}
 			className={cn(
-				"group/card relative flex min-w-0 flex-1 cursor-pointer touch-manipulation items-center gap-3 rounded-lg border bg-card px-3 text-left transition-[border-color,box-shadow] select-none",
-				// The family's bar and tint (plan.css); a block of time stays neutral.
-				tone !== "none" && "plan-tone pl-3.5",
+				"group/card plan-card relative flex min-w-0 flex-1 cursor-pointer touch-manipulation items-center gap-3 rounded-lg border bg-card px-3 text-left transition-[border-color,box-shadow] select-none",
 				"hover:border-foreground/20 has-[[data-card-main]:focus-visible]:ring-2 has-[[data-card-main]:focus-visible]:ring-ring",
-				compact || unlocated ? "min-h-10 py-1.5" : "min-h-14 py-2",
+				compact ? "min-h-10 py-1.5" : "min-h-14 py-2",
 				// A block of time: quieter, not dashed (dashes mean estimates, ADDENDUM §10).
 				unlocated && "bg-muted/35",
 				selected
@@ -868,12 +860,32 @@ export function ItemCard({
 					// The editing peer's rule covers the family bar while they edit.
 					...(peer
 						? {
-								boxShadow: `inset ${tone === "none" ? 2 : 4}px 0 0 ${presenceColor(peer.user.color)}`,
+								boxShadow: `inset 3px 0 0 ${presenceColor(peer.user.color)}`,
 							}
 						: {}),
 				} as CSSProperties
 			}
 		>
+			{/* One Yonder (D03): the family colour lives in the icon, as on its map pin. */}
+			<span
+				aria-hidden
+				className={cn(
+					"plan-icon flex shrink-0 items-center justify-center rounded-full",
+					compact ? "size-6" : "size-8",
+				)}
+			>
+				{unlocated ? (
+					<BlockGlyph title={title} />
+				) : node?.type === "place" && node.category ? (
+					<CategoryIcon category={node.category} className="size-4" />
+				) : node ? (
+					<TypeGlyph
+						type={node.type}
+						tinted={false}
+						className="size-4 text-current"
+					/>
+				) : null}
+			</span>
 			<div className="min-w-0 flex-1">
 				{crumbNodeId && !compact ? (
 					<div className="truncate text-2xs leading-4 text-muted-foreground">
@@ -881,7 +893,6 @@ export function ItemCard({
 					</div>
 				) : null}
 				<div className="flex min-w-0 items-center gap-1.5">
-					{unlocated ? <BlockGlyph title={title} /> : null}
 					<button
 						type="button"
 						data-card-main=""
@@ -902,24 +913,35 @@ export function ItemCard({
 							{node.localName}
 						</span>
 					) : null}
-					{cat && node?.category ? (
-						<span className="hidden shrink-0 items-center gap-1 @md:inline-flex">
-							<CategoryIcon
-								category={node.category}
-								className="plan-tone-ink size-3.5"
-							/>
-							{!compact ? (
-								<span className="text-xs text-muted-foreground">
-									{cat.label}
-								</span>
-							) : null}
-						</span>
+				</div>
+				{/* "Food & drink · 30m": the duration stays one click to change. */}
+				<div className="flex min-w-0 items-center gap-1 text-meta text-muted-foreground">
+					{cat && !compact ? (
+						<span className="truncate">{cat.label}</span>
+					) : null}
+					{cat && !compact ? <span aria-hidden>·</span> : null}
+					<span data-testid={PLAN_TESTID.itemDuration} className="shrink-0">
+						<DurationInput
+							value={durationShown}
+							presets={DURATION_PRESETS}
+							disabled={guard.disabled}
+							onChange={(m) =>
+								actions.update.mutate({
+									itemId: item.id,
+									patch: { durationMin: m },
+								})
+							}
+							className="-mx-1 h-5 rounded-md border-0 bg-transparent px-1 text-meta font-normal text-muted-foreground shadow-none hover:bg-accent hover:text-foreground dark:bg-transparent"
+						/>
+					</span>
+					{unlocated && !compact ? (
+						<span className="truncate">· no place</span>
 					) : null}
 				</div>
 				{!compact && (noteLine || (!item.note && nodeNote)) ? (
 					<div
 						data-testid={PLAN_TESTID.itemNote}
-						className="truncate text-xs leading-4 text-muted-foreground"
+						className="truncate text-meta text-muted-foreground"
 					>
 						{noteLine ? (
 							<MarkdownText md={noteLine} inline />
@@ -939,20 +961,6 @@ export function ItemCard({
 				) : null}
 				<BundleIcons item={item} />
 				<WarningChip item={item} />
-				<span data-testid={PLAN_TESTID.itemDuration}>
-					<DurationInput
-						value={durationShown}
-						presets={DURATION_PRESETS}
-						disabled={guard.disabled}
-						onChange={(m) =>
-							actions.update.mutate({
-								itemId: item.id,
-								patch: { durationMin: m },
-							})
-						}
-						className="bg-muted/60"
-					/>
-				</span>
 				{overlay ? null : (
 					<ItemMenu
 						item={item}

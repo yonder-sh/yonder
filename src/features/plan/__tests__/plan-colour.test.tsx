@@ -47,24 +47,24 @@ describe("card colour", () => {
 		expect(cardTone(null)).toBe("none");
 	});
 
-	it("cards carry data-family, the bar class and the category icon in its colour", () => {
+	it("cards carry data-family and an icon circle in its colour (One Yonder D03)", () => {
 		renderWithWorkspace(<PlanTab />, { search: { lens: "place" } });
 		expect(boxOf(I.hands).dataset.family).toBe("shopping");
 		expect(boxOf(I.sensoji).dataset.family).toBe("culture");
 		expect(boxOf(I.sky).dataset.family).toBe("culture");
 		expect(boxOf(I.dropBags).dataset.family).toBe("lodging");
 		expect(boxOf(I.kix).dataset.family).toBe("flight");
-		for (const id of [I.hands, I.sensoji, I.kix])
-			expect(boxOf(id).className).toMatch(/\bplan-tone\b/);
-		// The icon (not the old dot) takes the family colour.
-		expect(boxOf(I.sensoji).querySelector("svg.plan-tone-ink")).toBeTruthy();
+		for (const id of [I.hands, I.sensoji, I.kix]) {
+			expect(boxOf(id).className).toMatch(/\bplan-card\b/);
+			expect(boxOf(id).querySelector(".plan-icon svg")).toBeTruthy();
+		}
 	});
 
-	it("a block without a place stays neutral: no bar, no tint", () => {
+	it("a block without a place stays neutral: a grey icon, 'no place'", () => {
 		renderWithWorkspace(<PlanTab />, { search: { lens: "place" } });
 		const lunch = boxOf(I.lunch1);
 		expect(lunch.dataset.family).toBe("none");
-		expect(lunch.className).not.toMatch(/\bplan-tone\b/);
+		expect(lunch.textContent).toMatch(/no place/);
 	});
 
 	it("the flight's ticket stub reads in the flight colour", () => {
