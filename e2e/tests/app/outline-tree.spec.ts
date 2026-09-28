@@ -256,12 +256,12 @@ test("menu: rename, drop, delete with the affected list, and Undo", async ({ pag
 	await expect(page.getByTestId(OUTLINE_TESTID.droppedGroup).first()).toContainText("Not going · 1");
 	await expect(row(page, "Asakusa")).toHaveCount(0);
 
-	// Delete Shibuya: it has places and plan items, so the dialog lists them.
+	// Delete Shibuya: it has places and stops, so the dialog lists them.
 	await row(page, "Shibuya").click({ button: "right" });
 	await page.getByRole("menuitem", { name: /Delete/ }).click();
 	const dialog = page.getByTestId(OUTLINE_TESTID.deleteDialog);
 	await expect(dialog).toContainText("3 places inside");
-	await expect(dialog).toContainText("items on the plan");
+	await expect(dialog).toContainText("stops on the plan");
 	await page.screenshot({ path: shotPath("outline/delete-dialog.png"), animations: "disabled" });
 	await dialog.getByTestId(OUTLINE_TESTID.deleteConfirm).click();
 	await expect(row(page, "Shibuya")).toHaveCount(0);

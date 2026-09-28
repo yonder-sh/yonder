@@ -3,7 +3,7 @@
  * - **Move…** (SPEC §18.3): a `TreePicker` of every place, the invalid parents
  *   greyed with the rank rule's reason ("A city can't go inside a place").
  * - **Delete…** (QA HIER-09): lists what goes with the place (places inside,
- *   plan items, notes, media, list items) before deleting; the toast's Undo
+ *   stops on the plan, notes, media, list items) before deleting; the toast's Undo
  *   restores all of it (`restoreNode`). A place with nothing attached is
  *   deleted straight away, with the same Undo.
  */
@@ -69,7 +69,7 @@ const plural = (n: number, one: string, many = `${one}s`) =>
 export function impactLines(i: DeleteImpact): string[] {
 	const out: string[] = [];
 	if (i.places) out.push(`${plural(i.places, "place")} inside`);
-	if (i.items) out.push(`${plural(i.items, "item")} on the plan`);
+	if (i.items) out.push(`${plural(i.items, "stop")} on the plan`);
 	if (i.notes) out.push(i.notes === 1 ? "Notes" : `Notes on ${i.notes} places`);
 	if (i.media) out.push(plural(i.media, "photo or link", "photos and links"));
 	if (i.lists) out.push(plural(i.lists, "list item"));
