@@ -47,9 +47,12 @@ async function openQaPlan(page: Page, query: string): Promise<boolean> {
 const cardBox = (page: Page, title: string) =>
 	page.getByTestId(TESTID.timelineItem).filter({ hasText: title }).first().locator("[data-family]");
 
-/** The bar's colour: the first stop of the card's background gradient. */
+/** The family colour: the card's icon circle (One Yonder D03; it was a bar). */
 const barColor = (page: Page, title: string) =>
-	cardBox(page, title).evaluate((el) => /rgb[a]?\([^)]*\)|oklab\([^)]*\)|color\([^)]*\)/.exec(getComputedStyle(el).backgroundImage)?.[0] ?? "");
+	cardBox(page, title).evaluate((el) => {
+		const icon = el.querySelector(".plan-icon");
+		return icon ? getComputedStyle(icon).backgroundColor : "";
+	});
 
 /** Paint settles: fonts, the map's first frame, the reveal transition. */
 const settle = (page: Page) => page.waitForTimeout(800);
@@ -61,10 +64,11 @@ test.describe("on the QA seed: the owner's screenshots and the leg rows", () => 
 		await expect(cardBox(page, "Arrival formalities")).toHaveAttribute("data-family", "flight");
 		await expect(cardBox(page, "JINS")).toHaveAttribute("data-family", "shopping");
 		await expect(cardBox(page, "Lunch")).toHaveAttribute("data-family", "none");
-		// The bar is the map pin's colour (--fam-culture #cf3b1d, --fam-shopping #bc4891).
+		// The icon is the map pin's colour (--fam-culture #cf3b1d, --fam-shopping #bc4891).
 		expect(await barColor(page, "Anamori Inari Shrine")).toBe("rgb(207, 59, 29)");
 		expect(await barColor(page, "JINS")).toBe("rgb(188, 72, 145)");
-		expect(await barColor(page, "Lunch")).toBe("");
+		// A block of time: a quiet grey one.
+		expect(await barColor(page, "Lunch")).not.toBe("rgb(207, 59, 29)");
 		await settle(page);
 		await page.screenshot({ path: shot("desktop-light-day2"), animations: "disabled" });
 		// A second day: the Fuji Excursion, a stay, nature.
@@ -81,14 +85,13 @@ test.describe("on the QA seed: the owner's screenshots and the leg rows", () => 
 		await page.getByTestId(TESTID.centerPanel).screenshot({ path: shot("desktop-light-leg-hover"), animations: "disabled" });
 	});
 
-	test("dark, 1440×900: the tint still shows, the near-black families are raised", async ({ page }) => {
+	test("dark, 1440×900: the icons keep their colours, the near-black families are raised", async ({ page }) => {
 		await page.emulateMedia({ colorScheme: "dark" });
 		test.skip(!(await openQaPlan(page, "tab=plan&lens=place&days=2027-10-03")), "needs the QA seed (pnpm db:seed:qa)");
 		await expect(page.locator("html")).toHaveClass(/\bdark\b/);
-		// The shrine's tint against Breakfast's plain card (a city's muted bar, no tint).
-		const bg = (title: string) => cardBox(page, title).evaluate((el) => getComputedStyle(el).backgroundColor);
+		// The shrine's coloured icon against Breakfast's grey one (a city's).
 		await expect(cardBox(page, "Breakfast")).toHaveAttribute("data-family", "area");
-		expect(await bg("Anamori Inari Shrine")).not.toBe(await bg("Breakfast"));
+		expect(await barColor(page, "Anamori Inari Shrine")).not.toBe(await barColor(page, "Breakfast"));
 		await settle(page);
 		await page.screenshot({ path: shot("desktop-dark-day2"), animations: "disabled" });
 		await page.goto(`/t/${QA_TRIP}?tab=plan&lens=place&days=2027-10-07`);

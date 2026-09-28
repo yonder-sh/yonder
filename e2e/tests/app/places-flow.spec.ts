@@ -79,10 +79,12 @@ async function addMore(page: Page, c: FixtureClone): Promise<void> {
 }
 
 const step = (page: Page, s: string) => page.locator(`[data-testid="${T.step}"][data-step="${s}"]`);
-const countOf = (page: Page, s: string) => step(page, s).getByTestId(T.stepCount);
+/** A view's full count line, from its title ("Rate · 12 to rate"; the control shows "12 left"). */
+const countOf = async (page: Page, s: string) =>
+	((await step(page, s).getAttribute("title")) ?? "").replace(/^[^·]+· /, "");
 
 async function toRate(page: Page): Promise<number> {
-	const text = (await countOf(page, "rate").textContent()) ?? "";
+	const text = await countOf(page, "rate");
 	const m = /^(\d+) to rate$/.exec(text.trim());
 	if (!m) throw new Error(`no "N to rate" count: ${text}`);
 	return Number(m[1]);
@@ -91,7 +93,7 @@ async function toRate(page: Page): Promise<number> {
 test.describe("desktop", () => {
 	test.skip(({ isMobile }) => isMobile, "desktop layout (the phone has its own test)");
 
-	test("the step bar: 1 Rate · 2 Review · 3 Schedule with their counts; Places opens on Rate", async ({ page }) => {
+	test("the views: All places · Rate · Decide · Schedule with their counts; Places opens on Rate", async ({ page }) => {
 		const c = await cloneFixtureTrip(page.request);
 		await page.goto(`/t/${c.slug}?tab=plan`);
 		await expectLive(page);
@@ -103,16 +105,16 @@ test.describe("desktop", () => {
 		await expect(page).toHaveURL(/pv=rate/);
 		await expect(page.getByTestId(T.steps)).toHaveAttribute("data-step", "rate");
 		await expect(page.getByTestId(T.feed)).toBeVisible();
-		await expect(countOf(page, "review")).toHaveText(/^\d+ places$/);
-		await expect(countOf(page, "rate")).toHaveText(/^\d+ to rate$/);
+		await expect(step(page, "review")).toHaveAttribute("title", /^All places · \d+ places$/);
+		await expect(step(page, "rate")).toHaveAttribute("title", /^Rate · \d+ to rate$/);
 		await expect(step(page, "schedule")).toContainText("Schedule");
 		// Tokyo Tower, Yasaka Shrine, the museum and Tōdai-ji wait for a day.
-		await expect(countOf(page, "schedule")).toHaveText(/^\d+ shortlisted · 4 not on a day$/);
+		await expect(step(page, "schedule")).toHaveAttribute("title", /^Schedule · \d+ shortlisted · 4 not on a day$/);
 		// Rating is what's waiting for you: the dot.
 		await expect(step(page, "rate")).toHaveAttribute("data-next", "true");
 		await expect(step(page, "rate").getByTestId(T.stepDot)).toBeVisible();
 		// Every place but Tōdai-ji is yours to rate in a fresh clone.
-		const ideas = Number(/^\d+/.exec((await countOf(page, "review").textContent()) ?? "")?.[0]);
+		const ideas = Number(/^\d+/.exec(await countOf(page, "review"))?.[0]);
 		expect(await toRate(page)).toBe(ideas - 1);
 		await page.waitForTimeout(500);
 		await page.screenshot({ path: shot("desktop-2-rate"), animations: "disabled" });
@@ -156,7 +158,7 @@ test.describe("desktop", () => {
 		const placeId = (await card.getAttribute("data-place")) as string;
 		await page.keyboard.press("2");
 		await expect(card).toHaveAttribute("data-rated", /.+/);
-		await expect(countOf(page, "rate")).toHaveText(`${before - 1} to rate`);
+		await expect(step(page, "rate")).toHaveAttribute("title", `Rate · ${before - 1} to rate`);
 		const g = await graphOf(page);
 		expect(g.nodes.find((n) => n.id === placeId)?.priorities[c.members.owner]).toBe("really_want");
 		// The top bar's Rate says the same.
@@ -188,7 +190,7 @@ test.describe("desktop", () => {
 			.toBe(bestDay);
 		await expect(row).toHaveCount(0);
 		await expect(page.getByTestId(T.scheduleDone)).toBeVisible();
-		await expect(countOf(page, "schedule")).toHaveText(/shortlisted · all on a day$/);
+		await expect(step(page, "schedule")).toHaveAttribute("title", /shortlisted · all on a day$/);
 	});
 });
 
