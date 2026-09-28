@@ -347,7 +347,7 @@ function Fab() {
 				data-testid={TESTID.fab}
 				aria-label="Add"
 				className={cn(
-					"fixed right-4 bottom-[calc(72px+env(safe-area-inset-bottom))] z-40 flex size-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-float transition-transform active:scale-95 data-[state=open]:rotate-45",
+					"fixed right-4 bottom-[calc(72px+var(--plan-dock-h,0px)+env(safe-area-inset-bottom))] z-40 flex size-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-float transition-transform active:scale-95 data-[state=open]:rotate-45",
 				)}
 			>
 				<Plus className="size-6" />

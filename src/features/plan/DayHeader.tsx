@@ -781,16 +781,19 @@ export function DayHeader({
 							</button>
 						</h3>
 					)}
-					<div className="flex min-w-0 flex-wrap items-center gap-x-1 text-meta text-muted-foreground">
-						<StartTime day={day} />
-						{sd && hasItems ? (
-							<span
-								data-testid={PLAN_TESTID.daySummary}
-								className="min-w-0 truncate"
-							>
-								<Summary dayId={day.id} estimate={estimate} />
-							</span>
-						) : null}
+					<div className="flex min-w-0 flex-wrap items-center gap-x-2 text-meta text-muted-foreground">
+						{/* "09:00–23:35 · …": the start is a button, the rest reads on from it. */}
+						<span className="flex min-w-0 items-center">
+							<StartTime day={day} />
+							{sd && hasItems ? (
+								<span
+									data-testid={PLAN_TESTID.daySummary}
+									className="min-w-0 truncate"
+								>
+									<Summary dayId={day.id} estimate={estimate} />
+								</span>
+							) : null}
+						</span>
 						<span className="ml-auto flex min-w-0 items-center gap-x-2">
 							{day.nightNodeId || stayOpen ? (
 								<StayPicker

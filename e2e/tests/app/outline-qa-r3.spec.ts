@@ -183,7 +183,7 @@ test("FB-05: the Ideas header's 'Open in Places' keeps the current filter and sc
 	const ideas = page.getByTestId(PLAN_TESTID.ideas);
 	const link = ideas.getByTestId(OUTLINE_TESTID.rateIdeas);
 	await expect(link).toBeVisible();
-	await expect(link).toHaveText(/Open in Places/);
+	await expect(link).toHaveText(/See all in Places/);
 	const href = new URL((await link.getAttribute("href")) ?? "", page.url());
 	expect(href.pathname).toBe(`/t/${c.slug}`);
 	expect(href.searchParams.get("tab")).toBe("places");

@@ -16,9 +16,9 @@ import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { PLACES_TAB_TESTID } from "./testids";
 import { useFlowTally } from "./use-flow";
 
-/** The pill's bottom edge: just above the phone's 56px tab bar (One Yonder). */
+/** The pill's bottom edge: just above the phone's 56px tab bar and the Plan's ideas dock (One Yonder). */
 export const RATE_PILL_BOTTOM =
-	"calc(56px + env(safe-area-inset-bottom) + 12px)";
+	"calc(56px + var(--plan-dock-h, 0px) + env(safe-area-inset-bottom) + 12px)";
 
 export function RatePill() {
 	const { tab, search } = useWorkspace();

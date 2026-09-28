@@ -8,8 +8,9 @@
  * to schedule it, or press **A** on a focused row to add it to the focused
  * day. Proposed places (E7) sort in like any other, drawn as ghosts.
  *
- * `plan` (One Yonder, D03/D04): the same list under the Plan's days, "Ideas in
- * Kyoto" for the day in view, each row with + to add it to that day.
+ * `plan` (One Yonder, D03/P10): a dock at the foot of the Plan, "Ideas in
+ * Kyoto" for the day in view, the ideas as cards in a row that scrolls
+ * sideways, each with + to add it to that day; folded on a phone at first.
  */
 import { useDndMonitor, useDraggable } from "@dnd-kit/core";
 import {
@@ -17,6 +18,7 @@ import {
 	ArrowRight,
 	ChevronDown,
 	ChevronRight,
+	ChevronUp,
 	Lightbulb,
 	Plus,
 } from "lucide-react";
@@ -24,6 +26,7 @@ import {
 	type KeyboardEvent,
 	type MouseEvent,
 	useCallback,
+	useEffect,
 	useId,
 	useMemo,
 	useRef,
@@ -37,7 +40,7 @@ import {
 	leadMark,
 	ProposalGhost,
 } from "@/components/common/proposal-ghost";
-import { RatingDot } from "@/components/kit";
+import { RatingDot, RatingPill } from "@/components/kit";
 import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
@@ -48,6 +51,7 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { isRateable } from "@/features/places/lib/rate";
+import { cardTone } from "@/features/plan/card-tone";
 import { PLAN_TESTID } from "@/features/plan/testids";
 import type { GraphNode } from "@/lib/engine/types";
 import { bool, oneOf, useFollowValue } from "@/lib/realtime/view-ui";
@@ -72,6 +76,11 @@ import { usePlaceFilter } from "./use-place-filter";
 
 const SORT_KEY = "yonder:ideas:sort";
 const OPEN_KEY = "yonder:ideas:open";
+/** The Plan's dock folds on its own (open on a desktop, folded on a phone at first). */
+const PLAN_OPEN_KEY = "yonder:plan-ideas:open";
+const narrow = () =>
+	typeof window !== "undefined" &&
+	!!window.matchMedia?.("(max-width: 639px)").matches;
 const isIdeasSort = oneOf<IdeasSort>(IDEAS_SORTS);
 
 function readPref<T extends string>(
@@ -103,6 +112,7 @@ function IdeaRow({
 	onKey,
 	registerRef,
 	onAdd,
+	card = false,
 }: {
 	entry: IdeaEntry;
 	instance: string;
@@ -113,6 +123,8 @@ function IdeaRow({
 	registerRef(id: string, el: HTMLElement | null): void;
 	/** The Plan's +: add it to the day in view. */
 	onAdd?: (nodeId: string) => void;
+	/** The Plan's dock: a card in a row (icon, name, rating and where). */
+	card?: boolean;
 }) {
 	const { nav, sel, ix, proposals } = useWorkspace();
 	const guard = useEditGuard();
@@ -171,24 +183,62 @@ function IdeaRow({
 					: nav.select({ kind: "node", id: node.id })
 			}
 			onKeyDown={(e) => onKey(e, node)}
+			data-family={card ? cardTone(node) : undefined}
 			className={cn(
-				"group/idea relative flex h-7 cursor-pointer touch-manipulation items-center gap-1.5 pr-2 pl-4 text-sm outline-none select-none max-md:h-11",
-				"hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
+				"group/idea relative flex cursor-pointer touch-manipulation items-center text-sm outline-none select-none",
+				card
+					? "plan-card h-14 w-56 shrink-0 gap-2 rounded-lg border bg-card px-2 hover:border-foreground/20 focus-visible:ring-2 focus-visible:ring-ring"
+					: "h-7 gap-1.5 pr-2 pl-4 hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset max-md:h-11",
 				selected &&
-					"bg-card before:absolute before:inset-y-0 before:left-0 before:w-0.5 before:bg-primary",
+					(card
+						? "outline-2 outline-primary outline-solid"
+						: "bg-card before:absolute before:inset-y-0 before:left-0 before:w-0.5 before:bg-primary"),
 				isDragging && "opacity-40",
 				proposed && "text-muted-foreground",
 			)}
 		>
-			<TypeGlyph type={node.type} category={node.category} />
-			<span className="min-w-0 truncate">{node.name}</span>
-			{parent && parent.id !== scopeId ? (
-				<span className="min-w-0 shrink-[100] truncate text-xs text-muted-foreground">
-					{parent.name}
-				</span>
-			) : null}
-			<span className="ml-auto flex shrink-0 items-center gap-1 pl-1">
-				{ghost ? (
+			{card ? (
+				<>
+					<span
+						aria-hidden
+						className="plan-icon flex size-8 shrink-0 items-center justify-center rounded-full"
+					>
+						<TypeGlyph
+							type={node.type}
+							category={node.category}
+							tinted={false}
+							className="size-4 text-current"
+						/>
+					</span>
+					<span className="flex min-w-0 flex-1 flex-col">
+						<span className="truncate font-medium">{node.name}</span>
+						<span className="flex min-w-0 items-center gap-1 text-meta text-muted-foreground">
+							{top && !ghost ? <RatingPill level={top} size="sm" /> : null}
+							{ghost ? <span>suggested</span> : null}
+							{parent && parent.id !== scopeId ? (
+								<span className="truncate">{parent.name}</span>
+							) : null}
+						</span>
+					</span>
+				</>
+			) : (
+				<>
+					<TypeGlyph type={node.type} category={node.category} />
+					<span className="min-w-0 truncate">{node.name}</span>
+					{parent && parent.id !== scopeId ? (
+						<span className="min-w-0 shrink-[100] truncate text-xs text-muted-foreground">
+							{parent.name}
+						</span>
+					) : null}
+				</>
+			)}
+			<span
+				className={cn(
+					"flex shrink-0 items-center gap-1",
+					card ? "self-start pt-1" : "ml-auto pl-1",
+				)}
+			>
+				{card ? null : ghost ? (
 					<span className="sr-only">suggested</span>
 				) : (
 					<RatingDot level={top} />
@@ -232,7 +282,14 @@ function IdeaRow({
  * filter (the URL keeps `f`). A plain anchor the router takes over.
  * `offerRate` says when it shows.
  */
-function RateIdeasLink({ where }: { where: string | undefined }) {
+function RateIdeasLink({
+	where,
+	plan = false,
+}: {
+	where: string | undefined;
+	/** The Plan's dock says "See all in Places" (D03). */
+	plan?: boolean;
+}) {
 	const { nav } = useWorkspace();
 	const opts = { patch: { pst: "idea" as const, pv: undefined } };
 	const onClick = (e: MouseEvent<HTMLAnchorElement>) => {
@@ -252,7 +309,7 @@ function RateIdeasLink({ where }: { where: string | undefined }) {
 			title="See, rate and decide on these ideas in the Places tab"
 			className="inline-flex h-7 shrink-0 cursor-pointer items-center gap-1 rounded-md px-1.5 text-xs whitespace-nowrap max-md:h-11 text-primary underline-offset-2 hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
 		>
-			Open in Places
+			{plan ? "See all in Places" : "Open in Places"}
 			<ArrowRight className="size-3" aria-hidden />
 		</a>
 	);
@@ -274,12 +331,15 @@ function IdeasBinInner({
 	const guard = useEditGuard();
 	const dnd = useDnd();
 	const instance = useId();
+	const openKey = plan ? PLAN_OPEN_KEY : OPEN_KEY;
 	const [open, setOpenState] = useState(
-		() => readPref(OPEN_KEY, ["1", "0"] as const, "1") === "1",
+		() =>
+			readPref(openKey, ["1", "0"] as const, plan && narrow() ? "0" : "1") ===
+			"1",
 	);
 	const setOpen = (v: boolean) => {
 		setOpenState(v);
-		writePref(OPEN_KEY, v ? "1" : "0");
+		writePref(openKey, v ? "1" : "0");
 	};
 	const [sort, setSortState] = useState<IdeasSort>(() =>
 		readPref(SORT_KEY, IDEAS_SORTS, "priority"),
@@ -291,6 +351,21 @@ function IdeasBinInner({
 	// FB-21d: the bin's fold and sort travel with my view (not saved as a follower's).
 	useFollowValue("outline.ideas", open, setOpenState, bool);
 	useFollowValue("outline.isort", sort, setSortState, isIdeasSort);
+	// The Plan's dock: the phone's + and Rate pill float above it (--plan-dock-h).
+	const dock = useRef<HTMLElement>(null);
+	useEffect(() => {
+		const el = dock.current;
+		if (!plan || !el || typeof ResizeObserver === "undefined") return;
+		const root = document.documentElement;
+		const ro = new ResizeObserver(() =>
+			root.style.setProperty("--plan-dock-h", `${el.offsetHeight}px`),
+		);
+		ro.observe(el);
+		return () => {
+			ro.disconnect();
+			root.style.removeProperty("--plan-dock-h");
+		};
+	}, [plan]);
 	const scopeId = scopeIdProp !== undefined ? scopeIdProp : (scope?.id ?? null);
 	const ghosts = useMemo(
 		() => (proposals.show ? ghostNodes(ix, proposals.list) : []),
@@ -336,8 +411,11 @@ function IdeasBinInner({
 			if (id) refs.current.get(id)?.focus();
 		};
 		const plain = !e.metaKey && !e.ctrlKey && !e.altKey;
-		if (e.key === "ArrowDown") focus(Math.min(ideas.length - 1, i + 1));
-		else if (e.key === "ArrowUp") focus(Math.max(0, i - 1));
+		// The dock's cards run sideways: ← → as well as ↑ ↓.
+		if (e.key === "ArrowDown" || e.key === "ArrowRight")
+			focus(Math.min(ideas.length - 1, i + 1));
+		else if (e.key === "ArrowUp" || e.key === "ArrowLeft")
+			focus(Math.max(0, i - 1));
 		else if (e.key === "Home") focus(0);
 		else if (e.key === "End") focus(ideas.length - 1);
 		else if (e.key === "Enter" || e.key === " ")
@@ -364,11 +442,15 @@ function IdeasBinInner({
 
 	return (
 		<section
+			ref={dock}
 			data-testid={plan ? PLAN_TESTID.ideas : TESTID.ideasBin}
 			aria-label={plan ? `Ideas in ${where ?? graph.trip.name}` : "Ideas"}
 			className={cn(
 				"flex shrink-0 flex-col",
-				plan ? "mx-4 mt-6 rounded-xl border bg-card" : "border-t",
+				// The Plan's dock sits on the column's foot while its days scroll.
+				plan
+					? "sticky bottom-0 z-20 mt-6 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/85"
+					: "border-t",
 				!plan && !embedded && "max-h-[40%]",
 			)}
 		>
@@ -377,29 +459,54 @@ function IdeasBinInner({
 					type="button"
 					onClick={() => setOpen(!open)}
 					aria-expanded={open}
-					className="eyebrow flex h-full min-w-0 flex-1 items-center gap-1.5 overflow-hidden pl-4 whitespace-nowrap hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-inset"
+					className={cn(
+						"flex h-full min-w-0 flex-1 items-center gap-1.5 overflow-hidden pl-4 whitespace-nowrap hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-inset",
+						!plan && "eyebrow",
+					)}
 				>
-					{open ? (
+					{plan ? (
+						open ? (
+							<ChevronDown className="size-4 shrink-0 text-muted-foreground" />
+						) : (
+							<ChevronUp className="size-4 shrink-0 text-muted-foreground" />
+						)
+					) : open ? (
 						<ChevronDown className="size-3 shrink-0" />
 					) : (
 						<ChevronRight className="size-3 shrink-0" />
 					)}
-					<span>{plan ? `Ideas in ${where ?? graph.trip.name}` : "Ideas"}</span>
-					<span aria-hidden>·</span>
+					<span className={plan ? "text-sm font-medium" : undefined}>
+						{plan ? `Ideas in ${where ?? graph.trip.name}` : "Ideas"}
+					</span>
+					{plan ? null : <span aria-hidden>·</span>}
 					<span
-						className="normal-case tracking-normal tnum"
+						className={cn(
+							"tnum",
+							plan
+								? "text-meta text-muted-foreground"
+								: "normal-case tracking-normal",
+						)}
 						data-testid={OUTLINE_TESTID.ideasCount}
 					>
 						{countText}
 					</span>
+					{plan && total > 0 && !guard.disabled ? (
+						<span className="truncate text-meta text-muted-foreground max-sm:hidden">
+							· drag onto a day or tap +
+						</span>
+					) : null}
 				</button>
-				{offerRate ? <RateIdeasLink where={where} /> : null}
+				{offerRate ? <RateIdeasLink where={where} plan={plan} /> : null}
 				<DropdownMenu>
 					<DropdownMenuTrigger asChild>
 						<Button
 							variant="ghost"
 							size="xs"
-							className="h-7 gap-1 px-1.5 text-xs font-normal text-muted-foreground"
+							className={cn(
+								"h-7 gap-1 px-1.5 text-xs font-normal text-muted-foreground",
+								// The phone's dock has no room: Places sorts them too.
+								plan && "max-sm:hidden",
+							)}
 							data-testid={OUTLINE_TESTID.ideasSort}
 							aria-label={`Sort ideas: ${IDEAS_SORT_LABEL[sort]}`}
 						>
@@ -436,16 +543,14 @@ function IdeasBinInner({
 					<div
 						role="listbox"
 						aria-label={where ? `Ideas in ${where}` : "Ideas"}
+						aria-orientation={plan ? "horizontal" : undefined}
 						className={cn(
 							"min-h-0 pb-2",
 							!embedded && !plan && "overflow-y-auto",
+							plan &&
+								"flex gap-2 overflow-x-auto overscroll-x-contain px-4 pt-0.5 pb-3 [scrollbar-width:thin]",
 						)}
 					>
-						{plan ? (
-							<p className="px-4 pb-1 text-meta text-muted-foreground">
-								Drag one onto a day, or tap + to add it to the day in view.
-							</p>
-						) : null}
 						{ideas.map((entry) => (
 							<IdeaRow
 								key={entry.node.id}
@@ -457,6 +562,7 @@ function IdeasBinInner({
 								onKey={onKey}
 								registerRef={registerRef}
 								onAdd={plan ? (id) => actions.schedule(id) : undefined}
+								card={plan}
 							/>
 						))}
 					</div>
