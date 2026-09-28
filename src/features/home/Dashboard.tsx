@@ -235,7 +235,11 @@ function Hero({
 				</span>
 				{trip.viaLink || trip.role !== "owner" ? (
 					<span className="flex items-center gap-2 text-meta text-muted-foreground">
-						<Chip tone="outline" size="sm" className="text-muted-foreground">
+						<Chip
+							tone="outline"
+							size="sm"
+							className="bg-transparent text-muted-foreground"
+						>
 							{roleLabel(trip.role)}
 						</Chip>
 						{trip.ownerName ? `by ${trip.ownerName}` : null}
@@ -299,7 +303,11 @@ function TripCard({
 					</Link>
 					<span className="relative z-10 flex shrink-0 items-center gap-1">
 						{shared ? (
-							<Chip tone="outline" size="sm" className="text-muted-foreground">
+							<Chip
+								tone="outline"
+								size="sm"
+								className="bg-transparent text-muted-foreground"
+							>
 								{roleLabel(trip.role)}
 							</Chip>
 						) : null}
