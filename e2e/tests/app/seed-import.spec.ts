@@ -190,11 +190,9 @@ test("SEED-06/07/09: lists and links roll up at the trip and at Tokyo", async ({
 	await page.goto(`/t/${slug}?tab=plan`);
 	await expectLive(page);
 	const tabs = page.getByTestId(TESTID.centerTabs);
-	// 32 todos (11 Book ahead + 21 Action Timeline) + 27 shopping; 94 photos +
-	// 32 links, minus the 6 links on dropped cities (the tab counts what the
-	// Media tab shows, and dropped places are hidden: WP-Shell scope counts).
+	// 32 todos (11 Book ahead + 21 Action Timeline) + 27 shopping. Photos and
+	// links have no tab of their own since One Yonder (they're in Details).
 	await expect(tabs).toContainText(/Lists\s*59/);
-	await expect(tabs).toContainText(/Media\s*120/);
 	await page.goto(`/t/${slug}/japan/tokyo?lens=area&tab=lists&list=shopping`);
 	await expectLive(page);
 	// ROLL-01: 19 shopping items inside Tokyo, plus its to-dos.
