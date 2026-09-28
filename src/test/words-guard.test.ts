@@ -27,13 +27,14 @@ const BANNED: [RegExp, string][] = [
 	[/\bdropped\b/i, "Not going"],
 	[/\bcosts?\b/i, "Expense"],
 	[/\bwhat changed\b/i, "Activity"],
+	[/\blens(es)?\b/i, "Where / less or more detail"],
 ];
 
 /** `file` (relative) and the text it may keep. */
 const ALLOW: [string, RegExp][] = [];
 
 /** What a person reads in one TSX file: [line, text]. */
-export function visibleText(src: string): [number, string][] {
+function visibleText(src: string): [number, string][] {
 	const out: [number, string][] = [];
 	const lines = src.split("\n");
 	for (const [i, raw] of lines.entries()) {
