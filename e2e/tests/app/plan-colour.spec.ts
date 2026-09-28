@@ -6,7 +6,7 @@
  *   card's bar is its map pin's family colour;
  * - a leg row shows its mode and time; hovering (or Tab) shows the
  *   alternatives, and accepting one still works;
- * - the Outline and the map hide, stay hidden after a reload and come back;
+ * - the map hides, stays hidden after a reload and comes back;
  *   showing the map restores its width;
  * - the Places tab with the map hidden is wide.
  *
@@ -99,7 +99,7 @@ test.describe("on the QA seed: the owner's screenshots and the leg rows", () => 
 		await page.screenshot({ path: shot("desktop-dark-day6"), animations: "disabled" });
 	});
 
-	test("390 px: the Plan in the phone's sheet", async ({ browser }) => {
+	test("390 px: the Plan on the phone", async ({ browser }) => {
 		const ctx = await browser.newContext({
 			viewport: { width: 390, height: 844 },
 			isMobile: true,
@@ -160,29 +160,21 @@ test.describe("on the QA seed: the owner's screenshots and the leg rows", () => 
 	});
 });
 
-/** The phone: sign in, open the Plan, drag the sheet to its top snap. */
+/** The phone: sign in and open the Plan (the page, the map folded away). */
 async function openQaPlanPhone(page: Page): Promise<boolean> {
 	await loginViaApi(page.request, DENNIS.email, { first: DENNIS.first, last: DENNIS.last });
 	const res = await page.goto(`/t/${QA_TRIP}?tab=plan&lens=place&days=2027-10-03`);
 	if (!res || res.status() >= 400) return false;
 	await expectLive(page, 30_000);
-	const sheet = page.getByTestId(TESTID.mobileSheet);
-	await expect(sheet.getByTestId(TESTID.dayChips)).toBeVisible();
-	const box = await sheet.boundingBox();
-	if (!box) throw new Error("no sheet");
-	await page.mouse.move(195, box.y + 8);
-	await page.mouse.down();
-	await page.mouse.move(195, box.y - 300, { steps: 8 });
-	await page.mouse.move(195, 60, { steps: 8 });
-	await page.mouse.up();
-	await expect(sheet.getByTestId(TESTID.timelineItem).first()).toBeVisible();
+	await expect(page.getByTestId(TESTID.dayChips)).toBeVisible();
+	await expect(page.getByTestId(TESTID.mobileSheet).getByTestId(TESTID.timelineItem).first()).toBeVisible();
 	return true;
 }
 
 test.describe("on a clone of the demo trip", () => {
 	test.use({ storageState: storageStateOf("dev"), viewport: { width: 1440, height: 900 } });
 
-	test("the Outline and the map hide, stay hidden after a reload, and come back at their size", async ({ page }) => {
+	test("the map hides, stays hidden after a reload, and comes back at its size", async ({ page }) => {
 		const logs = collectConsole(page);
 		const c = await cloneFixtureTrip(page.request);
 		await page.goto(`/t/${c.slug}?tab=plan&lens=place`);
@@ -198,27 +190,17 @@ test.describe("on a clone of the demo trip", () => {
 		await page.mouse.up();
 		const width = Math.round((await center.boundingBox())?.width ?? 0);
 
-		await page.getByRole("button", { name: "Hide the outline" }).click();
 		await page.getByRole("button", { name: "Hide the map" }).click();
-		await expect(page.getByTestId(SHELL_TESTID.outlineAside)).toHaveCount(0);
 		await expect(page.getByTestId(TESTID.tripMap)).toHaveCount(0);
 		await page.reload();
 		await expectLive(page);
-		await expect(page.getByTestId(SHELL_TESTID.outlineRail)).toBeVisible();
 		await expect(page.getByTestId(SHELL_TESTID.mapRail)).toBeVisible();
-		await expect(page.getByTestId(SHELL_TESTID.outlineAside)).toHaveCount(0);
 		await expect(page.getByTestId(TESTID.tripMap)).toHaveCount(0);
-		// The centre takes the width between the two rails.
-		expect(Math.round((await center.boundingBox())?.width ?? 0)).toBeGreaterThan(1300);
-		// The top bar's Outline popover still works.
-		await page.getByTestId(TESTID.outlinePopoverButton).click();
-		await expect(page.getByTestId(TESTID.outlinePopover)).toBeVisible();
-		await page.keyboard.press("Escape");
+		// The centre takes the width up to the rail.
+		expect(Math.round((await center.boundingBox())?.width ?? 0)).toBeGreaterThan(1350);
 		await settle(page);
 		await page.screenshot({ path: shot("desktop-panels-hidden"), animations: "disabled" });
 
-		await page.getByRole("button", { name: "Show the outline" }).click();
-		await expect(page.getByTestId(SHELL_TESTID.outlineAside)).toBeVisible();
 		// ⌘⇧\ (Ctrl on Linux) brings the map back at the width it had.
 		await page.locator("body").press("ControlOrMeta+Shift+Backslash");
 		await expect(page.getByTestId(TESTID.tripMap)).toBeVisible();
@@ -249,8 +231,8 @@ test.describe("on a clone of the demo trip", () => {
 		const narrow = Math.round((await places.boundingBox())?.width ?? 0);
 		await page.getByRole("button", { name: "Hide the map" }).click();
 		await expect(page.getByTestId(SHELL_TESTID.mapRail)).toBeVisible();
-		// The viewport less the Outline (264) and the map's rail (40).
-		await expect.poll(async () => Math.round((await places.boundingBox())?.width ?? 0)).toBeGreaterThan(1100);
+		// The viewport less the map's rail (40).
+		await expect.poll(async () => Math.round((await places.boundingBox())?.width ?? 0)).toBeGreaterThan(1300);
 		expect(narrow).toBeLessThan(800);
 		// One switch: no Wide toggle of its own.
 		await expect(page.getByTestId("places-wide")).toHaveCount(0);

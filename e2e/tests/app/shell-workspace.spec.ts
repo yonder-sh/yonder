@@ -107,12 +107,14 @@ test("structure at 1440, 1100, 900 and 390 px", async ({ page }, info) => {
 		const inspector = page.getByTestId(TESTID.inspector);
 		await expect(inspector).toBeVisible();
 		await expect(inspector.getByTestId(TESTID.nodeOverview)).toBeVisible();
-		if (bp === "xl") {
-			await expect(page.getByRole("complementary", { name: "Outline" })).toBeVisible();
-			await expect(page.getByTestId(TESTID.outlinePopoverButton)).toHaveCount(0);
-		}
+		// One Yonder: no Outline anywhere; Where in the top bar (the phone's header) instead,
+		// and the tabs in the top bar's row from 1440 px.
+		await expect(page.getByRole("complementary", { name: "Outline" })).toHaveCount(0);
+		await expect(page.getByTestId("where-button")).toBeVisible();
+		if (bp === "xl")
+			await expect(page.getByTestId(TESTID.topBar).getByTestId(TESTID.centerTabs)).toBeVisible();
 		if (bp === "lg" || bp === "md")
-			await expect(page.getByTestId(TESTID.outlinePopoverButton)).toBeVisible();
+			await expect(page.getByTestId(TESTID.centerPanel).getByTestId(TESTID.centerTabs)).toBeVisible();
 		if (bp === "md") await expect(page.getByRole("dialog").getByTestId(TESTID.nodeOverview)).toBeVisible();
 		if (bp === "sm") {
 			await expect(page.getByTestId(TESTID.mobilePills)).toBeVisible();
@@ -156,7 +158,7 @@ test("each selection mounts its overview; Esc clears sel, then days, then zooms 
 	await expect(page).toHaveURL(new RegExp(`/t/${c.slug}/japan(\\?|$)`));
 });
 
-test("the layout survives a reload; ⌘\\ hides the Outline; ? lists shortcuts", async ({ page }, info) => {
+test("the layout survives a reload; ? lists shortcuts; J steps through the plan", async ({ page }, info) => {
 	test.skip(info.project.name !== "chromium", "desktop layout");
 	const c = await cloneFixtureTrip(page.request);
 	await page.setViewportSize({ width: 1440, height: 900 });
@@ -176,13 +178,6 @@ test("the layout survives a reload; ⌘\\ hides the Outline; ? lists shortcuts",
 	await page.reload();
 	await expectLive(page);
 	await expect.poll(async () => Math.round((await center.boundingBox())?.width ?? 0)).toBe(Math.round(resized));
-
-	// ⌘\ collapses the Outline; the popover button takes over; again restores it.
-	await page.keyboard.press("ControlOrMeta+Backslash");
-	await expect(page.getByTestId(SHELL_TESTID.outlineAside)).toHaveCount(0);
-	await expect(page.getByTestId(TESTID.outlinePopoverButton)).toBeVisible();
-	await page.keyboard.press("ControlOrMeta+Backslash");
-	await expect(page.getByTestId(SHELL_TESTID.outlineAside)).toBeVisible();
 
 	await page.keyboard.press("Shift+Slash");
 	await expect(page.getByTestId(SHELL_TESTID.shortcutsDialog)).toBeVisible();
@@ -216,7 +211,7 @@ test("global mounts: Try other dates, the Money tab, the inspector's Money tab",
 	await expect(page.getByTestId(TESTID.moneyPanel)).toBeVisible();
 });
 
-test("mobile: the sheet, the FAB menu with Expense, and the inbox drawer", async ({ page }, info) => {
+test("mobile: the header, the FAB menu with Expense, and the inbox drawer", async ({ page }, info) => {
 	test.skip(info.project.name !== "mobile", "mobile layout");
 	const logs = collectConsole(page);
 	const c = await cloneFixtureTrip(page.request);
@@ -224,7 +219,7 @@ test("mobile: the sheet, the FAB menu with Expense, and the inbox drawer", async
 	await page.goto(`/t/${c.slug}?tab=plan`);
 	await expectLive(page);
 	await expect(page.getByTestId(TESTID.mobilePills)).toBeVisible();
-	// The always-open sheet is non-modal: the pills and the + stay in the accessibility tree.
+	// The header's buttons and the + are in the accessibility tree.
 	await expect(page.getByRole("button", { name: /^Inbox/ })).toBeVisible();
 	await expect(page.getByRole("button", { name: "Add" })).toBeVisible();
 	await settle(page);
