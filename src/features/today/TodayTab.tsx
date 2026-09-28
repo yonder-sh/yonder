@@ -6,8 +6,8 @@
  * at risk with a fix when you run late, the free time and ideas nearby when
  * you run early, the rest of the day re-timed from now, and where you sleep
  * tonight. A stop with no place and no start time is Next "whenever you
- * like", with its own Done. Tapping a stop opens its details. Raters,
- * viewers and link guests see it without buttons.
+ * like", with its own Done when nothing is Now. Tapping a stop opens its
+ * details. Raters, viewers and link guests see it without buttons.
  *
  * - The first stop of the day, the end of it and a day without stops are
  *   their own simple states.
@@ -306,6 +306,7 @@ function Day({
 					now={view.now}
 					leave={view.leave}
 					act={act}
+					ownDone={!view.current}
 					onAddress={onAddress}
 				/>
 			) : null}
@@ -475,6 +476,7 @@ function NextCard({
 	now,
 	leave,
 	act,
+	ownDone,
 	onAddress,
 }: {
 	stop: TodayStop;
@@ -484,6 +486,8 @@ function NextCard({
 	/** The next fixed stop: a floating stop's card says when to leave for it. */
 	leave: TodayLeave | null;
 	act: TodayActions;
+	/** Nothing is Now: a floating stop gets its own Done (with a Now stop, that one's Done comes first). */
+	ownDone: boolean;
 	onAddress: (s: TodayStop) => void;
 }) {
 	const { ix, nav } = useWorkspace();
@@ -552,7 +556,7 @@ function NextCard({
 						) : null}
 					</span>
 				</button>
-				{stop.floating && act.mayMarkDone ? (
+				{stop.floating && ownDone && act.mayMarkDone ? (
 					<Button
 						variant="outline"
 						size="lg"
@@ -679,7 +683,7 @@ function Free({ view, act }: { view: TodayView; act: TodayActions }) {
 				</span>
 			</SectionHeader>
 			{/* A floating Next says when to leave in its own card. */}
-			{view.next?.floating ? null : (
+			{view.next?.floating && view.leave ? null : (
 				<p
 					data-testid={T.leave}
 					className="flex items-start gap-2 py-1 text-sm text-muted-foreground tnum"

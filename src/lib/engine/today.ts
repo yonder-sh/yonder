@@ -19,9 +19,10 @@
  *   two fixes: shorten the longest flexible stop before it, skip the nearest
  *   place.
  * - Free time: room before the next fixed stop, less the stops with a place
- *   before it (a floating stop's time is part of it), when that stop isn't
- *   at risk; and the ideas nearby that fit it (open then, a short walk away,
- *   the group's favourites first).
+ *   before it (a floating stop's time is part of it) and never more than
+ *   what's left until you leave, when that stop isn't at risk; and the ideas
+ *   nearby that fit it (open then, a short walk away, the group's
+ *   favourites first).
  *
  * `todayDayId` picks the day being lived; `computeToday` builds the view;
  * `stopHere` is "Looks like you're at Bic Camera?".
@@ -234,7 +235,7 @@ export interface TodayView {
 	ended: boolean;
 	pace: TodayPace;
 	risks: TodayRisk[];
-	/** The next fixed stop or departure after Now, and when to leave for it. */
+	/** The next fixed stop or departure after Now, and when to leave for it; null when a stop with a place comes first. */
 	leave: TodayLeave | null;
 	/** Room before it (at least `FREE_MIN`), else null. */
 	free: TodayFree | null;
@@ -810,7 +811,7 @@ export function computeToday(
 	let ideas: TodayIdea[] = [];
 	const first = targets[0];
 	if (first) {
-		leave = {
+		const next: TodayLeave = {
 			before: first.at - first.travelMin * MS_PER_MINUTE,
 			itemId: first.itemId,
 			name: first.name,
@@ -821,20 +822,35 @@ export function computeToday(
 			mode: first.mode,
 			departure: first.departure,
 		};
+		// Only floating stops before it: you leave for it from where you are.
+		const between = rows.slice(
+			currentAt + 1,
+			first.row ? rows.indexOf(first.row) : rows.length,
+		);
+		if (between.every((r) => r.stop.floating)) leave = next;
 		const spare = round(first.at - first.arrive);
 		// A floating stop happens in the free time: what's left of it counts.
-		const minutes = first.before.reduce(
-			(m, r) =>
-				r.stop.floating
-					? m + round(r.stop.end - Math.max(r.stop.start, now))
-					: m,
-			spare,
+		// Never more than what's left before you leave (a Done a while ago).
+		const minutes = Math.min(
+			round(next.before - now),
+			first.before.reduce(
+				(m, r) =>
+					r.stop.floating
+						? m + round(r.stop.end - Math.max(r.stop.start, now))
+						: m,
+				spare,
+			),
 		);
 		if (spare >= 0 && !risky.has(first) && minutes >= FREE_MIN) {
+			// It starts once the stops with a place before it are over.
+			const placed = first.before.filter((r) => !r.stop.floating).at(-1);
 			free = {
-				...leave,
+				...next,
 				minutes,
-				from: leave.before - minutes * MS_PER_MINUTE,
+				from: Math.max(
+					now,
+					placed ? placed.stop.end : next.before - minutes * MS_PER_MINUTE,
+				),
 			};
 			// Where you'll be: here, else the last place before it.
 			const prev = first.row ? list[first.row.index - 1] : list.at(-1);

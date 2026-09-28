@@ -12,13 +12,17 @@ import { useMyViewUi } from "@/lib/realtime/view-ui";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 
 export function LivePresence() {
-	const { graph, scope, scopePath, lens, tab, search } = useWorkspace();
+	const { graph, scope, scopePath, lens, tab, search, underway } =
+		useWorkspace();
 	const values = useMyViewUi((s) => s.values);
 	const at = useMyViewUi((s) => s.at);
 	const view = useMemo<AwarenessView>(() => {
 		const qs = new URLSearchParams();
 		for (const [k, v] of Object.entries(search))
 			if (v !== undefined) qs.set(k, String(v));
+		// During the trip a bare link opens Today or the Overview by role (flow 11): name it, so Follow lands there too.
+		if (underway && !search.tab && (tab === "today" || tab === "overview"))
+			qs.set("tab", tab);
 		const tail = scopePath.map((n) => n.slug).join("/");
 		const q = qs.toString();
 		const ui = fitViewUi(values, at);
@@ -40,6 +44,7 @@ export function LivePresence() {
 		lens,
 		tab,
 		search,
+		underway,
 		values,
 		at,
 	]);

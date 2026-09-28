@@ -539,6 +539,114 @@ describe("computeToday: following your pace, not the clock", () => {
 		expect(v3.next?.name).toBe("Dinner");
 		expect(v3.ended).toBe(false);
 	});
+
+	it("a floating stop before a place: Next, but nothing to leave for from it; the free time starts after the place", () => {
+		// Planned: Cha 09:00–09:40, Lunch 09:40–10:40, Bic 10:45–11:30, at the bar 11:40 for 14:00.
+		const s = scenario({
+			firstDate: DAY,
+			nodes: NODES,
+			days: [
+				{
+					items: [
+						{ k: "cha", node: "cha", min: 40, done: done("09:40") },
+						{ k: "lunch", title: "Lunch", min: 60 },
+						{ k: "bic", node: "bic", min: 45 },
+						{ k: "bar", node: "benfiddich", min: 60, pin: "14:00" },
+					],
+				},
+			],
+			legs: [
+				{ from: "cha", to: "bic", mode: "walk", min: 5 },
+				{ from: "bic", to: "bar", mode: "walk", min: 10 },
+			],
+		});
+		const { v } = view(s, at("09:40"), {}, "d1");
+		expect(v.next).toMatchObject({ name: "Lunch", floating: true });
+		expect(names(v.rest)).toEqual(["Bic Camera", "Bar Benfiddich"]);
+		expect(v.pace).toEqual({ kind: "on_time", minutes: 0 });
+		// Bic Camera comes first: no "Leave for Bar Benfiddich" on Lunch.
+		expect(v.leave).toBeNull();
+		// 2 h 20 spare after Bic Camera, and Lunch's hour.
+		expect(v.free).toMatchObject({ name: "Bar Benfiddich", minutes: 200 });
+		expect(t(v.free?.from as number)).toBe("11:30");
+		expect(t(v.free?.before as number)).toBe("13:50");
+	});
+
+	it("a floating stop before a flight: when to leave only once nothing with a place is left before it", () => {
+		const trip = (lunchFirst: boolean) =>
+			scenario({
+				firstDate: DAY,
+				days: [
+					{
+						items: [
+							{ k: "itoya", node: "itoya", min: 60, done: done("11:00") },
+							...(lunchFirst ? [{ k: "lunch", title: "Lunch", min: 45 }] : []),
+							{
+								k: "kix",
+								node: "kix",
+								min: 30,
+								done: lunchFirst ? undefined : done("12:30"),
+							},
+							...(lunchFirst ? [] : [{ k: "lunch", title: "Lunch", min: 45 }]),
+							{ k: "tpe", node: "tpe", min: 30 },
+						],
+					},
+				],
+				legs: [
+					{ from: "itoya", to: "kix", mode: "transit", min: 60 },
+					{
+						k: "flight",
+						from: "kix",
+						to: "tpe",
+						mode: "flight",
+						dep: [`${DAY}T16:00`, TOKYO],
+						arr: [`${DAY}T18:00`, "Asia/Taipei"],
+						details: flightDetails({
+							number: "CI157",
+							from: {
+								iata: "KIX",
+								tz: TOKYO,
+								country: "JP",
+								at: [34.432, 135.2304],
+							},
+							to: {
+								iata: "TPE",
+								tz: "Asia/Taipei",
+								country: "TW",
+								at: [25.0797, 121.2342],
+							},
+							dep: `${DAY}T16:00`,
+							arr: `${DAY}T18:00`,
+						}),
+					},
+				],
+			});
+		// Lunch in town, then the airport: the airport comes first.
+		const { v } = view(trip(true), at("11:00"), {}, "d1");
+		expect(v.next).toMatchObject({ name: "Lunch", floating: true });
+		expect(v.leave).toBeNull();
+		expect(v.free).toMatchObject({ name: "CI 157" });
+		// At the airport, then lunch there: leave for the flight from the table.
+		const { v: v2 } = view(trip(false), at("12:30"), {}, "d1");
+		expect(v2.next).toMatchObject({ name: "Lunch", floating: true });
+		expect(v2.leave).toMatchObject({ name: "CI 157", tz: TOKYO });
+		expect(v2.leave?.departure).toMatchObject({ flight: true });
+	});
+
+	it("a Done a while ago: the free time is what's left from now", () => {
+		const s = tokyoDay({
+			cha: done("09:50"),
+			broadway: done("13:30"),
+			yodobashi: done("15:20"),
+			bic: done("17:10"),
+			dinner: done("18:00"),
+		});
+		const { v } = view(s, at("19:00"));
+		expect(v.next?.name).toBe("Bar Benfiddich");
+		expect(v.free?.minutes).toBe(50);
+		expect(t(v.free?.from as number)).toBe("19:00");
+		expect(t(v.free?.before as number)).toBe("19:50");
+	});
 });
 
 describe("computeToday: timed departures", () => {

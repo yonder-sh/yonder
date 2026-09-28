@@ -263,6 +263,44 @@ describe("Today, running early (P18)", () => {
 		});
 	});
 
+	it("with a stop Now, Dinner Next has no Done of its own: that stop's comes first", () => {
+		render(tokyoDay({ ...LATE, yodobashi: done("16:40") }), "2027-10-05T17:00");
+		expect(screen.getByTestId(T.now)).toHaveTextContent("Bic Camera");
+		const next = screen.getByTestId(T.next);
+		expect(next).toHaveTextContent("Next · Dinner, whenever you like");
+		expect(within(next).getByTestId(T.leave)).toHaveTextContent(
+			"Leave for Bar Benfiddich by 19:50",
+		);
+		expect(within(next).queryByTestId(T.done)).toBeNull();
+		expect(screen.getAllByTestId(T.done)).toHaveLength(1);
+		expect(
+			within(screen.getByTestId(T.risk)).getAllByTestId(T.fix)[0],
+		).toHaveTextContent("Shorten dinner to 1 h");
+	});
+
+	it("Dinner before a place: its card doesn't say when to leave for the bar; the free time does", () => {
+		const { bic: _, ...marks } = EARLY;
+		const s = tokyoDay(marks);
+		const position = s.graph.items.find((i) => i.id === s.I.yodobashi)
+			?.position as string;
+		const graph: TripGraph = {
+			...s.graph,
+			items: s.graph.items.map((i) =>
+				i.id === s.I.dinner ? { ...i, position: `${position}m` } : i,
+			),
+		};
+		render(s, "2027-10-05T15:20", graph);
+		const next = screen.getByTestId(T.next);
+		expect(next).toHaveTextContent("Next · Dinner, whenever you like");
+		expect(within(next).queryByTestId(T.leave)).toBeNull();
+		expect(rows()[0]).toContain("Bic Camera");
+		expect(
+			within(screen.getByTestId(T.free)).getByTestId(T.leave),
+		).toHaveTextContent(
+			"Leave for Bar Benfiddich by 19:50 (booked for 20:00, 10 min walk)",
+		);
+	});
+
 	it("once Dinner is Done, the bar is Next and the free time says when to leave", () => {
 		render(tokyoDay({ ...EARLY, dinner: done("18:30") }), "2027-10-05T18:30");
 		expect(screen.getByTestId(T.next)).toHaveTextContent(
