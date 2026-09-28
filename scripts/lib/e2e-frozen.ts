@@ -2,9 +2,10 @@
  * `pnpm e2e:fast --frozen …`: the run happens in a git worktree beside the
  * repo (`../trip-planner-e2e`), checked out at HEAD, so the working tree can
  * keep changing while the envs (vite dev servers) serve the commit under
- * test. The worktree shares `.env` and `.data/e2e-fast` (the template's stamp
- * and the storageStates) with the repo, and installs from the pnpm store
- * (offline) only when the lockfiles changed. Uncommitted work is not tested.
+ * test. The worktree shares `.env`, `.data/e2e-fast` (the template's stamp
+ * and the storageStates) and the local-only seed photos with the repo, and
+ * installs from the pnpm store (offline) only when the lockfiles changed.
+ * Uncommitted work is not tested.
  */
 import { execFileSync, spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
@@ -73,6 +74,7 @@ export function prepareFrozen(): string {
 		rmSync(link, { recursive: true, force: true });
 		symlinkSync(path.join(REPO_ROOT, ".data/e2e-fast"), link);
 	}
+	linkLocalOnlyMedia();
 	const stamp = path.join(FROZEN_DIR, ".data/install.stamp");
 	const hash = lockHash(FROZEN_DIR);
 	const was = existsSync(stamp) ? readFileSync(stamp, "utf8") : "";
@@ -82,6 +84,24 @@ export function prepareFrozen(): string {
 		writeFileSync(stamp, hash);
 	}
 	return sha;
+}
+
+/** The seed photos kept out of git (no open licence, see seed/media/.gitignore): linked in, as the importer spec uploads them. */
+function linkLocalOnlyMedia(): void {
+	const files = git(
+		REPO_ROOT,
+		"ls-files",
+		"--others",
+		"--ignored",
+		"--exclude-standard",
+		"seed/media",
+	)
+		.split("\n")
+		.filter(Boolean);
+	for (const f of files) {
+		const to = path.join(FROZEN_DIR, f);
+		if (!existsSync(to)) symlinkSync(path.join(REPO_ROOT, f), to);
+	}
 }
 
 /** Runs e2e-fast from the worktree with the same arguments (minus --frozen). */
