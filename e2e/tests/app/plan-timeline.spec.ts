@@ -182,12 +182,13 @@ test("dropping a stop between a flight's items is refused with the toast", async
 	test.skip(info.project.name !== "chromium", "mouse drag");
 	const c = await cloneFixtureTrip(page.request);
 	const I = c.ids.items;
+	// The ideas dock folded: both days' stops fit above it.
+	await page.addInitScript(() => localStorage.setItem("yonder:plan-ideas:open", "0"));
 	await page.goto(`/t/${c.slug}?lens=place&days=${DAY.d4}..${DAY.d5}`);
 	await expectLive(page);
 	const from = card(page, I.kiyomizu as string);
 	const to = card(page, I.icn as string);
 	await expect(to).toBeVisible();
-	// Clear of the ideas docked at the column's foot.
 	await from.evaluate((el) => el.scrollIntoView({ block: "center" }));
 	const a = await from.boundingBox();
 	const b = await to.boundingBox();

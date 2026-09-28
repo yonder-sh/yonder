@@ -179,14 +179,18 @@ export function WhoMenu() {
 				</DropdownMenuItem>
 				{me ? (
 					<DropdownMenuItem onSelect={() => nav.setWho(me)}>
-						<MemberAvatar memberId={me} size={16} ring={false} />
+						<span aria-hidden className="flex">
+							<MemberAvatar memberId={me} size={16} ring={false} />
+						</span>
 						Me
 						{pick(me)}
 					</DropdownMenuItem>
 				) : null}
 				{others.map((m) => (
 					<DropdownMenuItem key={m.id} onSelect={() => nav.setWho(m.id)}>
-						<MemberAvatar memberId={m.id} size={16} ring={false} />
+						<span aria-hidden className="flex">
+							<MemberAvatar memberId={m.id} size={16} ring={false} />
+						</span>
 						<MemberName memberId={m.id} />
 						{pick(m.id)}
 					</DropdownMenuItem>

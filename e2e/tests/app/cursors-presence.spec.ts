@@ -41,8 +41,13 @@ async function open(
 	return { ctx, page };
 }
 
+/** Scrolls `el` to the middle of its scroller (the Plan's ideas dock covers the column's foot). */
+async function centre(el: Locator) {
+	await el.evaluate((e) => e.scrollIntoView({ block: "center" }));
+}
+
 async function hover(page: Page, el: Locator, fx = 0.5, fy = 0.5) {
-	await el.scrollIntoViewIfNeeded();
+	await centre(el);
 	const b = await el.boundingBox();
 	if (!b) throw new Error("no box");
 	await page.mouse.move(b.x + b.width * fx - 25, b.y + b.height * fy - 15);
@@ -96,7 +101,7 @@ test("'Show others' cursors' off hides them; the notes editor hides my mouse cur
 	const a = await open(browser, "dev", url);
 	const b = await open(browser, "maya", url, { viewport: { width: 1280, height: 800 } });
 	const sky = trip.ids.items.sky as string;
-	await b.page.locator(`[data-cursor-anchor="item:${sky}"]`).scrollIntoViewIfNeeded();
+	await centre(b.page.locator(`[data-cursor-anchor="item:${sky}"]`));
 	const cursor = b.page.locator(`[data-testid="remote-cursor"][data-user-id="${devId}"]`);
 	await hover(a.page, a.page.locator(`[data-cursor-anchor="item:${sky}"]`));
 	await expect(cursor).toHaveAttribute("data-state", "on");
@@ -147,9 +152,9 @@ test("a phone never hovers: taps ripple on the desktop, a long press reacts on a
 	const phone = await open(browser, "maya", url, { ...devices["Pixel 7"] });
 	const meiji = trip.ids.items.meiji as string;
 	const cardP = phone.page.locator(`[data-cursor-anchor="item:${meiji}"]`);
-	await cardP.scrollIntoViewIfNeeded();
+	await centre(cardP);
 	await expect(cardP).toBeInViewport();
-	await a.page.locator(`[data-cursor-anchor="item:${meiji}"]`).scrollIntoViewIfNeeded();
+	await centre(a.page.locator(`[data-cursor-anchor="item:${meiji}"]`));
 	const box = await cardP.boundingBox();
 	if (!box) throw new Error("no card on the phone");
 
@@ -230,7 +235,7 @@ test("polish: a 7-figure money total never truncates on a phone", async ({ brows
 	});
 	const planned = phone.page.getByTestId(M.summaryPlanned);
 	await expect(planned).toBeVisible();
-	await planned.scrollIntoViewIfNeeded();
+	await centre(planned);
 	// Nothing is cut: every tile's text fits its box (compact where needed).
 	for (const id of [M.summaryPlanned, M.summaryActual, M.summaryRemaining]) {
 		const fit = await phone.page.getByTestId(id).evaluate((el) => {

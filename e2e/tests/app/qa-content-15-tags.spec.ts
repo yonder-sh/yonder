@@ -95,7 +95,7 @@ test("TAG-01/02 tag members on timeline items; avatars live; filter; guests neve
 	// The Plan's person filter.
 	await d.page.goto("/t/asia-2027?tab=plan&lens=place");
 	await expectLive(d.page);
-	await d.page.getByRole("button", { name: /Someone/ }).click();
+	await d.page.getByTestId(PLAN_TESTID.whoFilter).click();
 	await d.page.waitForTimeout(300);
 	await shot(d.page, "15-tag01-filter-open");
 	const fopts = await d.page.locator("[role=option],[role=menuitemradio],[role=menuitem],[cmdk-item]").allInnerTexts();

@@ -79,9 +79,14 @@ async function receivedIds(page: Page): Promise<string[]> {
 	return [...ids];
 }
 
+/** Scrolls `el` to the middle of its scroller (the Plan's ideas dock covers the column's foot). */
+async function centre(el: Locator) {
+	await el.evaluate((e) => e.scrollIntoView({ block: "center" }));
+}
+
 /** Moves the mouse to fractions (fx, fy) of `el`'s box, in a few steps (pointermove fires). */
 async function hover(page: Page, el: Locator, fx: number, fy: number) {
-	await el.scrollIntoViewIfNeeded();
+	await centre(el);
 	const b = await el.boundingBox();
 	if (!b) throw new Error("no box");
 	await page.mouse.move(b.x + b.width * fx - 30, b.y + b.height * fy - 20);
@@ -138,7 +143,7 @@ test("A's cursor lands on the same card and the same map spot on B's differently
 	const sky = trip.ids.items.sky as string;
 	const cardA = a.page.locator(`[data-cursor-anchor="item:${sky}"]`);
 	const cardB = b.page.locator(`[data-cursor-anchor="item:${sky}"]`);
-	await cardB.scrollIntoViewIfNeeded();
+	await centre(cardB);
 	await hover(a.page, cardA, 0.3, 0.6);
 
 	const at = await cursorAt(b.page, devId);
@@ -256,7 +261,7 @@ test("a day drawn in two bands: A's cursor on its second drawing lands on B's se
 		[0, 0.6, 0.4],
 	] as const) {
 		const onB = heads(b.page).nth(i);
-		await onB.scrollIntoViewIfNeeded();
+		await centre(onB);
 		await hover(a.page, heads(a.page).nth(i), fx, fy);
 		const at = await cursorAt(b.page, devId);
 		const box = await onB.boundingBox();
@@ -370,7 +375,7 @@ test("cursor chat and emoji reactions reach the other screen", async ({ browser 
 	const a = await open(browser, "dev", url, A_SIZE);
 	const b = await open(browser, "maya", url, B_SIZE);
 	const meiji = trip.ids.items.meiji as string;
-	await b.page.locator(`[data-cursor-anchor="item:${meiji}"]`).scrollIntoViewIfNeeded();
+	await centre(b.page.locator(`[data-cursor-anchor="item:${meiji}"]`));
 	await hover(a.page, a.page.locator(`[data-cursor-anchor="item:${meiji}"]`), 0.6, 0.5);
 	await a.page.keyboard.press("/");
 	const input = a.page.getByTestId(S.cursorChatInput);
@@ -534,7 +539,7 @@ test("a link guest never receives a money anchor; a member does", async ({ brows
 	// The guest does get A's cursor where the guest can see it: a card on the plan.
 	await a.page.getByRole("tab", { name: /Plan/ }).click();
 	const sky = trip.ids.items.sky as string;
-	await gpage.locator(`[data-cursor-anchor="item:${sky}"]`).scrollIntoViewIfNeeded();
+	await centre(gpage.locator(`[data-cursor-anchor="item:${sky}"]`));
 	await hover(a.page, a.page.locator(`[data-cursor-anchor="item:${sky}"]`), 0.5, 0.5);
 	await expect.poll(async () => (await receivedIds(gpage)).includes(`item:${sky}`), { timeout: 8_000 }).toBe(true);
 	await expect(gpage.locator(`[data-testid="remote-cursor"][data-user-id="${devId}"]`)).toHaveAttribute(

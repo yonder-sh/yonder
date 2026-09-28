@@ -197,6 +197,7 @@ test("J1 sign up, new trip, Where to first? → Japan › Tokyo › Shibuya Sky,
 	expect(path[0]).toBe("Japan");
 	expect(path).toContain("Tokyo");
 	// The trip's Plan lists its days (One Yonder D02): Day 1's row names it.
+	await page.getByTestId(TESTID.centerTabs).locator('[data-tab="plan"]').click();
 	await expect(page.getByTestId(PLAN_TESTID.dayRow).filter({ hasText: /Shibuya Sky/i }).first()).toBeVisible();
 	await shot(page, "j1-04-scheduled");
 
