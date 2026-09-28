@@ -359,12 +359,13 @@ function ShiftBody({ onClose }: { onClose: () => void }) {
 						}}
 						className="text-muted-foreground"
 					>
-						Discard what-if
+						Don't shift
 					</Button>
 				) : null}
 				<span className="flex-1" />
+				{/* The draft stays as the top bar's what-if chip (Review brings it back). */}
 				<Button variant="ghost" onClick={onClose}>
-					{draft ? "Keep exploring" : "Close"}
+					{draft ? "Decide later" : "Close"}
 				</Button>
 				<Button
 					data-testid={INSIGHTS_TESTID.shiftApply}

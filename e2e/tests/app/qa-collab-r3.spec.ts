@@ -683,7 +683,7 @@ test("DEFECT (WP-Shell): on a phone, a kept what-if draft shows the WhatIfChip (
 	await p.getByText("Try other dates…").first().tap();
 	const dlg = p.getByTestId(TESTID.shiftTripDialog);
 	await dlg.getByTestId(I.shiftPlus).tap();
-	await dlg.getByRole("button", { name: /Keep exploring/ }).tap();
+	await dlg.getByRole("button", { name: /Decide later/ }).tap();
 	await expect(dlg).toBeHidden();
 	await snap(p, "r3-phone-whatif-no-chip");
 	const chip = p.getByTestId(TESTID.whatIfChip);

@@ -57,6 +57,7 @@ import { heroWhen, isRunning } from "./hero-when";
 import { NewTripDialog } from "./NewTripDialog";
 import { ProfileDialog } from "./ProfileDialog";
 import { myDeadlinesQuery, myTripsQuery } from "./queries";
+import { sharedToSaveLabel } from "./share-classify";
 import { leaveTrip } from "./sharing.functions";
 import { TripSketch } from "./TripSketch";
 import { HOME_TESTID } from "./testids";
@@ -492,17 +493,17 @@ function Deadlines() {
 	);
 }
 
-/** E8: "1 shared item waiting" (entries kept on this device while offline). */
+/** E8: "2 shared links to save" (entries kept on this device while offline). */
 function SharedWaiting() {
-	const [count, setCount] = useState(0);
+	const [label, setLabel] = useState<string | null>(null);
 	const [firstId, setFirstId] = useState<string | null>(null);
 	useEffect(() => {
 		void listShared().then((l) => {
-			setCount(l.length);
+			setLabel(l.length ? sharedToSaveLabel(l) : null);
 			setFirstId(l[0]?.id ?? null);
 		});
 	}, []);
-	if (!count || !firstId) return null;
+	if (!label || !firstId) return null;
 	return (
 		<Link
 			to="/share"
@@ -511,9 +512,7 @@ function SharedWaiting() {
 			className="flex h-11 items-center gap-3 rounded-xl border bg-card px-4 text-sm transition-colors hover:border-foreground/20"
 		>
 			<Inbox className="size-4 text-muted-foreground" />
-			<span className="flex-1">
-				{count} shared {count === 1 ? "item" : "items"} waiting
-			</span>
+			<span className="flex-1">{label}</span>
 			<ArrowRight className="size-4 text-muted-foreground" />
 		</Link>
 	);

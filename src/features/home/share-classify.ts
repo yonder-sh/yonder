@@ -40,6 +40,19 @@ export function classifyShare(entry: {
 	return "text";
 }
 
+/** The dashboard's line for shares kept on this device: "2 shared links to save". */
+export function sharedToSaveLabel(
+	entries: readonly Parameters<typeof classifyShare>[0][],
+): string {
+	const n = entries.length;
+	const links = entries.every((e) => {
+		const k = classifyShare(e);
+		return k === "maps" || k === "social" || k === "web";
+	});
+	const noun = links ? "link" : "item";
+	return `${n} shared ${noun}${n === 1 ? "" : "s"} to save`;
+}
+
 const URL_RE = /https?:\/\/[^\s<>"']+/i;
 
 export function firstUrl(text: string | null | undefined): string | null {

@@ -148,7 +148,7 @@ describe("MONEY-R2-07: a settlement's context tag", () => {
 		await user.click(
 			within(dialog).getAllByTestId(M.transferRecord)[0] as HTMLElement,
 		);
-		const tag = within(dialog).getByLabelText("Tag it to a place or a day");
+		const tag = within(dialog).getByLabelText("Place or day");
 		expect(tag.textContent).toBe("On Day 4 · 6 Oct");
 		act(() => useMoneyUi.getState().openSettle(false));
 	});

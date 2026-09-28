@@ -14,7 +14,7 @@
  * Suggesters' ideas become suggestions (the link chains onto the proposed
  * place through its client-chosen id); photos need edit access. Offline,
  * nothing is sent: the entry stays on this device (the dashboard shows "1
- * shared item waiting") for 7 days. iOS (no share target) gets "Paste a link".
+ * shared link to save") for 7 days. iOS (no share target) gets "Paste a link".
  */
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";

@@ -261,20 +261,19 @@ function RecordForm({
 			/>
 			<div className="flex items-center gap-2 text-xs text-muted-foreground">
 				<Label htmlFor="settle-tag" className="shrink-0 text-xs font-normal">
-					Context
+					Place or day
 				</Label>
 				<Select value={tag} onValueChange={setTag}>
 					<SelectTrigger
 						id="settle-tag"
 						size="sm"
 						className="min-w-0 flex-1 text-xs"
-						aria-label="Tag it to a place or a day"
 					>
 						<SelectValue />
 					</SelectTrigger>
 					<SelectContent>
 						<SelectItem className="cursor-pointer" value="none">
-							No tag
+							None
 						</SelectItem>
 						{scope ? (
 							<SelectItem className="cursor-pointer" value={`n:${scope.id}`}>

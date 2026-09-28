@@ -130,8 +130,8 @@ function Body() {
 	return (
 		<div className="-mt-1">
 			<Row
-				label="Start at"
-				hint="Where a trip opens when its link doesn't say."
+				label="Level of detail"
+				hint="What a trip shows first, from countries down to places, unless its link sets one."
 				htmlFor="pref-lens"
 			>
 				<Select

@@ -8,7 +8,35 @@ import {
 	parentLabel,
 	parseMapsUrl,
 	readResolution,
+	sharedToSaveLabel,
 } from "../share-classify";
+
+describe("the dashboard's shares kept on this device", () => {
+	const link = (url: string) => ({ url, text: null, files: [] });
+	it("says what they are and what to do: links to save", () => {
+		expect(sharedToSaveLabel([link("https://maps.app.goo.gl/abc")])).toBe(
+			"1 shared link to save",
+		);
+		expect(
+			sharedToSaveLabel([
+				link("https://www.tiktok.com/@a/video/1"),
+				{ url: null, text: "look https://example.com/ramen", files: [] },
+			]),
+		).toBe("2 shared links to save");
+	});
+
+	it("photos or plain text among them: items", () => {
+		expect(
+			sharedToSaveLabel([
+				link("https://example.com"),
+				{ url: null, text: null, files: [{}] },
+			]),
+		).toBe("2 shared items to save");
+		expect(sharedToSaveLabel([{ url: null, text: "ramen", files: [] }])).toBe(
+			"1 shared item to save",
+		);
+	});
+});
 
 describe("E8 share classification", () => {
 	it("tells Maps places, social videos, web pages, media and text apart", () => {

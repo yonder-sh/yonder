@@ -9,7 +9,7 @@
  *   (QA DIG-01/02/03);
  * - a view setting changed in one browser is there in a fresh one (the
  *   account copy, not just localStorage); 12-hour applies to the page's times
- *   at once; "Start at" can go back to Automatic (the key is removed).
+ *   at once; "Level of detail" can go back to Automatic (the key is removed).
  */
 import { randomUUID } from "node:crypto";
 import { type Browser, expect, type Page, test } from "@playwright/test";
@@ -130,7 +130,7 @@ test("view settings follow the account to a fresh browser", async ({ browser }, 
 	await expect(dialog.getByRole("radio", { name: "12-hour" })).toHaveAttribute("data-state", "on");
 	// Page-wide: the plan behind the dialog switches to 12-hour times.
 	await expect(first.getByTestId(TESTID.centerPanel)).toContainText(/\b\d{1,2}:\d{2}(am|pm)\b/);
-	// Start at: a lens, then back to Automatic.
+	// Level of detail: City, then back to Automatic.
 	await dialog.locator("#pref-lens").click();
 	await first.getByRole("option", { name: "City" }).click();
 	await expect(dialog.locator("#pref-lens")).toContainText("City");

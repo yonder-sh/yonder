@@ -441,7 +441,7 @@ test("R3 settle up from a day's view tags the day; a deleted place's tag disappe
 	await page.waitForTimeout(500);
 	out.recordForm = flat(await dlg.innerText());
 	await page.screenshot({ path: `${SHOTS}/r3-settle-day-form.png` });
-	const tagSel = dlg.getByRole("combobox", { name: /Tag it/ });
+	const tagSel = dlg.getByRole("combobox", { name: /Place or day/ });
 	out.tagDefault = (await tagSel.count()) ? flat(await tagSel.innerText()) : "no tag control";
 	await dlg.getByRole("button", { name: "Record payment" }).click();
 	await page.waitForTimeout(1200);

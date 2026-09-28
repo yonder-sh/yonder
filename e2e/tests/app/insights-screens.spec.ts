@@ -66,7 +66,7 @@ for (const size of [
 		await dialog.getByTestId(T.shiftPlus).click();
 		await expect(dialog.getByTestId(TESTID.dateImpactList)).toBeVisible();
 		await shot("shift");
-		await dialog.getByRole("button", { name: "Keep exploring" }).click();
+		await dialog.getByRole("button", { name: "Decide later" }).click();
 		await expect(page.getByTestId(TESTID.whatIfChip).first()).toBeVisible();
 		await page.locator(`[data-testid=harness-day][data-day="${c.ids.days.d1}"]`).scrollIntoViewIfNeeded();
 		await shot("whatif");

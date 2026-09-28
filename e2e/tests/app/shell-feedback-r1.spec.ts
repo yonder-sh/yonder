@@ -247,7 +247,7 @@ test.describe("phone 390", () => {
 		await page.getByText("Try other dates…").first().tap();
 		const dlg = page.getByTestId(TESTID.shiftTripDialog);
 		await dlg.getByTestId("shift-plus").tap();
-		await dlg.getByRole("button", { name: /Keep exploring/ }).tap();
+		await dlg.getByRole("button", { name: /Decide later/ }).tap();
 		await expect(dlg).toBeHidden();
 		const chip = page.getByTestId(TESTID.whatIfChip);
 		await expect(chip).toBeVisible({ timeout: 3_000 });
