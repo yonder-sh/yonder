@@ -3,7 +3,8 @@
  * Shinjuku at an `?asOf` local time: running late (a risk and its fixes),
  * running early (Dinner, with no place, Next whenever you like; free time
  * and ideas), the first stop, the end of the day, a day without stops, the
- * driver's address, read-only for viewers, and no Done for suggesters.
+ * driver's address, read-only for viewers, no Done for suggesters, and
+ * Done for an editor who is suggesting.
  */
 import { fireEvent, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -46,6 +47,7 @@ vi.mock("@/functions/items.functions", async (orig) => ({
 import type { LocalAt } from "@/lib/engine/__fixtures__/demo";
 import type { TripGraph } from "@/lib/engine/types";
 import { importedDay, tokyoDay } from "@/lib/fixtures/demo";
+import { useUi } from "@/lib/workspace/ui-store";
 import { renderWithWorkspace } from "@/test/render-workspace";
 import { TodayTab } from "../TodayTab";
 import { TODAY_TESTID as T } from "../testids";
@@ -67,6 +69,7 @@ afterEach(() => {
 	calls.update = [];
 	calls.create = [];
 	calls.toasts = [];
+	useUi.setState({ suggesting: false });
 });
 
 function render(
@@ -622,6 +625,7 @@ describe("Today read-only", () => {
 		const a = render(late, "2027-10-05T16:40", as(late));
 		expect(screen.getByTestId(T.now)).toHaveTextContent("Yodobashi Camera");
 		expect(screen.queryByTestId(T.done)).toBeNull();
+		expect(screen.getByText("Shorten dinner to 1 h")).toBeEnabled();
 		fireEvent.click(screen.getByText("Skip Bic Camera"));
 		await vi.waitFor(() => expect(calls.move).toHaveLength(1));
 		expect(calls.move[0]).toMatchObject({ itemId: late.I.bic, dayId: null });
@@ -646,6 +650,23 @@ describe("Today read-only", () => {
 		render(forgot, "2027-10-05T14:30", as(forgot));
 		expect(screen.queryByTestId(T.checkIn)).toBeNull();
 		expect(calls.done).toEqual([]);
+	});
+
+	it("an editor who is suggesting still marks Done (not a plan change); the fixes stay", async () => {
+		useUi.setState({ suggesting: true });
+		const s = tokyoDay(LATE);
+		const { ws } = render(s, "2027-10-05T16:40", {
+			...s.graph,
+			me: { ...s.graph.me, role: "editor" },
+		});
+		expect(ws().access.mode).toBe("suggest");
+		expect(screen.getByText("Skip Bic Camera")).toBeEnabled();
+		fireEvent.click(within(screen.getByTestId(T.now)).getByTestId(T.done));
+		await vi.waitFor(() =>
+			expect(calls.done).toEqual([
+				expect.objectContaining({ itemId: s.I.yodobashi, done: true }),
+			]),
+		);
 	});
 
 	it("link guests too, even on a Can edit link", () => {

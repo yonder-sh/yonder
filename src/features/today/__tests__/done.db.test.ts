@@ -1,8 +1,8 @@
 /**
  * Today's Done against real Postgres (a throwaway database): owners and
- * editors mark a stop Done directly (never a proposal); suggesters, raters,
- * viewers and link guests are refused (never a proposal) and nothing changes. The stamp is the
- * database's clock, by the marker, with no activity line; the trip's version
+ * editors mark a stop Done directly (never a proposal, even an editor who is
+ * suggesting); suggesters, raters, viewers and link guests are refused (never
+ * a proposal) and nothing changes. The stamp is the database's clock, by the marker, with no activity line; the trip's version
  * moves (the live event). Undo clears it; the Undo of an Undo puts the earlier
  * stamp back (never a later one, except on a test stack: a demo's
  * `asOf` time). A stop in Ideas can't be Done, and a stop moved to another day
@@ -34,11 +34,18 @@ const testEnv = vi.hoisted(() => {
 	return { hex, scratchUrl: scratch.toString() };
 });
 
+/** The calling tab's suggest mode (`x-yonder-mode`). */
+const hdr = vi.hoisted(() => ({ mode: null as string | null }));
+
 vi.mock("@tanstack/react-start", () => import("@/test/start-mock"));
-vi.mock(
-	"@tanstack/react-start/server",
-	() => import("@/test/start-server-mock"),
-);
+vi.mock("@tanstack/react-start/server", async () => {
+	const base = await import("@/test/start-server-mock");
+	return {
+		...base,
+		getRequestHeaders: () =>
+			new Headers(hdr.mode ? { "x-yonder-mode": hdr.mode } : {}),
+	};
+});
 
 import { closeDb, getDb } from "@/db/db.server";
 import {
@@ -212,6 +219,7 @@ beforeAll(async () => {
 });
 
 afterEach(async () => {
+	hdr.mode = null;
 	await db().execute(sql`
 		update items set done_at = null, done_by = null where trip_id = ${c.tripId}`);
 });
@@ -256,6 +264,18 @@ describe("setItemDone", () => {
 			expect(await proposals()).toBe(p0);
 			await mark(u, sky, false);
 		}
+	});
+
+	it("an editor who is suggesting marks it directly too: travel state, not a plan change", async () => {
+		hdr.mode = "suggest";
+		const p0 = await proposals();
+		await mark(maya, sky, true);
+		expect((await doneMark(sky))?.by).toBe(maya.id);
+		expect(await proposals()).toBe(p0);
+		// A suggester's own tab is always suggesting: still refused, never a proposal.
+		expect(await codeOf(mark(sam, sky, false))).toBe("FORBIDDEN");
+		expect((await doneMark(sky))?.by).toBe(maya.id);
+		expect(await proposals()).toBe(p0);
 	});
 
 	it("the graph carries it to everyone on the trip", async () => {
