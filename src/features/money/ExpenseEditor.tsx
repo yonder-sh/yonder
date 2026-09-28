@@ -2176,45 +2176,41 @@ function ItemizeEditor({
 							<X />
 						</Button>
 					</div>
-					<div className="flex flex-wrap gap-1">
+					<div className="flex flex-wrap gap-1.5">
 						{people.map((m) => {
 							const on = l.memberIds.includes(m.id);
 							return (
-								<button
+								<FilterPill
 									key={m.id}
-									type="button"
-									data-testid={MONEY_TESTID.linePerson}
-									aria-pressed={on}
-									onClick={() =>
+									size="sm"
+									memberId={m.id}
+									pressed={on}
+									onPressedChange={() =>
 										setLine(l.key, {
 											memberIds: on
 												? l.memberIds.filter((x) => x !== m.id)
 												: [...l.memberIds, m.id],
 										})
 									}
-									className={cn(
-										"inline-flex h-6 cursor-pointer items-center gap-1 rounded-full border pr-2 pl-1 text-2xs",
-										on
-											? "border-foreground/40 bg-accent"
-											: "text-muted-foreground",
-									)}
+									data-testid={MONEY_TESTID.linePerson}
 								>
-									<PersonAvatar memberId={m.id} size={16} ring={false} />
 									{nameOf(m.id)}
-								</button>
+								</FilterPill>
 							);
 						})}
 						<MemberPicker
 							value={l.memberIds}
 							onChange={(ids) => setLine(l.key, { memberIds: ids })}
 							trigger={
-								<button
+								<Button
 									type="button"
+									size="icon-sm"
+									variant="ghost"
 									aria-label="Who had it"
-									className="inline-flex h-6 cursor-pointer items-center rounded-full px-1.5 text-2xs text-muted-foreground hover:bg-accent hover:text-foreground"
+									className="rounded-full text-muted-foreground"
 								>
-									<Plus className="size-3" />
-								</button>
+									<Plus />
+								</Button>
 							}
 						/>
 					</div>
