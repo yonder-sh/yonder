@@ -234,7 +234,7 @@ export function ShareCardDialog({
 					{card.state === "loading" && (
 						<div
 							data-testid={T.loading}
-							className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-sm text-neutral-400"
+							className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-sm text-white/65"
 						>
 							<Spinner className="size-6" />
 							Drawing your route…
@@ -244,7 +244,7 @@ export function ShareCardDialog({
 						<div
 							data-testid={T.error}
 							role="alert"
-							className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-6 text-center text-sm text-neutral-300"
+							className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-6 text-center text-sm text-white/80"
 						>
 							Couldn't make the card. Check your connection and try again.
 							<Button
@@ -260,15 +260,18 @@ export function ShareCardDialog({
 						</div>
 					)}
 				</div>
+				{/* The primary action last: Share… where the browser can, else Download. */}
 				<DialogFooter className="gap-2 sm:justify-center">
-					{shareable && (
+					{copyable && (
 						<Button
 							type="button"
-							data-testid={T.share}
-							onClick={() => void share()}
+							variant="outline"
+							data-testid={T.copy}
+							disabled={card.state !== "ready"}
+							onClick={() => void copy()}
 						>
-							<Share2 />
-							Share…
+							<Copy />
+							Copy image
 						</Button>
 					)}
 					<Button
@@ -281,16 +284,14 @@ export function ShareCardDialog({
 						<Download />
 						Download
 					</Button>
-					{copyable && (
+					{shareable && (
 						<Button
 							type="button"
-							variant="outline"
-							data-testid={T.copy}
-							disabled={card.state !== "ready"}
-							onClick={() => void copy()}
+							data-testid={T.share}
+							onClick={() => void share()}
 						>
-							<Copy />
-							Copy image
+							<Share2 />
+							Share…
 						</Button>
 					)}
 				</DialogFooter>

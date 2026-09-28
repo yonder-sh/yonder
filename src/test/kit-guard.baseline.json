@@ -12,9 +12,6 @@
 	"src/features/media/components/media-tile.tsx": {
 		"text": 1
 	},
-	"src/features/media/components/pdf-viewer.tsx": {
-		"hex": 1
-	},
 	"src/features/overview/OverviewTab.tsx": {
 		"hex": 8
 	},
@@ -23,9 +20,6 @@
 	},
 	"src/features/overview/RouteStrip.tsx": {
 		"hex": 2
-	},
-	"src/features/overview/share/ShareButton.tsx": {
-		"palette": 2
 	},
 	"src/features/overview/WhereThingsStand.tsx": {
 		"palette": 2

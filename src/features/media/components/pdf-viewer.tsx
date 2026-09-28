@@ -147,7 +147,8 @@ export function PdfViewer({
 			<DialogContent
 				data-testid={MEDIA_TESTID.pdfViewer}
 				showCloseButton={false}
-				className="flex h-[100dvh] max-h-none w-screen max-w-none flex-col gap-0 overflow-hidden rounded-none border-0 bg-[#1b1e2b] p-0 text-white sm:h-[92vh] sm:w-[min(960px,94vw)] sm:max-w-none sm:rounded-2xl"
+				// Dark in both themes (the `dark` tokens), neutral greys like the app's dark mode.
+				className="dark flex h-[100dvh] max-h-none w-screen max-w-none flex-col gap-0 overflow-hidden rounded-none border-0 bg-card p-0 text-white sm:h-[92vh] sm:w-[min(960px,94vw)] sm:max-w-none sm:rounded-2xl"
 				onKeyDown={(e) => {
 					if ((e.key === "+" || e.key === "=") && zi < ZOOMS.length - 1)
 						setZoom(ZOOMS[zi + 1] ?? zoom);
