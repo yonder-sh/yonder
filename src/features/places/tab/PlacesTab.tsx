@@ -15,17 +15,14 @@
  * the shell shows any selection (on desktop the details pane at the right
  * edge; the content narrows and keeps scrolling, nothing is covered).
  *
- * Wide: with the map hidden (the shell's one "Hide the map", for every tab)
- * the tab takes its space. On a tablet the Rate step always takes the map's
- * space (beside the map, the feed was a narrow column).
+ * Wide (One Yonder D06): the tab takes the map's space; its Map view shows
+ * the places on a map of its own.
  */
 
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { EmptyState } from "@/components/common/empty-state";
 import { PlaceFilterSummary } from "@/features/outline/FilterMenu";
-import { useShell } from "@/features/shell/shell-store";
 import { TabPurpose } from "@/features/shell/TabPurpose";
-import { useBreakpoint } from "@/features/shell/use-breakpoint";
 import { canRateOwn } from "@/lib/auth/roles";
 import { cn } from "@/lib/utils";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
@@ -55,23 +52,11 @@ const PlacesMap = lazy(() => import("./PlacesMap"));
 const RateFeed = lazy(() => import("./RateFeed"));
 
 /**
- * Does the Places tab take the map's space right now? With the map hidden
- * (one switch, the shell's), and always in the Map view (one map at a time).
+ * One Yonder (D06, D07): the Places tab is a page of its own, the map's
+ * width included; its Map view is the map (one map at a time).
  */
-export function usePlacesTakesMap(): boolean {
-	const { tab, search } = useWorkspace();
-	const mapHidden = useShell((s) => s.mapHidden);
-	const rate = usePlacesRateTakesMap();
-	return tab === "places" && (mapHidden || search.pv === "map" || rate);
-}
-
-/** The Rate step on a tablet (md, lg): the feed takes the map's space. */
-export function usePlacesRateTakesMap(): boolean {
-	const { tab, search } = useWorkspace();
-	const bp = useBreakpoint();
-	return (
-		tab === "places" && search.pv === "rate" && (bp === "md" || bp === "lg")
-	);
+export function usePlacesWide(): boolean {
+	return useWorkspace().tab === "places";
 }
 
 /** The Places tab's Map view is on screen: it stands in for the side map. */
@@ -215,7 +200,7 @@ export function PlacesTab({ phone = false }: { phone?: boolean }) {
 	const urlStep = usePlacesState().step;
 	const data = usePlaces(urlStep === "rate" || urlStep === "schedule" ? "" : q);
 	const { access, ix, sel, search, nav } = useWorkspace();
-	const takesMap = usePlacesTakesMap();
+	const takesMap = usePlacesWide();
 	const tally = useMemo(
 		() =>
 			flowTally(data.rows, {

@@ -55,33 +55,31 @@ const asViewer: TripGraph = {
 };
 
 describe("the Places tab's steps", () => {
-	it("1 Rate · 2 Review · 3 Schedule with their counts; the dot on Rate", () => {
+	it("All places · Rate · Schedule with their counts (D06); the dot on Rate", () => {
 		renderWithWorkspace(<PlacesTab />, {
 			search: { tab: "places", pv: "table" },
 		});
 		const bar = screen.getByTestId(T.steps);
 		expect(bar).toHaveAttribute("data-step", "review");
-		const steps = within(bar).getAllByTestId(T.step);
-		expect(steps.map((s) => s.dataset.step)).toEqual([
-			"rate",
+		const all = within(bar).getAllByTestId(T.step);
+		expect(all.map((s) => s.dataset.step)).toEqual([
 			"review",
+			"rate",
 			"schedule",
 		]);
-		expect(steps[1]).toHaveAttribute("aria-current", "step");
-		expect(steps.map((s) => s.textContent?.match(/^\d(\D+?)\d/)?.[1])).toEqual([
-			"Rate",
-			"Review",
-			"Schedule",
+		expect(all[0]).toHaveAttribute("aria-current", "step");
+		// In the flow's order from here on: Rate, All places, Schedule.
+		const steps = [all[1], all[0], all[2]] as HTMLElement[];
+		expect(steps.map((s) => s.getAttribute("title"))).toEqual([
+			`Rate · ${rateable} to rate`,
+			`All places · ${rateable} places`,
+			`Schedule · ${rateable} shortlisted · all on a day`,
 		]);
 		const counts = within(bar)
 			.getAllByTestId(T.stepCount)
 			.map((c) => c.textContent);
-		// Every demo place is on a day (scheduled counts as shortlisted).
-		expect(counts).toEqual([
-			`${rateable} to rate`,
-			`${rateable} places`,
-			`${rateable} shortlisted · all on a day`,
-		]);
+		// Every demo place is on a day (scheduled counts as shortlisted): no count on Schedule.
+		expect(counts).toEqual([`${rateable}`, `${rateable} left`]);
 		expect(steps[0]).toHaveAttribute("data-next", "true");
 		expect(
 			within(steps[0] as HTMLElement).getByTestId(T.stepDot),
@@ -153,7 +151,7 @@ describe("the Places tab's steps", () => {
 		const rate = screen
 			.getAllByTestId(T.step)
 			.find((s) => s.dataset.step === "rate");
-		expect(rate).toHaveTextContent("View only");
+		expect(rate).toHaveAttribute("title", "Rate · View only");
 		expect(screen.queryByTestId(T.stepDot)).toBeNull();
 	});
 });

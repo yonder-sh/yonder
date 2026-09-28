@@ -23,7 +23,8 @@ export type ReviewView = (typeof REVIEW_VIEWS)[number];
 
 export const STEP_LABEL: Record<FlowStep, string> = {
 	rate: "Rate",
-	review: "Review",
+	// One Yonder (D06): the Review step is the page of all places.
+	review: "All places",
 	schedule: "Schedule",
 };
 
@@ -122,6 +123,15 @@ export function pickStep(
 
 const plural = (n: number, one: string, many = `${one}s`) =>
 	`${n} ${n === 1 ? one : many}`;
+
+/** Each view's count in the segmented header (D06): "125", "47 left", "4 to place"; null says nothing. */
+export function stepBadges(t: FlowTally): Record<FlowStep, string | null> {
+	return {
+		review: t.ideas ? String(t.ideas) : null,
+		rate: t.toRate ? `${t.toRate} left` : null,
+		schedule: t.notOnDay ? `${t.notOnDay} to place` : null,
+	};
+}
 
 /** Each step's count line ("12 to rate", "48 places", "9 shortlisted · 4 not on a day"). */
 export function stepCounts(

@@ -31,7 +31,7 @@ import { OfflineBanner } from "@/features/offline/OfflineBanner";
 import {
 	useIsPlacesRow,
 	usePlacesMapView,
-	usePlacesRateTakesMap,
+	usePlacesWide,
 } from "@/features/places/tab/PlacesTab";
 import { BRAND } from "@/lib/brand";
 import { TESTID } from "@/lib/testids";
@@ -114,8 +114,8 @@ export function DesktopWorkspace({ bp }: { bp: Exclude<Breakpoint, "sm"> }) {
 	const mapHidden = useShell((s) => s.mapHidden);
 	// docs/PLACES.md §1: the Places tab's Map view stands in for the side map.
 	const placesMap = usePlacesMapView();
-	// A tablet's Rate feed takes the map's space too (PlacesTab).
-	const rateFeed = usePlacesRateTakesMap();
+	// One Yonder (D06): the Places tab is a page, the map's width included.
+	const placesWide = usePlacesWide();
 	const overview = useOverviewTakesAll();
 	const { sel } = useWorkspace();
 	const winW = useWindowWidth();
@@ -129,7 +129,7 @@ export function DesktopWorkspace({ bp }: { bp: Exclude<Breakpoint, "sm"> }) {
 	);
 	const details =
 		(bp === "lg" || bp === "xl") && !overview && sel !== null && !mapPlace;
-	const mapShown = !(mapHidden || placesMap || rateFeed);
+	const mapShown = !(mapHidden || placesMap || placesWide);
 	// What's left for the pane beside a left column this wide, with or without the map.
 	const room = (left: number, map: boolean) =>
 		winW - left - DIVIDER_PX - CENTER_MIN - (map ? MAP_MIN : 0);
@@ -175,7 +175,7 @@ export function DesktopWorkspace({ bp }: { bp: Exclude<Breakpoint, "sm"> }) {
 						</div>
 						<InspectorSheet />
 					</>
-				) : mapHidden || placesMap || rateFeed || foldMap ? (
+				) : mapHidden || placesMap || placesWide || foldMap ? (
 					<>
 						<div className="h-full min-w-0 flex-1">
 							<CenterPanel tabs={!tabsTop} />
@@ -188,10 +188,10 @@ export function DesktopWorkspace({ bp }: { bp: Exclude<Breakpoint, "sm"> }) {
 								maxWidth={detailsW + room(left, false)}
 							/>
 						) : null}
-						{/* The Places Map view is the map here, and the Rate feed has
-						    it on a tablet: nothing to bring back. Folded for the
-						    details, showing it folds them instead. */}
-						{placesMap || rateFeed ? null : (
+						{/* The Places tab is a page with a Map view of its own:
+						    nothing to bring back. Folded for the details, showing
+						    the map folds them instead. */}
+						{placesMap || placesWide ? null : (
 							<MapRail onShow={foldMap ? fold : undefined} />
 						)}
 					</>

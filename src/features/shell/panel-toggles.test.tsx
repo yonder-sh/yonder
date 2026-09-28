@@ -73,8 +73,7 @@ describe("side panels", () => {
 		expect(inspector.style.width).toBe("380px");
 	});
 
-	it("the Places tab is wide with the map hidden, and has no toggle of its own", () => {
-		act(() => useShell.setState({ mapHidden: true }));
+	it("the Places tab is a page: the map's width, no map rail, no toggle of its own (D06)", () => {
 		renderWithWorkspace(desktop("xl"), {
 			search: { tab: "places", pv: "table" },
 		});
@@ -84,7 +83,9 @@ describe("side panels", () => {
 		expect(
 			within(places).getByRole("button", { name: /Add a place/ }),
 		).toHaveTextContent("Add a place");
-		expect(screen.getByTestId(SHELL_TESTID.mapRail)).toBeInTheDocument();
+		// Its Map view is the map: nothing to bring back beside it.
+		expect(screen.queryByTestId(SHELL_TESTID.mapRail)).toBeNull();
+		expect(screen.queryByTestId("trip-map")).toBeNull();
 	});
 
 	it("a fresh start reads the map's from storage", async () => {

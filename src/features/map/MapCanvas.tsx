@@ -713,11 +713,12 @@ export default function MapCanvas({
 	 */
 	const fitPadding = useMemo((): { hard: Insets; soft: Insets } => {
 		// The phone's map is its own page between the header and the tab bar
-		// (One Yonder): only the controls column on the right to keep clear.
+		// (One Yonder): its 44px controls column on the right (16px in) and the
+		// + and Rate pill over its foot stay clear of every pin.
 		if (variant === "mobile")
 			return {
 				hard: NO_INSETS,
-				soft: { top: 24, bottom: 24, left: 24, right: 56 },
+				soft: { top: 24, bottom: 96, left: 24, right: 80 },
 			};
 		return {
 			hard: {
