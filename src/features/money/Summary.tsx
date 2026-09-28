@@ -136,9 +136,9 @@ export function SummaryStrip({
 		<section
 			data-testid={MONEY_TESTID.summary}
 			data-cursor-anchor="money:summary"
-			className="px-4 pt-3 pb-4"
+			className="px-4 pb-4 @4xl:px-6"
 		>
-			<div className="grid grid-cols-3 gap-3">
+			<div className="grid grid-cols-3 gap-2 *:rounded-xl *:border *:bg-card *:px-3.5 *:py-3">
 				<Stat
 					label="Planned"
 					value={d.fmtTotal(s.plannedHome, exact("planned"))}
@@ -489,76 +489,74 @@ export function Balances({
 		<section
 			data-testid={MONEY_TESTID.balances}
 			data-cursor-anchor="money:balances"
-			className="px-4 pb-4"
+			// D11 / P14: the balance first, in a card of its own.
+			className="mx-4 mb-3 flex flex-wrap items-end gap-x-4 gap-y-3 rounded-2xl border bg-card p-4 @4xl:mx-6"
 		>
-			<SectionHeader
-				action={
-					canSettle || view.transfers.length ? (
-						<Button
-							size="sm"
-							variant="outline"
-							className="h-7"
-							data-testid={MONEY_TESTID.settleUpButton}
-							onClick={() => openSettle(true)}
-						>
-							Settle up
-						</Button>
-					) : null
-				}
-			>
-				Balances · whole trip
-			</SectionHeader>
-			{view.transfers.length === 0 ? (
-				<p className="text-meta text-muted-foreground">Everyone is square.</p>
-			) : (
-				<div className="space-y-1 text-meta leading-[18px]">
-					{mine.length ? (
-						<p>
-							{joined(
-								mine.map((t) =>
-									t.from === meId ? (
-										<>
-											You owe {name(t.to)} {both(t.amountMinor)}
-										</>
-									) : (
-										<>
-											{name(t.from)} owes you {both(t.amountMinor)}
-										</>
+			<div className="min-w-0 flex-1">
+				<h3 className="eyebrow mb-1.5">Your balance · whole trip</h3>
+				{view.transfers.length === 0 ? (
+					<p className="font-display text-xl leading-7 font-semibold">
+						Everyone is square.
+					</p>
+				) : (
+					<div className="space-y-1 text-meta leading-[18px]">
+						{mine.length ? (
+							<p className="font-display text-xl leading-7 font-semibold">
+								{joined(
+									mine.map((t) =>
+										t.from === meId ? (
+											<>
+												You owe {name(t.to)} {both(t.amountMinor)}
+											</>
+										) : (
+											<>
+												{name(t.from)} owes you {both(t.amountMinor)}
+											</>
+										),
 									),
-								),
-							)}
-						</p>
-					) : null}
-					{others.length ? (
-						<p className="text-muted-foreground">
-							{joined(
-								others.map((t) => (
-									<>
-										{name(t.from)} owes {name(t.to)} {both(t.amountMinor)}
-									</>
-								)),
-							)}
-						</p>
-					) : null}
-				</div>
-			)}
-			{meId && after !== undefined && Math.abs(delta) >= 1 ? (
-				<p
-					data-testid={MONEY_TESTID.balanceNotice}
-					className="mt-2 rounded-md bg-muted px-3 py-2 text-meta leading-[18px]"
+								)}
+							</p>
+						) : null}
+						{others.length ? (
+							<p className="text-muted-foreground">
+								{joined(
+									others.map((t) => (
+										<>
+											{name(t.from)} owes {name(t.to)} {both(t.amountMinor)}
+										</>
+									)),
+								)}
+							</p>
+						) : null}
+					</div>
+				)}
+				{meId && after !== undefined && Math.abs(delta) >= 1 ? (
+					<p
+						data-testid={MONEY_TESTID.balanceNotice}
+						className="mt-2 rounded-md bg-muted px-3 py-2 text-meta leading-[18px]"
+					>
+						Balance changed since your last settlement:{" "}
+						<Num>{signed(delta, d.home)}</Num>
+						{cause ? (
+							<span className="text-muted-foreground">
+								{" "}
+								(
+								{cause.cause ??
+									`${cause.actorName.split(" ")[0]} ${VERB[cause.verb] ?? "changed"}${cause.title ? ` ${cause.title}` : " an expense"}`}
+								)
+							</span>
+						) : null}
+					</p>
+				) : null}
+			</div>
+			{canSettle || view.transfers.length ? (
+				<Button
+					data-testid={MONEY_TESTID.settleUpButton}
+					onClick={() => openSettle(true)}
+					className="max-sm:w-full"
 				>
-					Balance changed since your last settlement:{" "}
-					<Num>{signed(delta, d.home)}</Num>
-					{cause ? (
-						<span className="text-muted-foreground">
-							{" "}
-							(
-							{cause.cause ??
-								`${cause.actorName.split(" ")[0]} ${VERB[cause.verb] ?? "changed"}${cause.title ? ` ${cause.title}` : " an expense"}`}
-							)
-						</span>
-					) : null}
-				</p>
+					Settle up
+				</Button>
 			) : null}
 		</section>
 	);

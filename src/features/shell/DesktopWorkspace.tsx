@@ -116,9 +116,10 @@ export function DesktopWorkspace({ bp }: { bp: Exclude<Breakpoint, "sm"> }) {
 	// docs/PLACES.md §1: the Places tab's Map view stands in for the side map.
 	const placesMap = usePlacesMapView();
 	// One Yonder (D06): the Places tab is a page, the map's width included.
-	const placesWide = usePlacesWide();
-	const overview = useOverviewTakesAll();
 	const { sel, search, days, tab } = useWorkspace();
+	// …and so is Money (D11: the balance first, no map).
+	const placesWide = usePlacesWide() || tab === "money";
+	const overview = useOverviewTakesAll();
 	// D04: a day's ideas in the map's place ("Fill this day").
 	const filling = !!search.fill && !!days && tab === "plan";
 	const winW = useWindowWidth();

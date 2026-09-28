@@ -58,7 +58,9 @@ export function MoneyTab() {
 		openAddExpense(scope ? { target: { kind: "node", nodeId: scope.id } } : {});
 	const writer = can(access, "manageExpenses");
 	const header = (
-		<div className="flex min-h-10 flex-wrap items-center gap-2 px-4 pt-2">
+		<div className="flex min-h-10 flex-wrap items-center gap-2 px-4 pt-2 @4xl:px-6 @4xl:pt-4 @4xl:pb-2">
+			{/* D11 / P14: "Money" heads it. */}
+			<h2 className="font-display text-2xl leading-8 font-semibold">Money</h2>
 			<span className="text-xs text-muted-foreground">
 				{view
 					? `${view.rows.length} ${view.rows.length === 1 ? "expense" : "expenses"}`
@@ -107,9 +109,26 @@ export function MoneyTab() {
 		<div
 			data-testid={TESTID.moneyTab}
 			data-cursor-vis="members"
-			className="pb-24"
+			className="@container pb-24"
 		>
 			{header}
+			{/* D11: the balance first, then the totals. */}
+			{scope ? (
+				<NetPositions
+					summary={view.summary}
+					display={d}
+					meId={meId}
+					scopeName={scope.name}
+				/>
+			) : (
+				<Balances
+					view={view}
+					display={d}
+					meId={meId}
+					data={data}
+					canSettle={writer}
+				/>
+			)}
 			{empty ? (
 				<EmptyState
 					className="py-8"
@@ -128,53 +147,45 @@ export function MoneyTab() {
 			) : (
 				<SummaryStrip summary={view.summary} display={d} meId={meId} />
 			)}
-			{scope ? (
-				<NetPositions
-					summary={view.summary}
-					display={d}
-					meId={meId}
-					scopeName={scope.name}
-				/>
-			) : (
-				<Balances
-					view={view}
-					display={d}
-					meId={meId}
-					data={data}
-					canSettle={writer}
-				/>
-			)}
-			{!empty ? (
-				<PeopleTable summary={view.summary} display={d} meId={meId} />
-			) : null}
-			<BudgetSection data={data} display={d} meId={meId} />
-			{!empty ? (
-				<Breakdown rows={view.rows} shopping={view.shopping} display={d} />
-			) : null}
-			{!empty ? (
-				<section data-testid={MONEY_TESTID.expenseList} className="pb-4">
-					<RowGroup title="To pay" rows={toPay} />
-					<RowGroup title="Paid" rows={paid} />
-					{view.shopping.length ? (
-						<div>
-							<SectionHeader className="sticky top-0 z-20 border-b bg-background/95 px-4 backdrop-blur">
-								From the shopping list{" "}
-								<span className="font-normal tnum">{view.shopping.length}</span>
-							</SectionHeader>
-							<ul className="divide-y">
-								{view.shopping.map((r) => (
-									<ShoppingRow
-										key={r.item.id}
-										row={r}
-										display={d}
-										writer={writer}
-									/>
-								))}
-							</ul>
-						</div>
+			<div className="@4xl:grid @4xl:grid-cols-[minmax(0,1fr)_minmax(300px,380px)] @4xl:items-start @4xl:gap-6 @4xl:px-2">
+				<div className="min-w-0">
+					{!empty ? (
+						<section data-testid={MONEY_TESTID.expenseList} className="pb-4">
+							<RowGroup title="To pay" rows={toPay} />
+							<RowGroup title="Paid" rows={paid} />
+							{view.shopping.length ? (
+								<div>
+									<SectionHeader className="sticky top-0 z-20 border-b bg-background/95 px-4 backdrop-blur">
+										From the shopping list{" "}
+										<span className="font-normal tnum">
+											{view.shopping.length}
+										</span>
+									</SectionHeader>
+									<ul className="divide-y">
+										{view.shopping.map((r) => (
+											<ShoppingRow
+												key={r.item.id}
+												row={r}
+												display={d}
+												writer={writer}
+											/>
+										))}
+									</ul>
+								</div>
+							) : null}
+						</section>
 					) : null}
-				</section>
-			) : null}
+					{!empty ? (
+						<PeopleTable summary={view.summary} display={d} meId={meId} />
+					) : null}
+				</div>
+				<div className="min-w-0 @4xl:sticky @4xl:top-0">
+					{!empty ? (
+						<Breakdown rows={view.rows} shopping={view.shopping} display={d} />
+					) : null}
+					<BudgetSection data={data} display={d} meId={meId} />
+				</div>
+			</div>
 			<SettleUpDialog />
 			<AddExpenseDialog />
 		</div>
