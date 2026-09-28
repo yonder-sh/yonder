@@ -16,6 +16,7 @@
  */
 import { devices, expect, type Page, test } from "@playwright/test";
 import { loginViaApi } from "./_helpers/auth";
+import { openPhoneMap } from "./_helpers/page";
 
 const TRIP = "asia-2027";
 const DENNIS = {
@@ -203,6 +204,8 @@ test.describe("200% zoom", () => {
 	}) => {
 		await signIn(page);
 		await openTrip(page, `/t/${TRIP}/japan/tokyo?days=2027-10-05&lens=place`);
+		// 640 px is the phone layout: its map from the header.
+		await openPhoneMap(page);
 		const covered = await page.evaluate(() =>
 			["Fit to the scope", "Map layers and legend", "Filter"].flatMap(
 				(label) => {

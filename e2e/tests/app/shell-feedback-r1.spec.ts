@@ -194,7 +194,8 @@ test.describe("desktop", () => {
 		await openTrip(page, `/t/${TRIP}/japan/tokyo?tab=lists`);
 		await expect(include(page)).toBeVisible();
 		await openTrip(page, `/t/${TRIP}/japan/tokyo/akihabara?tab=lists`);
-		await expect(page.getByTestId(TESTID.centerPanel).getByRole("tablist", { name: "Views" })).toBeVisible();
+		// At 1440 the tabs sit in the top bar (One Yonder).
+		await expect(page.getByRole("tablist", { name: "Views" })).toBeVisible();
 		await expect(include(page)).toHaveCount(0);
 		await settle(page);
 		await page.getByTestId(TESTID.centerPanel).screenshot({ path: shotPath("shell/fb12-center-leaf.png"), animations: "disabled" });
@@ -290,7 +291,7 @@ test.describe("phone 390", () => {
 		await page.screenshot({ path: shotPath("shell/vis3-03-phone-tab-lists.png"), animations: "disabled" });
 	});
 
-	test("VIS3-09: a new trip's Plan says 'Where to first?'; with a place but no dates it asks how long in each city", async ({ page }, info) => {
+	test("VIS3-09: a new trip's Plan says 'Where to first?'; with a place but no dates it asks for the dates", async ({ page }, info) => {
 		test.skip(info.project.name !== "chromium", "chromium project (the viewport is set here)");
 		await signIn(page);
 		await page.goto("/dashboard");
@@ -320,6 +321,6 @@ test.describe("phone 390", () => {
 			await m.createNode({ data: { tripId, id: crypto.randomUUID(), parentId: null, type: "city", name: "Kyoto", lat: 35.01, lng: 135.77 } });
 		}, tripId);
 		await openTrip(page, `/t/${slug}?tab=plan`);
-		await expect(page.getByTestId(TESTID.planTab)).toContainText("How long in each city?", { timeout: 15_000 });
+		await expect(page.getByTestId(TESTID.planTab)).toContainText("Set the trip dates to plan your days.", { timeout: 15_000 });
 	});
 });
