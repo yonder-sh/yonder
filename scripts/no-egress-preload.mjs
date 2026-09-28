@@ -6,12 +6,19 @@
  * to E2E_EGRESS_LOG (the runner counts them per host) and, with its stack, to
  * the env's app log (E2E_APP_LOG, else stderr). E2E_EGRESS_ALLOW: extra
  * comma-separated `host` or `host:port` entries.
+ *
+ * Worker threads have their own `net` and `dns` and don't run `--import`
+ * preloads, and Nitro's dev server runs the app's server code in one: every
+ * Worker a guarded process starts loads this file first.
  */
 import { appendFileSync } from "node:fs";
+import { createRequire, syncBuiltinESMExports } from "node:module";
 import path from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
+import { isMainThread } from "node:worker_threads";
 import { installNoEgress } from "./lib/no-egress.mjs";
 
-const proc = `${path.basename(process.argv[1] ?? process.argv0)}[${process.pid}]`;
+const proc = `${isMainThread ? path.basename(process.argv[1] ?? process.argv0) : "worker-thread"}[${process.pid}]`;
 
 installNoEgress({
 	allow: (process.env.E2E_EGRESS_ALLOW ?? "")
@@ -36,3 +43,32 @@ installNoEgress({
 		} catch {}
 	},
 });
+
+const GUARDED = Symbol.for("yonder.no-egress.worker");
+const threads = createRequire(import.meta.url)("node:worker_threads");
+if (!threads.Worker[GUARDED]) {
+	// Synchronous, and valid whether the worker's code is CommonJS or a module.
+	const self = JSON.stringify(fileURLToPath(import.meta.url));
+	const load = `process.getBuiltinModule("node:module").createRequire(${self})(${self});\n`;
+	/** A Worker that loads this file, then its own code or entry (as an ES module import). */
+	class GuardedWorker extends threads.Worker {
+		static [GUARDED] = true;
+		constructor(entry, options = {}) {
+			if (options.eval) {
+				super(load + String(entry), options);
+				return;
+			}
+			const s = String(entry);
+			const url =
+				entry instanceof URL || /^(file|data):/.test(s)
+					? s
+					: pathToFileURL(path.resolve(s)).href;
+			super(`${load}import(${JSON.stringify(url)});`, {
+				...options,
+				eval: true,
+			});
+		}
+	}
+	threads.Worker = GuardedWorker;
+	syncBuiltinESMExports();
+}

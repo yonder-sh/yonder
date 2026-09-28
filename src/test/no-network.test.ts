@@ -2,10 +2,15 @@
  * The no-egress guard (scripts/lib/no-egress.mjs) that vitest and the e2e
  * envs run with: nothing leaves this machine, loopback still works.
  */
+import { execFileSync } from "node:child_process";
 import dns from "node:dns";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { createServer } from "node:http";
 import type { AddressInfo } from "node:net";
 import net from "node:net";
+import { tmpdir } from "node:os";
+import path from "node:path";
+import { pathToFileURL } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
 import { isLoopbackHost } from "../../scripts/lib/no-egress.mjs";
 import { takeRefusals } from "./no-network";
@@ -78,5 +83,51 @@ describe("the guard", () => {
 			await new Promise((r) => server.close(r));
 		}
 		expect(takeRefusals()).toEqual([]);
+	});
+});
+
+describe("the e2e preload", () => {
+	const PRELOAD = path.resolve(
+		import.meta.dirname,
+		"../../scripts/no-egress-preload.mjs",
+	);
+	const GUARD = "process[Symbol.for('yonder.no-egress')]";
+
+	it("guards the worker threads a process starts (Nitro's dev server runs the app in one)", () => {
+		const dir = mkdtempSync(path.join(tmpdir(), "no-egress-"));
+		try {
+			const entry = path.join(dir, "entry.mjs");
+			writeFileSync(
+				entry,
+				`import { parentPort, workerData } from "node:worker_threads";\nparentPort.postMessage([workerData, !!${GUARD}]);\n`,
+			);
+			const main = `import { Worker } from "node:worker_threads";
+const ask = (w) => new Promise((r) => w.once("message", (m) => { r(m); w.terminate(); }));
+console.log(JSON.stringify({
+	main: !!${GUARD},
+	path: await ask(new Worker(${JSON.stringify(entry)}, { workerData: "path" })),
+	url: await ask(new Worker(new URL(${JSON.stringify(pathToFileURL(entry).href)}), { workerData: "url" })),
+	eval: await ask(new Worker("process.getBuiltinModule('node:worker_threads').parentPort.postMessage(!!${GUARD})", { eval: true })),
+}));`;
+			const out = execFileSync(
+				process.execPath,
+				[
+					"--import",
+					pathToFileURL(PRELOAD).href,
+					"--input-type=module",
+					"-e",
+					main,
+				],
+				{ encoding: "utf8" },
+			);
+			expect(JSON.parse(out)).toEqual({
+				main: true,
+				path: ["path", true],
+				url: ["url", true],
+				eval: true,
+			});
+		} finally {
+			rmSync(dir, { recursive: true, force: true });
+		}
 	});
 });
