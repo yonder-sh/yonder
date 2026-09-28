@@ -32,8 +32,7 @@ test("the trip's address (its share link) never leaves the app's origin", async 
 	await openLink(page, "asia-2027", TOKEN.viewer);
 	await page.waitForURL(/\/t\/asia-2027/, { timeout: 30_000 });
 	await expect(page.getByTestId("workspace")).toBeVisible({ timeout: 30_000 });
-	await page.goto("/t/asia-2027/japan/tokyo/shinjuku/golden-gai");
-	await page.getByRole("tab", { name: /^Media/ }).first().click();
+	await page.goto("/t/asia-2027/japan/tokyo/shinjuku/golden-gai?tab=media");
 	await page.waitForTimeout(3000);
 	// Click an outbound link (a guide link card); it opens a popup.
 	const ext = page.locator("a[href^='http']:not([href*='localhost'])").first();

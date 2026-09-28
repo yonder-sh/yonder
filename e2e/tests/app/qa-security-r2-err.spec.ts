@@ -85,7 +85,6 @@ test("ERR-05: storage is down during an upload", async ({ browser }) => {
 	const page = await ctx.newPage();
 	await page.goto(S3DOWN + "/t/asia-2027/japan/tokyo/shinjuku/golden-gai?tab=media");
 	await expect(page.getByTestId("workspace")).toBeVisible({ timeout: 30_000 });
-	await page.getByRole("tab", { name: /^Media/ }).first().click();
 	await page.waitForTimeout(1500);
 	const before = await page.getByTestId("media-upload-tile").count();
 	const input = page.getByTestId("media-file-input").first();

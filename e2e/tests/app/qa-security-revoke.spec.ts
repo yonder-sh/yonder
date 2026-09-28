@@ -19,9 +19,8 @@ const GG_URL = "/t/asia-2027/japan/tokyo/shinjuku/golden-gai";
 const DOC = `trip/${T}/node/${GG}`;
 
 async function openNotes(page: Page) {
-	await page.goto(GG_URL);
-	const tab = page.getByRole("tab", { name: /^Notes/ }).first();
-	await tab.click();
+	// One Yonder: a `tab=notes` link opens the details' Notes.
+	await page.goto(`${GG_URL}?tab=notes`);
 	await expect(page.locator(`[data-testid=note-editor][data-doc="${DOC}"]`).first()).toBeVisible({ timeout: 20_000 });
 }
 

@@ -214,8 +214,8 @@ test("SHARE-03: a viewer sees no editing controls (Kai on Asia 2027)", async ({ 
 	expect.soft(dtxt, "viewer sees no member emails").not.toMatch(/@asia2027\.test/);
 	await shot(k.page, "03-kai-share");
 	await k.page.keyboard.press("Escape");
-	// notes editor not editable
-	await k.page.getByRole("tab", { name: /notes/i }).first().click().catch(() => {});
+	// notes editor not editable (One Yonder: a `tab=notes` link opens the details' Notes)
+	await k.page.goto(`${new URL(k.page.url()).pathname}?tab=notes`);
 	await k.page.waitForTimeout(1500);
 	const editable = await k.page.locator('[contenteditable="true"]').count();
 	expect.soft(editable, "no editable contenteditable for a viewer").toBe(0);

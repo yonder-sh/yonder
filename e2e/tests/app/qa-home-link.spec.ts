@@ -8,7 +8,7 @@ import { type APIRequestContext, type Browser, type Page, expect, test } from "@
 import { loginViaApi } from "./_helpers/auth";
 import { APP_URL } from "./_helpers/env";
 import { cloneFixtureTrip } from "./_helpers/fixture";
-import { hydrated } from "./_helpers/page";
+import { hydrated, notesView } from "./_helpers/page";
 import { openLink } from "./_helpers/link";
 
 test.beforeEach(({}, info) => {
@@ -97,9 +97,10 @@ test("LINK-01: viewer link renders read-only with no sign-in prompt", async ({ b
 	expect.soft(txt).not.toMatch(/Add to this day/);
 	expect.soft(txt, "guests never see Money tab").not.toMatch(/\bMoney\b/);
 	expect(await g.page.locator('[contenteditable="true"]').count()).toBe(0);
-	// Lists and media tabs visible
+	// Lists, the gallery and the notes (One Yonder: `tab=media` is the gallery view, `tab=notes` the details' Notes)
 	for (const tab of ["Lists", "Media", "Notes"]) {
-		await g.page.getByTestId("center-tabs").getByText(tab, { exact: false }).first().click();
+		if (tab === "Lists") await g.page.getByTestId("center-tabs").getByText(tab, { exact: false }).first().click();
+		else await g.page.goto(`${new URL(g.page.url()).pathname}?tab=${tab.toLowerCase()}`);
 		await g.page.waitForTimeout(1200);
 		await shot(g.page, `01-guest-viewer-${tab.toLowerCase()}`);
 		expect.soft(await g.page.locator('[contenteditable="true"]').count(), `${tab}: nothing editable`).toBe(0);
@@ -148,14 +149,14 @@ test("LINK-02/10: editor link — guest edits reach the owner live, attributed t
 	const rows = JSON.stringify(act.value).slice(0, 1500);
 	console.log("LINK-02 activity:", rows);
 	expect.soft(rows).toMatch(/Guest/);
-	// notes: guest types in the trip notes
-	await ge.page.getByTestId("center-tabs").getByText("Notes").first().click();
-	const ed = ge.page.locator('[contenteditable="true"]').first();
+	// notes: guest types in the trip notes (the trip's details, Notes)
+	await ge.page.goto(`/t/${c.slug}?sel=root&itab=notes`);
+	const ed = notesView(ge.page).locator('[contenteditable="true"]').first();
 	await expect(ed).toBeVisible({ timeout: 15_000 });
 	await ed.click();
 	await ge.page.keyboard.type(" Guest wrote this line.");
-	await o.page.getByTestId("center-tabs").getByText("Notes").first().click();
-	await expect(o.page.getByTestId("workspace")).toContainText("Guest wrote this line.", { timeout: 5000 });
+	await o.page.goto(`/t/${c.slug}?sel=root&itab=notes`);
+	await expect(notesView(o.page)).toContainText("Guest wrote this line.", { timeout: 5000 });
 	await shot(o.page, "02-owner-sees-guest-note");
 	// LINK-10: reload keeps the same identity
 	const before = (await graphOf(ge.page)).me;

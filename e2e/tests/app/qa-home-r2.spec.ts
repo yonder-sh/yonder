@@ -266,7 +266,7 @@ test("R2 phone: dashboard, share dialog, settings, login (390x844)", async ({ br
 	const share = page.getByTestId("share-button");
 	console.log("R2 PHONE share buttons visible:", await share.filter({ visible: true }).count(), "trip-menu visible:", await page.getByTestId("trip-menu").filter({ visible: true }).count());
 	{
-		await page.getByRole("button", { name: "More" }).click();
+		await page.getByRole("button", { name: "More", exact: true }).click();
 		await page.getByRole("menuitem", { name: /^Share$/ }).click();
 		await expect(page.getByTestId("share-dialog")).toBeVisible();
 		await page.waitForTimeout(800);
@@ -274,7 +274,7 @@ test("R2 phone: dashboard, share dialog, settings, login (390x844)", async ({ br
 		await shot(page, "phone-share");
 		await page.keyboard.press("Escape");
 		await page.waitForTimeout(500);
-		await page.getByRole("button", { name: "More" }).click();
+		await page.getByRole("button", { name: "More", exact: true }).click();
 		await page.getByRole("menuitem", { name: /Trip settings/ }).click();
 		await page.waitForTimeout(1000);
 		console.log("R2 PHONE settings overflow:", await over());

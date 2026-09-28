@@ -206,7 +206,7 @@ test("an idea dropped on a Plan day is scheduled; A does it from the keyboard", 
 	// A: select a day, focus an idea, press A.
 	const days = await page.evaluate(() => (window as unknown as Win).__yonder?.graph.days ?? []);
 	const day2 = days[1] as { id: string };
-	await page.goto(`/t/${c.slug}?sel=d.${day2.id}`);
+	await page.goto(`/t/${c.slug}?tab=plan&sel=d.${day2.id}`);
 	await expectLive(page);
 	const ist = page.getByTestId(PLAN_TESTID.ideas).getByTestId(OUTLINE_TESTID.ideaRow).filter({ hasText: "Istanbul" });
 	await ist.focus();

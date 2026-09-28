@@ -245,7 +245,7 @@ test("FB-05: inside a scope 'Open in Places' opens that scope's ideas", async ({
 });
 
 test("FB-05: a view-link guest gets no 'Open in Places' link", async ({ browser }, info) => {
-	test.skip(info.project.name !== "chromium", "xl sidebar");
+	test.skip(info.project.name !== "chromium", "one run is enough");
 	const ownerCtx = await browser.newContext();
 	const owner = await ownerCtx.newPage();
 	await loginViaApi(owner.request, "dev@example.com", { first: "Dev", last: "User" });
@@ -260,6 +260,9 @@ test("FB-05: a view-link guest gets no 'Open in Places' link", async ({ browser 
 	const page = await ctx.newPage();
 	await openLink(page, c.slug, "viewer");
 	await expect(page.getByTestId("workspace")).toBeVisible({ timeout: 30_000 });
+	// The ideas are at the foot of the Plan.
+	await page.goto(`/t/${c.slug}?tab=plan`);
+	await expectLive(page);
 	const ideas = page.getByTestId(PLAN_TESTID.ideas);
 	await expect(ideas).toBeVisible();
 	// There are ideas (a member would get the link), but a guest can't rate.
