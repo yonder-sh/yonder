@@ -86,6 +86,7 @@ import { formatDayDate } from "@/lib/format";
 import { newId } from "@/lib/ids";
 import { useFormPresence } from "@/lib/realtime/form-presence";
 import type { NodeType, PlaceCategory } from "@/lib/schemas/enums";
+import { isProposed } from "@/lib/schemas/proposals";
 import type { LegTarget } from "@/lib/schemas/targets";
 import { TESTID } from "@/lib/testids";
 import { cn } from "@/lib/utils";
@@ -760,11 +761,14 @@ function Palette({
 				ids: [id],
 			},
 			{
-				onSuccess: () => {
+				onSuccess: (r) => {
+					// A suggested place takes the link too (it chains by id).
 					void addLinkAndCache(qc, tripId, {
 						target: { kind: "node", nodeId: id },
 						url,
 					}).catch((e) => toast.error(humanError(e)));
+					// Its "Suggested — …" toast has said so; there's nothing to show yet.
+					if (isProposed(r)) return onClose();
 					const where = ix.node(parentId)?.name ?? graph.trip.name;
 					if (open) {
 						onClose("inspector");

@@ -22,6 +22,8 @@ const calls = vi.hoisted(() => ({
 	navigate: [] as unknown[],
 	peeks: [] as string[],
 	peek: (() => new Promise(() => {})) as () => Promise<unknown>,
+	path: (async () => ({ ok: true })) as () => Promise<unknown>,
+	toasts: [] as string[],
 }));
 
 vi.mock("../places.functions", () => ({
@@ -48,7 +50,7 @@ vi.mock("@/features/media/media.functions", async (orig) => ({
 vi.mock("@/functions/nodes.functions", () => ({
 	createNodePath: async (opts: { data: (typeof calls.paths)[number] }) => {
 		calls.paths.push({ chain: opts.data.chain, ids: opts.data.ids });
-		return { ok: true };
+		return calls.path();
 	},
 	updateNode: async () => ({ ok: true }),
 	setNodePriority: async () => ({ ok: true }),
@@ -61,6 +63,15 @@ vi.mock("@tanstack/react-router", async (orig) => ({
 	},
 }));
 vi.mock("../ui/mini-map", () => ({ MiniMap: () => null }));
+vi.mock("sonner", async (orig) => {
+	const say = (m: string) => {
+		calls.toasts.push(m);
+	};
+	return {
+		...(await orig<typeof import("sonner")>()),
+		toast: Object.assign(say, { error: say, success: say }),
+	};
+});
 
 const REEL = "https://www.tiktok.com/@cafes/video/7430912345678901234";
 const CAPTION: LinkPeek = {
@@ -75,6 +86,8 @@ beforeEach(() => {
 	calls.navigate.length = 0;
 	calls.peeks.length = 0;
 	calls.peek = () => new Promise(() => {});
+	calls.path = async () => ({ ok: true });
+	calls.toasts.length = 0;
 });
 afterEach(() => {
 	act(() => useUi.getState().openAddPlace(null));
@@ -228,6 +241,21 @@ describe("a pasted link in ⌘K (D10)", () => {
 			target: { kind: "node", nodeId: calls.paths[0]?.ids[0] },
 			url: REEL,
 		});
+		expect(calls.toasts).toEqual(["Saved to Shibuya ideas"]);
+	});
+
+	it("a suggested new place still takes the link, and isn't called saved", async () => {
+		calls.path = async () => ({
+			proposed: { id: "p1", summary: "Add TikTok video" },
+		});
+		open({ splat: "japan/tokyo/shibuya" });
+		paste(REEL);
+		fireEvent.keyDown(input(), { key: "Enter", ctrlKey: true });
+		await waitFor(() => expect(calls.links).toHaveLength(1));
+		expect(calls.links[0]).toMatchObject({
+			target: { nodeId: calls.paths[0]?.ids[0] },
+		});
+		expect(calls.toasts).toEqual(["Suggested — Add TikTok video"]);
 	});
 
 	it("files New place somewhere else when asked", async () => {
