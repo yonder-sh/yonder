@@ -191,7 +191,7 @@ test("MONEY-01: a negative exact part is marked in the editor and refused by the
 	await expect(dlg).toBeVisible();
 	await dlg.getByTestId(M.amount).fill("1000");
 	await dlg.getByTestId(M.title).fill("UI negative exact");
-	await dlg.getByTestId(M.splitToggle).click();
+	await dlg.getByTestId(M.more).click();
 	await dlg.getByTestId(M.splitExact).click();
 	const parts = dlg.getByTestId(M.splitExactAmount);
 	await expect(parts.first()).toBeVisible();
@@ -326,17 +326,14 @@ test("FB-02 / FB-16: money controls show a pointer; payers and splits use the ro
 	await page.getByTestId(M.moreMenu).click();
 	expect(await cursor(page.getByTestId(M.exportCsv))).toBe("pointer");
 	await page.keyboard.press("Escape");
-	// The editor: split toggle, person chips, "+ Person", More, the payer picker's options.
+	// The editor: person pills, "+ Person", More, the payer picker's options.
 	await row.click();
 	const dlg = page.getByTestId(TESTID.addExpenseDialog);
 	await expect(dlg).toBeVisible();
 	const more = dlg.getByTestId(M.more);
 	if (await more.isVisible()) expect(await cursor(more)).toBe("pointer");
-	const toggle = dlg.getByTestId(M.splitToggle);
-	if (await toggle.isVisible()) {
-		expect(await cursor(toggle)).toBe("pointer");
-		await toggle.click();
-		const chip = dlg.getByTestId(M.splitPerson).first();
+	const chip = dlg.getByTestId(M.splitPerson).first();
+	if (await chip.isVisible()) {
 		expect(await cursor(chip)).toBe("pointer");
 		await expect(chip.locator('[data-slot="avatar"]')).toHaveCount(1);
 		expect(await cursor(dlg.getByTestId(M.splitAddPerson))).toBe("pointer");
@@ -402,7 +399,6 @@ test("FB-16: a payer's profile picture shows, round, on the row, in the split ch
 		await expect(page.getByTestId(M.personRow).and(page.locator(`[data-member-id="${maya}"]`)).locator("[data-avatar-image] img")).toBeVisible();
 		await row.click();
 		const dlg = page.getByTestId(TESTID.addExpenseDialog);
-		await dlg.getByTestId(M.splitToggle).click();
 		const chip = dlg.getByTestId(M.splitPerson).and(dlg.locator(`[data-member-id="${maya}"]`));
 		await expect(chip.locator("[data-avatar-image] img")).toBeVisible();
 		await dlg.screenshot({ path: shotPath("money/r4-avatar-photo-editor.png") });

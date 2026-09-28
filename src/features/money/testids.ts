@@ -37,13 +37,22 @@ export const MONEY_TESTID = {
 	currency: "expense-currency",
 	title: "expense-title",
 	status: "expense-status",
+	/** "Paid by": its pills (or a payer's picker in pooled rows and payments). */
 	payer: "expense-payer",
+	payerPerson: "expense-payer-person",
+	payerAdd: "expense-payer-add",
+	/** "Split equally with" (the header; it used to open the split). */
 	splitToggle: "expense-split-toggle",
 	splitPerson: "expense-split-person",
 	splitExact: "expense-split-exact",
 	splitExactAmount: "expense-split-exact-amount",
 	splitAddPerson: "expense-split-add-person",
 	more: "expense-more",
+	/** What More reveals. */
+	moreFields: "expense-more-fields",
+	/** The date and the place on the line above Save. */
+	when: "expense-when",
+	place: "expense-place",
 	category: "expense-category",
 	private: "expense-private",
 	itemize: "expense-itemize",
@@ -74,4 +83,5 @@ export const MONEY_TESTID = {
 	save: "expense-save",
 	delete: "expense-delete",
 	converted: "expense-converted",
+	close: "expense-close",
 } as const;

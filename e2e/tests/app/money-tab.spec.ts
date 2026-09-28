@@ -65,9 +65,8 @@ test("MONEY-01/02: a ¥ expense in Kyoto — JPY by default, split equally, in t
 	await dialog.getByTestId(M.amount).fill("1000");
 	await dialog.getByTestId(M.title).fill("Kiyomizu-dera tickets");
 	await expect(dialog.getByTestId(M.converted)).toContainText("≈ $");
-	// The demo trip is in the future, so new costs start as Planned: record it as paid.
-	await dialog.getByTestId(M.status).getByRole("radio", { name: "Paid" }).click();
-	await dialog.getByTestId(M.splitToggle).click();
+	// The demo trip is in the future, so a new expense starts planned: pick who paid (me).
+	await dialog.getByTestId(M.payerPerson).and(page.locator(`[data-member-id="${c.members.owner}"]`)).click();
 	await page.screenshot({ path: shotPath("money/add-expense-1440.png"), animations: "disabled" });
 	await dialog.getByTestId(M.save).click();
 	await expect(dialog).toBeHidden();
@@ -254,7 +253,7 @@ test("mobile: fast entry in the drawer (amount → save) and the tab at 390 px",
 	await expect(drawer).toBeVisible();
 	await expect(drawer.getByTestId(M.currency)).toHaveText(/JPY/);
 	await drawer.getByTestId(M.amount).fill("2400");
-	await drawer.getByTestId(M.status).getByRole("radio", { name: "Paid" }).click();
+	await drawer.getByTestId(M.payerPerson).and(page.locator(`[data-member-id="${c.members.owner}"]`)).click();
 	await page.waitForTimeout(400); // the drawer's slide-in
 	await page.screenshot({ path: shotPath("money/add-expense-390.png"), animations: "disabled" });
 	// Enter saves (the dev-only devtools badge covers the corner where Save sits).

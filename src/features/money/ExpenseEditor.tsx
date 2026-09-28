@@ -1,27 +1,37 @@
 /**
- * The expense editor (EXTENSIONS §8.6, ADDENDUM §6 "fast mobile entry"):
- * Amount (autofocus, decimal keypad) → currency (from the place's country,
- * else home) → Paid by (me) → Save; the receipt one tap away. "Split
- * equally · 3 ▸" opens people chips and Exact. Under More: paid or expected
- * date, category (inferred), private, points (redeemed + source + cash price),
- * itemize with % / fixed fees, several payers, the manual rate, tax-free,
- * note. Editing an existing expense adds its payments (deposits), Mark paid,
- * Refund… and Delete. Viewers see everything read-only.
+ * The expense editor (EXTENSIONS §8.6, ADDENDUM §6 "fast mobile entry", One
+ * Yonder P13 "add an expense in ten seconds"): the amount big first (decimal
+ * keypad) with its currency (the place's, else home) and ≈ in the display
+ * currency; What for; Paid by as pills (none picked = not paid yet); Split
+ * equally with who was there; the date and place, from where it was opened;
+ * Save. "More: itemise, fees, points" reveals the rest: paid or planned, the
+ * time, category, exact amounts, pooled payers, private, itemise with % /
+ * fixed fees, points (redeemed + source + cash price), tax-free, the manual
+ * rate, a receipt and the note. Editing an existing expense shows its
+ * payments (deposits), receipts, Mark paid, Refund and Delete. Viewers see
+ * everything read-only.
  */
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+	CalendarDays,
 	Camera,
-	ChevronDown,
-	ChevronRight,
+	Check,
 	Lock,
-	MapPin,
 	Plus,
 	Trash2,
 	Undo2,
 	X,
 } from "lucide-react";
-import { useId, useMemo, useState } from "react";
+import {
+	type ComponentProps,
+	type ElementType,
+	type ReactElement,
+	type ReactNode,
+	useId,
+	useMemo,
+	useState,
+} from "react";
 import { toast } from "sonner";
 import { useEditGuard } from "@/components/common/edit-guard";
 import {
@@ -29,15 +39,22 @@ import {
 	MemberPicker,
 	PersonAvatar,
 	resolveMember,
+	useAddPerson,
 } from "@/components/common/member";
 import { TimeInput } from "@/components/common/time";
 import { TreePicker } from "@/components/common/tree-picker";
 import { undoToast } from "@/components/common/undo-toast";
 import { useTripMutation } from "@/components/common/use-trip-mutation";
-import { Segmented } from "@/components/kit";
+import { FilterPill, Segmented } from "@/components/kit";
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+	Popover,
+	PopoverContent,
+	PopoverTrigger,
+} from "@/components/ui/popover";
 import {
 	Select,
 	SelectContent,
@@ -72,6 +89,7 @@ import {
 	targetLabel,
 } from "@/lib/engine/money-scope";
 import { humanError } from "@/lib/errors";
+import { formatDayDate } from "@/lib/format";
 import { tripKeys } from "@/lib/query/keys";
 import { bundleAnchor, useFormPresence } from "@/lib/realtime/form-presence";
 import {
@@ -307,9 +325,12 @@ export type EditorMode =
 export function ExpenseEditor({
 	mode,
 	onClose,
+	Title = "h2",
 }: {
 	mode: EditorMode;
 	onClose: () => void;
+	/** The dialog's or sheet's title part, so the heading names it. */
+	Title?: ElementType<{ className?: string; children?: ReactNode }>;
 }) {
 	const ws = useWorkspace();
 	const qc = useQueryClient();
@@ -347,6 +368,9 @@ export function ExpenseEditor({
 			home,
 		);
 	};
+	// The date of the day it hangs on (a stop's, a leg's, a day's), if any.
+	const dayOf = (t: BundleTarget) =>
+		ix.day(expenseAnchor(ix, t).dayId)?.date ?? null;
 
 	const [draft, setDraft] = useState<Draft>(() => {
 		const now = new Date();
@@ -393,9 +417,13 @@ export function ExpenseEditor({
 				(scope ? { kind: "node", nodeId: scope.id } : { kind: "trip" });
 			const future = graph.trip.startDate ? graph.trip.startDate > date : false;
 			const currency = r.currency ?? currencyFor(target);
+			// Opened on a stop or a day: paid that day (never later than today), or expected then.
+			const onDay = dayOf(target);
 			return {
 				...blank,
 				target,
+				date: onDay && onDay < date ? onDay : date,
+				expectedOn: onDay ?? "",
 				title: r.title ?? "",
 				category: r.category ?? null,
 				status: r.listItemId ? "paid" : future ? "planned" : "paid",
@@ -508,7 +536,6 @@ export function ExpenseEditor({
 				mode.expense.fxManual ||
 				!!mode.expense.note),
 	);
-	const [splitOpen, setSplitOpen] = useState(false);
 	const [receipt, setReceipt] = useState<File | null>(null);
 
 	const editing = mode.kind === "edit" ? mode.expense : null;
@@ -594,16 +621,26 @@ export function ExpenseEditor({
 	const rateToHome = draft.currency === home ? 1 : d.rateTo(draft.currency);
 	/** "Your rate" (1 currency = ? home), when one is typed. */
 	const myRate = draft.currency === home ? null : parseRate(draft.rate);
-	const approxHome =
-		cashAmount !== null && draft.currency !== home && (myRate || rateToHome)
+	const homeMinor =
+		cashAmount === null
+			? null
+			: draft.currency === home
+				? cashAmount
+				: myRate || rateToHome
+					? convertMinor(
+							cashAmount,
+							draft.currency,
+							home,
+							myRate ?? 1 / (rateToHome as number),
+						)
+					: null;
+	// "≈ $60.00" in the display currency (home when that is the amount's own).
+	const shownIn = d.converted && d.code !== draft.currency ? d.code : home;
+	const approx =
+		homeMinor !== null && shownIn !== draft.currency
 			? formatMoney(
-					convertMinor(
-						cashAmount,
-						draft.currency,
-						home,
-						myRate ?? 1 / (rateToHome as number),
-					),
-					home,
+					shownIn === home ? homeMinor : d.toDisplay(homeMinor),
+					shownIn,
 				)
 			: null;
 
@@ -952,6 +989,8 @@ export function ExpenseEditor({
 	};
 
 	// ---- render ----
+	const uid = useId();
+	const addPerson = useAddPerson();
 	const title =
 		mode.kind === "edit"
 			? isRefund
@@ -959,7 +998,68 @@ export function ExpenseEditor({
 				: "Expense"
 			: mode.kind === "refund"
 				? `Refund · ${mode.original.title}`
-				: "Add expense";
+				: "Add an expense";
+	const planned = !editing && draft.status === "planned";
+	const pooled = !editing && draft.multiPayer && !planned;
+	const payerId = draft.payers[0]?.memberId ?? meId ?? "";
+	const pickPayer = (memberId: string) =>
+		set({
+			status: "paid",
+			multiPayer: false,
+			payers: [{ memberId, amount: "" }],
+		});
+	// You first, then the others; anyone picked who isn't listed (yet) too.
+	const choices = (extra: string[]) => {
+		const ids = people.map((m) => m.id);
+		const all = [...ids, ...extra.filter((id) => id && !ids.includes(id))];
+		return meId && all.includes(meId)
+			? [meId, ...all.filter((id) => id !== meId)]
+			: all;
+	};
+	const symbol = currencySymbol(draft.currency);
+	const firstPayment = draft.payments[0];
+	// The date on the line: when it was paid, or when it's expected (clearable).
+	const when: {
+		value: string;
+		label: string;
+		onChange?: (v: string) => void;
+		expected?: boolean;
+	} = editing
+		? draft.payments.length === 0
+			? {
+					value: draft.expectedOn,
+					label: "Expected on",
+					onChange: (v) => set({ expectedOn: v }),
+					expected: true,
+				}
+			: draft.payments.length === 1 && firstPayment
+				? {
+						value: firstPayment.date,
+						label: isRefund ? "Received on" : "Paid on",
+						onChange: (v) => set({ payments: [{ ...firstPayment, date: v }] }),
+					}
+				: {
+						value: draft.payments.at(-1)?.date ?? "",
+						label: isRefund ? "Last received on" : "Last paid on",
+					}
+		: planned
+			? {
+					value: draft.expectedOn,
+					label: "Expected on",
+					onChange: (v) => set({ expectedOn: v }),
+					expected: true,
+				}
+			: {
+					value: draft.date,
+					label: isRefund ? "Received on" : "Paid on",
+					onChange: (v) => set({ date: v }),
+				};
+	const tripYear = (graph.trip.startDate ?? draft.date).slice(0, 4);
+	const whenDate = when.value
+		? formatDayDate(when.value, { year: when.value.slice(0, 4) !== tripYear })
+		: "No date";
+	const whenText =
+		when.expected && when.value ? `Expected ${whenDate}` : whenDate;
 	return (
 		<form
 			className="flex min-h-0 flex-1 flex-col"
@@ -968,92 +1068,322 @@ export function ExpenseEditor({
 				void save();
 			}}
 		>
-			<div className="flex items-center gap-2 px-5 pt-5 pb-3">
-				<h2 className="font-display text-lg leading-6 font-semibold">
+			<div className="flex items-center gap-2 px-5 pt-4 pb-2">
+				<Title className="min-w-0 truncate text-lg leading-7 font-semibold">
 					{title}
-				</h2>
+				</Title>
 				{editing ? (
-					<span className="text-xs text-muted-foreground">
+					<span className="shrink-0 text-xs text-muted-foreground">
 						<MonoNumbers text={statusText(editing)} />
 					</span>
 				) : null}
+				<Button
+					type="button"
+					size="icon-sm"
+					variant="ghost"
+					className="-mr-1.5 ml-auto"
+					aria-label="Close"
+					data-testid={MONEY_TESTID.close}
+					onClick={onClose}
+				>
+					<X />
+				</Button>
 			</div>
 			<div className="min-h-0 flex-1 overflow-y-auto px-5 pb-4">
-				<fieldset disabled={readOnly} className="grid gap-4">
-					{/* Amount + currency (autofocus, decimal keypad) */}
-					<div>
-						<div className="flex items-center gap-2">
-							<CurrencyPicker
-								value={draft.currency}
-								onChange={(c) =>
-									set({
-										currency: c,
-										cashValueCurrency: draft.points
-											? draft.cashValueCurrency
-											: c,
-									})
-								}
-								suggested={[
-									currencyFor(draft.target),
-									home,
-									...(data?.expenses
-										.map((e) => e.currency)
-										.filter((c): c is string => !!c) ?? []),
-								]}
-								disabled={
-									readOnly ||
-									(editing !== null &&
-										editing.payments.length > 0 &&
-										editing.payments.some(
-											(p) => p.currency !== editing.currency,
-										))
-								}
-								testid={MONEY_TESTID.currency}
-								className="h-12 px-3 text-base"
-							/>
-							<div className="relative flex-1">
-								{isRefund ? (
-									<span className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 tnum text-2xl text-muted-foreground">
-										−
+				<div className="grid gap-4">
+					<fieldset disabled={readOnly} className="grid gap-4">
+						{/* The amount, big (autofocus, decimal keypad), its currency and ≈ */}
+						<div className="grid gap-1">
+							<div className="flex items-center gap-2.5">
+								<div className="flex min-w-0 items-baseline border-b-2 border-transparent font-display text-4xl font-semibold tnum focus-within:border-ring">
+									{isRefund ? <span aria-hidden="true">−</span> : null}
+									{symbol !== draft.currency ? (
+										<span
+											aria-hidden="true"
+											className={cn(!draft.amount && "text-muted-foreground")}
+										>
+											{symbol}
+										</span>
+									) : null}
+									{/* Sized to what's typed, so the currency sits right after it. */}
+									<span className="inline-grid min-w-0 grid-cols-[minmax(0,max-content)] overflow-hidden">
+										<span
+											aria-hidden="true"
+											className="invisible col-start-1 row-start-1 whitespace-pre"
+										>
+											{draft.amount || "0"}
+										</span>
+										<input
+											// biome-ignore lint/a11y/noAutofocus: the amount first, keypad up (fast entry)
+											autoFocus={mode.kind !== "edit"}
+											data-testid={MONEY_TESTID.amount}
+											aria-label={
+												draft.points ? "Taxes and fees (cash)" : "Amount"
+											}
+											inputMode="decimal"
+											enterKeyHint="done"
+											autoComplete="off"
+											placeholder="0"
+											className="col-start-1 row-start-1 w-full min-w-0 bg-transparent tnum outline-none placeholder:text-muted-foreground disabled:opacity-50"
+											value={draft.amount}
+											onChange={(e) => set({ amount: e.target.value })}
+										/>
+									</span>
+								</div>
+								<CurrencyPicker
+									value={draft.currency}
+									onChange={(c) =>
+										set({
+											currency: c,
+											cashValueCurrency: draft.points
+												? draft.cashValueCurrency
+												: c,
+										})
+									}
+									suggested={[
+										currencyFor(draft.target),
+										home,
+										...(data?.expenses
+											.map((e) => e.currency)
+											.filter((c): c is string => !!c) ?? []),
+									]}
+									disabled={
+										readOnly ||
+										(editing !== null &&
+											editing.payments.length > 0 &&
+											editing.payments.some(
+												(p) => p.currency !== editing.currency,
+											))
+									}
+									trigger={
+										<Button
+											type="button"
+											variant="outline"
+											size="sm"
+											data-testid={MONEY_TESTID.currency}
+											aria-label={`Currency: ${draft.currency}`}
+											className="tnum"
+										>
+											{draft.currency}
+										</Button>
+									}
+								/>
+								{approx ? (
+									<span
+										data-testid={MONEY_TESTID.converted}
+										title={myRate ? "At your rate" : "At today's rate"}
+										className="ml-auto shrink-0 text-sm text-muted-foreground tnum"
+									>
+										≈ {approx}
 									</span>
 								) : null}
-								<Input
-									autoFocus={mode.kind !== "edit"}
-									data-testid={MONEY_TESTID.amount}
-									aria-label={draft.points ? "Taxes and fees (cash)" : "Amount"}
-									inputMode="decimal"
-									enterKeyHint="done"
-									placeholder={draft.points ? "Taxes & fees" : "0"}
-									className={cn(
-										"h-12 text-2xl tnum placeholder:text-base md:text-2xl",
-										isRefund && "pl-7",
-									)}
-									value={draft.amount}
-									onChange={(e) => set({ amount: e.target.value })}
-								/>
 							</div>
-						</div>
-						<div className="mt-1 flex min-h-5 items-center gap-2 text-xs text-muted-foreground">
-							{approxHome ? (
-								<span data-testid={MONEY_TESTID.converted}>
-									≈ {approxHome} at {myRate ? "your rate" : "today's rate"}
-								</span>
+							{draft.points ? (
+								<p className="text-xs text-muted-foreground">
+									The cash part: taxes and fees.
+								</p>
 							) : null}
 						</div>
-					</div>
 
-					{/* Title + where */}
-					<div className="grid gap-2">
-						<Input
-							data-testid={MONEY_TESTID.title}
-							aria-label="What for"
-							placeholder={defaultTitle}
-							maxLength={120}
-							value={draft.title}
-							onChange={(e) => set({ title: e.target.value })}
+						<div className="grid gap-1.5">
+							<Label
+								htmlFor={`${uid}-title`}
+								className="text-meta font-semibold"
+							>
+								What for
+							</Label>
+							<Input
+								id={`${uid}-title`}
+								data-testid={MONEY_TESTID.title}
+								placeholder={defaultTitle}
+								maxLength={120}
+								className="h-11 text-body md:text-body"
+								value={draft.title}
+								onChange={(e) => set({ title: e.target.value })}
+							/>
+						</div>
+
+						{/* Paid by: one pill picked (inverted); none = not paid yet */}
+						{!editing && !draft.isPrivate ? (
+							<fieldset
+								aria-labelledby={`${uid}-paid`}
+								data-testid={pooled ? undefined : MONEY_TESTID.payer}
+								className="grid min-w-0 gap-2"
+							>
+								<FieldHead
+									id={`${uid}-paid`}
+									label={isRefund ? "Refunded to" : "Paid by"}
+									hint={
+										planned
+											? isRefund
+												? "Not received yet"
+												: "Not paid yet"
+											: pooled
+												? "Several people"
+												: null
+									}
+								/>
+								{pooled ? (
+									<PooledPayers
+										draft={draft}
+										set={set}
+										nameOf={nameOf}
+										isNegative={isNegative}
+										left={payerLeft}
+										negative={negativePayer}
+									/>
+								) : (
+									<div className="flex flex-wrap gap-1.5">
+										{choices([payerId]).map((id) => (
+											<FilterPill
+												key={id}
+												pressed={!planned && id === payerId}
+												onPressedChange={(on) =>
+													on ? pickPayer(id) : set({ status: "planned" })
+												}
+												data-testid={MONEY_TESTID.payerPerson}
+												data-member-id={id}
+											>
+												{nameOf(id)}
+											</FilterPill>
+										))}
+										{addPerson ? (
+											<PersonSelect
+												value={payerId}
+												onChange={pickPayer}
+												ariaLabel={isRefund ? "Refunded to" : "Paid by"}
+												trigger={
+													<AddPill data-testid={MONEY_TESTID.payerAdd}>
+														Person
+													</AddPill>
+												}
+											/>
+										) : null}
+									</div>
+								)}
+							</fieldset>
+						) : null}
+
+						{/* Payments (edit) */}
+						{editing ? (
+							<PaymentsEditor
+								draft={draft}
+								set={set}
+								expense={editing}
+								home={home}
+								costRate={parseRate(draft.rate)}
+								sign={sign}
+								onMarkPaid={onMarkPaid}
+								readOnly={readOnly}
+							/>
+						) : null}
+
+						{/* Split equally with who was there */}
+						{draft.isPrivate ? (
+							<p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+								<Lock className="size-3" aria-hidden="true" /> Only you see
+								this. It's not split.
+							</p>
+						) : isRefund ? (
+							<p className="text-xs text-muted-foreground">
+								<span>Split back like the original.</span>
+								{refundLeft ? (
+									<span>
+										{" "}
+										Up to{" "}
+										<Num>
+											{formatMoney(refundLeft.minor, refundLeft.currency)}
+										</Num>{" "}
+										left to refund.
+									</span>
+								) : null}
+							</p>
+						) : itemized ? (
+							<p className="text-xs text-muted-foreground">
+								Split by item: who had what, under More.
+							</p>
+						) : (
+							<fieldset
+								aria-labelledby={`${uid}-split`}
+								className="grid min-w-0 gap-2"
+							>
+								<FieldHead
+									id={`${uid}-split`}
+									testid={MONEY_TESTID.splitToggle}
+									label={
+										draft.splitMode === "exact"
+											? "Split by exact amounts"
+											: "Split equally with"
+									}
+									hint={
+										draft.splitMode === "exact" ? (
+											<Remainder
+												left={exactLeft}
+												currency={draft.currency}
+												negative={negativeExact}
+											/>
+										) : (
+											"who was there"
+										)
+									}
+								/>
+								<SplitPeople
+									draft={draft}
+									set={set}
+									choices={choices(draft.splitIds)}
+									nameOf={nameOf}
+								/>
+							</fieldset>
+						)}
+
+						{editing ? (
+							<div data-testid={MONEY_TESTID.receipts}>
+								<ReceiptStrip expenseId={editing.id} />
+							</div>
+						) : null}
+					</fieldset>
+
+					{/* The date and the place (tap to change), and More */}
+					<div className="flex items-center gap-2 text-sm">
+						<CalendarDays
+							className="size-4 shrink-0 text-muted-foreground"
+							aria-hidden="true"
 						/>
-						<div className="flex flex-wrap items-center gap-2 text-xs">
-							<TargetChip
+						<div className="flex min-w-0 flex-1 items-center gap-1.5">
+							{when.onChange ? (
+								<DatePick
+									value={when.value}
+									onChange={when.onChange}
+									clearable={when.expected}
+									defaultMonth={graph.trip.startDate}
+								>
+									<button
+										type="button"
+										data-testid={MONEY_TESTID.when}
+										data-value={when.value || undefined}
+										aria-label={`${when.label}: ${whenDate}`}
+										disabled={readOnly}
+										className={cn(
+											"shrink-0 rounded-sm tnum whitespace-nowrap underline-offset-4 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring",
+											!when.value && "text-muted-foreground",
+										)}
+									>
+										{whenText}
+									</button>
+								</DatePick>
+							) : (
+								<span
+									data-testid={MONEY_TESTID.when}
+									className="shrink-0 tnum whitespace-nowrap"
+								>
+									<span className="sr-only">{when.label}: </span>
+									{whenDate}
+								</span>
+							)}
+							<span aria-hidden="true" className="text-muted-foreground">
+								·
+							</span>
+							<PlaceButton
 								target={draft.target}
 								onChange={(t) =>
 									set({
@@ -1063,513 +1393,334 @@ export function ExpenseEditor({
 								}
 								disabled={readOnly}
 							/>
-							<CategorySelect
-								value={draft.category}
-								inferred={inferred}
-								onChange={(c) => set({ category: c })}
-							/>
 						</div>
-					</div>
-
-					{/* Paid / planned (new) */}
-					{!editing ? (
-						<div className="flex flex-wrap items-center gap-2">
-							<Segmented
-								label="Paid or planned"
-								testId={MONEY_TESTID.status}
-								value={draft.status}
-								onValueChange={(v) =>
-									v && set({ status: v as Draft["status"] })
-								}
-								options={[
-									{ value: "paid", label: isRefund ? "Received" : "Paid" },
-									{
-										value: "planned",
-										label: isRefund ? "Expected" : "Planned",
-									},
-								]}
-							/>
-							{draft.status === "paid" && !draft.isPrivate ? (
-								draft.multiPayer ? null : (
-									<PayerSelect
-										value={draft.payers[0]?.memberId ?? meId ?? ""}
-										onChange={(m) =>
-											set({ payers: [{ memberId: m, amount: "" }] })
-										}
-										label={isRefund ? "to" : "by"}
-									/>
-								)
-							) : draft.status === "planned" ? (
-								<span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-									<Label htmlFor="exp-due" className="text-xs font-normal">
-										Due
-									</Label>
-									<Input
-										id="exp-due"
-										type="date"
-										aria-label="Expected on"
-										className="w-auto text-xs"
-										value={draft.expectedOn}
-										onChange={(e) => set({ expectedOn: e.target.value })}
-									/>
-								</span>
-							) : null}
-						</div>
-					) : null}
-
-					{/* Several payers (pooled cash) */}
-					{!editing &&
-					draft.status === "paid" &&
-					draft.multiPayer &&
-					!draft.isPrivate ? (
-						<div
-							className="grid gap-1.5 rounded-lg border p-3"
-							data-testid={MONEY_TESTID.multiPayer}
-						>
-							<div className="text-xs text-muted-foreground">
-								Paid by several people
-							</div>
-							{draft.payers.map((p, i) => (
-								<div
-									// biome-ignore lint/suspicious/noArrayIndexKey: payer rows are positional
-									key={`${p.memberId}-${i}`}
-									className="flex items-center gap-2"
-								>
-									<PayerSelect
-										value={p.memberId}
-										onChange={(m) =>
-											set({
-												payers: draft.payers.map((x, j) =>
-													j === i ? { ...x, memberId: m } : x,
-												),
-											})
-										}
-									/>
-									<Input
-										aria-label={`${nameOf(p.memberId)} paid`}
-										data-testid={MONEY_TESTID.payerAmount}
-										aria-invalid={isNegative(p.amount) || undefined}
-										inputMode="decimal"
-										className="flex-1 tnum"
-										value={p.amount}
-										onChange={(e) =>
-											set({
-												payers: draft.payers.map((x, j) =>
-													j === i ? { ...x, amount: e.target.value } : x,
-												),
-											})
-										}
-									/>
-									<Button
-										type="button"
-										size="icon-sm"
-										variant="ghost"
-										aria-label="Remove payer"
-										onClick={() =>
-											set({ payers: draft.payers.filter((_, j) => j !== i) })
-										}
-									>
-										<X />
-									</Button>
-								</div>
-							))}
-							<div className="flex items-center justify-between text-xs">
-								<Button
-									type="button"
-									size="xs"
-									variant="ghost"
-									onClick={() => {
-										const next = people.find(
-											(m) => !draft.payers.some((p) => p.memberId === m.id),
-										);
-										if (next)
-											set({
-												payers: [
-													...draft.payers,
-													{ memberId: next.id, amount: "" },
-												],
-											});
-									}}
-								>
-									<Plus /> Payer
-								</Button>
-								<Remainder
-									left={payerLeft}
-									currency={draft.currency}
-									negative={negativePayer}
-								/>
-							</div>
-						</div>
-					) : null}
-
-					{/* Split */}
-					{draft.isPrivate ? (
-						<p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-							<Lock className="size-3" aria-hidden="true" /> Only you see this.
-							It's not split.
-						</p>
-					) : isRefund ? (
-						<p className="text-xs text-muted-foreground">
-							<span>Split back like the original.</span>
-							{refundLeft ? (
-								<span>
-									{" "}
-									Up to{" "}
-									<Num>
-										{formatMoney(refundLeft.minor, refundLeft.currency)}
-									</Num>{" "}
-									left to refund.
-								</span>
-							) : null}
-						</p>
-					) : !itemized ? (
-						<div>
-							<button
-								type="button"
-								data-testid={MONEY_TESTID.splitToggle}
-								onClick={() => setSplitOpen((v) => !v)}
-								className="flex w-full cursor-pointer items-center gap-2 rounded-md py-1 text-left text-sm hover:text-foreground"
-							>
-								<span className="shrink-0">
-									Split{" "}
-									{draft.splitMode === "exact" ? "by exact amounts" : "equally"}{" "}
-									· <Num>{draft.splitIds.length}</Num>
-								</span>
-								<span className="min-w-0 truncate text-muted-foreground">
-									{draft.splitIds.map(nameOf).join(", ")}
-								</span>
-								{splitOpen ? (
-									<ChevronDown className="ml-auto size-4" />
-								) : (
-									<ChevronRight className="ml-auto size-4" />
-								)}
-							</button>
-							{splitOpen ? (
-								<SplitEditor
-									draft={draft}
-									set={set}
-									amount={amount}
-									left={exactLeft}
-									negative={negativeExact}
-									nameOf={nameOf}
-								/>
-							) : null}
-						</div>
-					) : null}
-
-					{/* Payments (edit) */}
-					{editing ? (
-						<PaymentsEditor
-							draft={draft}
-							set={set}
-							expense={editing}
-							home={home}
-							costRate={parseRate(draft.rate)}
-							sign={sign}
-							onMarkPaid={onMarkPaid}
-							readOnly={readOnly}
-						/>
-					) : null}
-					{editing ? (
-						<div data-testid={MONEY_TESTID.receipts}>
-							<ReceiptStrip expenseId={editing.id} />
-						</div>
-					) : null}
-
-					{/* More */}
-					<div>
 						<button
 							type="button"
 							data-testid={MONEY_TESTID.more}
+							aria-expanded={moreOpen}
 							onClick={() => setMoreOpen((v) => !v)}
-							className="flex cursor-pointer items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground"
+							className="shrink-0 rounded-sm text-meta font-semibold whitespace-nowrap text-primary underline-offset-4 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
 						>
-							{moreOpen ? (
-								<ChevronDown className="size-3.5" />
-							) : (
-								<ChevronRight className="size-3.5" />
-							)}
-							More
+							{moreOpen
+								? "Show less"
+								: isRefund
+									? "More"
+									: "More: itemise, fees, points"}
 						</button>
-						{moreOpen ? (
-							<div className="mt-3 grid gap-4">
-								{!editing && draft.status === "paid" ? (
-									<div className="grid grid-cols-2 gap-2">
-										<div className="grid gap-1">
-											<Label
-												className="text-xs text-muted-foreground"
-												htmlFor="exp-date"
-											>
-												Paid on
-											</Label>
-											<Input
-												id="exp-date"
-												type="date"
-												className="text-xs"
-												value={draft.date}
-												onChange={(e) => set({ date: e.target.value })}
-											/>
-										</div>
-										<div className="grid gap-1">
-											<span className="text-xs font-medium text-muted-foreground">
-												Time ({draft.tz.split("/").at(-1)?.replace(/_/g, " ")})
-											</span>
-											{/* 24-hour like every time field (DESIGN §2.6). */}
-											<TimeInput
-												aria-label="Time paid"
-												className="h-8 text-xs"
-												value={draft.time}
-												onChange={(time) => set({ time })}
-											/>
-										</div>
-									</div>
-								) : null}
-								{editing ? (
-									<div className="grid gap-1">
-										<Label
-											className="text-xs text-muted-foreground"
-											htmlFor="exp-expected"
+					</div>
+
+					{/* More: every other field */}
+					{moreOpen ? (
+						<fieldset
+							disabled={readOnly}
+							data-testid={MONEY_TESTID.moreFields}
+							className="grid gap-4 border-t pt-4"
+						>
+							{!editing ? (
+								<MoreRow
+									label={isRefund ? "Received or expected" : "Paid or planned"}
+								>
+									<Segmented
+										label={
+											isRefund ? "Received or expected" : "Paid or planned"
+										}
+										testId={MONEY_TESTID.status}
+										value={draft.status}
+										onValueChange={(v) => set({ status: v })}
+										options={[
+											{ value: "paid", label: isRefund ? "Received" : "Paid" },
+											{
+												value: "planned",
+												label: isRefund ? "Expected" : "Planned",
+											},
+										]}
+									/>
+								</MoreRow>
+							) : null}
+							{!editing && !planned ? (
+								<MoreRow
+									label={`${isRefund ? "Time received" : "Time paid"} (${draft.tz.split("/").at(-1)?.replace(/_/g, " ")})`}
+								>
+									{/* 24-hour like every time field (DESIGN §2.6). */}
+									<TimeInput
+										aria-label={isRefund ? "Time received" : "Time paid"}
+										className="w-24 text-xs"
+										value={draft.time}
+										onChange={(time) => set({ time })}
+									/>
+								</MoreRow>
+							) : null}
+							{editing && draft.payments.length > 0 ? (
+								<MoreRow label="Expected on">
+									<DatePick
+										value={draft.expectedOn}
+										onChange={(v) => set({ expectedOn: v })}
+										clearable
+										defaultMonth={graph.trip.startDate}
+									>
+										<Button
+											type="button"
+											variant="outline"
+											size="sm"
+											aria-label={`Expected on: ${draft.expectedOn ? formatDayDate(draft.expectedOn, { year: true }) : "No date"}`}
+											className={cn(
+												"gap-2 font-normal tnum",
+												!draft.expectedOn && "text-muted-foreground",
+											)}
 										>
-											Expected on
-										</Label>
+											<CalendarDays className="size-4 opacity-60" aria-hidden />
+											{draft.expectedOn
+												? formatDayDate(draft.expectedOn, { year: true })
+												: "No date"}
+										</Button>
+									</DatePick>
+								</MoreRow>
+							) : null}
+							<MoreRow label="Category">
+								<CategorySelect
+									value={draft.category}
+									inferred={inferred}
+									onChange={(c) => set({ category: c })}
+								/>
+							</MoreRow>
+							{ownSplit ? (
+								<MoreRow label="Split">
+									<Segmented
+										label="How to split"
+										value={draft.splitMode}
+										onValueChange={(v) => set({ splitMode: v })}
+										options={[
+											{ value: "equal", label: "Equally" },
+											{
+												value: "exact",
+												label: "Exact amounts",
+												testId: MONEY_TESTID.splitExact,
+											},
+										]}
+									/>
+								</MoreRow>
+							) : null}
+							{!editing && !planned && !draft.isPrivate && !isRefund ? (
+								<SwitchRow
+									label="Several people paid (pooled cash)"
+									checked={draft.multiPayer}
+									onChange={(v) =>
+										set({
+											multiPayer: v,
+											payers: v
+												? draft.payers.length > 1
+													? draft.payers
+													: [
+															{ memberId: payerId, amount: "" },
+															{
+																memberId:
+																	people.find((m) => m.id !== payerId)?.id ??
+																	"",
+																amount: "",
+															},
+														].filter((p) => p.memberId)
+												: draft.payers.slice(0, 1),
+										})
+									}
+								/>
+							) : null}
+							{!isRefund &&
+							(!editing || editing.createdBy === graph.me.userId) ? (
+								<SwitchRow
+									label="Private — only you see it, not split"
+									testid={MONEY_TESTID.private}
+									checked={draft.isPrivate}
+									onChange={(v) =>
+										set({
+											isPrivate: v,
+											multiPayer: false,
+											payers: meId ? [{ memberId: meId, amount: "" }] : [],
+										})
+									}
+								/>
+							) : null}
+							{!draft.isPrivate && !isRefund ? (
+								<SwitchRow
+									label="Itemise (who had what, tax and tip)"
+									testid={MONEY_TESTID.itemize}
+									checked={draft.itemize}
+									onChange={(v) =>
+										set({
+											itemize: v,
+											lines:
+												v && !draft.lines.length
+													? [
+															{
+																key: nextKey(),
+																label: "",
+																amount: "",
+																memberIds: [...draft.splitIds],
+															},
+														]
+													: draft.lines,
+										})
+									}
+								/>
+							) : null}
+							{itemized ? (
+								<ItemizeEditor
+									draft={draft}
+									set={set}
+									left={itemizeLeft}
+									negative={negativeLine}
+									nameOf={nameOf}
+								/>
+							) : null}
+							{!isRefund ? (
+								<SwitchRow
+									label="Paid with points or miles"
+									testid={MONEY_TESTID.points}
+									checked={draft.points}
+									onChange={(v) => set({ points: v })}
+								/>
+							) : null}
+							{draft.points ? (
+								<PointsEditor draft={draft} set={set} home={home} />
+							) : null}
+							{category === "shopping" ? (
+								<SwitchRow
+									label="Tax-free · refund pending"
+									checked={draft.taxFreePending}
+									onChange={(v) => set({ taxFreePending: v })}
+								/>
+							) : null}
+							{draft.currency !== home ? (
+								<div className="grid gap-1">
+									<Label
+										className="text-xs text-muted-foreground"
+										htmlFor={`${uid}-rate`}
+									>
+										Your rate (1 {draft.currency} = ? {home})
+									</Label>
+									<div className="flex items-center gap-2">
 										<Input
-											id="exp-expected"
-											type="date"
-											className="w-auto text-xs"
-											value={draft.expectedOn}
-											onChange={(e) => set({ expectedOn: e.target.value })}
+											id={`${uid}-rate`}
+											inputMode="decimal"
+											className="w-40 text-xs tnum"
+											placeholder={
+												rateToHome ? (1 / rateToHome).toPrecision(4) : "auto"
+											}
+											value={draft.rate}
+											onChange={(e) => set({ rate: e.target.value })}
 										/>
-									</div>
-								) : null}
-								{!editing &&
-								draft.status === "paid" &&
-								!draft.isPrivate &&
-								!isRefund ? (
-									<SwitchRow
-										label="Several people paid (pooled cash)"
-										checked={draft.multiPayer}
-										onChange={(v) =>
-											set({
-												multiPayer: v,
-												payers: v
-													? draft.payers.length > 1
-														? draft.payers
-														: [
-																{
-																	memberId:
-																		draft.payers[0]?.memberId ?? meId ?? "",
-																	amount: "",
-																},
-																{
-																	memberId:
-																		people.find(
-																			(m) =>
-																				m.id !==
-																				(draft.payers[0]?.memberId ?? meId),
-																		)?.id ?? "",
-																	amount: "",
-																},
-															].filter((p) => p.memberId)
-													: draft.payers.slice(0, 1),
-											})
-										}
-									/>
-								) : null}
-								{!isRefund &&
-								(!editing || editing.createdBy === graph.me.userId) ? (
-									<SwitchRow
-										label="Private — only you see it, not split"
-										testid={MONEY_TESTID.private}
-										checked={draft.isPrivate}
-										onChange={(v) =>
-											set({
-												isPrivate: v,
-												multiPayer: false,
-												payers: meId ? [{ memberId: meId, amount: "" }] : [],
-											})
-										}
-									/>
-								) : null}
-								{!draft.isPrivate && !isRefund ? (
-									<SwitchRow
-										label="Itemize (who had what, tax and tip)"
-										testid={MONEY_TESTID.itemize}
-										checked={draft.itemize}
-										onChange={(v) =>
-											set({
-												itemize: v,
-												lines:
-													v && !draft.lines.length
-														? [
-																{
-																	key: nextKey(),
-																	label: "",
-																	amount: "",
-																	memberIds: [...draft.splitIds],
-																},
-															]
-														: draft.lines,
-											})
-										}
-									/>
-								) : null}
-								{itemized ? (
-									<ItemizeEditor
-										draft={draft}
-										set={set}
-										left={itemizeLeft}
-										negative={negativeLine}
-										nameOf={nameOf}
-									/>
-								) : null}
-								{!isRefund ? (
-									<SwitchRow
-										label="Paid with points or miles"
-										testid={MONEY_TESTID.points}
-										checked={draft.points}
-										onChange={(v) => set({ points: v })}
-									/>
-								) : null}
-								{draft.points ? (
-									<PointsEditor draft={draft} set={set} home={home} />
-								) : null}
-								{category === "shopping" ? (
-									<SwitchRow
-										label="Tax-free · refund pending"
-										checked={draft.taxFreePending}
-										onChange={(v) => set({ taxFreePending: v })}
-									/>
-								) : null}
-								{draft.currency !== home ? (
-									<div className="grid gap-1">
-										<Label
-											className="text-xs text-muted-foreground"
-											htmlFor="exp-rate"
-										>
-											Your rate (1 {draft.currency} = ? {home})
-										</Label>
-										<div className="flex items-center gap-2">
-											<Input
-												id="exp-rate"
-												inputMode="decimal"
-												className="w-40 text-xs tnum"
-												placeholder={
-													rateToHome ? (1 / rateToHome).toPrecision(4) : "auto"
+										{editing?.fxManual ? (
+											<Button
+												type="button"
+												size="xs"
+												variant="ghost"
+												onClick={() =>
+													rateM.mutate(
+														{ id: editing.id, rate: null },
+														{ onSuccess: () => set({ rate: "" }) },
+													)
 												}
-												value={draft.rate}
-												onChange={(e) => set({ rate: e.target.value })}
-											/>
-											{editing?.fxManual ? (
-												<Button
-													type="button"
-													size="xs"
-													variant="ghost"
-													onClick={() =>
-														rateM.mutate(
-															{ id: editing.id, rate: null },
-															{ onSuccess: () => set({ rate: "" }) },
-														)
-													}
-												>
-													Use daily rate
-												</Button>
-											) : null}
-										</div>
-										{editing?.fxDate && !editing.fxManual ? (
-											<p className="text-xs text-muted-foreground">
-												Rate from{" "}
-												{paidDate(`${editing.fxDate}T12:00:00Z`, "UTC")} ·
-												currency-api
-											</p>
+											>
+												Use daily rate
+											</Button>
 										) : null}
 									</div>
-								) : null}
-								<Textarea
-									aria-label="Note"
-									placeholder="Note"
-									maxLength={2000}
-									className="min-h-16 text-sm"
-									value={draft.note}
-									onChange={(e) => set({ note: e.target.value })}
-								/>
-							</div>
-						) : null}
-					</div>
-				</fieldset>
-			</div>
-			<div className="flex items-center gap-2 border-t px-5 py-3">
-				{!readOnly && !editing ? (
-					<label
-						className="inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-md px-2 text-xs text-muted-foreground hover:bg-accent hover:text-foreground"
-						title="Attach a receipt (photo or PDF)"
-					>
-						<Camera className="size-4" />
-						<span className="max-w-28 truncate">
-							{receipt ? receipt.name : "Receipt"}
-						</span>
-						<input
-							type="file"
-							data-testid={MONEY_TESTID.receipt}
-							accept="image/*,application/pdf"
-							capture="environment"
-							className="sr-only"
-							onChange={(e) => setReceipt(e.target.files?.[0] ?? null)}
-						/>
-					</label>
-				) : null}
-				{editing && !readOnly ? (
-					<>
-						{!isRefund &&
-						editing.amountMinor !== null &&
-						editing.status !== "planned" ? (
-							<Button
-								type="button"
-								size="sm"
-								variant="ghost"
-								data-testid={MONEY_TESTID.refund}
-								onClick={() =>
-									useUi.getState().openAddExpense({ refundOfId: editing.id })
-								}
-							>
-								<Undo2 /> Refund
-							</Button>
-						) : null}
-						<Button
-							type="button"
-							size="icon-sm"
-							variant="ghost"
-							aria-label="Delete expense"
-							data-testid={MONEY_TESTID.delete}
-							onClick={() => void onDelete()}
-						>
-							<Trash2 />
-						</Button>
-					</>
-				) : null}
-				<div className="ml-auto flex items-center gap-2">
-					{problems.length && (draft.amount || editing) ? (
-						<span
-							data-testid={MONEY_TESTID.problems}
-							className="hidden text-xs text-muted-foreground sm:inline"
-						>
-							{problems[0]}
-						</span>
-					) : null}
-					<Button type="button" variant="ghost" size="sm" onClick={onClose}>
-						{readOnly ? "Close" : "Cancel"}
-					</Button>
-					{!readOnly ? (
-						<Button
-							type="submit"
-							size="sm"
-							data-testid={MONEY_TESTID.save}
-							disabled={problems.length > 0 || busy}
-						>
-							{editing ? "Save" : isRefund ? "Add refund" : "Save"}
-						</Button>
+									{editing?.fxDate && !editing.fxManual ? (
+										<p className="text-xs text-muted-foreground">
+											Rate from {paidDate(`${editing.fxDate}T12:00:00Z`, "UTC")}{" "}
+											· currency-api
+										</p>
+									) : null}
+								</div>
+							) : null}
+							{!editing && !readOnly ? (
+								<label className="flex cursor-pointer items-center gap-2 text-sm">
+									<Camera
+										className="size-4 shrink-0 text-muted-foreground"
+										aria-hidden="true"
+									/>
+									<span className="min-w-0 flex-1 truncate">
+										{receipt ? receipt.name : "Attach a receipt"}
+									</span>
+									<span className="shrink-0 text-xs text-muted-foreground">
+										Photo or PDF
+									</span>
+									<input
+										type="file"
+										data-testid={MONEY_TESTID.receipt}
+										accept="image/*,application/pdf"
+										capture="environment"
+										className="sr-only"
+										onChange={(e) => setReceipt(e.target.files?.[0] ?? null)}
+									/>
+								</label>
+							) : null}
+							<Textarea
+								aria-label="Note"
+								placeholder="Note"
+								maxLength={2000}
+								className="min-h-16 text-sm"
+								value={draft.note}
+								onChange={(e) => set({ note: e.target.value })}
+							/>
+						</fieldset>
 					) : null}
 				</div>
 			</div>
+			{!readOnly ? (
+				<div className="grid gap-2 px-5 pt-2 pb-[max(1rem,env(safe-area-inset-bottom))]">
+					{problems.length && (draft.amount || editing) ? (
+						<p
+							data-testid={MONEY_TESTID.problems}
+							className="text-xs text-muted-foreground"
+						>
+							{problems[0]}
+						</p>
+					) : null}
+					<div className="flex items-center gap-2">
+						{editing ? (
+							<>
+								{!isRefund &&
+								editing.amountMinor !== null &&
+								editing.status !== "planned" ? (
+									<Button
+										type="button"
+										size="lg"
+										variant="ghost"
+										data-testid={MONEY_TESTID.refund}
+										onClick={() =>
+											useUi
+												.getState()
+												.openAddExpense({ refundOfId: editing.id })
+										}
+									>
+										<Undo2 /> Refund
+									</Button>
+								) : null}
+								<Button
+									type="button"
+									size="icon-lg"
+									variant="ghost"
+									aria-label="Delete expense"
+									data-testid={MONEY_TESTID.delete}
+									onClick={() => void onDelete()}
+								>
+									<Trash2 />
+								</Button>
+							</>
+						) : null}
+						<Button
+							type="submit"
+							size="xl"
+							className="flex-1"
+							data-testid={MONEY_TESTID.save}
+							disabled={problems.length > 0 || busy}
+						>
+							<Check />
+							{!editing && isRefund ? "Add refund" : "Save"}
+						</Button>
+					</div>
+				</div>
+			) : null}
 		</form>
 	);
 }
@@ -1698,40 +1849,6 @@ function PayerSelect({
 	);
 }
 
-function TargetChip({
-	target,
-	onChange,
-	disabled,
-}: {
-	target: BundleTarget;
-	onChange: (t: BundleTarget) => void;
-	disabled?: boolean;
-}) {
-	const { ix } = useWorkspace();
-	const label = targetLabel(ix, target);
-	return (
-		<TreePicker
-			value={target.kind === "node" ? target.nodeId : null}
-			onChange={(nodeId) =>
-				onChange(nodeId ? { kind: "node", nodeId } : { kind: "trip" })
-			}
-			allowRoot
-			trigger={
-				<Button
-					type="button"
-					variant="outline"
-					size="xs"
-					disabled={disabled}
-					className="max-w-56 gap-1 rounded-full"
-				>
-					<MapPin className="size-3" />
-					<span className="truncate">{label}</span>
-				</Button>
-			}
-		/>
-	);
-}
-
 function CategorySelect({
 	value,
 	inferred,
@@ -1771,102 +1888,204 @@ function CategorySelect({
 	);
 }
 
-/** People chips (tick / untick), Equal or Exact, and "Add “Name”" for someone new. */
-function SplitEditor({
+/** A field's name (13px) with a hint on the right ("who was there"). */
+function FieldHead({
+	id,
+	label,
+	hint,
+	testid,
+}: {
+	id: string;
+	label: string;
+	hint?: ReactNode;
+	testid?: string;
+}) {
+	return (
+		<div data-testid={testid} className="flex items-baseline gap-2">
+			<span id={id} className="text-meta font-semibold">
+				{label}
+			</span>
+			{hint ? (
+				<span className="ml-auto text-xs text-muted-foreground">{hint}</span>
+			) : null}
+		</div>
+	);
+}
+
+/** One of More's rows: its name on the left, the control on the right. */
+function MoreRow({ label, children }: { label: string; children: ReactNode }) {
+	return (
+		<div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5 text-sm">
+			<span>{label}</span>
+			{children}
+		</div>
+	);
+}
+
+/** "+ Person" after a row of pills (a popover trigger). */
+function AddPill({ children, className, ...props }: ComponentProps<"button">) {
+	return (
+		<button
+			type="button"
+			{...props}
+			className={cn(
+				"inline-flex h-(--control) shrink-0 items-center gap-1 rounded-full border border-dashed px-3 text-meta text-muted-foreground transition-colors outline-none hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50",
+				className,
+			)}
+		>
+			<Plus className="size-3.5" aria-hidden="true" />
+			{children}
+		</button>
+	);
+}
+
+function toDate(iso: string): Date | undefined {
+	const [y, m, d] = iso.split("-").map(Number);
+	return y && m && d ? new Date(y, m - 1, d) : undefined;
+}
+
+function toIso(date: Date): string {
+	const p = (n: number) => String(n).padStart(2, "0");
+	return `${date.getFullYear()}-${p(date.getMonth() + 1)}-${p(date.getDate())}`;
+}
+
+/** A calendar on its trigger (`YYYY-MM-DD`); `clearable` adds "No date". */
+function DatePick({
+	value,
+	onChange,
+	clearable,
+	defaultMonth,
+	children,
+}: {
+	value: string;
+	onChange: (iso: string) => void;
+	clearable?: boolean;
+	/** `YYYY-MM-DD` to open on when empty (the trip's start). */
+	defaultMonth?: string | null;
+	children: ReactElement;
+}) {
+	const [open, setOpen] = useState(false);
+	return (
+		<Popover open={open} onOpenChange={setOpen}>
+			<PopoverTrigger asChild>{children}</PopoverTrigger>
+			<PopoverContent
+				className="w-auto p-0"
+				align="start"
+				collisionPadding={12}
+			>
+				<Calendar
+					mode="single"
+					defaultMonth={toDate(value || defaultMonth || "") ?? new Date()}
+					selected={toDate(value)}
+					onSelect={(d) => {
+						if (d) onChange(toIso(d));
+						setOpen(false);
+					}}
+				/>
+				{clearable && value ? (
+					<div className="border-t p-1">
+						<Button
+							type="button"
+							variant="ghost"
+							size="sm"
+							className="w-full"
+							onClick={() => {
+								onChange("");
+								setOpen(false);
+							}}
+						>
+							No date
+						</Button>
+					</div>
+				) : null}
+			</PopoverContent>
+		</Popover>
+	);
+}
+
+/** The place it hangs on, as text on the date line; picks a place (or the trip). */
+function PlaceButton({
+	target,
+	onChange,
+	disabled,
+}: {
+	target: BundleTarget;
+	onChange: (t: BundleTarget) => void;
+	disabled?: boolean;
+}) {
+	const { ix } = useWorkspace();
+	const label = targetLabel(ix, target);
+	return (
+		<TreePicker
+			value={target.kind === "node" ? target.nodeId : null}
+			onChange={(nodeId) =>
+				onChange(nodeId ? { kind: "node", nodeId } : { kind: "trip" })
+			}
+			allowRoot
+			trigger={
+				<button
+					type="button"
+					data-testid={MONEY_TESTID.place}
+					aria-label={`Place: ${label}`}
+					disabled={disabled}
+					className="min-w-0 truncate rounded-sm underline-offset-4 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
+				>
+					{label}
+				</button>
+			}
+		/>
+	);
+}
+
+/**
+ * Who shares it: a pill per person (a check on each one in), "+ Person"
+ * for someone new, and each one's amount when split by exact amounts.
+ */
+function SplitPeople({
 	draft,
 	set,
-	amount,
-	left,
-	negative,
+	choices,
 	nameOf,
 }: {
 	draft: Draft;
 	set: (p: Partial<Draft>) => void;
-	amount: number | null;
-	left: number | null;
-	/** An exact part is below zero. */
-	negative: boolean;
+	/** Everyone to offer, in order. */
+	choices: string[];
 	nameOf: (id: string) => string;
 }) {
-	const { graph } = useWorkspace();
-	const people = assignableMembers(graph.members);
 	const toggle = (id: string) =>
 		set({
 			splitIds: draft.splitIds.includes(id)
 				? draft.splitIds.filter((x) => x !== id)
 				: [...draft.splitIds, id],
 		});
-	const each =
-		amount !== null && draft.splitIds.length
-			? Math.floor(Math.abs(amount) / draft.splitIds.length)
-			: null;
 	return (
-		<div className="mt-2 grid gap-3 rounded-lg border p-3">
-			<div className="flex items-center gap-2">
-				<Segmented
-					label="How to split"
-					value={draft.splitMode}
-					onValueChange={(v) =>
-						v && set({ splitMode: v as Draft["splitMode"] })
-					}
-					options={[
-						{ value: "equal", label: "Equally" },
-						{ value: "exact", label: "Exact", testId: MONEY_TESTID.splitExact },
-					]}
-				/>
-				{draft.splitMode === "equal" && each !== null ? (
-					<span className="text-xs text-muted-foreground">
-						≈ <Num>{formatMoney(each, draft.currency)}</Num> each
-					</span>
-				) : null}
-				<span className="ml-auto text-xs">
-					<Remainder
-						left={left}
-						currency={draft.currency}
-						negative={negative}
-					/>
-				</span>
-			</div>
-			<ul className="flex flex-wrap gap-1.5">
-				{people.map((m) => {
-					const on = draft.splitIds.includes(m.id);
+		<>
+			<div className="flex flex-wrap gap-1.5">
+				{choices.map((id) => {
+					const on = draft.splitIds.includes(id);
 					return (
-						<li key={m.id}>
-							<button
-								type="button"
-								data-testid={MONEY_TESTID.splitPerson}
-								data-member-id={m.id}
-								aria-pressed={on}
-								onClick={() => toggle(m.id)}
-								className={cn(
-									"inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-full border pr-2.5 pl-1 text-xs transition-colors",
-									on
-										? "border-foreground/40 bg-accent text-foreground"
-										: "text-muted-foreground opacity-70 hover:opacity-100",
-								)}
-							>
-								<PersonAvatar memberId={m.id} size={20} ring={on} />
-								{nameOf(m.id)}
-							</button>
-						</li>
+						<FilterPill
+							key={id}
+							memberId={id}
+							pressed={on}
+							onPressedChange={() => toggle(id)}
+							data-testid={MONEY_TESTID.splitPerson}
+							data-member-id={id}
+						>
+							{nameOf(id)}
+							{on ? <Check aria-hidden="true" /> : null}
+						</FilterPill>
 					);
 				})}
-				<li>
-					<MemberPicker
-						value={draft.splitIds}
-						onChange={(ids) => set({ splitIds: ids })}
-						trigger={
-							<button
-								type="button"
-								data-testid={MONEY_TESTID.splitAddPerson}
-								className="inline-flex h-7 cursor-pointer items-center gap-1 rounded-full px-2.5 text-xs text-muted-foreground hover:bg-accent hover:text-foreground"
-							>
-								<Plus className="size-3" /> Person
-							</button>
-						}
-					/>
-				</li>
-			</ul>
+				<MemberPicker
+					value={draft.splitIds}
+					onChange={(ids) => set({ splitIds: ids })}
+					trigger={
+						<AddPill data-testid={MONEY_TESTID.splitAddPerson}>Person</AddPill>
+					}
+				/>
+			</div>
 			{draft.splitMode === "exact" ? (
 				<div className="grid gap-1.5">
 					{draft.splitIds.map((id) => (
@@ -1891,6 +2110,87 @@ function SplitEditor({
 					))}
 				</div>
 			) : null}
+		</>
+	);
+}
+
+/** Paid by several people (pooled cash): each payer and what they put in. */
+function PooledPayers({
+	draft,
+	set,
+	nameOf,
+	isNegative,
+	left,
+	negative,
+}: {
+	draft: Draft;
+	set: (p: Partial<Draft>) => void;
+	nameOf: (id: string) => string;
+	isNegative: (v: string) => boolean;
+	/** What the payers still have to add up to. */
+	left: number | null;
+	/** A payer's amount is below zero. */
+	negative: boolean;
+}) {
+	const { graph } = useWorkspace();
+	const people = assignableMembers(graph.members);
+	const setPayer = (i: number, p: Partial<PayerDraft>) =>
+		set({
+			payers: draft.payers.map((x, j) => (j === i ? { ...x, ...p } : x)),
+		});
+	return (
+		<div className="grid gap-1.5" data-testid={MONEY_TESTID.multiPayer}>
+			{draft.payers.map((p, i) => (
+				<div
+					// biome-ignore lint/suspicious/noArrayIndexKey: payer rows are positional
+					key={`${p.memberId}-${i}`}
+					className="flex items-center gap-2"
+				>
+					<PayerSelect
+						value={p.memberId}
+						onChange={(m) => setPayer(i, { memberId: m })}
+					/>
+					<Input
+						aria-label={`${nameOf(p.memberId)} paid`}
+						data-testid={MONEY_TESTID.payerAmount}
+						aria-invalid={isNegative(p.amount) || undefined}
+						inputMode="decimal"
+						className="flex-1 tnum"
+						value={p.amount}
+						onChange={(e) => setPayer(i, { amount: e.target.value })}
+					/>
+					<Button
+						type="button"
+						size="icon-sm"
+						variant="ghost"
+						aria-label="Remove payer"
+						onClick={() =>
+							set({ payers: draft.payers.filter((_, j) => j !== i) })
+						}
+					>
+						<X />
+					</Button>
+				</div>
+			))}
+			<div className="flex items-center justify-between text-xs">
+				<Button
+					type="button"
+					size="xs"
+					variant="ghost"
+					onClick={() => {
+						const next = people.find(
+							(m) => !draft.payers.some((p) => p.memberId === m.id),
+						);
+						if (next)
+							set({
+								payers: [...draft.payers, { memberId: next.id, amount: "" }],
+							});
+					}}
+				>
+					<Plus /> Payer
+				</Button>
+				<Remainder left={left} currency={draft.currency} negative={negative} />
+			</div>
 		</div>
 	);
 }

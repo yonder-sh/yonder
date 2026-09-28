@@ -1,11 +1,12 @@
 /**
- * E5 Add expense (EXTENSIONS §8.6, ADDENDUM §6 "fast mobile entry"): opened
- * with `useUi().openAddExpense(prefill)` from anywhere (item/day ⋯, leg ⋯, the
- * FAB, "Bought" on a shopping item, the Money tab), on an existing expense
- * (`{ expenseId }`: its row, inbox links) or as a refund (`{ refundOfId }`).
- * A Dialog (480) on desktop, a bottom Drawer on phones. Mounted once: extra
- * mounts (the shell mounts it globally; the Money tab and panel mount it too
- * so they work on their own) render nothing.
+ * E5 Add expense (EXTENSIONS §8.6, ADDENDUM §6 "fast mobile entry", One
+ * Yonder P13): opened with `useUi().openAddExpense(prefill)` from anywhere
+ * (item/day ⋯, leg ⋯, the FAB, "Bought" on a shopping item, the Money tab),
+ * on an existing expense (`{ expenseId }`: its row, inbox links) or as a
+ * refund (`{ refundOfId }`). A Dialog (480) on desktop, a bottom sheet on
+ * phones; the editor draws its own title and ×. Mounted once: extra mounts
+ * (the shell mounts it globally; the Money tab and panel mount it too so
+ * they work on their own) render nothing.
  */
 import { useSyncExternalStore } from "react";
 import {
@@ -74,7 +75,12 @@ function AddExpenseDialogInner() {
 	}
 	const open = mode !== null && !guest;
 	const body = mode ? (
-		<ExpenseEditor key={key} mode={mode} onClose={close} />
+		<ExpenseEditor
+			key={key}
+			mode={mode}
+			onClose={close}
+			Title={phone ? DrawerTitle : DialogTitle}
+		/>
 	) : null;
 	if (phone)
 		return (
@@ -87,7 +93,6 @@ function AddExpenseDialogInner() {
 					data-testid={TESTID.addExpenseDialog}
 					className="max-h-[92dvh]"
 				>
-					<DrawerTitle className="sr-only">Expense</DrawerTitle>
 					<DrawerDescription className="sr-only">
 						Amount, currency, who paid and who shares it.
 					</DrawerDescription>
@@ -98,10 +103,10 @@ function AddExpenseDialogInner() {
 	return (
 		<Dialog open={open} onOpenChange={(v) => !v && close()}>
 			<DialogContent
+				showCloseButton={false}
 				className="flex max-h-[88vh] flex-col gap-0 overflow-hidden p-0 sm:max-w-[480px]"
 				data-testid={TESTID.addExpenseDialog}
 			>
-				<DialogTitle className="sr-only">Expense</DialogTitle>
 				<DialogDescription className="sr-only">
 					Amount, currency, who paid and who shares it.
 				</DialogDescription>

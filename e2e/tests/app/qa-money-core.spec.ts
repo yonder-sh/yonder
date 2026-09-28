@@ -273,7 +273,7 @@ test("UI: fast entry defaults by country (JP/KR/TW), TWD display, Local display"
 		await dialog.getByTestId(M.title).fill(`Snack ${path}`);
 		await page.waitForTimeout(300);
 		out[`${path}:converted`] = await dialog.getByTestId(M.converted).innerText().catch(() => null);
-		out[`${path}:status`] = await dialog.getByTestId(M.status).innerText();
+		out[`${path}:status`] = await dialog.getByTestId(M.payer).innerText();
 		await page.screenshot({ path: `${SHOTS}/ui-add${path.replace(/\//g, "_")}.png` });
 		await dialog.getByTestId(M.save).click();
 		await expect(dialog).toBeHidden();
@@ -325,8 +325,8 @@ test("UI: itemize + 10% fee, pooled payers, refund then edit the refund", async 
 	const dialog = page.getByTestId(TESTID.addExpenseDialog);
 	await dialog.getByTestId(M.amount).fill("6600");
 	await dialog.getByTestId(M.title).fill("Kaiseki");
-	await dialog.getByTestId(M.status).getByRole("radio", { name: "Paid" }).click();
 	await dialog.getByTestId(M.more).click();
+	await dialog.getByTestId(M.status).getByRole("radio", { name: "Paid" }).click();
 	await dialog.getByTestId(M.itemize).click();
 	const lines = dialog.getByTestId(M.line);
 	await lines.nth(0).getByTestId(M.lineLabel).fill("Course A");
@@ -918,8 +918,8 @@ test("UI: shopping Bought + tax-free, private gift, manual rate on a paid cost, 
 	await page.getByTestId(M.addButton).first().click();
 	await dialog.getByTestId(M.amount).fill("10000");
 	await dialog.getByTestId(M.title).fill("Card at my bank's rate");
-	await dialog.getByTestId(M.status).getByRole("radio", { name: "Paid" }).click();
 	await dialog.getByTestId(M.more).click();
+	await dialog.getByTestId(M.status).getByRole("radio", { name: "Paid" }).click();
 	await dialog.getByLabel(/Your rate/).fill("0.01");
 	await page.screenshot({ path: `${SHOTS}/manual-rate-dialog.png` });
 	await dialog.getByTestId(M.save).click();
@@ -938,8 +938,8 @@ test("UI: shopping Bought + tax-free, private gift, manual rate on a paid cost, 
 	await dialog.getByTestId(M.title).fill("JFK-HND in J");
 	await dialog.getByTestId(M.currency).click();
 	await page.getByRole("option", { name: /^USD/ }).first().click();
-	await dialog.getByTestId(M.status).getByRole("radio", { name: "Paid" }).click();
 	await dialog.getByTestId(M.more).click();
+	await dialog.getByTestId(M.status).getByRole("radio", { name: "Paid" }).click();
 	await dialog.getByTestId(M.points).click();
 	await dialog.getByLabel("Programme", { exact: true }).fill("Aeroplan");
 	await dialog.getByLabel("Points", { exact: true }).fill("240000");
@@ -1146,6 +1146,7 @@ test("home change vs budgets, pooled payment edit, receipt upload, delete + undo
 	await page.getByTestId(M.addButton).first().click();
 	await dialog.getByTestId(M.amount).fill("1234");
 	await dialog.getByTestId(M.title).fill("With receipt");
+	await dialog.getByTestId(M.more).click();
 	const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==", "base64");
 	await dialog.getByTestId(M.receipt).setInputFiles({ name: "receipt.png", mimeType: "image/png", buffer: png });
 	await dialog.getByTestId(M.save).click();

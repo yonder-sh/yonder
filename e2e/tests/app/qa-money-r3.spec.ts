@@ -291,7 +291,7 @@ test("R3 validation: negative exact parts / item lines, zero amount, payments ov
 	await expect(dlg).toBeVisible();
 	await dlg.getByTestId(M.amount).fill("1000");
 	await dlg.getByTestId(M.title).fill("UI negative exact");
-	await dlg.getByTestId(M.splitToggle).click();
+	await dlg.getByTestId(M.more).click();
 	await dlg.getByTestId(M.splitExact).click();
 	await page.waitForTimeout(300);
 	const ex = dlg.getByTestId(M.splitExactAmount);

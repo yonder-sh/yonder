@@ -7,7 +7,7 @@
  */
 
 import { Check, ChevronDown, UserPlus } from "lucide-react";
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 import { toast } from "sonner";
 import {
 	assignableMembers,
@@ -43,6 +43,7 @@ export function PersonSelect({
 	testid,
 	ariaLabel = "Paid by",
 	disabled,
+	trigger,
 }: {
 	value: string;
 	onChange: (memberId: string) => void;
@@ -51,6 +52,8 @@ export function PersonSelect({
 	testid?: string;
 	ariaLabel?: string;
 	disabled?: boolean;
+	/** Instead of the select-like button ("+ Person" after the payer pills). */
+	trigger?: ReactNode;
 }) {
 	const { graph } = useWorkspace();
 	const people = assignableMembers(graph.members);
@@ -74,23 +77,25 @@ export function PersonSelect({
 	return (
 		<Popover open={open} onOpenChange={setOpen}>
 			<PopoverTrigger asChild disabled={disabled}>
-				<button
-					type="button"
-					data-testid={testid}
-					aria-label={`${ariaLabel}: ${name}`}
-					className={cn(
-						"inline-flex h-8 min-w-0 cursor-pointer items-center gap-1.5 rounded-md border border-input bg-background px-2.5 text-xs shadow-xs transition-colors",
-						"hover:bg-accent focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none",
-						"disabled:pointer-events-none disabled:opacity-50",
-					)}
-				>
-					{label ? (
-						<span className="text-muted-foreground">{label}</span>
-					) : null}
-					{value ? <PersonAvatar memberId={value} size={16} /> : null}
-					<span className="truncate">{name}</span>
-					<ChevronDown className="size-3.5 shrink-0 opacity-50" />
-				</button>
+				{trigger ?? (
+					<button
+						type="button"
+						data-testid={testid}
+						aria-label={`${ariaLabel}: ${name}`}
+						className={cn(
+							"inline-flex h-8 min-w-0 cursor-pointer items-center gap-1.5 rounded-md border border-input bg-background px-2.5 text-xs shadow-xs transition-colors",
+							"hover:bg-accent focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none",
+							"disabled:pointer-events-none disabled:opacity-50",
+						)}
+					>
+						{label ? (
+							<span className="text-muted-foreground">{label}</span>
+						) : null}
+						{value ? <PersonAvatar memberId={value} size={16} /> : null}
+						<span className="truncate">{name}</span>
+						<ChevronDown className="size-3.5 shrink-0 opacity-50" />
+					</button>
+				)}
 			</PopoverTrigger>
 			<PopoverContent className="w-60 p-0" align="start">
 				<Command>

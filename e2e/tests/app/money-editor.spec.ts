@@ -206,13 +206,12 @@ test("free-text people: typing a new payer's name adds a placeholder who is owed
 	const d = await newExpense(page);
 	await d.getByTestId(M.amount).fill("9000");
 	await d.getByTestId(M.title).fill("Karaoke");
-	// The trip is still ahead, so a new cost starts planned: record it paid.
-	await d.getByTestId(M.status).getByRole("radio", { name: "Paid" }).click();
-	await d.getByTestId(M.payer).click();
+	// The trip is still ahead, so a new expense starts planned: picking who paid records it paid.
+	await d.getByTestId(M.payerAdd).click();
 	await page.getByPlaceholder("Search or add a name…").fill("Kenji");
 	await page.screenshot({ path: shotPath("money/new-person-1440.png"), animations: "disabled" });
 	await page.getByTestId("person-select-add").click();
-	await expect(d.getByTestId(M.payer)).toContainText("Kenji");
+	await expect(d.getByTestId(M.payerPerson).filter({ hasText: "Kenji" })).toHaveAttribute("aria-pressed", "true");
 	await d.getByTestId(M.save).click();
 	await expect(d).toBeHidden();
 	const m = await callFn<{ expenses: { title: string; payments: { payers: { memberId: string }[] }[] }[] }>(

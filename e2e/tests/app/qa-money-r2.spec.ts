@@ -915,8 +915,6 @@ test("split defaults to the item's people; item ⋯ Add expense; a typed name be
 	out.itemDialogCurrency = await dlg.getByTestId(M.currency).innerText();
 	await dlg.getByTestId(M.amount).fill("1800");
 	// split: add a typed person
-	await dlg.getByTestId(M.splitToggle).click();
-	await page.waitForTimeout(300);
 	await dlg.getByTestId(M.splitAddPerson).click();
 	await page.waitForTimeout(300);
 	await page.keyboard.type("Kenji");
