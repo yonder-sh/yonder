@@ -65,6 +65,11 @@ test("desktop: the trip overview shows what's still to plan", async ({ page }, i
 	await expect(page).toHaveURL(new RegExp(`sel=l\\.${c.ids.items.ryokanBreakfast}\\.${c.ids.items.kiyomizu}`));
 	await expect(page.getByTestId(TESTID.legOverview)).toBeVisible();
 
+	// Shibuya Sky's guide link fetches its preview (and picture) the first time it shows: let that land
+	// first, or its tile grows under the jump below (e2e's link stub answers within milliseconds).
+	await page.goto(`/t/${c.slug}?sel=n.${c.ids.nodes.shibuyaSky}`);
+	await expect(page.locator(`[data-testid=${TESTID.galleryItem}][data-kind=link] img`).first()).toBeVisible();
+
 	// "Still to book" expands to its to-dos; one opens its list (To-dos, or Bookings for a booking window) filtered
 	// to it, the inspector on that selection's Lists tab (PLAN-I2-14, PLAN-R2-05).
 	await page.goto(`/t/${c.slug}?sel=root`);
