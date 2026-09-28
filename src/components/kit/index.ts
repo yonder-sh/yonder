@@ -9,6 +9,7 @@ export { EmptyState } from "@/components/common/empty-state";
 export { DurationInput, TimeInput } from "@/components/common/time";
 export { Chip, type ChipTone, chipVariants } from "./chip";
 export { DateInput } from "./date-input";
+export { FilterPill, type FilterPillSize } from "./filter-pill";
 export {
 	AvatarStack,
 	HereBadge,

@@ -1,11 +1,20 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
-import { CalendarDays, Check, Clock, Plus, Search, Share2 } from "lucide-react";
+import {
+	CalendarDays,
+	Check,
+	Clock,
+	MapPin,
+	Plus,
+	Search,
+	Share2,
+} from "lucide-react";
 import { type ReactNode, useState } from "react";
 import {
 	Chip,
 	type ChipTone,
 	EmptyState,
 	Eyebrow,
+	FilterPill,
 	HereBadge,
 	LiveAvatar,
 	RatingButtons,
@@ -67,6 +76,16 @@ function Block({ title, children }: { title: string; children: ReactNode }) {
 function Kit() {
 	const [view, setView] = useState<"days" | "cities">("days");
 	const [rating, setRating] = useState<Priority | null>("really_want");
+	const [pills, setPills] = useState<Record<string, boolean>>({
+		"sm-shortlist": true,
+		"md-shortlist": true,
+		"sm-maya": true,
+		"md-maya": true,
+	});
+	const pill = (k: string) => ({
+		pressed: !!pills[k],
+		onPressedChange: (on: boolean) => setPills((p) => ({ ...p, [k]: on })),
+	});
 	return (
 		<div className="grid gap-8 p-8">
 			<Block title="Type">
@@ -161,6 +180,33 @@ function Kit() {
 								{t}
 							</Chip>
 						))}
+					</div>
+				))}
+			</Block>
+			<Block title="Filter pills">
+				{(["sm", "md"] as const).map((s) => (
+					<div key={s} className="flex flex-wrap items-center gap-2">
+						<FilterPill size={s} count={48} {...pill(`${s}-all`)}>
+							All
+						</FilterPill>
+						<FilterPill size={s} count={12} {...pill(`${s}-shortlist`)}>
+							Shortlist
+						</FilterPill>
+						<FilterPill size={s} icon={MapPin} {...pill(`${s}-near`)}>
+							Near Shibuya
+						</FilterPill>
+						<FilterPill size={s} user={MAYA} {...pill(`${s}-maya`)}>
+							Maya
+						</FilterPill>
+						<FilterPill size={s} {...pill(`${s}-everyone`)}>
+							Everyone's
+						</FilterPill>
+						<FilterPill size={s} pressed disabled>
+							Tue
+						</FilterPill>
+						<FilterPill size={s} pressed={false} disabled>
+							Wed
+						</FilterPill>
 					</div>
 				))}
 			</Block>
