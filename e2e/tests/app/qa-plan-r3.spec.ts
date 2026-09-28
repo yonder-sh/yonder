@@ -14,6 +14,7 @@
  */
 import { type Browser, expect, type Page, test } from "@playwright/test";
 import { loginViaApi } from "./_helpers/auth";
+import { openOrganize } from "./_helpers/page";
 
 test.describe.configure({ mode: "default" });
 
@@ -207,10 +208,8 @@ test.describe("on a copy of Asia 2027", () => {
 		await openTrip(page, `/t/${slug}?tab=plan`);
 		const kuro = await nodeId(page, "Bar Kuro");
 		await openTrip(page, `/t/${slug}?sel=n.${kuro}`);
-		const row = page.getByRole("treeitem", { name: /^Bar Kuro/ }).first();
-		await row.scrollIntoViewIfNeeded();
-		await row.hover();
-		await row.getByTestId("outline-row-menu").click();
+		// One Yonder: the place's row actions are in its details' ⋯.
+		await page.getByTestId("details-menu").click();
 		await page.getByRole("menuitem", { name: /location/ }).click();
 		const dlg = page.getByRole("dialog").filter({ hasText: /location for Bar Kuro/ });
 		await page.waitForTimeout(3000); // the name search runs first
@@ -281,7 +280,7 @@ test("DEFECT (WP-Outline): 'Add inside…' on a node whose children run below th
 		const page = await ctx.newPage();
 		await signIn(page);
 		await openTrip(page, `/t/${TRIP}?tab=plan`);
-		const row = page.getByRole("treeitem", { name: /^Busan\b/ }).first();
+		const row = (await openOrganize(page)).getByRole("treeitem", { name: /^Busan\b/ }).first();
 		await row.scrollIntoViewIfNeeded();
 		await row.hover();
 		await row.getByTestId("outline-row-menu").click();

@@ -127,10 +127,8 @@ test("DEFECT HIER-12 (WP-Places): pasted coordinates make 'Use this location' th
 	await openTrip(page, `/t/${TRIP}?tab=plan`);
 	const kuro = await nodeId(page, "Bar Kuro");
 	await openTrip(page, `/t/${TRIP}?sel=n.${kuro}`);
-	const row = page.getByRole("treeitem", { name: /^Bar Kuro/ }).first();
-	await row.scrollIntoViewIfNeeded();
-	await row.hover();
-	await row.getByTestId("outline-row-menu").click();
+	// One Yonder: the place's row actions are in its details' ⋯.
+	await page.getByTestId("details-menu").click();
 	await page.getByRole("menuitem", { name: /location/ }).click();
 	const dlg = page.getByRole("dialog").filter({ hasText: /location for Bar Kuro/ });
 	// The dialog opens with the node's name as the query and searches it (worldwide).

@@ -110,10 +110,8 @@ test.describe("guards 1440", () => {
 		await openTrip(page, `/t/${TRIP}?tab=plan`);
 		const kuro = (await graph(page)).nodes.find((n) => n.name === "Bar Kuro")?.id;
 		await openTrip(page, `/t/${TRIP}?sel=n.${kuro}`);
-		const row = page.getByRole("treeitem", { name: /^Bar Kuro/ }).first();
-		await row.scrollIntoViewIfNeeded();
-		await row.hover();
-		await row.getByTestId("outline-row-menu").click();
+		// One Yonder: the place's row actions are in its details' ⋯.
+		await page.getByTestId("details-menu").click();
 		await page.getByRole("menuitem", { name: /location/ }).click();
 		const dlg = page.getByRole("dialog").filter({ hasText: /location for Bar Kuro/ });
 		await page.waitForTimeout(3000);

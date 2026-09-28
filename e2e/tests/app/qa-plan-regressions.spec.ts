@@ -13,6 +13,7 @@
  */
 import { expect, type Page, test } from "@playwright/test";
 import { loginViaApi } from "./_helpers/auth";
+import { openOrganize } from "./_helpers/page";
 
 const TRIP = "asia-2027";
 const QA = {
@@ -150,7 +151,7 @@ test("DEFECT Still to plan (WP-Shell/WP-Places): header and table agree on unall
 
 test("DEFECT Outline (WP-Outline): 'Add inside…' puts the caret in the new row", async ({ page }) => {
 	await openTrip(page, `/t/${TRIP}?tab=plan`);
-	const row = page.getByRole("treeitem", { name: /^Nara, / }).first();
+	const row = (await openOrganize(page)).getByRole("treeitem", { name: /^Nara, / }).first();
 	await row.hover();
 	await row.getByTestId("outline-row-menu").click();
 	await page.getByRole("menuitem", { name: /Add inside/ }).click();
