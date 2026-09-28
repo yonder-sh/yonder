@@ -48,7 +48,7 @@ const travelModes = (scope: ReturnType<Page["getByTestId"]>) =>
 		);
 
 async function openLeg(page: Page, slug: string, from: string, to: string) {
-	await page.goto(`/t/${slug}?sel=l.${from}.${to}`);
+	await page.goto(`/t/${slug}?tab=plan&lens=place&sel=l.${from}.${to}`);
 	await expectLive(page);
 	await expect(page.getByTestId(TESTID.legOverview)).toBeVisible({
 		timeout: 20_000,
