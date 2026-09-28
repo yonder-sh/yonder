@@ -25,6 +25,8 @@
  *                   (default HEAD, uncommitted work included) touches
  *   --frozen        run from a worktree at HEAD (../trip-planner-e2e), so the
  *                   repo can keep changing meanwhile (scripts/lib/e2e-frozen.ts)
+ * E2E_FAST_SLOT=1…3 runs beside another run (its own envs, ports and files);
+ * E2E_FAST_MIN_GB lowers the 20 GB it needs to start.
  * Anything else goes to `playwright test` (spec files, --project, -g, --retries…).
  */
 import { execFileSync, spawn } from "node:child_process";
@@ -64,8 +66,21 @@ import {
 	selectionArgs,
 } from "./lib/e2e-select";
 
-const REPORT_FILE = path.join(FAST_DIR, "report.json");
-const PIDS_FILE = path.join(FAST_DIR, "pids.json");
+/**
+ * E2E_FAST_SLOT=k (0…3): a run beside another one (a background suite and a
+ * kept env to work against), on envs 10k+1… with its own ports, databases,
+ * and pids, envs and report files.
+ */
+const SLOT = Number(process.env.E2E_FAST_SLOT ?? 0);
+if (!Number.isInteger(SLOT) || SLOT < 0 || SLOT > 3)
+	throw new Error(
+		`E2E_FAST_SLOT must be 0…3, got ${process.env.E2E_FAST_SLOT}`,
+	);
+const slotFile = (name: string) =>
+	path.join(FAST_DIR, SLOT ? `${name}-${SLOT}.json` : `${name}.json`);
+const REPORT_FILE = slotFile("report");
+const PIDS_FILE = slotFile("pids");
+const SLOT_ENVS_FILE = SLOT ? slotFile("envs") : ENVS_FILE;
 /**
  * Memory budget (the machine is shared with the owner's own work). Measured
  * with 6 envs under load: vite dev ~1.6 GB each, collab+worker ~0.35 GB, and
@@ -75,7 +90,7 @@ const PIDS_FILE = path.join(FAST_DIR, "pids.json");
 const DEFAULT_ENVS = 4;
 const GB_PER_ENV = 2;
 const RESERVE_GB = 16;
-const MIN_AVAILABLE_GB = 20;
+const MIN_AVAILABLE_GB = Number(process.env.E2E_FAST_MIN_GB ?? 20);
 const ABORT_BELOW_GB = Number(process.env.E2E_FAST_ABORT_BELOW_GB ?? 5);
 
 type Args = {
@@ -348,7 +363,10 @@ async function run(args: Args, t0: number): Promise<number> {
 
 	const source = sourceEnv();
 	const n = pickEnvCount(args.envs);
-	const envs = Array.from({ length: n }, (_, i) => fastEnv(i + 1, source));
+	if (n > 10) throw new Error("at most 10 envs per slot");
+	const envs = Array.from({ length: n }, (_, i) =>
+		fastEnv(SLOT * 10 + i + 1, source),
+	);
 	const busy = (
 		await Promise.all(
 			envs
@@ -427,7 +445,7 @@ async function run(args: Args, t0: number): Promise<number> {
 
 	// What Playwright's workers read (e2e/tests/app/_helpers/fast-env.ts). No
 	// secrets: the config loads the rest from .env.
-	writeJson(ENVS_FILE, {
+	writeJson(SLOT_ENVS_FILE, {
 		report: REPORT_FILE,
 		envs: envs.map((e) => ({
 			name: e.name,
@@ -452,7 +470,7 @@ async function run(args: Args, t0: number): Promise<number> {
 			{
 				cwd: REPO_ROOT,
 				stdio: "inherit",
-				env: { ...process.env, E2E_FAST_ENVS_FILE: ENVS_FILE },
+				env: { ...process.env, E2E_FAST_ENVS_FILE: SLOT_ENVS_FILE },
 			},
 		);
 		pw.on("exit", (c, sig) => resolve(c ?? (sig ? 130 : 1)));
