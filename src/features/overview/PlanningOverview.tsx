@@ -224,8 +224,10 @@ export function Favourites({
 				{top.map((f) => {
 					const cover = covers.get(f.id);
 					const node = ix.node(f.id);
+					// Its city, else where it's filed (Mt. Fuji).
 					const city = node
-						? ix.hierarchy.nearestOfType(node.id, "city")?.name
+						? (ix.hierarchy.nearestOfType(node.id, "city")?.name ??
+							ix.node(node.parentId)?.name)
 						: undefined;
 					const rating = node ? ratingOf(node, "max") : null;
 					return (
@@ -235,7 +237,7 @@ export function Favourites({
 							data-testid={OVERVIEW_TESTID.highlight}
 							data-cursor-anchor={`place:${f.id}`}
 							onClick={() => nav.select({ kind: "node", id: f.id })}
-							className="group relative aspect-[4/3] min-w-0 cursor-pointer overflow-hidden rounded-xl bg-muted text-left"
+							className="group relative aspect-[16/10] min-w-0 cursor-pointer overflow-hidden rounded-xl bg-muted text-left"
 						>
 							{cover ? (
 								<ThumbhashImage
