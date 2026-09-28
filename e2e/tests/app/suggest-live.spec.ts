@@ -142,7 +142,7 @@ test.describe("live review (desktop 1440×900)", () => {
 		const mine = maya.getByTestId(TESTID.reviewDrawer);
 		await expect(mine).toBeVisible();
 		await expect(mine.getByRole("heading", { name: "Your suggestions" })).toBeVisible();
-		await expect(mine.locator('[data-filter="mine"]')).toHaveAttribute("data-state", "active");
+		await expect(mine.getByTestId(S.filter).locator('[data-value="mine"]')).toHaveAttribute("data-state", "on");
 		const accepted = mine.locator(`[data-testid="${S.row}"][data-status="accepted"]`);
 		await expect(accepted).toContainText("Move Itoya Ginza to Day 1");
 		await expect(accepted.getByTestId(S.status)).toContainText("Accepted by Dev");
@@ -193,7 +193,7 @@ test.describe("live review (desktop 1440×900)", () => {
 		const conflict = row.getByTestId(S.conflict);
 		await expect(conflict).toHaveAttribute("data-reason", "changed");
 		await expect(conflict).toContainText("Itoya Ginza was changed since it was suggested.");
-		await expect(drawer.locator('[data-filter="conflicts"]')).toContainText("1");
+		await expect(drawer.getByTestId(S.filter).locator('[data-value="conflicts"]')).toContainText("1");
 		await settle(page);
 		await page.screenshot({ path: shotPath("suggest/live-6-conflict.png"), animations: "disabled" });
 
@@ -248,7 +248,7 @@ test.describe("live review (desktop 1440×900)", () => {
 		await expect.poll(() => dayOfItem(page, k.knives), { timeout: 15_000 }).toBe(k.d1);
 		await ctl.getByRole("button", { name: /^Review \d+ suggestions?$/ }).click();
 		const drawer = page.getByTestId(TESTID.reviewDrawer);
-		await drawer.locator('[data-filter="conflicts"]').click();
+		await drawer.getByTestId(S.filter).locator('[data-value="conflicts"]').click();
 		const row = drawer.getByTestId(S.row).filter({ hasText: "Move Kama-asa (knives) to Day 4" });
 		await expect(row.getByTestId(S.conflict)).toContainText("Dev's suggestion for this was accepted.", {
 			timeout: 15_000,

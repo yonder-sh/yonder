@@ -53,9 +53,9 @@ test.describe("fixture: reviewing suggestions (desktop 1440×900)", () => {
 		await page.screenshot({ path: shotPath("suggest/desktop-2-drawer.png"), animations: "disabled" });
 
 		// Filters: Mine is empty for the owner (one line, no illustration).
-		await drawer.locator('[data-filter="mine"]').click();
+		await drawer.getByTestId(S.filter).locator('[data-value="mine"]').click();
 		await expect(drawer.getByText("You haven't suggested anything yet.")).toBeVisible();
-		await drawer.locator('[data-filter="open"]').click();
+		await drawer.getByTestId(S.filter).locator('[data-value="open"]').click();
 
 		// Show: selects the item, closes the drawer, the bar names the suggestion.
 		await itoyaRow.getByTestId(S.show).click();

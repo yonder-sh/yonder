@@ -213,7 +213,7 @@ test("SUG-16 + SUG-03: Maya and Audrey suggest different days for one item; the 
 		await d.page.getByTestId(S.reviewOpen).click();
 		const drawer = d.page.getByTestId(TESTID.reviewDrawer).last();
 		await expect(drawer).toBeVisible();
-		await drawer.getByRole("tab", { name: /Conflicts/ }).click();
+		await drawer.getByRole("radio", { name: /Conflicts/ }).click();
 		const row = drawer.getByTestId(S.row).filter({ hasText: "Nakano Broadway" });
 		await expect(row).toBeVisible({ timeout: 10_000 });
 		await expect(row.getByTestId(S.conflict)).toBeVisible();
@@ -406,7 +406,7 @@ test("SUG-14: Dennis rejects Maya's suggestion in the drawer with a note; Maya g
 		if (await reviewBtn.isVisible().catch(() => false)) await reviewBtn.click();
 		const md = m.page.getByTestId(TESTID.reviewDrawer).last();
 		await expect(md).toBeVisible({ timeout: 10_000 });
-		await md.getByRole("tab", { name: /Mine/ }).click();
+		await md.getByRole("radio", { name: /Mine/ }).click();
 		const mine = md.getByTestId(S.row).filter({ hasText: `why not ${tag}` });
 		await expect(mine).toBeVisible({ timeout: 10_000 });
 		const mineText = (await mine.innerText()).replace(/\s+/g, " ");

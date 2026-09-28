@@ -11,8 +11,8 @@
  */
 import { type ReactNode, useMemo } from "react";
 import { EditGuard } from "@/components/common/edit-guard";
-import { EmptyState } from "@/components/common/empty-state";
 import { MemberAvatar } from "@/components/common/member";
+import { EmptyState, Segmented } from "@/components/kit";
 import { Button } from "@/components/ui/button";
 import {
 	Drawer,
@@ -28,7 +28,6 @@ import {
 	SheetHeader,
 	SheetTitle,
 } from "@/components/ui/sheet";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { bool, oneOf, useFollowValue } from "@/lib/realtime/view-ui";
 import type { ProposalDto } from "@/lib/schemas/proposals";
@@ -115,7 +114,7 @@ function GroupHeader({ batch }: { batch: Batch }) {
 					guest: batch.author.isGuest,
 				}}
 			/>
-			<p className="min-w-0 flex-1 truncate text-meta leading-[18px]">
+			<p className="min-w-0 flex-1 truncate text-meta">
 				<span className="font-medium">{batch.author.name}</span>
 				<span className="text-muted-foreground">
 					{" "}
@@ -271,36 +270,27 @@ function ReviewBody({ onAfterShow }: { onAfterShow: () => void }) {
 
 	return (
 		<>
-			<p className="px-4 text-meta leading-[18px] text-muted-foreground">
+			<p className="px-4 text-meta text-muted-foreground">
 				{access.canReview
 					? proposals.count
 						? `${proposals.count} open from ${joinNames(authors.slice(0, 3))}${authors.length > 3 ? " and others" : ""}.`
 						: "Nothing waiting for you."
 					: reviewersLine(names)}
 			</p>
-			<Tabs
-				value={filter}
-				onValueChange={(v) => setFilter(v as ReviewFilter)}
-				className="px-4"
-			>
-				<TabsList className="h-8 w-full" data-testid={SUGGEST_TESTID.filter}>
-					{FILTERS.map((f) => (
-						<TabsTrigger
-							key={f.value}
-							value={f.value}
-							data-filter={f.value}
-							className="gap-1.5 text-xs"
-						>
-							{f.label}
-							{count[f.value] ? (
-								<span className="text-2xs text-muted-foreground tnum">
-									{count[f.value]}
-								</span>
-							) : null}
-						</TabsTrigger>
-					))}
-				</TabsList>
-			</Tabs>
+			<div className="px-4">
+				<Segmented
+					full
+					size="sm"
+					label="Show"
+					testId={SUGGEST_TESTID.filter}
+					value={filter}
+					onValueChange={setFilter}
+					options={FILTERS.map((f) => ({
+						...f,
+						count: count[f.value] || null,
+					}))}
+				/>
+			</div>
 			<div className="min-h-0 flex-1 overflow-y-auto border-t pb-6">
 				{body ?? <EmptyState line={EMPTY[filter]} />}
 			</div>
