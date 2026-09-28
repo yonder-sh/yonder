@@ -71,6 +71,10 @@ export interface GraphTrip {
 	settings: TripSettings;
 	/** Monotonic per-trip counter for missed-event detection (D10). */
 	version: number;
+	/** "Mark the trip decided" (ISO; `features/places/lib/decided.ts`). Absent = not marked. */
+	decidedAt?: string | null;
+	/** Who marked it (a user id). */
+	decidedBy?: string | null;
 	updatedAt: string;
 }
 
@@ -156,6 +160,14 @@ export interface GraphNode {
 	priorities: Record<string, Priority>;
 	/** memberId → that member's comment on their rating (ADDENDUM §10; ≤ 280). */
 	ratingComments: Record<string, string>;
+	/**
+	 * "Mark decided" (ISO; `features/places/lib/decided.ts`) and who (a user
+	 * id). Always present from `loadTripGraph`; absent = not marked.
+	 */
+	decidedAt?: string | null;
+	decidedBy?: string | null;
+	/** When it was added (ISO); absent in older fixtures and ghosts (counts as long ago). */
+	createdAt?: string;
 	updatedAt: string;
 }
 

@@ -11,7 +11,7 @@ import { sql } from "drizzle-orm";
 import { v7 as uuidv7 } from "uuid";
 import { z } from "zod";
 import type { Tx } from "@/db/db.server";
-import { nodePriorities, nodes } from "@/db/schema";
+import { nodePriorities, nodes, trips } from "@/db/schema";
 import { enqueueOsmHours } from "@/features/insights/server/osm-hours-queue.server";
 import { lifecycleSet } from "@/lib/domain/places-lifecycle";
 import type { GraphIndex } from "@/lib/engine/graph-index";
@@ -168,6 +168,18 @@ export const SetNodePriorityInput = z
 		 * null clears it.
 		 */
 		comment: RatingComment.nullable().optional(),
+	})
+	.strict();
+
+/**
+ * "Mark decided" (owner, 2026-09-28): a node, or the whole trip when
+ * `nodeId` is null. `decided: false` is the undo (it clears the mark).
+ */
+export const SetDecidedInput = z
+	.object({
+		tripId: z.uuid(),
+		nodeId: z.uuid().nullable(),
+		decided: z.boolean(),
 	})
 	.strict();
 
@@ -749,4 +761,57 @@ export async function setNodePriorityCore(
 		);
 	out.emit({ entity: "node", ids: [data.nodeId] });
 	return { ok: true as const };
+}
+
+/** setDecided (edit-only, never a proposal): stamps or clears the mark. Keys: graph. */
+export async function setDecidedCore(
+	tx: Tx,
+	out: TxOutbox,
+	data: In<typeof SetDecidedInput>,
+	ctx: Pick<CoreCtx, "user" | "actor">,
+): Promise<{ decidedAt: string | null }> {
+	// The database's clock, like `created_at`: the mark covers what was added before it.
+	const set = {
+		decidedAt: data.decided ? sql`now()` : null,
+		decidedBy: data.decided ? ctx.user.id : null,
+		updatedAt: sql`now()`,
+	};
+	const word = data.decided ? "decided" : "undecided";
+	let at: Date | null;
+	if (data.nodeId === null) {
+		const [row] = await tx
+			.update(trips)
+			.set(set)
+			.where(sql`${trips.id} = ${data.tripId} and ${trips.deletedAt} is null`)
+			.returning({ decidedAt: trips.decidedAt });
+		if (!row) return fail("NOT_FOUND");
+		at = row.decidedAt;
+		await logActivity(tx, out, {
+			tripId: data.tripId,
+			actor: ctx.actor,
+			verb: "trip.update",
+			summary: `marked the trip ${word}`,
+		});
+		out.emit({ entity: "trip" });
+	} else {
+		const [row] = await tx
+			.update(nodes)
+			.set(set)
+			.where(
+				sql`${nodes.id} = ${data.nodeId} and ${nodes.tripId} = ${data.tripId} and ${nodes.deletedAt} is null`,
+			)
+			.returning({ name: nodes.name, decidedAt: nodes.decidedAt });
+		if (!row) return fail("NOT_FOUND");
+		at = row.decidedAt;
+		await logActivity(tx, out, {
+			tripId: data.tripId,
+			actor: ctx.actor,
+			verb: "node.update",
+			summary: `marked ${row.name} ${word}`,
+			nodeId: data.nodeId,
+			meta: { name: row.name },
+		});
+		out.emit({ entity: "node", ids: [data.nodeId] });
+	}
+	return { decidedAt: at?.toISOString() ?? null };
 }

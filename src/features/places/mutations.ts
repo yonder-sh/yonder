@@ -12,6 +12,7 @@ import { createItem, moveItem } from "@/functions/items.functions";
 import {
 	createNodePath,
 	moveNode,
+	setDecided,
 	setNodePriority,
 	updateNode,
 } from "@/functions/nodes.functions";
@@ -119,6 +120,37 @@ export function useUpdateNode(tripId: string) {
 				return next;
 			}),
 	});
+}
+
+export type SetDecidedVars = {
+	/** Null: the whole trip. */
+	nodeId: string | null;
+	decided: boolean;
+	/** Who marks it (a user id), for the optimistic write. */
+	by: string;
+};
+
+/** "Mark decided" at a scope, or its undo (edit-only). */
+export function useSetDecided(tripId: string) {
+	return useTripMutation(
+		({ nodeId, decided }: SetDecidedVars) =>
+			setDecided({ data: { tripId, nodeId, decided } }),
+		{
+			keys: [tripKeys.graph(tripId)],
+			optimistic: (qc, v) => {
+				const mark = {
+					decidedAt: v.decided ? new Date().toISOString() : null,
+					decidedBy: v.decided ? v.by : null,
+				};
+				if (v.nodeId)
+					patchNode(qc, tripId, v.nodeId, (n) => ({ ...n, ...mark }));
+				else
+					qc.setQueryData(tripKeys.graph(tripId), (g?: TripGraph) =>
+						g ? { ...g, trip: { ...g.trip, ...mark } } : g,
+					);
+			},
+		},
+	);
 }
 
 type ChainSegment = Parameters<

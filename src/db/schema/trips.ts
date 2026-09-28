@@ -61,6 +61,9 @@ export const trips = pgTable(
 		 * the last version they saw and refetch when an event skips one.
 		 */
 		version: bigint({ mode: "number" }).notNull().default(0),
+		/** "Mark the trip decided": like `nodes.decided_at`, for every place. */
+		decidedAt: timestamp({ withTimezone: true }),
+		decidedBy: text().references(() => user.id, { onDelete: "set null" }),
 		createdBy: text().references(() => user.id, { onDelete: "set null" }),
 		createdAt: createdAt(),
 		updatedAt: updatedAt(),

@@ -17,6 +17,7 @@ import {
 	pgTable,
 	primaryKey,
 	text,
+	timestamp,
 	unique,
 	uuid,
 } from "drizzle-orm/pg-core";
@@ -75,6 +76,12 @@ export const nodes = pgTable(
 		/** The shortlist override: `auto` follows the group score. */
 		shortlistPin: shortlistPin().notNull().default("auto"),
 		details: jsonb().$type<NodeDetails>().notNull().default({}),
+		/**
+		 * "Mark decided" (owner, 2026-09-28): the places inside that were added
+		 * before this stop asking for ratings. Null = not marked.
+		 */
+		decidedAt: timestamp({ withTimezone: true }),
+		decidedBy: text().references(() => user.id, { onDelete: "set null" }),
 		createdBy: text().references(() => user.id, { onDelete: "set null" }),
 		createdAt: createdAt(),
 		updatedAt: updatedAt(),

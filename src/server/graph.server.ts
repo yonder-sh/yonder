@@ -147,7 +147,8 @@ export async function loadTripGraph(
 				            and a.visibility = 'everyone' and a.expense_id is null)`
 										: sql`t.cover_attachment_id`
 								} as "coverAttachmentId",
-				       t.settings, t.version, t.updated_at as "updatedAt"
+				       t.settings, t.version, t.decided_at as "decidedAt", t.decided_by as "decidedBy",
+				       t.updated_at as "updatedAt"
 				  from trips t where t.id = ${tripId} and t.deleted_at is null`),
 		() =>
 			rows(sql`
@@ -172,7 +173,8 @@ export async function loadTripGraph(
 				       n.position, n.lat, n.lng, n.tz, n.country_code as "countryCode", n.address,
 				       n.google_place_id as "googlePlaceId", n.osm_ref as "osmRef", n.bbox, n.time_needed_min as "timeNeededMin",
 				       n.idea_status::text as "ideaStatus", n.shortlist_pin::text as "shortlistPin",
-				       n.details, n.updated_at as "updatedAt",
+				       n.details, n.decided_at as "decidedAt", n.decided_by as "decidedBy",
+				       n.created_at as "createdAt", n.updated_at as "updatedAt",
 				       coalesce((select jsonb_object_agg(p.member_id, p.priority)
 				                   from node_priorities p where p.node_id = n.id), '{}'::jsonb) as priorities,
 				       coalesce((select jsonb_object_agg(p.member_id, p.rating_comment)
@@ -234,6 +236,8 @@ export async function loadTripGraph(
 		coverAttachmentId: str(t.coverAttachmentId),
 		settings: (t.settings ?? {}) as TripSettings,
 		version: Number(t.version ?? 0),
+		decidedAt: iso(t.decidedAt),
+		decidedBy: str(t.decidedBy),
 		updatedAt: isoNN(t.updatedAt),
 	};
 
@@ -291,6 +295,9 @@ export async function loadTripGraph(
 		details: (n.details ?? {}) as NodeDetails,
 		priorities: (n.priorities ?? {}) as GraphNode["priorities"],
 		ratingComments: (n.ratingComments ?? {}) as GraphNode["ratingComments"],
+		decidedAt: iso(n.decidedAt),
+		decidedBy: str(n.decidedBy),
+		createdAt: isoNN(n.createdAt),
 		updatedAt: isoNN(n.updatedAt),
 	}));
 

@@ -53,6 +53,8 @@ export const MUTATION_POLICY = {
 	deleteNode: "proposable",
 	restoreNode: "edit-only",
 	setNodePriority: "proposable",
+	/** "Mark decided" at any scope: editors only, never a proposal. */
+	setDecided: "edit-only",
 
 	// ---- items (F) ----
 	createItem: "proposable",

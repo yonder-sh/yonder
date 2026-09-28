@@ -14,7 +14,9 @@ import {
 	MoveNodeInput,
 	RestoreNodeInput,
 	restoreNodeCore,
+	SetDecidedInput,
 	SetNodePriorityInput,
+	setDecidedCore,
 	UpdateNodeInput,
 } from "@/server/cores/nodes.server";
 import { tripOf } from "@/server/perms.server";
@@ -83,3 +85,24 @@ export const setNodePriority = createServerFn({ method: "POST" })
 	.middleware([withNamedUser])
 	.validator(proposable.input(SetNodePriorityInput))
 	.handler(proposable.run("node.priority"));
+
+/** "Mark decided" at a node or the whole trip (edit-only, never a proposal); `decided: false` undoes it. Keys: graph. */
+export const setDecided = createServerFn({ method: "POST" })
+	.middleware([withNamedUser])
+	.validator(SetDecidedInput)
+	.handler(async ({ data, context }): Promise<{ decidedAt: string | null }> => {
+		const access = await requireEditOnly(
+			"setDecided",
+			data.tripId,
+			context.user,
+		);
+		return withTripTx(
+			data.tripId,
+			(tx, out) =>
+				setDecidedCore(tx, out, data, {
+					user: context.user,
+					actor: actorOf(context.user),
+				}),
+			mutationMeta(access, context.user),
+		);
+	});
