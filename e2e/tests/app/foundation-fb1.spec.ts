@@ -101,11 +101,11 @@ test("FB-02: clickable things show the pointer", async ({ page }, info) => {
 	await expect(page.getByTestId("workspace")).toBeVisible({ timeout: 30_000 });
 	const cursor = (sel: string) =>
 		page.locator(sel).first().evaluate((el) => getComputedStyle(el).cursor);
-	// A plain button, a tab, an outline row (treeitem), a link and a plan card.
+	// A plain button, a tab, the Where button, a link and a plan card.
 	await hydrated(page.getByTestId("trip-menu"));
 	expect(await cursor('[data-testid="trip-menu"]')).toBe("pointer");
 	expect(await cursor('[role="tab"]')).toBe("pointer");
-	expect(await cursor('[data-testid="outline-row"]')).toBe("pointer");
+	expect(await cursor('[data-testid="where-button"]')).toBe("pointer");
 	expect(await cursor("a[href]")).toBe("pointer");
 	await expect(page.getByTestId("timeline-item").first()).toBeVisible({ timeout: 20_000 });
 	expect(await cursor('[data-testid="timeline-item"] .group\\/card')).toBe("pointer");

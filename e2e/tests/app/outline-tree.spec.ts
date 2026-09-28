@@ -1,6 +1,7 @@
 /**
  * WP-Outline acceptance (SPEC §18.3, QA HIER-01/05/07/09/13): the flattened
- * sortable tree on the workspace's one DndContext.
+ * sortable tree on the workspace's one DndContext (One Yonder: in Organize
+ * places, from the Where picker; the ideas are the Plan's "Ideas in …").
  * - Harajuku dragged under Kyoto persists (reload) and shows in a second
  *   context; a city under a place is refused by the tree and by the server.
  * - Keyboard reorder: Space, arrows, Space, announced politely.
@@ -14,7 +15,8 @@ import { OUTLINE_TESTID } from "../../../src/features/outline/testids";
 import { TESTID } from "../../../src/lib/testids";
 import { shotPath, storageStateOf } from "./_helpers/env";
 import { cloneFixtureTrip } from "./_helpers/fixture";
-import { collectConsole, expectLive } from "./_helpers/page";
+import { collectConsole, expectLive, openOrganize } from "./_helpers/page";
+import { PLAN_TESTID } from "../../../src/features/plan/testids";
 
 test.use({ storageState: storageStateOf("dev") });
 
@@ -61,6 +63,7 @@ test("Harajuku dragged under Kyoto persists and shows in a second context", asyn
 	const N = c.ids.nodes;
 	await page.goto(`/t/${c.slug}/japan/tokyo`);
 	await expectLive(page);
+	await openOrganize(page);
 	await expect(row(page, "Harajuku")).toBeVisible();
 
 	await drag(page, row(page, "Harajuku"), row(page, "Kyoto"));
@@ -74,6 +77,7 @@ test("Harajuku dragged under Kyoto persists and shows in a second context", asyn
 	const p2 = await other.newPage();
 	await p2.goto(`/t/${c.slug}/japan/kyoto`);
 	await expectLive(p2);
+	await openOrganize(p2);
 	await expect(row(p2, "Harajuku")).toBeVisible();
 	await expect(row(p2, "Harajuku")).toHaveAttribute("aria-level", "3");
 	// Maya is looking at Kyoto: a presence dot on that row in the first context.
@@ -97,6 +101,7 @@ test("a city can't go inside a place: the tree refuses it, and so does the serve
 	const N = c.ids.nodes;
 	await page.goto(`/t/${c.slug}/japan/tokyo`);
 	await expectLive(page);
+	await openOrganize(page);
 	// Kyoto dragged up to just under Itoya and two levels right = inside Itoya.
 	const kyoto = row(page, "Kyoto");
 	const a = await kyoto.boundingBox();
@@ -143,6 +148,7 @@ test("keyboard reorder: Space, arrow, Space — announced", async ({ page }, inf
 	const N = c.ids.nodes;
 	await page.goto(`/t/${c.slug}/japan/tokyo`);
 	await expectLive(page);
+	await openOrganize(page);
 	const asakusa = row(page, "Asakusa");
 	await asakusa.focus();
 	await page.keyboard.press("Space");
@@ -169,26 +175,40 @@ test("an idea dropped on a Plan day is scheduled; A does it from the keyboard", 
 	test.skip(info.project.name !== "chromium", "xl sidebar + plan");
 	const c = await cloneFixtureTrip(page.request);
 	const N = c.ids.nodes;
+	// One day in view and the whole plan column on screen: the ideas under it.
+	await page.setViewportSize({ width: 1440, height: 1600 });
 	await page.goto(`/t/${c.slug}?tab=plan`);
 	await expectLive(page);
-	const ideas = page.getByTestId(TESTID.ideasBin).first();
-	const tpe = ideas.getByTestId(OUTLINE_TESTID.ideaRow).filter({ hasText: "Taoyuan" });
-	await expect(tpe).toBeVisible();
+	const handsDay = await page.evaluate((nid) => {
+		const g = (window as unknown as Win).__yonder?.graph;
+		const it = g?.items.find((i) => i.nodeId === nid && i.dayId);
+		return g?.days.find((d) => d.id === it?.dayId)?.date;
+	}, N.hands as string);
+	await page.goto(`/t/${c.slug}?tab=plan&days=${handsDay}`);
+	await expectLive(page);
+	const ideas = page.getByTestId(PLAN_TESTID.ideas);
+	const idea = ideas.getByTestId(OUTLINE_TESTID.ideaRow).first();
+	const ideaId = (await idea.getAttribute("data-node-id")) as string;
 	const target = page.getByTestId(TESTID.timelineItem).filter({ hasText: "Hands Shibuya" }).first();
-	await drag(page, tpe, target, { dx: 380 });
+	await drag(page, idea, target);
 	const itemsOn = (nodeId: string) =>
 		page.evaluate(
 			(nid) => (window as unknown as Win).__yonder?.graph.items.filter((i) => i.nodeId === nid && i.dayId).length ?? 0,
 			nodeId,
 		);
-	await expect.poll(() => itemsOn(N.tpe as string)).toBe(1);
+	await expect.poll(() => itemsOn(ideaId)).toBe(1);
+	// + adds the next one to the day in view.
+	const next = ideas.getByTestId(OUTLINE_TESTID.ideaRow).first();
+	const nextId = (await next.getAttribute("data-node-id")) as string;
+	await next.getByTestId(OUTLINE_TESTID.ideaAdd).click();
+	await expect.poll(() => itemsOn(nextId)).toBe(1);
 
 	// A: select a day, focus an idea, press A.
 	const days = await page.evaluate(() => (window as unknown as Win).__yonder?.graph.days ?? []);
 	const day2 = days[1] as { id: string };
 	await page.goto(`/t/${c.slug}?sel=d.${day2.id}`);
 	await expectLive(page);
-	const ist = page.getByTestId(TESTID.ideasBin).first().getByTestId(OUTLINE_TESTID.ideaRow).filter({ hasText: "Istanbul" });
+	const ist = page.getByTestId(PLAN_TESTID.ideas).getByTestId(OUTLINE_TESTID.ideaRow).filter({ hasText: "Istanbul" });
 	await ist.focus();
 	await page.keyboard.press("a");
 	await expect.poll(() => itemsOn(N.ist as string)).toBe(1);
@@ -197,6 +217,7 @@ test("an idea dropped on a Plan day is scheduled; A does it from the keyboard", 
 	// A on a tree row works the same way.
 	await page.goto(`/t/${c.slug}/japan/tokyo?sel=d.${day2.id}`);
 	await expectLive(page);
+	await openOrganize(page);
 	await row(page, "Itoya Ginza").focus();
 	await page.keyboard.press("a");
 	await expect.poll(() => itemsOn(N.itoya as string)).toBe(2);
@@ -209,6 +230,7 @@ test("menu: rename, drop, delete with the affected list, and Undo", async ({ pag
 	const N = c.ids.nodes;
 	await page.goto(`/t/${c.slug}/japan/tokyo`);
 	await expectLive(page);
+	await openOrganize(page);
 
 	// Rename (F2 shows on the menu item; the inline input saves on Enter).
 	await row(page, "Harajuku").click({ button: "right" });
@@ -251,6 +273,7 @@ test("Add inside… from ⋯ or right-click: what you type lands in the new fiel
 	const c = await cloneFixtureTrip(page.request);
 	await page.goto(`/t/${c.slug}/japan`);
 	await expectLive(page);
+	await openOrganize(page);
 	const input = outline(page).getByTestId(OUTLINE_TESTID.inlineInput);
 
 	// ⋯ → Add inside…: the caret stays in "Inside Kyoto…" once the menu has
@@ -284,6 +307,7 @@ test("the level filter shows cities only, with the places they hide (HIER-07)", 
 	const c = await cloneFixtureTrip(page.request);
 	await page.goto(`/t/${c.slug}/japan/tokyo`);
 	await expectLive(page);
+	await openOrganize(page);
 	await outline(page).getByTestId(OUTLINE_TESTID.headerMenu).click();
 	await page.getByRole("menuitemradio", { name: "Cities" }).click();
 	await expect(row(page, "Shibuya")).toHaveCount(0);
@@ -298,24 +322,23 @@ test("released over empty sidebar space, a dragged row goes nowhere (no stray pl
 	const N = c.ids.nodes;
 	await page.goto(`/t/${c.slug}/japan/tokyo`);
 	await expectLive(page);
+	await openOrganize(page);
 	const count = () =>
 		page.evaluate(
 			(nid) => (window as unknown as Win).__yonder?.graph.items.filter((i) => i.nodeId === nid).length ?? -1,
 			N.itoya as string,
 		);
 	const before = await count();
-	// The empty space under the last row (above the Ideas bin).
-	const last = await row(page, "Newark").boundingBox();
-	const ideas = await page.getByTestId(TESTID.ideasBin).first().boundingBox();
-	if (!last || !ideas) throw new Error("no box");
+	// Empty space: outside the Organize places dialog, over its overlay.
+	const box = await page.getByTestId("organize-places").boundingBox();
+	if (!box) throw new Error("no box");
 	const src = await row(page, "Itoya Ginza").boundingBox();
 	if (!src) throw new Error("no box");
 	const sx = src.x + 60;
 	await page.mouse.move(sx, src.y + src.height / 2);
 	await page.mouse.down();
 	await page.mouse.move(sx + 2, src.y + src.height / 2 + 6, { steps: 3 });
-	const ty = (last.y + last.height + ideas.y) / 2;
-	await page.mouse.move(sx, ty, { steps: 12 });
+	await page.mouse.move(Math.max(8, box.x - 40), box.y + box.height / 2, { steps: 12 });
 	await page.waitForTimeout(150);
 	await page.mouse.up();
 	await page.waitForTimeout(500);
@@ -329,6 +352,7 @@ test("the tree's expand state follows the account to another device (ADDENDUM §
 	const c = await cloneFixtureTrip(page.request);
 	await page.goto(`/t/${c.slug}?tab=plan`);
 	await expectLive(page);
+	await openOrganize(page);
 	const kyoto = row(page, "Kyoto");
 	await expect(kyoto).toHaveAttribute("aria-expanded", "false");
 	await kyoto.focus();
@@ -352,6 +376,7 @@ test("the tree's expand state follows the account to another device (ADDENDUM §
 	const p2 = await other.newPage();
 	await p2.goto(`/t/${c.slug}?tab=plan`);
 	await expectLive(p2);
+	await openOrganize(p2);
 	await expect(row(p2, "Kyoto")).toHaveAttribute("aria-expanded", "true");
 	await expect(row(p2, "Kiyomizu-dera")).toBeVisible();
 	await other.close();

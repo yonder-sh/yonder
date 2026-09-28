@@ -122,3 +122,13 @@ export async function goWhere(page: import("@playwright/test").Page, name: strin
 		.first()
 		.click();
 }
+
+/** Organize places (One Yonder: the Outline's tree, from the Where picker): the open dialog. */
+export async function openOrganize(page: import("@playwright/test").Page): Promise<Locator> {
+	const dialog = page.getByTestId("organize-places");
+	if (await dialog.isVisible()) return dialog;
+	await page.getByTestId("where-button").click();
+	await page.getByTestId("where-organize").click();
+	await dialog.waitFor();
+	return dialog;
+}

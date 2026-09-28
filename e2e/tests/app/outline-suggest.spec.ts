@@ -13,10 +13,11 @@
  */
 import { expect, type Locator, type Page, test } from "@playwright/test";
 import { OUTLINE_TESTID } from "../../../src/features/outline/testids";
+import { PLAN_TESTID } from "../../../src/features/plan/testids";
 import { TESTID } from "../../../src/lib/testids";
 import { shotPath, storageStateOf } from "./_helpers/env";
 import { cloneFixtureTrip } from "./_helpers/fixture";
-import { collectConsole, expectLive } from "./_helpers/page";
+import { collectConsole, expectLive, openOrganize } from "./_helpers/page";
 
 test.use({ storageState: storageStateOf("dev") });
 
@@ -59,6 +60,7 @@ test("E7: proposed places and moves show as ghosts with an origin row, live for 
 	// Dennis (owner = reviewer) in Kyoto: Maya's Nishiki Market is a dashed row.
 	await page.goto(`/t/${c.slug}/japan/kyoto`);
 	await expectLive(page);
+	await openOrganize(page);
 	const nishiki = row(page, "Nishiki Market");
 	await expect(nishiki).toBeVisible();
 	await expect(nishiki.locator("xpath=..")).toHaveAttribute("data-proposed", "create");
@@ -66,7 +68,7 @@ test("E7: proposed places and moves show as ghosts with an origin row, live for 
 	await expect(nishiki).toHaveAttribute("aria-description", /Suggested by Maya/);
 	await expect(nishiki.locator("xpath=..")).not.toHaveAttribute("aria-description");
 	// … and it sorts into Kyoto's Ideas like any other place, marked as suggested.
-	const idea = page.getByTestId(TESTID.ideasBin).first().getByTestId(OUTLINE_TESTID.ideaRow).filter({ hasText: "Nishiki Market" });
+	const idea = page.getByTestId(PLAN_TESTID.ideas).getByTestId(OUTLINE_TESTID.ideaRow).filter({ hasText: "Nishiki Market" });
 	await expect(idea).toHaveAttribute("aria-label", /suggested/);
 	await expect(idea).toHaveAttribute("aria-description", /Suggested by Maya/);
 	await expect(idea.locator("xpath=..")).toHaveAttribute("data-proposed", "create");
@@ -79,6 +81,7 @@ test("E7: proposed places and moves show as ghosts with an origin row, live for 
 	// Dennis now looks at Tokyo while Maya works.
 	await page.goto(`/t/${c.slug}/japan/tokyo`);
 	await expectLive(page);
+	await openOrganize(page);
 	await expect(row(page, "Itoya Ginza")).toBeVisible();
 
 	// Maya (suggester) drags Itoya Ginza into Kyoto: a suggestion, not a move.
@@ -86,6 +89,7 @@ test("E7: proposed places and moves show as ghosts with an origin row, live for 
 	const mp = await maya.newPage();
 	await mp.goto(`/t/${c.slug}/japan/tokyo`);
 	await expectLive(mp);
+	await openOrganize(mp);
 	await drag(mp, row(mp, "Itoya Ginza"), row(mp, "Kyoto"));
 	await expect(mp.locator("[data-sonner-toast]", { hasText: /Suggested/ }).first()).toBeVisible();
 	expect(await serverParentOf(mp, N.itoya as string)).toBe(N.tokyo);

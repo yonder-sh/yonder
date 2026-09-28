@@ -42,7 +42,7 @@ test("a leg's new mode shows in the tab that changed it", async ({ page }, info)
 	expect(logs.messages).toEqual([]);
 });
 
-test("tablet widths don't scroll sideways and keep the breadcrumb readable", async ({ page }, info) => {
+test("tablet widths don't scroll sideways and keep Where readable", async ({ page }, info) => {
 	test.skip(info.project.name !== "chromium", "viewport sizes set here");
 	const c = await cloneFixtureTrip(page.request);
 	for (const width of [768, 820, 1024]) {
@@ -50,10 +50,11 @@ test("tablet widths don't scroll sideways and keep the breadcrumb readable", asy
 		await page.goto(`/t/${c.slug}/japan/tokyo`);
 		await expectLive(page);
 		await expectNoHorizontalOverflow(page);
-		const crumb = page.getByTestId(TESTID.scopeBreadcrumb);
-		await expect(crumb).toContainText("Tokyo");
-		const box = await crumb.boundingBox();
-		expect(box?.width ?? 0, `breadcrumb width at ${width}`).toBeGreaterThan(40);
+		// One Yonder: the Where button replaced the breadcrumb.
+		const where = page.getByTestId("where-button");
+		await expect(where).toContainText("Tokyo");
+		const box = await where.boundingBox();
+		expect(box?.width ?? 0, `Where width at ${width}`).toBeGreaterThan(40);
 		await page.screenshot({ path: shotPath(`foundation/resize-${width}.png`), animations: "disabled" });
 	}
 });

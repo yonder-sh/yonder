@@ -738,7 +738,11 @@ test("J6 photo, video, TikTok and guide link roll up at Tokyo, Japan and on the 
 	const skyId = c.ids.nodes.shibuyaSky as string;
 	const tiles = (kind?: string) =>
 		page.locator(`[data-testid=${TESTID.galleryItem}]${kind ? `[data-kind=${kind}]` : ""}`);
-	const mediaCount = async () => tabCount(page, "media");
+	// The full gallery's tiles (One Yonder: Media is out of the tab bar).
+	const mediaCount = async () => {
+		await page.getByTestId(TESTID.mediaTab).waitFor();
+		return page.getByTestId(TESTID.mediaTab).getByTestId(TESTID.galleryItem).count();
+	};
 
 	// Baselines.
 	await page.goto(`/t/${c.slug}/japan?tab=media`);

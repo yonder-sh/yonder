@@ -20,6 +20,7 @@ import { expect, type Page, test } from "@playwright/test";
 import { MAP_TESTID } from "../../../src/features/map/testids";
 import { TESTID } from "../../../src/lib/testids";
 import { loginViaApi } from "./_helpers/auth";
+import { openOrganize } from "./_helpers/page";
 
 const QA_TRIP = "asia-2027";
 const REAL_TRIP = process.env.E2E_REAL_TRIP ?? "asia-2027-real";
@@ -171,8 +172,8 @@ test("FB-10: the real trip (days in Japan, three idea countries) opens on a whol
 test("PLAN-R3-04: selecting cities with the inspector open on the globe never throws, even while the map resizes", async ({
 	page,
 }, info) => {
-	// It picks cities in the Outline, which a phone doesn't have.
-	test.skip(info.project.name === "mobile", "the desktop Outline");
+	// It picks cities in Organize places (the Outline's tree), a desktop run.
+	test.skip(info.project.name === "mobile", "the desktop run");
 	const errors: string[] = [];
 	page.on("pageerror", (e) => errors.push(e.message));
 	page.on("console", (m) => {
@@ -191,7 +192,7 @@ test("PLAN-R3-04: selecting cities with the inspector open on the globe never th
 			return orig.apply(this, a);
 		};
 	});
-	const outline = page.getByTestId(TESTID.outline).first();
+	const outline = (await openOrganize(page)).getByTestId(TESTID.outline).first();
 	const widths = [1440, 1180, 1440, 1320];
 	for (const [i, name] of ["Seoul", "Busan", "Hanoi", "Kyoto"].entries()) {
 		const row = outline.getByTestId(TESTID.outlineRow).filter({ hasText: new RegExp(`^\\s*${name}\\b`) }).first();
@@ -202,6 +203,8 @@ test("PLAN-R3-04: selecting cities with the inspector open on the globe never th
 		await page.waitForTimeout(250);
 	}
 	await page.setViewportSize({ width: 1440, height: 900 });
+	// Close the tree; the selection (and its details) stays.
+	await page.keyboard.press("Escape");
 	await mapReady(page, "country");
 	await expect(page.getByTestId(TESTID.inspector).first()).toBeVisible();
 	await expect(page.getByTestId("workspace")).toBeVisible();

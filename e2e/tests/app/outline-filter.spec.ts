@@ -8,10 +8,11 @@
  */
 import { expect, type Page, test } from "@playwright/test";
 import { OUTLINE_TESTID } from "../../../src/features/outline/testids";
+import { PLAN_TESTID } from "../../../src/features/plan/testids";
 import { TESTID } from "../../../src/lib/testids";
 import { shotPath, storageStateOf } from "./_helpers/env";
 import { cloneFixtureTrip } from "./_helpers/fixture";
-import { collectConsole, expectLive, expectNoHorizontalOverflow } from "./_helpers/page";
+import { collectConsole, expectLive, expectNoHorizontalOverflow, openOrganize } from "./_helpers/page";
 import { openLink } from "./_helpers/link";
 
 test.use({ storageState: storageStateOf("dev") });
@@ -51,6 +52,7 @@ test("the filter narrows the tree and Ideas, lives in the URL, and survives a re
 	// This tab skips its own live events; the ratings arrive with a reload.
 	await page.reload();
 	await expectLive(page);
+	await openOrganize(page);
 
 	// Category: Shopping.
 	await outline(page).getByTestId(OUTLINE_TESTID.filterButton).click();
@@ -80,7 +82,7 @@ test("the filter narrows the tree and Ideas, lives in the URL, and survives a re
 	await page.keyboard.press("Escape");
 	await expect(panel).toBeHidden();
 	await expect.poll(() => rowNames(page)).toEqual(["Taiwan", "Taipei", "Taoyuan (TPE)"]);
-	const ideas = page.getByTestId(TESTID.ideasBin).first();
+	const ideas = page.getByTestId(PLAN_TESTID.ideas);
 	await expect(ideas.getByTestId(OUTLINE_TESTID.ideaRow)).toHaveCount(1);
 	await expect(ideas.getByTestId(OUTLINE_TESTID.ideasCount)).toHaveText("1 of 3");
 	await expect(ideas.getByTestId(OUTLINE_TESTID.ideaRow)).toContainText("Must");
@@ -89,11 +91,13 @@ test("the filter narrows the tree and Ideas, lives in the URL, and survives a re
 	// A deep link: reload keeps it.
 	await page.reload();
 	await expectLive(page);
+	await openOrganize(page);
 	await expect.poll(() => rowNames(page)).toEqual(["Taiwan", "Taipei", "Taoyuan (TPE)"]);
 
 	// Unrated by me: Hands and TPE are rated by me, so they drop out.
 	await page.goto(`/t/${c.slug}/japan/tokyo?f=u%3Ame`);
 	await expectLive(page);
+	await openOrganize(page);
 	const tokyoNames = await rowNames(page);
 	expect(tokyoNames).not.toContain("Hands Shibuya");
 	expect(tokyoNames).toContain("Shibuya Loft");
@@ -112,6 +116,7 @@ test("a guest with the view link browses, and every edit affordance is disabled"
 	await openLink(guest, c.slug, "viewer");
 	await expect(guest.getByTestId(TESTID.workspace)).toBeVisible({ timeout: 20_000 });
 	await expectLive(guest);
+	await openOrganize(guest);
 	await expect(outline(guest).getByRole("button", { name: "Add a place" })).toBeDisabled();
 	const tokyo = outline(guest).locator('[role=treeitem][aria-label^="Tokyo,"]');
 	await tokyo.click({ button: "right" });
@@ -129,40 +134,44 @@ test("a guest with the view link browses, and every edit affordance is disabled"
 	await guestCtx.close();
 });
 
-test("layouts: xl sidebar, lg popover, and the phone drawer with 44px rows", async ({ page }, info) => {
+test("layouts: Organize places on the desktop, a tablet and the phone (44px rows); the Plan's ideas", async ({
+	page,
+}, info) => {
 	const c = await cloneFixtureTrip(page.request);
 	if (info.project.name === "chromium") {
 		await page.goto(`/t/${c.slug}/japan/tokyo`);
 		await expectLive(page);
+		await openOrganize(page);
 		await expect(outline(page)).toBeVisible();
-		await page.screenshot({ path: shotPath("outline/outline-1440.png"), animations: "disabled" });
+		await page.screenshot({ path: shotPath("outline/organize-1440.png"), animations: "disabled" });
+		await page.keyboard.press("Escape");
 		// The trip root: unrated ideas get a quiet "–", never a dashed pill.
 		await page.goto(`/t/${c.slug}?tab=plan`);
 		await expectLive(page);
-		const ideas = page.getByTestId(TESTID.ideasBin).first();
+		const ideas = page.getByTestId(PLAN_TESTID.ideas);
 		await expect(ideas.getByTestId(OUTLINE_TESTID.ideaRow).first()).toBeVisible();
 		await expect(ideas.locator(".border-dashed")).toHaveCount(0);
 		await page.screenshot({ path: shotPath("outline/ideas-1440.png"), animations: "disabled" });
 		await page.setViewportSize({ width: 1100, height: 800 });
-		await page.getByTestId(TESTID.outlinePopoverButton).click();
-		await expect(page.getByTestId(TESTID.outlinePopover)).toBeVisible();
-		await expect(page.getByTestId(TESTID.outlinePopover).getByTestId(TESTID.ideasBin)).toBeVisible();
-		await page.screenshot({ path: shotPath("outline/popover-1100.png"), animations: "disabled" });
+		await openOrganize(page);
+		await expect(outline(page)).toBeVisible();
+		await page.screenshot({ path: shotPath("outline/organize-1100.png"), animations: "disabled" });
 		await expectNoHorizontalOverflow(page);
 		return;
 	}
 	await page.setViewportSize({ width: 390, height: 844 });
-	await page.goto(`/t/${c.slug}/japan/tokyo`);
+	await page.goto(`/t/${c.slug}/japan/tokyo?tab=plan`);
 	await expectLive(page);
-	await page.getByTestId(TESTID.mobilePills).locator("button").nth(1).click();
+	await openOrganize(page);
 	const tree = outline(page);
 	await expect(tree).toBeVisible();
 	const box = await tree.locator('[role=treeitem][aria-label^="Tokyo,"]').boundingBox();
 	expect(box?.height).toBeGreaterThanOrEqual(44);
-	await expect(page.getByTestId(TESTID.ideasBin)).toHaveCount(1);
 	await expectNoHorizontalOverflow(page);
-	await page.screenshot({ path: shotPath("outline/outline-390.png"), animations: "disabled" });
-	// Ideas sit under the tree in the drawer.
-	await page.getByTestId(TESTID.ideasBin).scrollIntoViewIfNeeded();
+	await page.screenshot({ path: shotPath("outline/organize-390.png"), animations: "disabled" });
+	await page.keyboard.press("Escape");
+	// The ideas are the Plan's, under its days.
+	await expect(page.getByTestId(PLAN_TESTID.ideas)).toHaveCount(1);
+	await page.getByTestId(PLAN_TESTID.ideas).scrollIntoViewIfNeeded();
 	await page.screenshot({ path: shotPath("outline/ideas-390.png"), animations: "disabled" });
 });

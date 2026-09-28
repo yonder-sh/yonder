@@ -13,11 +13,12 @@ import { randomUUID } from "node:crypto";
 import { expect, type Page, test } from "@playwright/test";
 import { OUTLINE_TESTID } from "../../../src/features/outline/testids";
 import { PLACES_TAB_TESTID as PT } from "../../../src/features/places/tab/testids";
+import { PLAN_TESTID } from "../../../src/features/plan/testids";
 import { TESTID } from "../../../src/lib/testids";
 import { loginViaApi } from "./_helpers/auth";
 import { shotPath } from "./_helpers/env";
 import { cloneFixtureTrip } from "./_helpers/fixture";
-import { collectConsole, expectLive } from "./_helpers/page";
+import { collectConsole, expectLive, goWhere, openOrganize } from "./_helpers/page";
 import { openLink } from "./_helpers/link";
 
 test.describe.configure({ mode: "default" });
@@ -70,6 +71,7 @@ test("PLAN-R3-01: 'Add inside…' on a row near the fold opens the input and kee
 	const c = await cloneFixtureTrip(page.request);
 	await page.goto(`/t/${c.slug}?tab=plan`);
 	await expectLive(page);
+	await openOrganize(page);
 
 	// The lowest visible row that has children: its new last child is off-screen.
 	const box = await (await scroller(page)).evaluate((el) => {
@@ -146,6 +148,7 @@ test("PLAN-R3-01: the keyboard path (Enter on the item) keeps the input too", as
 	const c = await cloneFixtureTrip(page.request);
 	await page.goto(`/t/${c.slug}?tab=plan`);
 	await expectLive(page);
+	await openOrganize(page);
 	const rows = outline(page).locator("[role=treeitem][data-testid=outline-row][aria-expanded]");
 	const last = rows.last();
 	await last.scrollIntoViewIfNeeded();
@@ -177,7 +180,7 @@ test("FB-05: the Ideas header's 'Open in Places' keeps the current filter and sc
 	// A filter on (Food & drink), whole trip.
 	await page.goto(`/t/${c.slug}?f=g%3Afood_drink`);
 	await expectLive(page);
-	const ideas = page.getByTestId(TESTID.ideasBin).first();
+	const ideas = page.getByTestId(PLAN_TESTID.ideas);
 	const link = ideas.getByTestId(OUTLINE_TESTID.rateIdeas);
 	await expect(link).toBeVisible();
 	await expect(link).toHaveText(/Open in Places/);
@@ -225,9 +228,9 @@ test("FB-05: inside a scope 'Open in Places' opens that scope's ideas", async ({
 	let top = g.find((n) => n.name === "Nishiki Market");
 	while (top?.parentId) top = g.find((n) => n.id === top?.parentId);
 	if (!top) throw new Error("no country for Nishiki Market");
-	await outline(page).locator(`[role=treeitem][data-node-id="${top.id}"]`).dblclick();
+	await goWhere(page, top.name);
 	await expect(page).toHaveURL(new RegExp(`/t/${c.slug}/${top.slug}`));
-	const link = page.getByTestId(TESTID.ideasBin).first().getByTestId(OUTLINE_TESTID.rateIdeas);
+	const link = page.getByTestId(PLAN_TESTID.ideas).getByTestId(OUTLINE_TESTID.rateIdeas);
 	await expect(link).toBeVisible();
 	const href = new URL((await link.getAttribute("href")) ?? "", page.url());
 	expect(href.pathname).toBe(`/t/${c.slug}/${top.slug}`);
@@ -251,13 +254,13 @@ test("FB-05: a view-link guest gets no 'Open in Places' link", async ({ browser 
 	await expectLive(owner);
 	await addIdeas(owner, c.tripId, c.ids.nodes.kyoto as string);
 	// The owner gets the link; the guest below doesn't.
-	await expect(owner.getByTestId(TESTID.ideasBin).first().getByTestId(OUTLINE_TESTID.rateIdeas)).toBeVisible();
+	await expect(owner.getByTestId(PLAN_TESTID.ideas).getByTestId(OUTLINE_TESTID.rateIdeas)).toBeVisible();
 	await ownerCtx.close();
 	const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
 	const page = await ctx.newPage();
 	await openLink(page, c.slug, "viewer");
 	await expect(page.getByTestId("workspace")).toBeVisible({ timeout: 30_000 });
-	const ideas = page.getByTestId(TESTID.ideasBin).first();
+	const ideas = page.getByTestId(PLAN_TESTID.ideas);
 	await expect(ideas).toBeVisible();
 	// There are ideas (a member would get the link), but a guest can't rate.
 	await expect(ideas.getByTestId(OUTLINE_TESTID.ideaRow).first()).toBeVisible();
