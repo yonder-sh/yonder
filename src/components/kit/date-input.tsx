@@ -3,9 +3,11 @@
  * locale-shaped 10/11/2027, and opens a calendar. Values are `YYYY-MM-DD`
  * calendar dates; the picker's Date objects are built from local parts, so
  * no zone can shift a day. Picking the chosen day again keeps it.
+ * `trigger` swaps the field for your own (a date as text on a line);
+ * `clearLabel` offers clearing it ("No date").
  */
 import { CalendarDays } from "lucide-react";
-import { useState } from "react";
+import { type ReactElement, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -37,6 +39,8 @@ export function DateInput({
 	disabled,
 	testId,
 	className,
+	trigger,
+	clearLabel,
 }: {
 	/** `YYYY-MM-DD`; empty or null for none. */
 	value: string | null;
@@ -52,29 +56,35 @@ export function DateInput({
 	disabled?: boolean;
 	testId?: string;
 	className?: string;
+	/** Opens the calendar instead of the field (the field's props don't apply). */
+	trigger?: ReactElement;
+	/** Under the calendar, clears the date ("No date"), when there is one. */
+	clearLabel?: string;
 }) {
 	const [open, setOpen] = useState(false);
 	return (
 		<Popover open={open} onOpenChange={setOpen}>
 			<PopoverTrigger asChild>
-				<Button
-					id={id}
-					type="button"
-					variant="outline"
-					disabled={disabled}
-					aria-label={label}
-					data-testid={testId}
-					data-value={value || undefined}
-					className={cn(
-						"justify-start gap-2 px-3 font-normal tnum",
-						full && "w-full",
-						!value && "text-muted-foreground",
-						className,
-					)}
-				>
-					<CalendarDays className="size-4 opacity-60" aria-hidden />
-					{value ? formatDayDate(value, { year: true }) : placeholder}
-				</Button>
+				{trigger ?? (
+					<Button
+						id={id}
+						type="button"
+						variant="outline"
+						disabled={disabled}
+						aria-label={label}
+						data-testid={testId}
+						data-value={value || undefined}
+						className={cn(
+							"justify-start gap-2 px-3 font-normal tnum",
+							full && "w-full",
+							!value && "text-muted-foreground",
+							className,
+						)}
+					>
+						<CalendarDays className="size-4 opacity-60" aria-hidden />
+						{value ? formatDayDate(value, { year: true }) : placeholder}
+					</Button>
+				)}
 			</PopoverTrigger>
 			<PopoverContent
 				className="w-auto p-0"
@@ -90,6 +100,22 @@ export function DateInput({
 						setOpen(false);
 					}}
 				/>
+				{clearLabel && value ? (
+					<div className="border-t p-1">
+						<Button
+							type="button"
+							variant="ghost"
+							size="sm"
+							className="w-full"
+							onClick={() => {
+								onChange("");
+								setOpen(false);
+							}}
+						>
+							{clearLabel}
+						</Button>
+					</div>
+				) : null}
 			</PopoverContent>
 		</Popover>
 	);
