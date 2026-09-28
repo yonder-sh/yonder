@@ -183,6 +183,31 @@ describe("computeToday: no Done yet, the plan by the clock (the imported day)", 
 			}
 	});
 
+	it("a stop's time is up: “Still at Cha no Ikedaya?” for 45 min while the day follows the plan; a stop with no place isn't asked about", () => {
+		const { v } = view(s, at("10:05"));
+		expect(v.checkIn).toMatchObject({
+			itemId: s.I.cha,
+			name: "Cha no Ikedaya",
+		});
+		expect(v.current).toBeNull();
+		expect(v.next?.name).toBe("Nakano Broadway");
+		const { v: v2 } = view(s, at("10:45"));
+		expect(v2.checkIn?.name).toBe("Cha no Ikedaya");
+		expect(v2.current?.name).toBe("Nakano Broadway");
+		expect([v.pace, v2.pace]).toEqual([null, null]);
+		expect(view(s, at("10:50")).v.checkIn).toBeNull();
+		// Breakfast has no place: nothing to ask.
+		expect(view(s, at("09:35")).v.checkIn).toBeNull();
+	});
+
+	it("its Done tells you left late: Done at 10:20 re-times from then, 20 min behind", () => {
+		const { v } = view(importedDay({ cha: done("10:20") }), at("10:20"));
+		expect(v.checkIn).toBeNull();
+		expect(v.next?.name).toBe("Nakano Broadway");
+		expect(t(v.next?.start as number)).toBe("10:35");
+		expect(v.pace).toEqual({ kind: "behind", minutes: 20 });
+	});
+
 	it("P15's day at 11:00 with no Done: Nakano Broadway by the clock, not Cha no Ikedaya still going", () => {
 		const { v } = view(tokyoDay(), at("11:00"));
 		expect(names(v.passed)).toEqual(["Cha no Ikedaya"]);
@@ -232,7 +257,7 @@ describe("computeToday: after a Done, your pace within reason (the imported day)
 	});
 
 	it("past that, the Done was likely forgotten: “Still at Nakano Broadway?”, and the day follows the plan by the clock again", () => {
-		for (const time of ["14:15", "15:00"]) {
+		for (const time of ["14:15", "14:55"]) {
 			const { v } = view(s, at(time));
 			expect(v.checkIn).toMatchObject({
 				itemId: s.I.broadway,
@@ -257,24 +282,62 @@ describe("computeToday: after a Done, your pace within reason (the imported day)
 		}
 	});
 
-	it("Done on the check-in re-times from then; the bar keeps its 20:00, with the late arrival plain", () => {
+	it("the question stays as long as the stop could have run over, then the day moves on without asking", () => {
+		const { v } = view(s, at("15:00"));
+		expect(v.checkIn).toBeNull();
+		expect(names(v.passed)).toEqual(["Breakfast", "Nakano Broadway", "Lunch"]);
+		expect(v.current?.name).toBe("Yodobashi Camera");
+		expect(v.pace).toBeNull();
+		expect(v.risks).toEqual([]);
+	});
+
+	it("Done on the check-in re-times from then: 2 h 05 behind, and Dinner makes way, so the bar is tight, not late", () => {
 		const { v } = view(
-			importedDay({ cha: done("10:40"), broadway: done("15:00") }),
-			at("15:00"),
+			importedDay({ cha: done("10:40"), broadway: done("14:50") }),
+			at("14:50"),
 		);
 		expect(v.checkIn).toBeNull();
 		expect(v.next).toMatchObject({ name: "Lunch", floating: true });
 		expect(timeline(v)).toEqual([
-			"16:20 Yodobashi Camera",
-			"18:25 Bic Camera",
-			"19:55 Dinner",
+			"16:10 Yodobashi Camera",
+			"18:15 Bic Camera",
+			"19:45 Dinner",
 			"20:00 Bar Benfiddich",
-			"21:40 Golden Gai",
+			"21:05 Golden Gai",
 		]);
-		const bar = v.rest.find((r) => r.name === "Bar Benfiddich");
-		expect(t(bar?.arrive as number)).toBe("21:35");
-		expect(v.pace).toEqual({ kind: "behind", minutes: 135 });
-		expect(v.risks[0]).toMatchObject({ name: "Bar Benfiddich", late: true });
+		// Dinner ends when you leave for the bar: 5 min of it.
+		expect(t(v.rest[2]?.end as number)).toBe("19:50");
+		expect(v.pace).toEqual({ kind: "behind", minutes: 125 });
+		expect(v.risks[0]).toMatchObject({
+			name: "Bar Benfiddich",
+			spareMin: 0,
+			late: false,
+		});
+	});
+
+	it("a fixed stop you'd reach late keeps its time and says when you'd arrive; the rest reads in time order", () => {
+		// Yodobashi Camera Done at 18:30: Bic Camera 18:35–20:05, no time left for Dinner.
+		const { v } = view(
+			importedDay({
+				cha: done("10:00"),
+				broadway: done("12:45"),
+				yodobashi: done("18:30"),
+			}),
+			at("18:40"),
+		);
+		expect(v.current?.name).toBe("Bic Camera");
+		expect(v.next).toMatchObject({ name: "Dinner", floating: true });
+		expect(timeline(v)).toEqual([
+			"18:35 Bic Camera",
+			"20:00 Bar Benfiddich",
+			"21:05 Golden Gai",
+		]);
+		expect(t(v.rest[0]?.arrive as number)).toBe("20:15");
+		expect(v.risks[0]).toMatchObject({
+			name: "Bar Benfiddich",
+			spareMin: -15,
+			late: true,
+		});
 	});
 
 	it("a stop with no place never holds the day: Lunch passes when you'd leave for Yodobashi Camera", () => {
@@ -288,6 +351,144 @@ describe("computeToday: after a Done, your pace within reason (the imported day)
 		expect(t(v2.next?.start as number)).toBe("13:50");
 		expect(v2.pace).toEqual({ kind: "ahead", minutes: 15 });
 	});
+
+	it("at the day's last stop, the pace is how late you got there", () => {
+		const { v } = view(
+			importedDay({
+				cha: done("10:20"),
+				broadway: done("13:05"),
+				yodobashi: done("16:25"),
+				bic: done("18:00"),
+				dinner: done("19:30"),
+				bar: done("21:20"),
+			}),
+			at("21:40"),
+		);
+		expect(v.current?.name).toBe("Golden Gai");
+		expect(t(v.current?.start as number)).toBe("21:25");
+		expect(v.next).toBeNull();
+		expect(v.pace).toEqual({ kind: "behind", minutes: 20 });
+	});
+});
+
+describe("computeToday: the imported day lived five ways, every 5 min from 08:30 to 01:00", () => {
+	/** When each stop is tapped Done; the most "behind" those taps can show. */
+	const HABITS: [string, Record<string, string>, number | null][] = [
+		["nobody taps", {}, null],
+		[
+			"Done as each stop ends",
+			{
+				cha: "10:00",
+				broadway: "12:45",
+				yodobashi: "16:05",
+				bic: "17:40",
+				dinner: "19:10",
+				bar: "21:00",
+				gai: "22:35",
+			},
+			0,
+		],
+		[
+			"Done 20 min late",
+			{
+				cha: "10:20",
+				broadway: "13:05",
+				yodobashi: "16:25",
+				bic: "18:00",
+				dinner: "19:30",
+				bar: "21:20",
+				gai: "22:55",
+			},
+			20,
+		],
+		[
+			"Done twice, then forgotten",
+			{ cha: "10:00", broadway: "12:45" },
+			OVERRUN_MAX_MIN,
+		],
+		[
+			"Done early",
+			{
+				breakfast: "09:10",
+				cha: "09:20",
+				broadway: "11:45",
+				lunch: "12:25",
+				yodobashi: "14:25",
+				bic: "15:40",
+				dinner: "16:50",
+				bar: "20:40",
+				gai: "21:55",
+			},
+			0,
+		],
+	];
+
+	it.each(HABITS)(
+		"%s: each tap on a Done the screen shows, never more behind than the taps say, no risk without it, a question that goes, times in order, Next never back between taps",
+		(_, taps, maxBehind) => {
+			const days = new Map<string, Scenario>();
+			/** The day with the taps made by `until` (and at it, with `at`). */
+			const lived = (until: number, at_ = true) => {
+				const made = Object.entries(taps).filter(([, time]) =>
+					at_ ? at(time) <= until : at(time) < until,
+				);
+				const key = made.map(([k]) => k).join();
+				if (!days.has(key))
+					days.set(
+						key,
+						importedDay(
+							Object.fromEntries(made.map(([k, time]) => [k, done(time)])),
+						),
+					);
+				return { key, day: days.get(key) as Scenario };
+			};
+			const order = importedDay().graph.items.map((it) => it.id);
+			let lastNext = -1;
+			let lastKey = "";
+			for (
+				let now = at("08:30");
+				now <= at("01:00", "2027-10-06");
+				now += 5 * 60_000
+			) {
+				const when = t(now);
+				// Each tap now is on a Done the screen shows: Now, the question, or a floating Next.
+				const { v: before } = view(lived(now, false).day, now);
+				const offered = [
+					before.checkIn,
+					before.current,
+					before.current ? null : before.next?.floating ? before.next : null,
+				].map((x) => x?.itemId);
+				for (const [k, time] of Object.entries(taps))
+					if (at(time) === now)
+						expect(offered, `${k} at ${when}`).toContain(importedDay().I[k]);
+				const { key, day } = lived(now);
+				const { v } = view(day, now);
+				const behind = v.pace?.kind === "behind" ? v.pace.minutes : 0;
+				if (maxBehind === null) expect(v.pace, when).toBeNull();
+				expect(behind, when).toBeLessThanOrEqual(maxBehind ?? 0);
+				if (!behind) expect(v.risks, when).toEqual([]);
+				if (v.checkIn)
+					expect(now - v.checkIn.end, when).toBeLessThanOrEqual(
+						2 * OVERRUN_MAX_MIN * 60_000,
+					);
+				// A time earlier than the row above only for a late arrival, which says so.
+				const rows = [v.next, ...v.rest].filter(
+					(r): r is TodayStop => r !== null && !r.floating,
+				);
+				for (const [i, r] of rows.entries())
+					if (i > 0 && r.start < (rows[i - 1]?.start ?? 0))
+						expect(r.arrive, when).toBeGreaterThan(r.start);
+				// A tap may put Next back (you're later than the clock said); nothing else does.
+				const next = order.indexOf(v.next?.itemId ?? "");
+				if (key !== lastKey) lastNext = -1;
+				lastKey = key;
+				if (next >= 0) {
+					expect(next, when).toBeGreaterThanOrEqual(lastNext);
+					lastNext = next;
+				}
+			}
+		},
+	);
 });
 
 describe("computeToday: running late (board P15)", () => {
@@ -514,7 +715,7 @@ describe("computeToday: following your pace after a Done", () => {
 		expect(t(v.next?.start as number)).toBe("10:50");
 	});
 
-	it("reaching a booking late: a late risk; the only fix left is to shorten dinner, Next in its time", () => {
+	it("dinner before a booking makes way when you leave for it: the booking is tight, not late; the only fix left is to shorten dinner", () => {
 		const s = tokyoDay({
 			cha: done("09:50"),
 			broadway: done("14:00"),
@@ -524,22 +725,24 @@ describe("computeToday: following your pace after a Done", () => {
 		const { v } = view(s, at("19:30"));
 		expect(v.current).toBeNull();
 		expect(v.next?.name).toBe("Dinner");
+		expect(t(v.next?.end as number)).toBe("19:50");
+		expect(v.pace).toEqual({ kind: "behind", minutes: 40 });
 		const r = v.risks[0];
 		expect(r).toMatchObject({
 			name: "Bar Benfiddich",
-			spareMin: -40,
+			spareMin: 0,
 			plannedSpareMin: 40,
-			late: true,
+			late: false,
 		});
-		expect(t(r?.arrive as number)).toBe("20:40");
-		// Dinner (19:00–20:30) can end now at the earliest: 60 min back.
+		expect(t(r?.arrive as number)).toBe("20:00");
+		// Dinner (19:00–19:50) can end now at the earliest: 20 min back.
 		expect(r?.fixes).toEqual([
 			{
 				kind: "shorten",
 				itemId: s.I.dinner,
 				name: "Dinner",
 				toMin: 30,
-				recoverMin: 60,
+				recoverMin: 20,
 			},
 		]);
 	});
@@ -567,8 +770,9 @@ describe("computeToday: following your pace after a Done", () => {
 			yodobashi: done("16:00"),
 			bic: done("19:00"),
 		});
-		// Dinner (19:00–20:30) would make you late until then (see above).
+		// As before it (see above): nothing jumps when the moment goes.
 		const { v } = view(s, at("19:55"));
+		expect(v.pace).toEqual({ kind: "behind", minutes: 40 });
 		expect(names(v.passed)).toEqual(["Dinner"]);
 		expect(t(v.passed[0]?.end as number)).toBe("19:50");
 		expect(v.current).toBeNull();

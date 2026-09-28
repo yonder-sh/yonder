@@ -7,8 +7,9 @@
  * driver's Address, what's at risk with a fix when you run late, the free
  * time and ideas nearby, the rest of the day in time order, and where you
  * sleep tonight. A stop with no place and no start time is Next "whenever
- * you like", with its own Done when nothing is Now. A stop well past its
- * time without a Done asks "Still at …?". Tapping a stop opens its details.
+ * you like", with its own Done when nothing is Now. A stop the day moved on
+ * from without a Done asks "Still at …?" for a while, so a late Done can
+ * still be told. Tapping a stop opens its details.
  * Raters, viewers and link guests see it without buttons.
  *
  * - The first stop of the day, the end of it and a day without stops are
@@ -271,8 +272,10 @@ function Day({
 	const { ix } = useWorkspace();
 	const [notHere, setNotHere] = useState<string | null>(null);
 	const [notStill, setNotStill] = useState<string | null>(null);
+	const ask =
+		act.mayMarkDone && view.checkIn?.itemId !== notStill ? view.checkIn : null;
 	// Before the day's first Done: say once, quietly, what Done does.
-	const hint = act.mayMarkDone && !view.done.length && !view.checkIn;
+	const hint = act.mayMarkDone && !view.done.length && !ask;
 	const recent = [...view.done]
 		.filter((d) => d.doneAt !== null && view.now - d.doneAt < RECENT_DONE_MS)
 		.sort((a, b) => (a.doneAt ?? 0) - (b.doneAt ?? 0))
@@ -303,12 +306,8 @@ function Day({
 				/>
 			) : null}
 			{recent ? <DoneRow stop={recent} act={act} /> : null}
-			{view.checkIn && act.mayMarkDone && view.checkIn.itemId !== notStill ? (
-				<CheckIn
-					stop={view.checkIn}
-					act={act}
-					onNo={() => setNotStill(view.checkIn?.itemId ?? null)}
-				/>
+			{ask ? (
+				<CheckIn stop={ask} act={act} onNo={() => setNotStill(ask.itemId)} />
 			) : null}
 			{state === "ended" ? <Ended view={view} /> : null}
 			{view.current ? <NowRow stop={view.current} act={act} /> : null}
@@ -447,7 +446,7 @@ function DoneRow({ stop, act }: { stop: TodayStop; act: TodayActions }) {
 	);
 }
 
-/** "Still at Yodobashi Camera?": Done marks it now; No leaves the day on the plan. */
+/** "Still at Yodobashi Camera?": Done marks it now (you left late); No leaves the day on the plan. */
 function CheckIn({
 	stop,
 	act,

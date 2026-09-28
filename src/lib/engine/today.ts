@@ -14,16 +14,20 @@
  *   flight, a train). Stops before the last Done that aren't Done are passed.
  * - A stop not marked Done runs over until now, but only for
  *   `OVERRUN_MAX_MIN` past its re-timed end. Past that, the tap was likely
- *   forgotten: "Still at Yodobashi Camera?" (`checkIn`), and the rest follows
- *   the plan by the clock again.
+ *   forgotten, and the rest follows the plan by the clock again.
+ * - "Still at Yodobashi Camera?" (`checkIn`): a stop the day moved on from
+ *   without its Done (by the plan, at its end; on your pace, past the
+ *   overrun) keeps its Done for `OVERRUN_MAX_MIN` more, so leaving late can
+ *   still be told. Never a floating one: it never held the day.
  * - A custom stop with no place and no start time ("Dinner") floats: it
  *   keeps its time in the flow but never holds the day. It's never Now; it's
  *   Next "whenever you like" until the stop after it is due (a fixed one's
- *   leave-by, else when you'd set off for it), then it's passed, having
- *   taken no time past that. The day's last one waits for its Done.
+ *   leave-by, else when you'd set off for it), then it's passed. It takes no
+ *   time past that, in the flow ahead too, so nothing after it waits on it.
+ *   The day's last one waits for its Done.
  * - Pace: the next stop's re-timed arrival against the plan's (the next one
- *   with a place or a time: a floating stop has none to keep); none while
- *   following the plan.
+ *   with a place or a time: a floating stop has none to keep; at the day's
+ *   last, the one you're at); none while following the plan.
  * - Risks: a fixed stop or departure the flow reaches late, or with little
  *   room left (within `PACE_MIN` of the plan's own is on time), with up to
  *   two fixes: shorten the longest flexible stop before it, skip the nearest
@@ -239,7 +243,7 @@ export interface TodayView {
 	now: number;
 	/** Marked Done, in plan order. */
 	done: TodayStop[];
-	/** Not Done, and out of the flow: a later stop is Done, its time is over by the plan, a floating stop whose moment went, or `checkIn`. In plan order. */
+	/** Not Done, and out of the flow: a later stop is Done, its time is over by the plan, a floating stop whose moment went, or one run `OVERRUN_MAX_MIN` over. In plan order. */
 	passed: TodayStop[];
 	/** Now: the first stop not Done that has started and you've reached ("Now · since 14:40": its `start`, or `arrive` when later); never a floating one. */
 	current: TodayStop | null;
@@ -251,9 +255,9 @@ export interface TodayView {
 	starting: boolean;
 	/** Nothing left today: see `tomorrow`. */
 	ended: boolean;
-	/** Null while following the plan by the clock (no Done yet, or since `checkIn`): nothing to measure. */
+	/** Null while following the plan by the clock (no Done yet, or since a stop ran `OVERRUN_MAX_MIN` over): nothing to measure. */
 	pace: TodayPace | null;
-	/** "Still at Yodobashi Camera?": the stop after the last Done ran more than `OVERRUN_MAX_MIN` past its re-timed end, so its Done was likely forgotten. */
+	/** "Still at Yodobashi Camera?": the stop the day last moved on from without its Done (never a floating one): its time over by the plan, or run `OVERRUN_MAX_MIN` over your pace; for `OVERRUN_MAX_MIN` after. */
 	checkIn: TodayStop | null;
 	risks: TodayRisk[];
 	/** The next fixed stop or departure after Now, and when to leave for it; null when a stop with a place comes first. */
@@ -627,23 +631,27 @@ export function computeToday(
 			: start + (plannedEnd - plannedStart);
 		if (x.floating) {
 			const due = dueAfter(k, end, paced);
+			// It takes no time past it, even before it comes.
+			if (due !== null) end = Math.max(start, Math.min(end, due));
 			if (due !== null && due <= now) {
-				// Its moment went: passed, having taken no time past it.
-				end = Math.max(start, Math.min(end, due));
+				// Its moment went: passed.
 				passed.push(stopAt(start, end, arrive));
 				cursor = end;
 				continue;
 			}
 		} else if (!paced && end <= now) {
-			// Over, by the plan.
-			passed.push(stopAt(start, end, arrive));
+			// Over, by the plan; for a while its Done still says you left late.
+			const stop = stopAt(start, end, arrive);
+			passed.push(stop);
+			if (now - end <= OVERRUN_MAX_MIN * MS_PER_MINUTE) checkIn = stop;
 			cursor = end;
 			continue;
 		} else if (paced && Math.max(start, arrive) <= now && end < now) {
 			if (now - end > OVERRUN_MAX_MIN * MS_PER_MINUTE) {
-				// Its Done was likely forgotten: ask, and follow the plan from here.
-				checkIn = stopAt(start, end, arrive);
-				passed.push(checkIn);
+				// Its Done was likely forgotten: follow the plan from here, and ask for a while.
+				const stop = stopAt(start, end, arrive);
+				passed.push(stop);
+				if (now - end <= 2 * OVERRUN_MAX_MIN * MS_PER_MINUTE) checkIn = stop;
 				paced = false;
 				cursor = end;
 				continue;
@@ -676,7 +684,9 @@ export function computeToday(
 	const nextRow = rows[currentAt + 1];
 
 	// ---- pace (none while following the plan) -----------------------------------
-	const measured = rows.slice(currentAt + 1).find((r) => !r.stop.floating);
+	// The next stop with a place or a time; at the day's last, the one you're at.
+	const measured =
+		rows.slice(currentAt + 1).find((r) => !r.stop.floating) ?? current;
 	const drift = measured
 		? round(measured.flowArrive - measured.plannedArrive)
 		: 0;
