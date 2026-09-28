@@ -223,8 +223,10 @@ export class ScrollFollower {
 			if (scroller.closest("[inert]")) continue;
 			const box = visibleBox(scroller);
 			if (isEmpty(box)) continue;
+			// What sits over its edges (the Plan's ideas dock) is its scroll padding.
+			const pad = scrollPaddingOf(scroller);
 			const dy = followScroll({
-				view: { top: box.top, bottom: box.bottom },
+				view: { top: box.top + pad.top, bottom: box.bottom - pad.bottom },
 				pointer: plan.pointer,
 				range: plan.range,
 				tap: plan.tap,
@@ -248,4 +250,14 @@ export class ScrollFollower {
 				this.kick();
 			}, wait + 20);
 	}
+}
+
+/** A scroller's scroll padding (px; "auto" is 0). */
+function scrollPaddingOf(el: Element): { top: number; bottom: number } {
+	const cs = getComputedStyle(el);
+	const px = (v: string) => {
+		const n = Number.parseFloat(v);
+		return Number.isFinite(n) ? n : 0;
+	};
+	return { top: px(cs.scrollPaddingTop), bottom: px(cs.scrollPaddingBottom) };
 }
