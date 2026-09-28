@@ -132,7 +132,7 @@ test.beforeEach(({}, info) => {
 });
 
 test("A's cursor lands on the same card and the same map spot on B's differently sized screen", async ({ browser }) => {
-	const url = `/t/${trip.slug}?tab=plan`;
+	const url = `/t/${trip.slug}?tab=plan&lens=place`;
 	const a = await open(browser, "dev", url, A_SIZE);
 	const b = await open(browser, "maya", url, B_SIZE);
 	const sky = trip.ids.items.sky as string;
@@ -278,7 +278,7 @@ test("a day drawn in two bands: A's cursor on its second drawing lands on B's se
 });
 
 test("Follow keeps the followed person's card in view; the follower shows on A's avatar", async ({ browser }) => {
-	const url = `/t/${trip.slug}?tab=plan`;
+	const url = `/t/${trip.slug}?tab=plan&lens=place`;
 	const a = await open(browser, "dev", url, A_SIZE);
 	const b = await open(browser, "maya", url, { width: 1120, height: 640 });
 	// B follows A from the presence hover card.
@@ -318,7 +318,7 @@ test("Follow keeps the followed person's card in view; the follower shows on A's
 });
 
 test("Spotlight: everyone follows the presenter, B breaks away, A ends it", async ({ browser }) => {
-	const url = `/t/${trip.slug}?tab=plan`;
+	const url = `/t/${trip.slug}?tab=plan&lens=place`;
 	const a = await open(browser, "dev", url, A_SIZE);
 	const b = await open(browser, "maya", url, B_SIZE);
 	await expect(a.page.getByTestId(TESTID.presenceAvatar)).toHaveCount(1);
@@ -366,7 +366,7 @@ test("Spotlight: everyone follows the presenter, B breaks away, A ends it", asyn
 });
 
 test("cursor chat and emoji reactions reach the other screen", async ({ browser }) => {
-	const url = `/t/${trip.slug}?tab=plan`;
+	const url = `/t/${trip.slug}?tab=plan&lens=place`;
 	const a = await open(browser, "dev", url, A_SIZE);
 	const b = await open(browser, "maya", url, B_SIZE);
 	const meiji = trip.ids.items.meiji as string;

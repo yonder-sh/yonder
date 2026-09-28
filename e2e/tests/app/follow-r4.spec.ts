@@ -141,7 +141,7 @@ test.beforeEach(({}, info) => {
 test("FB-21a/b/d: folds, the inspector tab and view switches follow", async ({ browser }) => {
 	const url = `/t/${trip.slug}/japan/tokyo?lens=area`;
 	const a = await open(browser, "dev", url);
-	const b = await open(browser, "maya", `/t/${trip.slug}?tab=plan`, { viewport: B_SIZE });
+	const b = await open(browser, "maya", `/t/${trip.slug}?tab=plan&lens=place`, { viewport: B_SIZE });
 	await follow(b.page);
 	await expect(b.page).toHaveURL(/japan\/tokyo\?lens=area/, { timeout: 10_000 });
 
@@ -196,7 +196,7 @@ test("FB-21a/b/d: folds, the inspector tab and view switches follow", async ({ b
 		.toBe("person");
 	await b.page.screenshot({ path: shotPath("follow-r4/b-lists-view-follow.png") });
 	// …and the map's layer panel.
-	await a.page.goto(`/t/${trip.slug}?tab=plan`);
+	await a.page.goto(`/t/${trip.slug}?tab=plan&lens=place`);
 	await expectLive(a.page);
 	await a.page.getByTestId(MAP_TESTID.layersButton).click();
 	await expect(a.page.getByTestId(MAP_TESTID.layerMenu)).toBeVisible();
@@ -663,7 +663,7 @@ test("follow the view on a phone: the Overview card the leader points at comes i
 
 test("follow the view on a phone: a list scrolled with no pointer, map or panel, satellite", async ({ browser }) => {
 	test.setTimeout(150_000);
-	const { a, p } = await leadWithPhone(browser, `/t/${trip.slug}?tab=plan`);
+	const { a, p } = await leadWithPhone(browser, `/t/${trip.slug}?tab=plan&lens=place`);
 	await expect(p.page).toHaveURL(/tab=plan/, { timeout: 10_000 });
 	const mapA = a.page.getByTestId(MAP_TESTID.canvas);
 	const paneA = a.page.locator('[data-cursor-anchor="pane:plan"]');
@@ -765,7 +765,7 @@ test("follow the view on a phone: the day split's panel and an opened city follo
 	browser,
 }) => {
 	test.setTimeout(120_000);
-	const { a, p } = await leadWithPhone(browser, `/t/${trip.slug}?tab=plan`);
+	const { a, p } = await leadWithPhone(browser, `/t/${trip.slug}?tab=plan&lens=place`);
 	await expect(p.page).toHaveURL(/tab=plan/, { timeout: 10_000 });
 
 	// How long in each city: Change opens the panel; a city opened to its places.

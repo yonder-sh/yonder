@@ -196,7 +196,8 @@ test("J1 sign up, new trip, Where to first? → Japan › Tokyo › Shibuya Sky,
 	for (let n = sky; n; n = y?.graph.nodes.find((x) => x.id === n?.parentId)) path.unshift(n.name);
 	expect(path[0]).toBe("Japan");
 	expect(path).toContain("Tokyo");
-	await expect(page.getByTestId(TESTID.timelineItem).filter({ hasText: /Shibuya Sky/i })).toBeVisible();
+	// The trip's Plan lists its days (One Yonder D02): Day 1's row names it.
+	await expect(page.getByTestId(PLAN_TESTID.dayRow).filter({ hasText: /Shibuya Sky/i }).first()).toBeVisible();
 	await shot(page, "j1-04-scheduled");
 
 	// Back on the dashboard, the trip is listed.
@@ -302,16 +303,13 @@ test("J2 Asia 2027: zoom Japan → Tokyo → Shibuya, lens keys and Esc, Days 5�
 	await page.locator("body").press("Escape");
 	await expect(page).toHaveURL(/\/t\/asia-2027\/japan(\?|$)/);
 
-	// Days 5–6: click Day 5's header, shift-click Day 6's.
+	// Days 5–6: Day 5's row opens it (One Yonder D02), shift-click › adds Day 6.
 	const days = (await yon(page))?.graph.days ?? [];
 	const d5 = days[4]?.date as string;
 	const d6 = days[5]?.date as string;
-	const header = (n: number) =>
-		page.getByTestId(PLAN_TESTID.dayHeader).filter({ hasText: new RegExp(`Day ${n}\\b`) }).first();
-	await header(5).scrollIntoViewIfNeeded();
-	// "Show only …" filters; the date itself selects the day (FB-08).
-	await header(5).hover();
-	await header(5).getByTestId(PLAN_TESTID.dayFilter).click();
+	const row5 = page.getByRole("button", { name: /, Day 5: open the day/ }).first();
+	await row5.scrollIntoViewIfNeeded();
+	await row5.click();
 	await expect(page).toHaveURL(new RegExp(`days=${d5}(&|$)`));
 	// Shift-click the stepper's › adds Day 6.
 	await page.getByTestId(PLAN_TESTID.rangeBar).getByRole("button", { name: "Next day" }).click({ modifiers: ["Shift"] });

@@ -116,7 +116,7 @@ test.beforeEach(async ({ page }, info) => {
 test("FB-19: JFK then Haneda on the next day → a Flight leg, prefilled, no times", async ({ page }, info) => {
 	const logs = collectConsole(page);
 	const t = await ownersTestTrip(page);
-	await page.goto(`/t/${t.slug}?tab=plan`);
+	await page.goto(`/t/${t.slug}?tab=plan&lens=place`);
 	await expectLive(page);
 
 	// The real leg row: a flight nobody chose, both airports and dates, no times.
@@ -222,7 +222,7 @@ test("FB-18 + FB-19a: times added later make it timed; JFK 00:00 for 2 h then 02
 	await expect(summary).toContainText("JST");
 
 	// FB-19a: no "Misses NH 744 by 2h" anywhere, no conflict chip.
-	await page.goto(`/t/${t.slug}?tab=plan`);
+	await page.goto(`/t/${t.slug}?tab=plan&lens=place`);
 	await expectLive(page);
 	const stub = page.getByTestId(PLAN_TESTID.flightStub).first();
 	await expect(stub).toContainText("02:00");

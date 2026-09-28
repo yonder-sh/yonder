@@ -92,7 +92,7 @@ test("where are they: a strip, breadcrumb dots, and a tap goes there", async ({ 
 });
 
 test("'Show others' cursors' off hides them; the notes editor hides my mouse cursor", async ({ browser }) => {
-	const url = `/t/${trip.slug}?tab=plan`;
+	const url = `/t/${trip.slug}?tab=plan&lens=place`;
 	const a = await open(browser, "dev", url);
 	const b = await open(browser, "maya", url, { viewport: { width: 1280, height: 800 } });
 	const sky = trip.ids.items.sky as string;
@@ -142,7 +142,7 @@ test("'Show others' cursors' off hides them; the notes editor hides my mouse cur
 });
 
 test("a phone never hovers: taps ripple on the desktop, a long press reacts on a card", async ({ browser }) => {
-	const url = `/t/${trip.slug}?tab=plan`;
+	const url = `/t/${trip.slug}?tab=plan&lens=place`;
 	const a = await open(browser, "dev", url);
 	const phone = await open(browser, "maya", url, { ...devices["Pixel 7"] });
 	const meiji = trip.ids.items.meiji as string;
