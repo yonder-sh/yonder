@@ -35,11 +35,22 @@ import {
 } from "@/lib/schemas/targets";
 import type { ListItemDto } from "./lists.functions";
 
+/** A booking window opening within this long is "Opening soon" (30 days). */
+const BOOKING_SOON_MS = 30 * 86_400_000;
+
 /** Views per list (EXTENSIONS §7 "View"; ADDENDUM §10 "By day" for shopping). */
-export type ListsView = "due" | "place" | "person" | "recent" | "day";
+export type ListsView =
+	| "due"
+	| "bookings"
+	| "place"
+	| "person"
+	| "recent"
+	| "day";
 
 export const VIEW_LABEL: Record<ListsView, string> = {
 	due: "Due",
+	// One Yonder (D12): the booking windows (to-dos that open).
+	bookings: "Bookings",
 	place: "Place",
 	person: "Person",
 	recent: "Recent",
@@ -49,7 +60,7 @@ export const VIEW_LABEL: Record<ListsView, string> = {
 export function viewsFor(kind: ListKind): ListsView[] {
 	return kind === "shopping"
 		? ["place", "day", "due", "person", "recent"]
-		: ["due", "place", "person", "recent"];
+		: ["due", "bookings", "place", "person", "recent"];
 }
 
 /** At the trip root Todo defaults to Due (the MAIN list); elsewhere Place. */
@@ -613,6 +624,26 @@ export function groupRows(
 				tone: b.key === "overdue" ? "overdue" : "normal",
 				rows: b.rows.flatMap((row) => byId.get(row.id) ?? []),
 			}));
+		case "bookings": {
+			// Windows that open: soon (30 days), later, and no date yet.
+			const soon: RowInView[] = [];
+			const later: RowInView[] = [];
+			const undated: RowInView[] = [];
+			const at = (r: RowInView) => dueOf(r.row, ctx.dueCtx)?.at ?? null;
+			for (const r of inView) {
+				if (r.row.dueKind !== "opens") continue;
+				const t = at(r);
+				if (t === null) undated.push(r);
+				else if (t - ctx.now <= BOOKING_SOON_MS) soon.push(r);
+				else later.push(r);
+			}
+			const byAt = (a: RowInView, b: RowInView) => (at(a) ?? 0) - (at(b) ?? 0);
+			return [
+				{ key: "book:soon", title: "Opening soon", rows: soon.sort(byAt) },
+				{ key: "book:later", title: "Later", rows: later.sort(byAt) },
+				{ key: "book:none", title: "No date yet", rows: undated },
+			].filter((g) => g.rows.length);
+		}
 		case "person": {
 			const groups = new Map<string, RowInView[]>();
 			for (const r of sortInView(inView, "person", ctx)) {

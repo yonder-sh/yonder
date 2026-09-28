@@ -307,6 +307,26 @@ describe("views", () => {
 		expect(viewsFor("todo")).not.toContain("day");
 	});
 
+	it("Bookings (D12): only windows that open, soon (30 days) before later", () => {
+		const opens = (id: string, dueDate: string | null) =>
+			row({ id, dueKind: "opens", dueDate, dueTime: "09:00", dueTz: "UTC" });
+		const r = [
+			opens("later", "2026-12-03"),
+			row({ id: "plain", dueDate: "2026-09-30" }),
+			opens("soon", "2026-10-12"),
+			opens("undated", null),
+		];
+		const inView = rowsInView(ix, r, { scopeId: null, lens: "country" });
+		const g = groupRows("bookings", inView, ctx);
+		expect(g.map((x) => [x.title, x.rows.map((y) => y.row.id)])).toEqual([
+			["Opening soon", ["soon"]],
+			["Later", ["later"]],
+			["No date yet", ["undated"]],
+		]);
+		expect(viewsFor("todo")).toContain("bookings");
+		expect(viewsFor("shopping")).not.toContain("bookings");
+	});
+
 	it("Person puts a shared row under each assignee, me first, Unassigned last", () => {
 		const r = [
 			row({ id: "both", assigneeIds: ["m1", "m2"] }),

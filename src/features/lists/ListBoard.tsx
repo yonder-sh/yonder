@@ -487,6 +487,13 @@ export function ListBoard(props: BoardProps) {
 					}
 				/>
 			) : null}
+			{!empty &&
+			view === "bookings" &&
+			!inView.some((r) => r.row.dueKind === "opens") ? (
+				<p className="px-4 pt-2 pb-1 font-display text-body text-muted-foreground">
+					No booking windows yet. Give a to-do an "Opens" date from its ⋯.
+				</p>
+			) : null}
 			{!empty && view === "due" && !anyDated ? (
 				<p className="px-4 pt-2 pb-1 font-display text-body text-muted-foreground">
 					Nothing dated. Add a date from any to-do's ⋯.
