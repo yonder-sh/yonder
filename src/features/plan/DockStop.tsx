@@ -66,7 +66,18 @@ export function DockStop({
 			data-item-id={itemId}
 			data-cursor-anchor={`item:${itemId}`}
 			data-family={cardTone(node)}
+			tabIndex={0}
 			onClick={() => nav.select({ kind: "item", id: itemId })}
+			// Like an idea card: Enter opens it, A adds it to the day.
+			onKeyDown={(e) => {
+				if (e.key === "Enter" || e.key === " ") {
+					e.preventDefault();
+					nav.select({ kind: "item", id: itemId });
+				} else if ((e.key === "a" || e.key === "A") && !guard.disabled) {
+					e.preventDefault();
+					add();
+				}
+			}}
 			className={cn(
 				"plan-card group/idea flex h-14 w-56 shrink-0 cursor-pointer touch-manipulation items-center gap-2 rounded-lg border border-dashed bg-card px-2 text-sm outline-none select-none hover:border-foreground/20 focus-visible:ring-2 focus-visible:ring-ring",
 				selected && "outline-2 outline-primary outline-solid",
