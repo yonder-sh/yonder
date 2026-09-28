@@ -1158,10 +1158,8 @@ function EndCard({
 	const friends = friendsStats(data, me).sort((a, b) => b.matches - a.matches);
 	const best = friends.find((f) => f.agree.length);
 	const where = scope?.name ?? graph.trip.name;
-	// Someone's keen, someone isn't: the Review step's "Talk about it".
-	const split = data.rows.filter(
-		(r) => r.split && r.status !== "dropped",
-	).length;
+	// Someone's keen, someone isn't: the Review step's "Talk about it" (decided ones don't wait).
+	const split = data.counts.talk;
 	return (
 		<Slate testid={PLACES_TAB_TESTID.feedEnd} cardKey={cardKey}>
 			<span className="grid size-16 place-items-center rounded-full border-[3px] border-emerald-400 text-emerald-400">

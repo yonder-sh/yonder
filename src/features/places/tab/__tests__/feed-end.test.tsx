@@ -47,6 +47,20 @@ describe("the end of the Rate feed", () => {
 		expect(ws().search).toMatchObject({ pv: "table", talk: 1 });
 	});
 
+	it("a split place marked decided isn't one to talk through", async () => {
+		renderWithWorkspace(<PlacesTab phone />, {
+			graph: {
+				...graph,
+				nodes: graph.nodes.map((n) =>
+					n.id === N.tokyo ? { ...n, decidedAt: "2030-01-01T00:00:00Z" } : n,
+				),
+			},
+			search: { tab: "places", pv: "rate" },
+		});
+		await screen.findByTestId(T.feedReview, {}, { timeout: 5000 });
+		expect(screen.queryByTestId(T.feedTalk)).toBeNull();
+	});
+
 	it("the review button opens Review unfiltered", async () => {
 		const { ws } = renderWithWorkspace(<PlacesTab phone />, {
 			graph,
