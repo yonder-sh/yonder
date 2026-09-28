@@ -65,12 +65,9 @@ export function visibleTabs(me: {
 
 export function CenterTabBar({
 	className,
-	touch = false,
 	inTopBar = false,
 }: {
 	className?: string;
-	/** Phone sheet (MOB-07): a 44px bar and tabs at least 44px wide. */
-	touch?: boolean;
 	/** In the one-row top bar (One Yonder, ≥ 1440 px): its height, no rule. */
 	inTopBar?: boolean;
 }) {
@@ -102,7 +99,7 @@ export function CenterTabBar({
 			? null
 			: "plan";
 	// A narrow bar scrolls sideways: keep the selected tab in view (a `?tab=money`
-	// link on a phone, past the Overview and Plan).
+	// link, past the Overview and Plan).
 	const bar = useRef<HTMLDivElement>(null);
 	useEffect(() => {
 		const b = bar.current;
@@ -122,10 +119,6 @@ export function CenterTabBar({
 			data-testid={TESTID.centerTabs}
 			className={cn(
 				"relative flex h-[var(--tabbar-h)] shrink-0 items-end gap-4 overflow-x-auto border-b px-4 [scrollbar-width:none]",
-				// 44px tabs inside the 1px bottom border. Sideways only: a vertical
-				// drag moves the sheet (like the day chips), never wobbles the bar.
-				touch &&
-					"h-[45px] touch-pan-x gap-2 overflow-y-hidden overscroll-x-contain",
 				inTopBar && "h-full shrink-0 gap-5 overflow-visible border-b-0 px-1",
 				className,
 			)}
@@ -146,7 +139,6 @@ export function CenterTabBar({
 						onClick={() => ws.nav.setTab(t)}
 						className={cn(
 							"-mb-px flex h-full shrink-0 items-center gap-1.5 border-b-2 text-sm font-medium transition-colors",
-							touch && "min-w-11 justify-center px-1",
 							selected
 								? "border-foreground text-foreground"
 								: "border-transparent text-muted-foreground hover:text-foreground",
@@ -163,7 +155,7 @@ export function CenterTabBar({
 								data-testid={SHELL_TESTID.placesToDecide}
 							>
 								{toDecide}
-								<span className={touch || inTopBar ? "sr-only" : undefined}>
+								<span className={inTopBar ? "sr-only" : undefined}>
 									{" "}
 									to decide
 								</span>
