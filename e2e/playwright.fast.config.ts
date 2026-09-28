@@ -10,11 +10,14 @@
  *     whose auto fixture resets the worker's env to the template before each
  *     spec file;
  *   - the template holds the users' sessions, so the storageStates in
- *     `.data/e2e-fast/{auth,qa-auth}` are shared and global setup only checks.
+ *     `.data/e2e-fast/{auth,qa-auth}` are shared and global setup only checks;
+ *   - nothing leaves the machine: fast-test.ts guards every browser context
+ *     (`_helpers/egress.ts`) and Chromium resolves no host but localhost.
  */
 import { FAST } from "./tests/app/_helpers/fast-env";
 import { defineConfig } from "@playwright/test";
 import base from "./playwright.app.config";
+import { NO_DNS_ARGS } from "./tests/app/_helpers/egress";
 
 export default defineConfig({
 	...base,
@@ -32,7 +35,11 @@ export default defineConfig({
 		["json", { outputFile: FAST.report }],
 		["html", { open: "never", outputFolder: "playwright-report/fast" }],
 	],
-	use: { ...base.use, baseURL: process.env.APP_URL },
+	use: {
+		...base.use,
+		baseURL: process.env.APP_URL,
+		launchOptions: { ...base.use?.launchOptions, args: [...(base.use?.launchOptions?.args ?? []), ...NO_DNS_ARGS] },
+	},
 	// The runner (scripts/e2e-fast.ts) starts and stops the envs.
 	webServer: undefined,
 });

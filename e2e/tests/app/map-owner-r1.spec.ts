@@ -20,6 +20,7 @@ import { expect, type Page, test } from "@playwright/test";
 import { MAP_TESTID } from "../../../src/features/map/testids";
 import { TESTID } from "../../../src/lib/testids";
 import { loginViaApi } from "./_helpers/auth";
+import { ESRI_TILES } from "./_helpers/egress";
 import { openOrganize, openPhoneMap } from "./_helpers/page";
 
 const QA_TRIP = "asia-2027";
@@ -271,7 +272,7 @@ test("FB-04: the map follows the app theme; its Satellite button shows imagery a
 		if (/Content Security Policy|Refused to connect/i.test(m.text())) blocked.push(m.text());
 	});
 	page.on("response", (r) => {
-		if (r.url().startsWith("https://server.arcgisonline.com/")) tiles.push(r.status());
+		if (ESRI_TILES.test(r.url())) tiles.push(r.status());
 	});
 	await open(page, `/t/${QA_TRIP}/japan/tokyo`);
 	// Start from the map (the account may have Satellite on from an earlier run).
@@ -295,7 +296,7 @@ test("FB-04: the map follows the app theme; its Satellite button shows imagery a
 	s = await readStyle(page);
 	expect(s.name).toBe("Yonder satellite");
 	expect(s.sources.satellite?.type).toBe("raster");
-	expect(s.sources.satellite?.tiles[0]).toContain("server.arcgisonline.com");
+	expect(s.sources.satellite?.tiles[0]).toMatch(ESRI_TILES);
 	expect(s.dark).toBe(true);
 	await expect(page.locator(".maplibregl-ctrl-attrib")).toContainText("Esri");
 	await expect(page.locator(".maplibregl-ctrl-attrib")).toContainText("OpenStreetMap");

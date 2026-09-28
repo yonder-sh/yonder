@@ -8,6 +8,7 @@ import { and, eq, isNull } from "drizzle-orm";
 import { db } from "@/db/db.server";
 import { nodes } from "@/db/schema";
 import { fail } from "@/server/authz/session.server";
+import { outboundFetch } from "@/server/outbound-stub.server";
 import { type FilingNode, suggestFiling } from "../lib/filing";
 import { parseMapsUrl } from "../lib/maps-url";
 import {
@@ -123,7 +124,8 @@ export async function resolveUrl(
 }> {
 	let parsed = parseMapsUrl(raw);
 	if (parsed?.kind === "short") {
-		const expanded = await expandShortLink(parsed.url);
+		// e2e: the local link stub answers for Google (outbound-stub.server.ts).
+		const expanded = await expandShortLink(parsed.url, outboundFetch());
 		parsed = expanded ? parseMapsUrl(expanded) : null;
 	}
 	if (parsed?.kind !== "place") return { core: null };

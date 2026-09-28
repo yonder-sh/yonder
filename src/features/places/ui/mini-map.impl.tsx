@@ -17,6 +17,7 @@ import { Map as MapGL, type MapRef, Marker } from "@vis.gl/react-maplibre";
 import type { StyleSpecification } from "maplibre-gl";
 import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url";
 import { useEffect, useRef, useState } from "react";
+import { proxiedStyle } from "@/features/map/styles/proxy";
 import { pinStyle } from "@/lib/domain/taxonomy";
 import type { NodeType, PlaceCategory } from "@/lib/schemas/enums";
 
@@ -55,7 +56,7 @@ export function useYonderStyle(theme: Theme): StyleSpecification | null {
 		}
 		let live = true;
 		void STYLE_LOADERS[theme]().then((m) => {
-			const spec = m.default as StyleSpecification;
+			const spec = proxiedStyle(m.default as StyleSpecification);
 			loaded[theme] = spec;
 			if (live) setStyle(spec);
 		});

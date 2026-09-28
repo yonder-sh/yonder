@@ -11,6 +11,12 @@
  *                 Redis prefix yonder-e2e<i>
  *   template      app :7100, collab :7101, database trip_e2e_tmpl
  * None of them is a main target (src/lib/main-targets.ts).
+ *
+ * Offline: nothing in an env reaches a service outside this machine. Every
+ * outside service points at the services stub (e2e/stubs/services-stub.mjs,
+ * one per machine on :7099), keys that would switch on another one are blank,
+ * and every Node process runs with scripts/no-egress-preload.mjs, which
+ * refuses (and logs to the env's egress.jsonl) any other connection.
  */
 import { spawn, spawnSync } from "node:child_process";
 import {
@@ -23,6 +29,7 @@ import {
 } from "node:fs";
 import { freemem } from "node:os";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 import { parseEnv } from "node:util";
 import {
 	CreateBucketCommand,
@@ -34,6 +41,7 @@ import {
 import { Redis } from "ioredis";
 import pg from "pg";
 import { mainTargets } from "../../src/lib/main-targets";
+import { isLoopbackHost } from "./no-egress.mjs";
 
 export type Env = Record<string, string>;
 
@@ -58,41 +66,173 @@ export const PG_SERVER =
 	process.env.E2E_PG_URL ?? "postgres://trip:trip@localhost:5433";
 export const TEMPLATE_DB = "trip_e2e_tmpl";
 export const PORT_BASE = 7100;
-/** The public-services stub (Open-Meteo, Overpass, OSRM) every env asks (e2e/stubs/services-stub.mjs). */
-export const WEATHER_STUB_PORT = PORT_BASE - 1;
+/**
+ * The services stub every env asks instead of the outside world: Open-Meteo,
+ * Overpass, OSRM, FX, Photon, the link fetches and the basemap
+ * (e2e/stubs/services-stub.mjs).
+ */
+export const SERVICES_STUB_PORT = PORT_BASE - 1;
+const STUB = `http://127.0.0.1:${SERVICES_STUB_PORT}`;
+/** The stub's routes this harness expects (services-stub.mjs STUB_VERSION). */
+const STUB_VERSION = 2;
+/** The Node preload that refuses connections off this machine (NODE_OPTIONS). */
+export const NO_EGRESS_PRELOAD = path.join(
+	REPO_ROOT,
+	"scripts/no-egress-preload.mjs",
+);
+
+/** What `/__stub/calls` reports: per service, calls and misses (by what was asked). */
+export type StubStats = {
+	version?: number;
+	recordMap?: boolean;
+	total: number;
+	services?: Record<
+		string,
+		{ calls: number; misses: number; missed: Record<string, number> }
+	>;
+};
+
+export async function stubStats(): Promise<StubStats | null> {
+	try {
+		const r = await fetch(`${STUB}/__stub/calls`, {
+			signal: AbortSignal.timeout(2000),
+		});
+		return r.ok ? ((await r.json()) as StubStats) : null;
+	} catch {
+		return null;
+	}
+}
+
+function readJsonl<T>(file: string): T[] {
+	if (!existsSync(file)) return [];
+	return readFileSync(file, "utf8")
+		.split("\n")
+		.filter(Boolean)
+		.flatMap((l) => {
+			try {
+				return [JSON.parse(l) as T];
+			} catch {
+				return [];
+			}
+		});
+}
+
+const tally = (xs: string[]) => {
+	const m = new Map<string, number>();
+	for (const x of xs) m.set(x, (m.get(x) ?? 0) + 1);
+	return [...m].sort((a, b) => b[1] - a[1]);
+};
+const list = (xs: [string, number][], max = 8) =>
+	xs
+		.slice(0, max)
+		.map(([k, n]) => (n > 1 ? `${k} ×${n}` : k))
+		.join(", ") + (xs.length > max ? `, … (${xs.length - max} more)` : "");
 
 /**
- * Starts the weather stub in its own process (the template's `spawnSync`
- * steps block this one) and resolves once it answers; call the result to
- * stop it. A stub left over from an earlier run answers just as well.
+ * Prints what a run asked of the outside world: per service, the stub's calls
+ * and misses (answers it had to make up) since `before`, and the connections
+ * the no-egress preload (server, worker, scripts) and the browser guard
+ * refused, from each env dir's logs. Every miss and refusal should be 0.
+ * Returns the number of refusals.
  */
-export async function startWeatherStub(): Promise<() => void> {
+export function printOfflineReport(
+	before: StubStats | null,
+	after: StubStats | null,
+	dirs: string[],
+): number {
+	console.log(
+		"\n[e2e:fast] outside services (stub misses and refused requests; 0 expected):",
+	);
+	if (!after) console.log("  services stub: not answering");
+	for (const [name, s] of Object.entries(after?.services ?? {})) {
+		const b = before?.services?.[name];
+		const calls = s.calls - (b?.calls ?? 0);
+		const misses = s.misses - (b?.misses ?? 0);
+		if (!calls) continue;
+		const missed = Object.entries(s.missed)
+			.map(([k, n]) => [k, n - (b?.missed[k] ?? 0)] as [string, number])
+			.filter(([, n]) => n > 0)
+			.sort((x, y) => y[1] - x[1]);
+		const hint =
+			name === "map" && misses
+				? " (not in .data/e2e-fast/map-cache: blank tiles; fill it once with pnpm e2e:tiles:warm)"
+				: "";
+		console.log(
+			`  ${name}: ${calls} call(s), ${misses} miss(es)${hint}${missed.length && name !== "map" ? `: ${list(missed)}` : ""}`,
+		);
+	}
+	type Line = { host: string; port?: number; proc?: string; action?: string };
+	const server = dirs.flatMap((d) =>
+		readJsonl<Line>(path.join(d, "egress.jsonl")),
+	);
+	const browser = dirs.flatMap((d) =>
+		readJsonl<Line>(path.join(d, "browser-egress.jsonl")),
+	);
+	const refusedBrowser = browser.filter((l) => l.action !== "stubbed");
+	const stubbedBrowser = browser.filter((l) => l.action === "stubbed");
+	const at = (l: Line) => (l.port ? `${l.host}:${l.port}` : l.host);
+	console.log(
+		`  refused on the server side (vite, collab/worker, scripts): ${server.length}${server.length ? `: ${list(tally(server.map((l) => `${at(l)} (${(l.proc ?? "?").replace(/\[\d+\]$/, "")})`)))} (stacks in the envs' app.log)` : ""}`,
+	);
+	console.log(
+		`  refused in the browser: ${refusedBrowser.length}${refusedBrowser.length ? `: ${list(tally(refusedBrowser.map(at)))}` : ""}`,
+	);
+	if (stubbedBrowser.length)
+		console.log(
+			`  answered in the browser by the guard (video players, external pages): ${list(tally(stubbedBrowser.map(at)))}`,
+		);
+	return server.length + refusedBrowser.length;
+}
+
+/**
+ * Starts the services stub in its own process (the template's `spawnSync`
+ * steps block this one) and resolves once it answers; call the result to
+ * stop it. A current stub already running (another run's) is used as it is;
+ * an older one is asked to quit first. `recordMap`: basemap misses are
+ * fetched once and cached (`pnpm e2e:tiles:warm`).
+ */
+export async function startServicesStub(
+	opts: { recordMap?: boolean } = {},
+): Promise<() => void> {
+	const running = await stubStats();
+	if (
+		running?.version === STUB_VERSION &&
+		!!running.recordMap === !!opts.recordMap
+	)
+		return () => {};
+	if (running) {
+		if ((running.version ?? 1) < 2)
+			throw new Error(
+				`an older services stub answers on :${SERVICES_STUB_PORT}: stop it (pkill -f e2e/stubs/services-stub.mjs) and run again`,
+			);
+		await fetch(`${STUB}/__stub/quit`, { method: "POST" }).catch(() => {});
+		for (let i = 0; i < 50 && (await stubStats()); i++) await sleep(100);
+	}
+	mkdirSync(FAST_DIR, { recursive: true });
+	const log = openSync(path.join(FAST_DIR, "services-stub.log"), "a");
 	const child = spawn(
 		process.execPath,
 		[
 			path.join(REPO_ROOT, "e2e/stubs/services-stub.mjs"),
 			"--port",
-			String(WEATHER_STUB_PORT),
+			String(SERVICES_STUB_PORT),
+			...(opts.recordMap ? ["--record-map"] : []),
 		],
-		{ stdio: "ignore" },
+		{ stdio: ["ignore", log, log] },
 	);
+	closeSync(log);
 	const stop = () => {
 		child.kill();
 	};
 	process.once("exit", stop);
-	const url = `http://127.0.0.1:${WEATHER_STUB_PORT}/__stub/calls`;
 	for (let i = 0; i < 50; i++) {
-		if (
-			await fetch(url).then(
-				(r) => r.ok,
-				() => false,
-			)
-		)
-			return stop;
+		if ((await stubStats())?.version === STUB_VERSION) return stop;
 		await sleep(100);
 	}
 	stop();
-	throw new Error(`the services stub didn't start on :${WEATHER_STUB_PORT}`);
+	throw new Error(
+		`the services stub didn't start on :${SERVICES_STUB_PORT} (see ${path.relative(REPO_ROOT, path.join(FAST_DIR, "services-stub.log"))})`,
+	);
 }
 
 export const pgUrl = (db: string) => `${PG_SERVER.replace(/\/+$/, "")}/${db}`;
@@ -162,13 +302,7 @@ export function fastEnv(index: number, source: Env): FastEnv {
 		VITE_E2E: "1",
 		AUTH_RATE_LIMIT: "off",
 		COLLAB_RUN_WORKER: "1",
-		// Never the real services: a run would spend their quotas and depend on their answers.
-		OPEN_METEO_ARCHIVE_URL: `http://127.0.0.1:${WEATHER_STUB_PORT}`,
-		OVERPASS_URL: `http://127.0.0.1:${WEATHER_STUB_PORT}/api/interpreter`,
-		OSRM_FOOT_URL: `http://127.0.0.1:${WEATHER_STUB_PORT}`,
-		// Fixed rates: amounts at "today's rate" don't move from one day to the next.
-		FX_URL: `http://127.0.0.1:${WEATHER_STUB_PORT}/fx@latest/v1`,
-		FX_FALLBACK_URL: `http://127.0.0.1:${WEATHER_STUB_PORT}/fx@latest/v1`,
+		...offlineOverrides(dir, source),
 		// Read by the e2e helpers (otp.ts, env.ts, the QA specs).
 		E2E_APP_LOG: path.join(dir, "app.log"),
 		E2E_AUTH_DIR: AUTH_DIR,
@@ -181,7 +315,76 @@ export function fastEnv(index: number, source: Env): FastEnv {
 		throw new Error(
 			`env ${name} points at the main stack: ${onMain.join("; ")}`,
 		);
+	const remote = [
+		"DATABASE_URL",
+		"REDIS_URL",
+		"S3_ENDPOINT",
+		"S3_PUBLIC_ENDPOINT",
+	].filter((k) => {
+		try {
+			return !isLoopbackHost(new URL(env[k] ?? "").hostname);
+		} catch {
+			return !!env[k];
+		}
+	});
+	if (remote.length)
+		throw new Error(
+			`env ${name} would leave this machine: ${remote.map((k) => `${k}=${env[k]}`).join(", ")} (e2e runs on local Postgres, Redis and S3 only)`,
+		);
 	return { index, name, db, dir, appUrl, collabPort: port + 1, env, overrides };
+}
+
+/**
+ * Every outside service an env could reach, pointed at the services stub or
+ * switched off, and the no-egress preload for its Node processes. A run would
+ * otherwise spend the services' quotas (or money, or send mail) and depend on
+ * what they answer that day; a key added to `.env` for dev must never switch
+ * one on here.
+ */
+function offlineOverrides(dir: string, source: Env): Env {
+	const deny = (service: string) => `${STUB}/__deny/${service}`;
+	return {
+		OPEN_METEO_ARCHIVE_URL: STUB,
+		OPEN_METEO_API_KEY: "",
+		OVERPASS_URL: `${STUB}/api/interpreter`,
+		OSRM_FOOT_URL: STUB,
+		// Fixed rates: amounts at "today's rate" don't move from one day to the next.
+		FX_URL: `${STUB}/fx@latest/v1`,
+		FX_FALLBACK_URL: `${STUB}/fx@latest/v1`,
+		FX_CHECK_URL: "",
+		// Place search and reverse geocoding (the palette, shared links, the importer).
+		PHOTON_URL: STUB,
+		// Link previews, peekLink and Maps short links (outbound-stub.server.ts).
+		E2E_OUTBOUND_STUB: `${STUB}/__link`,
+		// The browser's basemap; `localhost` because dev CSP allows http://localhost:*.
+		VITE_MAP_PROXY_URL: `http://localhost:${SERVICES_STUB_PORT}/__map`,
+		// Keyed services stay off; their URLs lead to the stub anyway.
+		GOOGLE_MAPS_API_KEY: "",
+		GOOGLE_PLACES_URL: deny("google-places"),
+		GOOGLE_ROUTES_URL: deny("google-routes"),
+		NAVITIME_RAPIDAPI_KEY: "",
+		NAVITIME_URL: deny("navitime"),
+		ODPT_CONSUMER_KEY: "",
+		// Mail goes to the outbox only; no Turnstile, no Web Push, no telemetry.
+		RESEND_API_KEY: "",
+		SMTP_HOST: "",
+		TURNSTILE_SITE_KEY: "",
+		TURNSTILE_SECRET_KEY: "",
+		VAPID_PUBLIC_KEY: "",
+		VAPID_PRIVATE_KEY: "",
+		BETTER_AUTH_TELEMETRY: "0",
+		npm_config_update_notifier: "false",
+		// Anything else is refused and logged (the runner counts egress.jsonl).
+		NODE_OPTIONS: [
+			source.NODE_OPTIONS,
+			`--import=${pathToFileURL(NO_EGRESS_PRELOAD).href}`,
+		]
+			.filter(Boolean)
+			.join(" "),
+		E2E_EGRESS_LOG: path.join(dir, "egress.jsonl"),
+		// The browser's refusals (_helpers/fast-test.ts).
+		E2E_BROWSER_EGRESS_LOG: path.join(dir, "browser-egress.jsonl"),
+	};
 }
 
 // ---------------------------------------------------------------------------

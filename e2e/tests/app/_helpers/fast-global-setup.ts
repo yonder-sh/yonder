@@ -11,6 +11,7 @@
 import { existsSync } from "node:fs";
 import path from "node:path";
 import { type Browser, chromium, devices, request } from "@playwright/test";
+import { guardContext, NO_DNS_ARGS, setEgressTest } from "./egress";
 import { assertNotMainStack } from "./env";
 import { FAST, type FastEnvEntry } from "./fast-env";
 
@@ -46,6 +47,7 @@ async function checkEnv(e: FastEnvEntry): Promise<void> {
 
 async function visit(browser: Browser, e: FastEnvEntry, urls: string[], opts: Parameters<Browser["newContext"]>[0]) {
 	const ctx = await browser.newContext({ ...opts, baseURL: e.appUrl });
+	await guardContext(ctx);
 	const page = await ctx.newPage();
 	try {
 		for (const url of urls) {
@@ -69,7 +71,9 @@ export default async function fastGlobalSetup(): Promise<void> {
 	if (missing.length) throw new Error(`missing storageStates (rebuild: pnpm e2e:fast --rebuild): ${missing.join(", ")}`);
 
 	const t0 = Date.now();
-	const browser = await chromium.launch();
+	// Outside requests are logged (e2e:fast counts them), not failed: there is no test here.
+	setEgressTest("(global setup: warm-up)");
+	const browser = await chromium.launch({ args: NO_DNS_ARGS });
 	try {
 		await Promise.all(
 			FAST.envs.map(async (e) => {

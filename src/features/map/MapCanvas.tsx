@@ -160,6 +160,7 @@ import {
 	nextProjectedStyle,
 	type ProjectedStyleMemo,
 } from "./projected-style";
+import { proxiedStyle } from "./styles/proxy";
 import { MAP_TESTID } from "./testids";
 import {
 	isNetworkError,
@@ -266,7 +267,10 @@ function useBasemap(style: MapStyle): StyleSpecification | null {
 			if (live)
 				setStyles((s) => ({
 					...s,
-					[style]: globeBasemap(style, m.default as StyleSpecification),
+					[style]: globeBasemap(
+						style,
+						proxiedStyle(m.default as StyleSpecification),
+					),
 				}));
 		});
 		return () => {

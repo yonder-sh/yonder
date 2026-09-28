@@ -7,6 +7,7 @@ import { execFileSync } from "node:child_process";
 import { writeFileSync } from "node:fs";
 import path from "node:path";
 import { expect, test } from "@playwright/test";
+import { MAP_TILES } from "./_helpers/egress";
 import { call, DAY1, EMAIL, MOD, memberPage, T } from "./qa-security-helpers";
 
 // Probes against the isolated QA-security stack (fixed QA-seed ids, own ports): opt-in only.
@@ -48,12 +49,12 @@ test("ERR-03/06/07/08", async ({ browser }) => {
 	await page.unroute("**/_serverFn/**");
 
 	// ---- ERR-06: tiles blocked ---------------------------------------------
-	await page.route(/tiles\.openfreemap\.org/, (r) => r.abort());
+	await page.route(MAP_TILES, (r) => r.abort());
 	await page.goto("/t/asia-2027/japan/tokyo");
 	await page.waitForTimeout(6000);
 	out.err06 = (await page.locator("body").innerText()).match(/[^\n]*(tiles|Map)[^\n]*(load|unavailable)[^\n]*/gi)?.slice(0, 3) ?? [];
 	await page.screenshot({ path: path.join(DIR, "err06.png") });
-	await page.unroute(/tiles\.openfreemap\.org/);
+	await page.unroute(MAP_TILES);
 
 	// ---- ERR-08: bad input over the API ------------------------------------
 	const bad = [

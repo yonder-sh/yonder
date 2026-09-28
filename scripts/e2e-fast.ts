@@ -25,6 +25,9 @@
  *                   (default HEAD, uncommitted work included) touches
  *   --frozen        run from a worktree at HEAD (../trip-planner-e2e), so the
  *                   repo can keep changing meanwhile (scripts/lib/e2e-frozen.ts)
+ *   --record-map    fill the basemap cache (.data/e2e-fast/map-cache) with what the run
+ *                   browses, fetched once from OpenFreeMap and Esri
+ *                   (`pnpm e2e:tiles:warm`); every other run only reads it
  * E2E_FAST_SLOT=1…3 runs beside another run (its own envs, ports and files);
  * E2E_FAST_MIN_GB lowers the 20 GB it needs to start.
  * Anything else goes to `playwright test` (spec files, --project, -g, --retries…).
@@ -44,13 +47,16 @@ import {
 	freshBucket,
 	killAllSync,
 	memAvailableGb,
+	printOfflineReport,
 	REPO_ROOT,
 	type Running,
+	type StubStats,
 	sourceEnv,
 	startEnv,
-	startWeatherStub,
+	startServicesStub,
 	stopAll,
 	stopPostgres,
+	stubStats,
 	TEMPLATE_DB,
 	VITE_BASE_CACHE,
 	waitHealthy,
@@ -99,13 +105,20 @@ type Args = {
 	keep: boolean;
 	baseline?: string;
 	smoke: boolean;
+	recordMap: boolean;
 	/** A git ref, for `--affected`. */
 	affected?: string;
 	pw: string[];
 };
 
 function parseArgs(argv: string[]): Args {
-	const a: Args = { rebuild: false, keep: false, smoke: false, pw: [] };
+	const a: Args = {
+		rebuild: false,
+		keep: false,
+		smoke: false,
+		recordMap: false,
+		pw: [],
+	};
 	for (let i = 0; i < argv.length; i++) {
 		const x = argv[i] as string;
 		if (x === "--") continue;
@@ -116,6 +129,7 @@ function parseArgs(argv: string[]): Args {
 		else if (x === "--baseline") a.baseline = argv[++i];
 		else if (x.startsWith("--baseline=")) a.baseline = x.slice(11);
 		else if (x === "--smoke") a.smoke = true;
+		else if (x === "--record-map") a.recordMap = true;
 		else if (x === "--affected")
 			a.affected =
 				argv[i + 1]?.startsWith("-") || !argv[i + 1]
@@ -349,17 +363,21 @@ async function main(): Promise<number> {
 	stopLeftovers();
 	assertMemory("e2e:fast");
 	const startedPg = await ensurePostgres();
-	const stopWeather = await startWeatherStub();
+	const stopStub = await startServicesStub({ recordMap: args.recordMap });
 	try {
-		return await run(args, t0);
+		return await run(args, t0, await stubStats());
 	} finally {
-		stopWeather();
+		stopStub();
 		if (!args.keep && startedPg) stopPostgres();
 	}
 }
 
-async function run(args: Args, t0: number): Promise<number> {
-	await ensureTemplate({ force: args.rebuild });
+async function run(
+	args: Args,
+	t0: number,
+	stubBefore: StubStats | null,
+): Promise<number> {
+	const builtTemplate = await ensureTemplate({ force: args.rebuild });
 
 	const source = sourceEnv();
 	const n = pickEnvCount(args.envs);
@@ -491,6 +509,21 @@ async function run(args: Args, t0: number): Promise<number> {
 			`[e2e:fast] --keep: envs still running (pids in ${path.relative(REPO_ROOT, PIDS_FILE)})`,
 		);
 	summarize(Date.now() - t0, args.baseline);
+	const refused = printOfflineReport(
+		stubBefore,
+		await stubStats(),
+		// The template's own log counts when this run built it.
+		[
+			...(builtTemplate ? [path.join(FAST_DIR, "env-tmpl")] : []),
+			...envs.map((e) => e.dir),
+		],
+	);
+	if (refused && code === 0) {
+		console.log(
+			`[e2e:fast] ${refused} request(s) tried to leave this machine: the run fails`,
+		);
+		return 1;
+	}
 	return code;
 }
 

@@ -26,6 +26,9 @@ const OUTSIDE_APP = [
 	".output/**",
 ];
 
+// Every project: a test that reaches a host outside this machine fails.
+const NO_NETWORK = "src/test/no-network.ts";
+
 const projects: TestProjectInlineConfiguration[] = [
 	{
 		// Pure logic: engine, schemas, server helpers, collab, scripts.
@@ -42,6 +45,7 @@ const projects: TestProjectInlineConfiguration[] = [
 				"scripts/**/*.test.ts",
 			],
 			exclude: [...OUTSIDE_APP, "**/*.db.test.ts"],
+			setupFiles: [NO_NETWORK],
 		},
 	},
 	{
@@ -51,7 +55,13 @@ const projects: TestProjectInlineConfiguration[] = [
 			name: "dom",
 			environment: "happy-dom",
 			include: ["src/**/*.test.tsx"],
-			setupFiles: ["src/test/setup.ts"],
+			setupFiles: [NO_NETWORK, "src/test/setup.ts"],
+			// A clicked target=_blank link opens no page (it would load the real site).
+			environmentOptions: {
+				happyDOM: {
+					settings: { navigation: { disableChildPageNavigation: true } },
+				},
+			},
 		},
 	},
 	{
@@ -67,7 +77,7 @@ const projects: TestProjectInlineConfiguration[] = [
 			],
 			fileParallelism: false,
 			globalSetup: ["scripts/db-test-prepare.ts"],
-			setupFiles: ["src/test/db-guard.ts"],
+			setupFiles: [NO_NETWORK, "src/test/db-guard.ts"],
 		},
 	},
 ];

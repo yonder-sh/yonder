@@ -21,7 +21,26 @@ It starts several isolated copies of the app (each with its own database cloned 
 
 Flags: `--envs N`, `--rebuild` (refresh the template), `--keep` (leave the envs running), `--baseline <file>` (mark new failures). The HTML report lands in `e2e/playwright-report/fast`, logs in `.data/e2e-fast/`.
 
-Climate, opening hours and walking routes come from a local stub (`e2e/stubs/services-stub.mjs`) instead of Open-Meteo, Overpass and OSRM, so runs never load those public services or depend on their answers.
+## Offline
+
+`e2e:fast` and vitest never reach a service outside this machine: no quotas spent, no mail sent, the same answers every day.
+
+**Stubbed.** `e2e:fast` starts `stubs/services-stub.mjs` on :7099 and points every env at it (`offlineOverrides` in `scripts/lib/e2e-fast.ts`):
+
+- Open-Meteo, Overpass, OSRM and FX rates: made-up but plausible answers.
+- Photon (`photon-stub.mjs`): real answers recorded once in `stubs/fixtures/photon.json`, plus the seed's places (`seed/data/geocode-hints.json`) for the importer.
+- Whatever the server fetches for a pasted or shared URL (`link-stub.mjs`): pages, YouTube/TikTok oEmbed, Instagram, Google Maps, short links, preview images, favicons. The SSRF-safe fetch asks the stub instead of the host (`E2E_OUTBOUND_STUB`, test switches only).
+- The basemap (`map-proxy.mjs`): OpenFreeMap and Esri from `.data/e2e-fast/map-cache` (`VITE_MAP_PROXY_URL`). An uncached tile is blank, never an error.
+- Video players in the browser: a black placeholder page.
+- Off: Google Places/Routes (no key), Resend/SMTP (the outbox), Turnstile, Web Push, telemetry. Postgres, Redis and S3 must be local.
+
+**Guards.** Every Node process of an env (vite, collab and its worker, template scripts, what a spec spawns, the Playwright workers) loads `scripts/no-egress-preload.mjs`: a connection or DNS lookup off loopback is refused, logged with its stack to the env's `app.log`, and fails the run. In the browser, `tests/app/_helpers/egress.ts` aborts requests to outside hosts (Chromium also resolves only localhost) and fails the test that made one. Vitest (`src/test/no-network.ts`) fails any test that reaches the network. `e2e:fast` ends with each service's stub misses and every refusal: all 0 is the goal.
+
+**Warm the tile cache** once, and when the specs browse somewhere new: `pnpm e2e:tiles:warm [--smoke | specs…]` runs the suite while the proxy fetches what it lacks, one request at a time, 4 a second at most. Only browsed tiles are fetched (OpenFreeMap's terms forbid bulk prefetching).
+
+**Re-record a fixture.** Photon: add the query to `scripts/e2e-record-photon.ts`, then `pnpm e2e:photon:record` (only missing entries, one a second; `--force` for all). Links: edit `stubs/fixtures/links.json` (pages, video titles, short links); any other page on a host listed there or in the seed data gets a title from its URL.
+
+The single-env `pnpm e2e` below still uses whatever services its dev server is configured with.
 
 ## Run against one env
 

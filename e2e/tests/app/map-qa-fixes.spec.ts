@@ -9,6 +9,7 @@ import { expect, type Page, test } from "@playwright/test";
 import { MAP_TESTID } from "../../../src/features/map/testids";
 import { TESTID } from "../../../src/lib/testids";
 import { loginViaApi } from "./_helpers/auth";
+import { MAP_TILES } from "./_helpers/egress";
 import { openPhoneMap } from "./_helpers/page";
 
 const TRIP = "asia-2027";
@@ -176,13 +177,13 @@ test("MT-13: cluster chips never overlap at a day's default fit (GRAN-09)", asyn
 });
 
 test("SEC-R1-16 / ERR-06: blocked tiles say 'Map tiles couldn't load', pins stay", async ({ page }) => {
-	await page.route(/tiles\.openfreemap\.org/, (r) => r.abort());
+	await page.route(MAP_TILES, (r) => r.abort());
 	await page.goto(`/t/${TRIP}/japan/tokyo`);
 	await openPhoneMap(page);
 	await expect(page.getByTestId(MAP_TESTID.tilesError)).toBeVisible({ timeout: 20_000 });
 	await expect(page.getByTestId(MAP_TESTID.tilesError)).toContainText("Map tiles couldn't load");
 	await expect(page.getByTestId(TESTID.pin).first()).toBeVisible();
-	await page.unroute(/tiles\.openfreemap\.org/);
+	await page.unroute(MAP_TILES);
 });
 
 // ---- fix round 2 -------------------------------------------------------------

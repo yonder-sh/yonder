@@ -6,7 +6,7 @@
  *
  * READ-ONLY on the seeded trip (dialogs are opened and cancelled; "Show
  * suggestions" is toggled and restored; it is a per-user view setting).
- * The palette test needs Photon (photon.komoot.io) to answer.
+ * The palette test needs Photon to answer (e2e:fast: the services stub).
  * The PERF test only runs with QA_PERF=1 against the PRODUCTION build
  * (dev-mode timings are meaningless).
  *

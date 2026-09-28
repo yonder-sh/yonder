@@ -1,0 +1,169 @@
+{
+	"about": "Pages, oEmbed answers and redirects for the e2e link stub (e2e/stubs/link-stub.mjs). Titles are what the real pages said when e2e last fetched them; edit by hand.",
+	"pages": {
+		"https://noahlangphotography.com/blog/best-things-to-do-sapa-vietnam": {
+			"title": "Exploring Sapa, Vietnam: What to Expect as a First-Time Visitor — noahawaii",
+			"description": "Sa Pa, also spelled Sapa, is a picturesque mountain town in northwestern Vietnam near the Chinese border, and it’s well known for its stunning natural beauty, terraced hillsides, cool and comfortable weather, and rich cultural diversity—which is why a trip to Sapa is a must-do when spending any tim",
+			"siteName": "noahawaii",
+			"image": "http://static1.squarespace.com/static/6226f62738f4f73d2b353e79/6226f784f0c44161f8d9e904/622a92ff316e0a7fb6d5044f/1774312520332/DSC00390.jpg?format=1500w"
+		},
+		"https://samoyedmoffu.com/shop_takeshita-en": {
+			"title": "Samoyed Cafe moffu Takeshita Street｜Fluffy Dog Cafe in Harajuku",
+			"description": "Book Samoyed Cafe moffu Takeshita Street online here. Check our rates and photos of our fluffy Samoyeds. We provide business hours, location, and step-by-step directions from the station. Visit us for a cozy time!",
+			"siteName": "サモエドカフェmoffu｜公式サイト",
+			"image": "https://storage.googleapis.com/production-os-assets/assets/b30f45f9-0479-4578-996e-0b960d267809"
+		},
+		"https://stories.forbestravelguide.com/how-to-spend-two-days-in-taipei": {
+			"title": "How To Spend Two Days In Taipei",
+			"description": "Where to explore, imbibe and rest your head in Taiwan’s modern metropolis.",
+			"siteName": "Forbes Travel Guide Stories",
+			"image": "https://stories.forbestravelguide.com/wp-content/uploads/2020/01/HERO-Taipei-CreditSeanPavonePhoto.jpg"
+		},
+		"https://tokyocheapo.com/shopping-2/kappabashi-knife-shopping-tokyo/": {
+			"title": "Kappabashi Knife Shopping: Everything You Need to Know | Tokyo Cheapo",
+			"description": "We've got you covered when it comes to Kappabashi knife shopping — from the best stores, what materials, patterns and handles",
+			"siteName": "Tokyo Cheapo",
+			"image": "https://cdn.cheapoguides.com/wp-content/uploads/sites/2/2019/06/Specialty-knives-562x421.jpg"
+		},
+		"https://worldtosarah.blog/2025/01/16/the-best-place-to-visit-in-vietnam-ninh-binh/": {
+			"title": "The best place to visit in Vietnam: Ninh Binh",
+			"description": "Vietnam is a large country that has so many beautiful places you could spend a year exploring and still not have seen everything! I had about one week in Vietnam, and although I didn’t see ev…",
+			"siteName": "Earth to Sarah",
+			"image": "https://i0.wp.com/worldtosarah.blog/wp-content/uploads/2024/12/mua-caves-ninh-binh-vietnam-09.jpg?fit=1200%2C800&ssl=1"
+		},
+		"https://www.indochinavoyages.com/travel-blog/best-tailors-in-hoi-an": {
+			"title": "Best Tailors in Hoi An 2026: Top 6 Shops, Prices & Insider Tips",
+			"siteName": "Indochina Voyages",
+			"image": "https://www.indochinavoyages.com/wp-content/uploads/2025/03/tailor-in-hoi-an-market.jpg"
+		},
+		"https://www.japan-guide.com/e/e2155.html": {
+			"title": "Nagoya",
+			"description": "Travel guide for the city of Nagoya, Japan.",
+			"siteName": "japan-guide.com"
+		},
+		"https://www.japan-guide.com/e/e2157.html": {
+			"title": "Osaka",
+			"description": "Travel guide for the city of Osaka, Japan.",
+			"siteName": "japan-guide.com"
+		},
+		"https://www.japan-guide.com/e/e2158.html": {
+			"title": "Kyoto",
+			"description": "Travel guide for the city of Kyoto, Japan.",
+			"siteName": "japan-guide.com"
+		},
+		"https://www.japan-guide.com/e/e2164.html": {
+			"title": "Tokyo",
+			"description": "Travel guide for the city of Tokyo, Japan.",
+			"siteName": "japan-guide.com"
+		},
+		"https://www.japan-guide.com/e/e2165.html": {
+			"title": "Nara",
+			"description": "Travel guide for the city of Nara, Japan.",
+			"siteName": "japan-guide.com"
+		},
+		"https://www.japan-guide.com/e/e2172.html": {
+			"title": "Mount Fuji",
+			"description": "Travel guide for Mount Fuji in Japan.",
+			"siteName": "japan-guide.com"
+		},
+		"https://www.japan-guide.com/e/e3000.html": {
+			"title": "Sengakuji Temple",
+			"description": "Visitor guide for Sengakuji, a temple in Tokyo where the 47 Samurai are buried.",
+			"siteName": "japan-guide.com",
+			"image": "https://www.japan-guide.com/g17/3000_01.jpg"
+		},
+		"https://www.japan-guide.com/e/e3002.html": {
+			"title": "Meiji Shrine",
+			"description": "Visitor guide for Meiji Shrine in Tokyo.",
+			"siteName": "japan-guide.com",
+			"image": "https://www.japan-guide.com/g20/3002_01.jpg"
+		},
+		"https://www.japan-guide.com/e/e3003.html": {
+			"title": "Akihabara",
+			"description": "Visitor guide for Akihabara, the electric town in Tokyo.",
+			"siteName": "japan-guide.com",
+			"image": "https://www.japan-guide.com/g18/3003_01.jpg"
+		},
+		"https://www.japan-guide.com/e/e3004.html": {
+			"title": "Asakusa",
+			"description": "Visitor guide for Asakusa, a district of Tokyo and the center of Tokyo's shitamachi (low town or old town).",
+			"siteName": "japan-guide.com",
+			"image": "https://www.japan-guide.com/g22/3004_03.jpg"
+		},
+		"https://www.japan-guide.com/e/e3007.html": {
+			"title": "Shibuya",
+			"description": "Visitor guide for the Shibuya shopping and entertainment district in Tokyo.",
+			"siteName": "japan-guide.com",
+			"image": "https://www.japan-guide.com/g18/3007_01.jpg"
+		},
+		"https://www.japan-guide.com/e/e3011.html": {
+			"title": "Shinjuku",
+			"description": "Visitor guide for the Shinjuku district in central Tokyo.",
+			"siteName": "japan-guide.com",
+			"image": "https://www.japan-guide.com/g18/3011_11.jpg"
+		},
+		"https://www.japan-guide.com/e/e3020.html": {
+			"title": "Kappabashi Street",
+			"description": "Visitor guide for Kappabashi Street in Tokyo, where you can find plastic food samples and kitchen-related goods.",
+			"siteName": "japan-guide.com",
+			"image": "https://www.japan-guide.com/g18/3020_01.jpg"
+		},
+		"https://www.japan-guide.com/e/e3975.html": {
+			"title": "Uji",
+			"description": "Travel guide for Uji City in Kyoto Prefecture, home of Byodoin Temple and Uji Tea",
+			"siteName": "japan-guide.com"
+		},
+		"https://www.livelikeitstheweekend.com/busan-south-korea/": {
+			"title": "28 Best Things to do in Busan, South Korea (For First-Timers)",
+			"description": "Discover the best things to do in Busan, South Korea: Temples, street art, seafood markets, and stunning beach views all in one coastal city.",
+			"siteName": "Live Like It's the Weekend",
+			"image": "https://www.livelikeitstheweekend.com/wp-content/uploads/2026/02/Busan-things-to-do-.jpg"
+		},
+		"https://www.mtfujiropeway.jp/en/": {
+			"title": "~ Kawaguchiko ~ Mt. Fuji Panorama Ropeway",
+			"description": "Ropeway \"~ Kawaguchiko ~ Mt. Fuji panorama ropeway\" official website which enjoy the magnificent view of Mt. Fuji and the view of Lake Kawaguchi. You can enjoy panoramic view from the base of Mt. Fuji from the mountaintop which became the stage of the tale of the tick.",
+			"siteName": "~ Kawaguchiko ~ Mt. Fuji Panorama Ropeway",
+			"image": "https://www.mtfujiropeway.jp/assets/img/common/ogp.png"
+		},
+		"https://www.nihonbashi-nishikawa.com/lp/orderpillow/en/": {
+			"title": "Custom-Made Pillows | Professional Fitting at Nihonbashi Nishikawa",
+			"description": "Get a custom-made pillow crafted just for you at Nihonbashi Nishikawa. Our certified sleep experts consult one-on-one and build your perfect pillow on the spot. Same-day take-home available.",
+			"siteName": "Nihonbashi Nishikawa",
+			"image": "https://www.nihonbashi-nishikawa.com/lp/orderpillow/assets/img/ogp/ogp-en.jpg"
+		},
+		"https://www.shibuya-scramble-square.com/sky/": {
+			"title": "展望施設「SHIBUYA SKY(渋谷スカイ)」について",
+			"description": "展望せよ。渋谷。世界。自分。未来。渋谷上空229mの展望装置SHIBUYA SKY 。展望施設を空間装置ととらえ、入口から出口までを一貫した体験ストーリーで演出。渋谷上空から広がる360度の景色を眺めるにとどまらず、一連の体験を通じて知的好奇心を刺激し、想像力を育む展望装置です。",
+			"siteName": "SHIBUYA SCRAMBLE SQUARE",
+			"image": "https://www.shibuya-scramble-square.com/sky/images/share_image.png"
+		},
+		"https://www.timeout.com/tokyo/things-to-do/where-to-get-the-best-views-of-mount-fuji": {
+			"title": "12 best places to enjoy stunning views of Mt Fuji",
+			"description": "To see Mt Fuji in all its glory, take a day trip from Tokyo to these scenic spots in Yamanashi, Kanagawa and Shizuoka",
+			"siteName": "Time Out Tokyo",
+			"image": "https://media.timeout.com/images/105656806/image.jpg"
+		},
+		"https://www.walkmyworld.com/posts/jiufen-shifen-taiwan": {
+			"title": "Jiufen & Shifen, Taiwan: unmissable old streets, waterfalls and mountains — Walk My World",
+			"description": "Everything you need to know about visiting Jiufen & Shifen: best time to go, the stunning Jiufen Old Street, how to get there and why you should stay at least one night.",
+			"siteName": "Walk My World",
+			"image": "http://static1.squarespace.com/static/596b2969d2b85786e6892853/596dd526725e25fb5efd7397/5bf2b77f70a6ad8a5c93142b/1787152981839/6D2A8994-2.jpg?format=1500w"
+		}
+	},
+	"youtube": {
+		"dQw4w9WgXcQ": {
+			"title": "Rick Astley - Never Gonna Give You Up (Official Video) (4K Remaster)",
+			"author_name": "Rick Astley"
+		}
+	},
+	"tiktok": {},
+	"tiktokShort": {},
+	"mapsShort": {},
+	"hosts": [
+		"example.com",
+		"www.example.com",
+		"www.japan-guide.com",
+		"www.japan.travel",
+		"www.shibuya-scramble-square.com"
+	]
+}

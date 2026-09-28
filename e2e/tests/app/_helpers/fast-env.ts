@@ -9,10 +9,16 @@
  *
  * The envs file (`.data/e2e-fast/envs.json`, written by scripts/e2e-fast.ts)
  * holds only per-env values; secrets still come from .env via the app config.
+ *
+ * The runner and every worker also refuse connections off this machine (the
+ * no-egress preload the envs' servers run with; its log paths are read when
+ * something is refused, so the env's own). Processes a spec spawns get it
+ * through the env's NODE_OPTIONS.
  */
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import "../../../../scripts/no-egress-preload.mjs";
 
 export type FastEnvEntry = { name: string; appUrl: string; env: Record<string, string> };
 export type FastEnvsFile = { report: string; envs: FastEnvEntry[] };

@@ -12,11 +12,18 @@
  * reaches another. `auto: "all-hooks-included"` also runs it for beforeAll
  * hooks, which run before a test's own fixtures. Tests within one file still
  * share data, as before (the fast config runs each file in order in one worker).
+ *
+ * It also keeps the browser on this machine (`_helpers/egress.ts`): every
+ * context the worker's browser makes — the `page` fixture's and each
+ * `browser.newContext()` a spec calls — routes outside URLs to local
+ * stand-ins or aborts them, and a test whose pages asked for one it had to
+ * abort fails, naming them.
  */
 import IORedis from "ioredis";
 import pg from "pg";
 // The real module, by path: "@playwright/test" itself maps to this file.
 import { test as base } from "../../../node_modules/@playwright/test/index.mjs";
+import { guardContext, setEgressTest, takeRefused } from "./egress";
 
 export * from "../../../node_modules/@playwright/test/index.mjs";
 
@@ -105,7 +112,7 @@ async function enterFile(file: string): Promise<void> {
 	lastFile = file;
 }
 
-export const test = base.extend<{ _fastReset: void }>({
+export const test = base.extend<{ _fastReset: void; _noEgress: void }>({
 	_fastReset: [
 		async ({}, use, testInfo) => {
 			if (process.env.E2E_FAST_ENV) await enterFile(testInfo.file);
@@ -114,6 +121,33 @@ export const test = base.extend<{ _fastReset: void }>({
 		// "all-hooks-included": also before beforeAll hooks (Playwright-internal
 		// value; its own trace fixture uses it).
 		{ auto: "all-hooks-included" as unknown as true, box: true, title: "e2e:fast reset to template" },
+	],
+	// Every context from this worker's browser is guarded (Browser#newPage goes through newContext too).
+	browser: [
+		async ({ browser }, use) => {
+			const newContext = browser.newContext.bind(browser);
+			browser.newContext = async (...args: Parameters<typeof browser.newContext>) => {
+				const ctx = await newContext(...args);
+				await guardContext(ctx);
+				return ctx;
+			};
+			await use(browser);
+		},
+		{ scope: "worker" },
+	],
+	_noEgress: [
+		async ({}, use, testInfo) => {
+			setEgressTest(`${testInfo.file.replace(/^.*\/tests\/app\//, "")} › ${testInfo.titlePath.slice(1).join(" › ")}`);
+			await use();
+			const refused = takeRefused();
+			if (refused.length)
+				throw new Error(
+					`the browser asked for ${refused.length} URL(s) outside this machine (aborted; stub them, e2e/README.md "Offline"):\n${[
+						...new Set(refused.map((r) => `  ${r.type} ${r.url.slice(0, 160)}`)),
+					].join("\n")}`,
+				);
+		},
+		{ auto: true, box: true, title: "e2e: nothing leaves this machine" },
 	],
 });
 

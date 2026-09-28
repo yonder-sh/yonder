@@ -1,0 +1,3800 @@
+{
+	"about": "Photon answers for the e2e specs, replayed by e2e/stubs/photon-stub.mjs. Recorded by scripts/e2e-record-photon.ts (pnpm e2e:photon:record); OSM data © OpenStreetMap contributors (ODbL).",
+	"search": {
+		"bar kuro|": {
+			"q": "bar kuro",
+			"layers": [],
+			"bias": [
+				35.69,
+				139.7
+			],
+			"recordedAt": "2026-09-28T15:09:07.831Z",
+			"features": [
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "N",
+						"osm_id": 9105271323,
+						"osm_key": "amenity",
+						"osm_value": "restaurant",
+						"type": "house",
+						"name": "Yoro Kuro Bar",
+						"street": "Huanhu East Road",
+						"locality": "南岸社区",
+						"district": "Dongqianhu",
+						"city": "Ningbo",
+						"state": "Zhejiang",
+						"country": "China",
+						"countrycode": "CN"
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							121.662643,
+							29.7389996
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "N",
+						"osm_id": 5154287792,
+						"osm_key": "amenity",
+						"osm_value": "restaurant",
+						"type": "house",
+						"housenumber": "1660",
+						"name": "Kuro Sushi & Bar",
+						"street": "Renfrew Street",
+						"district": "Hastings-Sunrise",
+						"city": "Vancouver",
+						"county": "Metro Vancouver Regional District",
+						"state": "British Columbia",
+						"country": "Canada",
+						"postcode": "V5K 4E1",
+						"countrycode": "CA"
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							-123.043987,
+							49.2698716
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "N",
+						"osm_id": 5324810323,
+						"osm_key": "amenity",
+						"osm_value": "cafe",
+						"type": "house",
+						"housenumber": "5",
+						"name": "Kuro Expresso Bar",
+						"street": "Rue Mautrec",
+						"locality": "Bordeaux, Port of the Moon",
+						"district": "Bordeaux Centre",
+						"city": "Bordeaux",
+						"county": "Gironde",
+						"state": "Nouvelle-Aquitaine",
+						"country": "France",
+						"postcode": "33000",
+						"countrycode": "FR"
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							-0.5751038,
+							44.8426747
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "N",
+						"osm_id": 12860008215,
+						"osm_key": "amenity",
+						"osm_value": "restaurant",
+						"type": "house",
+						"name": "Kuro Kuma",
+						"street": "Via Viva Barrio Chino",
+						"locality": "Viaviva",
+						"district": "Belgrano",
+						"county": "Comuna 13",
+						"state": "Autonomous City of Buenos Aires",
+						"country": "Argentina",
+						"postcode": "C1428AID",
+						"countrycode": "AR"
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							-58.4535554,
+							-34.556172
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "N",
+						"osm_id": 9213367417,
+						"osm_key": "amenity",
+						"osm_value": "cafe",
+						"type": "house",
+						"housenumber": "130",
+						"name": "Kuro Coffee",
+						"street": "Jalan Ciumbuleuit",
+						"locality": "Cisitu Dalam",
+						"district": "Ciumbuleuit",
+						"city": "Bandung",
+						"county": "Sukasari",
+						"state": "West Java",
+						"country": "Indonesia",
+						"postcode": "40141",
+						"countrycode": "ID"
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							107.6056926,
+							-6.8711062
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "N",
+						"osm_id": 1401886274,
+						"osm_key": "natural",
+						"osm_value": "hills",
+						"type": "other",
+						"name": "Buuraha Badhi Gudud",
+						"county": "El Afweyn District",
+						"state": "Somaliland",
+						"country": "Somalia",
+						"countrycode": "SO"
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							47.047066,
+							9.815287
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "N",
+						"osm_id": 2499394412,
+						"osm_key": "amenity",
+						"osm_value": "pub",
+						"type": "house",
+						"name": "BAR BEAGLA",
+						"street": "文教通り",
+						"locality": "Kurosunadai 3-chome",
+						"district": "Inage Ward",
+						"city": "Chiba",
+						"state": "Chiba Prefecture",
+						"country": "Japan",
+						"postcode": "263-0023",
+						"countrycode": "JP"
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							140.1021076,
+							35.6219722
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "N",
+						"osm_id": 5470076972,
+						"osm_key": "amenity",
+						"osm_value": "restaurant",
+						"type": "house",
+						"name": "Okame Noodle & Sake Bar 麺喰酒場 おかめ",
+						"street": "黒部宇奈月線",
+						"locality": "Unazuki Onsen",
+						"city": "Kurobe",
+						"state": "Toyama Prefecture",
+						"country": "Japan",
+						"postcode": "938-0282",
+						"countrycode": "JP"
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							137.582709,
+							36.8159487
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "N",
+						"osm_id": 9121736552,
+						"osm_key": "amenity",
+						"osm_value": "cafe",
+						"type": "house",
+						"name": "CAFE&BAR SHIKANO",
+						"street": "Kuroiso-Nasu Bypass",
+						"locality": "東大和町",
+						"city": "Nasushiobara",
+						"state": "Tochigi Prefecture",
+						"country": "Japan",
+						"postcode": "325-0047",
+						"countrycode": "JP"
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							140.0394122,
+							36.9741147
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "N",
+						"osm_id": 8542819572,
+						"osm_key": "amenity",
+						"osm_value": "bar",
+						"type": "house",
+						"name": "BAR μ's",
+						"street": "Kuroishi Sanda Line",
+						"locality": "Tenjin 2-chome",
+						"city": "Sanda",
+						"state": "Hyogo Prefecture",
+						"country": "Japan",
+						"postcode": "669-1399",
+						"countrycode": "JP"
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							135.2140256,
+							34.8917828
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "N",
+						"osm_id": 13566771495,
+						"osm_key": "amenity",
+						"osm_value": "bar",
+						"type": "house",
+						"housenumber": "1",
+						"name": "Kiwis Bar",
+						"street": "Schulstraße",
+						"district": "Kurort Oberwiesenthal",
+						"city": "Kurort Oberwiesenthal",
+						"county": "Erzgebirgskreis",
+						"state": "Saxony",
+						"country": "Germany",
+						"postcode": "09484",
+						"countrycode": "DE"
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							12.971329,
+							50.4196371
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "N",
+						"osm_id": 6600647380,
+						"osm_key": "amenity",
+						"osm_value": "bar",
+						"type": "house",
+						"name": "Pizza-bar Limonata",
+						"street": "Kurortnyi Avenue",
+						"locality": "Миколаївська зона",
+						"district": "Миколаївська зона",
+						"city": "Коблівська сільська громада",
+						"county": "Mykolaiv Raion",
+						"state": "Mykolaiv Oblast",
+						"country": "Ukraine",
+						"postcode": "57453",
+						"countrycode": "UA"
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							31.1996806,
+							46.6247884
+						]
+					}
+				}
+			]
+		},
+		"daan|": {
+			"q": "daan",
+			"layers": [],
+			"bias": null,
+			"recordedAt": "2026-09-28T15:09:07.831Z",
+			"features": [
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "N",
+						"osm_id": 3494960748,
+						"osm_key": "railway",
+						"osm_value": "station",
+						"type": "house",
+						"housenumber": "180",
+						"name": "Daan",
+						"street": "Section 2, Fuxing South Road",
+						"locality": "Longtu Village",
+						"district": "Da'an",
+						"city": "Taipei",
+						"country": "Taiwan",
+						"postcode": "106",
+						"countrycode": "TW"
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							121.5435546,
+							25.0333294
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "N",
+						"osm_id": 3494960748,
+						"osm_key": "railway",
+						"osm_value": "station",
+						"type": "house",
+						"housenumber": "2",
+						"name": "Daan",
+						"street": "Section 2, Fuxing South Road",
+						"locality": "Longtu Village",
+						"district": "Da'an",
+						"city": "Taipei",
+						"country": "Taiwan",
+						"postcode": "106",
+						"countrycode": "TW"
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							121.5435546,
+							25.0333294
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "N",
+						"osm_id": 6416740071,
+						"osm_key": "place",
+						"osm_value": "city",
+						"type": "district",
+						"name": "Da'an",
+						"city": "龙井街道",
+						"county": "Da'an",
+						"state": "Sichuan Province",
+						"country": "China",
+						"postcode": "643000",
+						"countrycode": "CN"
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							104.7711037,
+							29.3664297
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "R",
+						"osm_id": 2869465,
+						"osm_key": "place",
+						"osm_value": "suburb",
+						"type": "district",
+						"name": "Da'an",
+						"city": "Taipei",
+						"country": "Taiwan",
+						"countrycode": "TW",
+						"extra": {
+							"admin_level": "7"
+						},
+						"extent": [
+							121.5217225,
+							25.0454483,
+							121.5658788,
+							25.0072168
+						]
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							121.534395,
+							25.0265152
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "N",
+						"osm_id": 6416740356,
+						"osm_key": "place",
+						"osm_value": "city",
+						"type": "city",
+						"name": "Da'an",
+						"county": "Da'an",
+						"state": "Jilin Province",
+						"country": "China",
+						"countrycode": "CN"
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							124.2787614,
+							45.5055354
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "R",
+						"osm_id": 2763758,
+						"osm_key": "place",
+						"osm_value": "county",
+						"type": "county",
+						"name": "Da'an",
+						"state": "Jilin Province",
+						"country": "China",
+						"countrycode": "CN",
+						"extra": {
+							"admin_level": "6"
+						},
+						"extent": [
+							123.1486622,
+							45.7597751,
+							124.3663995,
+							44.9499669
+						]
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							123.7207257,
+							45.4427984
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "R",
+						"osm_id": 2791313,
+						"osm_key": "place",
+						"osm_value": "district",
+						"type": "county",
+						"name": "Da'an",
+						"state": "Sichuan Province",
+						"country": "China",
+						"countrycode": "CN",
+						"extra": {
+							"admin_level": "6"
+						},
+						"extent": [
+							104.7200274,
+							29.4845993,
+							105.0999591,
+							29.2758992
+						]
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							104.9361346,
+							29.3934746
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "N",
+						"osm_id": 13100011085,
+						"osm_key": "railway",
+						"osm_value": "station",
+						"type": "house",
+						"name": "Da'an",
+						"street": "Shanshui Middle Road",
+						"locality": "Dakang",
+						"district": "Yuanshan",
+						"city": "Shenzhen",
+						"state": "Guangdong Province",
+						"country": "China",
+						"postcode": "518100",
+						"countrycode": "CN"
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							114.2310491,
+							22.6577327
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "N",
+						"osm_id": 4941123567,
+						"osm_key": "place",
+						"osm_value": "town",
+						"type": "city",
+						"name": "Da'an",
+						"county": "Longshan",
+						"state": "Hunan Province",
+						"country": "China",
+						"countrycode": "CN"
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							109.6686387,
+							29.5403355
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "N",
+						"osm_id": 7818780498,
+						"osm_key": "place",
+						"osm_value": "town",
+						"type": "city",
+						"name": "Da'an",
+						"county": "Ningqiang",
+						"state": "Shaanxi Province",
+						"country": "China",
+						"countrycode": "CN"
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							106.2975875,
+							33.0577649
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "N",
+						"osm_id": 3096609462,
+						"osm_key": "place",
+						"osm_value": "town",
+						"type": "district",
+						"name": "Da'an",
+						"city": "Hengyang",
+						"state": "Hunan Province",
+						"country": "China",
+						"countrycode": "CN"
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							112.1977146,
+							27.1441624
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "N",
+						"osm_id": 4584251484,
+						"osm_key": "place",
+						"osm_value": "town",
+						"type": "district",
+						"name": "Da'an",
+						"city": "Guang'an",
+						"state": "Sichuan Province",
+						"country": "China",
+						"countrycode": "CN"
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							106.6871267,
+							30.6012996
+						]
+					}
+				}
+			]
+		},
+		"fuji excursion|": {
+			"q": "fuji excursion",
+			"layers": [],
+			"bias": null,
+			"recordedAt": "2026-09-28T15:09:07.831Z",
+			"features": []
+		},
+		"g.itoya|": {
+			"q": "g.itoya",
+			"layers": [],
+			"bias": [
+				35.67,
+				139.77
+			],
+			"recordedAt": "2026-09-28T15:09:07.831Z",
+			"features": [
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "W",
+						"osm_id": 608331102,
+						"osm_key": "shop",
+						"osm_value": "stationery",
+						"type": "house",
+						"housenumber": "15",
+						"name": "Itoya",
+						"street": "7",
+						"locality": "Ginza 2",
+						"district": "Chuo",
+						"city": "Tokyo",
+						"state": "東京都",
+						"country": "Japan",
+						"postcode": "104-0061",
+						"countrycode": "JP",
+						"extent": [
+							139.7677284,
+							35.673013,
+							139.7679363,
+							35.672854
+						]
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							139.7678324,
+							35.6729335
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "W",
+						"osm_id": 103509438,
+						"osm_key": "shop",
+						"osm_value": "stationery",
+						"type": "house",
+						"housenumber": "15",
+						"name": "Itoya",
+						"street": "7",
+						"locality": "Ginza 2",
+						"district": "Chuo",
+						"city": "Tokyo",
+						"state": "東京都",
+						"country": "Japan",
+						"postcode": "104-0061",
+						"countrycode": "JP",
+						"extent": [
+							139.7671808,
+							35.673122,
+							139.7675616,
+							35.6728456
+						]
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							139.7674251,
+							35.672957
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "N",
+						"osm_id": 7176676735,
+						"osm_key": "amenity",
+						"osm_value": "cafe",
+						"type": "house",
+						"name": "Itoya Coffee",
+						"street": "Motomachi Street",
+						"locality": "本町",
+						"city": "Takasaki",
+						"state": "Gunma Prefecture",
+						"country": "Japan",
+						"postcode": "370-0811",
+						"countrycode": "JP"
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							139.0034362,
+							36.3306265
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "N",
+						"osm_id": 4335289102,
+						"osm_key": "tourism",
+						"osm_value": "hostel",
+						"type": "house",
+						"housenumber": "202",
+						"name": "Guesthouse Itoya",
+						"street": "Jofukuji street",
+						"locality": "Isshikicho",
+						"district": "Kamigyō Ward",
+						"city": "Kyoto",
+						"state": "Kyoto Prefecture",
+						"country": "Japan",
+						"postcode": "602-8472",
+						"countrycode": "JP"
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							135.7454086,
+							35.0300858
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "N",
+						"osm_id": 5055307524,
+						"osm_key": "tourism",
+						"osm_value": "hotel",
+						"type": "house",
+						"name": "Hatago Itoya",
+						"street": "銀山温泉線",
+						"locality": "Ginzan-shinhata",
+						"city": "Obanazawa",
+						"state": "Yamagata Prefecture",
+						"country": "Japan",
+						"postcode": "999-4333",
+						"countrycode": "JP"
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							140.5317194,
+							38.5693073
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "N",
+						"osm_id": 4999611042,
+						"osm_key": "shop",
+						"osm_value": "stationery",
+						"type": "house",
+						"name": "Itoya",
+						"street": "うめきた広場",
+						"locality": "Grand Front Osaka",
+						"district": "Kita Ward",
+						"city": "Osaka",
+						"state": "Osaka Prefecture",
+						"country": "Japan",
+						"postcode": "530-8558",
+						"countrycode": "JP"
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							135.4945058,
+							34.7045381
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "N",
+						"osm_id": 3483549542,
+						"osm_key": "tourism",
+						"osm_value": "hotel",
+						"type": "house",
+						"name": "Tenma Itoya Guest house",
+						"street": "霊符筋",
+						"locality": "Higashitenma 1-chome",
+						"district": "Kita Ward",
+						"city": "Osaka",
+						"state": "Osaka Prefecture",
+						"country": "Japan",
+						"postcode": "530-0044",
+						"countrycode": "JP"
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							135.5142073,
+							34.6960639
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "N",
+						"osm_id": 5066686625,
+						"osm_key": "amenity",
+						"osm_value": "restaurant",
+						"type": "house",
+						"housenumber": "18 bis",
+						"name": "La Palice-itoya-sushi",
+						"street": "Rue Guilhempierre",
+						"locality": "La Ville-nord",
+						"city": "Manosque",
+						"county": "Alpes-de-Haute-Provence",
+						"state": "Provence-Alpes-Côte d'Azur",
+						"country": "France",
+						"postcode": "04100",
+						"countrycode": "FR"
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							5.7818469,
+							43.8333701
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "N",
+						"osm_id": 6792923874,
+						"osm_key": "amenity",
+						"osm_value": "restaurant",
+						"type": "house",
+						"housenumber": "56",
+						"name": "Itoya Sushi",
+						"street": "Rúa Federico Tapia",
+						"locality": "Santa Lucía",
+						"district": "Juan Flórez",
+						"city": "A Coruña",
+						"county": "A Coruña",
+						"state": "Galicia",
+						"country": "Spain",
+						"postcode": "15005",
+						"countrycode": "ES"
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							-8.4065315,
+							43.361778
+						]
+					}
+				}
+			]
+		},
+		"golden gai|": {
+			"q": "golden gai",
+			"layers": [],
+			"bias": null,
+			"recordedAt": "2026-09-28T15:09:07.831Z",
+			"features": [
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "N",
+						"osm_id": 6942691397,
+						"osm_key": "amenity",
+						"osm_value": "restaurant",
+						"type": "house",
+						"housenumber": "11",
+						"name": "Golden Gai",
+						"street": "Dampoortstraat",
+						"locality": "Ham",
+						"district": "Ghent",
+						"city": "Ghent",
+						"county": "Gent",
+						"state": "East Flanders",
+						"country": "Belgium",
+						"postcode": "9000",
+						"countrycode": "BE"
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							3.7341267,
+							51.0567697
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "N",
+						"osm_id": 11882320714,
+						"osm_key": "office",
+						"osm_value": "estate_agent",
+						"type": "house",
+						"name": "Golden Gai CI",
+						"street": "Avenida Dom João II",
+						"district": "Parque das Nações",
+						"city": "Lisbon",
+						"county": "Lisbon",
+						"country": "Portugal",
+						"postcode": "1990-036",
+						"countrycode": "PT"
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							-9.0979671,
+							38.7632198
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "R",
+						"osm_id": 16562139,
+						"osm_key": "landuse",
+						"osm_value": "retail",
+						"type": "locality",
+						"name": "Shinjuku Golden Gai",
+						"district": "Shinjuku",
+						"city": "Tokyo",
+						"country": "Japan",
+						"postcode": "160-0021",
+						"countrycode": "JP",
+						"extent": [
+							139.7042337,
+							35.6946028,
+							139.7051451,
+							35.6935245
+						]
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							139.7047001,
+							35.6939905
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "W",
+						"osm_id": 155009832,
+						"osm_key": "highway",
+						"osm_value": "residential",
+						"type": "street",
+						"name": "Shinjuku Golden Gai G1 Street",
+						"locality": "Shinjuku Golden Gai",
+						"district": "Shinjuku",
+						"city": "Tokyo",
+						"country": "Japan",
+						"postcode": "160-0021",
+						"countrycode": "JP",
+						"extent": [
+							139.7042199,
+							35.6937423,
+							139.7048766,
+							35.6935348
+						]
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							139.7045482,
+							35.6936385
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "W",
+						"osm_id": 184723802,
+						"osm_key": "highway",
+						"osm_value": "footway",
+						"type": "street",
+						"name": "Shinjuku Golden Gai G2 Street",
+						"locality": "Shinjuku Golden Gai",
+						"district": "Shinjuku",
+						"city": "Tokyo",
+						"country": "Japan",
+						"postcode": "160-0021",
+						"countrycode": "JP",
+						"extent": [
+							139.7042683,
+							35.6938715,
+							139.7049334,
+							35.6936726
+						]
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							139.7046009,
+							35.6937721
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "N",
+						"osm_id": 11492061469,
+						"osm_key": "tourism",
+						"osm_value": "hotel",
+						"type": "house",
+						"name": "Golden Silk Hotel",
+						"street": "Hang Gai Street",
+						"locality": "Old Quarter",
+						"district": "Hoan Kiem Ward",
+						"city": "Hanoi",
+						"country": "Vietnam",
+						"postcode": "11024",
+						"countrycode": "VN"
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							105.8493899,
+							21.0314609
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "N",
+						"osm_id": 1952348374,
+						"osm_key": "amenity",
+						"osm_value": "bar",
+						"type": "house",
+						"name": "Golden Dust",
+						"street": "Akarui Hanazono Third Street",
+						"locality": "Shinjuku Golden Gai",
+						"district": "Shinjuku",
+						"city": "Tokyo",
+						"country": "Japan",
+						"postcode": "160-0022",
+						"countrycode": "JP"
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							139.7047082,
+							35.6939716
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "W",
+						"osm_id": 546500938,
+						"osm_key": "landuse",
+						"osm_value": "industrial",
+						"type": "locality",
+						"housenumber": "1308",
+						"name": "Golden Peanut Company",
+						"street": "North Main Street",
+						"city": "Seminole",
+						"county": "Gaines",
+						"state": "Texas",
+						"country": "United States",
+						"postcode": "79360",
+						"countrycode": "US",
+						"extent": [
+							-102.6425055,
+							32.7364481,
+							-102.6388006,
+							32.7329237
+						]
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							-102.6406847,
+							32.7347033
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "W",
+						"osm_id": 5977229,
+						"osm_key": "highway",
+						"osm_value": "residential",
+						"type": "street",
+						"name": "Golden Ash Way",
+						"locality": "Lakelands",
+						"district": "Kentlands",
+						"city": "Gaithersburg",
+						"county": "Montgomery",
+						"state": "Maryland",
+						"country": "United States",
+						"postcode": "20878",
+						"countrycode": "US",
+						"extent": [
+							-77.2391203,
+							39.1199275,
+							-77.2321149,
+							39.1190616
+						]
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							-77.2356208,
+							39.1194386
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "W",
+						"osm_id": 642346241,
+						"osm_key": "highway",
+						"osm_value": "unclassified",
+						"type": "street",
+						"name": "Golden Tiger Way",
+						"locality": "Green Street-Brenau Historic District",
+						"city": "Gainesville",
+						"county": "Hall",
+						"state": "Georgia",
+						"country": "United States",
+						"postcode": "30501",
+						"countrycode": "US",
+						"extent": [
+							-83.8227774,
+							34.3030725,
+							-83.8215264,
+							34.3025034
+						]
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							-83.8220591,
+							34.3030725
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "W",
+						"osm_id": 635555842,
+						"osm_key": "highway",
+						"osm_value": "residential",
+						"type": "street",
+						"name": "Golden Leaf Point",
+						"city": "Gainesville",
+						"county": "Hall",
+						"state": "Georgia",
+						"country": "United States",
+						"postcode": "30504",
+						"countrycode": "US",
+						"extent": [
+							-83.8971457,
+							34.2794401,
+							-83.8931304,
+							34.2776715
+						]
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							-83.8953271,
+							34.2790033
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "W",
+						"osm_id": 5979086,
+						"osm_key": "highway",
+						"osm_value": "residential",
+						"type": "street",
+						"name": "Golden Post Lane",
+						"locality": "Pleasant Run",
+						"city": "Gaithersburg",
+						"county": "Montgomery",
+						"state": "Maryland",
+						"country": "United States",
+						"postcode": "20899",
+						"countrycode": "US",
+						"extent": [
+							-77.2399787,
+							39.144031,
+							-77.238555,
+							39.1436799
+						]
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							-77.2392904,
+							39.1439656
+						]
+					}
+				}
+			]
+		},
+		"itoya ginza|": {
+			"q": "itoya ginza",
+			"layers": [],
+			"bias": [
+				35.68,
+				139.65
+			],
+			"recordedAt": "2026-09-28T15:09:07.831Z",
+			"features": [
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "W",
+						"osm_id": 608331102,
+						"osm_key": "shop",
+						"osm_value": "stationery",
+						"type": "house",
+						"housenumber": "15",
+						"name": "Itoya",
+						"street": "7",
+						"locality": "Ginza 2",
+						"district": "Chuo",
+						"city": "Tokyo",
+						"state": "東京都",
+						"country": "Japan",
+						"postcode": "104-0061",
+						"countrycode": "JP",
+						"extent": [
+							139.7677284,
+							35.673013,
+							139.7679363,
+							35.672854
+						]
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							139.7678324,
+							35.6729335
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "W",
+						"osm_id": 103509438,
+						"osm_key": "shop",
+						"osm_value": "stationery",
+						"type": "house",
+						"housenumber": "15",
+						"name": "Itoya",
+						"street": "7",
+						"locality": "Ginza 2",
+						"district": "Chuo",
+						"city": "Tokyo",
+						"state": "東京都",
+						"country": "Japan",
+						"postcode": "104-0061",
+						"countrycode": "JP",
+						"extent": [
+							139.7671808,
+							35.673122,
+							139.7675616,
+							35.6728456
+						]
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							139.7674251,
+							35.672957
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "N",
+						"osm_id": 5055307524,
+						"osm_key": "tourism",
+						"osm_value": "hotel",
+						"type": "house",
+						"name": "Hatago Itoya",
+						"street": "銀山温泉線",
+						"locality": "Ginzan-shinhata",
+						"city": "Obanazawa",
+						"state": "Yamagata Prefecture",
+						"country": "Japan",
+						"postcode": "999-4333",
+						"countrycode": "JP"
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							140.5317194,
+							38.5693073
+						]
+					}
+				}
+			]
+		},
+		"itoya|": {
+			"q": "itoya",
+			"layers": [],
+			"bias": [
+				35.67,
+				139.77
+			],
+			"recordedAt": "2026-09-28T15:09:07.831Z",
+			"features": [
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "W",
+						"osm_id": 608331102,
+						"osm_key": "shop",
+						"osm_value": "stationery",
+						"type": "house",
+						"housenumber": "15",
+						"name": "Itoya",
+						"street": "7",
+						"locality": "Ginza 2",
+						"district": "Chuo",
+						"city": "Tokyo",
+						"state": "東京都",
+						"country": "Japan",
+						"postcode": "104-0061",
+						"countrycode": "JP",
+						"extent": [
+							139.7677284,
+							35.673013,
+							139.7679363,
+							35.672854
+						]
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							139.7678324,
+							35.6729335
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "W",
+						"osm_id": 103509438,
+						"osm_key": "shop",
+						"osm_value": "stationery",
+						"type": "house",
+						"housenumber": "15",
+						"name": "Itoya",
+						"street": "7",
+						"locality": "Ginza 2",
+						"district": "Chuo",
+						"city": "Tokyo",
+						"state": "東京都",
+						"country": "Japan",
+						"postcode": "104-0061",
+						"countrycode": "JP",
+						"extent": [
+							139.7671808,
+							35.673122,
+							139.7675616,
+							35.6728456
+						]
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							139.7674251,
+							35.672957
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "W",
+						"osm_id": 671159185,
+						"osm_key": "amenity",
+						"osm_value": "pub",
+						"type": "house",
+						"name": "Itoya",
+						"street": "Nakamachi Dori",
+						"locality": "Chuo 3-chome",
+						"district": "葭町",
+						"city": "Matsumoto",
+						"state": "Nagano Prefecture",
+						"country": "Japan",
+						"postcode": "390-0874",
+						"countrycode": "JP",
+						"extent": [
+							137.970879,
+							36.2340399,
+							137.9709653,
+							36.2338288
+						]
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							137.9709221,
+							36.2339343
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "N",
+						"osm_id": 4497820789,
+						"osm_key": "shop",
+						"osm_value": "confectionery",
+						"type": "house",
+						"name": "Itoya",
+						"street": "岩切川岸線",
+						"locality": "Iwakiri 3-chome",
+						"district": "Miyagino Ward",
+						"city": "Sendai",
+						"state": "Miyagi Prefecture",
+						"country": "Japan",
+						"postcode": "983-0821",
+						"countrycode": "JP"
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							140.9425952,
+							38.3044482
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "N",
+						"osm_id": 5123980560,
+						"osm_key": "amenity",
+						"osm_value": "restaurant",
+						"type": "house",
+						"housenumber": "1",
+						"name": "Itoya",
+						"street": "88",
+						"locality": "Tsuchitoi",
+						"district": "Wakabayashi Ward",
+						"city": "Sendai",
+						"state": "Miyagi Prefecture",
+						"country": "Japan",
+						"postcode": "984-0065",
+						"countrycode": "JP"
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							140.8822309,
+							38.2485383
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "N",
+						"osm_id": 4999611042,
+						"osm_key": "shop",
+						"osm_value": "stationery",
+						"type": "house",
+						"name": "Itoya",
+						"street": "うめきた広場",
+						"locality": "Grand Front Osaka",
+						"district": "Kita Ward",
+						"city": "Osaka",
+						"state": "Osaka Prefecture",
+						"country": "Japan",
+						"postcode": "530-8558",
+						"countrycode": "JP"
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							135.4945058,
+							34.7045381
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "W",
+						"osm_id": 605980323,
+						"osm_key": "bridge",
+						"osm_value": "yes",
+						"type": "house",
+						"name": "Itoya-bashi Bridge",
+						"street": "Shuto Expressway Route 6 Misato Line",
+						"locality": "Kahei 1-chome",
+						"district": "Kahei",
+						"city": "Tokyo",
+						"country": "Japan",
+						"postcode": "120-0005",
+						"countrycode": "JP",
+						"extent": [
+							139.819608,
+							35.7611367,
+							139.8200721,
+							35.7610541
+						]
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							139.8198291,
+							35.7610572
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "N",
+						"osm_id": 5134873630,
+						"osm_key": "shop",
+						"osm_value": "confectionery",
+						"type": "house",
+						"name": "Itoya",
+						"street": "鳴瀬南郷線",
+						"locality": "木間塚",
+						"city": "Misato",
+						"county": "Toda County",
+						"state": "Miyagi Prefecture",
+						"country": "Japan",
+						"postcode": "989-4206",
+						"countrycode": "JP"
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							141.1321237,
+							38.479266
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "N",
+						"osm_id": 933980818,
+						"osm_key": "amenity",
+						"osm_value": "fast_food",
+						"type": "house",
+						"housenumber": "134",
+						"name": "Itoya",
+						"street": "Corso Baldovino Bigliati",
+						"district": "Poggio del Sole",
+						"city": "Albissola Marina",
+						"county": "Savona",
+						"state": "Liguria",
+						"country": "Italy",
+						"postcode": "17012",
+						"countrycode": "IT"
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							8.5009466,
+							44.3263371
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "N",
+						"osm_id": 660508725,
+						"osm_key": "amenity",
+						"osm_value": "restaurant",
+						"type": "house",
+						"housenumber": "200",
+						"name": "Itoya",
+						"street": "Spencer Street",
+						"locality": "Koreatown",
+						"district": "Melbourne",
+						"city": "Melbourne",
+						"state": "Victoria",
+						"country": "Australia",
+						"postcode": "3000",
+						"countrycode": "AU"
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							144.9530961,
+							-37.8163389
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "N",
+						"osm_id": 8395261242,
+						"osm_key": "amenity",
+						"osm_value": "restaurant",
+						"type": "house",
+						"name": "Itoya",
+						"street": "Passerelle RC 179",
+						"locality": "Oassis",
+						"city": "Crissier",
+						"county": "District de l'Ouest lausannois",
+						"state": "Vaud",
+						"country": "Switzerland",
+						"postcode": "1023",
+						"countrycode": "CH"
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							6.5730457,
+							46.5515831
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "N",
+						"osm_id": 7176676735,
+						"osm_key": "amenity",
+						"osm_value": "cafe",
+						"type": "house",
+						"name": "Itoya Coffee",
+						"street": "Motomachi Street",
+						"locality": "本町",
+						"city": "Takasaki",
+						"state": "Gunma Prefecture",
+						"country": "Japan",
+						"postcode": "370-0811",
+						"countrycode": "JP"
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							139.0034362,
+							36.3306265
+						]
+					}
+				}
+			]
+		},
+		"nishiki market|": {
+			"q": "nishiki market",
+			"layers": [],
+			"bias": [
+				35.01,
+				135.77
+			],
+			"recordedAt": "2026-09-28T15:09:07.831Z",
+			"features": [
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "W",
+						"osm_id": 772134672,
+						"osm_key": "amenity",
+						"osm_value": "marketplace",
+						"type": "house",
+						"name": "Nishiki Market",
+						"street": "Nishikikōji Street",
+						"locality": "Higashiuoyachō",
+						"district": "Nakagyō Ward",
+						"city": "Kyoto",
+						"state": "Kyoto Prefecture",
+						"country": "Japan",
+						"postcode": "600-8006",
+						"countrycode": "JP",
+						"extent": [
+							135.7625983,
+							35.005083,
+							135.7668201,
+							35.0049759
+						]
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							135.7655699,
+							35.0050244
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "N",
+						"osm_id": 12186175015,
+						"osm_key": "shop",
+						"osm_value": "bakery",
+						"type": "house",
+						"name": "KYOTO BAKERY MARKET",
+						"street": "Nishikikōji Street",
+						"locality": "Yoshinocho",
+						"district": "Nakagyō Ward",
+						"city": "Kyoto",
+						"state": "Kyoto Prefecture",
+						"country": "Japan",
+						"postcode": "604-8254",
+						"countrycode": "JP"
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							135.7588611,
+							35.0050334
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "N",
+						"osm_id": 11507956923,
+						"osm_key": "amenity",
+						"osm_value": "restaurant",
+						"type": "house",
+						"name": "Nishiki Ramen & Sushi",
+						"street": "Center Point Way",
+						"locality": "Kentlands Market Square",
+						"district": "Kentlands",
+						"city": "Gaithersburg",
+						"county": "Montgomery",
+						"state": "Maryland",
+						"country": "United States",
+						"postcode": "20878",
+						"countrycode": "US"
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							-77.2379224,
+							39.1216259
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "W",
+						"osm_id": 795549387,
+						"osm_key": "amenity",
+						"osm_value": "parking",
+						"type": "house",
+						"name": "wholesale Market",
+						"street": "Seto Ōhashi Road",
+						"locality": "Nishikimachi 1-chome",
+						"city": "Takamatsu",
+						"state": "Kagawa Prefecture",
+						"country": "Japan",
+						"postcode": "760-0020",
+						"countrycode": "JP",
+						"extent": [
+							134.042637,
+							34.352501,
+							134.0433908,
+							34.3520263
+						]
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							134.0430133,
+							34.3523082
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "N",
+						"osm_id": 1950688073,
+						"osm_key": "shop",
+						"osm_value": "florist",
+						"type": "house",
+						"name": "Aoyama Flower Market",
+						"locality": "Nishikicho",
+						"district": "Omiya Ward",
+						"city": "Saitama",
+						"state": "Saitama Prefecture",
+						"country": "Japan",
+						"postcode": "330-0802",
+						"countrycode": "JP"
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							139.6242113,
+							35.9061168
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "N",
+						"osm_id": 4243777892,
+						"osm_key": "amenity",
+						"osm_value": "bar",
+						"type": "house",
+						"name": "Craft Beer Market",
+						"locality": "Kanda-Nishikicho 3-chome",
+						"district": "Chiyoda",
+						"city": "Tokyo",
+						"state": "東京都",
+						"country": "Japan",
+						"postcode": "102-0000",
+						"countrycode": "JP"
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							139.7600001,
+							35.6931957
+						]
+					}
+				}
+			]
+		},
+		"rate|": {
+			"q": "rate",
+			"layers": [],
+			"bias": [
+				35.68,
+				139.77
+			],
+			"recordedAt": "2026-09-28T15:09:07.831Z",
+			"features": [
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "N",
+						"osm_id": 9916389508,
+						"osm_key": "place",
+						"osm_value": "hamlet",
+						"type": "district",
+						"name": "Ratet",
+						"city": "Melhus",
+						"county": "Trøndelag",
+						"country": "Norway",
+						"postcode": "7224",
+						"countrycode": "NO"
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							10.2909269,
+							63.3035004
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "N",
+						"osm_id": 5085420470,
+						"osm_key": "place",
+						"osm_value": "village",
+						"type": "city",
+						"name": "Rate",
+						"county": "Jhapa",
+						"state": "Koshi Province",
+						"country": "Nepal",
+						"countrycode": "NP"
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							87.9697179,
+							26.7532366
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "W",
+						"osm_id": 1092429437,
+						"osm_key": "place",
+						"osm_value": "hamlet",
+						"type": "district",
+						"name": "Rate",
+						"city": "Koloriang",
+						"county": "Koloriang HQ",
+						"state": "Arunachal Pradesh",
+						"country": "India",
+						"countrycode": "IN",
+						"extent": [
+							93.4030313,
+							27.9030328,
+							93.4039983,
+							27.9018409
+						]
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							93.4035863,
+							27.9025231
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "N",
+						"osm_id": 10007405064,
+						"osm_key": "place",
+						"osm_value": "hamlet",
+						"type": "district",
+						"name": "Rate",
+						"county": "Sangram SDO",
+						"state": "Arunachal Pradesh",
+						"country": "India",
+						"countrycode": "IN"
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							93.4881425,
+							27.7120426
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "W",
+						"osm_id": 191558476,
+						"osm_key": "place",
+						"osm_value": "islet",
+						"type": "other",
+						"name": "Rate",
+						"locality": "Kallahti",
+						"district": "Vuosaari",
+						"city": "Helsinki",
+						"state": "Uusimaa",
+						"country": "Finland",
+						"countrycode": "FI",
+						"extent": [
+							25.1437143,
+							60.1746938,
+							25.1439111,
+							60.1744917
+						]
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							25.143786,
+							60.1745916
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "N",
+						"osm_id": 9628210074,
+						"osm_key": "place",
+						"osm_value": "farm",
+						"type": "locality",
+						"name": "Rate",
+						"district": "Holsgrenda",
+						"city": "Lønset",
+						"county": "Trøndelag",
+						"country": "Norway",
+						"countrycode": "NO"
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							9.3703936,
+							62.5753295
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "N",
+						"osm_id": 8186594965,
+						"osm_key": "natural",
+						"osm_value": "bay",
+						"type": "other",
+						"name": "Rate",
+						"district": "Tehoro",
+						"state": "French Polynesia",
+						"country": "France",
+						"countrycode": "FR"
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							-150.9724367,
+							-16.7559443
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "N",
+						"osm_id": 4621403657,
+						"osm_key": "place",
+						"osm_value": "neighbourhood",
+						"type": "locality",
+						"name": "Rate",
+						"district": "Chavannes",
+						"city": "Saint-Marcel-lès-Annonay",
+						"county": "Ardèche",
+						"state": "Auvergne-Rhône-Alpes",
+						"country": "France",
+						"postcode": "07100",
+						"countrycode": "FR"
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							4.6162314,
+							45.2826547
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "R",
+						"osm_id": 6410755,
+						"osm_key": "landuse",
+						"osm_value": "farmyard",
+						"type": "locality",
+						"name": "Rate",
+						"district": "Holsgrenda",
+						"city": "Lønset",
+						"county": "Trøndelag",
+						"country": "Norway",
+						"countrycode": "NO",
+						"extent": [
+							9.3703607,
+							62.5756173,
+							9.3717569,
+							62.5750187
+						]
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							9.3710135,
+							62.5752766
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "R",
+						"osm_id": 2415572,
+						"osm_key": "place",
+						"osm_value": "village",
+						"type": "city",
+						"name": "Ratenelle",
+						"county": "Saône-et-Loire",
+						"state": "Bourgogne – Franche-Comté",
+						"country": "France",
+						"postcode": "71290",
+						"countrycode": "FR",
+						"extra": {
+							"admin_level": "8"
+						},
+						"extent": [
+							4.9775891,
+							46.539528,
+							5.0229252,
+							46.5097551
+						]
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							5.0134825,
+							46.5266933
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "N",
+						"osm_id": 2548847799,
+						"osm_key": "mountain_pass",
+						"osm_value": "yes",
+						"type": "other",
+						"name": "Raten",
+						"city": "Oberägeri",
+						"state": "Zug",
+						"country": "Switzerland",
+						"postcode": "6315",
+						"countrycode": "CH"
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							8.6632942,
+							47.1418019
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "N",
+						"osm_id": 460200294,
+						"osm_key": "place",
+						"osm_value": "village",
+						"type": "city",
+						"name": "Rătez",
+						"county": "Gorj",
+						"country": "Romania",
+						"postcode": "217257",
+						"countrycode": "RO"
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							22.9231636,
+							44.9602398
+						]
+					}
+				}
+			]
+		},
+		"senso-ji|": {
+			"q": "senso-ji",
+			"layers": [],
+			"bias": [
+				35.68,
+				139.65
+			],
+			"recordedAt": "2026-09-28T15:09:07.831Z",
+			"features": [
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "W",
+						"osm_id": 91008673,
+						"osm_key": "building",
+						"osm_value": "shrine",
+						"type": "house",
+						"name": "Senso-ji Main Hall",
+						"street": "Nakamise Street",
+						"locality": "Nakamise Shopping Street",
+						"district": "Taito",
+						"city": "Tokyo",
+						"country": "Japan",
+						"postcode": "111-0032",
+						"countrycode": "JP",
+						"extent": [
+							139.7964534,
+							35.7149713,
+							139.7970415,
+							35.7145039
+						]
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							139.7967468,
+							35.7147282
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "W",
+						"osm_id": 173154847,
+						"osm_key": "amenity",
+						"osm_value": "place_of_worship",
+						"type": "house",
+						"housenumber": "1",
+						"name": "Sensō-ji",
+						"street": "3",
+						"locality": "Asakusa 2",
+						"district": "Taito",
+						"city": "Tokyo",
+						"country": "Japan",
+						"postcode": "111-0032",
+						"countrycode": "JP",
+						"extent": [
+							139.7942244,
+							35.7159424,
+							139.7976804,
+							35.7109656
+						]
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							139.7955265,
+							35.7134032
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "N",
+						"osm_id": 6616038863,
+						"osm_key": "information",
+						"osm_value": "map",
+						"type": "house",
+						"name": "Guide to Senso-ji's Halls",
+						"street": "Nakamise Street",
+						"locality": "Nakamise Shopping Street",
+						"district": "Taito",
+						"city": "Tokyo",
+						"country": "Japan",
+						"postcode": "111-0032",
+						"countrycode": "JP"
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							139.7966289,
+							35.714425
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "N",
+						"osm_id": 6328333687,
+						"osm_key": "natural",
+						"osm_value": "tree",
+						"type": "house",
+						"name": "Sacred Ginkgo Tree of Sensō‑ji",
+						"street": "Nakamise Street",
+						"locality": "Nakamise Shopping Street",
+						"district": "Taito",
+						"city": "Tokyo",
+						"country": "Japan",
+						"postcode": "111-0032",
+						"countrycode": "JP"
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							139.7972107,
+							35.7141022
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "N",
+						"osm_id": 5983119685,
+						"osm_key": "tourism",
+						"osm_value": "guest_house",
+						"type": "house",
+						"name": "Riad Senso",
+						"street": "Rue El Jirari زنقة الجرري",
+						"locality": "Océan ⵍⵎⵓⵃⵉⵟ المحيط",
+						"district": "Arrondissement Hassan مقاطعة حسان",
+						"city": "Rabat",
+						"county": "باشوية الرباط",
+						"state": "Rabat-Salé-Kénitra",
+						"country": "Morocco",
+						"postcode": "10030",
+						"countrycode": "MA"
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							-6.8373089,
+							34.0288265
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "W",
+						"osm_id": 436581960,
+						"osm_key": "amenity",
+						"osm_value": "restaurant",
+						"type": "house",
+						"housenumber": "460",
+						"name": "Sensoji",
+						"street": "Jirón Simón Salguero",
+						"locality": "El Rosal",
+						"city": "Santiago de Surco",
+						"county": "Province of Lima",
+						"state": "Department of Lima",
+						"country": "Peru",
+						"postcode": "15048",
+						"countrycode": "PE",
+						"extent": [
+							-77.0092116,
+							-12.1304638,
+							-77.009171,
+							-12.1304945
+						]
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							-77.009191,
+							-12.1304784
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "N",
+						"osm_id": 10270355785,
+						"osm_key": "man_made",
+						"osm_value": "works",
+						"type": "house",
+						"housenumber": "2615",
+						"name": "Innovative Sensor Technology, s.r.o.",
+						"street": "Televizní",
+						"locality": "Jižní město",
+						"city": "Rožnov pod Radhoštěm",
+						"county": "okres Vsetín",
+						"state": "Zlín Region",
+						"country": "Czechia",
+						"postcode": "756 61",
+						"countrycode": "CZ"
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							18.1274986,
+							49.4611777
+						]
+					}
+				}
+			]
+		},
+		"shibuya sky|": {
+			"q": "shibuya sky",
+			"layers": [],
+			"bias": [
+				35.68,
+				139.76
+			],
+			"recordedAt": "2026-09-28T15:09:07.831Z",
+			"features": [
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "N",
+						"osm_id": 6952876785,
+						"osm_key": "tourism",
+						"osm_value": "viewpoint",
+						"type": "house",
+						"housenumber": "12",
+						"name": "Shibuya Sky",
+						"street": "24",
+						"locality": "Shibuya 2",
+						"district": "Shibuya",
+						"city": "Tokyo",
+						"state": "東京都",
+						"country": "Japan",
+						"postcode": "150-0002",
+						"countrycode": "JP"
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							139.7022617,
+							35.6582857
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "W",
+						"osm_id": 682737411,
+						"osm_key": "highway",
+						"osm_value": "pedestrian",
+						"type": "street",
+						"name": "Ebisu Sky Walk",
+						"locality": "Ebisu 4-chome",
+						"district": "Shibuya",
+						"city": "Tokyo",
+						"country": "Japan",
+						"postcode": "150-0013",
+						"countrycode": "JP",
+						"extent": [
+							139.7105872,
+							35.6459282,
+							139.7115622,
+							35.644481
+						]
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							139.7110249,
+							35.6451116
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "W",
+						"osm_id": 153341671,
+						"osm_key": "building",
+						"osm_value": "yes",
+						"type": "house",
+						"name": "SKY COURT渋谷北参道",
+						"street": "Meiji-dori Avenue",
+						"locality": "Sendagaya 4",
+						"district": "Shibuya",
+						"city": "Tokyo",
+						"country": "Japan",
+						"postcode": "151-0051",
+						"countrycode": "JP",
+						"extent": [
+							139.7043745,
+							35.6776143,
+							139.7045919,
+							35.677419
+						]
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							139.704487,
+							35.6775161
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "N",
+						"osm_id": 4913658922,
+						"osm_key": "amenity",
+						"osm_value": "cafe",
+						"type": "house",
+						"name": "Sky High",
+						"street": "八幡通り",
+						"locality": "Shibuya 2",
+						"district": "Shibuya",
+						"city": "Tokyo",
+						"country": "Japan",
+						"postcode": "150-0002",
+						"countrycode": "JP"
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							139.708824,
+							35.6595597
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "W",
+						"osm_id": 153343032,
+						"osm_key": "building",
+						"osm_value": "yes",
+						"type": "house",
+						"name": "Sky Court Harajuku",
+						"locality": "Sendagaya 4",
+						"district": "Shibuya",
+						"city": "Tokyo",
+						"country": "Japan",
+						"postcode": "151-0051",
+						"countrycode": "JP",
+						"extent": [
+							139.7036941,
+							35.6800075,
+							139.7038793,
+							35.6798208
+						]
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							139.703793,
+							35.6799038
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "N",
+						"osm_id": 14124085402,
+						"osm_key": "amenity",
+						"osm_value": "restaurant",
+						"type": "house",
+						"housenumber": "5010 #2",
+						"name": "Shibuya Izakaya Sushi Restaurant",
+						"street": "4 Street NE",
+						"district": "Skyline West",
+						"city": "Calgary",
+						"state": "Alberta",
+						"country": "Canada",
+						"postcode": "T2K 5X8",
+						"countrycode": "CA"
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							-114.0530294,
+							51.0963476
+						]
+					}
+				}
+			]
+		},
+		"shinjuku|": {
+			"q": "shinjuku",
+			"layers": [],
+			"bias": [
+				35.68,
+				139.77
+			],
+			"recordedAt": "2026-09-28T15:09:07.831Z",
+			"features": [
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "R",
+						"osm_id": 1758858,
+						"osm_key": "place",
+						"osm_value": "city",
+						"type": "district",
+						"name": "Shinjuku",
+						"city": "Tokyo",
+						"country": "Japan",
+						"postcode": "160-8484",
+						"countrycode": "JP",
+						"extra": {
+							"admin_level": "7"
+						},
+						"extent": [
+							139.6732748,
+							35.7299039,
+							139.7451394,
+							35.6732207
+						]
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							139.7036319,
+							35.6937632
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "R",
+						"osm_id": 17081654,
+						"osm_key": "place",
+						"osm_value": "quarter",
+						"type": "locality",
+						"name": "Shinjuku",
+						"district": "Shinjuku",
+						"city": "Tokyo",
+						"country": "Japan",
+						"postcode": "160-0022",
+						"countrycode": "JP",
+						"extra": {
+							"admin_level": "9"
+						},
+						"extent": [
+							139.6996852,
+							35.7013953,
+							139.7148755,
+							35.6873718
+						]
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							139.7086541,
+							35.6942679
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "N",
+						"osm_id": 6184943238,
+						"osm_key": "railway",
+						"osm_value": "stop",
+						"type": "house",
+						"name": "Shinjuku",
+						"street": "東京メトロ 新宿駅;地下2階;1番線",
+						"locality": "Shinjuku 3",
+						"district": "Shinjuku",
+						"city": "Tokyo",
+						"country": "Japan",
+						"postcode": "160-0022",
+						"countrycode": "JP"
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							139.7006065,
+							35.6921592
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "N",
+						"osm_id": 2389826024,
+						"osm_key": "railway",
+						"osm_value": "station",
+						"type": "house",
+						"name": "Shinjuku",
+						"street": "Yotsuya-Kakuhazu Line",
+						"locality": "Yoyogi 2",
+						"district": "Shibuya",
+						"city": "Tokyo",
+						"country": "Japan",
+						"postcode": "151-0053",
+						"countrycode": "JP"
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							139.6990749,
+							35.6883635
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "N",
+						"osm_id": 7677962359,
+						"osm_key": "railway",
+						"osm_value": "stop",
+						"type": "house",
+						"name": "Shinjuku",
+						"street": "小田急 新宿駅;1階;6番ホーム",
+						"locality": "Nishi-Shinjuku 1",
+						"district": "Shinjuku",
+						"city": "Tokyo",
+						"country": "Japan",
+						"postcode": "160-0023",
+						"countrycode": "JP"
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							139.6994491,
+							35.6903431
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "N",
+						"osm_id": 6184943237,
+						"osm_key": "railway",
+						"osm_value": "stop",
+						"type": "house",
+						"name": "Shinjuku",
+						"street": "新宿駅東口公衆喫煙所",
+						"locality": "Shinjuku 3",
+						"district": "Shinjuku",
+						"city": "Tokyo",
+						"country": "Japan",
+						"postcode": "160-0022",
+						"countrycode": "JP"
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							139.7005849,
+							35.6923037
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "N",
+						"osm_id": 6281974024,
+						"osm_key": "railway",
+						"osm_value": "stop",
+						"type": "house",
+						"name": "Shinjuku",
+						"street": "小田急 新宿駅;1階;2番ホーム",
+						"locality": "Nishi-Shinjuku 1",
+						"district": "Shinjuku",
+						"city": "Tokyo",
+						"country": "Japan",
+						"postcode": "160-0023",
+						"countrycode": "JP"
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							139.6997378,
+							35.6903709
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "N",
+						"osm_id": 7677962358,
+						"osm_key": "railway",
+						"osm_value": "stop",
+						"type": "house",
+						"name": "Shinjuku",
+						"street": "小田急 新宿駅;地下1階",
+						"locality": "Nishi-Shinjuku 1",
+						"district": "Shinjuku",
+						"city": "Tokyo",
+						"country": "Japan",
+						"postcode": "160-0023",
+						"countrycode": "JP"
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							139.6996107,
+							35.690358
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "N",
+						"osm_id": 6282970734,
+						"osm_key": "railway",
+						"osm_value": "stop",
+						"type": "house",
+						"name": "Shinjuku",
+						"street": "Yotsuya-Kakuhazu Line",
+						"locality": "Yoyogi 2",
+						"district": "Shibuya",
+						"city": "Tokyo",
+						"country": "Japan",
+						"postcode": "151-0053",
+						"countrycode": "JP"
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							139.699181,
+							35.6882153
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "N",
+						"osm_id": 6310410522,
+						"osm_key": "railway",
+						"osm_value": "stop",
+						"type": "house",
+						"name": "Shinjuku",
+						"street": "京王 新宿駅;地下2階;1番線",
+						"locality": "Nishi-Shinjuku 1",
+						"district": "Shinjuku",
+						"city": "Tokyo",
+						"country": "Japan",
+						"postcode": "160-0023",
+						"countrycode": "JP"
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							139.6992935,
+							35.6904666
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "N",
+						"osm_id": 5073455404,
+						"osm_key": "railway",
+						"osm_value": "stop",
+						"type": "house",
+						"name": "Shinjuku",
+						"street": "京王 新宿駅;地下1階",
+						"locality": "Nishi-Shinjuku 1",
+						"district": "Shinjuku",
+						"city": "Tokyo",
+						"country": "Japan",
+						"postcode": "160-0023",
+						"countrycode": "JP"
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							139.6990389,
+							35.6904488
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "N",
+						"osm_id": 1926277346,
+						"osm_key": "railway",
+						"osm_value": "station",
+						"type": "house",
+						"name": "Shinjuku",
+						"street": "Metro Promenade",
+						"locality": "Shinjuku 3",
+						"district": "Shinjuku",
+						"city": "Tokyo",
+						"country": "Japan",
+						"postcode": "160-0022",
+						"countrycode": "JP"
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							139.7006009,
+							35.6922273
+						]
+					}
+				}
+			]
+		},
+		"tokyo tower|": {
+			"q": "tokyo tower",
+			"layers": [],
+			"bias": [
+				35.68,
+				139.65
+			],
+			"recordedAt": "2026-09-28T15:09:07.831Z",
+			"features": [
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "R",
+						"osm_id": 4247312,
+						"osm_key": "man_made",
+						"osm_value": "tower",
+						"type": "house",
+						"name": "Tokyo Tower",
+						"street": "Tokyo Tower Street",
+						"locality": "Shibakōen 4",
+						"district": "Minato",
+						"city": "Tokyo",
+						"country": "Japan",
+						"postcode": "106-0041",
+						"countrycode": "JP",
+						"extent": [
+							139.7449463,
+							35.6589495,
+							139.7459337,
+							35.6581782
+						]
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							139.745536,
+							35.6584491
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "W",
+						"osm_id": 95274405,
+						"osm_key": "building",
+						"osm_value": "office",
+						"type": "house",
+						"housenumber": "2",
+						"name": "GranTokyo South Tower",
+						"street": "9",
+						"locality": "Marunouchi 1",
+						"district": "Chiyoda",
+						"city": "Tokyo",
+						"state": "東京都",
+						"country": "Japan",
+						"postcode": "100-0005",
+						"countrycode": "JP",
+						"extent": [
+							139.7669858,
+							35.6790209,
+							139.7677742,
+							35.6782485
+						]
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							139.7673727,
+							35.6786419
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "R",
+						"osm_id": 3818454,
+						"osm_key": "building",
+						"osm_value": "office",
+						"type": "house",
+						"housenumber": "44",
+						"name": "GranTokyo North Tower",
+						"street": "1",
+						"locality": "Marunouchi 1",
+						"district": "Chiyoda",
+						"city": "Tokyo",
+						"state": "東京都",
+						"country": "Japan",
+						"postcode": "100-0005",
+						"countrycode": "JP",
+						"extent": [
+							139.7684399,
+							35.6820482,
+							139.7695775,
+							35.6810276
+						]
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							139.7690823,
+							35.6815814
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "W",
+						"osm_id": 55441040,
+						"osm_key": "emergency",
+						"osm_value": "assembly_point",
+						"type": "house",
+						"name": "Cerulean Tower Tokyo Hotel",
+						"street": "Route 3 Shibuya Line",
+						"locality": "Dōgenzaka 1",
+						"district": "Shibuya",
+						"city": "Tokyo",
+						"country": "Japan",
+						"postcode": "150-0043",
+						"countrycode": "JP",
+						"extent": [
+							139.6987166,
+							35.6567169,
+							139.6999153,
+							35.6559998
+						]
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							139.6992826,
+							35.6563501
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "W",
+						"osm_id": 55441040,
+						"osm_key": "tourism",
+						"osm_value": "hotel",
+						"type": "house",
+						"name": "Cerulean Tower Tokyo Hotel",
+						"street": "Route 3 Shibuya Line",
+						"locality": "Dōgenzaka 1",
+						"district": "Shibuya",
+						"city": "Tokyo",
+						"country": "Japan",
+						"postcode": "150-0043",
+						"countrycode": "JP",
+						"extent": [
+							139.6987166,
+							35.6567169,
+							139.6999153,
+							35.6559998
+						]
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							139.6992826,
+							35.6563501
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "W",
+						"osm_id": 145495557,
+						"osm_key": "building",
+						"osm_value": "college",
+						"type": "house",
+						"housenumber": "3",
+						"name": "Mode Gakuen Cocoon Tower",
+						"street": "7",
+						"locality": "Nishi-Shinjuku 1",
+						"district": "Shinjuku",
+						"city": "Tokyo",
+						"state": "東京都",
+						"country": "Japan",
+						"postcode": "160-0023",
+						"countrycode": "JP",
+						"extent": [
+							139.6966702,
+							35.691837,
+							139.6972015,
+							35.6913486
+						]
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							139.6969354,
+							35.6915791
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "W",
+						"osm_id": 153148303,
+						"osm_key": "building",
+						"osm_value": "yes",
+						"type": "house",
+						"name": "Shinjuku Park Tower",
+						"street": "Koshu-kaido Avenue",
+						"locality": "Nishi-Shinjuku 3",
+						"district": "Shinjuku",
+						"city": "Tokyo",
+						"country": "Japan",
+						"postcode": "160-0023",
+						"countrycode": "JP",
+						"extent": [
+							139.6907083,
+							35.6853524,
+							139.691252,
+							35.684949
+						]
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							139.69098,
+							35.6851706
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "W",
+						"osm_id": 230341831,
+						"osm_key": "building",
+						"osm_value": "yes",
+						"type": "house",
+						"name": "Shinjuku Park Tower",
+						"street": "Junisha-dori",
+						"locality": "Nishi-Shinjuku 3",
+						"district": "Shinjuku",
+						"city": "Tokyo",
+						"country": "Japan",
+						"postcode": "160-0023",
+						"countrycode": "JP",
+						"extent": [
+							139.6902515,
+							35.6860346,
+							139.6908305,
+							35.6855903
+						]
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							139.6905297,
+							35.6858093
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "W",
+						"osm_id": 103007069,
+						"osm_key": "building",
+						"osm_value": "office",
+						"type": "house",
+						"name": "Midtown Tower",
+						"street": "Gaien Higashi Street",
+						"locality": "Akasaka 9",
+						"district": "Minato",
+						"city": "Tokyo",
+						"country": "Japan",
+						"postcode": "107-0052",
+						"countrycode": "JP",
+						"extent": [
+							139.7308123,
+							35.6665268,
+							139.7317637,
+							35.6657059
+						]
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							139.7312806,
+							35.6661249
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "W",
+						"osm_id": 153924771,
+						"osm_key": "building",
+						"osm_value": "office",
+						"type": "house",
+						"housenumber": "1",
+						"name": "Roppongi Hills Mori Tower",
+						"street": "10",
+						"locality": "Roppongi 6",
+						"district": "Minato",
+						"city": "Tokyo",
+						"state": "東京都",
+						"country": "Japan",
+						"postcode": "106-0032",
+						"countrycode": "JP",
+						"extent": [
+							139.7287238,
+							35.6609573,
+							139.7298396,
+							35.6599474
+						]
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							139.7292768,
+							35.6604561
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "W",
+						"osm_id": 151481850,
+						"osm_key": "building",
+						"osm_value": "office",
+						"type": "house",
+						"housenumber": "1",
+						"name": "Nippon Television Tower",
+						"street": "6",
+						"locality": "Shiodome Sio-Site",
+						"district": "Minato",
+						"city": "Tokyo",
+						"state": "東京都",
+						"country": "Japan",
+						"postcode": "105-7444",
+						"countrycode": "JP",
+						"extent": [
+							139.7594084,
+							35.6648412,
+							139.760294,
+							35.6639253
+						]
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							139.7598344,
+							35.6642942
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "W",
+						"osm_id": 160913112,
+						"osm_key": "building",
+						"osm_value": "yes",
+						"type": "house",
+						"name": "Shirokane Tower",
+						"street": "Kitazato Street",
+						"locality": "Shirokane 2",
+						"district": "Minato",
+						"city": "Tokyo",
+						"country": "Japan",
+						"postcode": "108-0072",
+						"countrycode": "JP",
+						"extent": [
+							139.7331012,
+							35.6448465,
+							139.7337766,
+							35.6442885
+						]
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							139.7334389,
+							35.6445775
+						]
+					}
+				}
+			]
+		},
+		"tokyo|city,county": {
+			"q": "tokyo",
+			"layers": [
+				"city",
+				"county"
+			],
+			"bias": null,
+			"recordedAt": "2026-09-28T15:09:07.831Z",
+			"features": [
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "R",
+						"osm_id": 1543125,
+						"osm_key": "place",
+						"osm_value": "province",
+						"type": "city",
+						"name": "Tokyo",
+						"country": "Japan",
+						"countrycode": "JP",
+						"extra": {
+							"admin_level": "4"
+						},
+						"extent": [
+							135.8536855,
+							35.8984245,
+							154.205541,
+							20.2145811
+						]
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							139.7638947,
+							35.6768601
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "N",
+						"osm_id": 13679739223,
+						"osm_key": "place",
+						"osm_value": "village",
+						"type": "city",
+						"name": "Tokio",
+						"county": "Goilala District",
+						"state": "Central Province",
+						"country": "Papua New Guinea",
+						"countrycode": "PG"
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							147.1551164,
+							-8.4056507
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "R",
+						"osm_id": 4036497,
+						"osm_key": "place",
+						"osm_value": "town",
+						"type": "city",
+						"name": "Toyo",
+						"county": "Aki County",
+						"state": "Kochi Prefecture",
+						"country": "Japan",
+						"countrycode": "JP",
+						"extra": {
+							"admin_level": "7"
+						},
+						"extent": [
+							134.193026,
+							33.567633,
+							134.4816869,
+							33.3678209
+						]
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							134.2429417,
+							33.5230707
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "R",
+						"osm_id": 4505782,
+						"osm_key": "boundary",
+						"osm_value": "administrative",
+						"type": "city",
+						"name": "Toco",
+						"county": "Germán Jordán",
+						"state": "Cochabamba",
+						"country": "Bolivia",
+						"countrycode": "BO",
+						"extra": {
+							"admin_level": "8"
+						},
+						"extent": [
+							-65.9748491,
+							-17.5998491,
+							-65.8728353,
+							-17.7167806
+						]
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							-65.9256552,
+							-17.6582856
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "R",
+						"osm_id": 3167569,
+						"osm_key": "place",
+						"osm_value": "village",
+						"type": "city",
+						"name": "Toky",
+						"county": "Ternopil Raion",
+						"state": "Ternopil Oblast",
+						"country": "Ukraine",
+						"postcode": "47823",
+						"countrycode": "UA",
+						"extra": {
+							"admin_level": "9"
+						},
+						"extent": [
+							26.1823956,
+							49.6840387,
+							26.248687,
+							49.6092548
+						]
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							26.2233261,
+							49.6330569
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "N",
+						"osm_id": 11070303447,
+						"osm_key": "place",
+						"osm_value": "village",
+						"type": "city",
+						"name": "Toko",
+						"county": "Grobogan",
+						"state": "Central Java",
+						"country": "Indonesia",
+						"postcode": "58114",
+						"countrycode": "ID"
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							110.8502966,
+							-7.118853
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "R",
+						"osm_id": 5162627,
+						"osm_key": "place",
+						"osm_value": "village",
+						"type": "city",
+						"name": "Tokoyo",
+						"state": "Mbomou",
+						"country": "Central African Republic",
+						"countrycode": "CF",
+						"extra": {
+							"admin_level": "8"
+						},
+						"extent": [
+							22.8172817,
+							4.7738961,
+							22.8532549,
+							4.7250067
+						]
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							22.846844,
+							4.7677296
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "R",
+						"osm_id": 3836233,
+						"osm_key": "place",
+						"osm_value": "town",
+						"type": "city",
+						"name": "Toko",
+						"county": "Ndian",
+						"state": "Southwest",
+						"country": "Cameroon",
+						"countrycode": "CM",
+						"extra": {
+							"admin_level": "8"
+						},
+						"extent": [
+							8.9442715,
+							5.4315596,
+							9.3302793,
+							4.9283473
+						]
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							9.1344451,
+							5.0451616
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "N",
+						"osm_id": 7166366112,
+						"osm_key": "place",
+						"osm_value": "village",
+						"type": "city",
+						"name": "TONYO",
+						"county": "Butiama",
+						"state": "Mara Region",
+						"country": "Tanzania",
+						"countrycode": "TZ"
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							33.8881797,
+							-1.6241517
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "N",
+						"osm_id": 10202158005,
+						"osm_key": "place",
+						"osm_value": "village",
+						"type": "city",
+						"name": "Tokho",
+						"state": "Bududa",
+						"country": "Uganda",
+						"countrycode": "UG"
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							34.3528952,
+							1.0409456
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "N",
+						"osm_id": 11282231326,
+						"osm_key": "place",
+						"osm_value": "village",
+						"type": "city",
+						"name": "Tokpo",
+						"state": "Maritime Region",
+						"country": "Togo",
+						"countrycode": "TG"
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							1.6468897,
+							6.2967734
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "N",
+						"osm_id": 7562007427,
+						"osm_key": "place",
+						"osm_value": "village",
+						"type": "city",
+						"name": "Tokpo",
+						"state": "Plateaux Region",
+						"country": "Togo",
+						"countrycode": "TG"
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							1.0336885,
+							6.8684205
+						]
+					}
+				}
+			]
+		},
+		"tokyo|country": {
+			"q": "tokyo",
+			"layers": [
+				"country"
+			],
+			"bias": null,
+			"recordedAt": "2026-09-28T15:09:07.831Z",
+			"features": []
+		}
+	},
+	"reverse": {
+		"35.0037,135.7788": {
+			"lat": 35.0037,
+			"lon": 135.7788,
+			"recordedAt": "2026-09-28T15:09:07.831Z",
+			"features": [
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "W",
+						"osm_id": 328903340,
+						"osm_key": "building",
+						"osm_value": "yes",
+						"type": "house",
+						"name": "美容水",
+						"street": "Chion-in Street",
+						"locality": "Rinka-cho",
+						"district": "Higashiyama Ward",
+						"city": "Kyoto",
+						"state": "Kyoto Prefecture",
+						"country": "Japan",
+						"postcode": "605-0062",
+						"countrycode": "JP",
+						"extent": [
+							135.7789875,
+							35.0036625,
+							135.7790079,
+							35.0036464
+						]
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							135.7789977,
+							35.0036545
+						]
+					}
+				}
+			]
+		},
+		"35.6729,139.7678": {
+			"lat": 35.6729,
+			"lon": 139.7678,
+			"recordedAt": "2026-09-28T15:09:07.831Z",
+			"features": [
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "W",
+						"osm_id": 608331102,
+						"osm_key": "shop",
+						"osm_value": "stationery",
+						"type": "house",
+						"housenumber": "15",
+						"name": "Itoya",
+						"street": "7",
+						"locality": "Ginza 2",
+						"district": "Chuo",
+						"city": "Tokyo",
+						"state": "東京都",
+						"country": "Japan",
+						"postcode": "104-0061",
+						"countrycode": "JP",
+						"extent": [
+							139.7677284,
+							35.673013,
+							139.7679363,
+							35.672854
+						]
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							139.7678324,
+							35.6729335
+						]
+					}
+				}
+			]
+		},
+		"35.6739,139.7676": {
+			"lat": 35.6739,
+			"lon": 139.7676,
+			"recordedAt": "2026-09-28T15:09:07.831Z",
+			"features": [
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "W",
+						"osm_id": 95277526,
+						"osm_key": "highway",
+						"osm_value": "unclassified",
+						"type": "street",
+						"name": "Ginza Yanagi-dori Street",
+						"locality": "Ginza 1",
+						"district": "Chuo",
+						"city": "Tokyo",
+						"country": "Japan",
+						"postcode": "104-0061",
+						"countrycode": "JP",
+						"extent": [
+							139.7657008,
+							35.6751906,
+							139.7696097,
+							35.6725895
+						]
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							139.7676619,
+							35.6739186
+						]
+					}
+				}
+			]
+		},
+		"35.6941,139.7045": {
+			"lat": 35.6941,
+			"lon": 139.7045,
+			"recordedAt": "2026-09-28T15:09:07.831Z",
+			"features": [
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "N",
+						"osm_id": 14144934501,
+						"osm_key": "amenity",
+						"osm_value": "pub",
+						"type": "house",
+						"name": "Blue Dragon",
+						"street": "Akarui Hanazono Third Street",
+						"locality": "Shinjuku Golden Gai",
+						"district": "Shinjuku",
+						"city": "Tokyo",
+						"country": "Japan",
+						"postcode": "160-0021",
+						"countrycode": "JP"
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							139.704519,
+							35.694107
+						]
+					}
+				}
+			]
+		}
+	},
+	"empty": [
+		"^zzqxwv qqpl$",
+		"^omakase[0-9a-f]{6}x$",
+		"^kissa [0-9a-f]{4}$"
+	]
+}

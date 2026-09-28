@@ -75,6 +75,24 @@ beforeAll(async () => {
 				res.writeHead(200, { "content-type": "text/plain" });
 				res.end("made it");
 				return;
+			case "/stub": {
+				// The e2e link stub: answers for the host in ?u=.
+				const u = new URL(url.searchParams.get("u") ?? "");
+				if (u.hostname.endsWith(".invalid")) {
+					res.writeHead(502, { "x-stub-error": "ENOTFOUND" });
+					res.end();
+				} else if (u.pathname === "/start") {
+					res.writeHead(302, { location: "/next" });
+					res.end();
+				} else if (u.pathname === "/to-metadata") {
+					res.writeHead(302, { location: "http://169.254.169.254/" });
+					res.end();
+				} else {
+					res.writeHead(200, { "content-type": "text/plain" });
+					res.end(`stub for ${u.href}`);
+				}
+				return;
+			}
 			default:
 				res.writeHead(404);
 				res.end();
@@ -180,6 +198,29 @@ describe("safeFetch", () => {
 		await import("open-graph-scraper");
 		const r = await globalThis.fetch(`${base}/json-gzip`);
 		expect(await r.json()).toEqual({ ok: true, n: 42 });
+	});
+
+	it("e2e: asks the stub for every hop, with the same checks and no DNS", async () => {
+		const f = createSafeFetch(publicOnly, undefined, new URL(`${base}/stub`));
+		const r = await f("https://www.japan-guide.com/start");
+		expect(r.body.toString()).toBe("stub for https://www.japan-guide.com/next");
+		expect(r.finalUrl).toBe("https://www.japan-guide.com/next");
+		await expect(f("https://evil.invalid/x")).rejects.toThrow(
+			/fetch failed: ENOTFOUND/,
+		);
+		await expect(
+			f("https://www.japan-guide.com/to-metadata"),
+		).rejects.toMatchObject({
+			reason: "ip",
+		});
+		await expect(f("http://127.0.0.1/")).rejects.toMatchObject({
+			reason: "ip",
+		});
+		await expect(
+			f("https://www.japan-guide.com/start", {
+				allowHosts: ["www.tiktok.com"],
+			}),
+		).rejects.toMatchObject({ reason: "host-not-allowed" });
 	});
 
 	it("pins Node's global fetch to the HTTP/1.1 agent (h2 answers lost Content-Encoding)", async () => {

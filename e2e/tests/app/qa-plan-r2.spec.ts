@@ -12,6 +12,7 @@
  */
 import { type Browser, expect, type Page, test } from "@playwright/test";
 import { loginViaApi } from "./_helpers/auth";
+import { OFM_STYLES } from "./_helpers/egress";
 
 const TRIP = "asia-2027";
 const QA = {
@@ -90,7 +91,7 @@ test("TZ-08 guard: an editor has a zone picker on a place, a viewer sees it disa
 test("Rate guard: the mini-map uses the Yonder style, never the public OpenFreeMap style", async ({ page }) => {
 	const styles: string[] = [];
 	page.on("request", (r) => {
-		if (/openfreemap\.org\/styles\//.test(r.url())) styles.push(r.url());
+		if (OFM_STYLES.test(r.url())) styles.push(r.url());
 	});
 	await page.goto(`/t/${TRIP}/rate`);
 	await expect(activeCard(page)).toBeVisible({ timeout: 30_000 });

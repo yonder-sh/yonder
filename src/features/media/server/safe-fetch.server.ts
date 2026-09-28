@@ -22,6 +22,9 @@
  *   integration; `safe-fetch.test.ts` checks the pin). That's the worker's;
  *   the web server loads this only through `peek.server.ts`, which puts its
  *   own global fetch back.
+ * - e2e: with E2E_OUTBOUND_STUB (test switches only, `outbound-stub.server.ts`)
+ *   every hop is still checked as above, then asked of the local stub
+ *   (`<stub>?u=<url>`) instead of its host: no DNS, nothing leaves the machine.
  */
 import dns from "node:dns";
 import net from "node:net";
@@ -29,6 +32,7 @@ import type { Readable } from "node:stream";
 import zlib from "node:zlib";
 import ipaddr from "ipaddr.js";
 import { Agent, request, setGlobalDispatcher } from "undici";
+import { outboundStubUrl, viaStub } from "@/server/outbound-stub.server";
 
 /** See the module comment: Node's global fetch over HTTP/1.1 only. */
 export const NODE_FETCH_DISPATCHER = new Agent({ allowH2: false });
@@ -124,16 +128,24 @@ export type SafeFetcher = (
 /**
  * Builds a fetcher. `createSafeFetch()` (the default export `safeFetch`) only
  * dials public addresses; tests pass a policy and ports for a local server.
+ * `via` (e2e): the local stub that answers for every host (see the module comment).
  */
 export function createSafeFetch(
 	policy: AddressPolicy = publicOnly,
 	allowPorts: readonly string[] = ["", "80", "443"],
+	via: URL | null = null,
 ): SafeFetcher {
-	const agent = new Agent({
-		connect: { lookup: guardedLookup(policy), timeout: 5_000 },
-		headersTimeout: 8_000,
-		bodyTimeout: 8_000,
-	});
+	const agent = via
+		? new Agent({
+				connect: { timeout: 5_000 },
+				headersTimeout: 8_000,
+				bodyTimeout: 8_000,
+			})
+		: new Agent({
+				connect: { lookup: guardedLookup(policy), timeout: 5_000 },
+				headersTimeout: 8_000,
+				bodyTimeout: 8_000,
+			});
 	return async (raw, o = {}) => {
 		const maxBytes = o.maxBytes ?? 3 * 1024 * 1024;
 		const maxRedirects = o.maxRedirects ?? 3;
@@ -150,7 +162,7 @@ export function createSafeFetch(
 				throw bad("host-not-allowed");
 			let res: Awaited<ReturnType<typeof request>>;
 			try {
-				res = await request(u, {
+				res = await request(via ? viaStub(via, u.href) : u, {
 					dispatcher: agent,
 					method: "GET",
 					signal: deadline,
@@ -173,6 +185,11 @@ export function createSafeFetch(
 			for (const [k, v] of Object.entries(res.headers))
 				if (v !== undefined)
 					headers[k] = Array.isArray(v) ? v.join(", ") : String(v);
+			// The stub answering "no such host" (ENOTFOUND) or a refused connection.
+			if (via && headers["x-stub-error"]) {
+				await res.body.dump();
+				throw new Error(`fetch failed: ${headers["x-stub-error"]}`);
+			}
 			if (res.statusCode >= 300 && res.statusCode < 400 && headers.location) {
 				await res.body.dump();
 				try {
@@ -237,5 +254,9 @@ async function readDecoded(
 	return Buffer.concat(chunks);
 }
 
-/** The production fetcher: public addresses on ports 80/443 only. */
-export const safeFetch: SafeFetcher = createSafeFetch();
+/** The production fetcher: public addresses on ports 80/443 only (e2e: through the stub). */
+export const safeFetch: SafeFetcher = createSafeFetch(
+	publicOnly,
+	undefined,
+	outboundStubUrl(),
+);

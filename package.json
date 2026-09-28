@@ -36,6 +36,8 @@
     "e2e:fast": "tsx scripts/e2e-fast.ts",
     "e2e:smoke": "tsx scripts/e2e-fast.ts --smoke",
     "e2e:affected": "tsx scripts/e2e-fast.ts --affected",
+    "e2e:tiles:warm": "tsx scripts/e2e-fast.ts --record-map",
+    "e2e:photon:record": "tsx --env-file=.env scripts/e2e-record-photon.ts",
     "kit:baseline": "tsx scripts/kit-baseline.ts",
     "e2e:template": "tsx scripts/e2e-template.ts",
     "db:up": "docker compose up -d --wait postgres s3proxy redis",

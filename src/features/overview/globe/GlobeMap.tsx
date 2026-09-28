@@ -13,6 +13,7 @@ import { Map as MapGL, type MapRef } from "@vis.gl/react-maplibre";
 import type { Map as MaplibreMap, StyleSpecification } from "maplibre-gl";
 import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url";
 import { useEffect, useRef, useState } from "react";
+import { proxiedStyle } from "@/features/map/styles/proxy";
 import type { LngLat } from "@/lib/engine/geo";
 
 const mapLib = import("maplibre-gl");
@@ -71,7 +72,7 @@ function heroStyle(base: StyleSpecification): StyleSpecification {
 let styleOnce: Promise<StyleSpecification> | null = null;
 const loadStyle = () => {
 	styleOnce ??= import("@/features/map/styles/yonder-dark.json").then((m) =>
-		heroStyle(m.default as unknown as StyleSpecification),
+		heroStyle(proxiedStyle(m.default as unknown as StyleSpecification)),
 	);
 	return styleOnce;
 };

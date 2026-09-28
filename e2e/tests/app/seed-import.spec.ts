@@ -18,6 +18,7 @@ import { REPO_ROOT, shotPath, storageStateOf } from "./_helpers/env";
 import { collectConsole, expectLive, expectNoHorizontalOverflow } from "./_helpers/page";
 
 const exec = promisify(execFile);
+const PHOTON_STUBBED = /^http:\/\/(localhost|127\.0\.0\.1)[:/]/.test(process.env.PHOTON_URL ?? "");
 
 
 test.use({ storageState: storageStateOf("dev") });
@@ -73,6 +74,8 @@ const baseArgs = (project: string) => [
 	"-",
 	// Photos only once: the desktop project imports them, mobile skips the upload.
 	...(project === "mobile" ? ["--no-media"] : []),
+	// Its Photon fallback asks the e2e stub (e2e:fast's PHOTON_URL), never photon.komoot.io.
+	...(PHOTON_STUBBED ? [] : ["--no-geocode-fallback"]),
 ];
 
 test.beforeAll(async ({ browserName: _b }, info) => {

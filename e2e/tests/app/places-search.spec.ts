@@ -2,7 +2,8 @@
  * WP-Places acceptance (SPEC §18.3): the ⌘K palette with Photon (no Google
  * key in dev), the filing chip, Save to Ideas → a hollow pin, Schedule after
  * the selected item, `locate`, and the viewer checks on the provider
- * functions and the photo proxy. Photon is live, so these search real OSM data.
+ * functions and the photo proxy. Photon answers real OSM data: in e2e:fast,
+ * recorded once in e2e/stubs/fixtures/photon.json (pnpm e2e:photon:record).
  */
 import { expect, type Page, test } from "@playwright/test";
 import { PLACES_TESTID as P } from "../../../src/features/places/testids";

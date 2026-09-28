@@ -26,6 +26,7 @@ import { PLACES_TAB_TESTID as PT } from "../../../src/features/places/tab/testid
 import { PLACES_TESTID as P } from "../../../src/features/places/testids";
 import { TESTID } from "../../../src/lib/testids";
 import { loginViaApi } from "./_helpers/auth";
+import { OFM_STYLES } from "./_helpers/egress";
 
 const TRIP = "asia-2027";
 
@@ -206,7 +207,7 @@ test("A11Y-01: named selects in the place inspector; a clean, image-only mini-ma
 	});
 	const styleUrls: string[] = [];
 	page.on("request", (r) => {
-		if (/tiles\.openfreemap\.org\/styles\//.test(r.url())) styleUrls.push(r.url());
+		if (OFM_STYLES.test(r.url())) styleUrls.push(r.url());
 	});
 	const sky = await nodeId(page, "Shibuya Sky");
 	for (const scheme of ["light", "dark"] as const) {
