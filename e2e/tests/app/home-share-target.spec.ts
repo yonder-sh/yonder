@@ -39,7 +39,13 @@ test("a pasted Maps link becomes an idea filed under its city, with one tap", as
 	await page.getByRole("button", { name: "Use" }).click();
 	await expect(page.getByTestId(HOME_TESTID.shareName)).toHaveValue(name);
 	await expect(page.getByTestId(HOME_TESTID.shareSave)).toBeEnabled();
-	await expect(page.getByTestId(TESTID.shareInbox)).toContainText("in Kyoto");
+	// No provider knows the name: the pin is filed by its spot's address,
+	// Photon's reverse geocode (Kyoto › Higashiyama Ward › Rinka-cho), under
+	// Kyoto in a new neighbourhood. ("in Kyoto" alone is only the guess shown
+	// while that answer is on its way.)
+	await expect(page.getByTestId(TESTID.shareInbox)).toContainText(
+		"in Rinka-cho (new)",
+	);
 	await expectNoHorizontalOverflow(page);
 	await page.screenshot({
 		path: shotPath(`home/share-inbox-${mobile ? "mobile" : "desktop"}.png`),
@@ -48,30 +54,32 @@ test("a pasted Maps link becomes an idea filed under its city, with one tap", as
 	if (mobile) return;
 	await page.getByTestId(HOME_TESTID.shareSave).click();
 	await expect(page.getByTestId(TESTID.shareInbox)).toContainText(
-		"Saved to Kyoto ideas",
+		"Saved to Rinka-cho ideas",
 		{ timeout: 15_000 },
 	);
 	await page.screenshot({
 		path: shotPath("home/share-inbox-saved-desktop.png"),
 		animations: "disabled",
 	});
-	// The idea is in the trip, located, under Kyoto.
+	// The idea is in the trip, located, under Kyoto's new Rinka-cho.
 	await page.getByRole("link", { name: "Open in trip" }).click();
 	await expect(page.getByTestId(TESTID.workspace)).toBeVisible();
-	const idea = await page.evaluate(
-		(n) =>
+	const nodes = await page.evaluate(
+		() =>
 			(
 				window as unknown as {
 					__yonder?: {
 						graph: {
-							nodes: { name: string; parentId: string | null; lat: number | null }[];
+							nodes: { id: string; name: string; parentId: string | null; lat: number | null }[];
 						};
 					};
 				}
-			).__yonder?.graph.nodes.find((x) => x.name === n),
-		name,
+			).__yonder?.graph.nodes ?? [],
 	);
-	expect(idea?.parentId).toBe(c.ids.nodes.kyoto);
+	const idea = nodes.find((x) => x.name === name);
+	const area = nodes.find((x) => x.id === idea?.parentId);
+	expect(area?.name).toBe("Rinka-cho");
+	expect(area?.parentId).toBe(c.ids.nodes.kyoto);
 	expect(idea?.lat).toBeCloseTo(35.0037, 3);
 });
 
