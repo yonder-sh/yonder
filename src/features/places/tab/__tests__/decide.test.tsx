@@ -203,6 +203,8 @@ describe("Mark decided (D08)", () => {
 				nodeId: N.kyoto,
 				decided: true,
 				at: "2026-09-10T00:00:00.000Z",
+				// The earlier mark's author, kept by the undo.
+				by: "user-dennis",
 			}),
 		);
 	});
