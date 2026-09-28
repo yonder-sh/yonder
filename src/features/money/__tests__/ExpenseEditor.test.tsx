@@ -10,7 +10,13 @@ import { QueryClient } from "@tanstack/react-query";
 import { act, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { DEMO_MEMBERS, demo, N, scenario } from "@/lib/fixtures/demo";
+import {
+	DEMO_MEMBERS,
+	demo,
+	demoGraph,
+	N,
+	scenario,
+} from "@/lib/fixtures/demo";
 import { TESTID } from "@/lib/testids";
 import { type AddExpenseRequest, useUi } from "@/lib/workspace/ui-store";
 import { renderWithWorkspace } from "@/test/render-workspace";
@@ -40,7 +46,7 @@ const { dennis, audrey } = DEMO_MEMBERS;
 const tokyo = { target: { kind: "node", nodeId: N.tokyo ?? "" } } as const;
 
 /** Opens the editor (in Tokyo: yen); ¥150 to the dollar, so ¥9,000 ≈ $60.00. */
-async function open(req: AddExpenseRequest = tokyo) {
+async function open(req: AddExpenseRequest = tokyo, graph = demoGraph) {
 	const queryClient = new QueryClient({
 		defaultOptions: { queries: { retry: false } },
 	});
@@ -48,7 +54,7 @@ async function open(req: AddExpenseRequest = tokyo) {
 		...scenario.money,
 		latestRates: { JPY: 150 },
 	} satisfies MoneyDto);
-	renderWithWorkspace(<AddExpenseDialog />, { queryClient });
+	renderWithWorkspace(<AddExpenseDialog />, { queryClient, graph });
 	act(() => useUi.getState().openAddExpense(req));
 	const dialog = await screen.findByTestId(TESTID.addExpenseDialog);
 	return { dialog, d: within(dialog), user: userEvent.setup() };
@@ -377,6 +383,75 @@ describe("Add an expense (P13)", () => {
 		expect(d.getByTestId(M.refund)).toBeTruthy();
 		expect(d.getByTestId(M.delete)).toBeTruthy();
 		expect(d.getByTestId(M.save).textContent).toBe("Save");
+	});
+
+	it("a viewer reads an expense: every field disabled, More and × still work", async () => {
+		const kiyomizu = scenario.money.expenses[0];
+		const { dialog, d, user } = await open(
+			{ expenseId: kiyomizu?.id ?? "" },
+			{ ...demoGraph, me: { ...demoGraph.me, role: "viewer" as const } },
+		);
+		expect(d.getByTestId(M.amount)).toBeDisabled();
+		expect(d.getByTestId(M.title)).toBeDisabled();
+		for (const pill of pills(dialog, M.splitPerson))
+			expect(pill).toBeDisabled();
+		expect(d.getByTestId(M.when)).toBeDisabled();
+		expect(d.getByTestId(M.place)).toBeDisabled();
+		expect(d.queryByTestId(M.save)).toBeNull();
+		expect(d.queryByTestId(M.delete)).toBeNull();
+		await user.click(d.getByTestId(M.more));
+		expect(d.getByTestId(M.category)).toBeDisabled();
+		expect(d.getByLabelText("Note")).toBeDisabled();
+		await user.click(d.getByTestId(M.close));
+		await waitFor(() =>
+			expect(screen.queryByTestId(TESTID.addExpenseDialog)).toBeNull(),
+		);
+	});
+
+	it("a refund: Refunded to, split back like the original, Add refund", async () => {
+		const kiyomizu = scenario.money.expenses[0];
+		const { dialog, d, user } = await open({ refundOfId: kiyomizu?.id ?? "" });
+		expect(
+			d.getByRole("heading", { name: "Refund · Kiyomizu-dera tickets" }),
+		).toBeTruthy();
+		expect(d.getByTestId(M.payer).textContent).toContain("Refunded to");
+		expect(pressed(pills(dialog, M.payerPerson))).toEqual([dennis]);
+		expect(d.queryByTestId(M.splitPerson)).toBeNull();
+		expect(d.getByText("Split back like the original.")).toBeTruthy();
+		expect(d.getByTestId(M.when).getAttribute("aria-label")).toBe(
+			"Received on: Tue 5 Oct",
+		);
+		expect(d.getByTestId(M.more).textContent).toBe("More");
+		await user.type(d.getByTestId(M.amount), "400");
+		expect(d.getByTestId(M.save).textContent).toBe("Add refund");
+		await user.click(d.getByTestId(M.save));
+		await waitFor(() => expect(created()).toHaveLength(1));
+		expect(created()[0]).toMatchObject({
+			refundOfId: kiyomizu?.id,
+			amountMinor: -400,
+			currency: "JPY",
+		});
+		expect(created()[0]?.split).toBeUndefined();
+		expect(firstPayment()?.payers).toEqual([
+			{ memberId: dennis, amountMinor: -400 },
+		]);
+	});
+
+	it("a planned expense's expected date clears to No date", async () => {
+		const { dialog, d, user } = await open({
+			target: { kind: "day", dayId: demo.D.d4 ?? "" },
+		});
+		await user.type(d.getByTestId(M.amount), "1200");
+		// Tapping the picked payer again: not paid yet, expected on its day.
+		await user.click(pills(dialog, M.payerPerson)[0] as HTMLElement);
+		expect(d.getByTestId(M.when).textContent).toBe("Expected Wed 6 Oct");
+		await user.click(d.getByTestId(M.when));
+		await user.click(await screen.findByRole("button", { name: "No date" }));
+		expect(d.getByTestId(M.when).textContent).toBe("No date");
+		await user.click(d.getByTestId(M.save));
+		await waitFor(() => expect(created()).toHaveLength(1));
+		expect(created()[0]?.expectedOn).toBeUndefined();
+		expect(created()[0]?.payments).toEqual([]);
 	});
 
 	it("PersonSelect opens from a given trigger (Paid by's + Person)", async () => {
