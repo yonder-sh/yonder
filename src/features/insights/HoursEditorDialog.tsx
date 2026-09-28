@@ -364,9 +364,8 @@ function EditorBody({
 									}
 								>
 									<SelectTrigger
-										size="sm"
 										aria-label="Which week"
-										className="h-8 w-[4.75rem]"
+										className="w-[4.75rem]"
 									>
 										<SelectValue />
 									</SelectTrigger>
@@ -386,11 +385,7 @@ function EditorBody({
 										})
 									}
 								>
-									<SelectTrigger
-										size="sm"
-										aria-label="Weekday"
-										className="h-8 w-[4.75rem]"
-									>
+									<SelectTrigger aria-label="Weekday" className="w-[4.75rem]">
 										<SelectValue />
 									</SelectTrigger>
 									<SelectContent>
@@ -418,10 +413,9 @@ function EditorBody({
 								onClick={() =>
 									update((d) => void d.closedNth.push({ day: 2, nth: 2 }))
 								}
-								className="h-7 w-fit gap-1 px-2 text-xs text-muted-foreground"
+								className="w-fit text-muted-foreground"
 							>
-								<Plus className="size-3.5" /> Also closed on a certain week (2nd
-								Tue…)
+								<Plus /> Also closed on a certain week (2nd Tue…)
 							</Button>
 						) : null}
 					</div>
@@ -448,7 +442,7 @@ function EditorBody({
 								size="sm"
 								aria-pressed={showLast}
 								onClick={() => setShowLast((v) => !v)}
-								className="ml-auto h-7 px-2 text-xs text-muted-foreground"
+								className="ml-auto text-muted-foreground"
 							>
 								{showLast ? "Hide per-day times" : "Or a time per day"}
 							</Button>
@@ -475,7 +469,6 @@ function EditorBody({
 							})
 						}
 						placeholder="Cash only · kitchen closes 30 min earlier"
-						className="h-9"
 					/>
 				</div>
 			</div>
@@ -483,13 +476,12 @@ function EditorBody({
 				{stored ? (
 					<Button
 						variant="ghost"
-						size="sm"
 						data-testid={INSIGHTS_TESTID.hoursEditorRemove}
 						disabled={guard.disabled || save.isPending}
 						onClick={remove}
-						className="h-8 gap-1 px-2 text-muted-foreground hover:text-destructive"
+						className="text-muted-foreground hover:text-destructive"
 					>
-						<Trash2 className="size-3.5" /> Remove
+						<Trash2 /> Remove
 					</Button>
 				) : null}
 				{error ? (
@@ -503,16 +495,14 @@ function EditorBody({
 				) : (
 					<span className="flex-1" />
 				)}
-				<Button variant="ghost" size="sm" className="h-8" onClick={onClose}>
+				<Button variant="ghost" onClick={onClose}>
 					Cancel
 				</Button>
 				<Button
-					size="sm"
 					data-testid={INSIGHTS_TESTID.hoursEditorSave}
 					disabled={guard.disabled || save.isPending}
 					title={guard.reason ?? undefined}
 					onClick={submit}
-					className="h-8 px-4"
 				>
 					{save.isPending
 						? "Saving…"
@@ -552,9 +542,9 @@ function WeeklyEditor({
 								d.days[day] = structuredClone(mon);
 						})
 					}
-					className="h-7 gap-1 px-2 text-xs text-muted-foreground"
+					className="text-muted-foreground"
 				>
-					<Copy className="size-3.5" /> Copy Mon to weekdays
+					<Copy /> Copy Mon to weekdays
 				</Button>
 			</div>
 			<div
@@ -632,10 +622,9 @@ function DayRow({
 					}
 				>
 					<SelectTrigger
-						size="sm"
 						data-testid={INSIGHTS_TESTID.hoursEditorDayState}
 						aria-label={`${WEEKDAY_SHORT[day]}: open or closed`}
-						className="h-8 w-[5.25rem] text-xs"
+						className="w-[5.25rem] text-xs"
 					>
 						<SelectValue />
 					</SelectTrigger>
@@ -766,7 +755,7 @@ function ClockField({
 				if (n && n !== value) onChange(n);
 			}}
 			className={cn(
-				"h-8 w-[4.25rem] px-2 text-center text-meta tnum",
+				"w-[4.25rem] px-2 text-center text-meta tnum",
 				muted &&
 					"text-muted-foreground placeholder:font-sans placeholder:text-xs",
 			)}
@@ -786,16 +775,18 @@ function IconButton({
 	testId?: string;
 }) {
 	return (
-		<button
+		<Button
 			type="button"
+			variant="ghost"
+			size="icon"
 			aria-label={label}
 			title={label}
 			data-testid={testId}
 			onClick={onClick}
-			className="inline-flex size-8 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+			className="text-muted-foreground"
 		>
 			{children}
-		</button>
+		</Button>
 	);
 }
 
@@ -906,9 +897,9 @@ function ExceptionsEditor({
 								}),
 						)
 					}
-					className="h-7 w-fit gap-1 px-2 text-xs text-muted-foreground"
+					className="w-fit text-muted-foreground"
 				>
-					<Plus className="size-3.5" /> Add a date
+					<Plus /> Add a date
 				</Button>
 			) : null}
 		</div>

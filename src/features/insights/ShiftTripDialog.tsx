@@ -224,9 +224,9 @@ function ShiftBody({ onClose }: { onClose: () => void }) {
 							data-testid={INSIGHTS_TESTID.shiftMinus}
 							disabled={delta <= -MAX_STEP}
 							onClick={() => step(-1)}
-							className="size-8 rounded-full"
+							className="rounded-full"
 						>
-							<Minus className="size-4" />
+							<Minus />
 						</Button>
 						<output
 							data-testid={INSIGHTS_TESTID.shiftDelta}
@@ -246,9 +246,9 @@ function ShiftBody({ onClose }: { onClose: () => void }) {
 							data-testid={INSIGHTS_TESTID.shiftPlus}
 							disabled={delta >= MAX_STEP}
 							onClick={() => step(1)}
-							className="size-8 rounded-full"
+							className="rounded-full"
 						>
-							<Plus className="size-4" />
+							<Plus />
 						</Button>
 					</div>
 					{day1 ? (
@@ -258,7 +258,7 @@ function ShiftBody({ onClose }: { onClose: () => void }) {
 									variant="ghost"
 									size="sm"
 									data-testid={INSIGHTS_TESTID.shiftDay1}
-									className="h-8 gap-1.5 px-2 text-meta text-muted-foreground hover:text-foreground"
+									className="text-muted-foreground hover:text-foreground"
 								>
 									<CalendarDays className="size-4" strokeWidth={1.75} />
 									Shift so Day 1 is…
@@ -352,23 +352,21 @@ function ShiftBody({ onClose }: { onClose: () => void }) {
 				{draft ? (
 					<Button
 						variant="ghost"
-						size="sm"
 						data-testid={INSIGHTS_TESTID.shiftDiscard}
 						onClick={() => {
 							setDraft(null);
 							onClose();
 						}}
-						className="h-8 px-2 text-muted-foreground"
+						className="text-muted-foreground"
 					>
 						Discard what-if
 					</Button>
 				) : null}
 				<span className="flex-1" />
-				<Button variant="ghost" size="sm" className="h-8" onClick={onClose}>
+				<Button variant="ghost" onClick={onClose}>
 					{draft ? "Keep exploring" : "Close"}
 				</Button>
 				<Button
-					size="sm"
 					data-testid={INSIGHTS_TESTID.shiftApply}
 					disabled={
 						guard.disabled ||
@@ -379,7 +377,7 @@ function ShiftBody({ onClose }: { onClose: () => void }) {
 					}
 					title={guard.reason ?? blockedBy ?? undefined}
 					onClick={apply}
-					className="h-8 px-4 max-sm:h-10 max-sm:w-full"
+					className="max-sm:w-full"
 				>
 					{shift.isPending
 						? "Shifting…"
