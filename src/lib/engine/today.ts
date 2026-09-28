@@ -1,28 +1,38 @@
 /**
  * Today (One Yonder phase 5, flow 10 "Today, on the road"): the day as it is
- * lived, not as planned. It follows your pace, not the clock. Pure: the graph
- * index, the schedule, a day and "now" in; plain data out.
+ * lived. It follows the plan by the clock until a Done says otherwise, then
+ * your pace. Pure: the graph index, the schedule, a day and "now" in; plain
+ * data out.
  *
- * - Done stops end when they were marked Done. A stop that isn't Done keeps
- *   you there until now, even past its planned end (you're still there).
+ * - No Done yet today: the plan by the clock. The stop planned for now is
+ *   Now, stops whose time is over are passed, times are the planned ones;
+ *   no pace, and no risk from lateness nobody reported.
+ * - After a Done, the rest re-times from the last one: each stop starts at
+ *   the previous one's actual end plus the schedule's travel between them
+ *   (never re-routed). Flexible stops flow as soon as possible; fixed ones
+ *   hold their time: a start time, or the arrival of a timed departure (a
+ *   flight, a train). Stops before the last Done that aren't Done are passed.
+ * - A stop not marked Done runs over until now, but only for
+ *   `OVERRUN_MAX_MIN` past its re-timed end. Past that, the tap was likely
+ *   forgotten: "Still at Yodobashi Camera?" (`checkIn`), and the rest follows
+ *   the plan by the clock again.
  * - A custom stop with no place and no start time ("Dinner") floats: it
- *   keeps its time in the flow, but it's never Now; it's Next "whenever you
- *   like" until it's Done.
- * - The rest re-times from there: each stop starts at the previous one's
- *   actual end plus the schedule's travel between them (never re-routed).
- *   Flexible stops flow as soon as possible; fixed ones hold their time: a
- *   start time, or the arrival of a timed departure (a flight, a train).
+ *   keeps its time in the flow but never holds the day. It's never Now; it's
+ *   Next "whenever you like" until the stop after it is due (a fixed one's
+ *   leave-by, else when you'd set off for it), then it's passed, having
+ *   taken no time past that. The day's last one waits for its Done.
  * - Pace: the next stop's re-timed arrival against the plan's (the next one
- *   with a place or a time: a floating stop has none to keep).
+ *   with a place or a time: a floating stop has none to keep); none while
+ *   following the plan.
  * - Risks: a fixed stop or departure the flow reaches late, or with little
  *   room left (within `PACE_MIN` of the plan's own is on time), with up to
  *   two fixes: shorten the longest flexible stop before it, skip the nearest
  *   place.
- * - Free time: room before the next fixed stop, less the stops with a place
- *   before it (a floating stop's time is part of it) and never more than
- *   what's left until you leave, when that stop isn't at risk; and the ideas
- *   nearby that fit it (open then, a short walk away, the group's
- *   favourites first).
+ * - Free time: time you can use now. From now (or the end of the stop you're
+ *   at, when that's within `FREE_SOON_MIN`) until you leave for the next
+ *   fixed stop, with only floating stops in between and that stop not at
+ *   risk; at least `FREE_MIN`. With the ideas nearby that fit it (open then,
+ *   a short walk away, the group's favourites first).
  *
  * `todayDayId` picks the day being lived; `computeToday` builds the view;
  * `stopHere` is "Looks like you're at Bic Camera?".
@@ -57,6 +67,14 @@ export const PACE_MIN = 5;
 export const TIGHT_MIN = 15;
 /** Room before a fixed stop that counts as free time. */
 export const FREE_MIN = 30;
+/** Free time starts at the end of the stop you're at when that's at most this far off. */
+export const FREE_SOON_MIN = 10;
+/**
+ * A stop not marked Done runs over by at most this much (three quarter-hours:
+ * a queue or a long lunch fits); past it the Done was likely forgotten, so a
+ * missed tap never reads as more than this much late.
+ */
+export const OVERRUN_MAX_MIN = 45;
 /** Ideas at most this many minutes' walk away. */
 export const IDEA_WALK_MIN = 15;
 /** A shortened stop keeps at least this long. */
@@ -95,13 +113,13 @@ export interface TodayStop {
 	name: string;
 	/** The stop's zone (format times in it). */
 	tz: string;
-	/** Re-timed from now. Done stops end at `doneAt`. */
+	/** Re-timed from the last Done (as planned while following the plan). Done stops end at `doneAt`. */
 	start: number;
 	end: number;
 	/** As planned (the schedule). */
 	plannedStart: number;
 	plannedEnd: number;
-	/** When the re-timed flow gets you there: after `start` only for a fixed stop reached late. */
+	/** When the flow gets you there: after `start` only for a fixed stop reached late ("you'd arrive 20:25"). */
 	arrive: number;
 	/** Leave the stop before by this: "Leave by 09:20" (`start` minus the travel). */
 	leaveBy: number;
@@ -110,7 +128,7 @@ export interface TodayStop {
 	mode: LegMode | null;
 	/** Holds its time: a set start time, or the arrival of a timed departure. */
 	fixed: boolean;
-	/** No place and no start time ("Dinner"): Next whenever you like, never Now. */
+	/** No place and no start time ("Dinner"): Next whenever you like, never Now, never holds the day. */
 	floating: boolean;
 	/** "Booked for this date". */
 	booked: boolean;
@@ -175,7 +193,7 @@ export interface TodayLeave {
 /** "2 h 40 free before 19:50": a floating stop's time is part of it. */
 export interface TodayFree extends TodayLeave {
 	minutes: number;
-	/** When it starts (the stops with a place before are over). */
+	/** When it starts: now, or soon, when the stop you're at ends. */
 	from: number;
 }
 
@@ -221,7 +239,7 @@ export interface TodayView {
 	now: number;
 	/** Marked Done, in plan order. */
 	done: TodayStop[];
-	/** Not Done, but a later stop is: passed over, out of the flow. */
+	/** Not Done, and out of the flow: a later stop is Done, its time is over by the plan, a floating stop whose moment went, or `checkIn`. In plan order. */
 	passed: TodayStop[];
 	/** Now: the first stop not Done that has started and you've reached ("Now · since 14:40": its `start`, or `arrive` when later); never a floating one. */
 	current: TodayStop | null;
@@ -233,11 +251,14 @@ export interface TodayView {
 	starting: boolean;
 	/** Nothing left today: see `tomorrow`. */
 	ended: boolean;
-	pace: TodayPace;
+	/** Null while following the plan by the clock (no Done yet, or since `checkIn`): nothing to measure. */
+	pace: TodayPace | null;
+	/** "Still at Yodobashi Camera?": the stop after the last Done ran more than `OVERRUN_MAX_MIN` past its re-timed end, so its Done was likely forgotten. */
+	checkIn: TodayStop | null;
 	risks: TodayRisk[];
 	/** The next fixed stop or departure after Now, and when to leave for it; null when a stop with a place comes first. */
 	leave: TodayLeave | null;
-	/** Room before it (at least `FREE_MIN`), else null. */
+	/** Time you can use now before leaving for it (at least `FREE_MIN`, nothing with a place to do first), else null. */
 	free: TodayFree | null;
 	/** Up to three ideas for the free time (empty without it). */
 	ideas: TodayIdea[];
@@ -499,14 +520,10 @@ export function computeToday(
 		if (doneMs(it) !== null) lastDone = i;
 	});
 
-	const done: TodayStop[] = [];
-	const passed: TodayStop[] = [];
-	const rows: Row[] = [];
-	/** The actual end of the stop before, in the flow (null before the first). */
-	let cursor: number | null = null;
-	for (const [i, it] of list.entries()) {
+	/** The day's stops with what the flow needs. */
+	const plan = list.flatMap((it, i) => {
 		const s = schedule.items[it.id];
-		if (!s) continue;
+		if (!s) return [];
 		const t = travelInto(ix, schedule, dayId, it, midnight);
 		const plannedStart = s.start.getTime();
 		const plannedEnd = s.end.getTime();
@@ -535,16 +552,55 @@ export function computeToday(
 			booked: it.fixedDate === true,
 			departure: t.departure,
 		};
+		return [
+			{ it, i, s, t, fixed, floating, plannedArriveHere, plannedBefore, base },
+		];
+	});
+	type Entry = (typeof plan)[number];
+	/** Leave the stop before by this: its departure's be-there-by, else `start` less the travel. */
+	const leaveByOf = (x: Entry, start: number) =>
+		x.t.departure ? x.t.departure.readyBy : start - x.t.minutes * MS_PER_MINUTE;
+	/**
+	 * When the stop after the floating one at `k` (ending at `end`) is due: a
+	 * fixed one's leave-by; else the floating one's end, when the next starts
+	 * or you leave for it (while following the plan: its planned leave-by).
+	 * Null when none follows: the day's last floating stop waits for its Done.
+	 */
+	const dueAfter = (k: number, end: number, paced: boolean) => {
+		const x = plan[k + 1];
+		if (!x) return null;
+		return x.fixed || (!paced && !x.floating)
+			? leaveByOf(x, x.base.plannedStart)
+			: end;
+	};
+
+	const done: TodayStop[] = [];
+	const passed: TodayStop[] = [];
+	const rows: Row[] = [];
+	/** Following your pace from the last Done; else the plan by the clock. */
+	let paced = lastDone >= 0;
+	let checkIn: TodayStop | null = null;
+	/** The end of the stop before (the actual one while `paced`); null before the first. */
+	let cursor: number | null = null;
+	for (const [k, x] of plan.entries()) {
+		const { it, i, t, fixed, base } = x;
+		const { plannedStart, plannedEnd } = base;
+		const stopAt = (start: number, end: number, arrive: number): TodayStop => ({
+			...base,
+			start,
+			end,
+			arrive,
+			leaveBy: leaveByOf(x, start),
+			doneAt: null,
+			doneBy: null,
+		});
 		const at = doneMs(it);
 		if (at !== null) {
 			const flow =
 				cursor === null ? plannedStart : cursor + t.minutes * MS_PER_MINUTE;
 			const start = Math.min(fixed ? plannedStart : flow, at);
 			done.push({
-				...base,
-				start,
-				end: at,
-				arrive: start,
+				...stopAt(start, at, start),
 				leaveBy: start - t.minutes * MS_PER_MINUTE,
 				doneAt: at,
 				doneBy: it.doneBy ?? null,
@@ -553,53 +609,58 @@ export function computeToday(
 			continue;
 		}
 		if (i < lastDone) {
-			passed.push({
-				...base,
-				start: plannedStart,
-				end: plannedEnd,
-				arrive: plannedStart,
-				leaveBy: plannedStart - t.minutes * MS_PER_MINUTE,
-				doneAt: null,
-				doneBy: null,
-			});
+			passed.push(stopAt(plannedStart, plannedEnd, plannedStart));
 			continue;
 		}
-		// A departure is reached when the stop before it ends; the train or flight brings you here.
-		const flowArrive: number = t.departure
-			? (cursor ?? plannedBefore ?? t.departure.readyBy)
-			: cursor === null
-				? plannedArriveHere
-				: cursor + t.minutes * MS_PER_MINUTE;
 		const plannedArrive = t.departure
-			? (plannedBefore ?? t.departure.readyBy)
-			: plannedArriveHere;
-		const arrive: number = t.held ? plannedStart : flowArrive;
-		const start = fixed ? plannedStart : arrive;
-		let end: number = fixed
+			? (x.plannedBefore ?? t.departure.readyBy)
+			: x.plannedArriveHere;
+		// A departure is reached when the stop before it ends; the train or flight brings you here.
+		const flowArrive =
+			paced && cursor !== null
+				? cursor + (t.departure ? 0 : t.minutes * MS_PER_MINUTE)
+				: plannedArrive;
+		const arrive = t.held ? plannedStart : flowArrive;
+		const start = fixed || !paced ? plannedStart : arrive;
+		let end = fixed
 			? Math.max(plannedEnd, arrive)
 			: start + (plannedEnd - plannedStart);
-		// Not Done yet: you're still there.
-		if (start <= now && end < now) end = now;
+		if (x.floating) {
+			const due = dueAfter(k, end, paced);
+			if (due !== null && due <= now) {
+				// Its moment went: passed, having taken no time past it.
+				end = Math.max(start, Math.min(end, due));
+				passed.push(stopAt(start, end, arrive));
+				cursor = end;
+				continue;
+			}
+		} else if (!paced && end <= now) {
+			// Over, by the plan.
+			passed.push(stopAt(start, end, arrive));
+			cursor = end;
+			continue;
+		} else if (paced && Math.max(start, arrive) <= now && end < now) {
+			if (now - end > OVERRUN_MAX_MIN * MS_PER_MINUTE) {
+				// Its Done was likely forgotten: ask, and follow the plan from here.
+				checkIn = stopAt(start, end, arrive);
+				passed.push(checkIn);
+				paced = false;
+				cursor = end;
+				continue;
+			}
+			// Not Done yet: you're still there.
+			end = now;
+		}
 		cursor = end;
 		rows.push({
-			stop: {
-				...base,
-				start,
-				end,
-				arrive,
-				leaveBy: t.departure
-					? t.departure.readyBy
-					: start - t.minutes * MS_PER_MINUTE,
-				doneAt: null,
-				doneBy: null,
-			},
+			stop: stopAt(start, end, arrive),
 			index: i,
 			item: it,
 			flowArrive,
 			plannedArrive,
 			target: t.departure
 				? t.departure.readyBy
-				: s.pinned
+				: x.s.pinned
 					? plannedStart
 					: null,
 		});
@@ -614,11 +675,14 @@ export function computeToday(
 	const current = currentAt >= 0 ? rows[currentAt] : undefined;
 	const nextRow = rows[currentAt + 1];
 
-	// ---- pace --------------------------------------------------------------
-	const paced = rows.slice(currentAt + 1).find((r) => !r.stop.floating);
-	const drift = paced ? round(paced.flowArrive - paced.plannedArrive) : 0;
-	const pace: TodayPace =
-		drift >= PACE_MIN
+	// ---- pace (none while following the plan) -----------------------------------
+	const measured = rows.slice(currentAt + 1).find((r) => !r.stop.floating);
+	const drift = measured
+		? round(measured.flowArrive - measured.plannedArrive)
+		: 0;
+	const pace: TodayPace | null = !paced
+		? null
+		: drift >= PACE_MIN
 			? { kind: "behind", minutes: drift }
 			: drift <= -PACE_MIN
 				? { kind: "ahead", minutes: -drift }
@@ -827,31 +891,20 @@ export function computeToday(
 			currentAt + 1,
 			first.row ? rows.indexOf(first.row) : rows.length,
 		);
-		if (between.every((r) => r.stop.floating)) leave = next;
-		const spare = round(first.at - first.arrive);
-		// A floating stop happens in the free time: what's left of it counts.
-		// Never more than what's left before you leave (a Done a while ago).
-		const minutes = Math.min(
-			round(next.before - now),
-			first.before.reduce(
-				(m, r) =>
-					r.stop.floating
-						? m + round(r.stop.end - Math.max(r.stop.start, now))
-						: m,
-				spare,
-			),
-		);
-		if (spare >= 0 && !risky.has(first) && minutes >= FREE_MIN) {
-			// It starts once the stops with a place before it are over.
-			const placed = first.before.filter((r) => !r.stop.floating).at(-1);
-			free = {
-				...next,
-				minutes,
-				from: Math.max(
-					now,
-					placed ? placed.stop.end : next.before - minutes * MS_PER_MINUTE,
-				),
-			};
+		const clear = between.every((r) => r.stop.floating);
+		if (clear) leave = next;
+		// Time you can use now: from now, or soon when the stop you're at ends,
+		// with only floating stops (they happen in it) before you leave.
+		const from = Math.max(now, current?.stop.end ?? now);
+		const minutes = round(next.before - from);
+		if (
+			clear &&
+			from - now <= FREE_SOON_MIN * MS_PER_MINUTE &&
+			round(first.at - first.arrive) >= 0 &&
+			!risky.has(first) &&
+			minutes >= FREE_MIN
+		) {
+			free = { ...next, minutes, from };
 			// Where you'll be: here, else the last place before it.
 			const prev = first.row ? list[first.row.index - 1] : list.at(-1);
 			const where =
@@ -868,7 +921,7 @@ export function computeToday(
 					ix,
 					point,
 					opts.here ? null : scope,
-					Math.max(now, free.from),
+					from,
 					minutes,
 					onToday,
 					opts,
@@ -937,6 +990,7 @@ export function computeToday(
 		starting: !done.length && !passed.length && !current,
 		ended,
 		pace,
+		checkIn,
 		risks,
 		leave,
 		free,

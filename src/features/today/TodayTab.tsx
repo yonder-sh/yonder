@@ -1,13 +1,15 @@
 /**
  * Today, on the road (One Yonder phase 5, flow 10; boards P15–P18): during
  * the trip it takes the Overview's place (a follower lands on the Overview,
- * flow 11). It follows your pace, not the clock (`computeToday`): Now with
- * Done, Next with when to leave, Directions and the driver's Address, what's
- * at risk with a fix when you run late, the free time and ideas nearby when
- * you run early, the rest of the day re-timed from now, and where you sleep
- * tonight. A stop with no place and no start time is Next "whenever you
- * like", with its own Done when nothing is Now. Tapping a stop opens its
- * details. Raters, viewers and link guests see it without buttons.
+ * flow 11). It follows the plan by the clock until someone taps Done, then
+ * your pace (`computeToday`): Now with Done (before the first Done, a quiet
+ * line on what it does), Next with when to leave, Directions and the
+ * driver's Address, what's at risk with a fix when you run late, the free
+ * time and ideas nearby, the rest of the day in time order, and where you
+ * sleep tonight. A stop with no place and no start time is Next "whenever
+ * you like", with its own Done when nothing is Now. A stop well past its
+ * time without a Done asks "Still at …?". Tapping a stop opens its details.
+ * Raters, viewers and link guests see it without buttons.
  *
  * - The first stop of the day, the end of it and a day without stops are
  *   their own simple states.
@@ -57,6 +59,7 @@ import {
 } from "./lib/directions";
 import {
 	fixLabel,
+	lateArrival,
 	leaveLine,
 	moved,
 	paceLabel,
@@ -200,9 +203,9 @@ function spoken(v: TodayView | null): string {
 	return [
 		v.current ? `Now: ${v.current.name}.` : null,
 		v.next ? `Next: ${v.next.name}.` : null,
-		v.pace.kind === "behind"
+		v.pace?.kind === "behind"
 			? "Running late."
-			: v.pace.kind === "ahead"
+			: v.pace?.kind === "ahead"
 				? "Running early."
 				: null,
 	]
@@ -267,6 +270,9 @@ function Day({
 }) {
 	const { ix } = useWorkspace();
 	const [notHere, setNotHere] = useState<string | null>(null);
+	const [notStill, setNotStill] = useState<string | null>(null);
+	// Before the day's first Done: say once, quietly, what Done does.
+	const hint = act.mayMarkDone && !view.done.length && !view.checkIn;
 	const recent = [...view.done]
 		.filter((d) => d.doneAt !== null && view.now - d.doneAt < RECENT_DONE_MS)
 		.sort((a, b) => (a.doneAt ?? 0) - (b.doneAt ?? 0))
@@ -297,8 +303,16 @@ function Day({
 				/>
 			) : null}
 			{recent ? <DoneRow stop={recent} act={act} /> : null}
+			{view.checkIn && act.mayMarkDone && view.checkIn.itemId !== notStill ? (
+				<CheckIn
+					stop={view.checkIn}
+					act={act}
+					onNo={() => setNotStill(view.checkIn?.itemId ?? null)}
+				/>
+			) : null}
 			{state === "ended" ? <Ended view={view} /> : null}
 			{view.current ? <NowRow stop={view.current} act={act} /> : null}
+			{hint && view.current ? <DoneHint /> : null}
 			{view.next ? (
 				<NextCard
 					stop={view.next}
@@ -310,6 +324,7 @@ function Day({
 					onAddress={onAddress}
 				/>
 			) : null}
+			{hint && !view.current && view.next?.floating ? <DoneHint /> : null}
 			{view.risks.map((r) => (
 				<RiskCard
 					key={`${r.itemId}:${r.departure?.legId ?? ""}`}
@@ -429,6 +444,57 @@ function DoneRow({ stop, act }: { stop: TodayStop; act: TodayActions }) {
 				</Button>
 			) : null}
 		</div>
+	);
+}
+
+/** "Still at Yodobashi Camera?": Done marks it now; No leaves the day on the plan. */
+function CheckIn({
+	stop,
+	act,
+	onNo,
+}: {
+	stop: TodayStop;
+	act: TodayActions;
+	onNo: () => void;
+}) {
+	return (
+		<div
+			data-testid={T.checkIn}
+			data-item={stop.itemId}
+			role="status"
+			className="flex min-h-12 items-center gap-3 rounded-2xl border px-4 py-1.5"
+		>
+			<Clock
+				className="size-5 shrink-0 text-muted-foreground"
+				strokeWidth={1.75}
+				aria-hidden
+			/>
+			<span className="min-w-0 flex-1 text-body">Still at {stop.name}?</span>
+			<Button variant="ghost" size="sm" onClick={onNo}>
+				No
+			</Button>
+			<Button
+				variant="outline"
+				size="sm"
+				data-testid={T.done}
+				disabled={act.offline}
+				onClick={() => act.done(stop.itemId)}
+			>
+				<Check />
+				Done
+			</Button>
+		</div>
+	);
+}
+
+function DoneHint() {
+	return (
+		<p
+			data-testid={T.hint}
+			className="-mt-2 px-4 text-meta text-muted-foreground"
+		>
+			Tap Done when you leave: the rest of today follows your pace.
+		</p>
 	);
 }
 
@@ -765,6 +831,7 @@ function IdeaRow({
 	);
 }
 
+/** In time order; a fixed stop reached late keeps its time and says when you'd arrive. */
 function Rest({ stops }: { stops: TodayStop[] }) {
 	const { nav } = useWorkspace();
 	const retimed = stops.some(moved);
@@ -808,8 +875,13 @@ function Rest({ stops }: { stops: TodayStop[] }) {
 								) : null}
 							</span>
 							<StopGlyph nodeId={s.nodeId} name={s.name} size="sm" />
-							<span className="min-w-0 flex-1 truncate text-body">
-								{s.name}
+							<span className="min-w-0 flex-1">
+								<span className="block truncate text-body">{s.name}</span>
+								{lateArrival(s) ? (
+									<span className="block text-meta text-warning tnum">
+										{lateArrival(s)}
+									</span>
+								) : null}
 							</span>
 							{s.booked ? (
 								<Chip tone="accent" icon={Clock}>

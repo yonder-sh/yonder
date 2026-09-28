@@ -45,7 +45,7 @@ vi.mock("@/functions/items.functions", async (orig) => ({
 
 import type { LocalAt } from "@/lib/engine/__fixtures__/demo";
 import type { TripGraph } from "@/lib/engine/types";
-import { tokyoDay } from "@/lib/fixtures/demo";
+import { importedDay, tokyoDay } from "@/lib/fixtures/demo";
 import { renderWithWorkspace } from "@/test/render-workspace";
 import { TodayTab } from "../TodayTab";
 import { TODAY_TESTID as T } from "../testids";
@@ -278,7 +278,7 @@ describe("Today, running early (P18)", () => {
 		).toHaveTextContent("Shorten dinner to 1 h");
 	});
 
-	it("Dinner before a place: its card doesn't say when to leave for the bar; the free time does", () => {
+	it("Dinner before a place: nothing to leave for on its card, and no free time while Bic Camera is to do", () => {
 		const { bic: _, ...marks } = EARLY;
 		const s = tokyoDay(marks);
 		const position = s.graph.items.find((i) => i.id === s.I.yodobashi)
@@ -294,11 +294,8 @@ describe("Today, running early (P18)", () => {
 		expect(next).toHaveTextContent("Next · Dinner, whenever you like");
 		expect(within(next).queryByTestId(T.leave)).toBeNull();
 		expect(rows()[0]).toContain("Bic Camera");
-		expect(
-			within(screen.getByTestId(T.free)).getByTestId(T.leave),
-		).toHaveTextContent(
-			"Leave for Bar Benfiddich by 19:50 (booked for 20:00, 10 min walk)",
-		);
+		expect(screen.queryByTestId(T.free)).toBeNull();
+		expect(screen.queryByTestId(T.leave)).toBeNull();
 	});
 
 	it("once Dinner is Done, the bar is Next and the free time says when to leave", () => {
@@ -311,6 +308,144 @@ describe("Today, running early (P18)", () => {
 		expect(within(free).getByTestId(T.leave)).toHaveTextContent(
 			"Leave for Bar Benfiddich by 19:50 (booked for 20:00, 10 min walk)",
 		);
+	});
+});
+
+describe("Today before anyone taps Done: the plan by the clock (the imported day)", () => {
+	const s = importedDay();
+
+	it("09:05: Breakfast first, whenever you like, with its own Done and the hint under it; no pace, no free time", () => {
+		render(s, "2027-10-05T09:05");
+		expect(screen.getByTestId(T.page)).toHaveAttribute(
+			"data-state",
+			"starting",
+		);
+		expect(screen.queryByTestId(T.pace)).toBeNull();
+		const next = screen.getByTestId(T.next);
+		expect(next).toHaveTextContent("First stop · Breakfast, whenever you like");
+		expect(within(next).getByTestId(T.done)).toBeEnabled();
+		expect(screen.getByTestId(T.hint)).toBeInTheDocument();
+		expect(screen.queryByTestId(T.free)).toBeNull();
+		expect(screen.queryByTestId(T.risk)).toBeNull();
+		expect(rows()[0]).toBe("09:30Cha no Ikedaya");
+	});
+
+	it("14:40: Now at Yodobashi Camera since 14:05, with a quiet line on what Done does; Bic Camera next at 16:10; nothing late", () => {
+		render(s, "2027-10-05T14:40");
+		expect(screen.queryByTestId(T.pace)).toBeNull();
+		const now = screen.getByTestId(T.now);
+		expect(now).toHaveTextContent("Now · since 14:05");
+		expect(now).toHaveTextContent("Yodobashi Camera");
+		expect(screen.getByTestId(T.hint)).toHaveTextContent(
+			"Tap Done when you leave: the rest of today follows your pace.",
+		);
+		const next = screen.getByTestId(T.next);
+		expect(next).toHaveTextContent("Next · about 16:10");
+		expect(next).not.toHaveTextContent("planned");
+		expect(rows()).toEqual([
+			"16:10Bic Camera",
+			"17:40Dinner",
+			"20:00Bar Benfiddich",
+			"21:05Golden Gai",
+		]);
+		expect(screen.getByTestId(T.rest)).not.toHaveTextContent(
+			"re-timed from now",
+		);
+		expect(screen.queryByTestId(T.risk)).toBeNull();
+		expect(screen.queryByTestId(T.free)).toBeNull();
+		expect(screen.queryByTestId(T.checkIn)).toBeNull();
+	});
+
+	it("18:30: Dinner next whenever you like, when to leave for the bar, 1 h 20 free before 19:50; the hint under Dinner's own Done", () => {
+		render(s, "2027-10-05T18:30");
+		const next = screen.getByTestId(T.next);
+		expect(next).toHaveTextContent("Next · Dinner, whenever you like");
+		expect(within(next).getByTestId(T.leave)).toHaveTextContent(
+			"Leave for Bar Benfiddich by 19:50 (at 20:00, 10 min walk)",
+		);
+		expect(within(next).getByTestId(T.done)).toBeEnabled();
+		expect(screen.getByTestId(T.hint)).toBeInTheDocument();
+		expect(screen.getByTestId(T.free)).toHaveTextContent(
+			"1 h 20 free before 19:50",
+		);
+		expect(screen.queryByTestId(T.pace)).toBeNull();
+		expect(rows()).toEqual(["20:00Bar Benfiddich", "21:05Golden Gai"]);
+	});
+
+	it("the hint goes with the first Done, and viewers never see it", () => {
+		const { unmount } = render(
+			importedDay({ cha: done("09:58") }),
+			"2027-10-05T10:30",
+		);
+		expect(screen.getByTestId(T.now)).toHaveTextContent("Nakano Broadway");
+		expect(screen.queryByTestId(T.hint)).toBeNull();
+		unmount();
+		render(s, "2027-10-05T14:40", {
+			...s.graph,
+			me: { ...s.graph.me, role: "viewer" },
+		});
+		expect(screen.getByTestId(T.now)).toBeInTheDocument();
+		expect(screen.queryByTestId(T.hint)).toBeNull();
+	});
+});
+
+describe("Today after a forgotten Done (the imported day, Cha no Ikedaya Done at 10:40)", () => {
+	const s = importedDay({ cha: done("10:40") });
+
+	it("12:00: at Nakano Broadway since 10:55, 40 min behind", () => {
+		render(s, "2027-10-05T12:00");
+		expect(screen.getByTestId(T.pace)).toHaveTextContent("40 min behind");
+		expect(screen.getByTestId(T.now)).toHaveTextContent("Now · since 10:55");
+		expect(screen.queryByTestId(T.checkIn)).toBeNull();
+	});
+
+	it("15:00: “Still at Nakano Broadway?” with Done; the day is back on the plan, no pace", async () => {
+		render(s, "2027-10-05T15:00");
+		expect(screen.queryByTestId(T.pace)).toBeNull();
+		const ask = screen.getByTestId(T.checkIn);
+		expect(ask).toHaveAttribute("data-item", s.I.broadway);
+		expect(ask).toHaveTextContent("Still at Nakano Broadway?");
+		expect(screen.getByTestId(T.now)).toHaveTextContent("Now · since 14:05");
+		expect(screen.getByTestId(T.now)).toHaveTextContent("Yodobashi Camera");
+		expect(screen.queryByTestId(T.hint)).toBeNull();
+		expect(screen.queryByTestId(T.risk)).toBeNull();
+		fireEvent.click(within(ask).getByTestId(T.done));
+		await vi.waitFor(() =>
+			expect(calls.done).toEqual([
+				expect.objectContaining({ itemId: s.I.broadway, done: true }),
+			]),
+		);
+		expect(calls.done[0]).not.toHaveProperty("at");
+	});
+
+	it("No puts the question away; viewers aren't asked", () => {
+		const { unmount } = render(s, "2027-10-05T15:00");
+		fireEvent.click(
+			within(screen.getByTestId(T.checkIn)).getByRole("button", {
+				name: "No",
+			}),
+		);
+		expect(screen.queryByTestId(T.checkIn)).toBeNull();
+		unmount();
+		render(s, "2027-10-05T15:00", {
+			...s.graph,
+			me: { ...s.graph.me, role: "viewer" },
+		});
+		expect(screen.queryByTestId(T.checkIn)).toBeNull();
+	});
+
+	it("Done on it at 15:00: the rest re-times from then, the bar keeps 20:00 and says when you'd arrive", () => {
+		render(
+			importedDay({ cha: done("10:40"), broadway: done("15:00") }),
+			"2027-10-05T15:00",
+		);
+		expect(rows()).toEqual([
+			"16:2014:05Yodobashi Camera",
+			"18:2516:10Bic Camera",
+			"19:5517:40Dinner",
+			"20:00Bar BenfiddichYou'd arrive 21:35",
+			"21:4021:05Golden Gai",
+		]);
 	});
 });
 

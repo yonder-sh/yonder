@@ -5,7 +5,8 @@
  * - during the trip the phone opens on Today (no ★ Rate pill), with the
  *   Overview a quiet link away;
  * - Done moves you on and Undo brings the stop back;
- * - a late day shows the risk to Shibuya Sky with its fixes, each with Undo;
+ * - a Done late in the day shows the risk to Shibuya Sky with its fixes,
+ *   each with Undo;
  * - Address opens "Show this to the driver";
  * - desktop: the same column in the Overview's place.
  * Screenshots in `e2e/shots/today/`.
@@ -21,8 +22,8 @@ import { collectConsole, expectLive } from "./_helpers/page";
 
 test.use({ storageState: storageStateOf("dev") });
 
-/** Hands Shibuya still on at 10:00 (15 min behind); at 14:10 Shibuya Sky is at risk. */
-const MORNING = "2027-10-03T10:00";
+/** Hands Shibuya on by the plan at 09:30; its Done read at 14:10 puts Shibuya Sky at risk. */
+const MORNING = "2027-10-03T09:30";
 const LATE = "2027-10-03T14:10";
 
 const tabs = (page: Page) => page.getByTestId(TESTID.centerTabs).getByRole("tab");
@@ -74,7 +75,7 @@ test("phone: Done moves you on, Undo brings the stop back", async ({ page, isMob
 	await now.getByTestId(T.done).tap();
 	// The quiet row keeps the Done (a stamp from another day reads as now) with its Undo.
 	const row = page.getByTestId(T.doneRow);
-	await expect(row).toContainText("Hands Shibuya · done 10:00");
+	await expect(row).toContainText("Hands Shibuya · done 09:30");
 	await expect(row).toHaveAttribute("data-item", c.ids.items.hands as string);
 	await expect(page.getByTestId(T.now)).toHaveCount(0);
 	await expect(page.getByTestId(T.next)).toContainText("Shibuya Loft");
@@ -90,11 +91,18 @@ test("phone: Done moves you on, Undo brings the stop back", async ({ page, isMob
 	await expect(page.getByTestId(T.now)).toContainText("Hands Shibuya");
 });
 
-test("a late day shows the risk and its fixes, each with Undo", async ({ page }) => {
+test("a Done late in the day shows the risk and its fixes, each with Undo", async ({ page }) => {
 	const c = await cloneFixtureTrip(page.request);
+	await page.goto(`/t/${c.slug}?asOf=${MORNING}`);
+	await expectLive(page);
+	// No Done yet: the plan by the clock, no pace.
+	await expect(page.getByTestId(T.pace)).toHaveCount(0);
+	await page.getByTestId(T.now).getByTestId(T.done).click();
+	await expect(page.getByTestId(T.doneRow)).toContainText("Hands Shibuya");
+
+	// A stamp from another day reads as now: Hands Shibuya left at 14:10.
 	await page.goto(`/t/${c.slug}?asOf=${LATE}`);
 	await expectLive(page);
-
 	await expect(page.getByTestId(T.pace)).toHaveAttribute("data-pace", "behind");
 	const risk = page.getByTestId(T.risk);
 	await expect(risk).toContainText("Tight before Shibuya Sky · 17:30");

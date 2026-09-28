@@ -10,6 +10,7 @@ import {
 } from "../lib/directions";
 import {
 	fixLabel,
+	lateArrival,
 	leaveLine,
 	paceLabel,
 	riskTitle,
@@ -135,6 +136,18 @@ describe("words", () => {
 			departure: { name: "NH 9" },
 		} as unknown as TodayLeave;
 		expect(leaveLine(nh9, at("17:10"))).toBe("Leave for NH 9 by 19:50");
+	});
+
+	it("a fixed stop reached late says when you'd arrive; on time or early, nothing", () => {
+		const at = (time: string) => zonedEpoch("2027-10-05", time, "Asia/Tokyo");
+		const bar = {
+			start: at("20:00"),
+			arrive: at("20:25"),
+			tz: "Asia/Tokyo",
+		} as TodayStop;
+		expect(lateArrival(bar)).toBe("You'd arrive 20:25");
+		expect(lateArrival({ ...bar, arrive: at("19:55") })).toBeNull();
+		expect(lateArrival({ ...bar, arrive: at("20:00") + 20_000 })).toBeNull();
 	});
 
 	it("a custom stop reads as a word in the fix; a place keeps its name", () => {

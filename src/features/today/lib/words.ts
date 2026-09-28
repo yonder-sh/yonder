@@ -90,6 +90,14 @@ export function riskLine(risk: TodayRisk): string {
 	return `You'd arrive ${arrive}: ${spokenMin(risk.spareMin)} spare instead of ${planned}.`;
 }
 
+/** A fixed stop the flow reaches after its time: "You'd arrive 20:25" (else null). */
+export function lateArrival(stop: TodayStop): string | null {
+	const arrive = formatTime(stop.arrive, stop.tz);
+	return stop.arrive > stop.start && arrive !== formatTime(stop.start, stop.tz)
+		? `You'd arrive ${arrive}`
+		: null;
+}
+
 /** The stop's time moved from the plan (to the minute, as shown). */
 export function moved(stop: TodayStop): boolean {
 	return (

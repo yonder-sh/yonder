@@ -7,15 +7,17 @@ import {
 	type Scenario,
 	scenario,
 } from "./__fixtures__/demo";
-import { NODES, tokyoDay } from "./__fixtures__/today";
+import { importedDay, NODES, tokyoDay } from "./__fixtures__/today";
 import { indexGraph } from "./graph-index";
 import { computeSchedule } from "./schedule";
 import { hhmm, zonedEpoch } from "./time";
 import {
 	computeToday,
+	OVERRUN_MAX_MIN,
 	stopHere,
 	type TodayOptions,
 	type TodayStop,
+	type TodayView,
 	todayDayId,
 } from "./today";
 import type { GraphNode } from "./types";
@@ -38,7 +40,7 @@ function view(s: Scenario, now: number, opts?: TodayOptions, day = "d1") {
 }
 
 describe("computeToday: before the day starts", () => {
-	it("the first stop is next, with when to leave the hotel; on time", () => {
+	it("the first stop is next, with when to leave the hotel; no pace yet", () => {
 		const { v } = view(tokyoDay(), at("08:00"));
 		expect(v.starting).toBe(true);
 		expect(v.current).toBeNull();
@@ -46,7 +48,7 @@ describe("computeToday: before the day starts", () => {
 		expect(t(v.next?.start as number)).toBe("09:10");
 		expect(t(v.next?.leaveBy as number)).toBe("09:00");
 		expect(v.next).toMatchObject({ travelMin: 10, mode: "walk", fixed: false });
-		expect(v.pace).toEqual({ kind: "on_time", minutes: 0 });
+		expect(v.pace).toBeNull();
 		expect(v.risks).toEqual([]);
 		expect(names(v.rest)).toEqual([
 			"Nakano Broadway",
@@ -69,6 +71,222 @@ describe("computeToday: before the day starts", () => {
 			mode: "walk",
 		});
 		expect(v.tomorrow).toBeNull();
+	});
+});
+
+/** "14:05 Yodobashi Camera" for Now, a timed Next and the rest of today. */
+const timeline = (v: TodayView) =>
+	[v.current, v.next?.floating ? null : v.next, ...v.rest]
+		.filter((r): r is TodayStop => r !== null)
+		.map((r) => `${t(r.start)} ${r.name}`);
+
+describe("computeToday: no Done yet, the plan by the clock (the imported day)", () => {
+	const s = importedDay();
+
+	it("09:05: Breakfast is the first stop, whenever you like; the rest at their planned times; no pace, no risk, no free time", () => {
+		const { v } = view(s, at("09:05"));
+		expect(v.starting).toBe(true);
+		expect(v.current).toBeNull();
+		expect(v.next).toMatchObject({ name: "Breakfast", floating: true });
+		expect(timeline(v)).toEqual([
+			"09:30 Cha no Ikedaya",
+			"10:15 Nakano Broadway",
+			"12:45 Lunch",
+			"14:05 Yodobashi Camera",
+			"16:10 Bic Camera",
+			"17:40 Dinner",
+			"20:00 Bar Benfiddich",
+			"21:05 Golden Gai",
+		]);
+		expect(v.pace).toBeNull();
+		expect(v.risks).toEqual([]);
+		// Cha no Ikedaya is to do first: nothing to leave for, no free time.
+		expect(v.leave).toBeNull();
+		expect(v.free).toBeNull();
+		expect(v.checkIn).toBeNull();
+	});
+
+	it("09:35: Breakfast passed once Cha no Ikedaya was due; Cha no Ikedaya is Now", () => {
+		const { v } = view(s, at("09:35"));
+		expect(names(v.passed)).toEqual(["Breakfast"]);
+		expect(v.current?.name).toBe("Cha no Ikedaya");
+		expect(t(v.current?.start as number)).toBe("09:30");
+		expect(v.starting).toBe(false);
+	});
+
+	it("14:40: Yodobashi Camera is Now since 14:05 and Bic Camera Next at 16:10; what's over is passed; nothing behind, nothing late", () => {
+		const { v } = view(s, at("14:40"));
+		expect(names(v.passed)).toEqual([
+			"Breakfast",
+			"Cha no Ikedaya",
+			"Nakano Broadway",
+			"Lunch",
+		]);
+		expect(v.current?.name).toBe("Yodobashi Camera");
+		expect(t(v.current?.start as number)).toBe("14:05");
+		expect(t(v.current?.end as number)).toBe("16:05");
+		expect(v.next?.name).toBe("Bic Camera");
+		expect(t(v.next?.leaveBy as number)).toBe("16:05");
+		expect(timeline(v)).toEqual([
+			"14:05 Yodobashi Camera",
+			"16:10 Bic Camera",
+			"17:40 Dinner",
+			"20:00 Bar Benfiddich",
+			"21:05 Golden Gai",
+		]);
+		expect(v.rest.every((r) => r.arrive <= r.start)).toBe(true);
+		expect(v.pace).toBeNull();
+		expect(v.risks).toEqual([]);
+		expect(v.free).toBeNull();
+	});
+
+	it("18:30: Dinner Next whenever you like, with when to leave for the bar; 1 h 20 free before 19:50, with ideas nearby", () => {
+		const { v } = view(s, at("18:30"));
+		expect(v.current).toBeNull();
+		expect(v.next).toMatchObject({ name: "Dinner", floating: true });
+		expect(timeline(v)).toEqual(["20:00 Bar Benfiddich", "21:05 Golden Gai"]);
+		expect(v.leave).toMatchObject({
+			name: "Bar Benfiddich",
+			booked: false,
+			travelMin: 10,
+		});
+		expect(t(v.leave?.before as number)).toBe("19:50");
+		expect(v.free).toMatchObject({ name: "Bar Benfiddich", minutes: 80 });
+		expect(t(v.free?.from as number)).toBe("18:30");
+		expect(v.ideas.map((i) => i.name)).toEqual([
+			"Fuunji",
+			"Omoide Yokocho",
+			"Don Quijote",
+		]);
+		expect(v.pace).toBeNull();
+		expect(v.risks).toEqual([]);
+	});
+
+	it("20:05: Dinner passed, the bar Now since 20:00: never late without a Done saying so", () => {
+		const { v } = view(s, at("20:05"));
+		expect(names(v.passed).at(-1)).toBe("Dinner");
+		expect(v.current?.name).toBe("Bar Benfiddich");
+		expect(t(v.current?.start as number)).toBe("20:00");
+		expect(v.risks).toEqual([]);
+	});
+
+	it("all day long: the rest of today in time order, never a pace, never a risk", () => {
+		for (let h = 7; h <= 23; h++)
+			for (const m of ["00", "20", "40"]) {
+				const { v } = view(s, at(`${String(h).padStart(2, "0")}:${m}`));
+				expect(v.pace).toBeNull();
+				expect(v.risks).toEqual([]);
+				const times = [v.current, v.next, ...v.rest]
+					.filter((r): r is TodayStop => r !== null && !r.floating)
+					.map((r) => r.start);
+				expect(times).toEqual([...times].sort((a, b) => a - b));
+			}
+	});
+
+	it("P15's day at 11:00 with no Done: Nakano Broadway by the clock, not Cha no Ikedaya still going", () => {
+		const { v } = view(tokyoDay(), at("11:00"));
+		expect(names(v.passed)).toEqual(["Cha no Ikedaya"]);
+		expect(v.current?.name).toBe("Nakano Broadway");
+		expect(t(v.current?.start as number)).toBe("10:15");
+		expect(t(v.next?.start as number)).toBe("14:05");
+		expect(v.pace).toBeNull();
+		expect(v.risks).toEqual([]);
+	});
+});
+
+describe("computeToday: after a Done, your pace within reason (the imported day)", () => {
+	// Cha no Ikedaya Done at 10:40, 40 min after its planned end; nothing since.
+	const s = importedDay({ cha: done("10:40") });
+
+	it("12:00: Now at Nakano Broadway since 10:55, Lunch Next whenever you like, the rest re-timed; 40 min behind, the bar tight", () => {
+		const { v } = view(s, at("12:00"));
+		expect(names(v.passed)).toEqual(["Breakfast"]);
+		expect(v.current?.name).toBe("Nakano Broadway");
+		expect(t(v.current?.start as number)).toBe("10:55");
+		expect(v.next).toMatchObject({ name: "Lunch", floating: true });
+		expect(timeline(v)).toEqual([
+			"10:55 Nakano Broadway",
+			"14:45 Yodobashi Camera",
+			"16:50 Bic Camera",
+			"18:20 Dinner",
+			"20:00 Bar Benfiddich",
+			"21:05 Golden Gai",
+		]);
+		expect(v.pace).toEqual({ kind: "behind", minutes: 40 });
+		expect(v.risks).toHaveLength(1);
+		expect(v.risks[0]).toMatchObject({
+			name: "Bar Benfiddich",
+			spareMin: 0,
+			plannedSpareMin: 40,
+			late: false,
+		});
+		expect(v.checkIn).toBeNull();
+	});
+
+	it("a stop runs over until now for at most 45 min past its re-timed end: at 14:10 still at Nakano Broadway (ends 13:25), 1 h 25 behind at most", () => {
+		const { v } = view(s, at("14:10"));
+		expect(v.current?.name).toBe("Nakano Broadway");
+		expect(t(v.current?.end as number)).toBe("14:10");
+		expect(v.pace).toEqual({ kind: "behind", minutes: 40 + OVERRUN_MAX_MIN });
+		expect(v.checkIn).toBeNull();
+	});
+
+	it("past that, the Done was likely forgotten: “Still at Nakano Broadway?”, and the day follows the plan by the clock again", () => {
+		for (const time of ["14:15", "15:00"]) {
+			const { v } = view(s, at(time));
+			expect(v.checkIn).toMatchObject({
+				itemId: s.I.broadway,
+				name: "Nakano Broadway",
+			});
+			expect(t(v.checkIn?.end as number)).toBe("13:25");
+			expect(names(v.passed)).toEqual([
+				"Breakfast",
+				"Nakano Broadway",
+				"Lunch",
+			]);
+			expect(v.current?.name).toBe("Yodobashi Camera");
+			expect(timeline(v)).toEqual([
+				"14:05 Yodobashi Camera",
+				"16:10 Bic Camera",
+				"17:40 Dinner",
+				"20:00 Bar Benfiddich",
+				"21:05 Golden Gai",
+			]);
+			expect(v.pace).toBeNull();
+			expect(v.risks).toEqual([]);
+		}
+	});
+
+	it("Done on the check-in re-times from then; the bar keeps its 20:00, with the late arrival plain", () => {
+		const { v } = view(
+			importedDay({ cha: done("10:40"), broadway: done("15:00") }),
+			at("15:00"),
+		);
+		expect(v.checkIn).toBeNull();
+		expect(v.next).toMatchObject({ name: "Lunch", floating: true });
+		expect(timeline(v)).toEqual([
+			"16:20 Yodobashi Camera",
+			"18:25 Bic Camera",
+			"19:55 Dinner",
+			"20:00 Bar Benfiddich",
+			"21:40 Golden Gai",
+		]);
+		const bar = v.rest.find((r) => r.name === "Bar Benfiddich");
+		expect(t(bar?.arrive as number)).toBe("21:35");
+		expect(v.pace).toEqual({ kind: "behind", minutes: 135 });
+		expect(v.risks[0]).toMatchObject({ name: "Bar Benfiddich", late: true });
+	});
+
+	it("a stop with no place never holds the day: Lunch passes when you'd leave for Yodobashi Camera", () => {
+		// Nakano Broadway Done 12:30: Lunch 12:30–13:30, Yodobashi Camera at 13:50.
+		const s2 = importedDay({ cha: done("10:00"), broadway: done("12:30") });
+		const { v } = view(s2, at("13:00"));
+		expect(v.next).toMatchObject({ name: "Lunch", floating: true });
+		const { v: v2 } = view(s2, at("13:40"));
+		expect(names(v2.passed)).toEqual(["Breakfast", "Lunch"]);
+		expect(v2.next?.name).toBe("Yodobashi Camera");
+		expect(t(v2.next?.start as number)).toBe("13:50");
+		expect(v2.pace).toEqual({ kind: "ahead", minutes: 15 });
 	});
 });
 
@@ -271,17 +489,7 @@ describe("computeToday: running early (board P18)", () => {
 	});
 });
 
-describe("computeToday: following your pace, not the clock", () => {
-	it("a stop not marked Done runs until now: you're still there", () => {
-		const { v } = view(tokyoDay(), at("11:00"));
-		expect(v.current?.name).toBe("Cha no Ikedaya");
-		expect(t(v.current?.start as number)).toBe("09:10");
-		expect(t(v.current?.end as number)).toBe("11:00");
-		expect(t(v.next?.start as number)).toBe("11:20");
-		expect(v.pace).toEqual({ kind: "behind", minutes: 65 });
-		expect(v.starting).toBe(false);
-	});
-
+describe("computeToday: following your pace after a Done", () => {
 	it("a later stop marked Done passes over the ones before it", () => {
 		const { v } = view(tokyoDay({ broadway: done("13:00") }), at("13:00"));
 		expect(names(v.passed)).toEqual(["Cha no Ikedaya"]);
@@ -336,7 +544,7 @@ describe("computeToday: following your pace, not the clock", () => {
 		]);
 	});
 
-	it("a booking whose time has come before dinner is Done is late, not gone", () => {
+	it("a booking whose time has come with dinner not Done: dinner passed, the booking is Now (nothing says you're late)", () => {
 		const s = tokyoDay({
 			cha: done("09:50"),
 			broadway: done("14:00"),
@@ -344,16 +552,29 @@ describe("computeToday: following your pace, not the clock", () => {
 			bic: done("17:10"),
 		});
 		const { v } = view(s, at("20:05"));
-		expect(v.current).toBeNull();
-		expect(v.next?.name).toBe("Dinner");
-		expect(v.rest[0]?.name).toBe("Bar Benfiddich");
-		expect(t(v.leave?.before as number)).toBe("19:50");
-		expect(v.risks[0]).toMatchObject({
-			name: "Bar Benfiddich",
-			late: true,
-			spareMin: -15,
+		expect(names(v.passed)).toEqual(["Dinner"]);
+		expect(v.current?.name).toBe("Bar Benfiddich");
+		expect(t(v.current?.start as number)).toBe("20:00");
+		expect(v.next?.name).toBe("Golden Gai");
+		expect(v.risks).toEqual([]);
+		expect(v.pace).toEqual({ kind: "on_time", minutes: 0 });
+	});
+
+	it("at the booking's leave-by, dinner not Done passes, taking no time past it: the bar is Next, on time at the latest", () => {
+		const s = tokyoDay({
+			cha: done("09:50"),
+			broadway: done("14:00"),
+			yodobashi: done("16:00"),
+			bic: done("19:00"),
 		});
-		expect(v.free).toBeNull();
+		// Dinner (19:00–20:30) would make you late until then (see above).
+		const { v } = view(s, at("19:55"));
+		expect(names(v.passed)).toEqual(["Dinner"]);
+		expect(t(v.passed[0]?.end as number)).toBe("19:50");
+		expect(v.current).toBeNull();
+		expect(v.next?.name).toBe("Bar Benfiddich");
+		expect(t(v.next?.arrive as number)).toBe("20:00");
+		expect(v.risks.filter((r) => r.late)).toEqual([]);
 	});
 
 	it("a booking whose time has come while you walk there is Next and late, with its Directions", () => {
@@ -492,7 +713,7 @@ describe("computeToday: following your pace, not the clock", () => {
 		expect(v.risks[0]?.fixes).toEqual([]);
 	});
 
-	it("a day of floating stops only: each is Next in turn until it's Done; no time to keep, nothing to leave for", () => {
+	it("a day of floating stops only: each is Next in turn as its time comes, the last until it's Done; no time to keep, nothing to leave for", () => {
 		// Planned: Breakfast 09:00–09:45, Wander 09:45–11:45, Dinner 11:45–13:15.
 		const floats = (marks: Record<string, LocalAt> = {}) =>
 			scenario({
@@ -512,13 +733,15 @@ describe("computeToday: following your pace, not the clock", () => {
 					},
 				],
 			});
+		// No Done: by the clock, Breakfast's time went when Wander's came.
 		const { v } = view(floats(), at("11:00"), {}, "d1");
 		expect(v.current).toBeNull();
-		expect(v.next).toMatchObject({ name: "Breakfast", floating: true });
-		expect(names(v.rest)).toEqual(["Wander", "Dinner"]);
-		expect(t(v.rest[0]?.start as number)).toBe("11:00");
-		expect(v.starting).toBe(true);
-		expect(v.pace).toEqual({ kind: "on_time", minutes: 0 });
+		expect(names(v.passed)).toEqual(["Breakfast"]);
+		expect(v.next).toMatchObject({ name: "Wander", floating: true });
+		expect(names(v.rest)).toEqual(["Dinner"]);
+		expect(t(v.rest[0]?.start as number)).toBe("11:45");
+		expect(v.starting).toBe(false);
+		expect(v.pace).toBeNull();
 		expect(v.leave).toBeNull();
 		expect(v.free).toBeNull();
 		expect(v.risks).toEqual([]);
@@ -538,38 +761,46 @@ describe("computeToday: following your pace, not the clock", () => {
 		);
 		expect(v3.next?.name).toBe("Dinner");
 		expect(v3.ended).toBe(false);
+		// The day's last one waits for its Done.
+		const { v: v4 } = view(floats(), at("18:00"), {}, "d1");
+		expect(v4.next?.name).toBe("Dinner");
+		expect(v4.ended).toBe(false);
 	});
 
-	it("a floating stop before a place: Next, but nothing to leave for from it; the free time starts after the place", () => {
+	it("a floating stop before a place: Next, but nothing to leave for and no free time until the place is Done", () => {
 		// Planned: Cha 09:00–09:40, Lunch 09:40–10:40, Bic 10:45–11:30, at the bar 11:40 for 14:00.
-		const s = scenario({
-			firstDate: DAY,
-			nodes: NODES,
-			days: [
-				{
-					items: [
-						{ k: "cha", node: "cha", min: 40, done: done("09:40") },
-						{ k: "lunch", title: "Lunch", min: 60 },
-						{ k: "bic", node: "bic", min: 45 },
-						{ k: "bar", node: "benfiddich", min: 60, pin: "14:00" },
-					],
-				},
-			],
-			legs: [
-				{ from: "cha", to: "bic", mode: "walk", min: 5 },
-				{ from: "bic", to: "bar", mode: "walk", min: 10 },
-			],
-		});
-		const { v } = view(s, at("09:40"), {}, "d1");
+		const lunchDay = (bicDone?: LocalAt) =>
+			scenario({
+				firstDate: DAY,
+				nodes: NODES,
+				days: [
+					{
+						items: [
+							{ k: "cha", node: "cha", min: 40, done: done("09:40") },
+							{ k: "lunch", title: "Lunch", min: 60 },
+							{ k: "bic", node: "bic", min: 45, done: bicDone },
+							{ k: "bar", node: "benfiddich", min: 60, pin: "14:00" },
+						],
+					},
+				],
+				legs: [
+					{ from: "cha", to: "bic", mode: "walk", min: 5 },
+					{ from: "bic", to: "bar", mode: "walk", min: 10 },
+				],
+			});
+		const { v } = view(lunchDay(), at("09:40"), {}, "d1");
 		expect(v.next).toMatchObject({ name: "Lunch", floating: true });
 		expect(names(v.rest)).toEqual(["Bic Camera", "Bar Benfiddich"]);
 		expect(v.pace).toEqual({ kind: "on_time", minutes: 0 });
-		// Bic Camera comes first: no "Leave for Bar Benfiddich" on Lunch.
+		// Bic Camera comes first: no "Leave for Bar Benfiddich" on Lunch, and
+		// the time after it isn't time you can use now.
 		expect(v.leave).toBeNull();
-		// 2 h 20 spare after Bic Camera, and Lunch's hour.
-		expect(v.free).toMatchObject({ name: "Bar Benfiddich", minutes: 200 });
-		expect(t(v.free?.from as number)).toBe("11:30");
-		expect(t(v.free?.before as number)).toBe("13:50");
+		expect(v.free).toBeNull();
+		// Bic Camera Done at 11:00: from now until you leave for the bar.
+		const { v: v2 } = view(lunchDay(done("11:00")), at("11:00"), {}, "d1");
+		expect(v2.free).toMatchObject({ name: "Bar Benfiddich", minutes: 170 });
+		expect(t(v2.free?.from as number)).toBe("11:00");
+		expect(t(v2.free?.before as number)).toBe("13:50");
 	});
 
 	it("a floating stop before a flight: when to leave only once nothing with a place is left before it", () => {
@@ -625,7 +856,7 @@ describe("computeToday: following your pace, not the clock", () => {
 		const { v } = view(trip(true), at("11:00"), {}, "d1");
 		expect(v.next).toMatchObject({ name: "Lunch", floating: true });
 		expect(v.leave).toBeNull();
-		expect(v.free).toMatchObject({ name: "CI 157" });
+		expect(v.free).toBeNull();
 		// At the airport, then lunch there: leave for the flight from the table.
 		const { v: v2 } = view(trip(false), at("12:30"), {}, "d1");
 		expect(v2.next).toMatchObject({ name: "Lunch", floating: true });
@@ -735,14 +966,20 @@ describe("computeToday: timed departures", () => {
 		expect(v.pace).toEqual({ kind: "behind", minutes: 80 });
 	});
 
-	it("before the day, the train leaves room: free time before it, no walk", () => {
-		const { v } = view(trainDay(), at("08:00"), {}, "d1");
+	it("the train leaves room: free time once the station stop ends, no walk; not before the day (Cha and the station come first)", () => {
+		expect(view(trainDay(), at("08:00"), {}, "d1").v.free).toBeNull();
+		// The station 10:15–10:30 by the plan: free from its end, 5 min off.
+		const { v } = view(trainDay(), at("10:25"), {}, "d1");
+		expect(v.current?.name).toBe("Tokyo Station");
 		expect(v.free).toMatchObject({
 			minutes: 80,
 			name: "Nozomi 7",
 			travelMin: 0,
 		});
+		expect(t(v.free?.from as number)).toBe("10:30");
 		expect(t(v.free?.before as number)).toBe("11:50");
+		// Its end further off than `FREE_SOON_MIN`: not yet.
+		expect(view(trainDay(), at("10:15"), {}, "d1").v.free).toBeNull();
 	});
 
 	/** Itoya, then KIX for NH 9 at 23:30, landing at Incheon 01:50 the next day. */
@@ -879,9 +1116,11 @@ describe("computeToday: timed departures", () => {
 		expect(tpe).toMatchObject({ name: "Taoyuan (TPE)", tz: "Asia/Taipei" });
 		expect(tpe?.departure?.tz).toBe(TOKYO);
 		expect(hhmm(tpe?.departure?.depMs as number, TOKYO)).toBe("16:00");
-		// The free time before boarding is in Tokyo's time, like the risk would be.
-		expect(v.free).toMatchObject({ name: "CI 157", tz: TOKYO });
-		expect(hhmm(v.free?.before as number, v.free?.tz as string)).toBe(
+		// At the airport (14:00–14:30): when to leave for boarding is in Tokyo's time, like the risk would be.
+		const { v: v2 } = view(s, at("14:25"), {}, "d1");
+		expect(v2.current?.name).toBe("Kansai Airport (KIX)");
+		expect(v2.leave).toMatchObject({ name: "CI 157", tz: TOKYO });
+		expect(hhmm(v2.leave?.before as number, v2.leave?.tz as string)).toBe(
 			t(tpe?.departure?.readyBy as number),
 		);
 	});

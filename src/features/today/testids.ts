@@ -10,8 +10,12 @@ export const TODAY_TESTID = {
 	pace: "today-pace",
 	/** The Now row; `data-item`. */
 	now: "today-now",
-	/** Done on the Now row, or on a floating Next card. */
+	/** Done on the Now row, on a floating Next card, or on the check-in. */
 	done: "today-done",
+	/** "Tap Done when you leave…", until the day's first Done. */
+	hint: "today-hint",
+	/** "Still at Yodobashi Camera?" (a Done likely forgotten); `data-item`. */
+	checkIn: "today-check-in",
 	/** "Bic Camera · done 17:10 · Undo"; `data-item`. */
 	doneRow: "today-done-row",
 	undo: "today-undo",
