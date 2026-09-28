@@ -53,12 +53,7 @@ import { PLACE_CATEGORIES } from "@/lib/domain/taxonomy";
 import { pairKey } from "@/lib/engine/graph-index";
 import { conflictFixes } from "@/lib/engine/suggest";
 import { hhmm, tzLabel } from "@/lib/engine/time";
-import {
-	formatDayDate,
-	formatDayShort,
-	formatDuration,
-	formatTime,
-} from "@/lib/format";
+import { formatDayDate, formatDuration, formatTime } from "@/lib/format";
 import { activityQuery } from "@/lib/query/trip-queries";
 import { useFormPresence } from "@/lib/realtime/form-presence";
 import { useSetEditing } from "@/lib/realtime/presence";
@@ -216,11 +211,9 @@ export function ItemHeadline({
 	/** The title and its chips. */
 	children: ReactNode;
 }) {
-	const { ix, schedule } = useWorkspace();
+	const { ix } = useWorkspace();
 	const item = ix.item(itemId);
 	const node = ix.node(item?.nodeId);
-	const day = ix.day(item?.dayId);
-	const s = schedule.items[itemId];
 	// The group's best rating, as the ideas show it.
 	const top = node ? ratingOf(node, "max") : null;
 	const cat =
@@ -264,26 +257,22 @@ export function ItemHeadline({
 						{line}
 					</p>
 				) : null}
-				{/* D03's chips: when, the group's rating, who. */}
-				<div
-					className="mt-2 flex flex-wrap items-center gap-1.5"
-					data-testid={PLAN_TESTID.overviewChips}
-				>
-					<span className="inline-flex h-6 items-center gap-1 rounded-full bg-muted px-2 text-xs font-medium tnum">
-						<CalendarDays className="size-3.5 text-muted-foreground" />
-						{day
-							? `${formatDayShort(day.date)}${s ? ` · ${hhmm(s.start, s.tz)}` : ""}`
-							: "Not on a day"}
-					</span>
-					{top ? <RatingPill level={top} size="sm" /> : null}
-					{item?.assigneeIds.length ? (
-						<span className="inline-flex items-center -space-x-1">
-							{item.assigneeIds.map((id) => (
-								<MemberAvatar key={id} memberId={id} size={20} />
-							))}
-						</span>
-					) : null}
-				</div>
+				{/* D03's chips (the day and time are in the title's): the group's rating, who. */}
+				{top || item?.assigneeIds.length ? (
+					<div
+						className="mt-2 flex flex-wrap items-center gap-1.5"
+						data-testid={PLAN_TESTID.overviewChips}
+					>
+						{top ? <RatingPill level={top} size="sm" /> : null}
+						{item?.assigneeIds.length ? (
+							<span className="inline-flex items-center -space-x-1">
+								{item.assigneeIds.map((id) => (
+									<MemberAvatar key={id} memberId={id} size={20} />
+								))}
+							</span>
+						) : null}
+					</div>
+				) : null}
 			</div>
 		</div>
 	);

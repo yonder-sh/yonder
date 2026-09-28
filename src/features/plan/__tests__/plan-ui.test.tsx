@@ -224,13 +224,17 @@ describe("Overviews and mobile", () => {
 		).toMatch(/Everyone/);
 	});
 
-	it("the item's headline chips say when, and About says what the place is (D03)", () => {
+	it("the item's headline shows the group's rating, and About says what the place is (D03)", () => {
 		const graph = structuredClone(demoGraph);
 		const item = graph.items.find((i) => i.id === I.hands);
 		const node = graph.nodes.find((n) => n.id === item?.nodeId);
 		if (!item || !node) throw new Error("fixture: Hands");
 		node.description = "Seven floors of craft supplies.";
 		node.timeNeededMin = 45;
+		node.priorities = {
+			...node.priorities,
+			[graph.me.memberId as string]: "must",
+		};
 		renderWithWorkspace(
 			<>
 				<ItemHeadline itemId={item.id}>Hands</ItemHeadline>
@@ -238,8 +242,9 @@ describe("Overviews and mobile", () => {
 			</>,
 			{ graph },
 		);
-		expect(screen.getByTestId(PLAN_TESTID.overviewChips).textContent).toMatch(
-			/^\w{3} \d{1,2} · 09:00/,
+
+		expect(screen.getByTestId(PLAN_TESTID.overviewChips)).toHaveTextContent(
+			"Must",
 		);
 		const about = screen.getByTestId(PLAN_TESTID.overviewAbout);
 		expect(about).toHaveTextContent("Seven floors of craft supplies.");

@@ -638,11 +638,14 @@ function PlanTabBody() {
 							</>
 						)}
 						<UnscheduledSection itemIds={model.unscheduled} />
-						{/* One Yonder (D03): what's saved but not planned, for the day in view. */}
-						<IdeasBin
-							plan
-							scopeId={planIdeasScope(ix, days, scope?.id ?? null)}
-						/>
+						{/* One Yonder (D03): what's saved but not planned, for the day in
+						    view; while filling a day (D04) the ideas are beside it instead. */}
+						{ws.search.fill && days ? null : (
+							<IdeasBin
+								plan
+								scopeId={planIdeasScope(ix, days, scope?.id ?? null)}
+							/>
+						)}
 					</div>
 				</DropIndicatorProvider>
 			</PlanWindowContext.Provider>

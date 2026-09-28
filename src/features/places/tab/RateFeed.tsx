@@ -706,7 +706,7 @@ function StepButtons({ steps }: { steps: CardSteps }) {
 				data-testid={PLACES_TAB_TESTID.feedNext}
 				onClick={() => steps.next?.()}
 			>
-				Next
+				Next place
 				<ChevronRight />
 			</Button>
 		</div>
