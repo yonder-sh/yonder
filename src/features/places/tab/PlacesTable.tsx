@@ -20,8 +20,10 @@ import {
 	useState,
 } from "react";
 import { EditGuard } from "@/components/common/edit-guard";
+import { TypeGlyph } from "@/components/common/glyphs";
 import { MemberAvatar } from "@/components/common/member";
-import { RatingDot, RatingMenu } from "@/components/kit";
+import { RatingMenu, RatingPill } from "@/components/kit";
+import { cardTone } from "@/features/plan/card-tone";
 import { NODE_TYPES, PLACE_CATEGORIES } from "@/lib/domain/taxonomy";
 import type { GraphMember } from "@/lib/engine/types";
 import { anchorKey } from "@/lib/realtime/cursor-protocol";
@@ -33,7 +35,7 @@ import { CategorySelect } from "../ui/category-select";
 import { mayRate } from "../ui/member-ratings";
 import { rowReason } from "./bar";
 import type { PlaceGroup } from "./grouping";
-import type { PlaceRow } from "./model";
+import { NO_DAYS, type PlaceRow } from "./model";
 import { TimeNeededEditor } from "./TimeNeeded";
 import { PLACES_TAB_TESTID } from "./testids";
 import { ScoreChip, SplitMark, StatusChip } from "./ui";
@@ -127,11 +129,15 @@ function RatingCell({ row, member }: { row: PlaceRow; member: GraphMember }) {
 	const p = row.node.priorities[member.id] ?? null;
 	const editable = mayRate(access, member) && member.id === act.me;
 	const placeholder = mayRate(access, member) && member.id !== act.me;
-	const label = (
-		<RatingDot
+	// One Yonder (D06): each person's rating as its pill, "Not yet" before they rate.
+	const label = p ? (
+		<RatingPill
 			level={p}
-			className={cn("text-meta", !ratingsCount(member) && "opacity-50")}
+			size="sm"
+			className={cn(!ratingsCount(member) && "opacity-50")}
 		/>
+	) : (
+		<span className="text-meta text-muted-foreground/70">Not yet</span>
 	);
 	if (!editable && !placeholder)
 		return <span data-testid={PLACES_TAB_TESTID.ratingCell}>{label}</span>;
@@ -351,7 +357,21 @@ export function PlacesTable({
 						"group-focus-visible/row:bg-accent",
 					)}
 				>
-					<div className="flex min-w-0 items-center gap-2">
+					<div
+						className="plan-card flex min-w-0 items-center gap-2.5"
+						data-family={cardTone(r.node)}
+					>
+						<span
+							aria-hidden
+							className="plan-icon flex size-7 shrink-0 items-center justify-center rounded-full"
+						>
+							<TypeGlyph
+								type={r.node.type}
+								category={r.node.category}
+								tinted={false}
+								className="size-3.5 text-current"
+							/>
+						</span>
 						<div className="min-w-0 flex-1">
 							<div className="truncate text-sm font-medium">{r.name}</div>
 							<div className="truncate text-xs text-muted-foreground">
@@ -412,7 +432,9 @@ export function PlacesTable({
 						</button>
 					)}
 				</td>
-				<td className="truncate px-3 text-muted-foreground">{r.when}</td>
+				<td className="truncate px-3 text-muted-foreground">
+					{r.when === NO_DAYS ? "—" : r.when}
+				</td>
 				<td className="px-2">
 					<TimeNeededEditor
 						row={r}

@@ -24,6 +24,8 @@ import { type Groupable, levelGroupOf } from "./grouping";
 import { type PlaceStatus, placeStatus, type StatusInfo } from "./lifecycle";
 import { allNah, groupScore, isSplit, topRating } from "./score";
 
+/** A row's `when` with no day for it in the trip. */
+export const NO_DAYS = "No days here yet";
 export type PlaceRow = Groupable & {
 	node: GraphNode;
 	split: boolean;
@@ -179,7 +181,7 @@ export function buildRows(
 		} else if (cityRow && cityDayIds.length) {
 			const at = cityRow.name;
 			when = `In ${at} · ${formatDayNumbers(cityDayIds.map((d) => ix.dayNumber(d)))}`;
-		} else when = "No days here yet";
+		} else when = NO_DAYS;
 		const planned = own[0]?.durationMin ?? null;
 		const c = opts.counts?.byNode[node.id];
 		return {
