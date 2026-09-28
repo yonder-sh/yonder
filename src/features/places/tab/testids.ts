@@ -51,6 +51,8 @@ export const PLACES_TAB_TESTID = {
 	feedReveal: "places-feed-reveal",
 	feedTag: "places-feed-tag",
 	feedTime: "places-feed-time",
+	/** D07: "The group", after you rate. */
+	feedGroup: "places-feed-group",
 	feedPeek: "places-feed-peek",
 	feedLeft: "places-feed-left",
 	feedRun: "places-feed-run",

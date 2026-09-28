@@ -45,7 +45,7 @@ import {
 	useSyncExternalStore,
 } from "react";
 import { createPortal } from "react-dom";
-import { MemberAvatar } from "@/components/common/member";
+import { MemberAvatar, MemberName } from "@/components/common/member";
 import { ThumbhashImage } from "@/components/common/thumbhash-image";
 import { RatingPill } from "@/components/kit";
 import { Button } from "@/components/ui/button";
@@ -610,6 +610,54 @@ function CardContext({ row }: { row: PlaceRow }) {
 	);
 }
 
+/**
+ * "The group" (D07): everyone else's rating and comment, once you've rated
+ * (or peeked), so your own isn't swayed.
+ */
+function GroupList({ row, data }: { row: PlaceRow; data: PlacesData }) {
+	const act = usePlaceActions();
+	const node = row.node;
+	const others = data.memberIds.filter((m) => m !== act.me);
+	if (!others.length) return null;
+	return (
+		<section
+			className="grid gap-2"
+			data-testid={PLACES_TAB_TESTID.feedGroup}
+			aria-label="The group"
+		>
+			<h3 className="text-sm font-semibold">The group</h3>
+			<ul className="grid divide-y border-y">
+				{others.map((id) => {
+					const p = node.priorities[id] ?? null;
+					const comment = node.ratingComments[id];
+					return (
+						<li key={id} className="flex min-w-0 items-start gap-2.5 py-2.5">
+							<MemberAvatar memberId={id} size={28} ring={false} />
+							<span className="grid min-w-0 gap-0.5">
+								<span className="flex items-center gap-2">
+									<MemberName memberId={id} className="font-medium" />
+									{p ? (
+										<RatingPill level={p} size="sm" />
+									) : (
+										<span className="text-meta text-muted-foreground">
+											Not yet
+										</span>
+									)}
+								</span>
+								{comment ? (
+									<span className="text-meta text-muted-foreground">
+										{commentVisibleText(comment)}
+									</span>
+								) : null}
+							</span>
+						</li>
+					);
+				})}
+			</ul>
+		</section>
+	);
+}
+
 function PlaceCard({
 	row,
 	data,
@@ -765,19 +813,6 @@ function PlaceCard({
 		</>
 	);
 
-	const details = (
-		<div className="flex flex-col gap-3">
-			{tagChip}
-			{/* D07: the name, then what it is. */}
-			{title}
-			{line ? (
-				<p className="line-clamp-3 text-body text-foreground">{line}</p>
-			) : null}
-			{buttons}
-			{commentRow}
-		</div>
-	);
-
 	return (
 		<article
 			data-testid={PLACES_TAB_TESTID.feedCard}
@@ -807,9 +842,23 @@ function PlaceCard({
 						ahead={ahead}
 						className="h-full rounded-2xl"
 					/>
+					{/* D07: the place, what it is, then your rating and the group. */}
 					<div className="flex min-h-0 flex-col gap-5 overflow-y-auto p-1">
+						{tagChip}
+						{title}
+						{line ? <p className="text-body text-foreground">{line}</p> : null}
 						{active ? <CardContext row={row} /> : null}
-						<div className="mt-auto">{details}</div>
+						<section className="grid gap-2.5">
+							<h3 className="flex items-baseline justify-between text-sm font-semibold">
+								Your rating
+								<span className="text-meta font-normal text-muted-foreground max-md:hidden">
+									change with 1–6
+								</span>
+							</h3>
+							{buttons}
+							{commentRow}
+						</section>
+						{shown ? <GroupList row={row} data={data} /> : null}
 					</div>
 				</div>
 			) : (
@@ -871,6 +920,7 @@ function PlaceCard({
 						{commentRow}
 						{peek}
 						{buttons}
+						{shown ? <GroupList row={row} data={data} /> : null}
 					</div>
 				</>
 			)}
