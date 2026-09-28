@@ -4,6 +4,7 @@ import {
 	classifyShare,
 	cleanShareName,
 	firstUrl,
+	namedIn,
 	parentLabel,
 	parseMapsUrl,
 	readResolution,
@@ -176,5 +177,31 @@ describe("E8 share classification", () => {
 		expect(
 			parentLabel(nodes, { parentId: null, create: [] }, "Asia 2027"),
 		).toBe("Asia 2027");
+	});
+});
+
+describe("the places a caption names (D10)", () => {
+	const places = [
+		{ name: "Takeshita Street", localName: "竹下通り" },
+		{ name: "Samoyed Cafe Moffu", localName: null },
+		{ name: "Ku", localName: null },
+		{ name: "Kiddy Land", localName: null },
+	];
+	const names = (text: string | null) =>
+		namedIn(text, places).map((p) => p.name);
+
+	it("finds whole names, in the order the caption names them", () => {
+		expect(
+			names(
+				"The fluffiest café in Harajuku 🐶 Samoyed Cafe Moffu, off Takeshita Street!",
+			),
+		).toEqual(["Samoyed Cafe Moffu", "Takeshita Street"]);
+	});
+
+	it("reads hashtags and local names, never part of a word or a short name", () => {
+		expect(names("#samoyedcafemoffu #tokyo")).toEqual(["Samoyed Cafe Moffu"]);
+		expect(names("原宿の竹下通りで")).toEqual(["Takeshita Street"]);
+		expect(names("Kiddy Landmark Ku")).toEqual([]);
+		expect(names(null)).toEqual([]);
 	});
 });

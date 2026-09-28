@@ -137,6 +137,38 @@ export const normName = (s: string) =>
 		.replace(/[^\p{L}\p{N}]+/gu, " ")
 		.trim();
 
+const CJK =
+	/[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}]/u;
+
+/**
+ * The places a caption names ("… at Samoyed Cafe Moffu"), in the order it
+ * names them: whole words after `normName`, or run together as a hashtag
+ * (#samoyedcafemoffu). Latin names under 3 letters never count.
+ */
+export function namedIn<N extends { name: string; localName?: string | null }>(
+	text: string | null | undefined,
+	places: readonly N[],
+): N[] {
+	const hay = ` ${normName(text ?? "")} `;
+	if (!hay.trim()) return [];
+	const hits: { p: N; at: number }[] = [];
+	for (const p of places) {
+		let at = -1;
+		for (const raw of [p.name, p.localName]) {
+			const n = raw ? normName(raw) : "";
+			const cjk = CJK.test(n);
+			if (n.length < (cjk ? 2 : 3)) continue;
+			for (const f of n.includes(" ") ? [n, n.replace(/ /g, "")] : [n]) {
+				// CJK runs have no spaces between words.
+				const i = cjk ? hay.indexOf(f) : hay.indexOf(` ${f} `);
+				if (i >= 0 && (at < 0 || i < at)) at = i;
+			}
+		}
+		if (at >= 0) hits.push({ p, at });
+	}
+	return hits.sort((a, b) => a.at - b.at).map((h) => h.p);
+}
+
 // ---------------------------------------------------------------------------
 // WP-Places' `resolveSharedLink` answer, read defensively (it is another
 // package's DTO: anything unexpected falls back to `parseMapsUrl`).
