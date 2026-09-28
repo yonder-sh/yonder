@@ -118,12 +118,14 @@ const mark = (
 	nodeId: string | null,
 	decided: boolean,
 	at?: string,
+	by?: string,
 ) =>
 	call<Marked>(setDecided, u, {
 		tripId: c.tripId,
 		nodeId,
 		decided,
 		...(at ? { at } : {}),
+		...(by ? { by } : {}),
 	});
 
 async function nodeMark(id: string) {
@@ -270,13 +272,20 @@ describe("setDecided", () => {
 		]);
 	});
 
-	it("undoing a re-mark puts the earlier stamp back, never a later one", async () => {
+	it("undoing a re-mark puts the earlier stamp and marker back, never a later stamp", async () => {
 		const first = await mark(owner, kyoto, true);
 		await tick();
 		await mark(owner, kyoto, true);
 		const back = await mark(owner, kyoto, true, first.decidedAt as string);
 		expect(back.decidedAt).toBe(first.decidedAt);
 		expect((await nodeMark(kyoto))?.at?.toISOString()).toBe(first.decidedAt);
+		// Maya's re-mark, undone: Olga's mark again; a stranger never gets it.
+		await mark(maya, kyoto, true);
+		await mark(maya, kyoto, true, first.decidedAt as string, owner.id);
+		expect((await nodeMark(kyoto))?.by).toBe(owner.id);
+		const stranger = await newUser("Stan");
+		await mark(maya, kyoto, true, first.decidedAt as string, stranger.id);
+		expect((await nodeMark(kyoto))?.by).toBe(maya.id);
 		// A stamp from the future is held to now.
 		const future = await mark(owner, kyoto, true, "2999-01-01T00:00:00.000Z");
 		expect(Date.parse(future.decidedAt as string)).toBeLessThanOrEqual(

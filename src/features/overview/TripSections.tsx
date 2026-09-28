@@ -13,7 +13,11 @@ import { selForRefs } from "@/features/shell/activity-sel";
 import { timeAgo } from "@/features/shell/inbox-model";
 import { TodoText, useOpenTodo } from "@/features/shell/StillToPlan";
 import { useShell } from "@/features/shell/shell-store";
-import { todoContext, todoTitle } from "@/features/shell/still-to-plan";
+import {
+	todoContext,
+	todoList,
+	todoTitle,
+} from "@/features/shell/still-to-plan";
 import { SHELL_TESTID } from "@/features/shell/testids";
 import {
 	deadlineChip,
@@ -94,7 +98,7 @@ export function Deadlines({ now: at }: { now?: number } = {}) {
 								type="button"
 								data-testid={SHELL_TESTID.deadlineRow}
 								title={todoTitle(plainText(li.text), context)}
-								onClick={() => openTodo(li.target)}
+								onClick={() => openTodo(li.target, todoList(li))}
 								className="flex min-h-9 w-full items-center gap-2.5 rounded-md px-2 py-1 text-left transition-colors hover:bg-accent"
 							>
 								<span className="flex min-w-0 flex-1 flex-col items-start gap-0.5">

@@ -974,11 +974,15 @@ export function ExpenseEditor({
 		}
 	};
 
+	// People added here, named until the refreshed trip data has them.
+	const [added, setAdded] = useState<Record<string, string>>({});
 	const nameOf = (id: string) => {
 		const m = resolveMember(graph.members, id);
 		return id === meId
 			? "You"
-			: (m?.firstName ?? m?.name.split(" ")[0] ?? "Former member");
+			: (m?.firstName ??
+					(m?.name ?? added[id])?.split(" ")[0] ??
+					"Former member");
 	};
 
 	// ---- render ----
@@ -1243,7 +1247,10 @@ export function ExpenseEditor({
 										{addPerson ? (
 											<PersonSelect
 												value={payerId}
-												onChange={pickPayer}
+												onChange={(id, name) => {
+													if (name) setAdded((a) => ({ ...a, [id]: name }));
+													pickPayer(id);
+												}}
 												ariaLabel={isRefund ? "Refunded to" : "Paid by"}
 												trigger={
 													<AddPill data-testid={MONEY_TESTID.payerAdd}>

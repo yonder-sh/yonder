@@ -44,6 +44,7 @@ import {
 	daysHint,
 	type StillToPlan as StillToPlanResult,
 	stillToPlan,
+	type TodoList,
 	todoTitle,
 	todoView,
 } from "./still-to-plan";
@@ -56,14 +57,14 @@ import { plainText, useTripGo } from "./use-trip-go";
  * narrowed to its place or day, its item/place/leg/day selected, and the
  * inspector on that selection's Lists tab. Upcoming deadlines use it too.
  */
-export function useOpenTodo(): (target: BundleTarget) => void {
+export function useOpenTodo(): (target: BundleTarget, list?: TodoList) => void {
 	const { ix, search } = useWorkspace();
 	const go = useTripGo();
 	const openInspectorTab = useShell((s) => s.openInspectorTab);
 	const from = search.sel ?? "none";
 	return useCallback(
-		(target: BundleTarget) => {
-			const v = todoView(ix, target);
+		(target: BundleTarget, list?: TodoList) => {
+			const v = todoView(ix, target, list);
 			if (v.inspectorTab && v.search.sel)
 				openInspectorTab(v.search.sel, v.inspectorTab, from);
 			go(v.search, v.scopeId ? { scopeId: v.scopeId } : { root: true });
@@ -181,7 +182,7 @@ function StillToPlanList() {
 								anchor={`list:${b.listItemId}`}
 								testId={SHELL_TESTID.stillToPlanItem}
 								title={todoTitle(plainText(b.text), b.context)}
-								onClick={() => openTodo(b.target)}
+								onClick={() => openTodo(b.target, b.list)}
 							>
 								<TodoText text={b.text} context={b.context} />
 								{b.due ? <Meta>{formatDayDate(b.due.date)}</Meta> : null}
@@ -216,7 +217,7 @@ function StillToPlanList() {
 								anchor={`list:${o.listItemId}`}
 								testId={SHELL_TESTID.stillToPlanItem}
 								title={todoTitle(plainText(o.text), o.context)}
-								onClick={() => openTodo(o.target)}
+								onClick={() => openTodo(o.target, o.list)}
 							>
 								<TodoText text={o.text} context={o.context} />
 								<Meta>{formatDueWhen(o.due)}</Meta>

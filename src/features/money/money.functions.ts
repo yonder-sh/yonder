@@ -990,7 +990,7 @@ export const exportMoneyCsv = createServerFn({ method: "GET" })
 					split: e.isPrivate
 						? "Only me"
 						: e.lines.length
-							? `Itemized (${who(e.lines.flatMap((l) => l.memberIds))})`
+							? `Itemised (${who(e.lines.flatMap((l) => l.memberIds))})`
 							: who(e.shares.map((s) => s.memberId)),
 					points: e.points
 						? `${e.points.points} ${e.points.program}${e.points.sourceProgram ? ` (from ${e.points.sourcePoints} ${e.points.sourceProgram})` : ""}`

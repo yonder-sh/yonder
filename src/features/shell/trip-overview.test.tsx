@@ -189,11 +189,12 @@ describe("trip overview", () => {
 			params: Record<string, string>;
 			search: Record<string, unknown>;
 		};
-		// PLAN-R2-05: scoped to Tokyo (a filtered list), Tokyo selected.
+		// PLAN-R2-05: scoped to Tokyo (a filtered list), Tokyo selected; a
+		// booking window opens in Bookings.
 		expect(call.params._splat).toBe("japan/tokyo");
 		expect(call.search).toEqual({
 			tab: "lists",
-			list: "todo",
+			list: "bookings",
 			sel: `n.${N.tokyo}`,
 		});
 		fireEvent.click(items[0] as HTMLElement);

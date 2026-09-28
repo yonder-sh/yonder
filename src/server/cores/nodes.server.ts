@@ -183,6 +183,8 @@ export const SetDecidedInput = z
 		decided: z.boolean(),
 		/** The undo of a re-mark: its earlier stamp back (never later than now). */
 		at: z.iso.datetime({ offset: true }).optional(),
+		/** With `at`: who made that earlier mark (kept while they're a member). */
+		by: z.string().min(1).max(100).optional(),
 	})
 	.strict();
 
@@ -777,9 +779,13 @@ export async function setDecidedCore(
 	const stamp = data.at
 		? sql`least(${data.at}::timestamptz, now())`
 		: sql`now()`;
+	const by =
+		data.at && data.by
+			? sql`coalesce((select user_id from trip_members where trip_id = ${data.tripId} and user_id = ${data.by} limit 1), ${ctx.user.id})`
+			: ctx.user.id;
 	const set = {
 		decidedAt: data.decided ? stamp : null,
-		decidedBy: data.decided ? ctx.user.id : null,
+		decidedBy: data.decided ? by : null,
 		updatedAt: sql`now()`,
 	};
 	const word = data.decided ? "decided" : "undecided";

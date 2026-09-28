@@ -135,7 +135,7 @@ test("guard: 'still to book' rows say what they are for and open that to-do", as
 	const rows = await stp.getByTestId("still-to-plan-item").allInnerTexts();
 	expect(rows.filter((r) => r.trim() === "Book ahead")).toEqual([]);
 	await stp.getByTestId("still-to-plan-item").first().click();
-	await expect(page).toHaveURL(/tab=lists&list=todo&sel=i\./);
+	await expect(page).toHaveURL(/tab=lists&list=(todo|bookings)&sel=i\./);
 });
 
 test("guard HIER-10: 'Shinjuku' finds the ward once and the Fuji Excursion leg, labelled as a leg", async ({ page }) => {

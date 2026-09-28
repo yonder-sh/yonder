@@ -46,7 +46,8 @@ export function PersonSelect({
 	trigger,
 }: {
 	value: string;
-	onChange: (memberId: string) => void;
+	/** `name`: a person just added, until the trip data has them. */
+	onChange: (memberId: string, name?: string) => void;
 	/** A muted lead-in inside the trigger ("by", "to"). */
 	label?: string;
 	testid?: string;
@@ -69,8 +70,9 @@ export function PersonSelect({
 		!people.some((m) => m.name.toLowerCase() === typed.toLowerCase());
 	const current = resolveMember(graph.members, value);
 	const name = value === meId ? "You" : (current?.name ?? "Former member");
-	const pick = (id: string) => {
-		onChange(id);
+	const pick = (id: string, added?: string) => {
+		if (added) onChange(id, added);
+		else onChange(id);
 		setQuery("");
 		setOpen(false);
 	};
@@ -128,7 +130,7 @@ export function PersonSelect({
 									data-testid="person-select-add"
 									onSelect={async () => {
 										try {
-											pick(await addPerson(typed));
+											pick(await addPerson(typed), typed);
 										} catch (e) {
 											toast.error(humanError(e));
 										}

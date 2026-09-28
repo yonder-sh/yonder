@@ -128,16 +128,16 @@ export type SetDecidedVars = {
 	decided: boolean;
 	/** Who marks it (a user id), for the optimistic write. */
 	by: string;
-	/** Undoing a re-mark: the stamp it had before (ISO). */
+	/** Undoing a re-mark: the stamp it had before (ISO); `by` is then who made it. */
 	at?: string;
 };
 
 /** "Mark decided" at a scope (again: the stamp moves to now), or its undo (edit-only). */
 export function useSetDecided(tripId: string) {
 	return useTripMutation(
-		({ nodeId, decided, at }: SetDecidedVars) =>
+		({ nodeId, decided, at, by }: SetDecidedVars) =>
 			setDecided({
-				data: { tripId, nodeId, decided, ...(at ? { at } : {}) },
+				data: { tripId, nodeId, decided, ...(at ? { at, by } : {}) },
 			}),
 		{
 			keys: [tripKeys.graph(tripId)],

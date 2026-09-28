@@ -237,7 +237,7 @@ export function DecidedControl({ data }: { data: PlacesData }) {
 			onError: (e) => toast.error(humanError(e)),
 			onSuccess: () =>
 				undoToast(`Marked ${m.name}'s new places decided`, () =>
-					set.mutate({ ...vars, at: m.at }),
+					set.mutate({ ...vars, at: m.at, by: m.by ?? vars.by }),
 				),
 		});
 	};

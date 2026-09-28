@@ -144,7 +144,7 @@ test.describe("desktop", () => {
 		await expect(items.first()).toBeVisible();
 		await items.first().click();
 		await expect(page).toHaveURL(/tab=lists/);
-		await expect(page).toHaveURL(/list=todo/);
+		await expect(page).toHaveURL(/list=(todo|bookings)/);
 	});
 
 	test("PLAN-I2-11: a deep scope's name shows in full in the Where button", async ({ page }) => {

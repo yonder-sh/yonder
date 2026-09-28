@@ -27,7 +27,12 @@
  * Privacy: list items come from F's `listTripListItems`, which already drops
  * other people's private rows, so a private to-do only counts for its author.
  */
-import { dayLabel, itemName, legLabel } from "@/features/lists/list-model";
+import {
+	dayLabel,
+	isBookingTodo,
+	itemName,
+	legLabel,
+} from "@/features/lists/list-model";
 import type { ListItemDto } from "@/features/lists/lists.functions";
 import { cityDayTable } from "@/features/places/lib/days";
 import { decidedIds } from "@/features/places/lib/decided";
@@ -56,6 +61,8 @@ export type StillToPlan = {
 		target: BundleTarget;
 		/** Its due instant, when it has one (shown next to it). */
 		due: StillToPlanDue | null;
+		/** Where it lives: a booking window in Bookings, else To-dos. */
+		list: TodoList;
 	}[];
 	opening: {
 		listItemId: string;
@@ -64,6 +71,7 @@ export type StillToPlan = {
 		at: number;
 		target: BundleTarget;
 		due: StillToPlanDue;
+		list: TodoList;
 	}[];
 	unrated: {
 		memberId: string;
@@ -153,8 +161,18 @@ export type TodoView = {
 	inspectorTab: "lists" | null;
 };
 
-export function todoView(ix: GraphIndex, target: BundleTarget): TodoView {
-	const list = { tab: "lists", list: "todo" } as const;
+/** The Lists tab a to-do sits in: booking windows have their own. */
+export type TodoList = "todo" | "bookings";
+export function todoList(li: Pick<ListItemDto, "list" | "dueKind">): TodoList {
+	return isBookingTodo(li) ? "bookings" : "todo";
+}
+
+export function todoView(
+	ix: GraphIndex,
+	target: BundleTarget,
+	kind: TodoList = "todo",
+): TodoView {
+	const list = { tab: "lists", list: kind } as const;
 	const sel = selForRefs(ix, bundleTargetColumns(target));
 	if (!sel) return { scopeId: null, search: { ...list }, inspectorTab: null };
 	const dateOf = (dayId: string | null | undefined) =>
@@ -393,6 +411,7 @@ export function stillToPlan(input: StillToPlanInput): StillToPlan {
 			context: todoContext(ix, li.target, li.text),
 			target: li.target,
 			due: dueOf(li),
+			list: todoList(li),
 		}));
 	const horizon = now + OPENING_WINDOW_DAYS * DAY_MS;
 	const opening = todos
@@ -410,6 +429,7 @@ export function stillToPlan(input: StillToPlanInput): StillToPlan {
 			at: due.at,
 			target: li.target,
 			due,
+			list: "bookings" as const,
 		}));
 	// The Rate screen's own set, so "You 47 of 125" here reads "You 78/125" there
 	// (places marked decided ask no one).

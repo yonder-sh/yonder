@@ -65,14 +65,14 @@ test("desktop: the trip overview shows what's still to plan", async ({ page }, i
 	await expect(page).toHaveURL(new RegExp(`sel=l\\.${c.ids.items.ryokanBreakfast}\\.${c.ids.items.kiyomizu}`));
 	await expect(page.getByTestId(TESTID.legOverview)).toBeVisible();
 
-	// "Still to book" expands to its to-dos; one opens the to-do list filtered
+	// "Still to book" expands to its to-dos; one opens its list (To-dos, or Bookings for a booking window) filtered
 	// to it, the inspector on that selection's Lists tab (PLAN-I2-14, PLAN-R2-05).
 	await page.goto(`/t/${c.slug}?sel=root`);
 	await expect(page.getByTestId(SHELL_TESTID.stillToPlan)).toBeVisible();
 	await row("book").getByRole("button", { name: /still to book/ }).click();
 	await row("book").getByTestId(SHELL_TESTID.stillToPlanItem).first().click();
 	await expect(page).toHaveURL(/tab=lists/);
-	await expect(page).toHaveURL(/list=todo/);
+	await expect(page).toHaveURL(/list=(todo|bookings)/);
 	await expect(page).toHaveURL(/sel=/);
 	await expect(page.getByTestId(TESTID.inspector).locator('[data-section="lists"]')).toBeInViewport();
 
