@@ -15,6 +15,7 @@
  * - screenshots at 1440×900 and 390×844.
  */
 import { expect, type Locator, type Page, test } from "@playwright/test";
+import { OUTLINE_TESTID } from "../../../src/features/outline/testids";
 import { PLAN_TESTID } from "../../../src/features/plan/testids";
 import { TESTID } from "../../../src/lib/testids";
 import { shotPath, storageStateOf } from "./_helpers/env";
@@ -201,6 +202,9 @@ test("dropping a stop between a flight's items is refused with the toast", async
 	expect(g.items.find((i) => i.id === I.kiyomizu)?.dayId).toBe(c.ids.days.d4);
 });
 
+/** The first idea under the Plan (One Yonder: the Outline's drag source moved there). */
+const idea = (page: Page) => page.getByTestId(PLAN_TESTID.ideas).getByTestId(OUTLINE_TESTID.ideaRow).first();
+
 /** A slow mouse drag from one element's centre to a point (dnd-kit needs real pointer moves). */
 async function drag(page: Page, from: Locator, to: { x: number; y: number }) {
 	const a = await from.boundingBox();
@@ -213,9 +217,11 @@ async function drag(page: Page, from: Locator, to: { x: number; y: number }) {
 	await page.mouse.up();
 }
 
-test("drag to reorder within a day, and drop a place from the Outline into a day", async ({ page }, info) => {
+test("drag to reorder within a day, and drop an idea into a day", async ({ page }, info) => {
 	test.skip(info.project.name !== "chromium", "mouse drag");
 	const c = await cloneFixtureTrip(page.request);
+	// The day and the ideas under it on one screen.
+	await page.setViewportSize({ width: 1440, height: 1600 });
 	const I = c.ids.items;
 	await page.goto(`/t/${c.slug}?lens=place&days=${DAY.d2}`);
 	await expectLive(page);
@@ -238,21 +244,22 @@ test("drag to reorder within a day, and drop a place from the Outline into a day
 		.toBe(I.itoya);
 	expect((await dayItems()).length).toBe(3);
 
-	// A place dragged from the Outline lands on the day, at the drop point.
+	// An idea dragged from the ideas under the Plan lands on the day, at the drop point.
 	const before = (await graphOf(page)).items.length;
-	const row = page.getByTestId(TESTID.outlineRow).filter({ hasText: "Tokyo" }).first();
-	await expect(row).toBeVisible();
+	const row = idea(page);
+	await expect(row).toBeInViewport();
 	const day = await page.getByTestId(PLAN_TESTID.daySection).first().boundingBox();
 	if (!day) throw new Error("no day");
 	await drag(page, row, { x: day.x + day.width / 2, y: day.y + day.height - 40 });
 	await expect.poll(async () => (await graphOf(page)).items.length).toBe(before + 1);
 });
 
-test("a drop below a day's last card goes at the end: a place from the Outline, a card from another day", async ({
+test("a drop below a day's last card goes at the end: an idea, a card from another day", async ({
 	page,
 }, info) => {
 	test.skip(info.project.name !== "chromium", "mouse drag");
 	const c = await cloneFixtureTrip(page.request);
+	await page.setViewportSize({ width: 1440, height: 1600 });
 	await page.goto(`/t/${c.slug}?lens=place&days=${DAY.d2}..${DAY.d3}`);
 	await expectLive(page);
 	const d2 = c.ids.days.d2 as string;
@@ -269,9 +276,10 @@ test("a drop below a day's last card goes at the end: a place from the Outline, 
 		return { x: box.x + box.width / 2, y: box.y + box.height + 14 };
 	};
 
-	// A place from the Outline, dropped under Day 2's last card, becomes its last item.
+	// An idea, dropped under Day 2's last card, becomes its last item.
 	const before = await order(d2);
-	const row = page.getByTestId(TESTID.outlineRow).filter({ hasText: "Tokyo" }).first();
+	const row = idea(page);
+	await row.scrollIntoViewIfNeeded();
 	await drag(page, row, await belowLast(d2));
 	await expect.poll(async () => (await order(d2)).length).toBe(before.length + 1);
 	const after = await order(d2);
