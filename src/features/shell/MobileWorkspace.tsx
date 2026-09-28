@@ -423,16 +423,22 @@ export function MobileWorkspace() {
 					<NowNext />
 				</div>
 			) : null}
-			<main className="relative flex min-h-0 flex-1 flex-col">
-				{mapOpen ? (
-					<div className="absolute inset-0 bg-basemap-land">
-						<MapRegion variant="mobile" />
-					</div>
-				) : (
-					<CenterTabContent whereChips={false} phone />
-				)}
-			</main>
-			<BottomTabs />
+			{/* The phone's page: the tab (or the map) and the tab bar. */}
+			<div
+				data-testid={TESTID.mobileSheet}
+				className="flex min-h-0 flex-1 flex-col"
+			>
+				<main className="relative flex min-h-0 flex-1 flex-col">
+					{mapOpen ? (
+						<div className="absolute inset-0 bg-basemap-land">
+							<MapRegion variant="mobile" />
+						</div>
+					) : (
+						<CenterTabContent whereChips={false} phone />
+					)}
+				</main>
+				<BottomTabs />
+			</div>
 			{/* The flow (owner, 2026-09-25): "★ Rate 12" above the tab bar. */}
 			<RatePill />
 			<Fab />

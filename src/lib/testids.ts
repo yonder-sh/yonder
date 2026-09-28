@@ -44,7 +44,9 @@ export const TESTID = {
 	inspector: "inspector",
 	inspectorClose: "inspector-close",
 	outlinePopoverButton: "outline-popover-button",
+	/** The phone's page: the tab (or the map) and the tab bar (the bottom sheet before One Yonder). */
 	mobileSheet: "mobile-sheet",
+	/** The phone's header (the floating pills before One Yonder). */
 	mobilePills: "mobile-pills",
 	fab: "fab",
 	dayRangeChip: "day-range-chip",
