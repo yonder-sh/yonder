@@ -57,6 +57,7 @@ export const PLACES_TAB_TESTID = {
 	rowPick: "places-row-pick",
 	pickAll: "places-pick-all",
 	selectionBar: "places-selection-bar",
+	decideWaiting: "places-decide-waiting",
 	selectionDay: "places-selection-day",
 	selectionRate: "places-selection-rate",
 	selectionDrop: "places-selection-drop",
