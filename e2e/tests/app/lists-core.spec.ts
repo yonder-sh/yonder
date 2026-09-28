@@ -11,6 +11,9 @@
  * - a relative booking window follows its item to another day (ADDENDUM §10,
  *   QA DUE-09);
  * - the inspector's Lists tab for a place rolls up "Everything inside";
+ * - the Lists page (D12): one list at a time; Add a booking lands in
+ *   Bookings with its details, Mark booked moves it to Booked; a Just mine
+ *   packing item is private;
  * - mobile: the Lists tab at 390 px, no sideways scroll.
  * Screenshots → e2e/shots/lists/.
  */
@@ -424,6 +427,31 @@ test("the Lists page: one list at a time under its heading, the switch its tabs 
 	await expect(tab.getByTestId("rollup-shopping")).toBeVisible();
 	await expect(tab.getByText("Petty knife")).toBeVisible();
 	await page.screenshot({ path: shotPath("lists/page-1920.png"), animations: "disabled" });
+	// Add a booking: a to-do that opens, in Bookings, its details beside the list.
+	await tab.getByTestId(L.addBooking).click();
+	await expect(tab.getByTestId(L.bookings)).toBeVisible();
+	await expect(page).toHaveURL(/list=bookings/);
+	await tab.getByTestId(L.bookingAdd).getByTestId(TESTID.mentionInput).click();
+	await page.keyboard.type("Ghibli Museum tickets");
+	await page.keyboard.press("Enter");
+	const booking = tab.getByTestId(L.bookingRow).filter({ hasText: "Ghibli Museum tickets" });
+	await expect(booking).toHaveAttribute("data-group", "none");
+	const details = tab.getByTestId(L.bookingDetails);
+	await expect(details).toContainText("Ghibli Museum tickets");
+	await details.getByTestId(L.bookingRef).fill("GH-2027");
+	await details.getByTestId(L.bookingRef).press("Enter");
+	await details.getByTestId(L.bookingMarkBooked).click();
+	await expect(booking).toHaveAttribute("data-group", "booked");
+	await expect(tab.getByTestId(L.kindTodo)).toContainText("To-dos");
+	await page.screenshot({ path: shotPath("lists/bookings-1920.png"), animations: "disabled" });
+	// Packing: for everyone and just mine.
+	await tab.getByTestId(L.kindPacking).click();
+	const mine = tab.getByTestId(L.packingGroup).and(tab.locator('[data-group="mine"]'));
+	await mine.getByTestId(TESTID.mentionInput).click();
+	await page.keyboard.type("Earplugs");
+	await page.keyboard.press("Enter");
+	await expect(mine.getByTestId(L.row).filter({ hasText: "Earplugs" })).toHaveAttribute("data-private", "");
+	await expect(tab.getByTestId(L.kindPacking)).toContainText("1");
 });
 
 test("mobile: the Lists tab", async ({ page }, info) => {
