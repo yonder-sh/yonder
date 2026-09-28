@@ -32,6 +32,8 @@ const WARM_DESKTOP = [
 const WARM_PHONE = ["/t/asia-2027?tab=plan", "/dashboard"];
 // A signed-out visitor at a trip whose link is off: the "no access" page.
 const WARM_GUEST = ["/login", "/t/asia-2027"];
+/** Basemap tiles and imagery from the map proxy (e2e/stubs/map-proxy.mjs). */
+const MAP_TILE = /\/__map\/(?:ofm\/planet\/[^/]+\/\d+\/|arcgis\/)/;
 
 async function checkEnv(e: FastEnvEntry): Promise<void> {
 	assertNotMainStack(e.appUrl);
@@ -48,6 +50,9 @@ async function checkEnv(e: FastEnvEntry): Promise<void> {
 async function visit(browser: Browser, e: FastEnvEntry, urls: string[], opts: Parameters<Browser["newContext"]>[0]) {
 	const ctx = await browser.newContext({ ...opts, baseURL: e.appUrl });
 	await guardContext(ctx);
+	// It only compiles the app: its maps get blank tiles here, not from the basemap cache (which
+	// holds what the specs browse; the Rate pile's first card, in Seoul, would count as misses).
+	await ctx.route(MAP_TILE, (r) => r.fulfill({ status: 200, body: "" }));
 	const page = await ctx.newPage();
 	try {
 		for (const url of urls) {
