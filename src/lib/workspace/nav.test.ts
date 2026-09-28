@@ -25,10 +25,11 @@ describe("navigation semantics (SPEC §8.5)", () => {
 			N.tokyo as string,
 		);
 		expect(t.splat).toBe("japan/tokyo");
-		expect(t.search).toEqual({ lens: "area" });
-		// With a day in view the lens is the day's (the workspace's place lens).
+		// Area is Tokyo's own lens: the URL names only a choice.
+		expect(t.search).toEqual({});
+		// With a day in view the lens stays as it was (none: the day's place lens).
 		const d = nav.zoomIn(
-			state(N.japan ?? null, { lens: "city", days: "2027-10-03" }),
+			state(N.japan ?? null, { days: "2027-10-03" }),
 			N.tokyo as string,
 		);
 		expect(d.search).toEqual({ days: "2027-10-03" });
@@ -49,22 +50,27 @@ describe("navigation semantics (SPEC §8.5)", () => {
 		});
 		const s1 = nav.escapeChain(s0);
 		expect(s1?.search).toEqual({ lens: "area", days: "2027-10-03" });
-		// Out of the day, the lens is the scope's own again.
+		// A chosen lens stays when the day goes.
 		const s2 = nav.escapeChain(state(N.tokyo ?? null, s1?.search));
-		expect(s2?.search).toEqual({});
+		expect(s2?.search).toEqual({ lens: "area" });
 		const s3 = nav.escapeChain(state(N.tokyo ?? null, s2?.search));
 		expect(s3?.splat).toBe("japan");
 	});
 
-	it("the lens goes with a change of days (the workspace picks the day's, D03)", () => {
+	it("a change of days keeps the URL's lens (none: the workspace picks the day's, D03)", () => {
 		const tokyo = N.tokyo ?? null;
-		const day = nav.setDays(state(tokyo, { lens: "area" }), {
-			from: "2027-10-03",
-			to: "2027-10-03",
+		const day = { from: "2027-10-03", to: "2027-10-03" };
+		expect(nav.setDays(state(tokyo), day).search).toEqual({
+			days: "2027-10-03",
 		});
-		expect(day.search).toEqual({ days: "2027-10-03" });
-		const all = nav.setDays(state(tokyo, day.search), null);
-		expect(all.search).toEqual({});
+		expect(nav.setDays(state(tokyo, { lens: "area" }), day).search).toEqual({
+			lens: "area",
+			days: "2027-10-03",
+		});
+		expect(
+			nav.setDays(state(tokyo, { lens: "place", days: "2027-10-03" }), null)
+				.search,
+		).toEqual({ lens: "place" });
 	});
 
 	it("stepLens skips levels that aren't usable and stays at the ends", () => {

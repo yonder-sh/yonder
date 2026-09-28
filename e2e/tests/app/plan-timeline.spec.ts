@@ -187,6 +187,8 @@ test("dropping a stop between a flight's items is refused with the toast", async
 	const from = card(page, I.kiyomizu as string);
 	const to = card(page, I.icn as string);
 	await expect(to).toBeVisible();
+	// Clear of the ideas docked at the column's foot.
+	await from.evaluate((el) => el.scrollIntoView({ block: "center" }));
 	const a = await from.boundingBox();
 	const b = await to.boundingBox();
 	if (!a || !b) throw new Error("no boxes");

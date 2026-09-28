@@ -589,7 +589,7 @@ test("signed-in link guest: no money in digest, counts, inbox, Plan cards, item 
 	const inb = await callFn<{ items: { kind: string }[] }>(g.page, "listInbox", { tripId: c.tripId }, INBOX).catch(() => null);
 	out.inboxKinds = inb?.items?.map((x) => x.kind);
 	out.listMoney = await callFnErr(g.page, "listMoney", { tripId: c.tripId });
-	await g.page.goto(`/t/${c.slug}?tab=plan`);
+	await g.page.goto(`/t/${c.slug}?tab=plan&lens=place`);
 	await waitLive(g.page);
 	out.wallet = await g.page.locator("svg.lucide-wallet").count();
 	out.bodyHasYen = await g.page.evaluate(() => /¥6,000|Shibuya Sky tickets/.test(document.body.innerText));
@@ -901,7 +901,7 @@ test("split defaults to the item's people; item ⋯ Add expense; a typed name be
 	console.log("EARLY", JSON.stringify(out, null, 1));
 	// the Plan card's ⋯ → Add expense
 	const d1 = Object.values(c.ids.days)[0];
-	await page.goto(`/t/${c.slug}?tab=plan`);
+	await page.goto(`/t/${c.slug}?tab=plan&lens=place`);
 	await waitLive(page);
 	const card = page.getByTestId("timeline-item").filter({ hasText: "Shibuya Sky" }).first();
 	await card.scrollIntoViewIfNeeded();

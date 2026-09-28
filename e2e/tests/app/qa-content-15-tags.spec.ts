@@ -58,7 +58,7 @@ test("TAG-01/02 tag members on timeline items; avatars live; filter; guests neve
 	await expect(ge.page).toHaveURL(/\/t\/asia-2027/, { timeout: 20_000 });
 	await expectLive(ge.page);
 	const d = await ctxFor(browser, "dennis");
-	await d.page.goto("/t/asia-2027?tab=plan");
+	await d.page.goto("/t/asia-2027?tab=plan&lens=place");
 	await expectLive(d.page);
 	const g = await graphOf(d.page);
 	const audrey = g.members.find((m) => m.name.startsWith("Audrey"));
@@ -73,7 +73,7 @@ test("TAG-01/02 tag members on timeline items; avatars live; filter; guests neve
 	if (!samoyed || !uniqlo || !golden || !audrey || !dennis) throw new Error("fixture items missing");
 	const a = await ctxFor(browser, "audrey");
 	const day6 = g.days.find((x) => x.date === "2027-10-06");
-	await a.page.goto(`/t/asia-2027?tab=plan&sel=d.${day6?.id}`);
+	await a.page.goto(`/t/asia-2027?tab=plan&lens=place&sel=d.${day6?.id}`);
 	await expectLive(a.page);
 	const opts = await assignVia(d.page, samoyed.id, ["Audrey"]);
 	console.log("TAG picker options", JSON.stringify(opts));
@@ -93,7 +93,7 @@ test("TAG-01/02 tag members on timeline items; avatars live; filter; guests neve
 	console.log("AUDREY TAGGED AFTER", tagged.length, JSON.stringify(tagged));
 	expect(g2.items.find((i) => i.id === golden.id)?.assigneeIds.sort()).toEqual([dennis.id, audrey.id].sort());
 	// The Plan's person filter.
-	await d.page.goto("/t/asia-2027?tab=plan");
+	await d.page.goto("/t/asia-2027?tab=plan&lens=place");
 	await expectLive(d.page);
 	await d.page.getByRole("button", { name: /Someone/ }).click();
 	await d.page.waitForTimeout(300);
@@ -158,7 +158,7 @@ test("TAG-01/02 tag members on timeline items; avatars live; filter; guests neve
 
 test("TAG-03 who can tag: Kai and Guest-V can't; Guest-E can (members only)", async ({ browser }) => {
 	const d = await ctxFor(browser, "dennis");
-	await d.page.goto("/t/asia-2027?tab=plan");
+	await d.page.goto("/t/asia-2027?tab=plan&lens=place");
 	await expectLive(d.page);
 	const g = await graphOf(d.page);
 	const golden = findItem(g, "Golden Gai");

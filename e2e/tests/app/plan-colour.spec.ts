@@ -8,7 +8,7 @@
  *   alternatives, and accepting one still works;
  * - the map hides, stays hidden after a reload and comes back;
  *   showing the map restores its width;
- * - the Places tab with the map hidden is wide.
+ * - the Places tab is a page, the map's width (One Yonder D06).
  *
  *   pnpm e2e:fast tests/app/plan-colour.spec.ts --envs 1
  */
@@ -225,22 +225,19 @@ test.describe("on a clone of the demo trip", () => {
 		await expect(page.getByTestId(TESTID.tripMap)).toBeVisible();
 	});
 
-	test("the Places tab with the map hidden is wide", async ({ page }) => {
+	test("the Places tab is a page: the map's width, no map beside it (D06)", async ({ page }) => {
 		const c = await cloneFixtureTrip(page.request);
 		await page.goto(`/t/${c.slug}?tab=places&pv=table`);
 		await expectLive(page);
 		const places = page.getByTestId("places-tab");
 		await expect(places).toBeVisible();
-		const narrow = Math.round((await places.boundingBox())?.width ?? 0);
-		await page.getByRole("button", { name: "Hide the map" }).click();
-		await expect(page.getByTestId(SHELL_TESTID.mapRail)).toBeVisible();
-		// The viewport less the map's rail (40).
 		await expect.poll(async () => Math.round((await places.boundingBox())?.width ?? 0)).toBeGreaterThan(1300);
-		expect(narrow).toBeLessThan(800);
+		await expect(page.getByTestId(TESTID.tripMap)).toHaveCount(0);
+		await expect(page.getByTestId(SHELL_TESTID.mapRail)).toHaveCount(0);
 		// One switch: no Wide toggle of its own.
 		await expect(page.getByTestId("places-wide")).toHaveCount(0);
 		await settle(page);
-		await page.screenshot({ path: shot("desktop-places-map-hidden"), animations: "disabled" });
+		await page.screenshot({ path: shot("desktop-places-wide"), animations: "disabled" });
 	});
 });
 

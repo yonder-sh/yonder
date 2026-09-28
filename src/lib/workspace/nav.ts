@@ -16,9 +16,9 @@
  */
 import type { GraphIndex } from "@/lib/engine/graph-index";
 import {
+	defaultLens,
 	lensAfterZoomIn,
 	lensAfterZoomOut,
-	resolveLens,
 	stepLens as stepLensPure,
 } from "@/lib/engine/lens";
 import { slugPath } from "@/lib/engine/tree";
@@ -86,6 +86,18 @@ export function cleanSearch(s: WorkspaceSearch): WorkspaceSearch {
 	) as WorkspaceSearch;
 }
 
+/**
+ * `lens` in the URL only when it isn't what the scope shows anyway (One
+ * Yonder: the URL's lens is a choice, kept across a change of days).
+ */
+function chosen(
+	ix: GraphIndex,
+	scopeId: string | null,
+	lens: Lens,
+): Lens | undefined {
+	return lens === defaultLens(ix, scopeId) ? undefined : lens;
+}
+
 /** The tab the current URL shows. */
 const tabNow = (s: NavState): Tab => tabOf(s.scopeId, s.search);
 
@@ -108,8 +120,9 @@ export function zoomIn(s: NavState, nodeId: string): NavTarget {
 			splat: splatFor(s.ix, nodeId),
 			search: cleanSearch({
 				...s.search,
-				// A day in view keeps the day's lens (model-context).
-				lens: s.days ? undefined : lensAfterZoomIn(s.ix, s.lens, nodeId),
+				lens: s.days
+					? s.search.lens
+					: chosen(s.ix, nodeId, lensAfterZoomIn(s.ix, s.lens, nodeId)),
 				sel: undefined,
 				itab: undefined,
 			}),
@@ -128,7 +141,9 @@ export function zoomOut(s: NavState): NavTarget | null {
 			splat: splatFor(s.ix, parentId),
 			search: cleanSearch({
 				...s.search,
-				lens: s.days ? undefined : lensAfterZoomOut(s.ix, s.lens, parentId),
+				lens: s.days
+					? s.search.lens
+					: chosen(s.ix, parentId, lensAfterZoomOut(s.ix, s.lens, parentId)),
 				sel: undefined,
 				itab: undefined,
 			}),
@@ -149,8 +164,7 @@ export function zoomTo(
 			splat: splatFor(s.ix, nodeId),
 			search: cleanSearch({
 				...s.search,
-				lens:
-					opts.lens ?? (s.days ? undefined : resolveLens(s.ix, nodeId, null)),
+				lens: opts.lens ? chosen(s.ix, nodeId, opts.lens) : undefined,
 				sel: serializeSel(opts.sel ?? null),
 				itab: undefined,
 			}),
@@ -238,11 +252,11 @@ export function setTab(s: NavState, tab: Tab): NavTarget {
 }
 
 /**
- * The lens goes with a change of days: a day in view reads as its stops (the
- * place lens, model-context), All days as the scope's own lens.
+ * The URL's lens is a choice; without one a day in view reads as its stops
+ * (the place lens) and All days as the scope's own (model-context).
  */
 export const setDays = (s: NavState, range: DayRange | null) =>
-	here(s, { days: serializeDays(range), lens: undefined }, range !== null);
+	here(s, { days: serializeDays(range) }, range !== null);
 
 export const extendDays = (s: NavState, date: string) =>
 	here(s, { days: serializeDays(extendRange(s.days, date)) }, true);

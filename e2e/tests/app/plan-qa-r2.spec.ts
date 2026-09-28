@@ -123,16 +123,12 @@ test("COLLAB-R2-11: the Day select fits the inspector (desktop)", async ({ page 
 	const lunch = await itemId(page, "Lunch", "2027-10-07");
 	await openTrip(page, `/t/${TRIP}?sel=i.${lunch}`);
 	const overview = page.getByTestId(TESTID.itemOverview);
+	// One Yonder: the day is on the When line; the select is "Change day".
 	const trigger = page.getByTestId(PLAN_TESTID.overviewDay);
-	await expect(trigger).toContainText("Thu 7 Oct");
+	await expect(overview).toContainText("Thu 7 Oct");
+	await expect(trigger).toContainText("Change day");
 	const [t, o] = await Promise.all([trigger.boundingBox(), overview.boundingBox()]);
 	expect(t && o && t.x + t.width).toBeLessThanOrEqual((o?.x ?? 0) + (o?.width ?? 0) + 1);
-	// The label is cut with an ellipsis inside the trigger, not by the panel.
-	const clipped = await trigger.evaluate((el) => {
-		const span = el.querySelector("[data-slot=select-value] > span") as HTMLElement;
-		return { inside: span.getBoundingClientRect().right <= el.getBoundingClientRect().right + 1 };
-	});
-	expect(clipped.inside).toBe(true);
 });
 
 test("COLLAB-R2-11: the Day select fits a 390px phone", async ({ browser }) => {
@@ -154,7 +150,8 @@ for (const width of [390, 412]) {
 	test(`VIS2-09: area rows keep the place name readable at ${width}px`, async ({ browser }) => {
 		const { ctx, page } = await phone(browser, width);
 		try {
-			await openTrip(page, `/t/${TRIP}/japan/tokyo?days=2027-10-05`);
+			// Area rows: the area lens (a day alone reads in the place lens).
+			await openTrip(page, `/t/${TRIP}/japan/tokyo?days=2027-10-05&lens=area`);
 			const names = page.getByTestId(PLAN_TESTID.areaBlock).locator("[data-block-name]");
 			await expect(names.first()).toBeAttached({ timeout: 15_000 });
 			const sizes = await names.evaluateAll((els) =>

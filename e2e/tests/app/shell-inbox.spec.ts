@@ -37,7 +37,7 @@ test("one inbox: a mention lights the bell, opens its place and is read everywhe
 	const dev = await as(browser, "dev", "/dashboard");
 	const c = await cloneFixtureTrip(dev.request);
 	test.skip(!c.members.maya, "maya@example.com is not seeded");
-	const maya = await as(browser, "maya", `/t/${c.slug}?tab=plan`);
+	const maya = await as(browser, "maya", `/t/${c.slug}?tab=plan&lens=place`);
 	const logs = collectConsole(maya);
 	const bell = maya.getByTestId(TESTID.inboxBell);
 	await expect(bell).toHaveAttribute("data-unread", "1");
@@ -75,11 +75,11 @@ test("digest: one line for other people's changes; Got it clears it", async ({ b
 	const c = await cloneFixtureTrip(dev.request);
 	test.skip(!c.members.maya, "maya@example.com is not seeded");
 	// Dennis opens the trip once: that is "last looked".
-	await dev.goto(`/t/${c.slug}?tab=plan`);
+	await dev.goto(`/t/${c.slug}?tab=plan&lens=place`);
 	await expectLive(dev);
 	await expect(dev.getByTestId(SHELL_TESTID.digestBanner)).toHaveCount(0);
 	// Maya adds a place under Kyoto (a real server-function call from her page).
-	const maya = await as(browser, "maya", `/t/${c.slug}?tab=plan`);
+	const maya = await as(browser, "maya", `/t/${c.slug}?tab=plan&lens=place`);
 	const created = await maya.evaluate(
 		async ({ tripId, parentId, id }) => {
 			const m = await import("/src/functions/nodes.functions.ts");
@@ -119,7 +119,7 @@ test("view settings follow the account to a fresh browser", async ({ browser }, 
 	test.skip(info.project.name !== "chromium", "one run is enough");
 	const first = await as(browser, "dev", "/dashboard");
 	const c = await cloneFixtureTrip(first.request);
-	await first.goto(`/t/${c.slug}?tab=plan`);
+	await first.goto(`/t/${c.slug}?tab=plan&lens=place`);
 	await expectLive(first);
 	await first.getByTestId(TESTID.tripMenu).click();
 	await first.getByTestId(SHELL_TESTID.viewSettingsButton).click();
@@ -158,7 +158,7 @@ test("view settings follow the account to a fresh browser", async ({ browser }, 
 		)
 		.toBe("12h/auto");
 	// A new browser (empty localStorage) gets it from the account.
-	const second = await as(browser, "dev", `/t/${c.slug}?tab=plan`);
+	const second = await as(browser, "dev", `/t/${c.slug}?tab=plan&lens=place`);
 	await second.getByTestId(TESTID.tripMenu).click();
 	await second.getByTestId(SHELL_TESTID.viewSettingsButton).click();
 	const d2 = second.getByTestId(SHELL_TESTID.viewSettingsDialog);

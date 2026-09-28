@@ -95,7 +95,8 @@ test.beforeEach(async ({ page }, info) => {
 // ---------------------------------------------------------------------------
 
 test("FB-07: the first day's ⋯ › Set stay… keeps the stay picker open (Plan tab, whole trip)", async ({ page }) => {
-	await openTrip(page, `/t/${TRIP}?tab=plan`);
+	// The whole trip's timelines (the place lens; the default lists the days, D02).
+	await openTrip(page, `/t/${TRIP}?tab=plan&lens=place`);
 	const header = page.getByTestId(PLAN_TESTID.dayHeader).first();
 	await expect(header).toContainText("Sat 2 Oct");
 	await header.getByTestId(PLAN_TESTID.dayMenu).click();

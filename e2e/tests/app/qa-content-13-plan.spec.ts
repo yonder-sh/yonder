@@ -25,7 +25,7 @@ type G = {
 const graphOf = (page: Page) => page.evaluate(() => (window as unknown as { __yonder: { graph: G } }).__yonder.graph);
 
 test("LIST-02 badge on the Fuji Excursion leg row and the map edge; NOTE-07 preview", async ({ page }) => {
-	await page.goto("/t/asia-2027?tab=plan");
+	await page.goto("/t/asia-2027?tab=plan&lens=place");
 	await expectLive(page);
 	const g = await graphOf(page);
 	const name = (id: string | null) => {
@@ -37,7 +37,7 @@ test("LIST-02 badge on the Fuji Excursion leg row and the map edge; NOTE-07 prev
 	const day7 = g.days.find((d) => d.date === "2027-10-07");
 	const day5 = g.days.find((d) => d.date === "2027-10-05");
 	if (!day7 || !day5) throw new Error("days");
-	await page.goto(`/t/asia-2027?tab=plan&sel=d.${day7.id}`);
+	await page.goto(`/t/asia-2027?tab=plan&lens=place&sel=d.${day7.id}`);
 	await expectLive(page);
 	await page.waitForTimeout(1500);
 	const drop = page.getByTestId(TESTID.timelineItem).filter({ hasText: "Drop bags at ryokan" }).first();
@@ -52,7 +52,7 @@ test("LIST-02 badge on the Fuji Excursion leg row and the map edge; NOTE-07 prev
 		if (/Fuji Excursion|Kawaguchiko/.test(t)) console.log("LEG ROW", i, t);
 	}
 	// NOTE-07: Bar Benfiddich's card on Tue 5 Oct.
-	await page.goto(`/t/asia-2027?tab=plan&sel=d.${day5.id}`);
+	await page.goto(`/t/asia-2027?tab=plan&lens=place&sel=d.${day5.id}`);
 	await expectLive(page);
 	await page.waitForTimeout(1500);
 	const benf = page.getByTestId(TESTID.timelineItem).filter({ hasText: "Bar Benfiddich" }).first();

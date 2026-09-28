@@ -137,6 +137,18 @@ async function expectNoOverflow(page: Page, testid: string) {
 	expect(over).toEqual([]);
 }
 
+
+/**
+ * The nights per city, as Cities & nights lists them (One Yonder D05; the
+ * Plan's one line "Tokyo 2 days · Osaka 2" went): opens it, checks, closes it.
+ */
+async function expectNights(page: Page, nights: [string, string][], tap = false) {
+	const go = (l: import("@playwright/test").Locator) => (tap ? l.tap() : l.click());
+	await go(page.getByTestId(T.splitChange));
+	for (const [city, n] of nights) await expect(rowOf(page, city)).toHaveAttribute("data-days", n);
+	await go(page.getByRole("radio", { name: "Days" }));
+}
+
 test.describe("desktop", () => {
 	test.skip(({ isMobile }) => isMobile, "desktop layout (the phone has its own test)");
 
@@ -211,8 +223,12 @@ test.describe("desktop", () => {
 			.poll(async () => (await graphOf(page)).days.map((d) => d.nightNodeId), { timeout: 15_000 })
 			.toEqual([t.city.tokyo, t.city.tokyo, t.city.osaka, t.city.osaka, t.city.kyoto, t.city.kyoto, null]);
 
-		// 5. The Plan keeps one line; the map goes back to normal.
-		await expect(page.getByTestId(T.splitDays)).toHaveText("Tokyo 2 days · Osaka 2 · Kyoto 3");
+		// 5. Cities & nights says so; the map goes back to normal.
+		await expectNights(page, [
+			[t.city.tokyo, "2"],
+			[t.city.osaka, "2"],
+			[t.city.kyoto, "3"],
+		]);
 		await expect(split).toHaveCount(0);
 		await expect(page.getByTestId(MAP_TESTID.splitStop)).toHaveCount(0);
 		await page.screenshot({ path: shot("desktop-3-plan-line"), animations: "disabled" });
@@ -256,7 +272,11 @@ test.describe("desktop", () => {
 			})
 			.toEqual([null]);
 		// The freed last day is the day you leave Kyoto: it counts there.
-		await expect(page.getByTestId(T.splitDays)).toHaveText("Tokyo 1 day · Osaka 2 · Kyoto 4");
+		await expectNights(page, [
+			[t.city.tokyo, "1"],
+			[t.city.osaka, "2"],
+			[t.city.kyoto, "4"],
+		]);
 		await expect(page.getByTestId(MAP_TESTID.splitStop)).toHaveCount(0);
 	});
 
@@ -288,7 +308,10 @@ test.describe("desktop", () => {
 		const dates = (await graphOf(page)).days.map((d) => d.date);
 		expect(dates).toHaveLength(5);
 		expect(Number(dates[0]?.slice(8))).toBe(15);
-		await expect(page.getByTestId(T.splitDays)).toHaveText("Tokyo 3 days · Kyoto 2");
+		await expectNights(page, [
+			[t.city.tokyo, "3"],
+			[t.city.kyoto, "2"],
+		]);
 		// Schedule has the per-city list now.
 		await page.goto(`/t/${t.slug}?tab=places&pv=schedule`);
 		await expect(page.getByTestId(P.schedule)).toHaveAttribute("data-mode", "schedule", { timeout: 30_000 });
@@ -324,7 +347,15 @@ test("phone: the split at 390 px, Move up, Use these days, then the line", async
 	await expect
 		.poll(async () => (await graphOf(page)).days.map((d) => d.nightNodeId), { timeout: 15_000 })
 		.toEqual([t.city.kyoto, t.city.kyoto, t.city.kyoto, t.city.tokyo, t.city.tokyo, t.city.tokyo, t.city.osaka]);
-	await expect(page.getByTestId(T.splitDays)).toHaveText("Kyoto 3 days · Tokyo 3 · Osaka 1");
+	await expectNights(
+		page,
+		[
+			[t.city.kyoto, "3"],
+			[t.city.tokyo, "3"],
+			[t.city.osaka, "1"],
+		],
+		true,
+	);
 	await page.getByTestId(T.splitChange).tap();
 	await expect(page.getByTestId(T.splitRow)).toHaveCount(3);
 	await expectNoOverflow(page, "plan-tab");

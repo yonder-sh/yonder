@@ -44,7 +44,7 @@ async function call<T>(page: Page, mod: string, fn: string, data: unknown): Prom
 test("TAG-04 / MENT-03 Kai removed: greyed former-member tag, plain-text mention, gone from pickers", async ({ browser }) => {
 	test.setTimeout(180_000);
 	const d = await ctxFor(browser, "dennis");
-	await d.page.goto("/t/asia-2027?tab=plan");
+	await d.page.goto("/t/asia-2027?tab=plan&lens=place");
 	await expectLive(d.page);
 	const g = await graphOf(d.page);
 	const kai = g.members.find((m) => m.name.startsWith("Kai"));
@@ -85,7 +85,7 @@ test("TAG-04 / MENT-03 Kai removed: greyed former-member tag, plain-text mention
 	console.log("TAG-04 card html has former:", (await card.innerHTML()).includes("former"), "text:", (await card.innerText()).replace(/\n/g, " "));
 	await shot(d.page, "21-tag04-card");
 	// The plan's person filter no longer offers him.
-	await d.page.goto("/t/asia-2027?tab=plan");
+	await d.page.goto("/t/asia-2027?tab=plan&lens=place");
 	await expectLive(d.page);
 	await d.page.getByTestId(PLAN_TESTID.whoFilter).click();
 	await d.page.waitForTimeout(300);
@@ -110,7 +110,7 @@ test("TAG-04 / MENT-03 Kai removed: greyed former-member tag, plain-text mention
 	await shot(d.page, "21-ment03-note");
 	// Kai himself: no longer reaches the trip.
 	const k = await ctxFor(browser, "kai");
-	const resp = await k.page.goto("/t/asia-2027?tab=plan");
+	const resp = await k.page.goto("/t/asia-2027?tab=plan&lens=place");
 	await k.page.waitForTimeout(1500);
 	console.log("Kai after removal:", resp?.status(), await k.page.locator("body").innerText().then((t) => t.slice(0, 120).replace(/\n/g, " ")));
 	await d.ctx.close();
