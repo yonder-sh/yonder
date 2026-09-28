@@ -150,6 +150,7 @@ test("guard HIER-10: 'Shinjuku' finds the ward once and the Fuji Excursion leg, 
 
 test("guard HIER-07: the Cities level says '1 place', not '1 places'", async ({ page }) => {
 	await openTrip(page, `/t/${TRIP}?tab=plan`);
+	await openOrganize(page);
 	await page.getByTestId("outline-header-menu").click();
 	await page.getByRole("menuitemradio", { name: /Cities/ }).click();
 	const rows = () =>
@@ -333,5 +334,5 @@ test("TL-03 / F4-b guard: Tue 5 Oct, travel only between places (a meal with no 
 	await expect(await start("Lunch")).toHaveText("12:45");
 	await expect(await start("Yodobashi Camera")).toHaveText("14:05");
 	await expect(await start("Dinner")).toHaveText("17:40");
-	await expect(page.getByTestId("plan-day-header").first()).toContainText("Travel 55m");
+	await expect(page.getByTestId("plan-day-header").first()).toContainText("55m travel");
 });

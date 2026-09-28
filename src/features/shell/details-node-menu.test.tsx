@@ -26,6 +26,16 @@ describe("the details ⋯ for a place", () => {
 		expect(screen.getByRole("heading", { name: "Tokyo" })).toBeInTheDocument();
 	});
 
+	it("is there for a place too (its own header)", () => {
+		renderWithWorkspace(<InspectorBody />, {
+			splat: "japan/tokyo",
+			search: { sel: `n.${N.shibuyaSky}` },
+		});
+		expect(screen.getByTestId(SHELL_TESTID.detailsMenu)).toHaveAccessibleName(
+			/More for Shibuya Sky/,
+		);
+	});
+
 	it("isn't there for a stop or the trip", () => {
 		renderWithWorkspace(<InspectorBody />, { search: { sel: "root" } });
 		expect(screen.queryByTestId(SHELL_TESTID.detailsMenu)).toBeNull();

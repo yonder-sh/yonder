@@ -157,7 +157,7 @@ function PlaceHeader({ node }: { node: GraphNode }) {
 	return (
 		<>
 			<h2 className="font-display text-2xl leading-7 font-semibold text-balance">
-				{node.name}
+				<DetailsNodeTitle node={node}>{node.name}</DetailsNodeTitle>
 			</h2>
 			{node.localName ? (
 				<p
@@ -255,7 +255,7 @@ function Body({
 					title={typeof header.title === "string" ? header.title : null}
 				/>
 			</div>
-			{node && !place ? <DetailsNodeMenu node={node} /> : null}
+			{node ? <DetailsNodeMenu node={node} /> : null}
 			{onCollapse ? (
 				<button
 					type="button"
@@ -294,11 +294,7 @@ function Body({
 		>
 			{top}
 			{target?.kind === "node" ? <CoverStrip target={target} /> : null}
-			{node && !place ? (
-				<NodeActions node={node}>{headerRow}</NodeActions>
-			) : (
-				headerRow
-			)}
+			{node ? <NodeActions node={node}>{headerRow}</NodeActions> : headerRow}
 			{place ? (
 				<div className="grid gap-2 px-4 pt-2">
 					<PlaceHeadStatus />

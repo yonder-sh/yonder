@@ -15,6 +15,7 @@
  */
 import { expect, type Page, test } from "@playwright/test";
 import { loginViaApi } from "./_helpers/auth";
+import { openOrganize } from "./_helpers/page";
 
 const TRIP = "asia-2027";
 
@@ -96,6 +97,7 @@ test.describe("guards 1440", () => {
 	test("Outline › Show › Cities says '1 place' (singular)", async ({ page }) => {
 		await signInDennis(page);
 		await openTrip(page, `/t/${TRIP}?tab=plan`);
+		await openOrganize(page);
 		await page.getByTestId("outline").getByRole("button", { name: "Outline options" }).click();
 		await page.getByRole("menuitemradio", { name: /Cities/ }).or(page.getByRole("menuitem", { name: /^Cities/ })).first().click();
 		const text = (await page.getByTestId("outline").innerText()).replace(/\s+/g, " ");

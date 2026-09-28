@@ -5,6 +5,7 @@
  * Screenshots only; nothing is written.
  */
 import { type APIRequestContext, expect, type Page, test } from "@playwright/test";
+import { openOrganize } from "./_helpers/page";
 
 const BASE = process.env.APP_URL ?? "http://localhost:5350";
 const SHOTS = process.env.QA_SHOTS ?? "/tmp/qa-money-shots";
@@ -43,8 +44,9 @@ test("spot-check: map edge dashes, Cities label, still-to-book rows, Fuji Excurs
 			.map((l) => [l.id, JSON.stringify(l.paint?.["line-dasharray"] ?? null)]);
 	});
 	await page.screenshot({ path: `${SHOTS}/r3c-map-country.png` });
-	// Outline ⋯ → Show › Cities
-	await page.getByTestId("outline-header-menu").click().catch(async () => page.getByRole("button", { name: /Outline options|More/ }).first().click());
+	// Organize places ⋯ → Show › Cities (One Yonder: the Outline is in Organize places)
+	await openOrganize(page);
+	await page.getByTestId("outline-header-menu").click();
 	await page.waitForTimeout(300);
 	out.menu = await page.getByRole("menuitem").allInnerTexts();
 	const show = page.getByRole("menuitem", { name: /^Show/ });

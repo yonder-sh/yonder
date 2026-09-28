@@ -123,8 +123,8 @@ test.describe("desktop 1440", () => {
 		await openTrip(page, `/t/${TRIP}?days=2027-10-02&lens=place`);
 		const header = page.getByTestId("plan-day-header").first();
 		await expect(header).toContainText("Sat 2 Oct");
-		// NH 9 leaves JFK 02:00 EDT and lands 05:00+1 JST; the summary reads "Travel 16h · ends 00:00".
-		await expect(header).not.toContainText(/ends 00:00/);
+		// NH 9 leaves JFK 02:00 EDT and lands 05:00+1 JST; the summary once read "Travel 16h · ends 00:00".
+		await expect(header).not.toContainText(/–00:00/);
 	});
 
 	test("DEFECT A11Y-02 (WP-Plan): deleting a card from its ⋯ menu doesn't drop the focus to <body>", async ({ page }) => {
