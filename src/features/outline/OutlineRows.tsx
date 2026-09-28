@@ -299,7 +299,13 @@ function takeFocusBack(ref: RefObject<HTMLInputElement | null>) {
 }
 
 /** Inline rename (SPEC §10.8: a local draft while focused; "Maya changed this"). */
-function RenameInput({ node }: { node: GraphNode }) {
+export function RenameInput({
+	node,
+	className,
+}: {
+	node: GraphNode;
+	className?: string;
+}) {
 	const ui = useOutlineUi();
 	const setEditing = useSetEditing();
 	const cancelled = useRef(false);
@@ -350,7 +356,10 @@ function RenameInput({ node }: { node: GraphNode }) {
 				onClick={(e) => e.stopPropagation()}
 				onPointerDown={(e) => e.stopPropagation()}
 				onMouseDown={(e) => e.stopPropagation()}
-				className="h-6 min-w-0 rounded-sm border border-ring bg-background px-1.5 text-sm outline-none"
+				className={cn(
+					"h-6 min-w-0 rounded-sm border border-ring bg-background px-1.5 text-sm outline-none",
+					className,
+				)}
 			/>
 			{field.remoteChanged ? (
 				<span className="text-2xs text-muted-foreground">

@@ -70,6 +70,11 @@ import { cn } from "@/lib/utils";
 import { type Sel, serializeSel } from "@/lib/workspace/search";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { bundleTargetForSel } from "./bundle-target";
+import {
+	DetailsNodeMenu,
+	DetailsNodeTitle,
+	NodeActions,
+} from "./DetailsNodeMenu";
 import { InspectorFormChips } from "./form-presence-ui";
 import { timeAgo } from "./inbox-model";
 import { inspectorHeader } from "./inspector-header";
@@ -203,6 +208,79 @@ function Body({
 	const scroller = useRef<HTMLDivElement>(null);
 	useSectionLink(sel, scroller);
 	const placeKeys = usePlaceKeys();
+	// A place's ⋯ and its in-place Rename share `NodeActions` (One Yonder).
+	const headerRow = (
+		<div className="flex items-start gap-2 px-4 pt-4">
+			<div className="min-w-0 flex-1">
+				{place ? (
+					<PlaceHeader node={place} />
+				) : (
+					<>
+						<h2
+							className={cn(
+								"text-2xl leading-7 font-semibold text-balance",
+								header.display && "font-display",
+							)}
+						>
+							{node ? (
+								<DetailsNodeTitle node={node}>{header.title}</DetailsNodeTitle>
+							) : (
+								header.title
+							)}
+						</h2>
+						<div className="mt-1 flex min-w-0 flex-wrap items-center gap-2">
+							{header.chip ? (
+								<Chip
+									// A place's type is a word; times and dates are data (DESIGN §2.6).
+									className={node ? "capitalize" : "tnum"}
+								>
+									{node ? (
+										<TypeGlyph type={node.type} category={node.category} />
+									) : null}
+									{header.chip}
+								</Chip>
+							) : null}
+							{node?.parentId ? <Crumbs nodeIds={node.parentId} /> : null}
+							{node?.localName ? (
+								<span className="text-xs text-muted-foreground">
+									{node.localName}
+								</span>
+							) : null}
+						</div>
+					</>
+				)}
+				{/* FB-24: someone has an editor open on this. */}
+				<InspectorFormChips
+					sel={sel}
+					title={typeof header.title === "string" ? header.title : null}
+				/>
+			</div>
+			{node && !place ? <DetailsNodeMenu node={node} /> : null}
+			{onCollapse ? (
+				<button
+					type="button"
+					onClick={onCollapse}
+					aria-label="Fold the details"
+					title="Fold the details"
+					data-testid={SHELL_TESTID.detailsCollapse}
+					className="-mt-0.5 rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
+				>
+					<PanelRightClose className="size-4" />
+				</button>
+			) : null}
+			{onClose ? (
+				<button
+					type="button"
+					onClick={onClose}
+					aria-label="Close"
+					data-testid={TESTID.inspectorClose}
+					className="-mt-0.5 -mr-1 rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
+				>
+					<X className="size-4" />
+				</button>
+			) : null}
+		</div>
+	);
 	return (
 		// biome-ignore lint/a11y/noStaticElementInteractions: a place's rating buttons are the keyboard entry; 1–6 are a shortcut
 		<div
@@ -216,71 +294,11 @@ function Body({
 		>
 			{top}
 			{target?.kind === "node" ? <CoverStrip target={target} /> : null}
-			<div className="flex items-start gap-2 px-4 pt-4">
-				<div className="min-w-0 flex-1">
-					{place ? (
-						<PlaceHeader node={place} />
-					) : (
-						<>
-							<h2
-								className={cn(
-									"text-2xl leading-7 font-semibold text-balance",
-									header.display && "font-display",
-								)}
-							>
-								{header.title}
-							</h2>
-							<div className="mt-1 flex min-w-0 flex-wrap items-center gap-2">
-								{header.chip ? (
-									<Chip
-										// A place's type is a word; times and dates are data (DESIGN §2.6).
-										className={node ? "capitalize" : "tnum"}
-									>
-										{node ? (
-											<TypeGlyph type={node.type} category={node.category} />
-										) : null}
-										{header.chip}
-									</Chip>
-								) : null}
-								{node?.parentId ? <Crumbs nodeIds={node.parentId} /> : null}
-								{node?.localName ? (
-									<span className="text-xs text-muted-foreground">
-										{node.localName}
-									</span>
-								) : null}
-							</div>
-						</>
-					)}
-					{/* FB-24: someone has an editor open on this. */}
-					<InspectorFormChips
-						sel={sel}
-						title={typeof header.title === "string" ? header.title : null}
-					/>
-				</div>
-				{onCollapse ? (
-					<button
-						type="button"
-						onClick={onCollapse}
-						aria-label="Fold the details"
-						title="Fold the details"
-						data-testid={SHELL_TESTID.detailsCollapse}
-						className="-mt-0.5 rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
-					>
-						<PanelRightClose className="size-4" />
-					</button>
-				) : null}
-				{onClose ? (
-					<button
-						type="button"
-						onClick={onClose}
-						aria-label="Close"
-						data-testid={TESTID.inspectorClose}
-						className="-mt-0.5 -mr-1 rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
-					>
-						<X className="size-4" />
-					</button>
-				) : null}
-			</div>
+			{node && !place ? (
+				<NodeActions node={node}>{headerRow}</NodeActions>
+			) : (
+				headerRow
+			)}
 			{place ? (
 				<div className="grid gap-2 px-4 pt-2">
 					<PlaceHeadStatus />

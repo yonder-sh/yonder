@@ -58,6 +58,7 @@ export const SHELL_TESTID = {
 	detailsRail: "details-rail",
 	detailsShow: "details-show",
 	detailsCollapse: "details-collapse",
+	detailsMenu: "details-menu",
 	detailsResize: "details-resize",
 	mapShow: "map-show",
 	crumbOverflow: "crumb-overflow",
