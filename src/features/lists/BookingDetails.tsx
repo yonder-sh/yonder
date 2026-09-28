@@ -35,6 +35,7 @@ import {
 	bookingCategory,
 	bookingFor,
 	dayBits,
+	movesWith,
 	nightsAt,
 	opensIn,
 	opensLabel,
@@ -226,7 +227,7 @@ export function BookingDetails({
 								<Line
 									bits={[
 										ruleLabel(row.dueRule),
-										`moves with ${f?.anchor ?? itemName(ix, row.dueRule.itemId)} if the day changes`,
+										`moves with ${movesWith(ix, f, row.dueRule)} if the day changes`,
 									]}
 								/>
 							) : null}

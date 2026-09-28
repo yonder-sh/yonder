@@ -227,6 +227,8 @@ export type BookingFor = {
 	extra: string | null;
 	/** What its window moves with ("the train", "Kawaguchiko Ryokan"). */
 	anchor: string;
+	/** The stops `anchor` stands for (the stop, or the leg's two ends). */
+	anchorIds: string[];
 };
 
 function andList(xs: readonly string[]): string {
@@ -265,6 +267,7 @@ function itemFor(
 		dayId: it.dayId,
 		extra: null,
 		anchor: name,
+		anchorIds: [it.id],
 	};
 }
 
@@ -317,12 +320,24 @@ export function bookingFor(
 				dayId: from?.dayId ?? null,
 				extra,
 				anchor: mode ?? name,
+				anchorIds: [leg.fromItemId, leg.toItemId],
 			};
 		}
 		return null;
 	}
 	const itemId = e.row.dueRule?.itemId ?? firstVisit(ix, t);
 	return itemId ? itemFor(ix, schedule, itemId) : null;
+}
+
+/** What a window following `rule` moves with: the booking's own stop or leg, else the rule's stop. */
+export function movesWith(
+	ix: GraphIndex,
+	f: BookingFor | null,
+	rule: DueRule,
+): string {
+	return f?.anchorIds.includes(rule.itemId)
+		? f.anchor
+		: itemName(ix, rule.itemId);
 }
 
 /** "Day 6 · Thu 7 Oct" pieces: ["Thu 7 Oct", "Day 6"]. */

@@ -14,6 +14,7 @@ import {
 	bookingGroups,
 	dayBits,
 	longDate,
+	movesWith,
 	nightsAt,
 	opensIn,
 	opensLabel,
@@ -191,6 +192,31 @@ describe("what a booking is for", () => {
 			itemId: I.sky,
 		});
 		expect(onNode(demo.N.tokyo as string)).toBeNull();
+	});
+
+	it("a window moves with what it's for, else with the stop its rule counts from", () => {
+		const rule = (itemId: string) => ({
+			kind: "days" as const,
+			days: 30,
+			itemId,
+			time: "10:00",
+			tz: "Asia/Tokyo",
+		});
+		const train = bookingFor(ix, schedule, {
+			kind: "todo",
+			id: "t",
+			row: row({ id: "t", target: { kind: "leg", legId: L.fuji as string } }),
+		});
+		expect(movesWith(ix, train, rule(I.dropBags as string))).toBe("the train");
+		const sky = bookingFor(ix, schedule, {
+			kind: "todo",
+			id: "s",
+			row: row({ id: "s", target: { kind: "item", itemId: I.sky as string } }),
+		});
+		expect(movesWith(ix, sky, rule(I.sky as string))).toBe("Shibuya Sky");
+		expect(movesWith(ix, sky, rule(I.kiyomizu as string))).toBe(
+			"Kiyomizu-dera",
+		);
 	});
 
 	it("a stay counts its nights; the expense category follows what it is", () => {
