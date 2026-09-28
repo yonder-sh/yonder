@@ -18,6 +18,7 @@ import { defaultItemDuration } from "@/lib/domain/taxonomy";
 import { haversineKm, type LngLat } from "@/lib/engine/geo";
 import type { GraphIndex } from "@/lib/engine/graph-index";
 import type { GraphItem, GraphMember } from "@/lib/engine/types";
+import { formatDayDate } from "@/lib/format";
 
 // ---------------------------------------------------------------------------
 // Cities and what their shortlist needs
@@ -741,7 +742,7 @@ export function needText(
 
 /** "Japan · 9 days". */
 export function headingText(name: string, days: number): string {
-	return `${name} · ${plural(days, "day")}`;
+	return `${name} · ${plural(days, "night")}`;
 }
 
 export type LeftToRate = {
@@ -792,7 +793,7 @@ export function overText(need: number, tripDays: number): string {
 
 /** "4 days not planned yet". */
 export function unusedText(unused: number): string {
-	return `${plural(unused, "day")} not planned yet`;
+	return `${plural(unused, "night")} not placed yet`;
 }
 
 /** "3 places are on days that move to another city. They'll go back to your list to schedule again." */
@@ -800,4 +801,28 @@ export function displacedText(n: number): string {
 	return n === 1
 		? "1 place is on a day that moves to another city. It'll go back to your list to schedule again."
 		: `${n} places are on days that move to another city. They'll go back to your list to schedule again.`;
+}
+
+/** "Sat 2 – Fri 15 Oct", "Thu 30 Sep – Wed 6 Oct". */
+export function dayRange(first: string, last: string): string {
+	const a = formatDayDate(first);
+	if (first === last) return a;
+	const b = formatDayDate(last);
+	return first.slice(0, 7) === last.slice(0, 7)
+		? `${a.replace(/ \w+$/, "")} – ${b}`
+		: `${a} – ${b}`;
+}
+
+/** Each row's dates when the split's days run in row order from the trip's first day. */
+export function rowRanges(
+	rows: readonly { days: number }[],
+	dates: readonly string[],
+): (string | null)[] {
+	let at = 0;
+	return rows.map((r) => {
+		const first = dates[at];
+		const last = dates[at + r.days - 1];
+		at += r.days;
+		return r.days && first && last ? dayRange(first, last) : null;
+	});
 }

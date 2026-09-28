@@ -132,12 +132,16 @@ export async function openPhoneMap(page: import("@playwright/test").Page): Promi
 	const { expect } = await import("@playwright/test");
 	await expect(page.getByTestId("workspace")).toBeVisible({ timeout: 30_000 });
 	const toggle = page.getByTestId("mobile-map-toggle");
-	if (!(await toggle.count()) || (await toggle.getAttribute("aria-pressed")) === "true") return;
+	if (!(await toggle.count())) return;
 	await page.evaluate(async () => {
 		const m = await import(/* @vite-ignore */ "/src/lib/workspace/ui-store.ts");
 		m.useUi.getState().setSheetSnap("120px"); // SHEET_SNAPS[0]: the map
 	});
 	await expect(toggle).toHaveAttribute("aria-pressed", "true");
+	// The map mounts on demand: wait for it and its controls.
+	await expect(page.getByTestId("trip-map").getByRole("button", { name: /^Fit to the scope/ })).toBeVisible({
+		timeout: 20_000,
+	});
 }
 
 /** Organize places (One Yonder: the Outline's tree, from the Where picker): the open dialog. */

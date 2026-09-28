@@ -49,11 +49,16 @@ import { ids, useFollowState } from "@/lib/realtime/view-ui";
 import { cn } from "@/lib/utils";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import type { DaySplitInfo } from "./DaySplit";
-import { headingText, type SplitLine, splitLines } from "./day-split";
+import {
+	headingText,
+	rowRanges,
+	type SplitLine,
+	splitLines,
+} from "./day-split";
 import { SPLIT_TESTID as T } from "./testids";
 
 export const NO_FREE_DAY =
-	"No free days left. Take one from another city first.";
+	"No free nights left. Take one from another city first.";
 
 export type SplitRowView = {
 	key: string;
@@ -201,6 +206,7 @@ function StopRow({
 	busy,
 	open,
 	onToggle,
+	dates,
 }: {
 	info: DaySplitInfo;
 	row: SplitRowView;
@@ -212,6 +218,8 @@ function StopRow({
 	busy: boolean;
 	open: boolean;
 	onToggle: () => void;
+	/** "Sun 3 – Wed 6 Oct" (D05); null without dates. */
+	dates: string | null;
 }) {
 	const i = line.index;
 	const sort = useSortable({ id: row.key, disabled: !onMove || busy });
@@ -299,10 +307,13 @@ function StopRow({
 							)}
 						>
 							<span className="tnum">{row.days}</span>{" "}
-							{row.days === 1 ? "day" : "days"}
+							{row.days === 1 ? "night" : "nights"}
 						</span>
 					</div>
 					<span className="block truncate text-xs text-muted-foreground">
+						{dates ? (
+							<span className="text-foreground/80 tnum">{dates} · </span>
+						) : null}
 						{row.shortlisted} shortlisted
 						{row.notRated ? ` · ${row.notRated} not rated yet` : ""}
 					</span>
@@ -313,7 +324,7 @@ function StopRow({
 							variant="outline"
 							size="icon-sm"
 							data-testid={T.splitMinus}
-							aria-label={`One day less in ${row.name}`}
+							aria-label={`One night less in ${row.name}`}
 							disabled={busy || row.days < 1}
 							onClick={() => onStep(i, -1)}
 						>
@@ -323,7 +334,7 @@ function StopRow({
 							variant="outline"
 							size="icon-sm"
 							data-testid={T.splitPlus}
-							aria-label={`One day more in ${row.name}`}
+							aria-label={`One night more in ${row.name}`}
 							title={unused < 1 ? NO_FREE_DAY : undefined}
 							disabled={busy || unused < 1}
 							onClick={() => onStep(i, 1)}
@@ -404,6 +415,14 @@ export function SplitRows({
 	const toggle = (id: string) =>
 		setOpen((s) => (s.includes(id) ? s.filter((k) => k !== id) : [...s, id]));
 	const lines = useMemo(() => splitLines(ix, rows), [ix, rows]);
+	const ranges = useMemo(
+		() =>
+			rowRanges(
+				rows,
+				ix.days.map((d) => d.date),
+			),
+		[rows, ix.days],
+	);
 	const sensors = useSensors(
 		useSensor(MouseSensor, { activationConstraint: { distance: 4 } }),
 		useSensor(TouchSensor, {
@@ -457,6 +476,7 @@ export function SplitRows({
 								busy={busy}
 								open={open.has(row.key)}
 								onToggle={() => toggle(row.key)}
+								dates={ranges[l.index] ?? null}
 							/>
 						);
 					})}

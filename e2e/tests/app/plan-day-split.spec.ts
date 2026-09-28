@@ -168,7 +168,7 @@ test.describe("desktop", () => {
 			[t.city.kyoto, "3"],
 			[t.city.osaka, "0"],
 		]);
-		await expect(page.getByTestId(T.heading)).toHaveText(["Japan · 7 days"]);
+		await expect(page.getByTestId(T.heading)).toHaveText(["Japan · 7 nights"]);
 		await expect(rowOf(page, t.city.osaka)).toContainText("0 shortlisted · 2 not rated yet");
 		await expect(page.getByTestId(T.splitRate)).toHaveText(/^You have 2 places to rate\. These days will change as you rate\.\s*Rate$/);
 		// The map numbers the stops in that order.
@@ -214,10 +214,10 @@ test.describe("desktop", () => {
 
 		// 4. − on Tokyo leaves a day not planned; + on Kyoto takes it.
 		await rowOf(page, t.city.tokyo).getByTestId(T.splitMinus).click();
-		await expect(page.getByTestId(T.splitUnused)).toHaveText("1 day not planned yet");
+		await expect(page.getByTestId(T.splitUnused)).toHaveText("1 night not placed yet");
 		await rowOf(page, t.city.kyoto).getByTestId(T.splitPlus).click();
 		await expect(rowOf(page, t.city.kyoto)).toHaveAttribute("data-days", "3");
-		await expect(page.getByTestId(T.splitUnused)).toHaveText("No free days left. Take one from another city first.");
+		await expect(page.getByTestId(T.splitUnused)).toHaveText("No free nights left. Take one from another city first.");
 		await page.getByTestId(T.splitUse).click();
 		await expect
 			.poll(async () => (await graphOf(page)).days.map((d) => d.nightNodeId), { timeout: 15_000 })

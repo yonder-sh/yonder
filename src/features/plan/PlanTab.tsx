@@ -640,7 +640,7 @@ function PlanTabBody() {
 						<UnscheduledSection itemIds={model.unscheduled} />
 						{/* One Yonder (D03): what's saved but not planned, for the day in
 						    view; while filling a day (D04) the ideas are beside it instead. */}
-						{ws.search.fill && days ? null : (
+						{(ws.search.fill && days) || (!days && nights) ? null : (
 							<IdeasBin
 								plan
 								scopeId={planIdeasScope(ix, days, scope?.id ?? null)}

@@ -33,7 +33,6 @@ import { setTripDates } from "@/functions/trips.functions";
 import { indexGraph } from "@/lib/engine/graph-index";
 import { addDays } from "@/lib/engine/time";
 import { humanError } from "@/lib/errors";
-import { formatDayDate } from "@/lib/format";
 import { meKeys, tripKeys } from "@/lib/query/keys";
 import { tripGraphQuery } from "@/lib/query/trip-queries";
 import { bool, useFollowState } from "@/lib/realtime/view-ui";
@@ -45,6 +44,7 @@ import {
 	type ApplyPlan,
 	applyPlan,
 	dayCityIds,
+	dayRange,
 	displacedText,
 	layoutDays,
 	leftToRate,
@@ -63,16 +63,6 @@ import {
 } from "./day-split";
 import { NO_FREE_DAY, SplitRows, type SplitRowView } from "./SplitRows";
 import { SPLIT_TESTID as T } from "./testids";
-
-/** "Sat 2 – Fri 15 Oct", "Thu 30 Sep – Wed 6 Oct". */
-function tripRange(first: string, last: string): string {
-	const a = formatDayDate(first);
-	if (first === last) return a;
-	const b = formatDayDate(last);
-	return first.slice(0, 7) === last.slice(0, 7)
-		? `${a.replace(/ \w+$/, "")} – ${b}`
-		: `${a} – ${b}`;
-}
 
 const dayWord = (n: number) => `${n} ${n === 1 ? "day" : "days"}`;
 
@@ -326,7 +316,7 @@ function SplitSuggestion({
 					</h2>
 					{dated ? (
 						<span className="text-sm text-muted-foreground">
-							{dayWord(tripDays)}, {tripRange(first, last)}
+							{dayWord(tripDays)}, {dayRange(first, last)}
 						</span>
 					) : null}
 				</div>
@@ -545,6 +535,17 @@ function ChangePanel({
 			data-cursor-anchor="sec:split.change"
 			className="flex flex-col gap-3 rounded-xl bg-muted/50 p-3 sm:p-4"
 		>
+			{/* D05: what this is, and how far along. */}
+			<p className="flex flex-wrap items-baseline justify-between gap-x-3 text-meta text-muted-foreground">
+				<span>
+					The order you travel in and how long you stay. Days follow from this.
+				</span>
+				{tripDays ? (
+					<span className="font-medium text-foreground tnum">
+						{Math.min(used, tripDays)} of {tripDays} nights placed
+					</span>
+				) : null}
+			</p>
 			<SplitRows
 				info={info}
 				rows={rows}

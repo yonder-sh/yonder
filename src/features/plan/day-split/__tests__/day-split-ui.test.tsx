@@ -147,7 +147,7 @@ describe("how long in each city (no day has a city yet)", () => {
 			[s.N.osaka, "0", ""],
 		]);
 		expect(screen.getAllByTestId(T.heading).map((h) => h.textContent)).toEqual([
-			"Japan · 10 days",
+			"Japan · 10 nights",
 		]);
 		// The demo's seven Tokyo places are unrated; Audrey rated nothing.
 		expect(rowOf(s.N.tokyo)).toHaveTextContent(
@@ -160,7 +160,7 @@ describe("how long in each city (no day has a city yet)", () => {
 			"You have 9 places to rate and Audrey 14. These days will change as you rate.",
 		);
 		expect(screen.getByTestId(T.splitUnused)).toHaveTextContent(
-			"No free days left. Take one from another city first.",
+			"No free nights left. Take one from another city first.",
 		);
 		expect(screen.queryByTestId(T.splitOver)).toBeNull();
 	});
@@ -223,13 +223,13 @@ describe("how long in each city (no day has a city yet)", () => {
 		fireEvent.click(within(rowOf(s.N.tokyo)).getByTestId(T.splitMinus));
 		expect(rowOf(s.N.tokyo)).toHaveAttribute("data-days", "4");
 		expect(screen.getByTestId(T.splitUnused)).toHaveTextContent(
-			"1 day not planned yet",
+			"1 night not placed yet",
 		);
 		fireEvent.click(within(rowOf(s.N.osaka)).getByTestId(T.splitPlus));
 		expect(rowOf(s.N.osaka)).toHaveAttribute("data-days", "1");
 		expect(rowOf(s.N.osaka)).toHaveAttribute("data-stop", "3");
 		expect(screen.getByTestId(T.splitUnused)).toHaveTextContent(
-			"No free days left. Take one from another city first.",
+			"No free nights left. Take one from another city first.",
 		);
 	});
 
@@ -450,7 +450,7 @@ describe("once days have cities", () => {
 			"Kyoto",
 		]);
 		expect(screen.getByTestId(T.splitUnused)).toHaveTextContent(
-			"No free days left. Take one from another city first.",
+			"No free nights left. Take one from another city first.",
 		);
 		fireEvent.click(within(rowOf(s.N.tokyo)).getByTestId(T.splitMinus));
 		fireEvent.click(screen.getByTestId(T.splitApply));
@@ -583,7 +583,7 @@ describe("the Places tab's Schedule", () => {
 		);
 		expect(
 			screen.getAllByTestId(P.scheduleCountry).map((h) => h.textContent),
-		).toEqual(["Japan · 2 days", "South Korea · 2 days"]);
+		).toEqual(["Japan · 2 nights", "South Korea · 2 nights"]);
 		// Tokyo's places by area: Shibuya, then the city's own.
 		const tokyo = screen
 			.getAllByTestId(P.scheduleWindow)

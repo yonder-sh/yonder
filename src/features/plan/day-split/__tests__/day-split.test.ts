@@ -34,6 +34,7 @@ import {
 	needText,
 	overText,
 	routeOrder,
+	rowRanges,
 	runsOf,
 	type SplitCity,
 	type SplitLine,
@@ -267,8 +268,18 @@ describe("the suggestion", () => {
 			["Hiroshima", 3],
 			["Osaka", 0],
 		]);
-		expect(unusedText(3)).toBe("3 days not planned yet");
-		expect(unusedText(1)).toBe("1 day not planned yet");
+		expect(unusedText(3)).toBe("3 nights not placed yet");
+		expect(unusedText(1)).toBe("1 night not placed yet");
+	});
+
+	it("gives each row its dates in row order (D05)", () => {
+		const dates = ["2027-10-02", "2027-10-03", "2027-10-04", "2027-10-05"];
+		expect(rowRanges([{ days: 1 }, { days: 0 }, { days: 3 }], dates)).toEqual([
+			"Sat 2 Oct",
+			null,
+			"Sun 3 – Tue 5 Oct",
+		]);
+		expect(rowRanges([{ days: 2 }], [])).toEqual([null]);
 	});
 
 	it("no dates yet: the same for the number of days you give", () => {
@@ -654,19 +665,19 @@ describe("headings in travel order", () => {
 			{ id: "Nara", days: 0 },
 		];
 		expect(text(splitLines(ix, rows), rows)).toEqual([
-			"Japan · 9 days",
+			"Japan · 9 nights",
 			"1 Tokyo",
-			"  Kansai · 5 days",
+			"  Kansai · 5 nights",
 			"  2 Kyoto",
 			"  3 Osaka",
-			"Korea · 3 days",
+			"Korea · 3 nights",
 			"4 Seoul",
 			// Back in Japan; Fukuoka and Nara share no region.
-			"Japan · 2 days",
+			"Japan · 2 nights",
 			"5 Fukuoka",
 			"- Nara",
 		]);
-		expect(headingText("Nara", 1)).toBe("Nara · 1 day");
+		expect(headingText("Nara", 1)).toBe("Nara · 1 night");
 	});
 
 	it("regroups as the order changes", () => {
@@ -676,15 +687,15 @@ describe("headings in travel order", () => {
 			{ id: "Osaka", days: 2 },
 		];
 		expect(text(splitLines(ix, rows), rows)).toEqual([
-			"Japan · 9 days",
+			"Japan · 9 nights",
 			"1 Kyoto",
 			"2 Tokyo",
 			"3 Osaka",
 		]);
 		const moved = moveAt(rows, 1, 2) ?? [];
 		expect(text(splitLines(ix, moved), moved)).toEqual([
-			"Japan · 9 days",
-			"  Kansai · 5 days",
+			"Japan · 9 nights",
+			"  Kansai · 5 nights",
 			"  1 Kyoto",
 			"  2 Osaka",
 			"3 Tokyo",
