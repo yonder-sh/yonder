@@ -239,6 +239,8 @@ export function CenterTabContent({
 					active === "places"
 						? "flex flex-col overflow-hidden"
 						: "overflow-y-auto",
+					// Scrolled into view (Follow, a jump) clear of the Plan's ideas dock.
+					active === "plan" && "scroll-pb-[var(--plan-dock-h,0px)]",
 				)}
 				data-cursor-anchor={`pane:${active}`}
 				data-cursor-scroll=""
