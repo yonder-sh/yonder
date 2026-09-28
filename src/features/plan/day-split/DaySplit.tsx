@@ -21,7 +21,7 @@ import {
 } from "react";
 import { toast } from "sonner";
 import { useTripMutation } from "@/components/common/use-trip-mutation";
-import { DateInput } from "@/components/kit";
+import { DateInput, Segmented } from "@/components/kit";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cityDayTable } from "@/features/places/lib/days";
@@ -54,7 +54,6 @@ import {
 	runsOf,
 	type SplitEntry,
 	splitCities,
-	splitText,
 	stepCity,
 	stepEntry,
 	suggestSplit,
@@ -468,50 +467,6 @@ function SplitSuggestion({
 	);
 }
 
-/** "Tokyo 4 days · Kyoto 3 · Osaka 2" and Change (the same panel, prefilled). */
-function DaysLine({
-	info,
-	onChange,
-}: {
-	info: DaySplitInfo;
-	/** Null: read-only, or the panel is open. */
-	onChange: (() => void) | null;
-}) {
-	const { ix } = useWorkspace();
-	const { entries, unused } = useMemo(
-		() => runsOf(info.current),
-		[info.current],
-	);
-	const nameOf = (id: string) => ix.node(id)?.name ?? "?";
-	const text = splitText(entries, nameOf);
-	// One quiet line: beside the filter when there's room, else its own row.
-	return (
-		<div className="flex min-w-0 grow basis-full items-center gap-2 @md:ml-1 @md:basis-0">
-			<p
-				data-testid={T.splitDays}
-				title={unused ? `${text} · ${unusedText(unused)}` : text}
-				className="min-w-0 truncate text-sm"
-			>
-				<span className="font-medium">{text}</span>
-				{unused ? (
-					<span className="text-muted-foreground"> · {unusedText(unused)}</span>
-				) : null}
-			</p>
-			{onChange ? (
-				<Button
-					size="xs"
-					variant="outline"
-					data-testid={T.splitChange}
-					onClick={onChange}
-					className="shrink-0"
-				>
-					Change
-				</Button>
-			) : null}
-		</div>
-	);
-}
-
 type KeyedEntry = SplitEntry & { key: string };
 
 function ChangePanel({
@@ -658,56 +613,76 @@ function ChangePanel({
  * city?" while no day has a city (with no dates too). `fallback` when the
  * trip has no places in a city yet. Always for the whole trip.
  */
+/**
+ * "Cities & nights" open (One Yonder D05: the Plan's second view), travelling
+ * with my view (its edits don't). The Plan owns it: the view replaces the days.
+ */
+export function useSplitOpen(): [boolean, (open: boolean) => void] {
+	const { access } = useWorkspace();
+	return useFollowState("plan.split.change", false, bool, {
+		enabled: access.canEdit,
+	});
+}
+
 export function PlanSplit({
 	header,
 	banner,
 	fallback = null,
-	summary = true,
+	open,
+	onOpenChange,
 	className,
 }: {
-	header?: ReactNode;
-	/** The days-per-city line and its Change panel (not with a day in view). */
-	summary?: boolean;
+	/** The header row; given the Days | Cities & nights switch when there is one. */
+	header?: (views: ReactNode) => ReactNode;
 	/** Between the header row and the panel. */
 	banner?: ReactNode;
 	fallback?: ReactNode;
+	/** Cities & nights (`useSplitOpen`); null with a day in view (no switch). */
+	open: boolean | null;
+	onOpenChange: (open: boolean) => void;
 	className?: string;
 }) {
 	const info = useDaySplit();
 	const { access } = useWorkspace();
 	const apply = useApplySplit();
-	// The Change panel being open travels with my view (its edits don't).
-	const [open, setOpen] = useFollowState("plan.split.change", false, bool, {
-		enabled: access.canEdit,
-	});
 	const cities = info.cities.length > 0;
 	const line = cities && info.hasDays;
-	const shown = line && summary;
+	const views = line && access.canEdit && open !== null;
+	// Nothing to switch to any more (the last city went): back to the days.
+	useEffect(() => {
+		if (open && !views) onOpenChange(false);
+	}, [open, views, onOpenChange]);
 	const current = useMemo(() => runsOf(info.current).entries, [info.current]);
+	const switcher = views ? (
+		<Segmented
+			size="sm"
+			label="Plan view"
+			value={open ? "nights" : "days"}
+			onValueChange={(v) => onOpenChange(v === "nights")}
+			options={[
+				{ value: "days", label: "Days" },
+				{ value: "nights", label: "Cities & nights", testId: T.splitChange },
+			]}
+		/>
+	) : null;
 	return (
 		<>
-			{header || shown ? (
+			{header ? (
 				<div className="flex min-h-10 flex-wrap items-center gap-2 px-4 py-1.5">
-					{header}
-					{shown ? (
-						<DaysLine
-							info={info}
-							onChange={access.canEdit && !open ? () => setOpen(true) : null}
-						/>
-					) : null}
+					{header(switcher)}
 				</div>
 			) : null}
 			{banner}
 			{!cities ? (
 				fallback
 			) : line ? (
-				open && summary ? (
+				open && views ? (
 					<div className={cn("px-4 pb-4", className)}>
 						<ChangePanel
 							info={info}
 							initial={current}
 							apply={apply}
-							onClose={() => setOpen(false)}
+							onClose={() => onOpenChange(false)}
 						/>
 					</div>
 				) : null

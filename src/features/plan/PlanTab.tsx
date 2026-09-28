@@ -42,7 +42,7 @@ import { TabPurpose } from "@/features/shell/TabPurpose";
 import type { GraphIndex } from "@/lib/engine/graph-index";
 import { indexGraph } from "@/lib/engine/graph-index";
 import type { DayRange } from "@/lib/engine/types";
-import { formatDuration, formatTime } from "@/lib/format";
+import { formatDateRange, formatDuration, formatTime } from "@/lib/format";
 import { userPrefsQuery } from "@/lib/query/trip-queries";
 import { decodePlanFolds, encodePlanFolds } from "@/lib/realtime/view-protocol";
 import { useFollowedUi, usePublishViewUi } from "@/lib/realtime/view-ui";
@@ -50,8 +50,9 @@ import { TESTID } from "@/lib/testids";
 import { useUi } from "@/lib/workspace/ui-store";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { cardTone } from "./card-tone";
+import { DayRow } from "./DayRow";
 import { DaySection } from "./DaySection";
-import { PlanSplit } from "./day-split/DaySplit";
+import { PlanSplit, useSplitOpen } from "./day-split/DaySplit";
 import { DayStepper, WhoMenu } from "./PlanToolbar";
 import {
 	DragDayContext,
@@ -174,6 +175,42 @@ function OverlayCard({ itemId }: { itemId: string }) {
 	);
 }
 
+/** "Plan · 35 days · Sat 2 Oct – Fri 5 Nov · 7 days planned" over the list of days (D02). */
+function PlanTitle({ entries }: { entries: readonly PlanEntry[] }) {
+	const { ix } = useWorkspace();
+	const ids = new Set<string>();
+	for (const e of entries) {
+		if (e.kind === "day") ids.add(e.dayId);
+		if (e.kind === "band") for (const d of e.days) ids.add(d.dayId);
+	}
+	const dates = [...ids]
+		.map((id) => ix.day(id)?.date)
+		.filter((d): d is string => !!d)
+		.sort();
+	const planned = [...ids].filter(
+		(id) => (ix.itemsByDay.get(id)?.length ?? 0) > 0,
+	).length;
+	const first = dates[0];
+	const last = dates.at(-1);
+	return (
+		<div className="min-w-0 py-1">
+			<h2 className="font-display text-2xl leading-8 font-semibold">Plan</h2>
+			{first && last ? (
+				<p
+					data-testid={PLAN_TESTID.planMeta}
+					className="truncate text-meta text-muted-foreground"
+				>
+					<span className="tnum">{dates.length}</span>{" "}
+					{dates.length === 1 ? "day" : "days"} ·{" "}
+					<span className="tnum">{formatDateRange(first, last)}</span> ·{" "}
+					<span className="tnum">{planned}</span>{" "}
+					{planned === 1 ? "day" : "days"} planned
+				</p>
+			) : null}
+		</div>
+	);
+}
+
 /**
  * Whose ideas the Plan offers: where the first day in view stays (its city,
  * else its region, like Mt. Fuji), else the scope.
@@ -204,6 +241,10 @@ export function PlanTab() {
 function PlanTabBody() {
 	const ws = useWorkspace();
 	const { ix, graph, scope, days, nav, model, schedule, lens, who, mode } = ws;
+	// One Yonder: Days | Cities & nights (D02/D05); without a day in view the
+	// coarse lenses list the days as rows (D02), a day in view is its timeline.
+	const [nights, setNights] = useSplitOpen();
+	const dayRows = !days && isCoarse(lens);
 	const actions = usePlanActions();
 	const openAddPlace = useUi((s) => s.openAddPlace);
 	const dnd = useDnd();
@@ -385,6 +426,8 @@ function PlanTabBody() {
 			<div data-testid={TESTID.planTab}>
 				<PlanSplit
 					className="pt-4"
+					open={null}
+					onOpenChange={setNights}
 					fallback={
 						<EmptyState
 							lead={<TabPurpose tab="plan" />}
@@ -470,20 +513,26 @@ function PlanTabBody() {
 							open={open}
 							onToggle={() => toggle(setCollapsedBands, e.key)}
 						/>
-						{open
-							? e.days.map((d) => (
-									<DaySection
-										key={`${e.key}:${d.dayId}`}
-										ctx={ctx}
-										dayId={d.dayId}
-										only={d.only}
-										skipLeadOf={skip}
-										keySuffix={`:${e.visit.key}`}
-										initialNear={initialNear(d.dayId)}
-										copy={d.copy}
-									/>
-								))
-							: null}
+						{open && dayRows ? (
+							<div className="grid gap-1.5 px-4 pb-2">
+								{e.days.map((d) => (
+									<DayRow key={`${e.key}:${d.dayId}`} dayId={d.dayId} />
+								))}
+							</div>
+						) : open ? (
+							e.days.map((d) => (
+								<DaySection
+									key={`${e.key}:${d.dayId}`}
+									ctx={ctx}
+									dayId={d.dayId}
+									only={d.only}
+									skipLeadOf={skip}
+									keySuffix={`:${e.visit.key}`}
+									initialNear={initialNear(d.dayId)}
+									copy={d.copy}
+								/>
+							))
+						) : null}
 					</div>
 				);
 			}
@@ -506,10 +555,11 @@ function PlanTabBody() {
 					>
 						{/* The header row; the days per city join it once days have cities. */}
 						<PlanSplit
-							header={
+							header={(views) => (
 								<>
-									<DayStepper />
+									{days ? <DayStepper /> : <PlanTitle entries={entries} />}
 									<span className="order-last ml-auto flex items-center gap-2">
+										{views}
 										{isCoarse(lens) && bandKeys.length > 1 ? (
 											<Button
 												variant="ghost"
@@ -532,12 +582,13 @@ function PlanTabBody() {
 										<WhoMenu />
 									</span>
 								</>
-							}
-							// A day in view: its stepper; the trip's days per city belong to All days.
-							summary={!days}
+							)}
+							// A day in view has its stepper instead of Days | Cities & nights.
+							open={days ? null : nights}
+							onOpenChange={setNights}
 							banner={<TripProposalBanner />}
 						/>
-						{whoEmpty && who ? (
+						{nights && !days ? null : whoEmpty && who ? (
 							<EmptyState
 								line={
 									<>

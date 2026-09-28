@@ -420,11 +420,15 @@ describe("once days have cities", () => {
 			{ items: [] },
 		]);
 
-	it("one line at the top with Change; the map stays normal", () => {
+	it("Days | Cities & nights at the top, on Days; the map stays normal", () => {
 		const { graph } = planned();
 		plan(graph);
-		expect(screen.getByTestId(T.splitDays)).toHaveTextContent(
-			"Tokyo 2 days · Kyoto 2",
+		expect(screen.getByTestId(T.splitChange)).toHaveTextContent(
+			"Cities & nights",
+		);
+		expect(screen.getByTestId(T.splitChange)).toHaveAttribute(
+			"data-state",
+			"off",
 		);
 		expect(screen.queryByTestId(T.split)).toBeNull();
 		expect(screen.queryByTestId(T.splitRow)).toBeNull();

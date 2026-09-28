@@ -9,6 +9,10 @@ export const PLAN_TESTID = {
 	ideas: "plan-ideas",
 	daySection: "plan-day",
 	dayHeader: "plan-day-header",
+	/** One Yonder D02: a day in the trip-level list. */
+	dayRow: "plan-day-row",
+	/** "35 days · Sat 2 Oct – Fri 5 Nov · 7 days planned" (D02). */
+	planMeta: "plan-meta",
 	dayMenu: "plan-day-menu",
 	dayMenuFilter: "plan-day-menu-filter",
 	dayFilter: "plan-day-filter",
