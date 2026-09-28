@@ -64,7 +64,8 @@ export type InboxLink = {
 	/** `sel` encoding (`n.<id>`, `i.<id>`, `p.<id>`, …). */
 	sel?: string;
 	tab?: "plan" | "notes" | "lists" | "money" | "media";
-	list?: ListKind;
+	/** The Lists tab: a list, or Bookings for a booking window (older links say `todo`). */
+	list?: ListKind | "bookings";
 	/** Open the review drawer (review items). */
 	review?: true;
 };

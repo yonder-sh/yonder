@@ -4,14 +4,18 @@
  *
  * `InboxItem.link` comes from the server; it is re-validated here like any URL
  * state (`sel` must match `SEL_RE`, `tab`/`list` their enums), so a malformed
- * link degrades to "open the trip" instead of navigating somewhere odd.
+ * link degrades to "open the trip" instead of navigating somewhere odd. A
+ * booking window opens the Bookings tab (`list=bookings`); older links with
+ * `list=todo` still open To-dos.
  */
 import type { GraphIndex } from "@/lib/engine/graph-index";
 import { formatMoney } from "@/lib/engine/money";
+import type { DueKind, ListKind } from "@/lib/schemas/enums";
 import type { InboxItem, InboxLink } from "@/lib/schemas/inbox";
 import { cleanSearch } from "@/lib/workspace/nav";
 import {
 	LISTS_TABS,
+	type ListsTabKey,
 	parseSel,
 	type Sel,
 	TABS,
@@ -60,6 +64,14 @@ export function groupInbox(items: readonly InboxItem[]): InboxGroup[] {
 		list.sort((a, b) => (a.at < b.at ? 1 : a.at > b.at ? -1 : 0));
 		return [{ key, items: list }];
 	});
+}
+
+/** The Lists tab a list row opens: Bookings for a booking window (D12), else its list. */
+export function listTabOf(row: {
+	list: ListKind;
+	dueKind: DueKind;
+}): ListsTabKey {
+	return row.list === "todo" && row.dueKind === "opens" ? "bookings" : row.list;
 }
 
 /** The workspace search a link opens (validated; unknown values dropped). */

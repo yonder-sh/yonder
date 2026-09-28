@@ -3,7 +3,8 @@
  *
  * - Booking windows: to-dos with `dueKind = 'opens'`, at `at − 1 day` and
  *   `at − 15 min`, where `at` is the to-do's effective instant
- *   (`effectiveDue`: relative rules follow their item and the trip's dates).
+ *   (`effectiveDue`: relative rules follow their item and the trip's dates);
+ *   none once its stop is booked for its date. They open the Bookings tab.
  * - Due reminders: an assigned to-do's due instant for the other kinds (a
  *   date without a time fires at 09:00 that day in its zone, not at 23:59).
  * - Countdown: "starts in 7 days" and "starts tomorrow", at 09:00 in Day 1's
@@ -17,6 +18,8 @@
  * the result against what it scheduled (`planReminderJobs`) and checks each
  * job again when it fires.
  */
+import { bookedStopOf } from "@/features/lists/bookings-model";
+import { listTabOf } from "@/features/shell/inbox-model";
 import { dayPlace } from "@/lib/engine/day-place";
 import {
 	dueCtxOf,
@@ -30,6 +33,7 @@ import { addDays, hhmm, zonedEpoch } from "@/lib/engine/time";
 import type { ScheduleResult, TripGraph } from "@/lib/engine/types";
 import type { DueKind, ListKind } from "@/lib/schemas/enums";
 import type { DueRule } from "@/lib/schemas/lists";
+import { bundleTargetOf } from "@/lib/schemas/targets";
 import { tripUrl } from "./links";
 import { dueAudience, memberUserIds, todoAudience } from "./recipients";
 import type { PushItem } from "./types";
@@ -85,7 +89,7 @@ export const TODAY_TIME = "07:30";
 /** A date-only due reminder fires at this local time on its date. */
 export const ALL_DAY_DUE_TIME = "09:00";
 
-/** A to-do's inbox-style link: the Lists tab, on its target. */
+/** A to-do's inbox-style link: the Lists tab (Bookings for a booking window), on its target. */
 export function todoUrl(slug: string, t: PushTodo): string {
 	const sel = t.itemId
 		? `i.${t.itemId}`
@@ -96,7 +100,7 @@ export function todoUrl(slug: string, t: PushTodo): string {
 				: undefined;
 	return tripUrl(slug, {
 		tab: "lists",
-		list: t.list,
+		list: listTabOf(t),
 		...(sel ? { sel } : {}),
 	});
 }
@@ -236,6 +240,9 @@ export function computeReminders(
 		const due = effectiveDue(t, ctx);
 		if (!due) continue;
 		if (due.kind === "opens") {
+			// Its stop is booked for its date already: it counts as booked (D12).
+			if (bookedStopOf(ix, { target: bundleTargetOf(t), dueRule: t.dueRule }))
+				continue;
 			const userIds = todoAudience(t, graph.members);
 			if (userIds.length) out.push(...bookingReminders(t, due, userIds, slug));
 		} else {

@@ -84,7 +84,7 @@ describe("booking windows", () => {
 		expect(rs[1]?.item).toMatchObject({
 			headline: "A booking opens in 15 minutes",
 			body: "Book Ghibli Museum tickets · Opens Fri 3 Sep · 10:00 JST",
-			url: "/t/asia-2027?tab=lists&list=todo",
+			url: "/t/asia-2027?tab=lists&list=bookings",
 		});
 		// Past its opening, "opens in 15 minutes" is stale.
 		expect(rs[1]?.staleAt).toBe(at);
@@ -98,15 +98,33 @@ describe("booking windows", () => {
 		);
 	});
 
-	it("deep-links to the to-do's place in the Lists tab", () => {
+	it("deep-links to the to-do's place in the Bookings tab (a plain due one: To-dos)", () => {
 		const t = todo({
 			dueDate: "2027-09-03",
 			itemId: demo.I.kiyomizu as string,
 		});
 		const [r] = of(computeReminders(trip(), [t]), "booking");
 		expect(r?.item.url).toBe(
-			`/t/asia-2027?sel=i.${demo.I.kiyomizu}&tab=lists&list=todo`,
+			`/t/asia-2027?sel=i.${demo.I.kiyomizu}&tab=lists&list=bookings`,
 		);
+		const due = todo({
+			dueKind: "due",
+			dueDate: "2027-09-03",
+			assigneeIds: [MAYA],
+		});
+		const [d] = of(computeReminders(trip(), [due]), "due");
+		expect(d?.item.url).toBe("/t/asia-2027?tab=lists&list=todo");
+	});
+
+	it("a window whose stop is booked for its date counts as booked: nothing planned", () => {
+		const kiyomizu = demo.I.kiyomizu as string;
+		const t = todo({ dueDate: "2027-09-03", itemId: kiyomizu });
+		const booked = trip((g) => {
+			const it = g.items.find((i) => i.id === kiyomizu);
+			if (it) it.fixedDate = true;
+		});
+		expect(of(computeReminders(trip(), [t]), "booking")).toHaveLength(2);
+		expect(of(computeReminders(booked, [t]), "booking")).toEqual([]);
 	});
 
 	it("reschedules when a relative rule's item moves (new keys: old jobs go, new ones come)", () => {

@@ -23,11 +23,13 @@
  */
 import { sql } from "drizzle-orm";
 import { db } from "@/db/db.server";
+import { bookedStopOf } from "@/features/lists/bookings-model";
 import {
 	balanceEdits,
 	netNow,
 	tripHomeCurrency,
 } from "@/features/money/server/money.server";
+import { listTabOf } from "@/features/shell/inbox-model";
 import { dueState, effectiveDue } from "@/lib/engine/due";
 import { indexGraph } from "@/lib/engine/graph-index";
 import { formatMoney } from "@/lib/engine/money";
@@ -383,6 +385,8 @@ async function dueItems(
 			};
 			const due = effectiveDue(dto, ctx);
 			if (!due) continue;
+			// A window whose stop is booked for its date counts as booked (D12).
+			if (due.kind === "opens" && bookedStopOf(ix, dto)) continue;
 			const state = dueState(due, now);
 			if (!DUE_STATES.has(state)) continue;
 			const key = inboxKey.due(r.id, due.at);
@@ -410,7 +414,7 @@ async function dueItems(
 				link: {
 					tripSlug: r.tripSlug,
 					tab: "lists",
-					list: r.list,
+					list: listTabOf(r),
 					...(sel ? { sel } : {}),
 				},
 			});

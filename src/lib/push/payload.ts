@@ -135,8 +135,9 @@ function summaryUrl(
 	if (urls.size === 1) return items[0]?.url ?? tripUrl(trip.slug);
 	switch (group) {
 		case "due":
-		case "booking":
 			return tripUrl(trip.slug, { tab: "lists", list: "todo" });
+		case "booking":
+			return tripUrl(trip.slug, { tab: "lists", list: "bookings" });
 		case "mention":
 		case "review":
 			// The newest one (the rest are one click away in the inbox / review drawer).

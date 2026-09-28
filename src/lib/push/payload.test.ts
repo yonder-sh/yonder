@@ -31,6 +31,10 @@ describe("tripUrl", () => {
 			sel: `i.${ID}`,
 		});
 		expect(isSafePushUrl(url)).toBe(true);
+		// D12: the Bookings tab is a list a link can name.
+		expect(tripUrl("asia-2027", { tab: "lists", list: "bookings" })).toBe(
+			"/t/asia-2027?tab=lists&list=bookings",
+		);
 	});
 
 	it("drops what the inbox would drop (bad sel, the default tab)", () => {
@@ -104,6 +108,10 @@ describe("buildPayload", () => {
 		const b = item({ key: "b", url: tripUrl("asia-2027", { sel: `d.${ID}` }) });
 		expect(buildPayload("due", [a, b], TRIP)?.url).toBe(
 			"/t/asia-2027?tab=lists&list=todo",
+		);
+		// Booking windows open the Bookings tab (D12).
+		expect(buildPayload("booking", [a, b], TRIP)?.url).toBe(
+			"/t/asia-2027?tab=lists&list=bookings",
 		);
 		expect(buildPayload("changes", [a, b], TRIP)?.url).toBe("/t/asia-2027");
 		expect(buildPayload("assigned", [a, { ...a, key: "c" }], TRIP)?.url).toBe(

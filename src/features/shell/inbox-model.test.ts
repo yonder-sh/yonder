@@ -7,6 +7,7 @@ import {
 	groupInbox,
 	inboxSearch,
 	keepScope,
+	listTabOf,
 	timeAgo,
 } from "./inbox-model";
 
@@ -79,6 +80,25 @@ describe("inbox model", () => {
 		expect(
 			inboxSearch({ tripSlug: "demo", tab: "lists", list: "gifts" as never }),
 		).toEqual({ tab: "lists" });
+		// A booking window opens Bookings; an older link to To-dos still works.
+		expect(
+			inboxSearch({ tripSlug: "demo", tab: "lists", list: "bookings" }),
+		).toEqual({ tab: "lists", list: "bookings" });
+		expect(
+			inboxSearch({
+				tripSlug: "demo",
+				tab: "lists",
+				list: "todo",
+				sel: `n.${id}`,
+			}),
+		).toEqual({ tab: "lists", list: "todo", sel: `n.${id}` });
+	});
+
+	it("a list row's tab: Bookings for a booking window, else its own list", () => {
+		expect(listTabOf({ list: "todo", dueKind: "opens" })).toBe("bookings");
+		expect(listTabOf({ list: "todo", dueKind: "due" })).toBe("todo");
+		expect(listTabOf({ list: "shopping", dueKind: "opens" })).toBe("shopping");
+		expect(listTabOf({ list: "packing", dueKind: "due" })).toBe("packing");
 	});
 
 	it("keeps the scope only when the entity is inside it", () => {
