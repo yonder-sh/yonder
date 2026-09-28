@@ -47,7 +47,7 @@ describe("the phone", () => {
 		const toggle = screen.getByTestId(SHELL_TESTID.mobileMapToggle);
 		fireEvent.click(toggle);
 		expect(screen.getByTestId("map-stub")).toBeInTheDocument();
-		expect(toggle).toHaveTextContent("List");
+		expect(toggle).toHaveAttribute("aria-label", "Show the list");
 		act(() =>
 			fireEvent.click(
 				within(screen.getByTestId(TESTID.centerTabs)).getByRole("tab", {

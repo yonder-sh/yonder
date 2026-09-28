@@ -121,16 +121,22 @@ function MobileHeader() {
 				>
 					<YonderMark className="size-5" />
 				</Link>
-				<WherePicker className="h-11 min-w-0 flex-1 justify-start" />
+				<WherePicker short className="h-11 min-w-0 flex-1 justify-start" />
+				{/* An icon, so Where keeps the width for its name. */}
 				<Button
 					variant="ghost"
+					size="icon"
 					data-testid={SHELL_TESTID.mobileMapToggle}
 					aria-pressed={mapOpen}
+					aria-label={mapOpen ? "Show the list" : "Show the map"}
 					onClick={() => setMapOpen(!mapOpen)}
-					className="h-11 shrink-0 px-3"
+					className="size-11 shrink-0"
 				>
-					{mapOpen ? <ListIcon /> : <MapIcon />}
-					{mapOpen ? "List" : "Map"}
+					{mapOpen ? (
+						<ListIcon className="size-5" />
+					) : (
+						<MapIcon className="size-5" />
+					)}
 				</Button>
 				<SuggestModeControl />
 				<InboxBell className="size-11 rounded-full" />

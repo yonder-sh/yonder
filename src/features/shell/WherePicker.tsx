@@ -31,7 +31,14 @@ import { OrganizePlaces } from "./OrganizePlaces";
 import { SHELL_TESTID } from "./testids";
 import { wherePlaces, whereRows } from "./where-rows";
 
-export function WherePicker({ className }: { className?: string }) {
+export function WherePicker({
+	className,
+	short = false,
+}: {
+	className?: string;
+	/** Just the place's name ("Tokyo"; the phone's header), not its path. */
+	short?: boolean;
+}) {
 	const { ix, scope, nav, graph } = useWorkspace();
 	const [open, setOpen] = useState(false);
 	const [organize, setOrganize] = useState(false);
@@ -42,11 +49,13 @@ export function WherePicker({ className }: { className?: string }) {
 		[open, q, ix],
 	);
 	const label = scope
-		? ix
-				.path(scope.id)
-				.slice(-2)
-				.map((n) => n.name)
-				.join(" › ")
+		? short
+			? scope.name
+			: ix
+					.path(scope.id)
+					.slice(-2)
+					.map((n) => n.name)
+					.join(" › ")
 		: "Whole trip";
 	const close = () => {
 		setOpen(false);
