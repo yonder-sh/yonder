@@ -55,6 +55,18 @@ export type PlacesCounts = Record<PlaceStatus, number> & {
 	toDecide: number;
 };
 
+/** "Kyoto › Higashiyama": the place's city and the first area below it. */
+export function placeWhere(ix: GraphIndex, nodeId: string): string {
+	const path = ix.path(nodeId).slice(0, -1);
+	const city = levelGroupOf(ix, nodeId, "city").node;
+	const cityAt = city ? path.findIndex((n) => n.id === city.id) : -1;
+	const below = path
+		.slice(cityAt + 1)
+		.filter((n) => n.type === "area")
+		.slice(0, 1);
+	return [...(city ? [city] : []), ...below].map((n) => n.name).join(" › ");
+}
+
 /** "Day 5", "Days 2–5", "Days 2, 4, 7–8" (1-based day numbers). */
 export function formatDayNumbers(nums: readonly number[]): string {
 	const xs = [...new Set(nums)].filter((n) => n > 0).sort((a, b) => a - b);
@@ -157,16 +169,8 @@ export function buildRows(
 			threshold: opts.threshold,
 			allNah: allNah(ratings, opts.memberIds),
 		});
-		const path = ix.path(node.id).slice(0, -1);
 		const city = levelGroupOf(ix, node.id, "city").node;
-		const cityAt = city ? path.findIndex((n) => n.id === city.id) : -1;
-		const below = path
-			.slice(cityAt + 1)
-			.filter((n) => n.type === "area")
-			.slice(0, 1);
-		const where = [...(city ? [city] : []), ...below]
-			.map((n) => n.name)
-			.join(" › ");
+		const where = placeWhere(ix, node.id);
 		const first = inside[0];
 		const firstDay = first ? ix.day(first.dayId) : undefined;
 		const days = [...new Set(inside.map((it) => it.dayId))].filter(
