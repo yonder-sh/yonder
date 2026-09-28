@@ -96,7 +96,7 @@ export function todoUrl(slug: string, t: PushTodo): string {
 				: undefined;
 	return tripUrl(slug, {
 		tab: "lists",
-		list: t.list === "shopping" ? "shopping" : "todo",
+		list: t.list,
 		...(sel ? { sel } : {}),
 	});
 }

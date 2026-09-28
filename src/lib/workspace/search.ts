@@ -30,6 +30,10 @@ export const TABS = [
 ] as const;
 export type Tab = (typeof TABS)[number];
 
+/** The Lists page's tabs (`list`, One Yonder D12); Bookings are to-dos that open. */
+export const LISTS_TABS = ["todo", "bookings", "shopping", "packing"] as const;
+export type ListsTabKey = (typeof LISTS_TABS)[number];
+
 /**
  * The Places tab's views (docs/PLACES.md §1: `pv`), which also name its step
  * (rate → review → schedule, owner 2026-09-25): table, board and map are Review,
@@ -119,7 +123,7 @@ export const WorkspaceSearch = z.object({
 	only: z.literal(1).optional().catch(undefined),
 	/** One Yonder D04: the day's ideas in the map's place ("Fill this day"). */
 	fill: z.literal(1).optional().catch(undefined),
-	list: z.enum(["todo", "shopping"]).optional().catch(undefined),
+	list: z.enum(LISTS_TABS).optional().catch(undefined),
 	/** Media filter; `documents` = PDFs (ADDENDUM §9). */
 	mf: z
 		.enum(["photos", "videos", "social", "guides", "documents"])

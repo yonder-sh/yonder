@@ -134,6 +134,13 @@
       "when": 1790381781063,
       "tag": "0018_day_includes_travel",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1790575374160,
+      "tag": "0019_lists_bookings_packing",
+      "breakpoints": true
     }
   ]
 }

@@ -1,5 +1,5 @@
 /**
- * WP-Lists: todo and shopping list server functions (SPEC §13.5; EXTENSIONS
+ * WP-Lists: to-do, shopping and packing list server functions (SPEC §13.5; EXTENSIONS
  * §7). The proposable functions run through the gate; their inputs and
  * DB-only cores are in `server/proposable.server.ts`. Reads apply the
  * ADDENDUM §7.2 privacy filter (private rows only for their creator).
@@ -8,6 +8,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { db } from "@/db/db.server";
+import { mustRedact } from "@/lib/auth/roles";
 import type { DueKind, ListItemStatus, ListKind } from "@/lib/schemas/enums";
 import type { DueRule } from "@/lib/schemas/lists";
 import type { BundleTarget } from "@/lib/schemas/targets";
@@ -68,6 +69,11 @@ export type ListItemDto = {
 	doneAt?: string | null;
 	/** Created by the caller (only the author may make an item private). Always set by the read. */
 	mine?: boolean;
+	/**
+	 * One Yonder D12: a booking's confirmation code ("E7K2Q9"); link guests
+	 * read `REDACTED_BOOKING_REF`. Always set by the read.
+	 */
+	bookingRef?: string | null;
 };
 
 /** Every live list item the caller may see, ordered by `(position, id)`. */
@@ -75,8 +81,10 @@ export const listTripListItems = createServerFn({ method: "GET" })
 	.middleware([withUser])
 	.validator(z.object({ tripId: z.uuid() }).strict())
 	.handler(async ({ data, context }): Promise<ListItemDto[]> => {
-		await requireTripRole(data.tripId, "viewer", context.user);
-		return readListItems(db, data.tripId, context.user.id);
+		const access = await requireTripRole(data.tripId, "viewer", context.user);
+		return readListItems(db, data.tripId, context.user.id, undefined, {
+			redactRefs: mustRedact(access),
+		});
 	});
 
 /** `list.create`. Keys: lists, counts. */

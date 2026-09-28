@@ -72,6 +72,13 @@ describe("inbox model", () => {
 		expect(
 			inboxSearch({ tripSlug: "demo", tab: "evil" as never, list: "todo" }),
 		).toEqual({ list: "todo" });
+		// D12: a packing row opens the Packing tab; an unknown list is dropped.
+		expect(
+			inboxSearch({ tripSlug: "demo", tab: "lists", list: "packing" }),
+		).toEqual({ tab: "lists", list: "packing" });
+		expect(
+			inboxSearch({ tripSlug: "demo", tab: "lists", list: "gifts" as never }),
+		).toEqual({ tab: "lists" });
 	});
 
 	it("keeps the scope only when the entity is inside it", () => {

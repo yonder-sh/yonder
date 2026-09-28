@@ -55,7 +55,7 @@ export function applyListProposals(
 			id,
 			ghostOf: p.id,
 			target,
-			list: pl.list === "shopping" ? "shopping" : "todo",
+			list: pl.list === "shopping" || pl.list === "packing" ? pl.list : "todo",
 			text: str("text") ?? "",
 			note: str("note"),
 			url: str("url"),
@@ -70,6 +70,7 @@ export function applyListProposals(
 			quantity: num("quantity"),
 			priceAmount: num("priceAmount"),
 			priceCurrency: str("priceCurrency"),
+			bookingRef: str("bookingRef"),
 			position: "~",
 			isPrivate: false,
 			assigneeIds: Array.isArray(pl.assigneeIds)

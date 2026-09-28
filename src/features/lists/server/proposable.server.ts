@@ -26,6 +26,7 @@ import type { Tx } from "@/db/db.server";
 import { listItems } from "@/db/schema";
 import { HHmm, HttpUrl, IsoDate, Tz } from "@/lib/schemas/common";
 import { DUE_KIND_VALUES, LIST_KIND_VALUES } from "@/lib/schemas/enums";
+import { isRedactedRef } from "@/lib/schemas/legs";
 import { DueRule } from "@/lib/schemas/lists";
 import { CurrencyCode } from "@/lib/schemas/money";
 import {
@@ -63,6 +64,9 @@ import {
 	writeTargets,
 } from "./lists.server";
 
+/** A booking's confirmation code ("E7K2Q9"). */
+const BookingRef = z.string().trim().min(1).max(60);
+
 export const NewListItem = z.object({
 	tripId: z.uuid(),
 	/** EXTENSIONS §2.2: a chosen id; an existing one is CONFLICT. */
@@ -83,6 +87,8 @@ export const NewListItem = z.object({
 	quantity: z.number().int().positive().max(9999).optional(),
 	priceAmount: z.number().nonnegative().max(1e12).optional(),
 	priceCurrency: CurrencyCode.optional(),
+	/** One Yonder D12: a booking's confirmation code. */
+	bookingRef: BookingRef.optional(),
 	/** ADDENDUM §7.2: visible only to the creator (gifts). */
 	isPrivate: z.boolean().optional(),
 	assigneeIds: z.array(z.uuid()).max(50).optional(),
@@ -124,6 +130,7 @@ export const ListItemPatch = z
 		quantity: z.number().int().positive().max(9999).nullable(),
 		priceAmount: z.number().nonnegative().max(1e12).nullable(),
 		priceCurrency: CurrencyCode.nullable(),
+		bookingRef: BookingRef.nullable(),
 		isPrivate: z.boolean(),
 		assigneeIds: z.array(z.uuid()).max(50),
 		extraTargetNodeIds: z.array(z.uuid()).max(20),
@@ -169,6 +176,13 @@ const listTrip = (i: { id: string }, exec: Parameters<typeof rowTrip>[0]) =>
 	rowTrip(exec, "list_items", i.id);
 
 type In<S extends z.ZodType> = z.output<S>;
+
+/** What an activity line calls each list. */
+const LIST_NAME: Record<ListItemDto["list"], string> = {
+	todo: "to-dos",
+	shopping: "shopping",
+	packing: "packing",
+};
 
 /** The fields that make a date absolute (they switch a relative rule off). */
 const ABSOLUTE_DUE = ["dueDayId", "dueDate", "dueTime", "dueTz"] as const;
@@ -269,6 +283,7 @@ export async function createListItemCore(
 			priceAmount: data.priceAmount ?? null,
 			priceCurrency:
 				data.priceAmount !== undefined ? (data.priceCurrency ?? null) : null,
+			bookingRef: data.bookingRef ?? null,
 			isPrivate: data.isPrivate ?? false,
 			position,
 			createdBy: ctx.user.id,
@@ -284,7 +299,7 @@ export async function createListItemCore(
 			tripId,
 			actor: ctx.actor,
 			verb: "list.create",
-			summary: `added ${quoteOf(row.text)} to ${row.list === "shopping" ? "shopping" : "to-dos"}`,
+			summary: `added ${quoteOf(row.text)} to ${LIST_NAME[row.list]}`,
 			...activityTarget(data.target),
 			meta: { name: quoteOf(row.text).slice(1, -1), listItemId: row.id },
 		});
@@ -354,6 +369,9 @@ export async function updateListItemCore(
 	if (p.priceCurrency !== undefined && p.priceAmount !== null)
 		set.priceCurrency = p.priceCurrency;
 	if (p.isPrivate !== undefined) set.isPrivate = p.isPrivate;
+	// A link guest reads the code hidden: sending that back changes nothing.
+	if (p.bookingRef !== undefined && !isRedactedRef(p.bookingRef))
+		set.bookingRef = p.bookingRef;
 	// A relative rule replaces the absolute fields, and an absolute date turns
 	// the rule off (EXTENSIONS §7).
 	if (p.dueRule) {

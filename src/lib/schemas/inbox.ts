@@ -14,7 +14,11 @@
  * author; link guests get an empty feed; money items only reach members.
  */
 import { z } from "zod";
-import type { DUE_KIND_VALUES, EXPENSE_CATEGORY_VALUES } from "./enums";
+import type {
+	DUE_KIND_VALUES,
+	EXPENSE_CATEGORY_VALUES,
+	ListKind,
+} from "./enums";
 
 export const INBOX_KIND_VALUES = [
 	/** Someone @mentioned me (notes, list items, item notes). */
@@ -60,7 +64,7 @@ export type InboxLink = {
 	/** `sel` encoding (`n.<id>`, `i.<id>`, `p.<id>`, …). */
 	sel?: string;
 	tab?: "plan" | "notes" | "lists" | "money" | "media";
-	list?: "todo" | "shopping";
+	list?: ListKind;
 	/** Open the review drawer (review items). */
 	review?: true;
 };

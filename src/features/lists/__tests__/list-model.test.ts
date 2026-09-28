@@ -19,6 +19,7 @@ import {
 	filterRows,
 	groupRows,
 	groupTarget,
+	isBookingTodo,
 	legLabel,
 	legSelTarget,
 	nearAnchor,
@@ -26,6 +27,7 @@ import {
 	rollupRows,
 	rowsInView,
 	shopPlan,
+	tabCounts,
 	targetLabel,
 	viewsFor,
 } from "../list-model";
@@ -307,24 +309,28 @@ describe("views", () => {
 		expect(viewsFor("todo")).not.toContain("day");
 	});
 
-	it("Bookings (D12): only windows that open, soon (30 days) before later", () => {
-		const opens = (id: string, dueDate: string | null) =>
-			row({ id, dueKind: "opens", dueDate, dueTime: "09:00", dueTz: "UTC" });
-		const r = [
-			opens("later", "2026-12-03"),
-			row({ id: "plain", dueDate: "2026-09-30" }),
-			opens("soon", "2026-10-12"),
-			opens("undated", null),
-		];
-		const inView = rowsInView(ix, r, { scopeId: null, lens: "country" });
-		const g = groupRows("bookings", inView, ctx);
-		expect(g.map((x) => [x.title, x.rows.map((y) => y.row.id)])).toEqual([
-			["Opening soon", ["soon"]],
-			["Later", ["later"]],
-			["No date yet", ["undated"]],
-		]);
-		expect(viewsFor("todo")).toContain("bookings");
+	it("Bookings is a tab of its own now, not a View (D12)", () => {
+		expect(viewsFor("todo")).not.toContain("bookings");
 		expect(viewsFor("shopping")).not.toContain("bookings");
+	});
+
+	it("the tabs count open rows in view; a booking window counts as a to-do too", () => {
+		const r = [
+			row({ id: "plain" }),
+			row({ id: "window", dueKind: "opens", dueDate: "2026-10-12" }),
+			row({ id: "booked", dueKind: "opens", status: "done" }),
+			row({ id: "buy", list: "shopping" }),
+			row({ id: "pack", list: "packing" }),
+			row({ id: "mine", list: "packing", isPrivate: true }),
+		];
+		expect(tabCounts(ix, r, { scopeId: null, lens: "country" })).toEqual({
+			todo: 2,
+			bookings: 1,
+			shopping: 1,
+			packing: 2,
+		});
+		expect(isBookingTodo(r[1] as ListItemDto)).toBe(true);
+		expect(isBookingTodo({ list: "shopping", dueKind: "opens" })).toBe(false);
 	});
 
 	it("Person puts a shared row under each assignee, me first, Unassigned last", () => {

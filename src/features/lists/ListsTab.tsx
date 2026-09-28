@@ -1,50 +1,77 @@
 /**
  * The Lists tab (SPEC §12.5 `ListsTab()`, DESIGN §7.3, EXTENSIONS §7):
- * to-dos and shopping rolled up over the scope (SPEC §8.4; the rollup toggle
- * "Everything inside · Only Tokyo" above is the shell's). Todo | Shopping
- * switch (One Yonder D12: one list at a time, under "Lists" when wide). At the trip
- * root Todo opens in View = Due: the MAIN list of everything, overdue first.
- * The list is the URL's `list=todo|shopping` (the inbox deep-links with it).
+ * to-dos, bookings, shopping and packing rolled up over the scope (SPEC §8.4;
+ * the rollup toggle "Everything inside · Only Tokyo" above is the shell's).
+ * One Yonder D12: one list at a time, the switch its tabs (each with its
+ * count), under "Lists" and "Add a booking" when wide. At the trip root
+ * To-dos open in View = Due: the MAIN list of everything, overdue first. The
+ * list is the URL's `list=todo|bookings|shopping|packing` (the inbox
+ * deep-links with it).
  */
 
+import { CalendarPlus } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useEditGuard } from "@/components/common/edit-guard";
+import { Segmented } from "@/components/kit";
+import { Button } from "@/components/ui/button";
 import { oneOf, useFollowValue } from "@/lib/realtime/view-ui";
-import type { ListKind } from "@/lib/schemas/enums";
 import type { BundleTarget } from "@/lib/schemas/targets";
 import { TESTID } from "@/lib/testids";
-import { cn } from "@/lib/utils";
+import { LISTS_TABS, type ListsTabKey } from "@/lib/workspace/search";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
+import { BookingsBoard } from "./BookingsBoard";
 import { ListBoard } from "./ListBoard";
-import { rollupRows, type ScopeOptions } from "./list-model";
+import { type ScopeOptions, tabCounts } from "./list-model";
+import { PackingBoard } from "./PackingBoard";
 import { useListItems } from "./queries";
 import { LISTS_TESTID } from "./testids";
 
 const KIND_KEY = "yonder:lists:kind";
-const isListKind = oneOf<ListKind>(["todo", "shopping"]);
+const isTab = oneOf<ListsTabKey>(LISTS_TABS);
 /** Wide enough for the page's heading. */
-const SIDE_BY_SIDE_PX = 640;
+const HEADING_PX = 640;
+/** Wide enough for a booking's details beside the list. */
+const BESIDE_PX = 880;
+
+const TAB_LABEL: Record<ListsTabKey, string> = {
+	todo: "To-dos",
+	bookings: "Bookings",
+	shopping: "Shopping",
+	packing: "Packing",
+};
+
+const TAB_TESTID: Record<ListsTabKey, string> = {
+	todo: LISTS_TESTID.kindTodo,
+	bookings: LISTS_TESTID.kindBookings,
+	shopping: LISTS_TESTID.kindShopping,
+	packing: LISTS_TESTID.kindPacking,
+};
 
 export function ListsTab() {
 	const ws = useWorkspace();
 	const { graph, scope, only, days, lens, model, search, who, nav } = ws;
 	const { items, loading } = useListItems();
+	const editGuard = useEditGuard();
+	const canAdd = ws.mode === "live" && !editGuard.disabled;
 	const root = useRef<HTMLDivElement>(null);
-	const [wide, setWide] = useState(false);
+	const [width, setWidth] = useState(0);
+	// "Add a booking" focuses the Bookings add row (a new tick each time).
+	const [addTick, setAddTick] = useState(0);
 	// The list is in the URL (`list`, so a deep link or the inbox opens the
 	// right one); without it, the last one this browser used.
-	const [stored, setStored] = useState<ListKind>("todo");
+	const [stored, setStored] = useState<ListsTabKey>("todo");
 	useEffect(() => {
 		try {
 			const k = localStorage.getItem(KIND_KEY);
-			if (k === "todo" || k === "shopping") setStored(k);
+			if (isTab.safeParse(k).success) setStored(k as ListsTabKey);
 		} catch {
 			// storage blocked
 		}
 	}, []);
-	const kind: ListKind = search.list ?? stored;
+	const kind: ListsTabKey = search.list ?? stored;
 	// FB-21d: a follower opens the same list even when it isn't in the URL.
-	useFollowValue("lists.kind", kind, setStored, isListKind);
-	const pickKind = (k: ListKind) => {
+	useFollowValue("lists.kind", kind, setStored, isTab);
+	const pickKind = (k: ListsTabKey) => {
 		setStored(k);
 		try {
 			localStorage.setItem(KIND_KEY, k);
@@ -57,12 +84,11 @@ export function ListsTab() {
 	useEffect(() => {
 		const el = root.current;
 		if (!el || typeof ResizeObserver === "undefined") return;
-		const ro = new ResizeObserver(([e]) =>
-			setWide((e?.contentRect.width ?? 0) >= SIDE_BY_SIDE_PX),
-		);
+		const ro = new ResizeObserver(([e]) => setWidth(e?.contentRect.width ?? 0));
 		ro.observe(el);
 		return () => ro.disconnect();
 	}, []);
+	const wide = width >= HEADING_PX;
 
 	const scopeId = scope?.id ?? null;
 	const opts = useMemo<ScopeOptions>(
@@ -80,25 +106,15 @@ export function ListsTab() {
 		[scopeId],
 	);
 	const where = scope?.name ?? graph.trip.name;
-	// Open rows in view, per list (the switch's counts).
-	const counts = useMemo(() => {
-		const c = { todo: 0, shopping: 0 };
-		const seen = new Set<string>();
-		for (const g of rollupRows(ws.ix, items, opts))
-			for (const s of g.subs)
-				for (const r of s.rows) {
-					if (seen.has(r.id) || r.status !== "open") continue;
-					seen.add(r.id);
-					c[r.list] += 1;
-				}
-		return c;
-	}, [ws.ix, items, opts]);
+	const counts = useMemo(
+		() => tabCounts(ws.ix, items, opts),
+		[ws.ix, items, opts],
+	);
 
 	const common = {
 		items,
 		scope: opts,
 		addTarget,
-		storageScope: scopeId ?? "root",
 		who,
 		setWho: nav.setWho,
 		where,
@@ -106,57 +122,70 @@ export function ListsTab() {
 	};
 
 	const switcher = (
-		<div
-			role="tablist"
-			aria-label="Which list"
-			className="inline-flex h-7 items-center rounded-full border p-0.5 text-xs"
-		>
-			{(["todo", "shopping"] as const).map((k) => (
-				<button
-					key={k}
-					type="button"
-					role="tab"
-					aria-selected={kind === k}
-					data-testid={
-						k === "todo" ? LISTS_TESTID.kindTodo : LISTS_TESTID.kindShopping
-					}
-					onClick={() => pickKind(k)}
-					className={cn(
-						"inline-flex h-6 items-center gap-1.5 rounded-full px-3 transition-colors",
-						kind === k
-							? "bg-foreground text-background"
-							: "text-muted-foreground hover:text-foreground",
-					)}
-				>
-					{k === "todo" ? "To-do" : "Shopping"}
-					{counts[k] ? (
-						<span
-							className={cn(
-								"tnum",
-								kind === k ? "text-background/70" : "text-muted-foreground",
-							)}
-						>
-							{counts[k]}
-						</span>
-					) : null}
-				</button>
-			))}
+		// Four tabs with counts: a phone scrolls them rather than squeezing them.
+		<div className="max-w-full overflow-x-auto">
+			<Segmented
+				label="Which list"
+				value={kind}
+				onValueChange={pickKind}
+				options={LISTS_TABS.map((k) => ({
+					value: k,
+					label: TAB_LABEL[k],
+					count: counts[k],
+					testId: TAB_TESTID[k],
+				}))}
+			/>
 		</div>
 	);
 
 	return (
 		<div ref={root} data-testid={TESTID.listsTab} className="pb-16">
 			{wide ? (
-				// D12: on a page of its own, "Lists" and where heads it.
-				<h2 className="flex items-baseline gap-2 px-6 pt-4 pb-1">
-					<span className="font-display text-2xl leading-8 font-semibold">
-						Lists
-					</span>
-					<span className="text-meta text-muted-foreground">{where}</span>
-				</h2>
+				// D12: on a page of its own, "Lists" and where head it.
+				<div className="flex items-center gap-3 px-6 pt-4 pb-1">
+					<h2 className="flex min-w-0 items-baseline gap-2">
+						<span className="font-display text-2xl leading-8 font-semibold">
+							Lists
+						</span>
+						<span className="truncate text-meta text-muted-foreground">
+							{scopeId ? where : "Whole trip"} · shared with everyone
+						</span>
+					</h2>
+					{canAdd ? (
+						<Button
+							size="sm"
+							variant="outline"
+							className="ml-auto"
+							data-testid={LISTS_TESTID.addBooking}
+							onClick={() => {
+								pickKind("bookings");
+								setAddTick((t) => t + 1);
+							}}
+						>
+							<CalendarPlus /> Add a booking
+						</Button>
+					) : null}
+				</div>
 			) : null}
 			{/* D12: one list at a time, the switch its tabs, at every width. */}
-			<ListBoard key={kind} {...common} kind={kind} headerStart={switcher} />
+			{kind === "bookings" ? (
+				<BookingsBoard
+					{...common}
+					headerStart={switcher}
+					beside={width >= BESIDE_PX}
+					focusAdd={addTick}
+				/>
+			) : kind === "packing" ? (
+				<PackingBoard {...common} headerStart={switcher} />
+			) : (
+				<ListBoard
+					key={kind}
+					{...common}
+					storageScope={scopeId ?? "root"}
+					kind={kind}
+					headerStart={switcher}
+				/>
+			)}
 		</div>
 	);
 }

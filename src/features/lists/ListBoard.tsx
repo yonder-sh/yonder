@@ -1,5 +1,5 @@
 /**
- * One list (Todo or Shopping) over a scope: the header (View, the person
+ * One list (To-dos or Shopping) over a scope: the header (View, the person
  * filter, "Near …" for shopping), the add row, and the groups for the View
  * (EXTENSIONS §7 UX; DESIGN §7.3). Used by the Lists tab (one or two boards)
  * and the inspector's `ListsPanel`.
@@ -179,7 +179,12 @@ export function ListBoard(props: BoardProps) {
 	const [nearOn, setNearOn] = useFollowState("lists.snear", false, bool, {
 		enabled: !compact && k === "s",
 	});
-	useFollowValue(`lists.${part}${k}group`, view, showView, VIEW_OF[kind]);
+	useFollowValue(
+		`lists.${part}${k}group`,
+		view,
+		showView,
+		VIEW_OF[kind === "shopping" ? "shopping" : "todo"],
+	);
 	const [lingering, setLingering] = useState<Record<string, true>>({});
 	const timers = useRef(new Map<string, ReturnType<typeof setTimeout>>());
 	useEffect(
@@ -487,13 +492,6 @@ export function ListBoard(props: BoardProps) {
 					}
 				/>
 			) : null}
-			{!empty &&
-			view === "bookings" &&
-			!inView.some((r) => r.row.dueKind === "opens") ? (
-				<p className="px-4 pt-2 pb-1 font-display text-body text-muted-foreground">
-					No booking windows yet. Give a to-do an "Opens" date from its ⋯.
-				</p>
-			) : null}
 			{!empty && view === "due" && !anyDated ? (
 				<p className="px-4 pt-2 pb-1 font-display text-body text-muted-foreground">
 					Nothing dated. Add a date from any to-do's ⋯.
@@ -792,7 +790,7 @@ function GroupHead({
 }
 
 /** "Everyone ▾": filter by who a row is for (members only; the URL `who` in the tab). */
-function PersonFilter({
+export function PersonFilter({
 	who,
 	setWho,
 }: {

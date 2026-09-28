@@ -410,7 +410,7 @@ async function dueItems(
 				link: {
 					tripSlug: r.tripSlug,
 					tab: "lists",
-					list: r.list === "shopping" ? "shopping" : "todo",
+					list: r.list,
 					...(sel ? { sel } : {}),
 				},
 			});

@@ -18,7 +18,6 @@ import { bool, oneOf, useFollowValue, uuid } from "@/lib/realtime/view-ui";
 import type { ListKind } from "@/lib/schemas/enums";
 import type { BundleTarget } from "@/lib/schemas/targets";
 import { TESTID } from "@/lib/testids";
-import { cn } from "@/lib/utils";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { ListBoard } from "./ListBoard";
 import { rollupRows, type ScopeOptions, targetLabel } from "./list-model";
@@ -115,7 +114,7 @@ export function ListsPanel({ target }: { target: BundleTarget }) {
 	}, [node, day, isWide, target.kind, items, effectiveTarget]);
 
 	const counts = useMemo(() => {
-		const c = { todo: 0, shopping: 0 };
+		const c: Record<ListKind, number> = { todo: 0, shopping: 0, packing: 0 };
 		const seen = new Set<string>();
 		for (const g of rollupRows(ix, rows, scope))
 			for (const s of g.subs)
@@ -131,42 +130,19 @@ export function ListsPanel({ target }: { target: BundleTarget }) {
 		target.kind === "trip" ? graph.trip.name : targetLabel(ix, effectiveTarget);
 
 	const switcher = (
-		<div
-			role="tablist"
-			aria-label="Which list"
-			className="inline-flex h-7 items-center rounded-full border p-0.5 text-xs"
-		>
-			{(["todo", "shopping"] as const).map((k) => (
-				<button
-					key={k}
-					type="button"
-					role="tab"
-					aria-selected={kind === k}
-					data-testid={
-						k === "todo" ? LISTS_TESTID.kindTodo : LISTS_TESTID.kindShopping
-					}
-					onClick={() => setKind(k)}
-					className={cn(
-						"inline-flex h-6 items-center gap-1.5 rounded-full px-3 transition-colors",
-						kind === k
-							? "bg-foreground text-background"
-							: "text-muted-foreground hover:text-foreground",
-					)}
-				>
-					{k === "todo" ? "To-do" : "Shopping"}
-					{counts[k] ? (
-						<span
-							className={cn(
-								"tnum",
-								kind === k ? "text-background/70" : "text-muted-foreground",
-							)}
-						>
-							{counts[k]}
-						</span>
-					) : null}
-				</button>
-			))}
-		</div>
+		<Segmented
+			label="Which list"
+			size="sm"
+			value={kind}
+			onValueChange={setKind}
+			options={(["todo", "shopping"] as const).map((k) => ({
+				value: k,
+				label: k === "todo" ? "To-dos" : "Shopping",
+				count: counts[k] || null,
+				testId:
+					k === "todo" ? LISTS_TESTID.kindTodo : LISTS_TESTID.kindShopping,
+			}))}
+		/>
 	);
 
 	return (

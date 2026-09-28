@@ -11,6 +11,7 @@ import { formatMoney } from "@/lib/engine/money";
 import type { InboxItem, InboxLink } from "@/lib/schemas/inbox";
 import { cleanSearch } from "@/lib/workspace/nav";
 import {
+	LISTS_TABS,
 	parseSel,
 	type Sel,
 	TABS,
@@ -68,8 +69,9 @@ export function inboxSearch(link: InboxLink): WorkspaceSearch {
 		link.tab && (TABS as readonly string[]).includes(link.tab)
 			? link.tab
 			: undefined;
-	const list =
-		link.list === "todo" || link.list === "shopping" ? link.list : undefined;
+	const list = (LISTS_TABS as readonly string[]).includes(link.list ?? "")
+		? link.list
+		: undefined;
 	return cleanSearch({
 		sel: sel ? link.sel : undefined,
 		tab: tab === "plan" ? undefined : tab,

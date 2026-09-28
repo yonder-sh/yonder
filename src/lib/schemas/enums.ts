@@ -152,7 +152,8 @@ export const ATTACHMENT_STATUS_VALUES = [
 export const AttachmentStatus = z.enum(ATTACHMENT_STATUS_VALUES);
 export type AttachmentStatus = z.infer<typeof AttachmentStatus>;
 
-export const LIST_KIND_VALUES = ["todo", "shopping"] as const;
+/** One Yonder D12: `packing` (shared, plus private "Just mine" rows). */
+export const LIST_KIND_VALUES = ["todo", "shopping", "packing"] as const;
 export const ListKind = z.enum(LIST_KIND_VALUES);
 export type ListKind = z.infer<typeof ListKind>;
 

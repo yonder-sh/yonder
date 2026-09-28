@@ -52,6 +52,7 @@ export type CreateVars = {
 		| "priceAmount"
 		| "priceCurrency"
 		| "extraTargetNodeIds"
+		| "bookingRef"
 	>
 > & {
 		/** QA SEC-R3-01: this is the caller's private to-do, suggested to the trip. */
@@ -83,6 +84,7 @@ export function shareCopyOf(row: ListItemDto): CreateVars {
 		quantity: v(row.quantity),
 		priceAmount: v(row.priceAmount),
 		priceCurrency: row.priceAmount != null ? v(row.priceCurrency) : undefined,
+		bookingRef: v(row.bookingRef),
 		assigneeIds: row.assigneeIds,
 		extraTargetNodeIds: row.extraTargetNodeIds,
 		fromPrivateId: row.id,
@@ -121,14 +123,16 @@ export function useListActions() {
 						list: v.list,
 						text: v.text,
 						note: v.note ?? null,
-						url: null,
+						url: v.url ?? null,
 						status: "open",
-						dueDayId: null,
-						dueDate: null,
-						dueTime: null,
-						dueTz: null,
-						dueKind: "due",
-						dueRule: null,
+						dueDayId: v.dueDayId ?? null,
+						dueDate: v.dueDate ?? null,
+						dueTime: v.dueTime ?? null,
+						dueTz: v.dueTz ?? null,
+						// "Add a booking" lands in Bookings at once (D12).
+						dueKind: v.dueKind ?? "due",
+						dueRule: v.dueRule ?? null,
+						bookingRef: v.bookingRef ?? null,
 						quantity: null,
 						priceAmount: null,
 						priceCurrency: null,

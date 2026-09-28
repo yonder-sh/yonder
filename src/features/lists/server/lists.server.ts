@@ -7,6 +7,7 @@
 import { and, asc, eq, inArray, isNull, or, sql } from "drizzle-orm";
 import type { Tx } from "@/db/db.server";
 import { listItemAssignees, listItems, listItemTargets } from "@/db/schema";
+import { REDACTED_BOOKING_REF } from "@/lib/schemas/legs";
 import type { DueRule } from "@/lib/schemas/lists";
 import { type BundleTarget, bundleTargetOf } from "@/lib/schemas/targets";
 import { fail } from "@/server/authz/session.server";
@@ -23,6 +24,7 @@ export function toDto(
 	meUserId: string,
 	assigneeIds: string[],
 	extraTargetNodeIds: string[],
+	redactRefs = false,
 ): ListItemDto {
 	return {
 		id: r.id,
@@ -49,18 +51,22 @@ export function toDto(
 		updatedAt: r.updatedAt.toISOString(),
 		doneAt: r.doneAt ? r.doneAt.toISOString() : null,
 		mine: r.createdBy === meUserId,
+		bookingRef:
+			r.bookingRef && redactRefs ? REDACTED_BOOKING_REF : r.bookingRef,
 	};
 }
 
 /**
  * Live list items of a trip that `meUserId` may see (private rows only for
- * their creator), ordered by `(position, id)`. `ids` narrows the read.
+ * their creator), ordered by `(position, id)`. `ids` narrows the read;
+ * `redactRefs` hides booking codes (link guests, like a flight's ref).
  */
 export async function readListItems(
 	exec: Exec,
 	tripId: string,
 	meUserId: string,
 	ids?: readonly string[],
+	opts: { redactRefs?: boolean } = {},
 ): Promise<ListItemDto[]> {
 	const idFilter = ids ? inArray(listItems.id, [...ids]) : undefined;
 	const rows = await exec
@@ -114,6 +120,7 @@ export async function readListItems(
 			meUserId,
 			(as.get(r.id) ?? []).map((a) => a.memberId),
 			(ts.get(r.id) ?? []).map((t) => t.nodeId),
+			opts.redactRefs,
 		),
 	);
 }

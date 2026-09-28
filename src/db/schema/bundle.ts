@@ -199,7 +199,7 @@ export const attachments = pgTable(
 	],
 );
 
-/** Todo and shopping items (the `list` column says which). */
+/** Todo, shopping and packing items (the `list` column says which). */
 export const listItems = pgTable(
 	"list_items",
 	{
@@ -242,6 +242,8 @@ export const listItems = pgTable(
 		priceAmount: numeric({ precision: 14, scale: 2, mode: "number" }),
 		priceCurrency: text(),
 		priceText: text(),
+		/** One Yonder D12: a booking's confirmation code ("E7K2Q9"). */
+		bookingRef: text(),
 		position: sortKey().notNull(),
 		createdBy: text().references(() => user.id, { onDelete: "set null" }),
 		createdAt: createdAt(),

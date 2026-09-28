@@ -104,6 +104,7 @@ export function ListRow({
 	sortable = false,
 	boardId = "",
 	placeGroup,
+	simple = false,
 }: {
 	row: ListItemDto;
 	ctx: RowCtx;
@@ -121,6 +122,8 @@ export function ListRow({
 	 * group's own place/day gets its source crumb (QA ROLL-05).
 	 */
 	placeGroup?: Pick<ListGroup, "repId" | "dayId" | "groupKind">;
+	/** Packing (D12): text, tick and who only (no date, price, note or move). */
+	simple?: boolean;
 }) {
 	const ws = useWorkspace();
 	const { access, graph } = ws;
@@ -366,7 +369,7 @@ export function ListRow({
 				if (e.key === "x") {
 					e.preventDefault();
 					onToggle(row);
-				} else if (e.key === "d") {
+				} else if (e.key === "d" && !simple) {
 					e.preventDefault();
 					setDueOpen(true);
 				} else if (e.key === "Enter") {
@@ -437,7 +440,11 @@ export function ListRow({
 						disabled={!editable}
 						onCheckedChange={() => onToggle(row)}
 						aria-label={
-							row.list === "shopping" ? `Bought: ${label}` : `Done: ${label}`
+							row.list === "shopping"
+								? `Bought: ${label}`
+								: row.list === "packing"
+									? `Packed: ${label}`
+									: `Done: ${label}`
 						}
 					/>
 					<div className="min-w-0 flex-1 basis-40">
@@ -604,24 +611,26 @@ export function ListRow({
 								)}
 							</button>
 						</AssignPicker>
-						<DueEditor
-							row={row}
-							rowRef={rowEl}
-							open={dueOpen}
-							onOpenChange={setDueOpen}
-							onSave={(p) => actions.update(row.id, p)}
-						>
-							<span>
-								<DueChip
-									due={due}
-									state={state}
-									tbd={tbd}
-									glow={glow}
-									now={ctx.now}
-									onClick={editable ? () => setDueOpen(true) : undefined}
-								/>
-							</span>
-						</DueEditor>
+						{simple ? null : (
+							<DueEditor
+								row={row}
+								rowRef={rowEl}
+								open={dueOpen}
+								onOpenChange={setDueOpen}
+								onSave={(p) => actions.update(row.id, p)}
+							>
+								<span>
+									<DueChip
+										due={due}
+										state={state}
+										tbd={tbd}
+										glow={glow}
+										now={ctx.now}
+										onClick={editable ? () => setDueOpen(true) : undefined}
+									/>
+								</span>
+							</DueEditor>
+						)}
 						<PriceEditor
 							row={row}
 							open={priceOpen}
@@ -653,6 +662,7 @@ export function ListRow({
 							onPrice={() => setPriceOpen(true)}
 							onNote={() => setNoteOpen(true)}
 							onExpense={addExpense}
+							simple={simple}
 							canPrivate={
 								row.mine === true &&
 								!access.isGuest &&
@@ -780,6 +790,7 @@ function RowMenu({
 	canMoney,
 	canPrivate,
 	proposing,
+	simple,
 	actions,
 	onDate,
 	onAssign,
@@ -795,6 +806,8 @@ function RowMenu({
 	canPrivate: boolean;
 	/** Edits become suggestions (a suggester, suggest mode). */
 	proposing: boolean;
+	/** Packing: who, sharing and delete only. */
+	simple: boolean;
 	myUserId: string;
 	actions: ListActions;
 	onDate: () => void;
@@ -836,15 +849,19 @@ function RowMenu({
 			>
 				{editable ? (
 					<>
-						<DropdownMenuItem onSelect={after(onDate)}>
-							Set date…<DropdownMenuShortcut>D</DropdownMenuShortcut>
-						</DropdownMenuItem>
+						{simple ? null : (
+							<DropdownMenuItem onSelect={after(onDate)}>
+								Set date…<DropdownMenuShortcut>D</DropdownMenuShortcut>
+							</DropdownMenuItem>
+						)}
 						<DropdownMenuItem onSelect={after(onAssign)}>
 							{row.list === "shopping" ? "For…" : "Assign…"}
 						</DropdownMenuItem>
-						<DropdownMenuItem onSelect={after(onNote)}>
-							{row.note ? "Edit note" : "Add note"}
-						</DropdownMenuItem>
+						{simple ? null : (
+							<DropdownMenuItem onSelect={after(onNote)}>
+								{row.note ? "Edit note" : "Add note"}
+							</DropdownMenuItem>
+						)}
 						{row.list === "shopping" ? (
 							<DropdownMenuItem onSelect={after(onPrice)}>
 								Quantity & budget…
@@ -860,9 +877,11 @@ function RowMenu({
 								Clear candidate shops
 							</DropdownMenuItem>
 						) : null}
-						<DropdownMenuItem onSelect={after(onMove)}>
-							Move to…
-						</DropdownMenuItem>
+						{simple ? null : (
+							<DropdownMenuItem onSelect={after(onMove)}>
+								Move to…
+							</DropdownMenuItem>
+						)}
 						{/* Sharing publishes it: a suggestion unless you may edit (QA
 						    SEC-R3-01). Nothing private can be suggested, so no
 						    "Make private" while suggesting. */}
@@ -875,10 +894,14 @@ function RowMenu({
 								}
 							>
 								{!row.isPrivate
-									? "Make private (only me)"
+									? simple
+										? "Move to Just mine"
+										: "Make private (only me)"
 									: proposing
 										? "Suggest sharing with the trip"
-										: "Share with the trip"}
+										: simple
+											? "Move to For everyone"
+											: "Share with the trip"}
 							</DropdownMenuItem>
 						) : null}
 						{row.list === "shopping" && canMoney ? (
@@ -887,7 +910,7 @@ function RowMenu({
 							</DropdownMenuItem>
 						) : null}
 						<DropdownMenuSeparator />
-						{row.status === "skipped" ? (
+						{simple ? null : row.status === "skipped" ? (
 							<DropdownMenuItem
 								onSelect={() => actions.setStatus(row.id, "open")}
 							>

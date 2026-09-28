@@ -1,8 +1,35 @@
 /** WP-Lists' own test ids (CONTRACTS §1 rule 8). Import-free. */
 export const LISTS_TESTID = {
-	/** Todo | Shopping segmented control items. */
+	/** To-dos | Bookings | Shopping | Packing segmented control items. */
 	kindTodo: "lists-kind-todo",
 	kindShopping: "lists-kind-shopping",
+	kindBookings: "lists-kind-bookings",
+	kindPacking: "lists-kind-packing",
+	/** The page header's "Add a booking". */
+	addBooking: "lists-add-booking",
+	/** The Bookings board, its add row, a row (`data-id`, `data-kind`, `data-group`) and its chip. */
+	bookings: "lists-bookings",
+	bookingAdd: "booking-add",
+	bookingRow: "booking-row",
+	bookingOpen: "booking-row-open",
+	bookingCheck: "booking-row-check",
+	bookingChip: "booking-row-chip",
+	/** A booking's details and their parts. */
+	bookingDetails: "booking-details",
+	bookingFor: "booking-for",
+	bookingOpens: "booking-opens",
+	bookingReminders: "booking-reminders",
+	bookingConfirmation: "booking-confirmation",
+	bookingRef: "booking-ref",
+	bookingExpense: "booking-expense",
+	bookingEdit: "booking-edit",
+	bookingMarkBooked: "booking-mark-booked",
+	bookingSite: "booking-site",
+	bookingClose: "booking-close",
+	/** The Packing board, a group (`data-group` = everyone | mine) and its add row. */
+	packing: "lists-packing",
+	packingGroup: "packing-group",
+	packingAdd: "packing-add",
 	/** The View select trigger (Due / Place / Person / Recent / By day). */
 	view: "lists-view",
 	/** The person filter select trigger. */
