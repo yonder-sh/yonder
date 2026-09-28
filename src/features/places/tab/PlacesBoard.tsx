@@ -14,6 +14,7 @@ import { RatingDot } from "@/components/kit";
 import type { MediaDto } from "@/features/media/media.functions";
 import { tripMediaQuery } from "@/features/media/queries";
 import { PIN_FAMILIES, PLACE_CATEGORIES } from "@/lib/domain/taxonomy";
+import type { GraphNode } from "@/lib/engine/types";
 import { formatDuration } from "@/lib/format";
 import { mediaUrl } from "@/lib/media-url";
 import { anchorKey } from "@/lib/realtime/cursor-protocol";
@@ -56,13 +57,13 @@ export function useCovers(): Map<string, MediaDto> {
 
 /** A category-toned cover when a place has no photo. */
 export function CoverPlaceholder({
-	row,
+	node,
 	className,
 }: {
-	row: PlaceRow;
+	node: Pick<GraphNode, "type" | "category">;
 	className?: string;
 }) {
-	const cat = row.node.type === "place" ? (row.node.category ?? "other") : null;
+	const cat = node.type === "place" ? (node.category ?? "other") : null;
 	const hex = cat ? PIN_FAMILIES[PLACE_CATEGORIES[cat].family].hex : "#7c6b5d";
 	return (
 		<div
@@ -130,7 +131,7 @@ function Card({
 						className="absolute inset-0 size-full"
 					/>
 				) : (
-					<CoverPlaceholder row={row} className="absolute inset-0" />
+					<CoverPlaceholder node={row.node} className="absolute inset-0" />
 				)}
 				<span className="absolute bottom-2 left-2">
 					<StatusChip

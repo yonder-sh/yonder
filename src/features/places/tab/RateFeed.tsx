@@ -418,7 +418,7 @@ export function FeedMedia({
 				label={`Map of ${node.name}`}
 			/>
 		) : (
-			<CoverPlaceholder row={row} className="size-full" />
+			<CoverPlaceholder node={row.node} className="size-full" />
 		);
 	return (
 		<div

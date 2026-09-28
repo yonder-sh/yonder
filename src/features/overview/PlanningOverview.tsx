@@ -12,6 +12,7 @@ import { ThumbhashImage } from "@/components/common/thumbhash-image";
 import { RatingPill } from "@/components/kit";
 import { Button } from "@/components/ui/button";
 import type { MediaDto } from "@/features/media/media.functions";
+import { CoverPlaceholder } from "@/features/places/tab/PlacesBoard";
 import { mediaUrl } from "@/lib/media-url";
 import { usePeers } from "@/lib/realtime/presence";
 import { cn } from "@/lib/utils";
@@ -57,9 +58,7 @@ export function PlanningHero({
 			>
 				<PhaseChip phase={data.phase} lastDate={lastDate} />
 				<Title size="band">{graph.trip.name}</Title>
-				<p className="text-lg text-white/70">
-					{dateLine(firstDate, lastDate)}
-				</p>
+				<p className="text-lg text-white/70">{dateLine(firstDate, lastDate)}</p>
 				<HereNow />
 				<Stats data={data} cols={3} after={false} row />
 			</div>
@@ -244,6 +243,11 @@ export function Favourites({
 									src={mediaUrl(cover.id, "thumb")}
 									alt=""
 									className="absolute inset-0 size-full transition-transform duration-300 group-hover:scale-[1.03]"
+								/>
+							) : node ? (
+								<CoverPlaceholder
+									node={node}
+									className="absolute inset-0 pb-8"
 								/>
 							) : null}
 							{rating ? (
