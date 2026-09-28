@@ -768,10 +768,11 @@ function PlaceCard({
 	const details = (
 		<div className="flex flex-col gap-3">
 			{tagChip}
-			{line ? (
-				<p className="line-clamp-2 text-sm text-muted-foreground">{line}</p>
-			) : null}
+			{/* D07: the name, then what it is. */}
 			{title}
+			{line ? (
+				<p className="line-clamp-3 text-body text-foreground">{line}</p>
+			) : null}
 			{buttons}
 			{commentRow}
 		</div>
