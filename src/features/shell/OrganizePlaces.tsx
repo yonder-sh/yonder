@@ -26,7 +26,7 @@ export function OrganizePlaces({
 		<Dialog open={open} onOpenChange={onOpenChange}>
 			<DialogContent
 				data-testid={SHELL_TESTID.organizePlaces}
-				className="flex h-[min(80vh,44rem)] max-w-xl flex-col gap-0 p-0"
+				className="flex h-[min(80vh,44rem)] flex-col gap-0 p-0 sm:max-w-xl"
 			>
 				<DialogHeader className="border-b px-4 pt-4 pb-3">
 					<DialogTitle>Organize places</DialogTitle>

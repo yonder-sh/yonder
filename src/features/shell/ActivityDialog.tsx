@@ -8,6 +8,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { presenceColor } from "@/components/common/member";
+import { Eyebrow } from "@/components/kit";
 import {
 	Dialog,
 	DialogContent,
@@ -15,6 +16,7 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
+import { Skeleton } from "@/components/ui/skeleton";
 import { buildDigest, type DigestLine } from "@/lib/engine/digest";
 import { activityQuery, tripDigestQuery } from "@/lib/query/trip-queries";
 import { bool, useFollowValue } from "@/lib/realtime/view-ui";
@@ -101,7 +103,7 @@ function ActivityBody({ onPick }: { onPick(): void }) {
 		<div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
 			{groups.length ? (
 				<section className="mb-5">
-					<h3 className="eyebrow mb-2">Since you last looked</h3>
+					<Eyebrow className="mb-2">Since you last looked</Eyebrow>
 					<ul className="grid gap-3">
 						{groups.map((g) => (
 							<li key={g.actorUserId ?? g.actorName}>
@@ -148,11 +150,11 @@ function ActivityBody({ onPick }: { onPick(): void }) {
 				</section>
 			) : null}
 			<section>
-				<h3 className="eyebrow mb-2">Recent</h3>
+				<Eyebrow className="mb-2">Recent</Eyebrow>
 				{recent.isPending && live ? (
 					<div className="grid gap-2" aria-busy="true">
 						{[0, 1, 2, 3].map((i) => (
-							<div key={i} className="h-5 animate-pulse rounded bg-muted" />
+							<Skeleton key={i} className="h-5" />
 						))}
 					</div>
 				) : recent.data?.length ? (

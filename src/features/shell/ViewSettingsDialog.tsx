@@ -131,7 +131,7 @@ function Body() {
 		<div className="-mt-1">
 			<Row
 				label="Start at"
-				hint="The lens a trip opens with when the link doesn't say."
+				hint="Where a trip opens when its link doesn't say."
 				htmlFor="pref-lens"
 			>
 				<Select
