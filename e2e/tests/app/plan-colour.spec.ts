@@ -138,8 +138,8 @@ test.describe("on the QA seed: the owner's screenshots and the leg rows", () => 
 		const row = page.getByTestId(TESTID.leg).filter({ has: page.getByRole("button", { name, exact: true }) });
 		const more = row.getByTestId(PLAN_TESTID.legMore);
 		await row.scrollIntoViewIfNeeded();
-		// One quiet line: the mode and "~15m est."; the rest waits.
-		await expect(row.getByTestId(TESTID.legMode)).toHaveText(/est\./);
+		// One quiet line: the mode and "about 15m"; the rest waits.
+		await expect(row.getByTestId(TESTID.legMode)).toHaveText(/^about \d/);
 		await page.mouse.move(5, 5);
 		await expect(more).toHaveCSS("opacity", "0");
 		const before = await row.evaluate((el) => el.getBoundingClientRect().height);
