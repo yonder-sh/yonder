@@ -62,6 +62,24 @@ describe("dialog anatomy: Cancel, then the primary action last", () => {
 		expect(fns.createTrip).not.toHaveBeenCalled();
 	});
 
+	it("New trip: Cancel clears a failed attempt's error", async () => {
+		fns.createTrip.mockRejectedValueOnce(new Error("Server is busy"));
+		renderWithWorkspace(<NewTripDialog />);
+		fireEvent.click(screen.getByTestId(TESTID.newTripButton));
+		fireEvent.change(screen.getByTestId(TESTID.newTripName), {
+			target: { value: "Kyoto" },
+		});
+		fireEvent.click(screen.getByTestId(TESTID.newTripSubmit));
+		expect(await screen.findByRole("alert")).toBeInTheDocument();
+		fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+		await waitFor(() =>
+			expect(screen.queryByTestId(TESTID.newTripDialog)).toBeNull(),
+		);
+		fireEvent.click(screen.getByTestId(TESTID.newTripButton));
+		expect(screen.getByTestId(TESTID.newTripDialog)).toBeInTheDocument();
+		expect(screen.queryByRole("alert")).toBeNull();
+	});
+
 	it("Trip settings: Cancel closes without saving", () => {
 		renderWithWorkspace(<TripSettingsDialog />, { mode: "live" });
 		act(() => useUi.getState().setSettingsOpen(true));

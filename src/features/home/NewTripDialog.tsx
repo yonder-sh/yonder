@@ -62,14 +62,13 @@ export function NewTripDialog({ trigger }: { trigger?: React.ReactNode }) {
 		if (name.trim() && !datesInvalid) create.mutate();
 	};
 	const datesInvalid = !!start !== !!end || (!!start && !!end && start > end);
+	// Closing (Esc, ✕ or Cancel) clears a failed attempt's error.
+	const change = (v: boolean) => {
+		setOpen(v);
+		if (!v) create.reset();
+	};
 	return (
-		<Dialog
-			open={open}
-			onOpenChange={(v) => {
-				setOpen(v);
-				if (!v) create.reset();
-			}}
-		>
+		<Dialog open={open} onOpenChange={change}>
 			<DialogTrigger asChild>
 				{trigger ?? (
 					<Button data-testid={TESTID.newTripButton}>
@@ -135,11 +134,7 @@ export function NewTripDialog({ trigger }: { trigger?: React.ReactNode }) {
 								Reconnect to create a trip.
 							</span>
 						) : null}
-						<Button
-							type="button"
-							variant="ghost"
-							onClick={() => setOpen(false)}
-						>
+						<Button type="button" variant="ghost" onClick={() => change(false)}>
 							Cancel
 						</Button>
 						<Button
