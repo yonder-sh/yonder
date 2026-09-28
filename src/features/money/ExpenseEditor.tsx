@@ -26,7 +26,6 @@ import {
 import {
 	type ComponentProps,
 	type ElementType,
-	type ReactElement,
 	type ReactNode,
 	useId,
 	useMemo,
@@ -45,16 +44,10 @@ import { TimeInput } from "@/components/common/time";
 import { TreePicker } from "@/components/common/tree-picker";
 import { undoToast } from "@/components/common/undo-toast";
 import { useTripMutation } from "@/components/common/use-trip-mutation";
-import { FilterPill, Segmented } from "@/components/kit";
+import { DateInput, FilterPill, Segmented } from "@/components/kit";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-	Popover,
-	PopoverContent,
-	PopoverTrigger,
-} from "@/components/ui/popover";
 import {
 	Select,
 	SelectContent,
@@ -1343,34 +1336,35 @@ export function ExpenseEditor({
 						) : null}
 					</fieldset>
 
-					{/* The date and the place (tap to change), and More */}
-					<div className="flex items-center gap-2 text-sm">
-						<CalendarDays
-							className="size-4 shrink-0 text-muted-foreground"
-							aria-hidden="true"
-						/>
-						<div className="flex min-w-0 flex-1 items-center gap-1.5">
+					{/* The date and the place (tap to change), and More (under them when narrow) */}
+					<div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 text-sm">
+						<div className="flex min-w-0 flex-auto items-center gap-1.5">
+							<CalendarDays
+								className="mr-0.5 size-4 shrink-0 text-muted-foreground"
+								aria-hidden="true"
+							/>
 							{when.onChange ? (
-								<DatePick
+								<DateInput
 									value={when.value}
 									onChange={when.onChange}
-									clearable={when.expected}
+									clearLabel={when.expected ? "No date" : undefined}
 									defaultMonth={graph.trip.startDate}
-								>
-									<button
-										type="button"
-										data-testid={MONEY_TESTID.when}
-										data-value={when.value || undefined}
-										aria-label={`${when.label}: ${whenDate}`}
-										disabled={readOnly}
-										className={cn(
-											"shrink-0 rounded-sm tnum whitespace-nowrap underline-offset-4 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring",
-											!when.value && "text-muted-foreground",
-										)}
-									>
-										{whenText}
-									</button>
-								</DatePick>
+									trigger={
+										<button
+											type="button"
+											data-testid={MONEY_TESTID.when}
+											data-value={when.value || undefined}
+											aria-label={`${when.label}: ${whenDate}`}
+											disabled={readOnly}
+											className={cn(
+												"shrink-0 rounded-sm tnum whitespace-nowrap underline-offset-4 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring",
+												!when.value && "text-muted-foreground",
+											)}
+										>
+											{whenText}
+										</button>
+									}
+								/>
 							) : (
 								<span
 									data-testid={MONEY_TESTID.when}
@@ -1399,7 +1393,7 @@ export function ExpenseEditor({
 							data-testid={MONEY_TESTID.more}
 							aria-expanded={moreOpen}
 							onClick={() => setMoreOpen((v) => !v)}
-							className="shrink-0 rounded-sm text-meta font-semibold whitespace-nowrap text-primary underline-offset-4 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
+							className="ml-auto shrink-0 rounded-sm text-meta font-semibold whitespace-nowrap text-primary underline-offset-4 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
 						>
 							{moreOpen
 								? "Show less"
@@ -1452,28 +1446,14 @@ export function ExpenseEditor({
 							) : null}
 							{editing && draft.payments.length > 0 ? (
 								<MoreRow label="Expected on">
-									<DatePick
+									<DateInput
 										value={draft.expectedOn}
 										onChange={(v) => set({ expectedOn: v })}
-										clearable
+										label={`Expected on: ${draft.expectedOn ? formatDayDate(draft.expectedOn, { year: true }) : "No date"}`}
+										placeholder="No date"
+										clearLabel="No date"
 										defaultMonth={graph.trip.startDate}
-									>
-										<Button
-											type="button"
-											variant="outline"
-											size="sm"
-											aria-label={`Expected on: ${draft.expectedOn ? formatDayDate(draft.expectedOn, { year: true }) : "No date"}`}
-											className={cn(
-												"gap-2 font-normal tnum",
-												!draft.expectedOn && "text-muted-foreground",
-											)}
-										>
-											<CalendarDays className="size-4 opacity-60" aria-hidden />
-											{draft.expectedOn
-												? formatDayDate(draft.expectedOn, { year: true })
-												: "No date"}
-										</Button>
-									</DatePick>
+									/>
 								</MoreRow>
 							) : null}
 							<MoreRow label="Category">
@@ -1936,70 +1916,6 @@ function AddPill({ children, className, ...props }: ComponentProps<"button">) {
 			<Plus className="size-3.5" aria-hidden="true" />
 			{children}
 		</button>
-	);
-}
-
-function toDate(iso: string): Date | undefined {
-	const [y, m, d] = iso.split("-").map(Number);
-	return y && m && d ? new Date(y, m - 1, d) : undefined;
-}
-
-function toIso(date: Date): string {
-	const p = (n: number) => String(n).padStart(2, "0");
-	return `${date.getFullYear()}-${p(date.getMonth() + 1)}-${p(date.getDate())}`;
-}
-
-/** A calendar on its trigger (`YYYY-MM-DD`); `clearable` adds "No date". */
-function DatePick({
-	value,
-	onChange,
-	clearable,
-	defaultMonth,
-	children,
-}: {
-	value: string;
-	onChange: (iso: string) => void;
-	clearable?: boolean;
-	/** `YYYY-MM-DD` to open on when empty (the trip's start). */
-	defaultMonth?: string | null;
-	children: ReactElement;
-}) {
-	const [open, setOpen] = useState(false);
-	return (
-		<Popover open={open} onOpenChange={setOpen}>
-			<PopoverTrigger asChild>{children}</PopoverTrigger>
-			<PopoverContent
-				className="w-auto p-0"
-				align="start"
-				collisionPadding={12}
-			>
-				<Calendar
-					mode="single"
-					defaultMonth={toDate(value || defaultMonth || "") ?? new Date()}
-					selected={toDate(value)}
-					onSelect={(d) => {
-						if (d) onChange(toIso(d));
-						setOpen(false);
-					}}
-				/>
-				{clearable && value ? (
-					<div className="border-t p-1">
-						<Button
-							type="button"
-							variant="ghost"
-							size="sm"
-							className="w-full"
-							onClick={() => {
-								onChange("");
-								setOpen(false);
-							}}
-						>
-							No date
-						</Button>
-					</div>
-				) : null}
-			</PopoverContent>
-		</Popover>
 	);
 }
 
