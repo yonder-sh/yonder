@@ -300,6 +300,20 @@ describe("a pasted link in ⌘K (D10)", () => {
 		expect(rows()[0]).toBe(N.loft);
 	});
 
+	it("Paste link to save… puts a copied link right here", async () => {
+		Object.defineProperty(navigator, "clipboard", {
+			configurable: true,
+			value: { readText: async () => REEL },
+		});
+		open({ mode: "live" });
+		fireEvent.click(await screen.findByText("Paste link to save…"));
+		await waitFor(() => expect(input()).toHaveValue(REEL));
+		expect(
+			await screen.findByTestId(PLACES_TESTID.linkPreview),
+		).toHaveTextContent("TikTok video");
+		expect(calls.navigate).toEqual([]);
+	});
+
 	it("goes to the share page when it can't be added here", async () => {
 		open({ connection: "offline" });
 		paste(REEL);
