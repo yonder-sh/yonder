@@ -8,6 +8,7 @@
  * places stop asking, so a split one leaves Disagreements for a quiet note.
  */
 import { Check, CircleCheck, CircleHelp, MessageSquare } from "lucide-react";
+import { useMemo } from "react";
 import { toast } from "sonner";
 import { EditGuard, useEditGuard } from "@/components/common/edit-guard";
 import { TypeGlyph } from "@/components/common/glyphs";
@@ -31,9 +32,9 @@ import {
 	scopeDecision,
 	whereName,
 } from "../lib/decided";
-import { commentVisibleText } from "../lib/rate";
+import { commentVisibleText, ratingMembers, ratingsCount } from "../lib/rate";
 import { useSetDecided } from "../mutations";
-import type { PlaceRow } from "./model";
+import { buildRows, type PlaceRow, placesInScope } from "./model";
 import { categoryLabel } from "./PlacesTable";
 import { personName, RemindButton } from "./RatingPeople";
 import { formatScore, RATING_WEIGHT } from "./score";
@@ -205,7 +206,8 @@ const TEXT_BUTTON =
  * "Mark Kyoto decided" (editors); once marked, "Decided · Undo"; inside a
  * decided scope, "Decided with Japan", which goes there (the undo lives there).
  * Places added since the mark still ask: "Mark them decided" moves the mark
- * to now (inside Japan, "Mark Japan's new places decided": the same mark).
+ * to now (inside Japan, "Mark Japan's new places decided": the same mark,
+ * with Japan's count when it covers more than the places here).
  */
 export function DecidedControl({ data }: { data: PlacesData }) {
 	const { ix, scope, graph, nav } = useWorkspace();
@@ -241,6 +243,19 @@ export function DecidedControl({ data }: { data: PlacesData }) {
 	};
 	// Added since the mark: they still ask.
 	const since = addedSince(data.rows);
+	// Inside Japan's mark, the re-mark covers Japan's other new places too: say how many.
+	const aboveId = state.kind === "inherited" ? state.mark.scopeId : undefined;
+	const aboveSince = useMemo(() => {
+		if (aboveId === undefined || !since) return 0;
+		const live = new Set(graph.nodes.map((n) => n.id));
+		const nodes = placesInScope(ix, aboveId, live);
+		const memberIds = ratingMembers(graph.members, nodes)
+			.filter(ratingsCount)
+			.map((m) => m.id);
+		return addedSince(
+			buildRows(ix, nodes, { memberIds, threshold: data.threshold }),
+		);
+	}, [ix, graph.nodes, graph.members, aboveId, since, data.threshold]);
 	const remarkButton =
 		state.kind !== "open" && since ? (
 			<>
@@ -253,7 +268,9 @@ export function DecidedControl({ data }: { data: PlacesData }) {
 						onClick={() => remark(state.mark)}
 						className={TEXT_BUTTON}
 					>
-						{state.remark}
+						{state.kind === "inherited" && aboveSince > since
+							? `Mark ${state.mark.name}'s ${aboveSince} new places decided`
+							: state.remark}
 					</button>
 				</EditGuard>
 			</>

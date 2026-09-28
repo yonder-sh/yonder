@@ -236,6 +236,23 @@ describe("Mark decided (D08)", () => {
 		);
 	});
 
+	it("says how many of Japan's places it covers when that's more than here", () => {
+		const graph = marked({ [N.japan as string]: "2026-09-10T00:00:00.000Z" });
+		graph.nodes = graph.nodes.map((n) =>
+			n.id === N.kiyomizu || n.id === N.sensoji
+				? { ...n, createdAt: "2026-09-20T00:00:00.000Z" }
+				: n,
+		);
+		renderWithWorkspace(<PlacesTab />, {
+			graph,
+			splat: "japan/kyoto",
+			search: { tab: "places", pv: "decide" },
+		});
+		expect(screen.getByTestId(T.decideRemark).parentElement).toHaveTextContent(
+			"Decided with Japan· 1 added since·Mark Japan's 2 new places decided",
+		);
+	});
+
 	it("re-marking is for editors only too", () => {
 		const graph = marked({ [N.kyoto as string]: "2026-09-10T00:00:00.000Z" });
 		graph.nodes = graph.nodes.map((n) =>
