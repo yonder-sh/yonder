@@ -221,7 +221,7 @@ test("mobile: the header, the FAB menu with Expense, and the inbox drawer", asyn
 	await expect(page.getByTestId(TESTID.mobilePills)).toBeVisible();
 	// The header's buttons and the + are in the accessibility tree.
 	await expect(page.getByRole("button", { name: /^Inbox/ })).toBeVisible();
-	await expect(page.getByRole("button", { name: "Add" })).toBeVisible();
+	await expect(page.getByRole("button", { name: "Add", exact: true })).toBeVisible();
 	await settle(page);
 	await page.screenshot({ path: shotPath("shell/mobile-peek.png"), animations: "disabled" });
 	await page.getByTestId(TESTID.fab).click();

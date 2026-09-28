@@ -13,7 +13,7 @@ import { TESTID } from "../../../src/lib/testids";
 import { shotPath } from "./_helpers/env";
 import { cloneFixtureTrip } from "./_helpers/fixture";
 import { logOffset, readOtpFromLog } from "./_helpers/otp";
-import { collectConsole, expectLive, hydrated } from "./_helpers/page";
+import { collectConsole, expectLive, hydrated, openPhoneMap } from "./_helpers/page";
 
 test("sign in, onboarding, dashboard, new trip, workspace", async ({ page }, info) => {
 	const email = `e2e-${info.project.name}-${randomBytes(4).toString("hex")}@example.com`;
@@ -68,7 +68,8 @@ test("sign in, onboarding, dashboard, new trip, workspace", async ({ page }, inf
 	await page.goto(`/t/${demo.slug}?tab=plan`);
 	await expectLive(page);
 	await expect(page.getByText("Hands Shibuya").first()).toBeVisible();
-	// The map mounts lazily: wait for it before the screenshot.
+	// The map mounts lazily (on a phone, from the header's map button): wait for it before the screenshot.
+	await openPhoneMap(page);
 	await expect(page.getByTestId(TESTID.tripMap)).toBeVisible({ timeout: 15_000 });
 	await page.screenshot({ path: shotPath(`foundation/04-demo-${info.project.name}.png`), animations: "disabled" });
 	expect(logs.messages).toEqual([]);

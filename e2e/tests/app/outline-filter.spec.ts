@@ -165,8 +165,10 @@ test("layouts: Organize places on the desktop, a tablet and the phone (44px rows
 	await openOrganize(page);
 	const tree = outline(page);
 	await expect(tree).toBeVisible();
-	const box = await tree.locator('[role=treeitem][aria-label^="Tokyo,"]').boundingBox();
-	expect(box?.height).toBeGreaterThanOrEqual(44);
+	// Measured once the dialog has zoomed in.
+	await expect
+		.poll(async () => (await tree.locator('[role=treeitem][aria-label^="Tokyo,"]').boundingBox())?.height ?? 0)
+		.toBeGreaterThanOrEqual(44);
 	await expectNoHorizontalOverflow(page);
 	await page.screenshot({ path: shotPath("outline/organize-390.png"), animations: "disabled" });
 	await page.keyboard.press("Escape");
