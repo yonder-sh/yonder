@@ -56,4 +56,12 @@ describe("the planning Overview (D01)", () => {
 		fireEvent.click(notNow);
 		expect(screen.getByTestId(O.next).dataset.key).not.toBe(first);
 	});
+
+	it("The whole trip opens the trip's details at its notes", () => {
+		const { ws } = renderWide();
+		fireEvent.click(
+			screen.getByRole("button", { name: "Add a note for the trip" }),
+		);
+		expect(ws().sel).toEqual({ kind: "root" });
+	});
 });

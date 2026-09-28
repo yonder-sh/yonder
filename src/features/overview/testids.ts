@@ -31,6 +31,7 @@ export const OVERVIEW_TESTID = {
 	favourites: "overview-favourites",
 	next: "overview-next",
 	nextAction: "overview-next-action",
+	wholeTrip: "overview-whole-trip",
 	empty: "overview-empty",
 	openPlan: "overview-open-plan",
 	seePlaces: "overview-see-places",

@@ -45,7 +45,12 @@ import {
 	Title,
 	TodayList,
 } from "./PhaseHeader";
-import { Favourites, NextForYou, PlanningHero } from "./PlanningOverview";
+import {
+	Favourites,
+	NextForYou,
+	PlanningHero,
+	WholeTrip,
+} from "./PlanningOverview";
 import { RouteStrip } from "./RouteStrip";
 import { ShareButton } from "./share/ShareButton";
 import { Deadlines, People, Recent } from "./TripSections";
@@ -195,6 +200,7 @@ export function OverviewTab({ phone = false }: { phone?: boolean }) {
 					</div>
 					<div className="flex min-w-0 flex-col gap-6">
 						<Deadlines />
+						<WholeTrip />
 						<div className="rounded-2xl border bg-card p-4">
 							<StillToPlan followPath="overview.still" />
 						</div>

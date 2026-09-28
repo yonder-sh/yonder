@@ -5,7 +5,7 @@
  * stand. The page (OverviewTab) puts the route strip under the hero and
  * what's coming up beside the rest.
  */
-import { ArrowRight, ChevronRight } from "lucide-react";
+import { ArrowRight, ChevronRight, ImagePlus, NotebookPen } from "lucide-react";
 import { type ReactNode, useState } from "react";
 import { MemberAvatar } from "@/components/common/member";
 import { ThumbhashImage } from "@/components/common/thumbhash-image";
@@ -13,6 +13,7 @@ import { RatingPill } from "@/components/kit";
 import { Button } from "@/components/ui/button";
 import type { MediaDto } from "@/features/media/media.functions";
 import { CoverPlaceholder } from "@/features/places/tab/PlacesBoard";
+import { useShell } from "@/features/shell/shell-store";
 import { mediaUrl } from "@/lib/media-url";
 import { usePeers } from "@/lib/realtime/presence";
 import { cn } from "@/lib/utils";
@@ -268,6 +269,38 @@ export function Favourites({
 						</button>
 					);
 				})}
+			</div>
+		</section>
+	);
+}
+
+/** D01's "The whole trip": the trip's own notes, photos and links, one tap away. */
+export function WholeTrip() {
+	const { nav } = useWorkspace();
+	const openTab = useShell((s) => s.openInspectorTab);
+	const go = (tab: "notes" | "media") => {
+		openTab("root", tab);
+		nav.select({ kind: "root" });
+	};
+	return (
+		<section
+			data-testid={OVERVIEW_TESTID.wholeTrip}
+			data-cursor-anchor="sec:ov.whole"
+			className="grid gap-2 rounded-2xl border bg-card p-4"
+		>
+			<h2 className="font-display text-lg font-semibold">The whole trip</h2>
+			<p className="text-meta text-muted-foreground">
+				Notes, photos and links that belong to the trip rather than one place.
+			</p>
+			<div className="flex flex-wrap gap-2 pt-1">
+				<Button variant="outline" size="sm" onClick={() => go("notes")}>
+					<NotebookPen />
+					Add a note for the trip
+				</Button>
+				<Button variant="outline" size="sm" onClick={() => go("media")}>
+					<ImagePlus />
+					Add a photo or link
+				</Button>
 			</div>
 		</section>
 	);
