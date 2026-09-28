@@ -23,6 +23,7 @@ import { EditGuard } from "@/components/common/edit-guard";
 import { TypeGlyph } from "@/components/common/glyphs";
 import { MemberAvatar } from "@/components/common/member";
 import { RatingMenu, RatingPill } from "@/components/kit";
+import { Checkbox } from "@/components/ui/checkbox";
 import { cardTone } from "@/features/plan/card-tone";
 import { NODE_TYPES, PLACE_CATEGORIES } from "@/lib/domain/taxonomy";
 import type { GraphMember } from "@/lib/engine/types";
@@ -36,6 +37,7 @@ import { mayRate } from "../ui/member-ratings";
 import { rowReason } from "./bar";
 import type { PlaceGroup } from "./grouping";
 import { NO_DAYS, type PlaceRow } from "./model";
+import { PlacesSelectionBar } from "./PlacesSelection";
 import { TimeNeededEditor } from "./TimeNeeded";
 import { PLACES_TAB_TESTID } from "./testids";
 import { ScoreChip, SplitMark, StatusChip } from "./ui";
@@ -287,6 +289,16 @@ export function PlacesTable({
 			? focused
 			: (rows[0]?.id ?? null);
 	const selShown = !!selId && rows.some((r) => r.id === selId);
+	// Ticked places (D06): a desktop's bulk actions; only the ones on show count.
+	const [picked, setPicked] = useState<ReadonlySet<string>>(new Set());
+	const chosen = narrow ? [] : rows.filter((r) => picked.has(r.id));
+	const pick = (id: string, on: boolean) =>
+		setPicked((p) => {
+			const next = new Set(p);
+			if (on) next.add(id);
+			else next.delete(id);
+			return next;
+		});
 
 	// The drawer's place keeps the keyboard focus row (Enter from elsewhere),
 	// and comes into view (a place just added).
@@ -361,6 +373,20 @@ export function PlacesTable({
 						className="plan-card flex min-w-0 items-center gap-2.5"
 						data-family={cardTone(r.node)}
 					>
+						{narrow ? null : (
+							<Checkbox
+								checked={picked.has(r.id)}
+								onCheckedChange={(v) => pick(r.id, v === true)}
+								onClick={(e) => e.stopPropagation()}
+								onKeyDown={(e) => e.stopPropagation()}
+								aria-label={`Select ${r.name}`}
+								data-testid={PLACES_TAB_TESTID.rowPick}
+								className={cn(
+									!chosen.length &&
+										"opacity-0 group-hover/row:opacity-100 focus-visible:opacity-100",
+								)}
+							/>
+						)}
 						<span
 							aria-hidden
 							className="plan-icon flex size-7 shrink-0 items-center justify-center rounded-full"
@@ -450,129 +476,156 @@ export function PlacesTable({
 	};
 
 	return (
-		<div
-			className="min-h-0 flex-1 overflow-auto [container-type:inline-size]"
-			data-testid={PLACES_TAB_TESTID.tableScroll}
-			data-scroll-y=""
-			// The phone's sheet never drags from the rows: a swipe here scrolls them.
-			data-vaul-no-drag=""
-		>
-			<table
-				data-testid={PLACES_TAB_TESTID.table}
-				className="table-fixed border-separate border-spacing-0"
-				style={{ width: `max(100%, ${width}px)` }}
+		<div className="relative flex min-h-0 flex-1 flex-col">
+			<div
+				className={cn(
+					"min-h-0 flex-1 overflow-auto [container-type:inline-size]",
+					// The last rows scroll clear of the selection bar.
+					chosen.length > 0 && "pb-20",
+				)}
+				data-testid={PLACES_TAB_TESTID.tableScroll}
+				data-scroll-y=""
+				// The phone's sheet never drags from the rows: a swipe here scrolls them.
+				data-vaul-no-drag=""
 			>
-				<colgroup>
-					<col style={{ width: undefined, minWidth: placeW }} />
-					<col style={{ width: W.category }} />
-					{members.map((m) => (
-						<col key={m.id} style={{ width: W.member }} />
-					))}
-					<col style={{ width: W.score }} />
-					<col style={{ width: W.status }} />
-					<col style={{ width: W.when }} />
-					<col style={{ width: W.time }} />
-					<col style={{ width: W.media }} />
-				</colgroup>
-				<thead className="sticky top-0 z-[2] bg-background">
-					<tr className="eyebrow h-9 text-left">
-						<th
-							scope="col"
-							className="sticky left-0 z-[1] border-r border-b bg-background px-3"
-							style={{ minWidth: placeW }}
-						>
-							Place
-						</th>
-						<th scope="col" className="border-b px-3">
-							Category
-						</th>
+				<table
+					data-testid={PLACES_TAB_TESTID.table}
+					className="table-fixed border-separate border-spacing-0"
+					style={{ width: `max(100%, ${width}px)` }}
+				>
+					<colgroup>
+						<col style={{ width: undefined, minWidth: placeW }} />
+						<col style={{ width: W.category }} />
 						{members.map((m) => (
+							<col key={m.id} style={{ width: W.member }} />
+						))}
+						<col style={{ width: W.score }} />
+						<col style={{ width: W.status }} />
+						<col style={{ width: W.when }} />
+						<col style={{ width: W.time }} />
+						<col style={{ width: W.media }} />
+					</colgroup>
+					<thead className="sticky top-0 z-[2] bg-background">
+						<tr className="eyebrow h-9 text-left">
 							<th
-								key={m.id}
 								scope="col"
-								className={cn(
-									"border-b px-2",
-									!ratingsCount(m) && "text-muted-foreground/70",
-								)}
-								title={
-									ratingsCount(m)
-										? undefined
-										: `Not counted: ${m.firstName ?? m.name}'s ratings are left out`
-								}
+								className="sticky left-0 z-[1] border-r border-b bg-background px-3"
+								style={{ minWidth: placeW }}
 							>
-								<span className="inline-flex max-w-full items-center gap-1.5">
-									<MemberAvatar memberId={m.id} size={16} ring={false} />
-									<span className="truncate">
-										{m.id === act.me ? "You" : (m.firstName ?? m.name)}
-									</span>
+								<span className="flex items-center gap-2.5">
+									{narrow ? null : (
+										<Checkbox
+											checked={
+												chosen.length && chosen.length === rows.length
+													? true
+													: chosen.length
+														? "indeterminate"
+														: false
+											}
+											onCheckedChange={(v) =>
+												setPicked(
+													new Set(v === true ? rows.map((r) => r.id) : []),
+												)
+											}
+											aria-label="Select every place shown"
+											data-testid={PLACES_TAB_TESTID.pickAll}
+										/>
+									)}
+									Place
 								</span>
 							</th>
-						))}
-						<th scope="col" className="border-b px-3">
-							Score
-						</th>
-						<th scope="col" className="border-b px-2">
-							Status
-						</th>
-						<th scope="col" className="border-b px-3">
-							When
-						</th>
-						<th scope="col" className="border-b px-2">
-							Time
-						</th>
-						<th scope="col" className="border-b px-3 text-right">
-							Media
-						</th>
-					</tr>
-				</thead>
-				<tbody ref={body} onKeyDown={onKeyDown}>
-					{data.groups.map((g) => {
-						const closed = collapsed.has(g.key);
-						const toggle = () =>
-							setClosedKeys((c) =>
-								c.includes(g.key)
-									? c.filter((k) => k !== g.key)
-									: [...c, g.key],
-							);
-						const header =
-							data.state.group === "none" ? null : (
-								<GroupHeader
-									key={`h:${g.key}`}
-									group={g}
-									cols={cols}
-									collapsed={closed}
-									onCollapse={toggle}
-								/>
-							);
-						if (closed) return header;
-						if (!g.subgroups) return [header, ...g.rows.map(renderRow)];
-						return [
-							header,
-							...g.subgroups.flatMap((s) => [
-								<tr
-									key={`s:${g.key}:${s.key}`}
-									data-testid={PLACES_TAB_TESTID.subgroup}
+							<th scope="col" className="border-b px-3">
+								Category
+							</th>
+							{members.map((m) => (
+								<th
+									key={m.id}
+									scope="col"
+									className={cn(
+										"border-b px-2",
+										!ratingsCount(m) && "text-muted-foreground/70",
+									)}
+									title={
+										ratingsCount(m)
+											? undefined
+											: `Not counted: ${m.firstName ?? m.name}'s ratings are left out`
+									}
 								>
-									<th
-										colSpan={cols}
-										scope="rowgroup"
-										className="border-b bg-background p-0 text-left text-meta font-semibold"
-									>
-										<span className="sticky left-0 inline-block px-4 py-1.5 pl-11">
-											{s.label}
-											<span className="font-normal text-muted-foreground">
-												{" "}
-												· {s.rows.length}
-											</span>
+									<span className="inline-flex max-w-full items-center gap-1.5">
+										<MemberAvatar memberId={m.id} size={16} ring={false} />
+										<span className="truncate">
+											{m.id === act.me ? "You" : (m.firstName ?? m.name)}
 										</span>
-									</th>
-								</tr>,
-								...s.rows.map(renderRow),
-							]),
-						];
-					})}
-				</tbody>
-			</table>
+									</span>
+								</th>
+							))}
+							<th scope="col" className="border-b px-3">
+								Score
+							</th>
+							<th scope="col" className="border-b px-2">
+								Status
+							</th>
+							<th scope="col" className="border-b px-3">
+								When
+							</th>
+							<th scope="col" className="border-b px-2">
+								Time
+							</th>
+							<th scope="col" className="border-b px-3 text-right">
+								Media
+							</th>
+						</tr>
+					</thead>
+					<tbody ref={body} onKeyDown={onKeyDown}>
+						{data.groups.map((g) => {
+							const closed = collapsed.has(g.key);
+							const toggle = () =>
+								setClosedKeys((c) =>
+									c.includes(g.key)
+										? c.filter((k) => k !== g.key)
+										: [...c, g.key],
+								);
+							const header =
+								data.state.group === "none" ? null : (
+									<GroupHeader
+										key={`h:${g.key}`}
+										group={g}
+										cols={cols}
+										collapsed={closed}
+										onCollapse={toggle}
+									/>
+								);
+							if (closed) return header;
+							if (!g.subgroups) return [header, ...g.rows.map(renderRow)];
+							return [
+								header,
+								...g.subgroups.flatMap((s) => [
+									<tr
+										key={`s:${g.key}:${s.key}`}
+										data-testid={PLACES_TAB_TESTID.subgroup}
+									>
+										<th
+											colSpan={cols}
+											scope="rowgroup"
+											className="border-b bg-background p-0 text-left text-meta font-semibold"
+										>
+											<span className="sticky left-0 inline-block px-4 py-1.5 pl-11">
+												{s.label}
+												<span className="font-normal text-muted-foreground">
+													{" "}
+													· {s.rows.length}
+												</span>
+											</span>
+										</th>
+									</tr>,
+									...s.rows.map(renderRow),
+								]),
+							];
+						})}
+					</tbody>
+				</table>
+			</div>
+			<PlacesSelectionBar rows={chosen} onClear={() => setPicked(new Set())} />
 		</div>
 	);
 }

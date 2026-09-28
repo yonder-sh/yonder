@@ -54,6 +54,12 @@ export const PLACES_TAB_TESTID = {
 	/** D07: "The group", after you rate. */
 	feedGroup: "places-feed-group",
 	feedPos: "places-feed-pos",
+	rowPick: "places-row-pick",
+	pickAll: "places-pick-all",
+	selectionBar: "places-selection-bar",
+	selectionDay: "places-selection-day",
+	selectionRate: "places-selection-rate",
+	selectionDrop: "places-selection-drop",
 	feedPrev: "places-feed-prev",
 	feedNext: "places-feed-next",
 	feedLinks: "places-feed-links",
