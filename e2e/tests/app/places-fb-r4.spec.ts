@@ -230,7 +230,10 @@ test.describe("the Shinjuku gap", () => {
 			"base64",
 		);
 		await drawer.getByTestId(MT.fileInput).setInputFiles({ name: "sky.jpg", mimeType: "image/jpeg", buffer: jpeg });
-		await expect(drawer.getByTestId(TESTID.galleryItem).locator("img").first()).toBeVisible({ timeout: 60_000 });
+		// The photo's own tile (the guide link's preview picture is a gallery image too).
+		await expect(drawer.locator(`[data-testid=${TESTID.galleryItem}][data-kind=photo] img`).first()).toBeVisible({
+			timeout: 60_000,
+		});
 		// Shibuya (the area) in the Rate feed: its place's photo, labelled with the place.
 		await page.goto(`/t/${c.slug}/rate?n=${N.shibuya}`);
 		const card = activeCard(page);
