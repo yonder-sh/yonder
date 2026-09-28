@@ -15,7 +15,8 @@
  *   `data.panel`), then `closestCenter` among that panel's droppables. A
  *   pointer over no panel has NO target (the drop is a no-op; never the
  *   closest droppable elsewhere). Keyboard drags have no pointer: they stay in
- *   the active item's panel.
+ *   the active item's panel. Over a modal (Organize places) only its own
+ *   droppables count, never the Plan behind it.
  * - Packages may also subscribe with dnd-kit's `useDndMonitor` (onDragOver /
  *   onDragMove: tree depth projection, cross-day previews) inside this context.
  * - Features register behaviour with `useDnd().onDrop(type, handler)`; drag
@@ -37,6 +38,7 @@ import {
 	type DragEndEvent,
 	DragOverlay,
 	type DragStartEvent,
+	type DroppableContainer,
 	type KeyboardCoordinateGetter,
 	KeyboardSensor,
 	MouseSensor,
@@ -143,8 +145,33 @@ export const panelKeyboardCoordinates: KeyboardCoordinateGetter = (
 	});
 };
 
+const MODAL = '[role="dialog"], [role="alertdialog"], [data-slot$="-overlay"]';
+
+/**
+ * A modal is on top (Organize places): over it only its own droppables
+ * count, over its backdrop none do; the Plan behind is never a target. Null
+ * when no modal is under the pointer.
+ */
+export function modalDroppables(
+	point: { x: number; y: number },
+	containers: DroppableContainer[],
+): DroppableContainer[] | null {
+	if (typeof document === "undefined" || !document.elementFromPoint)
+		return null;
+	const layer = document.elementFromPoint(point.x, point.y)?.closest(MODAL);
+	if (!layer) return null;
+	return containers.filter((d) => {
+		const node = d.node.current;
+		return !!node && layer.contains(node);
+	});
+}
+
 /** Panel-aware collisions: the panel under the pointer first, then the closest droppable in it. */
-const collisions: CollisionDetection = (args) => {
+const collisions: CollisionDetection = (raw) => {
+	const inModal = raw.pointerCoordinates
+		? modalDroppables(raw.pointerCoordinates, raw.droppableContainers)
+		: null;
+	const args = inModal ? { ...raw, droppableContainers: inModal } : raw;
 	// Keyboard drags have no pointer: stay within the active item's panel.
 	if (!args.pointerCoordinates) {
 		const panel = activePanel(
