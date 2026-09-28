@@ -20,7 +20,7 @@ import { createRequire } from "node:module";
 import { devices, expect, type Page, test } from "@playwright/test";
 import { loginViaApi } from "./_helpers/auth";
 import { APP_URL } from "./_helpers/env";
-import { expectNoHorizontalOverflow, hydrated } from "./_helpers/page";
+import { expectNoHorizontalOverflow, hydrated, openOrganize } from "./_helpers/page";
 
 const TRIP = "asia-2027";
 const QA = {
@@ -186,7 +186,8 @@ test.describe("desktop", () => {
 		await signIn(page, "dennis");
 		// Outline: cancelling a row drag must not zoom out.
 		await openTrip(page, `/t/${TRIP}/${GOLDEN_GAI_PATH}?days=2027-10-05`);
-		const row = page.getByRole("treeitem", { name: /^Golden Gai/ });
+		// One Yonder: the tree is Organize places'.
+		const row = (await openOrganize(page)).getByRole("treeitem", { name: /^Golden Gai/ });
 		await row.focus();
 		await page.keyboard.press("Space");
 		await page.waitForTimeout(400);

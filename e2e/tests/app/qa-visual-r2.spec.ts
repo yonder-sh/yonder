@@ -15,6 +15,7 @@ import { expect, type Page, test } from "@playwright/test";
 import { makePdf } from "../../../src/features/media/__tests__/make-pdf";
 import { loginViaApi } from "./_helpers/auth";
 import { cloneFixtureTrip } from "./_helpers/fixture";
+import { openPhoneMap } from "./_helpers/page";
 
 const TRIP = "asia-2027";
 
@@ -194,6 +195,8 @@ test.describe("200% zoom (1280×720 → 640×360)", () => {
 	test("DEFECT A11Y-04 (WP-Shell/WP-Map): the map controls aren't covered by the + button or the sheet", async ({ page }) => {
 		await signInDennis(page);
 		await openTrip(page, `/t/${TRIP}/japan/tokyo?days=2027-10-05&lens=place`);
+		// At 640 px it's the phone layout: its map from the header.
+		await openPhoneMap(page);
 		const covered = await page.evaluate(() =>
 			["Fit to the scope", "Map layers and legend", "Filter"].flatMap((label) => {
 				const b = document.querySelector(`[aria-label^="${label}"]`);

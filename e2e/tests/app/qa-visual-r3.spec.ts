@@ -89,7 +89,7 @@ test.describe("guards 1440", () => {
 		await signInDennis(page);
 		await openTrip(page, `/t/${TRIP}?days=2027-10-26&lens=place`);
 		const tab = page.getByTestId("plan-tab");
-		await expect(tab.getByTestId("plan-day-header").first()).toContainText("ends 21:35");
+		await expect(tab.getByTestId("plan-day-header").first()).toContainText("–21:35");
 		await expect(tab.getByText(/to Lào Cai Station/)).toBeVisible();
 		await expect(tab.getByText(/SP3\s*7h55/)).toBeVisible();
 	});
