@@ -805,6 +805,35 @@ export const refreshLinkMeta = createServerFn({ method: "POST" })
 		);
 	});
 
+/** A link's title and caption before it's saved (⌘K's pasted link, D10). */
+export type LinkPeek = {
+	title: string | null;
+	description: string | null;
+	siteName: string | null;
+};
+
+/**
+ * What a link is called, without saving it: the same cached, SSRF-safe
+ * `linkMeta` the preview job reads (so the job finds it warm). For those
+ * who can add links; a failed fetch answers nulls, never an error.
+ */
+export const peekLink = createServerFn({ method: "GET" })
+	.middleware([withNamedUser])
+	.validator(z.object({ tripId: z.uuid(), url: z.url().max(2000) }).strict())
+	.handler(async ({ data, context }): Promise<LinkPeek> => {
+		await requireTripCapability(data.tripId, "propose", context.user);
+		await rateLimit(`links:peek:${context.user.id}`, 30);
+		// Loaded on first use: it brings undici and pins the global fetch
+		// dispatcher to HTTP/1.1, as the worker already runs.
+		const { linkMeta } = await import("./server/preview.server");
+		const m = await linkMeta(data.url);
+		return {
+			title: m.title,
+			description: m.description,
+			siteName: m.siteName,
+		};
+	});
+
 /** `attachment.update`: caption, target (an expense = a receipt) or order. */
 export const updateAttachment = createServerFn({ method: "POST" })
 	.middleware([withNamedUser])
