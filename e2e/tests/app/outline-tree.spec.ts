@@ -208,11 +208,16 @@ test("an idea dropped on a Plan day is scheduled; A does it from the keyboard", 
 	const day2 = days[1] as { id: string };
 	await page.goto(`/t/${c.slug}?tab=plan&sel=d.${day2.id}`);
 	await expectLive(page);
-	const ist = page.getByTestId(PLAN_TESTID.ideas).getByTestId(OUTLINE_TESTID.ideaRow).filter({ hasText: "Istanbul" });
-	await ist.focus();
+	const left = page.getByTestId(PLAN_TESTID.ideas).getByTestId(OUTLINE_TESTID.ideaRow).first();
+	const leftId = (await left.getAttribute("data-node-id")) as string;
+	const leftName = (await page.evaluate(
+		(nid) => (window as unknown as Win).__yonder?.graph.nodes.find((n) => n.id === nid)?.name,
+		leftId,
+	)) as string;
+	await left.focus();
 	await page.keyboard.press("a");
-	await expect.poll(() => itemsOn(N.ist as string)).toBe(1);
-	await expect(page.getByText(/Added Istanbul Airport \(IST\) to Day 2/)).toBeVisible();
+	await expect.poll(() => itemsOn(leftId)).toBe(1);
+	await expect(page.getByText(`Added ${leftName} to Day 2`)).toBeVisible();
 
 	// A on a tree row works the same way.
 	await page.goto(`/t/${c.slug}/japan/tokyo?sel=d.${day2.id}`);
