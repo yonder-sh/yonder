@@ -149,9 +149,7 @@ export function ProfileDialog() {
 			>
 				<form onSubmit={submit} className="grid gap-5">
 					<DialogHeader>
-						<DialogTitle className="text-xl">
-							{guest ? "Your name" : "Profile"}
-						</DialogTitle>
+						<DialogTitle>{guest ? "Your name" : "Profile"}</DialogTitle>
 						<DialogDescription>
 							{guest
 								? "Shown to the people on this trip while you're a guest."
@@ -263,6 +261,13 @@ export function ProfileDialog() {
 					) : null}
 					<DialogFooter hidden={cropping}>
 						<Button
+							type="button"
+							variant="ghost"
+							onClick={() => setOpen(false)}
+						>
+							Cancel
+						</Button>
+						<Button
 							type="submit"
 							disabled={save.isPending || !valid}
 							data-testid={HOME_TESTID.profileSave}
@@ -291,7 +296,7 @@ function StorageMeter({ enabled }: { enabled: boolean }) {
 		<div className="grid gap-1.5" data-testid={HOME_TESTID.profileStorage}>
 			<div className="flex items-baseline justify-between gap-3 text-sm">
 				<span className="font-medium">Storage</span>
-				<span className="text-muted-foreground tabular-nums">
+				<span className="text-muted-foreground tnum">
 					{formatBytes(u.usedBytes)} of {formatBytes(u.quotaBytes)} used
 				</span>
 			</div>

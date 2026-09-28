@@ -136,6 +136,13 @@ export function NewTripDialog({ trigger }: { trigger?: React.ReactNode }) {
 							</span>
 						) : null}
 						<Button
+							type="button"
+							variant="ghost"
+							onClick={() => setOpen(false)}
+						>
+							Cancel
+						</Button>
+						<Button
 							type="submit"
 							disabled={
 								!name.trim() || datesInvalid || create.isPending || !online

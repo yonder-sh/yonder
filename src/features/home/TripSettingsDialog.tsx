@@ -41,6 +41,7 @@ import {
 import { EditGuard, useEditGuard } from "@/components/common/edit-guard";
 import { DurationInput, TimeInput } from "@/components/common/time";
 import { useTripMutation } from "@/components/common/use-trip-mutation";
+import { Eyebrow } from "@/components/kit";
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -131,7 +132,7 @@ function Row({
 		<div className="grid gap-1.5 sm:grid-cols-[160px_1fr] sm:items-start sm:gap-4">
 			<Label
 				htmlFor={htmlFor}
-				className="text-meta text-muted-foreground sm:h-9"
+				className="text-meta text-muted-foreground sm:h-(--control)"
 			>
 				{label}
 			</Label>
@@ -144,7 +145,7 @@ function Row({
 }
 
 function Heading({ children }: { children: ReactNode }) {
-	return <h3 className="eyebrow pt-2">{children}</h3>;
+	return <Eyebrow className="pt-2">{children}</Eyebrow>;
 }
 
 /** Dates: pick → preview what moves → apply (or suggest). */
@@ -216,7 +217,7 @@ function DatesRow() {
 						type="button"
 						variant="ghost"
 						size="sm"
-						className="-ml-2 h-7 text-primary hover:text-primary"
+						className="-ml-2 text-primary hover:text-primary"
 						disabled={disabled || !trip.startDate}
 						title={reason ?? undefined}
 						data-testid={HOME_TESTID.settingsTryDates}
@@ -365,11 +366,11 @@ function DeleteTrip() {
 							disabled={
 								typed.trim() !== graph.trip.name.trim() || del.isPending
 							}
+							variant="destructive"
 							onClick={(e) => {
 								e.preventDefault();
 								del.mutate();
 							}}
-							className="bg-destructive text-white hover:bg-destructive/90"
 						>
 							Delete trip
 						</AlertDialogAction>
@@ -635,7 +636,7 @@ export function TripSettingsDialog() {
 							label="Hours in your day"
 							hint="From getting up to going to bed, travel included. 14h leaves 8h of sleep and an hour each to get ready and wind down. Longer days get a gentle warning."
 						>
-							<span className="flex items-center sm:h-9">
+							<span className="flex items-center sm:h-(--control)">
 								<DurationInput
 									value={form.capacity}
 									disabled={disabled}
@@ -675,7 +676,7 @@ export function TripSettingsDialog() {
 						<Row label="Travel times" htmlFor={ids.auto}>
 							<label
 								htmlFor={ids.auto}
-								className="flex items-center gap-2 text-sm sm:h-9"
+								className="flex items-center gap-2 text-sm sm:h-(--control)"
 							>
 								<Switch
 									id={ids.auto}
@@ -775,7 +776,7 @@ export function TripSettingsDialog() {
 							variant="ghost"
 							onClick={() => setOpen(false)}
 						>
-							Close
+							Cancel
 						</Button>
 						<EditGuard
 							kind="edit-only"

@@ -5,9 +5,6 @@
 	"src/components/common/time.tsx": {
 		"text": 1
 	},
-	"src/features/home/AvatarCropper.tsx": {
-		"hex": 1
-	},
 	"src/features/landing/LandingPage.tsx": {
 		"text": 25,
 		"hex": 8

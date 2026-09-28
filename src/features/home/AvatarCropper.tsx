@@ -41,9 +41,9 @@ export const STAGE_PX = 256;
 export const CIRCLE_PX = 224;
 /** The round "this is you" preview (CSS px), the size of the Profile avatar. */
 const PREVIEW_PX = 40;
-/** The stage behind the photo, and the dim over everything outside the circle. */
-const STAGE_FILL = "#12141c";
-const OUTSIDE_DIM = "rgba(12, 14, 22, 0.78)";
+/** The stage behind the photo, and the dim over everything outside the circle (neutral greys). */
+const STAGE_FILL = "#141414";
+const OUTSIDE_DIM = "rgba(10, 10, 10, 0.78)";
 
 export type CropSource = CanvasImageSource & ImageSize;
 
@@ -326,14 +326,15 @@ export function AvatarCropper({
 				// Width-driven and square: on a phone narrower than the stage it
 				// shrinks on both axes (a fixed height with max-w-full squashed
 				// only the width: an oval "circle" and a distorted photo).
-				className="aspect-square h-auto w-64 max-w-full cursor-grab touch-none rounded-xl bg-[#12141c] outline-none select-none focus-visible:ring-2 focus-visible:ring-ring active:cursor-grabbing"
+				className="aspect-square h-auto w-64 max-w-full cursor-grab touch-none rounded-xl outline-none select-none focus-visible:ring-2 focus-visible:ring-ring active:cursor-grabbing"
+				style={{ background: STAGE_FILL }}
 			/>
 			<div className="flex w-full max-w-64 items-center gap-2">
 				<Button
 					type="button"
 					size="icon"
 					variant="ghost"
-					className="size-8 shrink-0 text-muted-foreground"
+					className="shrink-0 text-muted-foreground"
 					aria-label="Zoom out"
 					disabled={crop.zoom <= MIN_ZOOM}
 					onClick={() =>
@@ -366,7 +367,7 @@ export function AvatarCropper({
 					type="button"
 					size="icon"
 					variant="ghost"
-					className="size-8 shrink-0 text-muted-foreground"
+					className="shrink-0 text-muted-foreground"
 					aria-label="Zoom in"
 					disabled={crop.zoom >= MAX_ZOOM}
 					onClick={() =>

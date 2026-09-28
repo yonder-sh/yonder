@@ -40,6 +40,7 @@ import { type FormEvent, type ReactNode, useState } from "react";
 import { toast } from "sonner";
 import { useEditGuard } from "@/components/common/edit-guard";
 import { MemberAvatar } from "@/components/common/member";
+import { SectionHeader } from "@/components/kit";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -64,6 +65,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import {
 	Tooltip,
@@ -126,21 +128,10 @@ const MEMBER_ROLE_TEXT = cn(
 	"sm:min-w-[8.5rem] sm:pr-3 sm:text-right min-[380px]:max-sm:px-2",
 );
 
-function Section({
-	title,
-	children,
-	aside,
-}: {
-	title: string;
-	children: ReactNode;
-	aside?: ReactNode;
-}) {
+function Section({ title, children }: { title: string; children: ReactNode }) {
 	return (
 		<section className="grid gap-2">
-			<div className="flex items-center justify-between">
-				<h3 className="eyebrow">{title}</h3>
-				{aside}
-			</div>
+			<SectionHeader>{title}</SectionHeader>
 			{children}
 		</section>
 	);
@@ -525,13 +516,17 @@ function MemberRow({
 		(placeholder && (linker || canClaim)) ||
 		countable ? (
 			<DropdownMenu>
-				<DropdownMenuTrigger
-					aria-label={`More for ${m.name}`}
-					data-testid={HOME_TESTID.memberMenu}
-					disabled={disabled}
-					className="inline-flex size-8 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground disabled:opacity-50"
-				>
-					<MoreHorizontal className="size-4" />
+				<DropdownMenuTrigger asChild>
+					<Button
+						variant="ghost"
+						size="icon"
+						aria-label={`More for ${m.name}`}
+						data-testid={HOME_TESTID.memberMenu}
+						disabled={disabled}
+						className="text-muted-foreground"
+					>
+						<MoreHorizontal />
+					</Button>
 				</DropdownMenuTrigger>
 				<DropdownMenuContent align="end" className="w-56">
 					{placeholder ? (
@@ -606,7 +601,7 @@ function MemberRow({
 				</DropdownMenuContent>
 			</DropdownMenu>
 		) : (
-			<span className="size-8 shrink-0" />
+			<span className="size-(--control) shrink-0" />
 		);
 	return (
 		<li
@@ -1141,8 +1136,8 @@ export function ShareDialog() {
 										key={i}
 										className="flex h-11 items-center gap-3 opacity-60"
 									>
-										<span className="size-7 rounded-full bg-muted" />
-										<span className="h-3 w-40 rounded bg-muted" />
+										<Skeleton className="size-7 rounded-full" />
+										<Skeleton className="h-3 w-40" />
 									</li>
 								))
 							: ordered.map((m) => (

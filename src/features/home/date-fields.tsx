@@ -93,7 +93,7 @@ export function DateRangeField({
 					disabled={disabled}
 					data-testid={testId}
 					className={cn(
-						"h-9 w-full justify-start gap-2 px-3 font-normal",
+						"w-full justify-start gap-2 px-3 font-normal",
 						!from && "text-muted-foreground",
 						className,
 					)}
