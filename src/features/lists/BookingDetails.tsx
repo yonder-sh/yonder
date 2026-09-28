@@ -186,7 +186,7 @@ export function BookingDetails({
 					</div>
 				) : (
 					<p className="text-meta text-muted-foreground">
-						Not linked to a stop. Set when it opens from a stop to link it.
+						Not linked to a stop yet.
 					</p>
 				)}
 			</Section>
@@ -252,7 +252,7 @@ export function BookingDetails({
 					<BookingConfirmation target={f.target} label={f.name} />
 				) : (
 					<p className="text-meta text-muted-foreground">
-						Link it to a stop to keep the confirmation with it.
+						Once it's linked to a stop, its confirmation goes here.
 					</p>
 				)}
 			</Section>

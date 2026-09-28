@@ -1,9 +1,8 @@
 /**
  * The Lists view model (DESIGN §7.3, EXTENSIONS §7, ADDENDUM §10). Pure:
  * the rows in view for a scope (SPEC §8.4 `rollup`), the tabs' counts, their
- * grouping per View
- * (Due buckets, Place, Person, Recent, By day), where a row comes from (the
- * source crumb), and where a shopping item's shop is on the plan
+ * grouping per View (Due buckets, Place, Person, Recent, By day), where a row
+ * comes from (the source crumb), and where a shopping item's shop is on the plan
  * ("Day 3 · Kappabashi 14:10", "Not on the plan", "Closed Day 3").
  */
 import { Temporal } from "temporal-polyfill";

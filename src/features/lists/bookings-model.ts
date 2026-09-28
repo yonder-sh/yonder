@@ -55,7 +55,8 @@ export type BookingGroup = {
 
 /**
  * The stop a booking to-do is for: the visit it hangs on, its leg's
- * departure, or the stop its window counts back from.
+ * departure, the stop its window counts back from, or the first visit to
+ * the place it hangs on.
  */
 export function bookingItemId(
 	ix: GraphIndex,
@@ -67,7 +68,15 @@ export function bookingItemId(
 		const leg = ix.leg(t.legId);
 		if (leg?.kind === "pair" && leg.fromItemId) return leg.fromItemId;
 	}
-	return row.dueRule?.itemId ?? null;
+	return row.dueRule?.itemId ?? firstVisit(ix, row.target);
+}
+
+/** The first visit on a day to a place (not a city or area) a row hangs on. */
+function firstVisit(ix: GraphIndex, t: BundleTarget): string | null {
+	if (t.kind !== "node" || ix.node(t.nodeId)?.type !== "place") return null;
+	return (
+		ix.ordered.find((it) => it.dayId && it.nodeId === t.nodeId)?.id ?? null
+	);
 }
 
 /** The day a booking is on (its stop's day), for sorting and "Day 6". */
@@ -261,8 +270,8 @@ function itemFor(
 
 /**
  * What a booking is for: a booked stop itself; for a to-do, the visit or leg
- * it hangs on, else the stop its window counts back from. Null when it hangs
- * on a place, a day or the trip.
+ * it hangs on, else the stop its window counts back from, else the first
+ * visit to its place. Null for a day, a city or the trip.
  */
 export function bookingFor(
 	ix: GraphIndex,
@@ -312,7 +321,8 @@ export function bookingFor(
 		}
 		return null;
 	}
-	return e.row.dueRule ? itemFor(ix, schedule, e.row.dueRule.itemId) : null;
+	const itemId = e.row.dueRule?.itemId ?? firstVisit(ix, t);
+	return itemId ? itemFor(ix, schedule, itemId) : null;
 }
 
 /** "Day 6 · Thu 7 Oct" pieces: ["Thu 7 Oct", "Day 6"]. */

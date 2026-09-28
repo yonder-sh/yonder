@@ -179,6 +179,18 @@ describe("what a booking is for", () => {
 				row: row({ id: "x" }),
 			}),
 		).toBeNull();
+		// On a place: its first visit; on a city: nothing.
+		const onNode = (nodeId: string) =>
+			bookingFor(ix, schedule, {
+				kind: "todo",
+				id: "n",
+				row: row({ id: "n", target: { kind: "node", nodeId } }),
+			});
+		expect(onNode(demo.N.shibuyaSky as string)?.target).toEqual({
+			kind: "item",
+			itemId: I.sky,
+		});
+		expect(onNode(demo.N.tokyo as string)).toBeNull();
 	});
 
 	it("a stay counts its nights; the expense category follows what it is", () => {
