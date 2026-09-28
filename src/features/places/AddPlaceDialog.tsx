@@ -5,8 +5,9 @@
  *
  * Groups: **In this trip** (Enter jumps, ⌘Enter schedules), **Places** from
  * Google or OpenStreetMap, **Actions** (Pick on the map…, a new node by name, Go to
- * Day N, a pasted Google Maps link); any other pasted link goes on a place
- * or makes a new one (D10, `ui/link-chooser`). Picking a place opens the preview (a
+ * Day N, a pasted Google Maps link); any other pasted link goes on a place,
+ * or waits while the search finds or makes its new one (D10,
+ * `ui/link-chooser`). Picking a place opens the preview (a
  * right pane ≥ 768px, full-screen below): photo or map, name, category,
  * address, the filing chip (`TreePicker` per segment), category chips, and
  * Save to Ideas / Schedule (a split button). Modes: `search`, `schedule`
@@ -32,6 +33,7 @@ import {
 	Route,
 	Search,
 	Star,
+	X,
 } from "lucide-react";
 import {
 	type ReactNode,
@@ -246,6 +248,9 @@ type Selection =
 	| { kind: "pin"; lat: number; lng: number }
 	| { kind: "link"; url: string };
 
+/** D10 New place…: the pasted link, waiting for the place the search finds or makes. */
+type PendingLink = { url: string; parentId: string | null };
+
 const DEBOUNCE_MS = 300;
 
 /** A pasted link's title and caption (D10), cached like a preview. */
@@ -322,6 +327,8 @@ function Palette({
 	const [q, setQ] = useState(locating?.name ?? "");
 	const [selected, setSelected] = useState<Selection | null>(null);
 	const [pinning, setPinning] = useState(false);
+	const [pending, setPending] = useState<PendingLink | null>(null);
+	const inputRef = useRef<HTMLInputElement>(null);
 	const sessionToken = useMemo(() => newId(), []);
 	const canSearch =
 		ws.mode === "live" && can(access, "searchPlaces") && access.canEdit;
@@ -331,9 +338,11 @@ function Palette({
 
 	// Bias: the request's parent, else the scope, else nothing (`first`).
 	// Setting a location looks around the node's own parent (Bar Kuro: Golden
-	// Gai), not wherever the view happens to be.
+	// Gai), not wherever the view happens to be; a waiting link, around where
+	// its new place files.
 	const biasNode =
 		(mode === "locate" ? locateBiasNode(ix, request.nodeId) : null) ??
+		pending?.parentId ??
 		request.parentId ??
 		scope?.id ??
 		null;
@@ -399,10 +408,12 @@ function Palette({
 					: [],
 		[ix, q, mode, results.length, coords],
 	);
-	// Named legs ("Fuji Excursion (Shinjuku → Kawaguchiko)", HIER-10).
+	// Named legs ("Fuji Excursion (Shinjuku → Kawaguchiko)", HIER-10); a
+	// waiting link looks for places only.
+	const waiting = pending !== null;
 	const legHits = useMemo(
 		() =>
-			mode === "locate" || mode === "first" || coords || !q.trim()
+			mode === "locate" || mode === "first" || coords || !q.trim() || waiting
 				? []
 				: matchTripLegs(
 						graph.legs.filter((l) => ix.leg(l.id)),
@@ -410,7 +421,7 @@ function Palette({
 						q,
 						3,
 					),
-		[ix, graph.legs, q, mode, coords],
+		[ix, graph.legs, q, mode, coords, waiting],
 	);
 	const dayQuery = parseDayQuery(q);
 	const dayHit =
@@ -457,11 +468,22 @@ function Palette({
 	const [linkParentPick, setLinkParentPick] = useState<
 		string | null | undefined
 	>(undefined);
-	const [linkBusy, setLinkBusy] = useState(false);
-	const linkDayId = linking
-		? (defaultSchedulePick(ix, { request, sel: ws.sel, days: ws.days })
-				?.dayId ?? null)
-		: null;
+	const schedulePick = defaultSchedulePick(ix, {
+		request,
+		sel: ws.sel,
+		days: ws.days,
+	});
+	const linkDayId = linking ? (schedulePick?.dayId ?? null) : null;
+	// Opened from a day ("Add a place to the plan"): the link's place goes on it too.
+	const linkDay = mode === "schedule" ? schedulePick : null;
+	// "Adding the link: …" in New place…'s search.
+	const pendingPeek = useQuery({
+		...peekQuery(tripId, pending?.url ?? ""),
+		enabled: pending !== null && ws.mode === "live",
+	});
+	const pendingTitle = pending
+		? cleanShareName(pendingPeek.data?.title, null) || fallbackName(pending.url)
+		: "";
 	const linkAll = useMemo(
 		() =>
 			linking
@@ -491,7 +513,11 @@ function Palette({
 	const linkParentId =
 		linkParentPick !== undefined
 			? linkParentPick
-			: linkParent(ix, request.parentId ?? scope?.id ?? null);
+			: linkParent(
+					ix,
+					request.parentId ?? scope?.id ?? null,
+					openNode?.id ?? null,
+				);
 	// EMPTY-05 / DESIGN §12: a finished search that found nothing says so
 	// (the Actions group always has items, so cmdk's own empty never shows).
 	const settled =
@@ -521,7 +547,9 @@ function Palette({
 		? "Find a place in this trip…"
 		: mode === "first"
 			? "A country or a city…"
-			: "Search places, or type Day 4…";
+			: pending
+				? "Search for the place, or type its name…"
+				: "Search places, or type Day 4…";
 
 	const showPreview = selected !== null || pinning;
 	// The results on a map, numbered as in the list, to pick the right one.
@@ -549,6 +577,7 @@ function Palette({
 	const showRate =
 		mode === "search" &&
 		ws.mode === "live" &&
+		!pending &&
 		!coords &&
 		(!q.trim() || matchesRateCommand(q));
 	const toRate = useMemo(() => {
@@ -640,14 +669,57 @@ function Palette({
 
 	// ---- actions --------------------------------------------------------
 	const createNamed = useCreateNodePath(tripId);
-	const parentForNew = request.parentId ?? scope?.id ?? null;
+	const createItem = useCreateItem(tripId);
+	// A waiting link's new place files where New place… said.
+	const parentForNew = pending
+		? pending.parentId
+		: (request.parentId ?? scope?.id ?? null);
 	const newType: NodeType | null = (() => {
 		if (mode === "first") return "country";
+		// A link is about a place.
+		if (pending) return "place";
 		const parent = parentForNew ? ix.node(parentForNew) : null;
 		if (!parent) return "country";
 		const order: NodeType[] = ["place", "area", "city", "region", "country"];
 		return order.find((t) => canNest(parent.type, t)) ?? null;
 	})();
+
+	/** A link onto a place (D10); a suggested place takes it too (it chains by id). */
+	const attachLink = (url: string, nodeId: string) =>
+		addLinkAndCache(qc, tripId, {
+			target: { kind: "node", nodeId },
+			url,
+		}).catch((e) => {
+			toast.error(humanError(e));
+			return false;
+		});
+	/** "Shibuya Sky · End of Day 1", with Show unless it's a suggestion. */
+	const putOnDay = (nodeId: string, pick: SchedulePick, say: string) => {
+		const id = newId();
+		createItem.mutate(
+			{
+				id,
+				dayId: pick.dayId,
+				nodeId,
+				...(pick.afterItemId ? { afterItemId: pick.afterItemId } : {}),
+			},
+			{
+				onSuccess: (r) => {
+					onClose();
+					// Its "Suggested — …" toast has said so; there's nothing to show yet.
+					if (isProposed(r)) return;
+					toast(say, {
+						action: {
+							label: "Show",
+							onClick: () => nav.select({ kind: "item", id }),
+						},
+					});
+				},
+				onError: (e) => toast.error(humanError(e)),
+			},
+		);
+	};
+
 	const addNamed = () => {
 		const name = q.trim();
 		if (!name || !newType) return;
@@ -660,11 +732,17 @@ function Palette({
 				...(newType === "place" ? { category: "other" as const } : {}),
 			},
 		];
+		const link = pending?.url;
+		const day = link ? linkDay : null;
 		const open = newType === "place" && opensAdded(ws);
 		createNamed.mutate(
 			{ chain, ids: [id] },
 			{
-				onSuccess: () => {
+				onSuccess: (r) => {
+					if (link) void attachLink(link, id);
+					if (day) return putOnDay(id, day, `${name} · ${day.label}`);
+					// Its "Suggested — …" toast has said so; there's nothing to show yet.
+					if (isProposed(r)) return onClose();
 					if (open) {
 						onClose("inspector");
 						nav.select({ kind: "node", id });
@@ -695,110 +773,43 @@ function Palette({
 		else nav.zoomIn(n.id);
 	};
 
-	const createItem = useCreateItem(tripId);
 	const scheduleExisting = (n: GraphNode) => {
-		const pick = defaultSchedulePick(ix, {
-			request,
-			sel: ws.sel,
-			days: ws.days,
-		});
-		if (!pick || !access.canEdit) return jumpTo(n);
-		const id = newId();
-		createItem.mutate(
-			{
-				id,
-				dayId: pick.dayId,
-				nodeId: n.id,
-				...(pick.afterItemId ? { afterItemId: pick.afterItemId } : {}),
-			},
-			{
-				onSuccess: () => {
-					onClose();
-					toast(`${n.name} · ${pick.label}`, {
-						action: {
-							label: "Show",
-							onClick: () => nav.select({ kind: "item", id }),
-						},
-					});
-				},
-				onError: (e) => toast.error(humanError(e)),
-			},
-		);
+		if (!schedulePick || !access.canEdit) return jumpTo(n);
+		putOnDay(n.id, schedulePick, `${n.name} · ${schedulePick.label}`);
 	};
 
 	// ---- a pasted link (D10) ------------------------------------------------
+	/** Onto `n` (and the day ⌘K was opened from): the pasted link, or the waiting one. */
 	const addLinkTo = (n: GraphNode) => {
-		const url = otherLink;
+		const url = otherLink ?? pending?.url;
 		if (!url) return;
+		void attachLink(url, n.id).then((added) => {
+			// A suggestion says so itself.
+			if (added && !linkDay) toast(`Link added to ${n.name}`);
+		});
+		if (linkDay)
+			return putOnDay(
+				n.id,
+				linkDay,
+				`Link added to ${n.name} · ${linkDay.label}`,
+			);
 		onClose();
-		void addLinkAndCache(qc, tripId, {
-			target: { kind: "node", nodeId: n.id },
-			url,
-		})
-			.then((added) => {
-				// A suggestion says so itself.
-				if (added) toast(`Link added to ${n.name}`);
-			})
-			.catch((e) => toast.error(humanError(e)));
 	};
-	// As the share page does: a place named after the link, then the link on it.
-	const newPlaceFromLink = async () => {
-		const url = otherLink;
-		if (!url || !linking || linkBusy) return;
-		setLinkBusy(true);
-		// The title names it: wait a moment when it's still on its way.
-		const meta =
-			peek.data ??
-			(ws.mode === "live" && !peek.isError
-				? await Promise.race([
-						qc.fetchQuery(peekQuery(tripId, url)).catch(() => undefined),
-						new Promise<undefined>((r) => setTimeout(r, 3000)),
-					])
-				: undefined);
-		// Closed while it waited: nothing is made.
-		if (!commandRef.current?.isConnected) return;
-		const name = cleanShareName(meta?.title, null) || fallbackName(url);
-		const parentId = linkParentId;
-		const id = newId();
-		const open = opensAdded(ws);
-		createNamed.mutate(
-			{
-				chain: [
-					...(parentId ? ix.path(parentId).map((n) => ({ id: n.id })) : []),
-					{ type: "place", name, category: "other" },
-				],
-				ids: [id],
-			},
-			{
-				onSuccess: (r) => {
-					// A suggested place takes the link too (it chains by id).
-					void addLinkAndCache(qc, tripId, {
-						target: { kind: "node", nodeId: id },
-						url,
-					}).catch((e) => toast.error(humanError(e)));
-					// Its "Suggested — …" toast has said so; there's nothing to show yet.
-					if (isProposed(r)) return onClose();
-					const where = ix.node(parentId)?.name ?? graph.trip.name;
-					if (open) {
-						onClose("inspector");
-						nav.select({ kind: "node", id });
-						toast(`Saved to ${where} ideas`);
-						return;
-					}
-					onClose();
-					toast(`Saved to ${where} ideas`, {
-						action: {
-							label: "Show",
-							onClick: () => nav.select({ kind: "node", id }),
-						},
-					});
-				},
-				onError: (e) => {
-					setLinkBusy(false);
-					toast.error(humanError(e));
-				},
-			},
-		);
+	// New place…: the search finds or makes it, the link waiting (Esc goes back).
+	const newPlaceFromLink = () => {
+		if (!otherLink || !linking) return;
+		setPending({ url: otherLink, parentId: linkParentId });
+		setQ("");
+		setSelected(null);
+		setPinning(false);
+		steered.current = false;
+		inputRef.current?.focus();
+	};
+	const backToLink = () => {
+		if (!pending) return;
+		setQ(pending.url);
+		setPending(null);
+		steered.current = false;
 	};
 	const linkEnter =
 		highlighted === LINK_NEW
@@ -817,6 +828,12 @@ function Palette({
 					e.preventDefault();
 					setSelected(null);
 					setPinning(false);
+					return;
+				}
+				// New place…'s search: back to the link's choices.
+				if (pending) {
+					e.preventDefault();
+					backToLink();
 				}
 			}}
 			className={cn(
@@ -836,7 +853,7 @@ function Palette({
 				onKeyDown={(e) => {
 					if (!OURS.has(e.nativeEvent) && steersHighlight(e))
 						steered.current = true;
-					// ⌘Enter with a pasted link: a new place (a picker's own Enter is taken).
+					// ⌘Enter with a pasted link: New place… (a picker's own Enter is taken).
 					if (
 						linking &&
 						e.key === "Enter" &&
@@ -845,7 +862,7 @@ function Palette({
 						!e.nativeEvent.isComposing
 					) {
 						e.preventDefault();
-						void newPlaceFromLink();
+						newPlaceFromLink();
 					}
 				}}
 				className="flex h-full max-h-[min(640px,85svh)] flex-col rounded-none bg-popover max-sm:max-h-none"
@@ -870,12 +887,15 @@ function Palette({
 					)}
 				>
 					<CommandInput
+						ref={inputRef}
 						data-testid={PLACES_TESTID.paletteInput}
 						value={q}
 						onValueChange={(v) => {
 							setQ(v);
 							setSelected(null);
 							setPinning(false);
+							// Another link takes over from the waiting one (a Maps link can be its place).
+							if (looksLikeUrl(v) && !parseMapsUrl(v.trim())) setPending(null);
 							// New text: cmdk highlights the first option again.
 							steered.current = false;
 						}}
@@ -891,6 +911,27 @@ function Palette({
 						Cancel
 					</button>
 				</div>
+				{pending ? (
+					<div
+						data-testid={PLACES_TESTID.linkPending}
+						className="flex items-center gap-2 border-b py-1 pr-2 pl-4 text-meta text-muted-foreground"
+					>
+						<Link2 className="size-3.5 shrink-0" strokeWidth={1.5} />
+						<span className="min-w-0 flex-1 truncate">
+							Adding the link:{" "}
+							<span className="text-foreground">{pendingTitle}</span>
+						</span>
+						<Button
+							size="xs"
+							variant="ghost"
+							data-testid={PLACES_TESTID.linkPendingDrop}
+							onClick={() => setPending(null)}
+						>
+							<X />
+							Don't add
+						</Button>
+					</div>
+				) : null}
 				{showMap ? (
 					<fieldset
 						aria-label="Show results as"
@@ -954,7 +995,11 @@ function Palette({
 							</p>
 						) : null}
 						{!q.trim() && !showPreview ? (
-							<EmptyHints canSearch={canSearch} mode={mode} />
+							<EmptyHints
+								canSearch={canSearch}
+								mode={mode}
+								linking={pending !== null}
+							/>
 						) : null}
 
 						{rateItem && q.trim() ? (
@@ -968,11 +1013,13 @@ function Palette({
 										key={n.id}
 										value={`trip:${n.id}`}
 										data-testid={PLACES_TESTID.paletteTripResult}
-										onSelect={() => jumpTo(n)}
+										// With a waiting link, the place it goes on.
+										onSelect={() => (pending ? addLinkTo(n) : jumpTo(n))}
 										onKeyDown={(e) => {
 											if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
 												e.preventDefault();
-												scheduleExisting(n);
+												if (pending) addLinkTo(n);
+												else scheduleExisting(n);
 											}
 										}}
 									>
@@ -1092,13 +1139,9 @@ function Palette({
 								filed={filedUnder(ix, linkParentId)}
 								parentId={linkParentId}
 								onParent={setLinkParentPick}
-								newName={
-									cleanShareName(peek.data?.title, null) ||
-									(peekLoading ? "" : fallbackName(otherLink))
-								}
-								busy={linkBusy}
+								busy={createItem.isPending}
 								onAdd={addLinkTo}
-								onNew={() => void newPlaceFromLink()}
+								onNew={newPlaceFromLink}
 							/>
 						) : null}
 
@@ -1147,7 +1190,7 @@ function Palette({
 										Save this link…
 									</CommandItem>
 								) : null}
-								{!q.trim() && canSearch && mode !== "first" ? (
+								{!q.trim() && canSearch && mode !== "first" && !pending ? (
 									<CommandItem
 										value="action:paste"
 										onSelect={async () => {
@@ -1278,6 +1321,11 @@ function Palette({
 									request={request}
 									sessionToken={sessionToken}
 									onDone={onClose}
+									onPlace={
+										pending
+											? (id) => void attachLink(pending.url, id)
+											: undefined
+									}
 								/>
 							) : null}
 						</div>
@@ -1309,7 +1357,7 @@ function Palette({
 					<span className="ml-auto hidden shrink-0 items-center gap-1 sm:inline-flex">
 						{linking ? (
 							<LinkKeys
-								enter={linkEnter ? `Add to ${linkEnter.name}` : "New place"}
+								enter={linkEnter ? `Add to ${linkEnter.name}` : "New place…"}
 							/>
 						) : (
 							<>
@@ -1319,7 +1367,7 @@ function Palette({
 								{mode === "locate" ? "choose" : "open"}
 							</>
 						)}
-						{tripHits.length && mode !== "locate" ? (
+						{tripHits.length && mode !== "locate" && !pending ? (
 							<>
 								<Kbd className="ml-2">⌘</Kbd>
 								<Kbd>
@@ -1329,7 +1377,7 @@ function Palette({
 							</>
 						) : null}
 						<Kbd className="ml-2">Esc</Kbd>
-						{showPreview ? "back" : "close"}
+						{showPreview || pending ? "back" : "close"}
 					</span>
 				</div>
 			</Command>
@@ -1348,9 +1396,12 @@ function legMeta(ix: ReturnType<typeof useWorkspace>["ix"], leg: GraphLeg) {
 function EmptyHints({
 	canSearch,
 	mode,
+	linking,
 }: {
 	canSearch: boolean;
 	mode: AddPlaceRequest["mode"];
+	/** New place…'s search, a link waiting. */
+	linking: boolean;
 }) {
 	return (
 		<div className="grid gap-1 px-4 pt-5 pb-3 text-meta text-muted-foreground">
@@ -1358,9 +1409,11 @@ function EmptyHints({
 				<Search className="size-3.5" strokeWidth={1.5} />
 				{mode === "first"
 					? "Type a country or a city to start the trip."
-					: canSearch
-						? "Type a place, a shop, a temple — or “Day 4”."
-						: "Type a place in this trip, or “Day 4”."}
+					: linking
+						? "Search for the place in the link, or type its name to add it."
+						: canSearch
+							? "Type a place, a shop, a temple — or “Day 4”."
+							: "Type a place in this trip, or “Day 4”."}
 			</p>
 		</div>
 	);
@@ -1612,11 +1665,14 @@ function PreviewPane({
 	request,
 	sessionToken,
 	onDone,
+	onPlace,
 }: {
 	selection: Selection;
 	request: AddPlaceRequest;
 	sessionToken: string;
 	onDone: (then?: AfterClose) => void;
+	/** The place saved, scheduled or opened here (a waiting link goes on it). */
+	onPlace?: (nodeId: string) => void;
 }) {
 	const ws = useWorkspace();
 	const { ix, graph, nav, schedule } = ws;
@@ -1705,6 +1761,7 @@ function PreviewPane({
 			}
 			knownExisting={q.data.existing?.nodeId}
 			openAdded={opensAdded(ws)}
+			onPlace={onPlace}
 			ws={{ ix, graph, nav, schedule, sel: ws.sel, days: ws.days }}
 		/>
 	);
@@ -1717,6 +1774,7 @@ function PreviewBody({
 	pin,
 	knownExisting,
 	openAdded,
+	onPlace,
 	ws,
 }: {
 	preview: PlacePreview;
@@ -1727,6 +1785,7 @@ function PreviewBody({
 	knownExisting?: string;
 	/** Saving a place to Ideas opens it (Places › Review). */
 	openAdded: boolean;
+	onPlace?: (nodeId: string) => void;
 	ws: Pick<
 		ReturnType<typeof useWorkspace>,
 		"ix" | "graph" | "nav" | "schedule" | "sel" | "days"
@@ -1842,7 +1901,11 @@ function PreviewBody({
 			{ chain, ids },
 			{
 				onError: (e) => toast.error(humanError(e)),
-				onSuccess: () => {
+				onSuccess: (r) => {
+					// A suggested place takes the link too (it chains by id).
+					onPlace?.(leafId);
+					// Its "Suggested — …" toast has said so; there's nothing to show yet.
+					if (target === "ideas" && isProposed(r)) return onDone();
 					const where =
 						filing.create.at(-1)?.name ??
 						ix.node(filing.existing.at(-1))?.name ??
@@ -1876,8 +1939,9 @@ function PreviewBody({
 						},
 						{
 							onError: (e) => toast.error(humanError(e)),
-							onSuccess: () => {
+							onSuccess: (s) => {
 								onDone();
+								if (isProposed(s)) return;
 								toast(`${name.trim() || preview.name} · ${target.label}`, {
 									action: {
 										label: "Show",
@@ -1903,8 +1967,10 @@ function PreviewBody({
 			},
 			{
 				onError: (e) => toast.error(humanError(e)),
-				onSuccess: () => {
+				onSuccess: (r) => {
+					onPlace?.(n.id);
 					onDone();
+					if (isProposed(r)) return;
 					toast(`${n.name} · ${target.label}`, {
 						action: {
 							label: "Show",
@@ -2037,11 +2103,13 @@ function PreviewBody({
 							size="xs"
 							variant="ghost"
 							onClick={() => {
+								onPlace?.(existing.id);
 								onDone("inspector");
 								nav.select({ kind: "node", id: existing.id });
 							}}
 						>
-							Open
+							{/* A waiting link goes on the one already there. */}
+							{onPlace ? "Add the link" : "Open"}
 						</Button>
 					</div>
 				) : null}

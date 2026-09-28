@@ -107,11 +107,18 @@ export function targetMeta(ix: GraphIndex, nodeId: string): string {
 		.join(" · ");
 }
 
-/** A new place from a link files under the scope (a place's own parent). */
+/**
+ * Where a new place from a link files: beside the open place (its area or
+ * city), in an open area, else under the scope (a place's own parent).
+ */
 export function linkParent(
 	ix: GraphIndex,
 	scopeId: string | null,
+	openId: string | null = null,
 ): string | null {
+	const open = ix.node(openId);
+	if (open?.type === "place") return open.parentId;
+	if (open?.type === "area") return open.id;
 	const n = ix.node(scopeId);
 	return n?.type === "place" ? n.parentId : (n?.id ?? null);
 }

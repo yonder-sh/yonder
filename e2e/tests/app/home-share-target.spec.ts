@@ -254,7 +254,7 @@ test("⌘K: a pasted reel goes onto the open place in one step", async ({ page, 
 		.toEqual({ kind: "node", nodeId: place });
 });
 
-test("⌘K: ⌘Enter saves a pasted reel as a new place in the scope", async ({ page, request }, info) => {
+test("⌘K: ⌘Enter is New place…: the search makes the place, and the reel goes on it", async ({ page, request }, info) => {
 	test.skip(info.project.name !== "chromium", "one browser is enough");
 	const c = await cloneFixtureTrip(request);
 	await page.setViewportSize({ width: 1440, height: 900 });
@@ -263,10 +263,17 @@ test("⌘K: ⌘Enter saves a pasted reel as a new place in the scope", async ({ 
 	await page.keyboard.press("Control+k");
 	await expect(page.getByTestId(TESTID.addPlaceDialog)).toBeVisible();
 	const reel = `https://www.instagram.com/reel/C9${randomBytes(3).toString("hex")}/`;
-	await page.getByTestId("places-palette-input").fill(reel);
+	const input = page.getByTestId("places-palette-input");
+	await input.fill(reel);
 	await expect(page.getByTestId("places-link-new-place")).toContainText("Filed under Japan › Tokyo");
 	await page.keyboard.press("Control+Enter");
-	await expect(page.getByText("Saved to Tokyo ideas")).toBeVisible();
+	// D10: the search, empty, the link waiting (never a place named after the caption).
+	await expect(input).toHaveValue("");
+	await expect(page.getByTestId("places-link-pending")).toContainText("Adding the link:");
+	const name = `Kissa ${randomBytes(2).toString("hex")}`;
+	await input.fill(name);
+	await page.getByRole("option", { name: `Add “${name}” as a new place in Tokyo` }).click();
+	await expect(page.getByText(`Added ${name}`)).toBeVisible();
 	await expect
 		.poll(async () =>
 			page.evaluate(
@@ -274,12 +281,12 @@ test("⌘K: ⌘Enter saves a pasted reel as a new place in the scope", async ({ 
 					const m = await import(/* @vite-ignore */ "/src/features/media/media.functions.ts");
 					const all = (await m.listTripMedia({ data: { tripId } })) as { url: string | null; target: { kind: string; nodeId?: string } }[];
 					const id = all.find((x) => x.url === reel)?.target.nodeId;
-					const g = (window as unknown as { __yonder?: { graph: { nodes: { id: string; type: string; parentId: string | null }[] } } }).__yonder?.graph;
+					const g = (window as unknown as { __yonder?: { graph: { nodes: { id: string; type: string; name: string; parentId: string | null }[] } } }).__yonder?.graph;
 					const n = g?.nodes.find((x) => x.id === id);
-					return n ? { type: n.type, parentId: n.parentId } : null;
+					return n ? { type: n.type, name: n.name, parentId: n.parentId } : null;
 				},
 				{ tripId: c.tripId, reel },
 			),
 		)
-		.toEqual({ type: "place", parentId: c.ids.nodes.tokyo });
+		.toEqual({ type: "place", name, parentId: c.ids.nodes.tokyo });
 });

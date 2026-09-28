@@ -2,9 +2,10 @@
  * D10 "Add · paste a link", inside ⌘K's list: the link's preview (what it
  * is, its title, the trip's places it names), then "Add it to a place, or
  * save a new one?": the places it names, the open place, a few nearby, a
- * search over every place, and New place (filed under the Where scope, which
- * can be changed). The preview can arrive late or not at all: the choices
- * work before it, and a failed one just shows the link's site.
+ * search over every place, and New place… (the palette's search finds or
+ * makes it, filed beside the open place or under the Where scope, which can
+ * be changed). The preview can arrive late or not at all: the choices work
+ * before it, and a failed one just shows the link's site.
  */
 import { CornerDownLeft, Film, Globe, Plus, Search } from "lucide-react";
 import { TypeGlyph } from "@/components/common/glyphs";
@@ -43,7 +44,6 @@ export function LinkChooser({
 	filed,
 	parentId,
 	onParent,
-	newName,
 	busy,
 	onAdd,
 	onNew,
@@ -61,9 +61,9 @@ export function LinkChooser({
 	filed: string;
 	parentId: string | null;
 	onParent: (id: string | null) => void;
-	newName: string;
 	busy: boolean;
 	onAdd: (n: GraphNode) => void;
+	/** New place…: to the search, the link waiting. */
 	onNew: () => void;
 }) {
 	const { ix } = useWorkspace();
@@ -200,12 +200,7 @@ export function LinkChooser({
 					>
 						<Plus strokeWidth={1.5} />
 						<span className="grid min-w-0 flex-1">
-							<span className="truncate">
-								New place
-								{newName ? (
-									<span className="text-muted-foreground"> · {newName}</span>
-								) : null}
-							</span>
+							<span className="truncate">New place…</span>
 							<span className="truncate text-xs text-muted-foreground">
 								Filed under {filed}
 							</span>
@@ -234,7 +229,7 @@ export function LinkChooser({
 	);
 }
 
-/** The footer's keys with a pasted link: "↵ Add to Moffu · ⌘↵ New place". */
+/** The footer's keys with a pasted link: "↵ Add to Moffu · ⌘↵ New place…". */
 export function LinkKeys({ enter }: { enter: string }) {
 	return (
 		<>
@@ -246,7 +241,7 @@ export function LinkKeys({ enter }: { enter: string }) {
 			<Kbd>
 				<CornerDownLeft className="size-3" />
 			</Kbd>
-			New place
+			New place…
 		</>
 	);
 }

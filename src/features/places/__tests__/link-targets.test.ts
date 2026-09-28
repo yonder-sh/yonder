@@ -116,6 +116,23 @@ describe("the words on a row and on New place", () => {
 		expect(filedUnder(ix, null)).toBe(demoGraph.trip.name);
 	});
 
+	it("files it beside the open place (its area or city) before the scope", () => {
+		expect(linkParent(ix, N.asakusa as string, N.loft as string)).toBe(
+			N.shibuya,
+		);
+		expect(linkParent(ix, N.asakusa as string, N.itoya as string)).toBe(
+			N.tokyo,
+		);
+		expect(linkParent(ix, N.tokyo as string, N.harajuku as string)).toBe(
+			N.harajuku,
+		);
+		// Nothing open, or a city: the scope.
+		expect(linkParent(ix, N.asakusa as string, null)).toBe(N.asakusa);
+		expect(linkParent(ix, N.asakusa as string, N.kyoto as string)).toBe(
+			N.asakusa,
+		);
+	});
+
 	it("names the kind of link, and a new place when it has no title", () => {
 		const tiktok = "https://www.tiktok.com/@cafes/video/7430912345678901234";
 		expect(linkKind(tiktok)).toEqual({ label: "TikTok video", social: true });

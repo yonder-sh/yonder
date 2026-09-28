@@ -25,6 +25,9 @@ export const PLACES_TESTID = {
 	linkSearch: "places-link-search",
 	linkNewPlace: "places-link-new-place",
 	linkFiling: "places-link-filing",
+	/** New place…'s search: "Adding the link: …" and its Don't add. */
+	linkPending: "places-link-pending",
+	linkPendingDrop: "places-link-pending-drop",
 	dropPinUse: "places-drop-pin-use",
 	providerFooter: "places-provider-footer",
 	paletteEmpty: "places-palette-empty",

@@ -3,9 +3,10 @@
  * one"): a reel or a guide is never a place name ("Add 'https://…' as a new
  * country"). The palette previews it and asks "Add it to a place, or save a
  * new one?": the places its caption names, the open place, a few nearby, a
- * search over every place, and New place. Enter adds it to the highlighted
- * place, ⌘Enter makes a new place. The preview can arrive late or fail
- * quietly. Without edit access it still goes to the share page.
+ * search over every place, and New place…. Enter adds it to the highlighted
+ * place, ⌘Enter is New place… (its search: `palette-link-new-place`). The
+ * preview can arrive late or fail quietly. Without edit access it still goes
+ * to the share page.
  */
 import { act, fireEvent, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -207,7 +208,7 @@ describe("a pasted link in ⌘K (D10)", () => {
 		expect(rows()[0]).toBe(N.loft);
 	});
 
-	it("⌘Enter saves it as a new place, named from its title and filed under the scope", async () => {
+	it("⌘Enter is New place…: the search, never a place named after the caption", async () => {
 		calls.peek = async () => ({
 			title: "The fluffiest café in Harajuku 🐶 #moffu",
 			description: null,
@@ -215,47 +216,24 @@ describe("a pasted link in ⌘K (D10)", () => {
 		});
 		open({ mode: "live", splat: "japan/tokyo/shibuya" });
 		paste(REEL);
-		const row = screen.getByTestId(PLACES_TESTID.linkNewPlace);
+		const preview = screen.getByTestId(PLACES_TESTID.linkPreview);
 		await waitFor(() =>
-			expect(row).toHaveTextContent("The fluffiest café in Harajuku"),
+			expect(preview).toHaveTextContent("The fluffiest café in Harajuku"),
 		);
+		const row = screen.getByTestId(PLACES_TESTID.linkNewPlace);
+		expect(row).toHaveTextContent("New place…");
+		expect(row).not.toHaveTextContent("fluffiest");
 		expect(row).toHaveTextContent("Filed under Tokyo › Shibuya");
+		expect(screen.getByTestId(PLACES_TESTID.providerFooter)).toHaveTextContent(
+			"New place…",
+		);
 		fireEvent.keyDown(input(), { key: "Enter", metaKey: true });
-		await waitFor(() => expect(calls.links).toHaveLength(1));
-		expect(calls.paths).toEqual([
-			{
-				chain: [
-					{ id: N.japan },
-					{ id: N.tokyo },
-					{ id: N.shibuya },
-					{
-						type: "place",
-						name: "The fluffiest café in Harajuku",
-						category: "other",
-					},
-				],
-				ids: [expect.any(String)],
-			},
-		]);
-		expect(calls.links[0]).toMatchObject({
-			target: { kind: "node", nodeId: calls.paths[0]?.ids[0] },
-			url: REEL,
-		});
-		expect(calls.toasts).toEqual(["Saved to Shibuya ideas"]);
-	});
-
-	it("a suggested new place still takes the link, and isn't called saved", async () => {
-		calls.path = async () => ({
-			proposed: { id: "p1", summary: "Add TikTok video" },
-		});
-		open({ splat: "japan/tokyo/shibuya" });
-		paste(REEL);
-		fireEvent.keyDown(input(), { key: "Enter", ctrlKey: true });
-		await waitFor(() => expect(calls.links).toHaveLength(1));
-		expect(calls.links[0]).toMatchObject({
-			target: { nodeId: calls.paths[0]?.ids[0] },
-		});
-		expect(calls.toasts).toEqual(["Suggested — Add TikTok video"]);
+		await waitFor(() => expect(input()).toHaveValue(""));
+		expect(screen.getByTestId(PLACES_TESTID.linkPending)).toHaveTextContent(
+			"Adding the link: The fluffiest café in Harajuku",
+		);
+		expect(calls.paths).toEqual([]);
+		expect(calls.links).toEqual([]);
 	});
 
 	it("files New place somewhere else when asked", async () => {
