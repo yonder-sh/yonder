@@ -14,11 +14,10 @@ import { Link } from "@tanstack/react-router";
 import { ArrowRight, Check, Inbox, Plus } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { EmptyState } from "@/components/common/empty-state";
 import { FlagEmoji } from "@/components/common/glyphs";
 import { AvatarStack } from "@/components/common/member";
 import { YonderMark } from "@/components/common/yonder-mark";
-import { Chip, Eyebrow } from "@/components/kit";
+import { Chip, EmptyState, Eyebrow } from "@/components/kit";
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -221,7 +220,7 @@ function Hero({
 					to="/t/$trip"
 					params={{ trip: trip.slug }}
 					data-testid={TESTID.tripCard}
-					className="text-3xl leading-[34px] font-semibold text-balance after:absolute after:inset-0 after:content-[''] focus-visible:outline-none"
+					className="font-display text-3xl font-semibold text-balance after:absolute after:inset-0 after:content-[''] focus-visible:outline-none"
 				>
 					{trip.name}
 				</Link>
@@ -236,9 +235,9 @@ function Hero({
 				</span>
 				{trip.viaLink || trip.role !== "owner" ? (
 					<span className="flex items-center gap-2 text-meta text-muted-foreground">
-						<span className="rounded-full border px-1.5 text-2xs leading-[18px]">
+						<Chip tone="outline" size="sm" className="text-muted-foreground">
 							{roleLabel(trip.role)}
-						</span>
+						</Chip>
 						{trip.ownerName ? `by ${trip.ownerName}` : null}
 					</span>
 				) : null}
@@ -300,9 +299,9 @@ function TripCard({
 					</Link>
 					<span className="relative z-10 flex shrink-0 items-center gap-1">
 						{shared ? (
-							<span className="rounded-full border px-1.5 text-2xs leading-[18px] text-muted-foreground">
+							<Chip tone="outline" size="sm" className="text-muted-foreground">
 								{roleLabel(trip.role)}
-							</span>
+							</Chip>
 						) : null}
 						{menu}
 					</span>
@@ -420,18 +419,12 @@ function Deadlines() {
 									tick.mutate(d.listItemId);
 								}}
 							/>
-							<span
-								className={cn(
-									"hidden shrink-0 rounded-full px-2 text-xs leading-[22px] tnum sm:inline",
-									warn
-										? "text-warning"
-										: soon
-											? "bg-accent text-accent-foreground"
-											: "bg-muted text-muted-foreground",
-								)}
+							<Chip
+								tone={warn ? "warn" : soon ? "accent" : "neutral"}
+								className="hidden tnum sm:inline-flex"
 							>
 								{label}
-							</span>
+							</Chip>
 							<span className="flex min-w-0 flex-1 flex-col sm:flex-row sm:items-baseline sm:gap-2">
 								<span
 									className={cn(
@@ -459,32 +452,39 @@ function Deadlines() {
 									{d.tripName}
 								</span>
 							</span>
-							<Link
-								to="/t/$trip"
-								params={{ trip: d.tripSlug }}
-								search={
-									{
-										tab: "lists",
-										...(d.sel ? { sel: d.sel } : {}),
-									} as never
-								}
-								aria-label={`Open ${plain(d.text)} in ${d.tripName}`}
-								className="inline-flex size-8 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
+							<Button
+								asChild
+								variant="ghost"
+								size="icon"
+								className="text-muted-foreground"
 							>
-								<ArrowRight className="size-4" />
-							</Link>
+								<Link
+									to="/t/$trip"
+									params={{ trip: d.tripSlug }}
+									search={
+										{
+											tab: "lists",
+											...(d.sel ? { sel: d.sel } : {}),
+										} as never
+									}
+									aria-label={`Open ${plain(d.text)} in ${d.tripName}`}
+								>
+									<ArrowRight />
+								</Link>
+							</Button>
 						</li>
 					);
 				})}
 			</ul>
 			{rows.length > 5 ? (
-				<button
-					type="button"
+				<Button
+					variant="link"
+					size="sm"
 					onClick={() => setAll((v) => !v)}
-					className="mt-2 text-meta font-medium text-primary hover:underline"
+					className="mt-1 px-0"
 				>
 					{all ? "Show fewer" : `Show all (${rows.length})`}
-				</button>
+				</Button>
 			) : null}
 		</section>
 	);
@@ -654,7 +654,7 @@ export function Dashboard({
 			</header>
 			<main className="mx-auto grid max-w-[1200px] grid-cols-1 gap-10 px-4 pt-4 pb-16 sm:px-8 sm:pt-6">
 				<div className="flex flex-wrap items-center justify-between gap-4">
-					<h1 className="font-display text-2xl leading-8 font-semibold tracking-[-0.02em] sm:text-3xl sm:leading-[38px]">
+					<h1 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">
 						{hello}, {viewer.firstName || viewer.name}
 					</h1>
 					{all.length ? <NewTripDialog /> : null}
@@ -757,7 +757,7 @@ export function Dashboard({
 												/>
 												{datesText(t)}
 											</span>
-											<span className="relative z-10 flex size-7 shrink-0 items-center justify-center">
+											<span className="relative z-10 flex size-(--control-sm) shrink-0 items-center justify-center">
 												{menuFor(t)}
 											</span>
 										</li>
@@ -791,8 +791,8 @@ export function Dashboard({
 					<AlertDialogFooter>
 						<AlertDialogCancel>Cancel</AlertDialogCancel>
 						<AlertDialogAction
+							variant="destructive"
 							onClick={() => leaving && leave.mutate(leaving)}
-							className="bg-destructive text-white hover:bg-destructive/90"
 						>
 							Leave trip
 						</AlertDialogAction>

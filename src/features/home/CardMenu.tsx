@@ -10,6 +10,7 @@
  */
 import { Link } from "@tanstack/react-router";
 import { Copy, LogOut, MoreHorizontal, Star } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -35,13 +36,17 @@ export function CardMenu({
 	if (!member) return null;
 	return (
 		<DropdownMenu>
-			<DropdownMenuTrigger
-				data-testid={HOME_TESTID.tripCardMenu}
-				aria-label={`More for ${trip.name}`}
-				onClick={(e) => e.stopPropagation()}
-				className="inline-flex size-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
-			>
-				<MoreHorizontal className="size-4" />
+			<DropdownMenuTrigger asChild>
+				<Button
+					variant="ghost"
+					size="icon-sm"
+					data-testid={HOME_TESTID.tripCardMenu}
+					aria-label={`More for ${trip.name}`}
+					onClick={(e) => e.stopPropagation()}
+					className="text-muted-foreground"
+				>
+					<MoreHorizontal />
+				</Button>
 			</DropdownMenuTrigger>
 			<DropdownMenuContent align="end" className="w-44">
 				<DropdownMenuItem asChild data-testid={HOME_TESTID.tripCardRate}>
