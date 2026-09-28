@@ -176,8 +176,8 @@ const MATRIX: Record<Capability, readonly Who[]> = {
 	linkPeople: ["owner", "editor"],
 	// Plain viewers never rate: sharing "just to look" stays view-only.
 	rate: ["owner", "editor", "suggester", "rater"],
-	// The members who travel and plan; raters, viewers and link guests follow along.
-	markDone: ["owner", "editor", "suggester"],
+	// Owners and editors (owner, 2026-09-28); suggesters, raters, viewers and link guests don't.
+	markDone: ["owner", "editor"],
 };
 
 /**

@@ -1,10 +1,10 @@
 /**
  * What Today changes (One Yonder phase 5). Done and its Undo are shared
- * travel state: direct, never a proposal, for owners, editors and suggesters
+ * travel state: direct, never a proposal, for owners and editors
  * (`markDone`). The fixes are ordinary plan edits with their Undo (proposals
- * in suggest mode): Skip moves the stop to Ideas, Shorten sets its duration,
- * Add puts an idea on today (the Plan's add-to-day). Raters, viewers and
- * link guests follow along.
+ * in suggest mode, so a suggester's are suggestions): Skip moves the stop to
+ * Ideas, Shorten sets its duration, Add puts an idea on today (the Plan's
+ * add-to-day). Raters, viewers and link guests follow along.
  */
 import { undoToast } from "@/components/common/undo-toast";
 import { asOfZone, nowFor } from "@/features/overview/lib/phase";
@@ -23,9 +23,9 @@ import { spokenMin } from "./lib/words";
 import { useSetItemDone } from "./mutations";
 
 export interface TodayActions {
-	/** Done and Undo are shown. */
+	/** Done, Undo and the questions that lead to a Done are shown (owners, editors). */
 	mayMarkDone: boolean;
-	/** The fixes and Add are shown (edits, or suggestions in suggest mode); never for link guests. */
+	/** The fixes and Add are shown (edits, or suggestions in suggest mode): owners, editors, suggesters; never link guests. */
 	mayChange: boolean;
 	/** Offline: the buttons wait (shown, disabled). */
 	offline: boolean;
@@ -54,8 +54,8 @@ export function useTodayActions(): TodayActions {
 	const nowAt = () => (asOf ? nowFor(asOf, asOfZone(ix, schedule)) : undefined);
 	return {
 		mayMarkDone,
-		// Those who travel: raters, viewers and link guests follow along.
-		mayChange: mayMarkDone && access.mode !== "read",
+		// Members who edit or suggest: raters, viewers and link guests follow along.
+		mayChange: !graph.me.isGuest && access.mode !== "read",
 		offline: connection === "offline",
 		done: (itemId, when) => {
 			const at = when ?? nowAt();

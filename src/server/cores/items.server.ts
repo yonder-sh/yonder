@@ -432,9 +432,9 @@ export async function setItemAssigneesCore(
 }
 
 /**
- * setItemDone (owners, editors, suggesters; never a proposal): stamps or
- * clears Done on a stop on a day. Travel state, not a plan edit: no activity
- * line and `updated_at` stays. Keys: graph.
+ * setItemDone (owners and editors; never a proposal, a suggester is refused):
+ * stamps or clears Done on a stop on a day. Travel state, not a plan edit: no
+ * activity line and `updated_at` stays. Keys: graph.
  */
 export async function setItemDoneCore(
 	tx: Tx,

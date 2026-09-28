@@ -83,7 +83,7 @@ export const setItemAssignees = createServerFn({ method: "POST" })
 	.validator(proposable.input(SetItemAssigneesInput))
 	.handler(proposable.run("item.assignees"));
 
-/** Today: Done on a stop for the whole group (owners, editors, suggesters; never a proposal); `done: false` undoes it. Keys: graph. */
+/** Today: Done on a stop for the whole group (owners and editors; never a proposal, suggesters get FORBIDDEN); `done: false` undoes it. Keys: graph. */
 export const setItemDone = createServerFn({ method: "POST" })
 	.middleware([withNamedUser])
 	.validator(SetItemDoneInput)

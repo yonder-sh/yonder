@@ -3,7 +3,7 @@
  * Shinjuku at an `?asOf` local time: running late (a risk and its fixes),
  * running early (Dinner, with no place, Next whenever you like; free time
  * and ideas), the first stop, the end of the day, a day without stops, the
- * driver's address, and read-only for viewers.
+ * driver's address, read-only for viewers, and no Done for suggesters.
  */
 import { fireEvent, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -613,6 +613,41 @@ describe("Today read-only", () => {
 		expect(screen.queryByTestId(T.ideaAdd)).toBeNull();
 	});
 
+	it("suggesters get no Done, Undo, hint or “Still at …?”; Skip, Shorten and Add stay, as suggestions", async () => {
+		const as = <G extends { graph: TripGraph }>(d: G): TripGraph => ({
+			...d.graph,
+			me: { ...d.graph.me, role: "suggester" },
+		});
+		const late = tokyoDay(LATE);
+		const a = render(late, "2027-10-05T16:40", as(late));
+		expect(screen.getByTestId(T.now)).toHaveTextContent("Yodobashi Camera");
+		expect(screen.queryByTestId(T.done)).toBeNull();
+		fireEvent.click(screen.getByText("Skip Bic Camera"));
+		await vi.waitFor(() => expect(calls.move).toHaveLength(1));
+		expect(calls.move[0]).toMatchObject({ itemId: late.I.bic, dayId: null });
+		a.unmount();
+		const early = tokyoDay(EARLY);
+		const b = render(early, "2027-10-05T17:10", as(early));
+		expect(screen.getByTestId(T.doneRow)).toBeInTheDocument();
+		expect(screen.queryByTestId(T.undo)).toBeNull();
+		// Dinner, floating Next: no Done of its own either.
+		expect(screen.getByTestId(T.next)).toHaveAttribute(
+			"data-item",
+			early.I.dinner,
+		);
+		expect(screen.queryByTestId(T.done)).toBeNull();
+		expect(screen.getAllByTestId(T.ideaAdd)).toHaveLength(3);
+		b.unmount();
+		const start = importedDay();
+		const c = render(start, "2027-10-05T09:05", as(start));
+		expect(screen.queryByTestId(T.hint)).toBeNull();
+		c.unmount();
+		const forgot = importedDay({ cha: done("10:40") });
+		render(forgot, "2027-10-05T14:30", as(forgot));
+		expect(screen.queryByTestId(T.checkIn)).toBeNull();
+		expect(calls.done).toEqual([]);
+	});
+
 	it("link guests too, even on a Can edit link", () => {
 		const s = tokyoDay(LATE);
 		render(s, "2027-10-05T16:40", {
@@ -683,6 +718,28 @@ describe("Use my location (opt-in, on the device)", () => {
 		// Stop: the watch ends.
 		fireEvent.click(screen.getByTestId(T.locate));
 		expect(clearWatch).toHaveBeenCalledWith(7);
+		unmount();
+	});
+
+	it("suggesters aren't asked “Looks like you're at …?”", async () => {
+		const watchPosition = vi.fn((ok: PositionCallback) => {
+			ok({
+				coords: { latitude: 35.6919, longitude: 139.7007 },
+			} as GeolocationPosition);
+			return 7;
+		});
+		Object.defineProperty(navigator, "geolocation", {
+			value: { watchPosition, clearWatch: vi.fn() },
+			configurable: true,
+		});
+		const s = tokyoDay(LATE);
+		const { unmount } = render(s, "2027-10-05T16:40", {
+			...s.graph,
+			me: { ...s.graph.me, role: "suggester" },
+		});
+		fireEvent.click(screen.getByTestId(T.locate));
+		await vi.waitFor(() => expect(watchPosition).toHaveBeenCalled());
+		expect(screen.queryByTestId(T.here)).toBeNull();
 		unmount();
 	});
 });

@@ -117,7 +117,6 @@ const EXPECTED: Record<string, Capability[]> = {
 		"setMediaVisibility",
 		"addPeople",
 		"rate",
-		"markDone",
 	],
 	// PLACES §1c: exactly a viewer, plus rating.
 	rater: [

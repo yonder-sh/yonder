@@ -40,7 +40,7 @@ export function patchDone(g: TripGraph, v: SetItemDoneVars): TripGraph {
 	};
 }
 
-/** Done / Undo on a stop, for everyone on the trip (owners, editors, suggesters: `can(access, "markDone")`). */
+/** Done / Undo on a stop, for owners and editors (`can(access, "markDone")`). */
 export function useSetItemDone(tripId: string) {
 	return useTripMutation(
 		({ itemId, done, at, by }: SetItemDoneVars) =>

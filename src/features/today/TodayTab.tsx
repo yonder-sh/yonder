@@ -10,7 +10,8 @@
  * you like", with its own Done when nothing is Now. A stop the day moved on
  * from without a Done asks "Still at …?" for a while, so a late Done can
  * still be told. Tapping a stop opens its details.
- * Raters, viewers and link guests see it without buttons.
+ * Suggesters see it without Done (their fixes and Add are suggestions);
+ * raters, viewers and link guests see it without buttons.
  *
  * - The first stop of the day, the end of it and a day without stops are
  *   their own simple states.

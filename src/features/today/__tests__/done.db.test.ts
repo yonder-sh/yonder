@@ -1,7 +1,7 @@
 /**
- * Today's Done against real Postgres (a throwaway database): owners, editors
- * and suggesters mark a stop Done directly (never a proposal); raters,
- * viewers and link guests are refused and nothing changes. The stamp is the
+ * Today's Done against real Postgres (a throwaway database): owners and
+ * editors mark a stop Done directly (never a proposal); suggesters, raters,
+ * viewers and link guests are refused (never a proposal) and nothing changes. The stamp is the
  * database's clock, by the marker, with no activity line; the trip's version
  * moves (the live event). Undo clears it; the Undo of an Undo puts the earlier
  * stamp back (never a later one, except on a test stack: a demo's
@@ -237,8 +237,8 @@ afterAll(async () => {
 });
 
 describe("setItemDone", () => {
-	it("owners, editors and suggesters mark it directly: the database's clock, by them, no activity line, no proposal", async () => {
-		for (const u of [owner, maya, sam]) {
+	it("owners and editors mark it directly: the database's clock, by them, no activity line, no proposal", async () => {
+		for (const u of [owner, maya]) {
 			const before = await dbNow();
 			const [v0, a0, p0] = [
 				await version(),
@@ -266,10 +266,11 @@ describe("setItemDone", () => {
 		expect(item?.doneAt).toBe((await doneMark(sky))?.at?.toISOString());
 	});
 
-	it("raters and viewers are refused, and the mark stays as it was; strangers don't see the trip", async () => {
+	it("suggesters, raters and viewers are refused (no proposal either), and the mark stays as it was; strangers don't see the trip", async () => {
 		await mark(owner, sky, true);
 		const was = await doneMark(sky);
-		for (const u of [rae, vic]) {
+		const p0 = await proposals();
+		for (const u of [sam, rae, vic]) {
 			expect(await codeOf(mark(u, sky, false))).toBe("FORBIDDEN");
 			expect(await codeOf(mark(u, sky, true))).toBe("FORBIDDEN");
 		}
@@ -277,6 +278,7 @@ describe("setItemDone", () => {
 			"NOT_FOUND",
 		);
 		expect(await doneMark(sky)).toEqual(was);
+		expect(await proposals()).toBe(p0);
 	});
 
 	it("link guests are refused, even on a Can edit link", async () => {
@@ -291,8 +293,8 @@ describe("setItemDone", () => {
 	});
 
 	it("Undo clears it", async () => {
-		await mark(sam, sky, true);
-		const r = await mark(sam, sky, false);
+		await mark(maya, sky, true);
+		const r = await mark(maya, sky, false);
 		expect(r.doneAt).toBeNull();
 		expect(await doneMark(sky)).toEqual({ at: null, by: null });
 	});
