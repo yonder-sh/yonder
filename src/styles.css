@@ -271,14 +271,18 @@
 	}
 	/*
 	 * The phone trip screen is an app screen: the page itself never scrolls or
-	 * rubber-bands, so dragging the sheet moves only the sheet (MobileWorkspace
-	 * sets the class while it's open).
+	 * rubber-bands, only its lists do (MobileWorkspace sets the class while
+	 * it's open).
 	 */
 	html.app-locked,
 	html.app-locked body {
 		height: 100%;
 		overflow: hidden;
 		overscroll-behavior: none;
+	}
+	/* A modal turns the page's pointer events off: its toasts (Undo) stay clickable. */
+	[data-sonner-toast] {
+		pointer-events: auto;
 	}
 	/* 2px ring with a 2px offset on every focusable element (§13). */
 	:focus-visible {

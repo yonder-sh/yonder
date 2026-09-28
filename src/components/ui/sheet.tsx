@@ -1,6 +1,7 @@
 import { XIcon } from "lucide-react";
 import { Dialog as SheetPrimitive } from "radix-ui";
 import type * as React from "react";
+import { keepToastClicks } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 
 function Sheet({ ...props }: React.ComponentProps<typeof SheetPrimitive.Root>) {
@@ -46,6 +47,7 @@ function SheetContent({
 	children,
 	side = "right",
 	showCloseButton = true,
+	onInteractOutside,
 	...props
 }: React.ComponentProps<typeof SheetPrimitive.Content> & {
 	side?: "top" | "right" | "bottom" | "left";
@@ -56,6 +58,10 @@ function SheetContent({
 			<SheetOverlay />
 			<SheetPrimitive.Content
 				data-slot="sheet-content"
+				onInteractOutside={(e) => {
+					keepToastClicks(e);
+					onInteractOutside?.(e);
+				}}
 				className={cn(
 					"fixed z-50 flex flex-col gap-4 bg-background shadow-lg transition ease-in-out data-[state=closed]:animate-out data-[state=closed]:duration-300 data-[state=open]:animate-in data-[state=open]:duration-500",
 					side === "right" &&
