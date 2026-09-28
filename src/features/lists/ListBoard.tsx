@@ -30,6 +30,7 @@ import { type DragData, useDnd } from "@/components/common/dnd/workspace-dnd";
 import { useEditGuard } from "@/components/common/edit-guard";
 import { EmptyState } from "@/components/common/empty-state";
 import { assignableMembers, resolveMember } from "@/components/common/member";
+import { FilterPill } from "@/components/kit";
 import { Button } from "@/components/ui/button";
 import {
 	Select,
@@ -399,21 +400,15 @@ export function ListBoard(props: BoardProps) {
 				) : null}
 				<div className="ml-auto flex flex-wrap items-center gap-1.5">
 					{near ? (
-						<button
-							type="button"
+						<FilterPill
+							size="sm"
+							icon={MapPin}
+							pressed={nearActive}
+							onPressedChange={setNearOn}
 							data-testid={LISTS_TESTID.near}
-							aria-pressed={nearActive}
-							onClick={() => setNearOn((v) => !v)}
-							className={cn(
-								"inline-flex h-7 items-center gap-1 rounded-full border px-2.5 text-xs transition-colors",
-								nearActive
-									? "border-foreground bg-foreground text-background"
-									: "text-muted-foreground hover:text-foreground",
-							)}
 						>
-							<MapPin className="size-3.5" strokeWidth={1.5} />
 							Near {ix.node(near)?.name}
-						</button>
+						</FilterPill>
 					) : null}
 					<PersonFilter who={who} setWho={setWho} />
 					<Select value={view} onValueChange={(v) => setView(v as ListsView)}>

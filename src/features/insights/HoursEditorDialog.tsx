@@ -16,7 +16,7 @@ import { toast } from "sonner";
 import { useEditGuard } from "@/components/common/edit-guard";
 import { undoToast } from "@/components/common/undo-toast";
 import { useTripMutation } from "@/components/common/use-trip-mutation";
-import { DateInput, Eyebrow, Segmented } from "@/components/kit";
+import { DateInput, Eyebrow, FilterPill, Segmented } from "@/components/kit";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -307,28 +307,22 @@ function EditorBody({
 								{WEEK_ORDER.map((day) => {
 									const on = draft.closedDays.includes(day);
 									return (
-										<button
+										<FilterPill
 											key={day}
-											type="button"
-											aria-pressed={on}
+											pressed={on}
 											data-testid={INSIGHTS_TESTID.hoursEditorClosedDay}
 											data-day={day}
-											onClick={() =>
+											onPressedChange={(closed) =>
 												update((d) => {
-													d.closedDays = on
-														? d.closedDays.filter((x) => x !== day)
-														: [...d.closedDays, day];
+													d.closedDays = closed
+														? [...d.closedDays, day]
+														: d.closedDays.filter((x) => x !== day);
 												})
 											}
-											className={cn(
-												"h-8 min-w-11 rounded-full border px-3 text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
-												on
-													? "border-foreground bg-foreground text-background"
-													: "border-input text-muted-foreground hover:text-foreground",
-											)}
+											className="min-w-11 justify-center"
 										>
 											{WEEKDAY_SHORT[day]}
-										</button>
+										</FilterPill>
 									);
 								})}
 							</div>

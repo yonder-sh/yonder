@@ -2,11 +2,12 @@
  * The Review step's header (docs/PLACES.md §1; the flow, owner 2026-09-25):
  * the view switch (Table · Board · Map), Group by,
  * Sort, search and the shared filter; under it the status pills (All ·
- * Shortlist · Ideas · Scheduled · Dropped · Talk about it) and per-member
- * rating progress ("Audrey 42/78 · rate her unrated · Remind"). Everything
- * but the search lives in the URL and is shared by every view; the settings
- * hold the shortlist's level. Rate and Schedule are the tab's steps
- * (`PlacesSteps`); "Add a place" and wide mode sit on the steps' bar.
+ * Shortlist · Ideas · On a day · Not going · Disagreements, the kit's
+ * FilterPill) and per-member rating progress ("Audrey 42/78 · rate her
+ * unrated · Remind"). Everything but the search lives in the URL and is
+ * shared by every view; the settings hold the shortlist's level. Rate and
+ * Schedule are the tab's steps (`PlacesSteps`); "Add a place" and wide mode
+ * sit on the steps' bar.
  */
 
 import {
@@ -18,10 +19,9 @@ import {
 	Settings2,
 	Sheet,
 } from "lucide-react";
-import type { ReactNode } from "react";
 import { MemberAvatar } from "@/components/common/member";
 import { useTripMutation } from "@/components/common/use-trip-mutation";
-import { Segmented } from "@/components/kit";
+import { FilterPill, Segmented } from "@/components/kit";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -196,41 +196,6 @@ const PILLS: { k: PlaceStatus | null; label: string }[] = [
 	{ k: "scheduled", label: "On a day" },
 	{ k: "dropped", label: "Not going" },
 ];
-
-function Pill({
-	on,
-	onClick,
-	children,
-	testid,
-	value,
-	title,
-}: {
-	on: boolean;
-	onClick: () => void;
-	children: ReactNode;
-	testid: string;
-	value?: string;
-	title?: string;
-}) {
-	return (
-		<button
-			type="button"
-			aria-pressed={on}
-			data-testid={testid}
-			data-value={value}
-			title={title}
-			onClick={onClick}
-			className={cn(
-				"inline-flex h-7 shrink-0 cursor-pointer items-center gap-1.5 rounded-full border px-3 text-meta font-medium whitespace-nowrap transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring",
-				on
-					? "border-primary bg-primary text-primary-foreground"
-					: "bg-background text-foreground hover:bg-accent",
-			)}
-		>
-			{children}
-		</button>
-	);
-}
 
 /**
  * "Shortlist a place when the group averages: Want · Between Want and
@@ -438,28 +403,28 @@ export function PlacesToolbar({
 			<div className="flex items-center gap-x-3 gap-y-2 max-md:flex-col max-md:items-stretch md:flex-wrap">
 				<div className="-mx-4 flex items-center gap-1.5 overflow-x-auto px-4 [scrollbar-width:none] md:mx-0 md:px-0">
 					{PILLS.map(({ k, label }) => (
-						<Pill
+						<FilterPill
 							key={label}
-							on={state.status === k}
-							value={k ?? "all"}
-							testid={PLACES_TAB_TESTID.statusPill}
+							pressed={state.status === k}
+							count={k === null ? counts.all : counts[k]}
+							data-value={k ?? "all"}
+							data-testid={PLACES_TAB_TESTID.statusPill}
 							onClick={() => nav.setPlaces({ pst: k ?? undefined })}
 						>
 							{label}
-							<span className="text-xs opacity-75 tnum">
-								{k === null ? counts.all : counts[k]}
-							</span>
-						</Pill>
+						</FilterPill>
 					))}
-					<Pill
-						on={state.talk}
-						testid={PLACES_TAB_TESTID.talkPill}
+					<FilterPill
+						pressed={state.talk}
+						count={counts.talk}
+						data-testid={PLACES_TAB_TESTID.talkPill}
 						title="Disagreements: someone is keen, someone isn't"
-						onClick={() => nav.setPlaces({ talk: state.talk ? undefined : 1 })}
+						onPressedChange={(on) =>
+							nav.setPlaces({ talk: on ? 1 : undefined })
+						}
 					>
 						Disagreements
-						<span className="text-xs opacity-75 tnum">{counts.talk}</span>
-					</Pill>
+					</FilterPill>
 				</div>
 				<RatingProgress data={data} />
 			</div>

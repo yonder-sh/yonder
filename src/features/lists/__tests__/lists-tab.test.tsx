@@ -1,7 +1,8 @@
 /**
  * The Lists page (One Yonder D12): the four tabs and their counts, Bookings
  * (its groups, a booked stop, a booking's details, Mark booked, the
- * booking reference, Add a booking) and Packing's two groups.
+ * booking reference, Add a booking), Packing's two groups and Shopping's
+ * Near pill.
  */
 import { QueryClient } from "@tanstack/react-query";
 import { fireEvent, screen, waitFor, within } from "@testing-library/react";
@@ -462,5 +463,33 @@ describe("Packing", () => {
 				{ id: ID(12), status: "done" },
 			]),
 		);
+	});
+});
+
+describe("Shopping", () => {
+	it("Near Shibuya is the kit's filter pill and narrows to shops in the area", async () => {
+		const user = userEvent.setup();
+		const hands = demo.N.hands as string;
+		mount({ list: "shopping", sel: `n.${hands}` }, [
+			row({
+				id: ID(14),
+				list: "shopping",
+				text: "Travel scissors",
+				target: { kind: "node", nodeId: hands },
+			}),
+		]);
+		const near = screen.getByTestId(L.near);
+		expect(near).toHaveTextContent("Near Shibuya");
+		expect(near).toHaveAttribute("data-slot", "filter-pill");
+		expect(near).toHaveAttribute("aria-pressed", "false");
+		const board = screen.getByTestId("rollup-shopping");
+		expect(board).toHaveTextContent("Petty knife");
+		await user.click(near);
+		expect(near).toHaveAttribute("aria-pressed", "true");
+		expect(board).toHaveTextContent("Travel scissors");
+		expect(board).not.toHaveTextContent("Petty knife");
+		await user.click(near);
+		expect(near).toHaveAttribute("aria-pressed", "false");
+		expect(board).toHaveTextContent("Petty knife");
 	});
 });

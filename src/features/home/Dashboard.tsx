@@ -17,7 +17,7 @@ import { toast } from "sonner";
 import { FlagEmoji } from "@/components/common/glyphs";
 import { AvatarStack } from "@/components/common/member";
 import { YonderMark } from "@/components/common/yonder-mark";
-import { Chip, EmptyState, Eyebrow } from "@/components/kit";
+import { Chip, EmptyState, Eyebrow, FilterPill } from "@/components/kit";
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -373,20 +373,14 @@ function Deadlines() {
 		<section data-testid={HOME_TESTID.deadlines}>
 			<div className="mb-3 flex items-center justify-between gap-3">
 				<Eyebrow as="h2">Upcoming deadlines</Eyebrow>
-				<button
-					type="button"
-					aria-pressed={everyone}
+				<FilterPill
+					size="sm"
+					pressed={everyone}
+					onPressedChange={setEveryone}
 					data-testid={HOME_TESTID.deadlinesEveryone}
-					onClick={() => setEveryone((v) => !v)}
-					className={cn(
-						"rounded-full border px-2.5 text-xs leading-6 transition-colors",
-						everyone
-							? "border-foreground/20 bg-accent text-accent-foreground"
-							: "text-muted-foreground hover:text-foreground",
-					)}
 				>
 					Everyone's
-				</button>
+				</FilterPill>
 			</div>
 			{!rows.length ? (
 				<p className="rounded-xl border bg-card px-4 py-3 text-sm text-muted-foreground">
