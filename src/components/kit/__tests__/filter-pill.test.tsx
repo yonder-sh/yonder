@@ -113,6 +113,8 @@ describe("FilterPill", () => {
 		);
 		expect(screen.getByTitle("Maya Chen")).toBeInTheDocument();
 		expect(screen.getByRole("button").querySelector("svg")).toBeNull();
+		// The label names her once; the avatar's initials stay out of it.
+		expect(screen.getByRole("button", { name: "Maya" })).toBeVisible();
 	});
 
 	it("finds a member's avatar in the trip", () => {
@@ -122,5 +124,6 @@ describe("FilterPill", () => {
 			</FilterPill>,
 		);
 		expect(screen.getByTitle("Audrey")).toBeInTheDocument();
+		expect(screen.getByRole("button", { name: "Audrey" })).toBeVisible();
 	});
 });

@@ -34,7 +34,7 @@ export function FilterPill({
 	/** Called with the flipped state on every click. */
 	onPressedChange?: (pressed: boolean) => void;
 	icon?: LucideIcon;
-	/** A person's avatar in front, instead of an icon. */
+	/** A person's avatar in front, instead of an icon (with no label, pass an aria-label). */
 	memberId?: string;
 	user?: AvatarPerson;
 	/** A count after the label ("Shortlist 12"). */
@@ -64,7 +64,15 @@ export function FilterPill({
 			)}
 		>
 			{avatar ? (
-				<MemberAvatar memberId={memberId} user={user} size={20} ring={false} />
+				// The label names the person; the avatar's initials would repeat it.
+				<span aria-hidden className="inline-flex shrink-0">
+					<MemberAvatar
+						memberId={memberId}
+						user={user}
+						size={20}
+						ring={false}
+					/>
+				</span>
 			) : Icon ? (
 				<Icon aria-hidden strokeWidth={1.75} />
 			) : null}
