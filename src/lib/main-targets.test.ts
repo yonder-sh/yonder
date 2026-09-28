@@ -4,7 +4,11 @@
  * every `/api/test/*` route runs first.
  */
 import { afterEach, describe, expect, it } from "vitest";
-import { resetEnv, testRouteGuard } from "@/server/env.server";
+import {
+	resetEnv,
+	testRouteGuard,
+	testStackEnabled,
+} from "@/server/env.server";
 import { assertIsolated, isolateTestEnv } from "@/test/isolation";
 import { databaseNameOf, mainTargets, portOf } from "./main-targets";
 
@@ -137,6 +141,33 @@ describe("testRouteGuard (every /api/test/* route)", () => {
 			expect(((await res.json()) as { error: string }).error).toBe(
 				"MAIN_STACK",
 			);
+		}
+	});
+});
+
+describe("testStackEnabled (a demo's `asOf` Done kept as sent)", () => {
+	const saved = { ...process.env };
+	afterEach(() => {
+		process.env = { ...saved };
+		resetEnv();
+	});
+	const envWith = (vars: Record<string, string>) => {
+		process.env = { ...saved, NODE_ENV: "test", ...vars };
+		resetEnv();
+	};
+
+	it("only with test routes on an isolated local stack", () => {
+		envWith({ ...ISOLATED, ENABLE_TEST_ROUTES: "1" });
+		expect(testStackEnabled()).toBe(true);
+		for (const off of [
+			{ ...ISOLATED, ENABLE_TEST_ROUTES: "" },
+			{ ...ISOLATED, ENABLE_TEST_ROUTES: "1", APP_URL: "https://yonder.app" },
+			{ ...ISOLATED, ENABLE_TEST_ROUTES: "1", NODE_ENV: "production" },
+			{ ...MAIN, ENABLE_TEST_ROUTES: "1" },
+			{ ...ISOLATED, ENABLE_TEST_ROUTES: "1", S3_BUCKET: "" },
+		]) {
+			envWith(off);
+			expect(testStackEnabled()).toBe(false);
 		}
 	});
 });

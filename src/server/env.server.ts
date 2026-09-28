@@ -158,6 +158,14 @@ export function testRoutesEnabled(env: AppEnv = getEnv()): boolean {
 	return env.ENABLE_TEST_ROUTES && env.isLocal && !env.isProduction;
 }
 
+/** Test-only behaviour of a real route (a demo's `asOf` Done): test routes on, and never on the main stack. */
+export function testStackEnabled(
+	env: AppEnv = getEnv(),
+	raw: Record<string, string | undefined> = process.env,
+): boolean {
+	return testRoutesEnabled(env) && mainTargets(raw).length === 0;
+}
+
 /**
  * The first thing every `/api/test/*` handler does: a 404 when test routes
  * are off, a 403 when this server runs on the main stack (database `trip`,

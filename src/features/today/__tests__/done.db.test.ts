@@ -4,7 +4,7 @@
  * viewers and link guests are refused and nothing changes. The stamp is the
  * database's clock, by the marker, with no activity line; the trip's version
  * moves (the live event). Undo clears it; the Undo of an Undo puts the earlier
- * stamp back (never a later one, unless the test routes are on: a demo's
+ * stamp back (never a later one, except on a test stack: a demo's
  * `asOf` time). A stop in Ideas can't be Done, and a stop moved to another day
  * (or off a removed day) stops being Done.
  */
@@ -52,7 +52,7 @@ import { moveItem, setItemDone } from "@/functions/items.functions";
 import type { AuthUser } from "@/server/auth.server";
 import { errorCode } from "@/server/authz/errors";
 import { openTripLink } from "@/server/authz/share-links.server";
-import { resetEnv, testRoutesEnabled } from "@/server/env.server";
+import { resetEnv, testStackEnabled } from "@/server/env.server";
 import { cloneDemoTrip, type FixtureClone } from "@/server/fixture.server";
 import { loadGraphForServer } from "@/server/graph.server";
 import { closeQueues } from "@/server/live/jobs.server";
@@ -113,12 +113,19 @@ async function addMember(
 		values (${randomUUID()}, ${tripId}, ${u.id}, 'active', ${role}, 3, now())`);
 }
 
-/** Runs `fn` with the test routes on (ENABLE_TEST_ROUTES on a local APP_URL), as the e2e and screenshot envs run. */
-async function withTestRoutes<T>(fn: () => Promise<T>): Promise<T> {
-	const keys = ["ENABLE_TEST_ROUTES", "APP_URL"] as const;
+/** Runs `fn` with the test routes on (ENABLE_TEST_ROUTES on a local APP_URL), as the e2e and screenshot envs run; `vars` on top. */
+async function withTestRoutes<T>(
+	fn: () => Promise<T>,
+	vars: Record<string, string> = {},
+): Promise<T> {
+	const set = {
+		ENABLE_TEST_ROUTES: "1",
+		APP_URL: "http://localhost:5710",
+		...vars,
+	};
+	const keys = Object.keys(set);
 	const was = keys.map((k) => process.env[k]);
-	process.env.ENABLE_TEST_ROUTES = "1";
-	process.env.APP_URL = "http://localhost:3000";
+	Object.assign(process.env, set);
 	resetEnv();
 	try {
 		return await fn();
@@ -311,15 +318,27 @@ describe("setItemDone", () => {
 		);
 	});
 
-	it("a later stamp is held to now; with the test routes on (demos, e2e) a later `asOf` time is kept as sent", async () => {
+	it("a later stamp is held to now; on a test stack (demos, e2e) a later `asOf` time is kept as sent", async () => {
 		const later = "2099-10-03T00:30:00.000Z";
-		expect(testRoutesEnabled()).toBe(false);
+		resetEnv();
+		expect(testStackEnabled()).toBe(false);
 		const held = await mark(owner, sky, true, later);
 		expect(Date.parse(held.doneAt as string)).toBeLessThanOrEqual(
 			await dbNow(),
 		);
+		// Test routes on the main stack (the owner's real trips) never take one.
+		await withTestRoutes(
+			async () => {
+				expect(testStackEnabled()).toBe(false);
+				const main = await mark(owner, sky, true, later);
+				expect(Date.parse(main.doneAt as string)).toBeLessThanOrEqual(
+					await dbNow(),
+				);
+			},
+			{ S3_BUCKET: "trip-media" },
+		);
 		await withTestRoutes(async () => {
-			expect(testRoutesEnabled()).toBe(true);
+			expect(testStackEnabled()).toBe(true);
 			const kept = await mark(maya, sky, true, later, maya.id);
 			expect(kept.doneAt).toBe(later);
 			expect(await doneMark(sky)).toEqual({ at: new Date(later), by: maya.id });

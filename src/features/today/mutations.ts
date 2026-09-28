@@ -20,7 +20,7 @@ export type SetItemDoneVars = {
 	done: boolean;
 	/** Who marks it (a user id), for the optimistic write; with `at`, who marked it then. */
 	by: string;
-	/** A stamp (ISO): the Undo of an Undo, or the `?asOf` time; the server holds it to now outside test routes. */
+	/** A stamp (ISO): the Undo of an Undo, or the `?asOf` time; the server holds it to now off a test stack. */
 	at?: string;
 };
 

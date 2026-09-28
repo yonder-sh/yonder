@@ -726,6 +726,29 @@ describe("computeToday: following your pace after a Done", () => {
 		}
 	});
 
+	it("a Done from before the day counts from its planned end: before that the morning follows the plan", () => {
+		// Bic Camera (16:10–17:40) tapped the evening before.
+		const s = tokyoDay({ bic: done("21:30", "2027-10-04") });
+		const { v } = view(s, at("10:30"));
+		expect(v.done).toEqual([]);
+		expect(names(v.passed)).toEqual(["Cha no Ikedaya"]);
+		expect(v.current?.name).toBe("Nakano Broadway");
+		expect(v.pace).toBeNull();
+		const { v: after } = view(s, at("17:40"));
+		expect(names(after.done)).toEqual(["Bic Camera"]);
+		expect(t(after.done[0]?.doneAt as number)).toBe("17:40");
+		expect(after.pace).toEqual({ kind: "on_time", minutes: 0 });
+	});
+
+	it("a stamp at the day's midnight or at now is its own time", () => {
+		const s = tokyoDay({ cha: done("00:00"), broadway: done("10:30") });
+		const { v } = view(s, at("10:30"));
+		expect(t(v.done[0]?.doneAt as number)).toBe("00:00");
+		expect(t(v.done[1]?.doneAt as number)).toBe("10:30");
+		const { v: before } = view(s, at("10:29"));
+		expect(names(before.done)).toEqual(["Cha no Ikedaya"]);
+	});
+
 	it("a Done stamped after now isn't done yet: an earlier `asOf` shows the day as it was", () => {
 		const s = tokyoDay({ cha: done("09:50"), broadway: done("13:00") });
 		const { v } = view(s, at("09:30"));
@@ -1429,6 +1452,32 @@ describe("todayDayId", () => {
 		);
 		expect(t(v2.done[1]?.doneAt as number)).toBe("00:20");
 		expect(v2.ended).toBe(true);
+	});
+
+	it("a Done tapped past midnight while yesterday still ran is from before the day: done on plan", () => {
+		const s = scenario({
+			firstDate: DAY,
+			days: [
+				{ items: [{ k: "late", node: "itoya", pin: "23:30", min: 90 }] },
+				{
+					items: [
+						{
+							k: "next",
+							node: "sensoji",
+							min: 60,
+							done: done("00:40", "2027-10-06"),
+						},
+					],
+				},
+			],
+		});
+		const { schedule } = view(s, at("12:00", "2027-10-06"), undefined, "d2");
+		const end = schedule.items[s.I.next as string]?.end.getTime() as number;
+		const { v: early } = view(s, end - 60_000, undefined, "d2");
+		expect(early.done).toEqual([]);
+		expect(early.current?.name).toBe("Senso-ji");
+		const { v } = view(s, at("12:00", "2027-10-06"), undefined, "d2");
+		expect(v.done[0]?.doneAt).toBe(end);
 	});
 });
 
