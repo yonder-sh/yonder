@@ -70,6 +70,7 @@ import {
 } from "./cursors/presence-ui";
 import { SHEET_SNAPS, snapForFocus } from "./cursors/scroll-rules";
 import { FollowBar } from "./FollowBar";
+import { useFollowPause } from "./follow-pause";
 import { InboxBell } from "./InboxBell";
 import { InspectorBody } from "./InspectorBody";
 import { MapRegion } from "./MapRegion";
@@ -129,7 +130,12 @@ function MobileHeader() {
 					data-testid={SHELL_TESTID.mobileMapToggle}
 					aria-pressed={mapOpen}
 					aria-label={mapOpen ? "Show the list" : "Show the map"}
-					onClick={() => setMapOpen(!mapOpen)}
+					onClick={() => {
+						// Following: my own switch holds the view until Resume.
+						if (useUi.getState().following)
+							useFollowPause.getState().pauseSheet();
+						setMapOpen(!mapOpen);
+					}}
 					className="size-11 shrink-0"
 				>
 					{mapOpen ? (
@@ -408,14 +414,15 @@ export function MobileWorkspace() {
 	// Follow: the leader on their map (or their page) takes mine there too.
 	const following = useUi((s) => s.following);
 	const focus = useFollowedStore((s) => s.focus);
+	const held = useFollowPause((s) => s.sheet);
 	useEffect(() => {
-		if (!following || !focus) return;
+		if (!following || !focus || held) return;
 		useUi
 			.getState()
 			.setSheetSnap(
 				snapForFocus(focus, useUi.getState().sheetSnap, SHEET_SNAPS),
 			);
-	}, [following, focus]);
+	}, [following, focus, held]);
 	return (
 		<div className="relative flex h-svh flex-col overflow-hidden bg-background">
 			<MobileHeader />

@@ -6,9 +6,11 @@
 import { act, fireEvent, screen, within } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { useFollowedStore } from "@/lib/realtime/view-ui";
 import { TESTID } from "@/lib/testids";
 import { useUi } from "@/lib/workspace/ui-store";
 import { renderWithWorkspace } from "@/test/render-workspace";
+import { useFollowPause } from "./follow-pause";
 import { MobileWorkspace } from "./MobileWorkspace";
 import { SHELL_TESTID } from "./testids";
 
@@ -21,7 +23,13 @@ vi.mock("./MapRegion", () => ({
 	MapRegion: () => <div data-testid="map-stub" />,
 }));
 
-afterEach(() => act(() => useUi.getState().resetUi()));
+afterEach(() =>
+	act(() => {
+		useUi.getState().resetUi();
+		useFollowedStore.setState({ focus: null });
+		useFollowPause.setState({ scroll: false, sheet: false });
+	}),
+);
 
 describe("the phone", () => {
 	it("has Where in the header and the five tabs at the foot", () => {
@@ -57,5 +65,21 @@ describe("the phone", () => {
 		);
 		expect(screen.queryByTestId("map-stub")).toBeNull();
 		expect(ws().tab).toBe("lists");
+	});
+
+	it("follows the leader to the map or the page, and my own switch holds it until Resume", () => {
+		renderWithWorkspace(<MobileWorkspace />, { search: { tab: "plan" } });
+		act(() => useUi.getState().setFollowing("maya"));
+		act(() => useFollowedStore.setState({ focus: "map" }));
+		expect(screen.getByTestId("map-stub")).toBeInTheDocument();
+		fireEvent.click(screen.getByTestId(SHELL_TESTID.mobileMapToggle));
+		expect(useFollowPause.getState().sheet).toBe(true);
+		expect(screen.queryByTestId("map-stub")).toBeNull();
+		act(() => useFollowedStore.setState({ focus: "map" }));
+		act(() => useFollowedStore.setState({ focus: "panel" }));
+		act(() => useFollowedStore.setState({ focus: "map" }));
+		expect(screen.queryByTestId("map-stub")).toBeNull();
+		act(() => useFollowPause.getState().resume());
+		expect(screen.getByTestId("map-stub")).toBeInTheDocument();
 	});
 });

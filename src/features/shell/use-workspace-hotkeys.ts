@@ -2,7 +2,7 @@
  * Workspace keyboard shortcuts (DESIGN §13; the `?` sheet lists them): `[` /
  * `]` lens, the Esc chain, Enter zooms into the selected node, D selects the
  * selection's day, J / K step through the plan's stops, ⌘K opens the palette,
- * ⌘\ toggles the Outline, ⌘⇧\ the map, `?` shows the shortcuts. Ignored
+ * ⌘⇧\ toggles the map, `?` shows the shortcuts. Ignored
  * while typing in inputs (react-hotkeys-hook default), except ⌘K.
  */
 import { useCallback, useRef } from "react";
