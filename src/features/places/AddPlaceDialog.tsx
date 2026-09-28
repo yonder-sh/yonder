@@ -450,6 +450,9 @@ function Palette({
 		!peek.isError &&
 		(peekUrl === null || peek.isFetching);
 	const [linkFind, setLinkFind] = useState("");
+	// Another link: its own places again, not the last search.
+	// biome-ignore lint/correctness/useExhaustiveDependencies: reset on a new link only
+	useEffect(() => setLinkFind(""), [otherLink]);
 	const [linkParentPick, setLinkParentPick] = useState<
 		string | null | undefined
 	>(undefined);

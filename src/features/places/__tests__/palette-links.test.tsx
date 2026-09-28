@@ -287,6 +287,19 @@ describe("a pasted link in ⌘K (D10)", () => {
 		);
 	});
 
+	it("starts a new link without the last search", async () => {
+		open({ search: { sel: `n.${N.loft}` } as never });
+		paste(REEL);
+		const find = await screen.findByTestId(PLACES_TESTID.linkSearch);
+		fireEvent.change(find, { target: { value: "senso" } });
+		await waitFor(() => expect(rows()).toEqual([N.sensoji]));
+		paste("https://www.japan-guide.com/e/e3007.html");
+		await waitFor(() =>
+			expect(screen.getByTestId(PLACES_TESTID.linkSearch)).toHaveValue(""),
+		);
+		expect(rows()[0]).toBe(N.loft);
+	});
+
 	it("goes to the share page when it can't be added here", async () => {
 		open({ connection: "offline" });
 		paste(REEL);
