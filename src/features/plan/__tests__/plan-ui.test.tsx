@@ -130,13 +130,10 @@ describe("PlanTab", () => {
 		fireEvent.click(filter);
 		expect(ws().days).toEqual({ from: d2, to: d2 });
 		expect(screen.getAllByTestId(PLAN_TESTID.daySection)).toHaveLength(1);
-		expect(
-			screen
-				.getAllByTestId(PLAN_TESTID.fold)
-				.map((f) => f.getAttribute("data-reason")),
-		).toEqual(["before", "after"]);
+		// No folds for the days around it: the stepper and All days (One Yonder).
+		expect(screen.queryAllByTestId(PLAN_TESTID.fold)).toHaveLength(0);
 		expect(screen.getByTestId(PLAN_TESTID.rangeBar).textContent).toMatch(
-			/Show all/,
+			/All days/,
 		);
 		const shown = within(screen.getByTestId(PLAN_TESTID.dayHeader)).getByTestId(
 			PLAN_TESTID.dayFilter,
@@ -481,7 +478,7 @@ describe("I2 fixes", () => {
 		const tpe = cardOf(sc.I.tpe as string);
 		expect(within(tpe).getByTestId(TESTID.itemEnd).textContent).toBe("17:30");
 		expect(screen.getByTestId(PLAN_TESTID.daySummary).textContent).toMatch(
-			/ends 17:30/,
+			/^–17:30/,
 		);
 	});
 

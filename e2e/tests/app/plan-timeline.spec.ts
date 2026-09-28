@@ -364,8 +364,8 @@ test("day range, person filter, and a new person typed into the assignee picker"
 	await header.getByTestId(PLAN_TESTID.dayFilter).click();
 	await expect(page).toHaveURL(new RegExp(`days=${DAY.d2}`));
 	await expect(page.getByTestId(PLAN_TESTID.daySection)).toHaveCount(1);
-	await expect(page.locator(`[data-testid="${PLAN_TESTID.fold}"][data-reason="before"]`)).toBeVisible();
-	await page.getByTestId(PLAN_TESTID.rangeBar).getByRole("button", { name: "Show all" }).click();
+	await expect(page.getByTestId(PLAN_TESTID.rangeBar)).toContainText("Mon 4");
+	await page.getByTestId(PLAN_TESTID.rangeBar).getByRole("button", { name: "All days" }).click();
 	await expect(page.getByTestId(PLAN_TESTID.daySection).nth(2)).toBeVisible();
 
 	// Assign Hands to a brand-new person by typing the name (ADDENDUM §8).
@@ -384,13 +384,14 @@ test("day range, person filter, and a new person typed into the assignee picker"
 	// "Me": only my cards (QA TAG-01). Hands is Kenji's and nothing is mine,
 	// so the Plan says so (DESIGN §12) and "Show everyone" brings it all back.
 	await page.keyboard.press("Escape");
-	await page.getByTestId(PLAN_TESTID.whoFilter).getByRole("button", { name: "Me", exact: true }).click();
+	await page.getByTestId(PLAN_TESTID.whoFilter).click();
+	await page.getByRole("menuitem", { name: "Me", exact: true }).click();
 	await expect(card(page, I.hands as string)).toHaveCount(0);
 	await expect(page.getByTestId(TESTID.emptyState)).toContainText(/Nothing assigned to .+ here\./);
 	await page.getByRole("button", { name: "Show everyone" }).click();
 	await expect(card(page, I.hands as string)).toBeVisible();
 	// Kenji's filter: exactly Hands, under its day; the other cards of the day are counted.
-	await page.getByTestId(PLAN_TESTID.whoFilter).getByRole("button", { name: /Someone/ }).click();
+	await page.getByTestId(PLAN_TESTID.whoFilter).click();
 	await page.getByRole("menuitem", { name: /Kenji/ }).click();
 	await expect(page.getByTestId(TESTID.timelineItem)).toHaveCount(1);
 	await expect(card(page, I.hands as string)).toBeVisible();

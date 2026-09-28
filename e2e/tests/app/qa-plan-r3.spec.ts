@@ -92,10 +92,10 @@ test.beforeEach(async ({ page }, info) => {
 
 test("guard: a day that ends by boarding a night train or flight ends at the departure", async ({ page }) => {
 	for (const [date, end] of [
-		["2027-10-02", "ends 02:00"],
-		["2027-10-26", "ends 21:35"],
-		["2027-10-28", "ends 21:10"],
-		["2027-11-04", "ends 23:25"],
+		["2027-10-02", "–02:00"],
+		["2027-10-26", "–21:35"],
+		["2027-10-28", "–21:10"],
+		["2027-11-04", "–23:25"],
 	] as const) {
 		await openTrip(page, `/t/${TRIP}?days=${date}&lens=place`);
 		await expect(page.getByTestId("plan-day-header").first()).toContainText(end);

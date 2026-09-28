@@ -19,7 +19,7 @@
 import "./plan.css";
 import { useDndContext } from "@dnd-kit/core";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronsDownUp, ChevronsUpDown, Users } from "lucide-react";
+import { ChevronsDownUp, ChevronsUpDown } from "lucide-react";
 import {
 	type ReactNode,
 	useCallback,
@@ -32,27 +32,16 @@ import {
 import { toast } from "sonner";
 import { useDnd } from "@/components/common/dnd/workspace-dnd";
 import { EmptyState } from "@/components/common/empty-state";
-import {
-	assignableMembers,
-	MemberAvatar,
-	MemberName,
-	resolveMember,
-} from "@/components/common/member";
+import { resolveMember } from "@/components/common/member";
 import { Chip } from "@/components/kit";
 import { Button } from "@/components/ui/button";
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { useMoneyCounts } from "@/features/money/use-money-counts";
 import { IdeasBin } from "@/features/outline/IdeasBin";
 import { TabPurpose } from "@/features/shell/TabPurpose";
 import type { GraphIndex } from "@/lib/engine/graph-index";
 import { indexGraph } from "@/lib/engine/graph-index";
 import type { DayRange } from "@/lib/engine/types";
-import { formatDateRange, formatDuration, formatTime } from "@/lib/format";
+import { formatDuration, formatTime } from "@/lib/format";
 import { userPrefsQuery } from "@/lib/query/trip-queries";
 import { decodePlanFolds, encodePlanFolds } from "@/lib/realtime/view-protocol";
 import { useFollowedUi, usePublishViewUi } from "@/lib/realtime/view-ui";
@@ -63,6 +52,7 @@ import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { cardTone } from "./card-tone";
 import { DaySection } from "./DaySection";
 import { PlanSplit } from "./day-split/DaySplit";
+import { DayStepper, WhoMenu } from "./PlanToolbar";
 import {
 	DragDayContext,
 	type DropIndicator,
@@ -114,84 +104,6 @@ function toggle(
 }
 
 /** "Everyone · Me · Maya ▾" (members only; link guests are never listed). */
-function WhoFilter() {
-	const { graph, who, nav } = useWorkspace();
-	const me = graph.me.memberId;
-	const others = assignableMembers(graph.members).filter((m) => m.id !== me);
-	const other = who && who !== me ? others.find((m) => m.id === who) : null;
-	if (others.length === 0 && !me) return null;
-	const seg = (active: boolean) =>
-		cn(
-			"h-6 rounded-md px-2 text-xs font-medium transition-colors",
-			active
-				? "bg-background text-foreground shadow-xs"
-				: "text-muted-foreground hover:text-foreground",
-		);
-	return (
-		// biome-ignore lint/a11y/useSemanticElements: a segmented control, not a form fieldset
-		<div
-			data-testid={PLAN_TESTID.whoFilter}
-			role="group"
-			aria-label="Whose plan"
-			className="flex h-7 items-center gap-0.5 rounded-lg bg-muted p-0.5"
-		>
-			<button
-				type="button"
-				aria-pressed={!who}
-				className={seg(!who)}
-				onClick={() => nav.setWho(null)}
-			>
-				Everyone
-			</button>
-			{me ? (
-				<button
-					type="button"
-					aria-pressed={who === me}
-					className={seg(who === me)}
-					onClick={() => nav.setWho(me)}
-				>
-					Me
-				</button>
-			) : null}
-			{others.length ? (
-				<DropdownMenu>
-					<DropdownMenuTrigger asChild>
-						<button
-							type="button"
-							aria-pressed={!!other}
-							className={cn(seg(!!other), "flex items-center gap-1")}
-						>
-							{other ? (
-								<>
-									<MemberAvatar memberId={other.id} size={16} ring={false} />
-									<MemberName
-										memberId={other.id}
-										className="max-w-24 truncate"
-									/>
-								</>
-							) : (
-								<>
-									<Users className="size-3.5" strokeWidth={1.5} aria-hidden />{" "}
-									Someone
-								</>
-							)}
-							<span aria-hidden>▾</span>
-						</button>
-					</DropdownMenuTrigger>
-					<DropdownMenuContent align="start">
-						{others.map((m) => (
-							<DropdownMenuItem key={m.id} onSelect={() => nav.setWho(m.id)}>
-								<MemberAvatar memberId={m.id} size={16} />
-								<MemberName memberId={m.id} />
-							</DropdownMenuItem>
-						))}
-					</DropdownMenuContent>
-				</DropdownMenu>
-			) : null}
-		</div>
-	);
-}
-
 /**
  * Where a drop across days would land (a line before the card, or at the end
  * of the day); within one day the sortable animation shows it instead. Reads
@@ -514,31 +426,8 @@ function PlanTabBody() {
 					/>
 				);
 			case "days-fold":
-				if (e.reason !== "scope")
-					return (
-						<DaysFoldRow
-							key={e.key}
-							dayIds={e.dayIds}
-							reason={e.reason}
-							onClick={(ev) => {
-								const first = ix.day(e.dayIds[0])?.date;
-								const last = ix.day(e.dayIds.at(-1))?.date;
-								if (!days || !first || !last) return;
-								// Shift-click extends the range by the one day next to it
-								// (DESIGN §7.1: shift-click extends; the folded days have
-								// no header to shift-click).
-								if (ev.shiftKey) {
-									nav.extendDays(e.reason === "before" ? last : first);
-									return;
-								}
-								nav.setDays(
-									e.reason === "before"
-										? { from: first, to: days.to }
-										: { from: days.from, to: last },
-								);
-							}}
-						/>
-					);
+				// The days before and after the ones in view: the stepper and All days (One Yonder).
+				if (e.reason !== "scope") return null;
 				return (
 					<div key={e.key}>
 						<DaysFoldRow
@@ -613,47 +502,33 @@ function PlanTabBody() {
 						<PlanSplit
 							header={
 								<>
-									<WhoFilter />
-									{days ? (
-										<span
-											data-testid={PLAN_TESTID.rangeBar}
-											className="flex items-center gap-1 text-xs text-muted-foreground"
-										>
-											Showing{" "}
-											<span className="text-foreground tnum">
-												{formatDateRange(days.from, days.to)}
-											</span>{" "}
-											·
-											<button
-												type="button"
-												className="text-primary hover:underline"
-												onClick={() => nav.setDays(null)}
+									<DayStepper />
+									<span className="order-last ml-auto flex items-center gap-2">
+										{isCoarse(lens) && bandKeys.length > 1 ? (
+											<Button
+												variant="ghost"
+												size="xs"
+												className="text-muted-foreground"
+												onClick={() =>
+													setCollapsedBands(
+														allCollapsed ? new Set() : new Set(bandKeys),
+													)
+												}
 											>
-												Show all
-											</button>
-										</span>
-									) : null}
-									{isCoarse(lens) && bandKeys.length > 1 ? (
-										<Button
-											variant="ghost"
-											size="xs"
-											className="order-last ml-auto text-muted-foreground"
-											onClick={() =>
-												setCollapsedBands(
-													allCollapsed ? new Set() : new Set(bandKeys),
-												)
-											}
-										>
-											{allCollapsed ? (
-												<ChevronsUpDown className="size-3.5" />
-											) : (
-												<ChevronsDownUp className="size-3.5" />
-											)}
-											{allCollapsed ? "Expand all" : "Collapse all"}
-										</Button>
-									) : null}
+												{allCollapsed ? (
+													<ChevronsUpDown className="size-3.5" />
+												) : (
+													<ChevronsDownUp className="size-3.5" />
+												)}
+												{allCollapsed ? "Expand all" : "Collapse all"}
+											</Button>
+										) : null}
+										<WhoMenu />
+									</span>
 								</>
 							}
+							// A day in view: its stepper; the trip's days per city belong to All days.
+							summary={!days}
 							banner={<TripProposalBanner />}
 						/>
 						{whoEmpty && who ? (

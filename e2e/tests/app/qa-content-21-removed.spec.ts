@@ -87,7 +87,7 @@ test("TAG-04 / MENT-03 Kai removed: greyed former-member tag, plain-text mention
 	// The plan's person filter no longer offers him.
 	await d.page.goto("/t/asia-2027?tab=plan");
 	await expectLive(d.page);
-	await d.page.getByTestId(PLAN_TESTID.whoFilter).getByRole("button", { name: /Someone|Audrey|Maya/ }).last().click();
+	await d.page.getByTestId(PLAN_TESTID.whoFilter).click();
 	await d.page.waitForTimeout(300);
 	const opts = await d.page.locator("[role=menuitemradio],[role=menuitem],[role=option]").filter({ hasNotText: /Must|Want|rated|Sure/ }).allInnerTexts();
 	console.log("TAG-04 plan filter options", JSON.stringify(opts));

@@ -367,13 +367,19 @@ async function run(args: Args, t0: number): Promise<number> {
 	const envs = Array.from({ length: n }, (_, i) =>
 		fastEnv(SLOT * 10 + i + 1, source),
 	);
-	const busy = (
-		await Promise.all(
-			envs
-				.flatMap((e) => [Number(e.env.APP_PORT), e.collabPort])
-				.map(async (p) => ((await portInUse(p)) ? p : null)),
-		)
-	).filter((p) => p !== null);
+	const ports = envs.flatMap((e) => [Number(e.env.APP_PORT), e.collabPort]);
+	const busyNow = async () =>
+		(
+			await Promise.all(
+				ports.map(async (p) => ((await portInUse(p)) ? p : null)),
+			)
+		).filter((p) => p !== null);
+	// Envs stopped a moment ago (stopLeftovers) take a few seconds to let go.
+	let busy = await busyNow();
+	for (let i = 0; busy.length && i < 20; i++) {
+		await new Promise((r) => setTimeout(r, 500));
+		busy = await busyNow();
+	}
 	if (busy.length)
 		throw new Error(
 			`ports already in use: ${busy.join(", ")} (another e2e:fast run? see ${PIDS_FILE})`,

@@ -160,6 +160,11 @@ export function formatDayDate(
 }
 
 /** "5–7 Oct", "30 Sep – 2 Oct", "2 Oct – 5 Nov 2027" (with `{ year: true }`). */
+/** "Tue 5": a day next to its neighbours (the Plan's day stepper). */
+export function formatDayShort(date: string): string {
+	return formatDayDate(date).split(" ").slice(0, 2).join(" ");
+}
+
 export function formatDateRange(
 	from: string | null | undefined,
 	to: string | null | undefined,

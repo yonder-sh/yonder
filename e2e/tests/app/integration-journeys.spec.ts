@@ -313,11 +313,8 @@ test("J2 Asia 2027: zoom Japan → Tokyo → Shibuya, lens keys and Esc, Days 5�
 	await header(5).hover();
 	await header(5).getByTestId(PLAN_TESTID.dayFilter).click();
 	await expect(page).toHaveURL(new RegExp(`days=${d5}(&|$)`));
-	// The days after the range fold away; shift-click the fold adds Day 6.
-	await page
-		.locator(`[data-testid="${PLAN_TESTID.fold}"][data-reason="after"]`)
-		.first()
-		.click({ modifiers: ["Shift"] });
+	// Shift-click the stepper's › adds Day 6.
+	await page.getByTestId(PLAN_TESTID.rangeBar).getByRole("button", { name: "Next day" }).click({ modifiers: ["Shift"] });
 	await expect(page).toHaveURL(new RegExp(`days=${d5}\\.\\.${d6}`));
 	await expect(page.getByTestId(TESTID.dayRangeChip)).toBeVisible();
 	const ranged = await scopeState(page);

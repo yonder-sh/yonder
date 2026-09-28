@@ -17,9 +17,9 @@
 import { useQuery } from "@tanstack/react-query";
 import {
 	BedDouble,
-	ChevronDown,
 	EllipsisVertical,
 	ListFilter,
+	MapPin,
 	TriangleAlert,
 	Wallet,
 } from "lucide-react";
@@ -32,6 +32,7 @@ import { useEditGuard } from "@/components/common/edit-guard";
 import { TimeInput } from "@/components/common/time";
 import { TreePicker } from "@/components/common/tree-picker";
 import { useDraftField } from "@/components/common/use-draft-field";
+import { Chip, Eyebrow } from "@/components/kit";
 import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
@@ -261,14 +262,9 @@ function StartTime({ day }: { day: GraphDay }) {
 					disabled={guard.disabled}
 					title={guard.reason ?? "Day start"}
 					onClick={(e) => e.stopPropagation()}
-					className="inline-flex h-6 items-center gap-0.5 rounded-md px-1 text-xs text-foreground tnum hover:bg-accent disabled:cursor-default disabled:text-muted-foreground disabled:hover:bg-transparent"
+					className="-mx-1 inline-flex h-6 items-center rounded-md px-1 text-foreground tnum decoration-dotted underline-offset-4 hover:bg-accent hover:underline disabled:cursor-default disabled:text-muted-foreground disabled:hover:bg-transparent disabled:hover:no-underline"
 				>
 					{day.startTime}
-					<ChevronDown
-						className="size-3 text-muted-foreground"
-						strokeWidth={1.5}
-						aria-hidden
-					/>
 				</button>
 			</PopoverTrigger>
 			{open ? (
@@ -381,13 +377,12 @@ export function StayPicker({
 }
 
 /** The inline day title (`useDraftField`, so a peer's change never clobbers a draft). */
+/** Renaming the day, in place of its title. */
 function DayTitle({
 	day,
-	editing,
 	setEditing,
 }: {
 	day: GraphDay;
-	editing: boolean;
 	setEditing: (v: boolean) => void;
 }) {
 	const actions = usePlanActions();
@@ -402,15 +397,6 @@ function DayTitle({
 				expectedUpdatedAt,
 			}),
 	});
-	if (!editing)
-		return day.title ? (
-			<span
-				data-testid={PLAN_TESTID.dayTitle}
-				className="truncate text-meta text-muted-foreground"
-			>
-				{day.title}
-			</span>
-		) : null;
 	return (
 		<Input
 			autoFocus
@@ -433,7 +419,7 @@ function DayTitle({
 			placeholder="A title for the day"
 			aria-label="Day title"
 			maxLength={200}
-			className="h-7 w-56 max-w-full text-meta"
+			className="h-8 w-72 max-w-full text-lg font-semibold"
 		/>
 	);
 }
@@ -745,29 +731,23 @@ export function DayHeader({
 					marks.length > 0 && "border-b-dashed",
 				)}
 			>
-				{/* QA A11Y-01: the header holds its own buttons (date, filter, start,
+				{/* QA A11Y-01: the header holds its own buttons (title, filter, start,
 				    stay, issues, ⋯), so it is no role=button. FB-08: the empty
 				    header is not clickable at all (the owner clicks there to
-				    dismiss menus); the date selects the day. */}
-				<div className="flex min-h-12 flex-col justify-center gap-0.5 px-4 py-1.5 has-[[data-day-main]:focus-visible]:ring-2 has-[[data-day-main]:focus-visible]:ring-ring has-[[data-day-main]:focus-visible]:ring-inset">
-					<div className="flex min-w-0 items-center gap-x-2">
-						<h3 className="shrink-0 font-display text-lg leading-6 font-semibold whitespace-nowrap">
-							<button
-								type="button"
-								data-day-main=""
-								aria-label={`${formatDayDate(day.date)}, Day ${ix.dayNumber(day.id)}${focused ? " (selected)" : ""}`}
-								title="Show this day's overview"
-								onClick={() => nav.select({ kind: "day", id: day.id })}
-								className="cursor-pointer rounded-sm outline-none"
-							>
-								{formatDayDate(day.date)}
-							</button>
-						</h3>
-						<span className="min-w-0 truncate text-meta text-muted-foreground">
-							Day {ix.dayNumber(day.id)}
-							{city ? ` · ${city}` : ""}
+				    dismiss menus); the title selects the day. One Yonder (D03):
+				    the date as an eyebrow, the day's title large, one stats line. */}
+				<div className="flex flex-col gap-0.5 px-4 pt-2.5 pb-2 has-[[data-day-main]:focus-visible]:ring-2 has-[[data-day-main]:focus-visible]:ring-ring has-[[data-day-main]:focus-visible]:ring-inset">
+					<div className="flex min-h-6 min-w-0 items-center gap-2">
+						<Eyebrow as="p" className="min-w-0 truncate">
+							Day {ix.dayNumber(day.id)} · {formatDayDate(day.date)}
 							{zone ? ` · ${zone}` : ""}
-						</span>
+						</Eyebrow>
+						{day.title && city ? (
+							<Chip size="sm" className="shrink-0">
+								<MapPin aria-hidden />
+								{city}
+							</Chip>
+						) : null}
 						<span className="ml-auto flex shrink-0 items-center gap-1.5">
 							<IssuesChip dayId={day.id} />
 							<DayFilterButton day={day} />
@@ -779,29 +759,48 @@ export function DayHeader({
 							/>
 						</span>
 					</div>
-					{day.title || renaming ? (
+					{renaming ? (
 						<div className="flex min-w-0">
-							<DayTitle day={day} editing={renaming} setEditing={setRenaming} />
+							<DayTitle day={day} setEditing={setRenaming} />
 						</div>
-					) : null}
-					<div className="flex min-w-0 flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
+					) : (
+						<h3 className="min-w-0 font-display text-xl leading-7 font-semibold">
+							<button
+								type="button"
+								data-day-main=""
+								aria-label={`${formatDayDate(day.date)}, Day ${ix.dayNumber(day.id)}${focused ? " (selected)" : ""}`}
+								title="Show this day's overview"
+								onClick={() => nav.select({ kind: "day", id: day.id })}
+								className="block max-w-full cursor-pointer truncate rounded-sm text-left outline-none"
+							>
+								{day.title ? (
+									<span data-testid={PLAN_TESTID.dayTitle}>{day.title}</span>
+								) : (
+									(city ?? `Day ${ix.dayNumber(day.id)}`)
+								)}
+							</button>
+						</h3>
+					)}
+					<div className="flex min-w-0 flex-wrap items-center gap-x-1 text-meta text-muted-foreground">
 						<StartTime day={day} />
-						{day.nightNodeId || stayOpen ? (
-							<StayPicker
-								day={day}
-								open={stayOpen}
-								onOpenChange={setStayOpen}
-							/>
-						) : null}
-						<DaySun dayId={day.id} compact={narrow} />
 						{sd && hasItems ? (
 							<span
 								data-testid={PLAN_TESTID.daySummary}
-								className="ml-auto min-w-0 truncate"
+								className="min-w-0 truncate"
 							>
 								<Summary dayId={day.id} estimate={estimate} />
 							</span>
 						) : null}
+						<span className="ml-auto flex min-w-0 items-center gap-x-2">
+							{day.nightNodeId || stayOpen ? (
+								<StayPicker
+									day={day}
+									open={stayOpen}
+									onOpenChange={setStayOpen}
+								/>
+							) : null}
+							<DaySun dayId={day.id} compact={narrow} />
+						</span>
 					</div>
 				</div>
 			</header>
@@ -884,7 +883,7 @@ export function DayHeaderLite({ day, copy }: { day: GraphDay; copy?: string }) {
 	);
 }
 
-/** "Activities 13h · Travel 1h20 · ends 23:35" (+ "· 11.3 km on foot · 3 rides" when wide). */
+/** "–23:35 · 9 stops · 55m travel · 40m free" after the start (+ "· 11.3 km on foot · 3 rides" when wide). */
 function Summary({ dayId, estimate }: { dayId: string; estimate: boolean }) {
 	const { schedule, ix } = useWorkspace();
 	const sd = schedule.days[dayId];
@@ -893,24 +892,33 @@ function Summary({ dayId, estimate }: { dayId: string; estimate: boolean }) {
 	// flies Hanoi → Taipei ends at 19:00 CST, not 18:00 ICT); a day that
 	// leaves on a flight or night train ends with its arrival (QA VIS2-06).
 	const end = dayEnd(ix, schedule, dayId);
+	const stops = ix.itemsByDay.get(dayId)?.length ?? 0;
 	return (
 		<>
-			Activities{" "}
 			<span className="tnum">
-				{formatDuration(sd.activitiesMin, { compact: true })}
-			</span>{" "}
-			· Travel{" "}
-			<span className="tnum">
-				{estimate ? "~" : ""}
-				{formatDuration(sd.travelMin, { compact: true })}
-			</span>
-			{estimate ? " est." : ""} · ends{" "}
-			<span className="tnum">
-				{formatTime(end?.at ?? sd.end, end?.tz ?? sd.tz)}
+				–{formatTime(end?.at ?? sd.end, end?.tz ?? sd.tz)}
 				{end && end.plusDays > 0 ? (
-					<sup className="text-[9px]">+{end.plusDays}</sup>
+					<sup className="text-2xs">+{end.plusDays}</sup>
 				) : null}
 			</span>
+			{" · "}
+			<span className="tnum">{stops}</span> {stops === 1 ? "stop" : "stops"}
+			{sd.travelMin > 0 ? (
+				<>
+					{" · "}
+					<span className="tnum">
+						{estimate ? "~" : ""}
+						{formatDuration(sd.travelMin)}
+					</span>{" "}
+					travel{estimate ? " est." : ""}
+				</>
+			) : null}
+			{sd.freeMin > 0 ? (
+				<>
+					{" · "}
+					<span className="tnum">{formatDuration(sd.freeMin)}</span> free
+				</>
+			) : null}
 			{sd.walkKm >= 0.1 ? (
 				<span className="hidden @2xl:inline">
 					{" "}

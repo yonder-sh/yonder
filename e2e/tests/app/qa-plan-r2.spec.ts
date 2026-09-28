@@ -153,8 +153,8 @@ test("DEFECT (F schedule / WP-Plan): a day that ends by boarding a night train d
 	// Tue 26 Oct: Board SP3 09:00 (0m), SP3 dep 21:35 → 05:30+1. Same on 2 Oct (ends 00:00), 28 Oct, 4 Nov.
 	await openTrip(page, `/t/${TRIP}?days=2027-10-26&lens=place`);
 	const header = page.getByTestId("plan-day-header").first();
-	await expect(header).toContainText("Travel 8h05");
-	await expect(header).not.toContainText("ends 09:00");
+	await expect(header).toContainText("8h 5m travel");
+	await expect(header).not.toContainText("–09:00");
 });
 
 test("DEFECT (WP-Map): known flights draw solid map edges (dashes only for proposals and estimates)", async ({ page }) => {

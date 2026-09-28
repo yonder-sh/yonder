@@ -173,8 +173,8 @@ test("VIS2-06 / PLAN-R2-13: the night-train day ends when SP3 leaves; the carry 
 	await openTrip(page, `/t/${TRIP}?days=2027-10-26&lens=place`);
 	const header = page.getByTestId(PLAN_TESTID.dayHeader).first();
 	await expect(header).toContainText("Tue 26 Oct");
-	await expect(header).not.toContainText("ends 09:00");
-	await expect(header).toContainText("ends 21:35");
+	await expect(header).not.toContainText("–09:00");
+	await expect(header).toContainText("–21:35");
 	const carry = page.getByTestId(PLAN_TESTID.ghost).filter({ hasText: "SP3" }).first();
 	await expect(carry).toContainText(/SP3 7h55/);
 	await expect(carry).not.toContainText("8h05");
@@ -184,7 +184,7 @@ test("VIS2-06 / PLAN-R2-13: the NH 9 day ends at take-off; the carry row says NH
 	await openTrip(page, `/t/${TRIP}?days=2027-10-02&lens=place`);
 	const header = page.getByTestId(PLAN_TESTID.dayHeader).first();
 	await expect(header).toContainText("Sat 2 Oct");
-	await expect(header).not.toContainText(/ends 00:00/);
+	await expect(header).not.toContainText(/–00:00/);
 	const carry = page.getByTestId(PLAN_TESTID.ghost).filter({ hasText: "NH 9" }).first();
 	await expect(carry).toContainText(/NH 9 14h/);
 	await expect(carry).not.toContainText("16h");

@@ -162,8 +162,8 @@ describe("day summaries", () => {
 		});
 		const summary = screen.getByTestId(PLAN_TESTID.daySummary);
 		// Itoya ends at 13:00; SP3 leaves at 21:35.
-		expect(summary.textContent).toMatch(/ends 21:35/);
-		expect(summary.textContent).not.toMatch(/ends 13:00/);
+		expect(summary.textContent).toMatch(/^–21:35/);
+		expect(summary.textContent).not.toMatch(/13:00/);
 	});
 
 	it("VIS2-06: the day Overview says the same", () => {

@@ -662,9 +662,12 @@ export function PlanSplit({
 	header,
 	banner,
 	fallback = null,
+	summary = true,
 	className,
 }: {
 	header?: ReactNode;
+	/** The days-per-city line and its Change panel (not with a day in view). */
+	summary?: boolean;
 	/** Between the header row and the panel. */
 	banner?: ReactNode;
 	fallback?: ReactNode;
@@ -679,13 +682,14 @@ export function PlanSplit({
 	});
 	const cities = info.cities.length > 0;
 	const line = cities && info.hasDays;
+	const shown = line && summary;
 	const current = useMemo(() => runsOf(info.current).entries, [info.current]);
 	return (
 		<>
-			{header || line ? (
+			{header || shown ? (
 				<div className="flex min-h-10 flex-wrap items-center gap-2 px-4 py-1.5">
 					{header}
-					{line ? (
+					{shown ? (
 						<DaysLine
 							info={info}
 							onChange={access.canEdit && !open ? () => setOpen(true) : null}
@@ -697,7 +701,7 @@ export function PlanSplit({
 			{!cities ? (
 				fallback
 			) : line ? (
-				open ? (
+				open && summary ? (
 					<div className={cn("px-4 pb-4", className)}>
 						<ChangePanel
 							info={info}

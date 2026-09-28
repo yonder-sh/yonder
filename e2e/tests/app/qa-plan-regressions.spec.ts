@@ -114,7 +114,7 @@ test("DEFECT TZ-04 (WP-Plan): a day that changes zone ends in the last stop's lo
 	await openTrip(page, `/t/${TRIP}?days=2027-10-31&lens=place`);
 	const tpe = page.getByTestId("timeline-item").filter({ hasText: "TPE" }).last();
 	await expect(tpe.getByTestId("item-end")).toHaveText("18:00");
-	await expect(page.getByTestId("plan-day-header").first()).toContainText("ends 18:00");
+	await expect(page.getByTestId("plan-day-header").first()).toContainText("–18:00");
 });
 
 test("DEFECT HIER-11 (WP-Places): 'daan' finds Da'an District in the palette", async ({ page }) => {
