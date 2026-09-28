@@ -73,14 +73,16 @@ export function PlacesSteps({
 								title={`${STEP_LABEL[s]} · ${counts[s]}`}
 								onClick={() => onStep(s)}
 								className={cn(
-									"relative flex min-w-0 flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-md px-3 text-sm font-medium whitespace-nowrap outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring",
+									"relative flex min-w-0 flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-md text-sm font-medium whitespace-nowrap outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring",
+									phone ? "px-1.5" : "px-3",
 									on
 										? "bg-background text-foreground shadow-xs"
 										: "text-muted-foreground hover:text-foreground",
 								)}
 							>
 								<span className="truncate">{STEP_LABEL[s]}</span>
-								{badges[s] ? (
+								{/* A phone's 390px keeps only the words (the counts are in the title). */}
+								{badges[s] && !phone ? (
 									<span
 										data-testid={PLACES_TAB_TESTID.stepCount}
 										className={cn(
