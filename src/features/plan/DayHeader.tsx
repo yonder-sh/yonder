@@ -764,22 +764,26 @@ export function DayHeader({
 							<DayTitle day={day} setEditing={setRenaming} />
 						</div>
 					) : (
-						<h3 className="min-w-0 font-display text-xl leading-7 font-semibold">
-							<button
-								type="button"
-								data-day-main=""
-								aria-label={`${formatDayDate(day.date)}, Day ${ix.dayNumber(day.id)}${focused ? " (selected)" : ""}`}
-								title="Show this day's overview"
-								onClick={() => nav.select({ kind: "day", id: day.id })}
-								className="block max-w-full cursor-pointer truncate rounded-sm text-left outline-none"
-							>
-								{day.title ? (
-									<span data-testid={PLAN_TESTID.dayTitle}>{day.title}</span>
-								) : (
-									(city ?? `Day ${ix.dayNumber(day.id)}`)
-								)}
-							</button>
-						</h3>
+						// A row, so the heading is as wide as its title (FB-08: the rest
+						// of the header selects nothing).
+						<div className="flex min-w-0">
+							<h3 className="min-w-0 font-display text-xl leading-7 font-semibold">
+								<button
+									type="button"
+									data-day-main=""
+									aria-label={`${formatDayDate(day.date)}, Day ${ix.dayNumber(day.id)}${focused ? " (selected)" : ""}`}
+									title="Show this day's overview"
+									onClick={() => nav.select({ kind: "day", id: day.id })}
+									className="block max-w-full cursor-pointer truncate rounded-sm text-left outline-none"
+								>
+									{day.title ? (
+										<span data-testid={PLAN_TESTID.dayTitle}>{day.title}</span>
+									) : (
+										(city ?? `Day ${ix.dayNumber(day.id)}`)
+									)}
+								</button>
+							</h3>
+						</div>
 					)}
 					<div className="flex min-w-0 flex-wrap items-center gap-x-2 text-meta text-muted-foreground">
 						{/* "09:00–23:35 · …": the start is a button, the rest reads on from it. */}
