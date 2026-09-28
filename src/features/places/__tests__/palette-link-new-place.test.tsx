@@ -19,6 +19,8 @@ const calls = vi.hoisted(() => ({
 	paths: [] as { chain: unknown[]; ids: string[] }[],
 	items: [] as { dayId: string | null; nodeId: string }[],
 	path: (async () => ({ ok: true })) as () => Promise<unknown>,
+	/** The search result's preview (Moffu, unless a test says otherwise). */
+	preview: {} as Partial<PlacePreview>,
 	toasts: [] as string[],
 }));
 
@@ -45,6 +47,7 @@ vi.mock("../places.functions", () => ({
 			existing: [N.japan, N.tokyo, N.harajuku] as string[],
 			create: [],
 		},
+		...calls.preview,
 	}),
 	reverseGeocode: async () => {
 		throw new Error("no geocoding here");
@@ -105,6 +108,7 @@ beforeEach(() => {
 	calls.paths.length = 0;
 	calls.items.length = 0;
 	calls.path = async () => ({ ok: true });
+	calls.preview = {};
 	calls.toasts.length = 0;
 });
 afterEach(() => {
@@ -238,6 +242,57 @@ describe("New place… from a pasted link (D10)", () => {
 		expect(calls.toasts).toEqual(["Added Moffu"]);
 	});
 
+	it("Back on phones goes to the link's choices; Don't add keeps the box focused", async () => {
+		open({ splat: "japan/tokyo/shibuya" });
+		await toSearch();
+		fireEvent.click(screen.getByTestId(PLACES_TESTID.linkPendingBack));
+		await waitFor(() => expect(input()).toHaveValue(REEL));
+		expect(isOpen()).toBe(true);
+		expect(screen.queryByTestId(PLACES_TESTID.linkPendingBack)).toBeNull();
+
+		newPlace();
+		const drop = await screen.findByTestId(PLACES_TESTID.linkPendingDrop);
+		drop.focus();
+		fireEvent.click(drop);
+		expect(screen.queryByTestId(PLACES_TESTID.linkPending)).toBeNull();
+		expect(document.activeElement).toBe(input());
+	});
+
+	it("offers no Go to Day N while the link waits", async () => {
+		open({ splat: "japan/tokyo/shibuya" });
+		await toSearch();
+		type("Day 2");
+		await addOption(/Add “Day 2” as a new place/);
+		expect(screen.queryByRole("option", { name: /Go to Day 2/ })).toBeNull();
+	});
+
+	it("the preview's place already in the trip takes it", async () => {
+		// The search result is Shibuya Loft, already in the trip.
+		calls.preview = {
+			name: "Shibuya Loft",
+			category: "shopping",
+			lat: 35.6612,
+			lng: 139.6987,
+		};
+		open({ mode: "live", splat: "japan/tokyo/shibuya" });
+		await toSearch();
+		type("Loft");
+		fireEvent.click(await screen.findByTestId(PLACES_TESTID.paletteResult));
+		fireEvent.click(
+			await screen.findByRole("button", { name: "Add the link" }),
+		);
+		await waitFor(() =>
+			expect(calls.links).toMatchObject([
+				{ target: { nodeId: N.loft }, url: REEL },
+			]),
+		);
+		expect(calls.paths).toEqual([]);
+		await waitFor(() =>
+			expect(calls.toasts).toEqual(["Link added to Shibuya Loft"]),
+		);
+		expect(isOpen()).toBe(false);
+	});
+
 	it("a place already in the trip takes it", async () => {
 		open({ splat: "japan/tokyo/shibuya" });
 		await toSearch();
@@ -262,6 +317,33 @@ describe("opened from a day", () => {
 		open({ search: { sel: `n.${N.loft}` } as never }, day);
 		type(REEL);
 		fireEvent.click(await screen.findByTestId(PLACES_TESTID.addLinkTo));
+		await waitFor(() =>
+			expect(calls.items).toEqual([{ dayId: demo.D.d2, nodeId: N.loft }]),
+		);
+		expect(calls.links).toMatchObject([
+			{ target: { nodeId: N.loft }, url: REEL },
+		]);
+		await waitFor(() =>
+			expect(calls.toasts).toEqual([
+				"Link added to Shibuya Loft · End of Day 2",
+			]),
+		);
+	});
+
+	it("the preview's place already in the trip goes on that day too", async () => {
+		calls.preview = {
+			name: "Shibuya Loft",
+			category: "shopping",
+			lat: 35.6612,
+			lng: 139.6987,
+		};
+		open({ mode: "live", splat: "japan/tokyo/shibuya" }, day);
+		await toSearch();
+		type("Loft");
+		fireEvent.click(await screen.findByTestId(PLACES_TESTID.paletteResult));
+		fireEvent.click(
+			await screen.findByRole("button", { name: "Add the link" }),
+		);
 		await waitFor(() =>
 			expect(calls.items).toEqual([{ dayId: demo.D.d2, nodeId: N.loft }]),
 		);

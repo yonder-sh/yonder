@@ -424,8 +424,11 @@ function Palette({
 		[ix, graph.legs, q, mode, coords, waiting],
 	);
 	const dayQuery = parseDayQuery(q);
+	// A waiting link isn't dropped for a day.
 	const dayHit =
-		dayQuery !== null && dayQuery >= 1 ? ix.days[dayQuery - 1] : undefined;
+		dayQuery !== null && dayQuery >= 1 && !pending
+			? ix.days[dayQuery - 1]
+			: undefined;
 	const mapsLink = looksLikeUrl(q) && parseMapsUrl(q.trim()) ? q.trim() : null;
 	// Any other link (a reel, a guide) is never a place name: it goes on a
 	// place or makes a new one (D10), else to the share page.
@@ -811,6 +814,10 @@ function Palette({
 		setPending(null);
 		steered.current = false;
 	};
+	const dropPending = () => {
+		setPending(null);
+		inputRef.current?.focus();
+	};
 	const linkEnter =
 		highlighted === LINK_NEW
 			? null
@@ -903,12 +910,14 @@ function Palette({
 						className="h-12 text-base"
 					/>
 					{search.isFetching ? <Spinner className="mr-3 size-4" /> : null}
+					{/* Phones have no Esc: back to the link's choices, like Esc. */}
 					<button
 						type="button"
-						onClick={() => onClose()}
+						data-testid={pending ? PLACES_TESTID.linkPendingBack : undefined}
+						onClick={() => (pending ? backToLink() : onClose())}
 						className="mr-2 rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-accent sm:hidden"
 					>
-						Cancel
+						{pending ? "Back" : "Cancel"}
 					</button>
 				</div>
 				{pending ? (
@@ -925,7 +934,7 @@ function Palette({
 							size="xs"
 							variant="ghost"
 							data-testid={PLACES_TESTID.linkPendingDrop}
-							onClick={() => setPending(null)}
+							onClick={dropPending}
 						>
 							<X />
 							Don't add
@@ -1326,6 +1335,7 @@ function Palette({
 											? (id) => void attachLink(pending.url, id)
 											: undefined
 									}
+									onLinkTo={pending ? addLinkTo : undefined}
 								/>
 							) : null}
 						</div>
@@ -1364,7 +1374,7 @@ function Palette({
 								<Kbd>
 									<CornerDownLeft className="size-3" />
 								</Kbd>
-								{mode === "locate" ? "choose" : "open"}
+								{mode === "locate" || pending ? "choose" : "open"}
 							</>
 						)}
 						{tripHits.length && mode !== "locate" && !pending ? (
@@ -1666,13 +1676,16 @@ function PreviewPane({
 	sessionToken,
 	onDone,
 	onPlace,
+	onLinkTo,
 }: {
 	selection: Selection;
 	request: AddPlaceRequest;
 	sessionToken: string;
 	onDone: (then?: AfterClose) => void;
-	/** The place saved, scheduled or opened here (a waiting link goes on it). */
+	/** The place saved or scheduled here (a waiting link goes on it). */
 	onPlace?: (nodeId: string) => void;
+	/** A waiting link onto the place already in the trip (and the day). */
+	onLinkTo?: (n: GraphNode) => void;
 }) {
 	const ws = useWorkspace();
 	const { ix, graph, nav, schedule } = ws;
@@ -1762,6 +1775,7 @@ function PreviewPane({
 			knownExisting={q.data.existing?.nodeId}
 			openAdded={opensAdded(ws)}
 			onPlace={onPlace}
+			onLinkTo={onLinkTo}
 			ws={{ ix, graph, nav, schedule, sel: ws.sel, days: ws.days }}
 		/>
 	);
@@ -1775,6 +1789,7 @@ function PreviewBody({
 	knownExisting,
 	openAdded,
 	onPlace,
+	onLinkTo,
 	ws,
 }: {
 	preview: PlacePreview;
@@ -1786,6 +1801,7 @@ function PreviewBody({
 	/** Saving a place to Ideas opens it (Places › Review). */
 	openAdded: boolean;
 	onPlace?: (nodeId: string) => void;
+	onLinkTo?: (n: GraphNode) => void;
 	ws: Pick<
 		ReturnType<typeof useWorkspace>,
 		"ix" | "graph" | "nav" | "schedule" | "sel" | "days"
@@ -2099,18 +2115,28 @@ function PreviewBody({
 								({ix.node(existing.parentId)?.name ?? "top level"})
 							</span>
 						</span>
-						<Button
-							size="xs"
-							variant="ghost"
-							onClick={() => {
-								onPlace?.(existing.id);
-								onDone("inspector");
-								nav.select({ kind: "node", id: existing.id });
-							}}
-						>
-							{/* A waiting link goes on the one already there. */}
-							{onPlace ? "Add the link" : "Open"}
-						</Button>
+						{onLinkTo ? (
+							// A waiting link goes on the one already there.
+							<Button
+								size="xs"
+								variant="ghost"
+								disabled={busy || guard.disabled}
+								onClick={() => onLinkTo(existing)}
+							>
+								Add the link
+							</Button>
+						) : (
+							<Button
+								size="xs"
+								variant="ghost"
+								onClick={() => {
+									onDone("inspector");
+									nav.select({ kind: "node", id: existing.id });
+								}}
+							>
+								Open
+							</Button>
+						)}
 					</div>
 				) : null}
 
