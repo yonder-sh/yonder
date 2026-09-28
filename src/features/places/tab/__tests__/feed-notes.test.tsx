@@ -4,7 +4,7 @@
  * full, like the desktop), the rating buttons last, in the thumb zone.
  */
 import { QueryClient } from "@tanstack/react-query";
-import { screen, within } from "@testing-library/react";
+import { fireEvent, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import type { NoteDto } from "@/features/notes/notes.functions";
 import { demoGraph } from "@/lib/fixtures/demo";
@@ -92,6 +92,27 @@ describe("the phone's Rate feed", () => {
 		expect(within(card).getByTestId(T.feedBar)).not.toHaveTextContent(
 			"time needed",
 		);
+	});
+});
+
+describe("the group on the Rate card (D07)", () => {
+	it("stays hidden until you peek (or rate), then shows everyone else's rating", async () => {
+		// Someone else has rated every place: the card offers a peek.
+		const graph = structuredClone(demoGraph);
+		const other = graph.members.find((m) => m.id !== graph.me.memberId);
+		if (!other) throw new Error("fixture: one member");
+		for (const n of graph.nodes)
+			n.priorities = { ...n.priorities, [other.id]: "want" };
+		renderWithWorkspace(<PlacesTab phone />, {
+			graph,
+			search: { tab: "places", pv: "rate" },
+		});
+		const card = await activeCard();
+		expect(within(card).queryByTestId(T.feedGroup)).toBeNull();
+		fireEvent.click(within(card).getByTestId(T.feedPeek));
+		const group = await within(card).findByTestId(T.feedGroup);
+		expect(group).toHaveTextContent("The group");
+		expect(group).toHaveTextContent("Want");
 	});
 });
 
