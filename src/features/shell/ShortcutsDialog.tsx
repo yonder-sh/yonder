@@ -21,8 +21,8 @@ export const SHIFT = IS_MAC ? "⇧" : "Shift";
 export const SHORTCUTS: { keys: string[]; label: string }[] = [
 	{ keys: [MOD, "K"], label: "Search, add or jump" },
 	{ keys: [MOD, SHIFT, "\\"], label: "Show or hide the map" },
-	{ keys: ["["], label: "Coarser lens" },
-	{ keys: ["]"], label: "Finer lens" },
+	{ keys: ["["], label: "Less detail: cities, then countries" },
+	{ keys: ["]"], label: "More detail: areas, then places" },
 	{ keys: ["Enter"], label: "Zoom into the selection" },
 	{ keys: ["Esc"], label: "Clear the selection, then the days, then zoom out" },
 	{ keys: ["J"], label: "Next stop in the plan" },
