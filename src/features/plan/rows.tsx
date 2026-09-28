@@ -248,7 +248,7 @@ function GhostLeg({ leg, scheduled }: { leg: GraphLeg; scheduled: number }) {
 			: scheduled;
 	const duration =
 		minutes !== null && minutes > 0
-			? `${flight?.estimate ? "~" : ""}${formatDuration(minutes, { compact: true })}${flight?.estimate ? " est." : ""}`
+			? `${flight?.estimate ? "about " : ""}${formatDuration(minutes, { compact: true })}`
 			: "";
 	return (
 		<span className="truncate not-italic">
@@ -589,8 +589,8 @@ export function BandLink({ transition }: { transition: Transition }) {
 			) : null}
 			{minutes > 0 ? (
 				<span className="tnum">
-					· {formatDuration(minutes, { compact: true })}
-					{estimate ? " est." : ""}
+					· {estimate ? "about " : ""}
+					{formatDuration(minutes, { compact: true })}
 				</span>
 			) : null}
 			{when ? <span className="hidden tnum @sm:inline">· {when}</span> : null}

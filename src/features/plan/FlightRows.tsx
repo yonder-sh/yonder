@@ -264,9 +264,8 @@ export function FlightRows({
 									{name ?? "Flight"}
 								</span>
 								<span className="tnum">
-									· {t.estimate ? "~" : ""}
+									· {t.estimate ? "about " : ""}
 									{formatDuration(t.minutes, { compact: true })}
-									{t.estimate ? " est." : ""}
 								</span>
 								{t.untimed ? (
 									<span data-testid={PLAN_TESTID.flightTbd}>· times TBD</span>

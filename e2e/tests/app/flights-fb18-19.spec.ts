@@ -153,7 +153,7 @@ test("FB-19: JFK then Haneda on the next day → a Flight leg, prefilled, no tim
 			"aria-selected",
 			"true",
 		);
-		await expect(overview.getByTestId(T.flightLine)).toHaveText("Flight · JFK → HND · ~14h 5m est. · times TBD");
+		await expect(overview.getByTestId(T.flightLine)).toHaveText("Flight · JFK → HND · about 14h 5m · times TBD");
 		await page.screenshot({ path: shotPath("flights/fb19-leg-editor.png") });
 	}
 	expect(logs.messages).toEqual([]);

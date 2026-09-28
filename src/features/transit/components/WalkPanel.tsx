@@ -14,9 +14,9 @@ import type { LegEditor } from "../use-leg-editor";
 import { GoogleMapsLink } from "./bits";
 
 const SOURCE: Record<string, string> = {
-	osrm: "est. · OSRM",
+	osrm: "Estimate · OSRM",
 	google: "Google",
-	estimate: "est.",
+	estimate: "Estimate",
 	manual: "Set by hand",
 	navitime: "NAVITIME",
 };

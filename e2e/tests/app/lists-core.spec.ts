@@ -258,7 +258,7 @@ test("rows on dropped places leave a trace and come back on Show (QA ROLL-12)", 
 	await expect(row(page, "Petty knife")).toBeVisible();
 	await expect(row(page, "Omamori charm")).toHaveCount(0);
 	const trace = page.getByTestId(L.dropped);
-	await expect(trace).toContainText("1 on dropped places");
+	await expect(trace).toContainText("1 on places you're not going to");
 	await trace.click();
 	await expect(row(page, "Omamori charm")).toBeVisible();
 	await expect(trace).toContainText("Hide dropped places");
@@ -406,7 +406,7 @@ test("rows drag to reorder within a place (Place view)", async ({ page }, info) 
 	await expect(panel.getByTestId(L.row)).toHaveText([/Whetstone #1000/, /Petty knife/]);
 });
 
-test("a wide panel shows both lists side by side", async ({ page }, info) => {
+test("the Lists page: one list at a time under its heading, the switch its tabs (D12)", async ({ page }, info) => {
 	test.skip(info.project.name !== "chromium", "desktop layout");
 	await page.setViewportSize({ width: 1920, height: 1080 });
 	const c = await cloneFixtureTrip(page.request);
@@ -414,23 +414,16 @@ test("a wide panel shows both lists side by side", async ({ page }, info) => {
 	await expectLive(page);
 	const tab = page.getByTestId(TESTID.listsTab);
 	await expect(tab).toBeVisible();
-	// WP-Shell's centre panel is resizable (440–720); widen it the way a drag would.
-	await tab.evaluate((el) => {
-		let panel: HTMLElement | null = el;
-		const w = el.getBoundingClientRect().width;
-		while (panel?.parentElement && panel.parentElement.getBoundingClientRect().width <= w + 1)
-			panel = panel.parentElement;
-		if (panel) {
-			panel.style.width = "720px";
-			panel.style.maxWidth = "720px";
-			panel.style.flex = "0 0 720px";
-		}
-	});
+	// The page takes the map's width: "Lists" heads it.
+	await expect(tab.getByRole("heading", { name: /^Lists/ })).toBeVisible();
+	await expect(page.getByTestId(TESTID.tripMap)).toHaveCount(0);
 	await expect(tab.getByTestId("rollup-todo")).toBeVisible();
-	await expect(tab.getByTestId("rollup-shopping")).toBeVisible();
+	await expect(tab.getByTestId("rollup-shopping")).toHaveCount(0);
 	await expect(tab.getByText("Get a Suica card")).toBeVisible();
+	await tab.getByTestId(L.kindShopping).click();
+	await expect(tab.getByTestId("rollup-shopping")).toBeVisible();
 	await expect(tab.getByText("Petty knife")).toBeVisible();
-	await page.screenshot({ path: shotPath("lists/side-by-side-1920.png"), animations: "disabled" });
+	await page.screenshot({ path: shotPath("lists/page-1920.png"), animations: "disabled" });
 });
 
 test("mobile: the Lists tab", async ({ page }, info) => {

@@ -916,7 +916,7 @@ function estimateText(s: Seg, from: AirportRow, to: AirportRow): string {
 		depLocal: localOf(s.depDate, s.depTime) || undefined,
 		depFold: s.depFold,
 	});
-	const est = `~${formatDuration(t.minutes)} flight est.`;
+	const est = `about ${formatDuration(t.minutes)} flight`;
 	if (t.arrMs === null) return `${est} · add times when you know them`;
 	return `${est} · arrives ~${hhmm(t.arrMs, to.tz)} ${tzLabel(to.tz, t.arrMs)}${localDateOf(t.arrMs, to.tz) !== s.depDate ? ` (${formatDayDate(localDateOf(t.arrMs, to.tz))})` : ""}`;
 }

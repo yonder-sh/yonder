@@ -232,6 +232,8 @@ test("FB-05: inside a scope 'Open in Places' opens that scope's ideas", async ({
 	await expect(page).toHaveURL(new RegExp(`/t/${c.slug}/${top.slug}`));
 	const link = page.getByTestId(PLAN_TESTID.ideas).getByTestId(OUTLINE_TESTID.rateIdeas);
 	await expect(link).toBeVisible();
+	// The dock follows the new place a moment after the URL does.
+	await expect(link).toHaveAttribute("href", new RegExp(`^/t/${c.slug}/${top.slug}\\?`));
 	const href = new URL((await link.getAttribute("href")) ?? "", page.url());
 	expect(href.pathname).toBe(`/t/${c.slug}/${top.slug}`);
 	expect(href.searchParams.get("tab")).toBe("places");

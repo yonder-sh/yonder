@@ -77,7 +77,7 @@ describe("FlightForm", () => {
 		const duration = screen.getByTestId(TRANSIT_TESTID.flightDuration);
 		await waitFor(() =>
 			expect(duration.textContent).toBe(
-				"~14h 5m flight est. · add times when you know them",
+				"about 14h 5m flight · add times when you know them",
 			),
 		);
 		fireEvent.click(screen.getByTestId(TRANSIT_TESTID.flightSave));
@@ -107,14 +107,14 @@ describe("FlightForm", () => {
 			/>,
 		);
 		const duration = screen.getByTestId(TRANSIT_TESTID.flightDuration);
-		await waitFor(() => expect(duration.textContent).toMatch(/^~14h 5m/));
+		await waitFor(() => expect(duration.textContent).toMatch(/^about 14h 5m/));
 		fireEvent.change(screen.getByRole("textbox", { name: "Departure time" }), {
 			target: { value: "02:00" },
 		});
 		// 02:00 EST (UTC−5, December) + 14h 5m = 16:05 EST = 06:05 JST next day.
 		await waitFor(() =>
 			expect(duration.textContent).toBe(
-				"~14h 5m flight est. · arrives ~06:05 JST (Sun 13 Dec)",
+				"about 14h 5m flight · arrives ~06:05 JST (Sun 13 Dec)",
 			),
 		);
 	});

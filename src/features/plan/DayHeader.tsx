@@ -926,10 +926,10 @@ function Summary({ dayId, estimate }: { dayId: string; estimate: boolean }) {
 				<>
 					{" · "}
 					<span className="tnum">
-						{estimate ? "~" : ""}
+						{estimate ? "about " : ""}
 						{formatDuration(sd.travelMin)}
 					</span>{" "}
-					travel{estimate ? " est." : ""}
+					travel
 				</>
 			) : null}
 			{sd.freeMin > 0 ? (

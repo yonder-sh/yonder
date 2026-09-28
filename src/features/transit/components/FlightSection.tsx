@@ -141,7 +141,7 @@ export function FlightSummary({
 					<span className="text-2xs tnum">
 						{mins !== null
 							? formatDuration(mins, { compact: true })
-							: `~${formatDuration(t.minutes, { compact: true })} est.`}
+							: `about ${formatDuration(t.minutes, { compact: true })}`}
 					</span>
 				</div>
 				<div className="grid gap-0.5 p-3 text-right">
@@ -176,7 +176,7 @@ export function FlightSummary({
 					{flight.cabin ? ` · ${CABIN[flight.cabin]}` : ""}
 					{mins !== null
 						? ` · ${formatDuration(mins)}`
-						: ` · ~${formatDuration(t.minutes)} est.`}
+						: ` · about ${formatDuration(t.minutes)}`}
 					{t.untimed ? " · times TBD" : t.arrEstimated ? " · arrival TBD" : ""}
 				</span>
 			</p>
