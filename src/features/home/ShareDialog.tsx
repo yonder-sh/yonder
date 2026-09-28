@@ -516,13 +516,12 @@ function MemberRow({
 		(placeholder && (linker || canClaim)) ||
 		countable ? (
 			<DropdownMenu>
-				<DropdownMenuTrigger asChild>
+				<DropdownMenuTrigger asChild disabled={disabled}>
 					<Button
 						variant="ghost"
 						size="icon"
 						aria-label={`More for ${m.name}`}
 						data-testid={HOME_TESTID.memberMenu}
-						disabled={disabled}
 						className="text-muted-foreground"
 					>
 						<MoreHorizontal />
