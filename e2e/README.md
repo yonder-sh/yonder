@@ -25,12 +25,12 @@ Flags: `--envs N`, `--rebuild` (refresh the template), `--keep` (leave the envs 
 
 `e2e:fast` and vitest never reach a service outside this machine: no quotas spent, no mail sent, the same answers every day.
 
-**Stubbed.** `e2e:fast` starts `stubs/services-stub.mjs` on :7099 and points every env at it (`offlineOverrides` in `scripts/lib/e2e-fast.ts`):
+**Stubbed.** `e2e:fast` starts `stubs/services-stub.mjs` on :7099 (:7098… with `E2E_FAST_SLOT`) and points every env at it (`offlineOverrides` in `scripts/lib/e2e-fast.ts`):
 
 - Open-Meteo, Overpass, OSRM and FX rates: made-up but plausible answers.
 - Photon (`photon-stub.mjs`): real answers recorded once in `stubs/fixtures/photon.json`, plus the seed's places (`seed/data/geocode-hints.json`) for the importer.
 - Whatever the server fetches for a pasted or shared URL (`link-stub.mjs`): pages, YouTube/TikTok oEmbed, Instagram, Google Maps, short links, preview images, favicons. The SSRF-safe fetch asks the stub instead of the host (`E2E_OUTBOUND_STUB`, test switches only).
-- The basemap (`map-proxy.mjs`): OpenFreeMap and Esri from `.data/e2e-fast/map-cache` (`VITE_MAP_PROXY_URL`). An uncached tile is blank, never an error.
+- The basemap (`map-proxy.mjs`): OpenFreeMap and Esri from the main checkout's `.data/e2e-fast/map-cache`, shared by its worktrees (`VITE_MAP_PROXY_URL`). An uncached tile is blank, never an error.
 - Video players in the browser: a black placeholder page.
 - Off: Google Places/Routes (no key), Resend/SMTP (the outbox), Turnstile, Web Push, telemetry. Postgres, Redis and S3 must be local.
 

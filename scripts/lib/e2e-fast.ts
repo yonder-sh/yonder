@@ -14,11 +14,11 @@
  *
  * Offline: nothing in an env reaches a service outside this machine. Every
  * outside service points at the services stub (e2e/stubs/services-stub.mjs,
- * one per machine on :7099), keys that would switch on another one are blank,
- * and every Node process runs with scripts/no-egress-preload.mjs, which
- * refuses (and logs to the env's egress.jsonl) any other connection.
+ * one per slot from :7099 down), keys that would switch on another one are
+ * blank, and every Node process runs with scripts/no-egress-preload.mjs,
+ * which refuses (and logs to the env's egress.jsonl) any other connection.
  */
-import { spawn, spawnSync } from "node:child_process";
+import { execFileSync, spawn, spawnSync } from "node:child_process";
 import {
 	closeSync,
 	existsSync,
@@ -69,9 +69,19 @@ export const PORT_BASE = 7100;
 /**
  * The services stub every env asks instead of the outside world: Open-Meteo,
  * Overpass, OSRM, FX, Photon, the link fetches and the basemap
- * (e2e/stubs/services-stub.mjs).
+ * (e2e/stubs/services-stub.mjs). One per E2E_FAST_SLOT (:7099, :7098…): a
+ * run beside another counts only its own calls, and outlives it.
  */
-export const SERVICES_STUB_PORT = PORT_BASE - 1;
+export const SERVICES_STUB_PORT =
+	PORT_BASE - 1 - (Number(process.env.E2E_FAST_SLOT) || 0);
+/**
+ * The basemap cache (map-proxy.mjs) of the main checkout, so every worktree
+ * (agents', `--frozen`) reads the one `pnpm e2e:tiles:warm` filled.
+ */
+export const MAP_CACHE_DIR = path.join(
+	mainCheckout(),
+	".data/e2e-fast/map-cache",
+);
 const STUB = `http://127.0.0.1:${SERVICES_STUB_PORT}`;
 /** The stub's routes this harness expects (services-stub.mjs STUB_VERSION). */
 const STUB_VERSION = 2;
@@ -91,6 +101,20 @@ export type StubStats = {
 		{ calls: number; misses: number; missed: Record<string, number> }
 	>;
 };
+
+/** This clone's main checkout (a worktree's shared `.git` parent), else itself. */
+function mainCheckout(): string {
+	try {
+		const common = execFileSync(
+			"git",
+			["rev-parse", "--path-format=absolute", "--git-common-dir"],
+			{ cwd: REPO_ROOT, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] },
+		).trim();
+		return path.basename(common) === ".git" ? path.dirname(common) : REPO_ROOT;
+	} catch {
+		return REPO_ROOT;
+	}
+}
 
 export async function stubStats(): Promise<StubStats | null> {
 	try {
@@ -155,7 +179,7 @@ export function printOfflineReport(
 			.sort((x, y) => y[1] - x[1]);
 		const hint =
 			name === "map" && misses
-				? " (not in .data/e2e-fast/map-cache: blank tiles; fill it once with pnpm e2e:tiles:warm)"
+				? ` (not in ${MAP_CACHE_DIR}: blank tiles; fill it once with pnpm e2e:tiles:warm)`
 				: "";
 		console.log(
 			`  ${name}: ${calls} call(s), ${misses} miss(es)${hint}${missed.length && name !== "map" ? `: ${list(missed)}` : ""}`,
@@ -216,6 +240,8 @@ export async function startServicesStub(
 			path.join(REPO_ROOT, "e2e/stubs/services-stub.mjs"),
 			"--port",
 			String(SERVICES_STUB_PORT),
+			"--map-cache",
+			MAP_CACHE_DIR,
 			...(opts.recordMap ? ["--record-map"] : []),
 		],
 		{ stdio: ["ignore", log, log] },

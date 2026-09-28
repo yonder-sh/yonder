@@ -25,10 +25,12 @@
  *                   (default HEAD, uncommitted work included) touches
  *   --frozen        run from a worktree at HEAD (../trip-planner-e2e), so the
  *                   repo can keep changing meanwhile (scripts/lib/e2e-frozen.ts)
- *   --record-map    fill the basemap cache (.data/e2e-fast/map-cache) with what the run
- *                   browses, fetched once from OpenFreeMap and Esri
+ *   --record-map    fill the basemap cache (the main checkout's
+ *                   .data/e2e-fast/map-cache) with what the run browses,
+ *                   fetched once from OpenFreeMap and Esri
  *                   (`pnpm e2e:tiles:warm`); every other run only reads it
- * E2E_FAST_SLOT=1…3 runs beside another run (its own envs, ports and files);
+ * E2E_FAST_SLOT=1…3 runs beside another run (its own envs, ports, services
+ * stub and files);
  * E2E_FAST_MIN_GB lowers the 20 GB it needs to start.
  * Anything else goes to `playwright test` (spec files, --project, -g, --retries…).
  */
