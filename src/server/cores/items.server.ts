@@ -14,6 +14,7 @@ import type { GraphIndex } from "@/lib/engine/graph-index";
 import { HHmm } from "@/lib/schemas/common";
 import { logActivity } from "@/server/activity.server";
 import { fail } from "@/server/authz/session.server";
+import { testRoutesEnabled } from "@/server/env.server";
 import { indexTx, reconcileLegs } from "@/server/legs.server";
 import type { TxOutbox } from "@/server/live/outbox.server";
 import { syncMentions } from "@/server/mentions.server";
@@ -89,7 +90,7 @@ export const SetItemDoneInput = z
 		tripId: z.uuid(),
 		itemId: z.uuid(),
 		done: z.boolean(),
-		/** An earlier stamp (the Undo of an Undo, or "done at 16:50"): never later than now. */
+		/** An earlier stamp (the Undo of an Undo, or "done at 16:50"): never later than now, except with test routes on (a demo's `asOf`). */
 		at: z.iso.datetime({ offset: true }).optional(),
 		/** With `at`: who marked it then (kept while they're a member). */
 		by: z.string().min(1).max(100).optional(),
@@ -441,10 +442,12 @@ export async function setItemDoneCore(
 	data: In<typeof SetItemDoneInput>,
 	ctx: Pick<CoreCtx, "user">,
 ): Promise<{ doneAt: string | null }> {
-	// The database's clock, like `decided_at`.
-	const stamp = data.at
-		? sql`least(${data.at}::timestamptz, now())`
-		: sql`now()`;
+	// The database's clock, like `decided_at`; with test routes on, a demo's `asOf` time as sent.
+	const stamp = !data.at
+		? sql`now()`
+		: testRoutesEnabled()
+			? sql`${data.at}::timestamptz`
+			: sql`least(${data.at}::timestamptz, now())`;
 	const by =
 		data.at && data.by
 			? sql`coalesce((select user_id from trip_members where trip_id = ${data.tripId} and user_id = ${data.by} and status = 'active' limit 1), ${ctx.user.id})`

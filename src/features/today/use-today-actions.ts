@@ -7,6 +7,7 @@
  * link guests follow along.
  */
 import { undoToast } from "@/components/common/undo-toast";
+import { asOfZone, nowFor } from "@/features/overview/lib/phase";
 import { useMoveItem } from "@/features/places/mutations";
 import type { PlaceRow } from "@/features/places/tab/model";
 import { usePlaceActions } from "@/features/places/tab/use-place-actions";
@@ -28,7 +29,7 @@ export interface TodayActions {
 	mayChange: boolean;
 	/** Offline: the buttons wait (shown, disabled). */
 	offline: boolean;
-	/** `at`: an earlier moment it was done (epoch ms), else now. */
+	/** `at`: an earlier moment it was done (epoch ms), else now (the `?asOf` time, when set). */
 	done(itemId: string, at?: number): void;
 	undo(itemId: string): void;
 	skip(itemId: string): void;
@@ -41,25 +42,30 @@ export interface TodayActions {
 }
 
 export function useTodayActions(): TodayActions {
-	const { graph, ix, access, connection } = useWorkspace();
+	const { graph, ix, schedule, access, connection, search } = useWorkspace();
 	const setDone = useSetItemDone(graph.trip.id);
 	const move = useMoveItem(graph.trip.id);
 	const plan = usePlanActions();
 	const places = usePlaceActions();
 	const by = graph.me.userId;
 	const mayMarkDone = can(graph.me, "markDone");
+	// Under `?asOf` (demos, e2e) a Done records that time, the "now" the engine uses.
+	const asOf = search.asOf ?? null;
+	const nowAt = () => (asOf ? nowFor(asOf, asOfZone(ix, schedule)) : undefined);
 	return {
 		mayMarkDone,
 		// Those who travel: raters, viewers and link guests follow along.
 		mayChange: mayMarkDone && access.mode !== "read",
 		offline: connection === "offline",
-		done: (itemId, at) =>
+		done: (itemId, when) => {
+			const at = when ?? nowAt();
 			setDone.mutate({
 				itemId,
 				done: true,
 				by,
 				...(at === undefined ? {} : { at: new Date(at).toISOString() }),
-			}),
+			});
+		},
 		undo: (itemId) => setDone.mutate({ itemId, done: false, by }),
 		// "Bic Camera moved to Ideas · Undo" (a leg it leaves behind rejoins on Undo).
 		skip: (itemId) => {

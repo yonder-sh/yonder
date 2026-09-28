@@ -7,6 +7,9 @@
  * - No Done yet today: the plan by the clock. The stop planned for now is
  *   Now, stops whose time is over are passed, times are the planned ones;
  *   no pace, and no risk from lateness nobody reported.
+ * - A Done stamped before the day (a clock off, a tap the evening before)
+ *   reads as done on plan: at its planned end. One stamped after now isn't
+ *   done yet, so an `asOf` view of an earlier time shows the day as it was.
  * - After a Done, the rest re-times from the last one: each stop starts at
  *   the previous one's actual end plus the schedule's travel between them
  *   (never re-routed). Flexible stops flow as soon as possible; fixed ones
@@ -140,7 +143,7 @@ export interface TodayStop {
 	booked: boolean;
 	/** The timed departure that takes you there, if it leaves today (an overnight one only holds the time). */
 	departure: TodayDeparture | null;
-	/** When it was marked Done (a stamp outside the day reads as now) and by whom (a user id). */
+	/** When it was marked Done (a stamp from before the day reads as its planned end) and by whom (a user id). */
 	doneAt: number | null;
 	doneBy: string | null;
 }
@@ -515,11 +518,13 @@ export function computeToday(
 	);
 	const midnight = day ? zonedEpoch(day.date, "00:00", tz) : now;
 
-	// A stamp outside the day (a demo's `asOf`, a clock a little off) reads as now.
+	// A stamp before the day is done on plan; one after now isn't done yet (an earlier `asOf`).
 	const doneMs = (it: GraphItem): number | null => {
 		const raw = it.doneAt ? Date.parse(it.doneAt) : Number.NaN;
-		if (!Number.isFinite(raw)) return null;
-		return raw < midnight ? now : Math.min(raw, now);
+		if (!Number.isFinite(raw) || raw > now) return null;
+		return raw < midnight
+			? (schedule.items[it.id]?.end.getTime() ?? null)
+			: raw;
 	};
 	let lastDone = -1;
 	list.forEach((it, i) => {

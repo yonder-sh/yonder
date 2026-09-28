@@ -4,8 +4,9 @@
  * viewers and link guests are refused and nothing changes. The stamp is the
  * database's clock, by the marker, with no activity line; the trip's version
  * moves (the live event). Undo clears it; the Undo of an Undo puts the earlier
- * stamp back (never a later one). A stop in Ideas can't be Done, and a stop
- * moved to another day (or off a removed day) stops being Done.
+ * stamp back (never a later one, unless the test routes are on: a demo's
+ * `asOf` time). A stop in Ideas can't be Done, and a stop moved to another day
+ * (or off a removed day) stops being Done.
  */
 import { randomUUID } from "node:crypto";
 import { sql } from "drizzle-orm";
@@ -28,6 +29,8 @@ const testEnv = vi.hoisted(() => {
 	process.env.DATABASE_URL = scratch.toString();
 	process.env.REDIS_PREFIX = `yonder-donetest-${hex}`;
 	process.env.BETTER_AUTH_SECRET ||= "test-secret-test-secret-test-secret-00";
+	// Agent copies' `.env` turns the test routes on; this file turns them on where it means to.
+	process.env.ENABLE_TEST_ROUTES = "";
 	return { hex, scratchUrl: scratch.toString() };
 });
 
@@ -49,6 +52,7 @@ import { moveItem, setItemDone } from "@/functions/items.functions";
 import type { AuthUser } from "@/server/auth.server";
 import { errorCode } from "@/server/authz/errors";
 import { openTripLink } from "@/server/authz/share-links.server";
+import { resetEnv, testRoutesEnabled } from "@/server/env.server";
 import { cloneDemoTrip, type FixtureClone } from "@/server/fixture.server";
 import { loadGraphForServer } from "@/server/graph.server";
 import { closeQueues } from "@/server/live/jobs.server";
@@ -107,6 +111,25 @@ async function addMember(
 	await db().execute(sql`
 		insert into trip_members (id, trip_id, user_id, status, role, color, joined_at)
 		values (${randomUUID()}, ${tripId}, ${u.id}, 'active', ${role}, 3, now())`);
+}
+
+/** Runs `fn` with the test routes on (ENABLE_TEST_ROUTES on a local APP_URL), as the e2e and screenshot envs run. */
+async function withTestRoutes<T>(fn: () => Promise<T>): Promise<T> {
+	const keys = ["ENABLE_TEST_ROUTES", "APP_URL"] as const;
+	const was = keys.map((k) => process.env[k]);
+	process.env.ENABLE_TEST_ROUTES = "1";
+	process.env.APP_URL = "http://localhost:3000";
+	resetEnv();
+	try {
+		return await fn();
+	} finally {
+		keys.forEach((k, i) => {
+			const v = was[i];
+			if (v === undefined) delete process.env[k];
+			else process.env[k] = v;
+		});
+		resetEnv();
+	}
 }
 
 let owner: AuthUser;
@@ -284,6 +307,32 @@ describe("setItemDone", () => {
 		// A stamp from the future is held to now.
 		const future = await mark(owner, sky, true, "2999-01-01T00:00:00.000Z");
 		expect(Date.parse(future.doneAt as string)).toBeLessThanOrEqual(
+			await dbNow(),
+		);
+	});
+
+	it("a later stamp is held to now; with the test routes on (demos, e2e) a later `asOf` time is kept as sent", async () => {
+		const later = "2099-10-03T00:30:00.000Z";
+		expect(testRoutesEnabled()).toBe(false);
+		const held = await mark(owner, sky, true, later);
+		expect(Date.parse(held.doneAt as string)).toBeLessThanOrEqual(
+			await dbNow(),
+		);
+		await withTestRoutes(async () => {
+			expect(testRoutesEnabled()).toBe(true);
+			const kept = await mark(maya, sky, true, later, maya.id);
+			expect(kept.doneAt).toBe(later);
+			expect(await doneMark(sky)).toEqual({ at: new Date(later), by: maya.id });
+			// Without `at` it's still the database's clock.
+			const before = await dbNow();
+			const now = await mark(owner, sky, true);
+			const at = Date.parse(now.doneAt as string);
+			expect(at).toBeGreaterThanOrEqual(before);
+			expect(at).toBeLessThanOrEqual(await dbNow());
+		});
+		// Off again: held to now.
+		const again = await mark(owner, sky, true, later);
+		expect(Date.parse(again.doneAt as string)).toBeLessThanOrEqual(
 			await dbNow(),
 		);
 	});

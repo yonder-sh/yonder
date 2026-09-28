@@ -708,11 +708,36 @@ describe("computeToday: following your pace after a Done", () => {
 		expect(v2.pace).toEqual({ kind: "behind", minutes: 5 });
 	});
 
-	it("a Done stamp from outside the day (a demo's asOf) reads as now", () => {
-		const s = tokyoDay({ cha: ["2026-09-28T10:00", TOKYO] });
-		const { v } = view(s, at("10:30"));
-		expect(t(v.done[0]?.doneAt as number)).toBe("10:30");
-		expect(t(v.next?.start as number)).toBe("10:50");
+	it("a Done stamped before the day (a clock off, the evening before) is done on plan: no lateness, no earliness", () => {
+		for (const stamp of [
+			["2026-09-28T10:00", TOKYO],
+			done("21:30", "2027-10-04"),
+		] as LocalAt[]) {
+			const { v } = view(tokyoDay({ cha: stamp }), at("10:00"));
+			expect(names(v.done)).toEqual(["Cha no Ikedaya"]);
+			expect(t(v.done[0]?.doneAt as number)).toBe("09:55");
+			expect(t(v.done[0]?.end as number)).toBe("09:55");
+			expect(v.next?.name).toBe("Nakano Broadway");
+			expect(v.next?.start).toBe(v.next?.plannedStart);
+			expect(v.pace).toEqual({ kind: "on_time", minutes: 0 });
+			// It stays put as the day goes on.
+			const { v: later } = view(tokyoDay({ cha: stamp }), at("18:40"));
+			expect(t(later.done[0]?.doneAt as number)).toBe("09:55");
+		}
+	});
+
+	it("a Done stamped after now isn't done yet: an earlier `asOf` shows the day as it was", () => {
+		const s = tokyoDay({ cha: done("09:50"), broadway: done("13:00") });
+		const { v } = view(s, at("09:30"));
+		expect(v.done).toEqual([]);
+		expect(v.current?.name).toBe("Cha no Ikedaya");
+		expect(v.pace).toBeNull();
+		const { v: noon } = view(s, at("12:00"));
+		expect(names(noon.done)).toEqual(["Cha no Ikedaya"]);
+		expect(noon.current?.name).toBe("Nakano Broadway");
+		// At the stamp itself it's done.
+		const { v: one } = view(s, at("13:00"));
+		expect(names(one.done)).toEqual(["Cha no Ikedaya", "Nakano Broadway"]);
 	});
 
 	it("dinner before a booking makes way when you leave for it: the booking is tight, not late; the only fix left is to shorten dinner", () => {

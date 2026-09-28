@@ -157,8 +157,13 @@ describe("Today, running late (P15)", () => {
 		fireEvent.click(screen.getByText("Skip Bic Camera"));
 		fireEvent.click(screen.getByText("Shorten dinner to 1 h"));
 		await vi.waitFor(() => expect(calls.toasts).toHaveLength(2));
+		// Under `?asOf` the Done records that time (16:40 in Tokyo).
 		expect(calls.done).toEqual([
-			expect.objectContaining({ itemId: s.I.yodobashi, done: true }),
+			expect.objectContaining({
+				itemId: s.I.yodobashi,
+				done: true,
+				at: "2027-10-05T07:40:00.000Z",
+			}),
 		]);
 		expect(calls.move).toEqual([{ itemId: s.I.bic, dayId: null }]);
 		expect(calls.update).toEqual([
@@ -182,6 +187,23 @@ describe("Today, running late (P15)", () => {
 			itemId: s.I.dinner,
 			patch: { durationMin: 90 },
 		});
+	});
+
+	it("without `?asOf` a Done sends no stamp: the server's clock", async () => {
+		vi.useFakeTimers({ toFake: ["Date"] });
+		vi.setSystemTime(new Date("2027-10-05T07:40:00.000Z"));
+		try {
+			renderWithWorkspace(<TodayTab phone />, { graph: s.graph, search: {} });
+			fireEvent.click(within(screen.getByTestId(T.now)).getByTestId(T.done));
+			await vi.waitFor(() => expect(calls.done).toHaveLength(1));
+			expect(calls.done[0]).toEqual({
+				tripId: s.graph.trip.id,
+				itemId: s.I.yodobashi,
+				done: true,
+			});
+		} finally {
+			vi.useRealTimers();
+		}
 	});
 
 	it("a stop opens its details over Today", () => {
@@ -414,10 +436,13 @@ describe("Today after a forgotten Done (the imported day, Cha no Ikedaya Done at
 		fireEvent.click(within(ask).getByTestId(T.done));
 		await vi.waitFor(() =>
 			expect(calls.done).toEqual([
-				expect.objectContaining({ itemId: s.I.broadway, done: true }),
+				expect.objectContaining({
+					itemId: s.I.broadway,
+					done: true,
+					at: "2027-10-05T05:30:00.000Z",
+				}),
 			]),
 		);
-		expect(calls.done[0]).not.toHaveProperty("at");
 	});
 
 	it("No puts the question away; viewers aren't asked; it goes by itself 45 min on", () => {
@@ -470,7 +495,11 @@ describe("Today before anyone taps Done, a stop's time is up (the imported day a
 		fireEvent.click(within(ask).getByTestId(T.done));
 		await vi.waitFor(() =>
 			expect(calls.done).toEqual([
-				expect.objectContaining({ itemId: s.I.cha, done: true }),
+				expect.objectContaining({
+					itemId: s.I.cha,
+					done: true,
+					at: "2027-10-05T01:20:00.000Z",
+				}),
 			]),
 		);
 	});
