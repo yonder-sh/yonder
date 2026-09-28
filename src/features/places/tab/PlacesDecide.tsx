@@ -3,10 +3,15 @@
  * the group's ratings), **Disagreements** (split ratings, with what people
  * said) and **Not going**. Each card shows everyone's rating; Keep pins it
  * on the shortlist, Not going drops it, Bring back undoes that. Above them:
- * who the rest are waiting on (Remind) and how the shortlist works.
+ * who the rest are waiting on (Remind), how the shortlist works, and "Mark
+ * Kyoto decided" (the Where picker's scope; `lib/decided.ts`): decided
+ * places stop asking, so a split one leaves Disagreements for a quiet note.
  */
-import { Check, CircleHelp, MessageSquare } from "lucide-react";
+import { Check, CircleCheck, CircleHelp, MessageSquare } from "lucide-react";
+import { toast } from "sonner";
+import { EditGuard, useEditGuard } from "@/components/common/edit-guard";
 import { TypeGlyph } from "@/components/common/glyphs";
+import { undoToast } from "@/components/common/undo-toast";
 import { MemberAvatar, RatingPill } from "@/components/kit";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,9 +21,13 @@ import {
 } from "@/components/ui/popover";
 import { cardTone } from "@/features/plan/card-tone";
 import { PRIORITIES, PRIORITY_ORDER } from "@/lib/domain/taxonomy";
+import { humanError } from "@/lib/errors";
 import { formatDuration } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { useWorkspace } from "@/lib/workspace/use-workspace";
+import { scopeDecision, whereName } from "../lib/decided";
 import { commentVisibleText } from "../lib/rate";
+import { useSetDecided } from "../mutations";
 import type { PlaceRow } from "./model";
 import { categoryLabel } from "./PlacesTable";
 import { personName, RemindButton } from "./RatingPeople";
@@ -29,10 +38,12 @@ import type { PlacesData } from "./use-places";
 
 type Column = "shortlist" | "talk" | "out";
 
-/** Which column a place is in: a split rating is talked through first. */
-export function decideColumn(row: PlaceRow): Column | null {
+/** Which column a place is in: a split rating is talked through first, unless it's decided. */
+export function decideColumn(
+	row: Pick<PlaceRow, "status" | "split"> & { decided?: boolean },
+): Column | null {
 	if (row.status === "dropped") return "out";
-	if (row.split) return "talk";
+	if (row.split && !row.decided) return "talk";
 	if (row.status === "shortlist" || row.status === "scheduled")
 		return "shortlist";
 	return null;
@@ -60,6 +71,10 @@ export function PlacesDecide({ data }: { data: PlacesData }) {
 		const c = decideColumn(r);
 		if (c) by[c].push(r);
 	}
+	// Split, but decided: no longer to talk through (a quiet note instead).
+	const settled = data.visible.filter(
+		(r) => r.split && r.decided && r.status !== "dropped",
+	);
 	return (
 		<div
 			data-testid={PLACES_TAB_TESTID.decide}
@@ -90,7 +105,7 @@ export function PlacesDecide({ data }: { data: PlacesData }) {
 							by[col.key].map((r) => (
 								<DecideCard key={r.id} row={r} data={data} column={col.key} />
 							))
-						) : (
+						) : col.key === "talk" && settled.length ? null : (
 							<p className="px-1 py-2 text-meta text-muted-foreground">
 								{col.key === "talk"
 									? "Nothing to talk about: everyone agrees."
@@ -99,6 +114,19 @@ export function PlacesDecide({ data }: { data: PlacesData }) {
 										: "Nothing on the shortlist yet."}
 							</p>
 						)}
+						{col.key === "talk" && settled.length ? (
+							<p
+								data-testid={PLACES_TAB_TESTID.decideSettled}
+								className="px-1 py-1 text-meta text-muted-foreground"
+							>
+								Split, but decided:{" "}
+								{settled
+									.slice(0, 5)
+									.map((r) => r.name)
+									.join(", ")}
+								{settled.length > 5 ? ` and ${settled.length - 5} more` : ""}
+							</p>
+						) : null}
 					</section>
 				))}
 			</div>
@@ -153,9 +181,101 @@ function DecideStrip({ data }: { data: PlacesData }) {
 						. Places people disagree on wait under Disagreements. Keep puts one
 						on the shortlist whatever its score; Not going takes it out.
 					</p>
+					<p className="text-muted-foreground">
+						Mark a place, a city or the trip decided when you're done: its
+						places stop asking for ratings. Places added later still ask.
+					</p>
 				</PopoverContent>
 			</Popover>
+			<DecidedControl data={data} />
 		</div>
+	);
+}
+
+/**
+ * "Mark Kyoto decided" (editors); once marked, "Decided · Undo"; inside a
+ * decided scope, "Decided with Japan", which goes there (the undo lives there).
+ */
+export function DecidedControl({ data }: { data: PlacesData }) {
+	const { ix, scope, graph, nav } = useWorkspace();
+	const guard = useEditGuard("edit-only");
+	const set = useSetDecided(graph.trip.id);
+	const state = scopeDecision(ix, scope);
+	const nodeId = scope?.id ?? null;
+	const where = whereName(scope);
+	const mark = (decided: boolean) => {
+		if (guard.disabled) return;
+		const vars = { nodeId, decided, by: graph.me.userId };
+		set.mutate(vars, {
+			onError: (e) => toast.error(humanError(e)),
+			onSuccess: () => {
+				if (decided)
+					undoToast(`Marked ${where} decided`, () =>
+						set.mutate({ ...vars, decided: false }),
+					);
+			},
+		});
+	};
+	if (state.kind === "decided") {
+		// Added since the mark: they still ask.
+		const since = data.rows.filter(
+			(r) => r.status !== "dropped" && !r.decided,
+		).length;
+		const who = graph.members.find(
+			(m) => m.userId && m.userId === state.mark.by,
+		);
+		return (
+			<span
+				data-testid={PLACES_TAB_TESTID.decideDecided}
+				title={who ? `Marked decided by ${who.name}` : undefined}
+				className="inline-flex items-center gap-1.5"
+			>
+				<CircleCheck className="size-3.5 text-primary" aria-hidden />
+				<span className="font-medium text-foreground">Decided</span>
+				{since ? <span className="tnum">· {since} added since</span> : null}
+				<span aria-hidden>·</span>
+				<EditGuard kind="edit-only">
+					<button
+						type="button"
+						data-testid={PLACES_TAB_TESTID.decideUndo}
+						onClick={() => mark(false)}
+						className="cursor-pointer text-primary hover:underline disabled:cursor-default disabled:opacity-50 disabled:no-underline"
+					>
+						Undo
+					</button>
+				</EditGuard>
+			</span>
+		);
+	}
+	if (state.kind === "inherited")
+		return (
+			<Button
+				size="sm"
+				variant="outline"
+				data-testid={PLACES_TAB_TESTID.decideDecidedWith}
+				title={`Marked in ${state.mark.name}: undo it there`}
+				onClick={() =>
+					nav.openPlaces({
+						scopeId: state.mark.scopeId,
+						patch: { pv: "decide" },
+					})
+				}
+			>
+				<CircleCheck className="text-primary" />
+				{state.label}
+			</Button>
+		);
+	return (
+		<EditGuard kind="edit-only">
+			<Button
+				size="sm"
+				data-testid={PLACES_TAB_TESTID.decideMark}
+				onClick={() => mark(true)}
+			>
+				<Check />
+				{state.label}
+			</Button>
+		</EditGuard>
 	);
 }
 

@@ -87,6 +87,12 @@ export const PLACES_TAB_TESTID = {
 	decideKeep: "places-decide-keep",
 	decideDrop: "places-decide-drop",
 	decideBack: "places-decide-back",
+	/** "Mark Kyoto decided", "Decided · Undo", "Decided with Japan", split but decided. */
+	decideMark: "places-decide-mark",
+	decideDecided: "places-decide-decided",
+	decideUndo: "places-decide-undo",
+	decideDecidedWith: "places-decide-decided-with",
+	decideSettled: "places-decide-settled",
 	step: "places-step",
 	stepCount: "places-step-count",
 	stepDot: "places-step-dot",
