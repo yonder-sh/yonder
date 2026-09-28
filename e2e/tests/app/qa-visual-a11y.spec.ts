@@ -172,7 +172,7 @@ test.describe("desktop", () => {
 		await expect(page.locator('[data-slot="popover-content"]')).toBeVisible();
 		await page.keyboard.press("Escape");
 		await expect(page.locator('[data-slot="popover-content"]')).toHaveCount(0);
-		await card.getByRole("button", { name: /Set a time/ }).focus();
+		await card.getByRole("button", { name: /Set start time/ }).focus();
 		await page.keyboard.press("Enter");
 		await expect(page.getByRole("textbox", { name: /Start time/ })).toBeFocused();
 		await page.keyboard.press("Escape");

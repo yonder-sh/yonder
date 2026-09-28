@@ -232,9 +232,7 @@ export function applyProposals(
 						origin: {
 							entity: key,
 							afterId: null,
-							toLabel: toDay
-								? (dayLabel.get(toDay) ?? "another day")
-								: "the ideas",
+							toLabel: toDay ? (dayLabel.get(toDay) ?? "another day") : "Ideas",
 						},
 					});
 			} else if (p.op === "node.move") {

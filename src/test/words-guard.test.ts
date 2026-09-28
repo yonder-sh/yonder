@@ -10,7 +10,7 @@ import { join, relative } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const BANNED: [RegExp, string][] = [
-	[/\bunschedul(ed?|e)\b/i, "the ideas / Take off the day"],
+	[/\bunschedul(ed?|e)\b/i, "Ideas / Remove from this day"],
 	[/\bto decide\b/i, "Ideas"],
 	[/\bnot on (a|the) (day|plan)\b/i, "Ideas"],
 	[/\b(my )?priorit(y|ies)\b/i, "Rating"],
@@ -22,7 +22,7 @@ const BANNED: [RegExp, string][] = [
 	[/\btalk about it\b/i, "Disagreements"],
 	[
 		/\bpin(ned)? (start|at)\b|\bpin start time\b|\bdrop a pin\b/i,
-		"Set a time / Pick on the map",
+		"Set start time / Pick on the map",
 	],
 	[/\bdropped\b/i, "Not going"],
 	[/\bcosts?\b/i, "Expense"],

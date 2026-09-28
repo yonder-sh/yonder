@@ -522,7 +522,7 @@ function PlaceOverview({ node }: { node: GraphNode }) {
 									className="w-full rounded px-1 py-0.5 text-left text-meta text-muted-foreground hover:bg-accent"
 									onClick={() => nav.select({ kind: "item", id: it.id })}
 								>
-									No day yet · {formatDuration(it.durationMin)}
+									No day · {formatDuration(it.durationMin)}
 								</button>
 							</li>
 						))}
@@ -720,9 +720,7 @@ function CoarseOverview({ node }: { node: GraphNode }) {
 						})}
 					</ul>
 				) : (
-					<p className="text-meta text-muted-foreground">
-						An idea for now: no day yet.
-					</p>
+					<p className="text-meta text-muted-foreground">Not on any day yet.</p>
 				)}
 			</Section>
 

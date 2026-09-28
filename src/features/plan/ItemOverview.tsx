@@ -170,7 +170,7 @@ function DayValue({ dayId }: { dayId: string | null }) {
 					{d.title ? ` · ${d.title}` : ""}
 				</>
 			) : (
-				"No day yet"
+				"No day"
 			)}
 		</span>
 	);
@@ -178,8 +178,8 @@ function DayValue({ dayId }: { dayId: string | null }) {
 
 /**
  * The details header's ⋯ for a stop (One Yonder D03): the card's own menu
- * (move, pin, expense, unschedule, delete). "Set a time…" opens the
- * overview's "Set a time".
+ * (move, pin, expense, unschedule, delete). "Set start time…" opens the
+ * overview's "Set start time".
  */
 export function ItemDetailsMenu({ itemId }: { itemId: string }) {
 	const { ix } = useWorkspace();
@@ -398,7 +398,7 @@ function ItemOverviewBody({ itemId }: { itemId: string }) {
 						className="font-semibold text-warning"
 						data-testid={TESTID.conflictBadge}
 					>
-						Starts {formatDuration(s.late.minutes)} late: set for{" "}
+						Starts {formatDuration(s.late.minutes)} late: fixed at{" "}
 						{item.pinnedStart}.
 					</p>
 					{fixes.length ? (
@@ -483,7 +483,7 @@ function ItemOverviewBody({ itemId }: { itemId: string }) {
 							<span className="tnum">
 								{day && s
 									? `${formatDayDate(day.date)} · ${formatTime(s.start, s.tz)}–${formatTime(s.end, s.tz)}${s.endsNextDay ? "⁺¹" : ""} ${tzLabel(s.tz, s.start)}`
-									: "No day yet"}
+									: "No day"}
 							</span>
 							<span aria-hidden className="text-muted-foreground">
 								·
@@ -516,7 +516,7 @@ function ItemOverviewBody({ itemId }: { itemId: string }) {
 											<span className="text-primary" aria-hidden>
 												◆
 											</span>{" "}
-											Set for {item.pinnedStart}
+											Starts at {item.pinnedStart}
 										</span>
 										<Button
 											size="xs"
@@ -545,7 +545,7 @@ function ItemOverviewBody({ itemId }: { itemId: string }) {
 											className="ml-auto"
 											disabled={guard.disabled}
 										>
-											{item.pinnedStart ? "Change" : "Set a time"}
+											{item.pinnedStart ? "Change" : "Set start time"}
 										</Button>
 									</PopoverTrigger>
 									<PopoverContent align="end" className="w-60 p-3">
@@ -754,7 +754,9 @@ function ItemOverviewBody({ itemId }: { itemId: string }) {
 									{d.title ? ` · ${d.title}` : ""}
 								</SelectItem>
 							))}
-							<SelectItem value={UNSCHEDULED}>Back to the ideas</SelectItem>
+							<SelectItem value={UNSCHEDULED}>
+								No day (move to Ideas)
+							</SelectItem>
 						</SelectContent>
 					</Select>
 					{money ? (

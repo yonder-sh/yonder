@@ -674,7 +674,7 @@ function DeleteConfirm({ day, onDone }: { day: GraphDay; onDone: () => void }) {
 					Delete {formatDayDate(day.date)}?{" "}
 					<span className="text-muted-foreground">
 						{n
-							? `Its ${n} ${n === 1 ? "stop goes" : "stops go"} back to the ideas; later days move back one.`
+							? `Its ${n} ${n === 1 ? "stop moves" : "stops move"} to Ideas; later days move back one.`
 							: "Later days move back one."}
 					</span>
 				</span>

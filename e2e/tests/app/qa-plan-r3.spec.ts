@@ -255,7 +255,7 @@ test.describe("on a copy of Asia 2027", () => {
 		const card = page.locator(`[data-testid="timeline-item"][data-item-id="${bf}"]`).first();
 		await expect(card.getByTestId("item-start")).toHaveText("09:00");
 		await card.getByTestId("plan-item-menu").click();
-		await page.getByRole("menuitem", { name: "Set a time…" }).click();
+		await page.getByRole("menuitem", { name: "Set start time…" }).click();
 		// Breakfast ending after the 08:30 departure misses it by hours.
 		await page.getByLabel("Start time").fill("09:30");
 		await page.getByRole("button", { name: "Set", exact: true }).click();

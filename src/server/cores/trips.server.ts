@@ -267,7 +267,7 @@ export async function setTripDatesCore(
 		tripId: data.tripId,
 		actor: ctx.actor,
 		verb: "trip.dates",
-		summary: `changed the dates to ${data.startDate} – ${data.endDate}${moved.length ? ` (${moved.length} ${moved.length === 1 ? "stop" : "stops"} back to the ideas)` : ""}`,
+		summary: `changed the dates to ${data.startDate} – ${data.endDate}${moved.length ? ` (${moved.length} ${moved.length === 1 ? "stop" : "stops"} moved to Ideas)` : ""}`,
 		meta: { count: moved.length },
 	});
 	out.emit({

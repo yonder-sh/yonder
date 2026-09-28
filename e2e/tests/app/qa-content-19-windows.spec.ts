@@ -90,6 +90,6 @@ test("relative windows follow item moves, trip shifts; gone anchor → Date TBD"
 	await expectLive(page);
 	console.log("AFTER DELETE", JSON.stringify(await chips(), null, 1));
 	await shot(page, "19-windows-after-delete");
-	// Take it off its day instead (restore + back to the ideas).
+	// Remove it from its day instead (restore + move to Ideas).
 	expect(c1).not.toEqual(c0);
 });

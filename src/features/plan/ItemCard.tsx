@@ -623,7 +623,9 @@ function ItemMenuContent({
 			</DropdownMenuLabel>
 			{item.dayId && onPin ? (
 				<DropdownMenuItem disabled={guard.disabled} onSelect={handOff(onPin)}>
-					{item.pinnedStart ? `Set for ${item.pinnedStart}…` : "Set a time…"}
+					{item.pinnedStart
+						? `Change start time (${item.pinnedStart})…`
+						: "Set start time…"}
 				</DropdownMenuItem>
 			) : null}
 			{item.pinnedStart ? (
@@ -713,7 +715,7 @@ function ItemMenuContent({
 					disabled={guard.disabled}
 					onSelect={leaving(() => actions.unschedule(item.id))}
 				>
-					Take off the day
+					Remove from this day
 				</DropdownMenuItem>
 			) : null}
 			<DropdownMenuSeparator />
@@ -1031,7 +1033,9 @@ export function ItemCard({
 						setPinOpen(true);
 					}}
 					aria-label={
-						item.pinnedStart ? `Set for ${item.pinnedStart}` : "Set a time"
+						item.pinnedStart
+							? `Starts at ${item.pinnedStart}`
+							: "Set start time"
 					}
 					className="ml-auto flex flex-col items-end justify-center rounded-md pr-3 text-right text-xs leading-4 tnum outline-none hover:bg-accent/60 focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-default disabled:hover:bg-transparent"
 				>
@@ -1049,7 +1053,7 @@ export function ItemCard({
 								{s.pinned ? (
 									<span
 										role="img"
-										aria-label="set time"
+										aria-label="fixed start time"
 										className="text-[8px] text-primary"
 									>
 										◆

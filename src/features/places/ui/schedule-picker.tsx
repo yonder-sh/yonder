@@ -172,10 +172,10 @@ export function SchedulePicker({
 							<CommandGroup>
 								<CommandItem
 									value="__unscheduled"
-									onSelect={() => pick({ dayId: null, label: "the ideas" })}
+									onSelect={() => pick({ dayId: null, label: "Ideas" })}
 								>
 									<Inbox className="size-4" strokeWidth={1.5} />
-									No day yet (keep it as an idea)
+									No day (keep it in Ideas)
 								</CommandItem>
 							</CommandGroup>
 						) : null}

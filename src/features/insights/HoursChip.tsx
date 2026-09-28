@@ -192,9 +192,7 @@ function IssueDetails({
 				const where =
 					fix.kind === "move" ? fix.label.replace(/^Move to /, "") : null;
 				undoToast(
-					where
-						? `${place} moved to ${where}`
-						: `${place} went back to the ideas`,
+					where ? `${place} moved to ${where}` : `${place} moved to Ideas`,
 					() => move.mutate(from),
 				);
 			},

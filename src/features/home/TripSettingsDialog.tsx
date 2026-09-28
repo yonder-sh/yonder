@@ -238,13 +238,13 @@ function DatesRow() {
 					) : null}
 					{p?.blockedBy ? null : items.length ? (
 						<p>
-							{items.length} {items.length === 1 ? "item" : "items"} on{" "}
+							{items.length} {items.length === 1 ? "stop" : "stops"} on{" "}
 							{p?.removedDays
 								.slice(0, 3)
 								.map((d) => formatDayDate(d))
 								.join(", ")}
-							{(p?.removedDays.length ?? 0) > 3 ? "…" : ""} go back to the
-							ideas. Nothing is deleted.
+							{(p?.removedDays.length ?? 0) > 3 ? "…" : ""} move to Ideas.
+							Nothing is deleted.
 							<span className="mt-1 block truncate text-muted-foreground">
 								{items
 									.slice(0, 4)
@@ -255,9 +255,7 @@ function DatesRow() {
 						</p>
 					) : (
 						<p className="text-muted-foreground">
-							{preview.isPending
-								? "Checking what moves…"
-								: "No stop loses its day."}
+							{preview.isPending ? "Checking what moves…" : "No stops move."}
 						</p>
 					)}
 					<div className="flex gap-2">

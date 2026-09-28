@@ -296,7 +296,7 @@ function usePlanActionsImpl() {
 				if (r.detachedLegIds.length) announceDetached(r.detachedLegIds, undo);
 				else if (!v.quiet && back && back.dayId !== v.dayId) {
 					const name = itemName(ix, ix.item(v.itemId));
-					const where = v.dayId ? `Day ${ix.dayNumber(v.dayId)}` : "the ideas";
+					const where = v.dayId ? `Day ${ix.dayNumber(v.dayId)}` : "Ideas";
 					undoToast(`${name} moved to ${where}`, () => void undo());
 				}
 			},

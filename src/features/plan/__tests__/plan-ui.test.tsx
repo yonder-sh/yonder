@@ -53,7 +53,7 @@ describe("PlanTab", () => {
 		const sky = screen
 			.getAllByTestId(TESTID.timelineItem)
 			.find((c) => c.getAttribute("data-item-id") === I.sky);
-		expect(sky && within(sky).getByLabelText("set time")).toBeTruthy();
+		expect(sky && within(sky).getByLabelText("fixed start time")).toBeTruthy();
 	});
 
 	it("groups the area lens under block headers and folds them", () => {

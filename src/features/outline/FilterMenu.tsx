@@ -249,7 +249,7 @@ export function PlaceFilterPanel() {
 
 			<div className="flex items-center justify-between gap-3">
 				<Label htmlFor={ids.ns} className="text-sm font-normal">
-					Ideas only (no day yet)
+					Ideas only
 				</Label>
 				<Switch
 					id={ids.ns}

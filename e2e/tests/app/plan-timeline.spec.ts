@@ -109,7 +109,7 @@ test("a pin conflict shows one chip on the card and one on the day, and Unpin fi
 	await page.goto(`/t/${c.slug}?lens=place&days=${DAY.d1}`);
 	await expectLive(page);
 	const sky = card(page, I.sky as string);
-	await sky.getByRole("button", { name: "Set for 17:30" }).click();
+	await sky.getByRole("button", { name: "Starts at 17:30" }).click();
 	await page.getByLabel("Start time").fill("10:00");
 	await page.getByRole("button", { name: "Update" }).click();
 	await expect(sky.getByTestId(TESTID.itemStart)).toHaveText("10:00");
@@ -122,7 +122,7 @@ test("a pin conflict shows one chip on the card and one on the day, and Unpin fi
 	await page.getByRole("button", { name: /^Unpin/ }).click();
 	await expect(sky.getByTestId(TESTID.conflictBadge)).toHaveCount(0);
 	await expect(header.getByTestId(TESTID.conflictBadge)).toHaveCount(0);
-	await expect(sky.getByLabel("set time")).toHaveCount(0);
+	await expect(sky.getByLabel("fixed start time")).toHaveCount(0);
 });
 
 test("booked for this date shows a lock on the rail and in the Overview; menu items open their editors in one step", async ({
@@ -168,7 +168,7 @@ test("booked for this date shows a lock on the rail and in the Overview; menu it
 	await page.keyboard.press("Enter");
 	await expect(header.getByTestId(PLAN_TESTID.dayTitle)).toHaveText("Knives and pens");
 	await openItemMenu(page, I.sensoji as string);
-	await page.getByRole("menuitem", { name: "Set a time…" }).click();
+	await page.getByRole("menuitem", { name: "Set start time…" }).click();
 	// The popover's own field and Pin (the selected item's Overview has both too).
 	const pin = page.getByRole("dialog").filter({ has: page.getByLabel("Start time") });
 	await expect(pin.getByLabel("Start time")).toBeFocused();
@@ -327,7 +327,7 @@ test("unschedule and reschedule; insert and delete a day never lose items", asyn
 
 	// Off its day, the stop waits in the ideas dock on its place's card (One Yonder).
 	await openItemMenu(page, I.meiji as string);
-	await page.getByRole("menuitem", { name: "Take off the day" }).click();
+	await page.getByRole("menuitem", { name: "Remove from this day" }).click();
 	const meijiNode = (before.items.find((i) => i.id === I.meiji) as unknown as { nodeId: string }).nodeId;
 	const meijiIdea = page.getByTestId(PLAN_TESTID.ideas).locator(`[data-node-id="${meijiNode}"]`);
 	await expect(meijiIdea).toBeVisible();

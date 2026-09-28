@@ -61,7 +61,7 @@ export function DockStop({
 			ref={setNodeRef}
 			role="option"
 			aria-selected={selected}
-			aria-label={`${name}, ${formatDuration(item.durationMin)}, no day yet`}
+			aria-label={`${name}, ${formatDuration(item.durationMin)}, no day`}
 			data-testid={PLAN_TESTID.dockStop}
 			data-item-id={itemId}
 			data-cursor-anchor={`item:${itemId}`}

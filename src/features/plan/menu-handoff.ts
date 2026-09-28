@@ -1,7 +1,7 @@
 /**
  * Plan menu items that open another surface (FB-07): "Set stay…" (the stay
  * picker), "Rename day…" / "Add a title…" (an inline input), "Delete day…"
- * (the inline confirm), "Set a time…" and the "+" menu's "Custom…" (a
+ * (the inline confirm), "Set start time…" and the "+" menu's "Custom…" (a
  * popover).
  *
  * Radix keeps a closing menu mounted, and live under the pointer, for its

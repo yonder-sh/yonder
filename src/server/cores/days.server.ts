@@ -195,7 +195,7 @@ export async function deleteDayCore(
 		tripId,
 		actor: ctx.actor,
 		verb: "day.delete",
-		summary: `deleted Day ${ix.dayNumber(day.id)} (${moved.length} ${moved.length === 1 ? "stop" : "stops"} back to the ideas)`,
+		summary: `deleted Day ${ix.dayNumber(day.id)} (${moved.length} ${moved.length === 1 ? "stop" : "stops"} moved to Ideas)`,
 		dayId: day.id,
 		meta: { count: moved.length },
 	});
