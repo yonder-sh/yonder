@@ -26,6 +26,14 @@ export function isRunning(
 	);
 }
 
+/** The one trip under way on `today`, else null (none, or more than one to choose from). */
+export function onlyRunning<
+	T extends { startDate: string | null; endDate: string | null },
+>(trips: readonly T[], today: string | null): T | null {
+	const on = trips.filter((t) => isRunning(t.startDate, t.endDate, today));
+	return on.length === 1 ? (on[0] ?? null) : null;
+}
+
 export type HeroWhen =
 	| { kind: "countdown"; days: number }
 	| { kind: "day"; day: number }

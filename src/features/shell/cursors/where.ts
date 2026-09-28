@@ -6,6 +6,7 @@ import type { AwarenessView, Peer } from "@/lib/realtime/protocol";
 
 const TAB_WORD = {
 	overview: "Overview",
+	today: "Today",
 	plan: "Plan",
 	places: "Places",
 	media: "Media",

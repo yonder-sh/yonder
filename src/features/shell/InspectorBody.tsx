@@ -62,6 +62,7 @@ import {
 } from "@/features/plan/ItemOverview";
 import { ProposalBar } from "@/features/suggest/ProposalBar";
 import { ProposalOverview } from "@/features/suggest/ProposalOverview";
+import { StopActions } from "@/features/today/StopActions";
 import { EdgeOverview } from "@/features/transit/EdgeOverview";
 import { LegOverview } from "@/features/transit/LegOverview";
 import { seesMoney } from "@/lib/auth/roles";
@@ -325,6 +326,8 @@ function Body({
 					<PlaceHeadActions node={place} />
 				</div>
 			) : null}
+			{/* On the road (P11): Directions and the driver's Address. */}
+			{sel?.kind === "item" ? <StopActions itemId={sel.id} /> : null}
 			<div className="mt-3 empty:hidden">
 				<ProposalBar sel={sel} />
 			</div>

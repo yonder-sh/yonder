@@ -8,10 +8,33 @@
  * travellers see the day they are living, wherever the viewer is. `asOf`
  * (the `?asOf=` param, demos and e2e) replaces "today" everywhere.
  */
+import type { GraphIndex } from "@/lib/engine/graph-index";
 import { localDateOf, zonedEpoch } from "@/lib/engine/time";
+import type { ScheduleResult } from "@/lib/engine/types";
 import { daysUntil } from "@/lib/format";
 
 export type PhaseDay = { id: string; date: string; tz: string };
+
+/** The trip's days in order, each in its own zone (the schedule's). */
+export function phaseDays(
+	ix: GraphIndex,
+	schedule: ScheduleResult,
+): PhaseDay[] {
+	return ix.days.map((d) => ({
+		id: d.id,
+		date: d.date,
+		tz: schedule.days[d.id]?.tz ?? ix.defaultTz,
+	}));
+}
+
+/** `nowFor`'s zone for an `asOf`: the zone of that trip day, else the trip's. */
+export function asOfZone(
+	ix: GraphIndex,
+	schedule: ScheduleResult,
+): (date: string) => string {
+	return (date) =>
+		schedule.days[ix.dayOfDate(date)?.id ?? ""]?.tz ?? ix.defaultTz;
+}
 
 export type TripPhase =
 	/** No days yet. */

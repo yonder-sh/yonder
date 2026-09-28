@@ -51,8 +51,9 @@ import {
 	type WorkspaceRouteBinding,
 } from "@/lib/workspace/model-context";
 import type { NavTarget } from "@/lib/workspace/nav";
-import { defaultTab, WorkspaceSearch } from "@/lib/workspace/search";
+import { WorkspaceSearch } from "@/lib/workspace/search";
 import { useUi } from "@/lib/workspace/ui-store";
+import { useWorkspace } from "@/lib/workspace/use-workspace";
 
 /**
  * `/t/$trip/…` — the trip workspace (SPEC §12.1, D5: `ssr: false`). The scope
@@ -207,22 +208,6 @@ function TripWorkspace({
 		useUi.getState().loadSuggesting(tripId);
 		return () => useUi.getState().resetUi();
 	}, [tripId]);
-	// Someone who can only rate lands on Rate: a bare trip link, once per open
-	// (owner, 2026-09-27). Going to the Overview afterwards stays there.
-	const landed = useRef<string | null>(null);
-	useEffect(() => {
-		if (landed.current === tripId) return;
-		landed.current = tripId;
-		if (graph.me.role !== "rater" || splat) return;
-		if (search.tab || defaultTab(null, search) !== "overview") return;
-		void navigate({
-			to: "/t/$trip",
-			params: { trip: slug },
-			search: { ...search, tab: "places", pv: "rate" },
-			replace: true,
-		});
-	}, [tripId, graph.me.role, splat, search, slug, navigate]);
-
 	const go = useCallback(
 		(t: NavTarget, opts?: { replace?: boolean }) => {
 			const replace = opts?.replace ?? false;
@@ -313,10 +298,35 @@ function TripWorkspace({
 				route={route}
 				proposals={proposals}
 			>
+				<RaterLanding tripId={tripId} slug={slug} />
 				<Workspace />
 			</WorkspaceModelProvider>
 		</TripChannelProvider>
 	);
+}
+
+/**
+ * Someone who can only rate lands on Rate: a bare trip link, once per open
+ * (owner, 2026-09-27). Going to the Overview afterwards stays there. Not
+ * while the trip is on: planning steps back, Today comes first.
+ */
+function RaterLanding({ tripId, slug }: { tripId: string; slug: string }) {
+	const { graph, scope, search, tab } = useWorkspace();
+	const navigate = useNavigate();
+	const landed = useRef<string | null>(null);
+	useEffect(() => {
+		if (landed.current === tripId) return;
+		landed.current = tripId;
+		if (graph.me.role !== "rater" || scope) return;
+		if (search.tab || tab !== "overview") return;
+		void navigate({
+			to: "/t/$trip",
+			params: { trip: slug },
+			search: { ...search, tab: "places", pv: "rate" },
+			replace: true,
+		});
+	}, [tripId, graph.me.role, scope, search, tab, slug, navigate]);
+	return null;
 }
 
 /** The workspace's shape while the graph loads (no spinner in the middle of nothing). */

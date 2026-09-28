@@ -1,6 +1,7 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { Dashboard } from "@/features/home/Dashboard";
 import { dashboardToday } from "@/features/home/dashboard.functions";
+import { onlyRunning } from "@/features/home/hero-when";
 import { myTripsQuery } from "@/features/home/queries";
 import { pageTitle } from "@/lib/brand";
 import { todayIn } from "@/lib/format";
@@ -11,13 +12,27 @@ import { todayIn } from "@/lib/format";
  * fetched in the loader and dehydrated, with "today" in the viewer's zone so
  * the first paint already splits next / past trips right (DASH-03); in the
  * browser the loader asks the clock.
+ *
+ * The installed app starts here (`?source=pwa`, the manifest's start_url):
+ * with exactly one of your trips under way it opens that trip instead, which
+ * lands on Today (One Yonder phase 5).
  */
 export const Route = createFileRoute("/_authed/dashboard")({
-	loader: async ({ context }) => {
-		const [, today] = await Promise.all([
+	loaderDeps: ({ search }) => ({
+		pwa: (search as { source?: unknown }).source === "pwa",
+	}),
+	loader: async ({ context, deps }) => {
+		const [trips, today] = await Promise.all([
 			context.queryClient.ensureQueryData(myTripsQuery()),
 			typeof window === "undefined" ? dashboardToday() : todayIn(),
 		]);
+		const on = deps.pwa ? onlyRunning(trips, today) : null;
+		if (on)
+			throw redirect({
+				to: "/t/$trip",
+				params: { trip: on.slug },
+				replace: true,
+			});
 		return { today };
 	},
 	head: () => ({ meta: [{ title: pageTitle("Your trips") }] }),

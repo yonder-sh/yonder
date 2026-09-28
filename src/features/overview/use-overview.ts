@@ -18,7 +18,13 @@ import {
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { type DayLine, dayLines } from "./lib/day-lines";
 import type { HighlightCandidate } from "./lib/highlights";
-import { nowFor, type TripPhase, tripPhase } from "./lib/phase";
+import {
+	asOfZone,
+	nowFor,
+	phaseDays,
+	type TripPhase,
+	tripPhase,
+} from "./lib/phase";
 import { type TripRoute, tripRoute } from "./lib/trip-route";
 
 /** A minute clock (0 on the server). */
@@ -59,25 +65,12 @@ export function useOverview(): OverviewData {
 	const asOf = search.asOf ?? null;
 	const minute = useMinute();
 	const now = asOf
-		? nowFor(
-				asOf,
-				(date) =>
-					schedule.days[ix.dayOfDate(date)?.id ?? ""]?.tz ?? ix.defaultTz,
-			)
+		? nowFor(asOf, asOfZone(ix, schedule))
 		: minute || Date.now();
 	const route = useMemo(() => tripRoute(ix), [ix]);
 	const lines = useMemo(() => dayLines(ix, route), [ix, route]);
 	const phase = useMemo(
-		() =>
-			tripPhase(
-				ix.days.map((d) => ({
-					id: d.id,
-					date: d.date,
-					tz: schedule.days[d.id]?.tz ?? ix.defaultTz,
-				})),
-				now,
-				asOf,
-			),
+		() => tripPhase(phaseDays(ix, schedule), now, asOf),
 		[ix, schedule, now, asOf],
 	);
 

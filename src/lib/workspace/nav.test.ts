@@ -213,6 +213,56 @@ describe("the Overview tab (docs/OVERVIEW.md)", () => {
 	});
 });
 
+describe("Today during the trip (One Yonder phase 5)", () => {
+	const on = (scopeId: string | null, search: WorkspaceSearch = {}) => ({
+		...state(scopeId, search),
+		underway: true,
+	});
+	const tab = (t: nav.NavTarget, scopeId: string | null) =>
+		tabOf(scopeId, t.search, true);
+
+	it("a bare trip link is Today; Overview and Plan links keep working", () => {
+		expect(tabOf(null, {}, true)).toBe("today");
+		expect(tabOf(null, { tab: "overview" }, true)).toBe("overview");
+		expect(tabOf(null, { tab: "plan" }, true)).toBe("plan");
+		expect(tabOf(null, { days: "2027-10-05" }, true)).toBe("plan");
+		expect(tabOf(N.tokyo ?? null, {}, true)).toBe("plan");
+		// Outside the trip a Today link shows the Overview.
+		expect(tabOf(null, { tab: "today" })).toBe("overview");
+	});
+
+	it("the Overview is named in the URL; Today is the bare link", () => {
+		const ov = nav.setTab(on(null), "overview");
+		expect(ov.search).toEqual({ tab: "overview" });
+		const back = nav.setTab(on(null, ov.search), "today");
+		expect(back.search).toEqual({});
+		// From a place: the trip root, without a selection or days.
+		const t = nav.setTab(
+			on(N.tokyo ?? null, { sel: "root", days: "2027-10-05" }),
+			"today",
+		);
+		expect(t.splat).toBe("");
+		expect(tab(t, null)).toBe("today");
+		expect(t.search.days).toBeUndefined();
+	});
+
+	it("a selection opens its details over Today; going somewhere opens the Plan", () => {
+		const s0 = on(null);
+		const item = demoGraph.items[0]?.id ?? "";
+		const picked = nav.select(s0, { kind: "item", id: item });
+		expect(picked.search).toEqual({ tab: "today", sel: `i.${item}` });
+		expect(tab(picked, null)).toBe("today");
+		// Closing the details stays on Today.
+		const closed = nav.escapeChain(on(null, picked.search));
+		expect(closed && tab(closed, null)).toBe("today");
+		const tokyo = N.tokyo ?? "";
+		expect(tab(nav.zoomIn(s0, tokyo), tokyo)).toBe("plan");
+		expect(
+			tab(nav.setDays(s0, { from: "2027-10-05", to: "2027-10-05" }), null),
+		).toBe("plan");
+	});
+});
+
 describe("retired Media and Notes tabs (One Yonder)", () => {
 	it("open the scope's details at that section, or the selection's", () => {
 		const t = nav.openDetails(

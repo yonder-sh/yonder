@@ -2,10 +2,11 @@
  * The trip Overview (docs/OVERVIEW.md), on a cloned demo trip (§18.5):
  * - a bare trip link lands on the Overview (first tab), which takes the map's
  *   space on desktop; `?tab=plan` links keep opening the Plan;
- * - the stats; `?asOf` shows the before / during / after headers;
+ * - the stats; `?asOf` shows the before / during / after headers (during
+ *   the trip a bare link opens Today: `tab=overview` names the Overview);
  * - a stay on the route strip opens its days in the Plan;
  * - a view-link guest lands on it too;
- * - on a phone it is the sheet's first tab, stacked, at full height;
+ * - on a phone it is stacked, at full height (during the trip, under Today);
  * - screenshots in `e2e/shots/overview/`.
  */
 import { expect, type Page, test } from "@playwright/test";
@@ -71,7 +72,7 @@ test("?asOf shows the header before, during and after the trip", async ({ page }
 	await expect(page.getByTestId(O.chip)).toContainText("Planning · 3 days to go");
 
 	// Day 3 of 5 (5 Oct): the night at Mt. Fuji, pulsing on the globe.
-	await page.goto(`/t/${c.slug}?asOf=2027-10-05`);
+	await page.goto(`/t/${c.slug}?tab=overview&asOf=2027-10-05`);
 	await expect(header).toHaveAttribute("data-phase", "during");
 	await expect(header).toContainText("Day 3 of 5");
 	await expect(page.getByTestId(O.title)).toContainText("Mt. Fuji");
@@ -134,14 +135,14 @@ test("a view-link guest lands on the Overview", async ({ browser, page }, info) 
 	await guestCtx.close();
 });
 
-test("phone: the Overview is the first tab, stacked and full height", async ({ page }, info) => {
+test("phone: the Overview is stacked and full height (under Today during the trip)", async ({ page }, info) => {
 	test.skip(info.project.name !== "mobile", "phone layout");
 	const c = await cloneFixtureTrip(page.request);
-	await page.goto(`/t/${c.slug}?asOf=2027-10-05`);
+	await page.goto(`/t/${c.slug}?tab=overview&asOf=2027-10-05`);
 	const sheet = page.getByTestId(TESTID.mobileSheet);
 	await expect(sheet).toBeVisible();
 	const tabs = sheet.getByTestId(TESTID.centerTabs).getByRole("tab");
-	await expect(tabs.first()).toHaveAttribute("data-tab", "overview");
+	await expect(tabs.first()).toHaveAttribute("data-tab", "today");
 	await expect(tabs.first()).toHaveAttribute("aria-selected", "true");
 	const ov = page.getByTestId(O.page);
 	await expect(ov).toBeVisible();

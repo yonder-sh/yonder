@@ -352,7 +352,7 @@ function Header({
 	lastDate: string | null;
 	covers: ReturnType<typeof useCovers>;
 }) {
-	const { graph, ix, schedule, nav } = useWorkspace();
+	const { graph, ix, schedule, nav, underway } = useWorkspace();
 	const guard = useEditGuard();
 	const openAddPlace = useUi((s) => s.openAddPlace);
 	const setSettingsOpen = useUi((s) => s.setSettingsOpen);
@@ -533,8 +533,11 @@ function Header({
 				{buttons(
 					<Button
 						data-testid={OVERVIEW_TESTID.openToday}
+						// During the trip: Today (One Yonder phase 5); an `asOf` day otherwise.
 						onClick={() =>
-							nav.setDays({ from: todayLine.date, to: todayLine.date })
+							underway
+								? nav.setTab("today")
+								: nav.setDays({ from: todayLine.date, to: todayLine.date })
 						}
 						className={PRIMARY}
 					>

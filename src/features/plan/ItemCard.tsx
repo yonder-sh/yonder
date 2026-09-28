@@ -127,7 +127,7 @@ export function isBooked(item: GraphItem): boolean {
 }
 
 /** The glyph of an unlocated block, from its title ("Lunch" → Utensils). */
-function BlockGlyph({ title }: { title: string }) {
+export function BlockGlyph({ title }: { title: string }) {
 	const t = title.toLowerCase();
 	const Icon = /breakfast|lunch|dinner|brunch|meal|food|eat/.test(t)
 		? Utensils

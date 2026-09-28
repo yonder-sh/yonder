@@ -4,7 +4,7 @@
  * the start date; every later day counts up.
  */
 import { describe, expect, it } from "vitest";
-import { heroWhen, isRunning, tripDayNumber } from "../hero-when";
+import { heroWhen, isRunning, onlyRunning, tripDayNumber } from "../hero-when";
 
 describe("tripDayNumber", () => {
 	it("is Day 1 on the start date", () => {
@@ -78,5 +78,26 @@ describe("isRunning", () => {
 		expect(isRunning("2026-09-20", "2026-09-23", "2026-09-24")).toBe(false);
 		expect(isRunning("2026-09-20", "2026-09-23", "2026-09-19")).toBe(false);
 		expect(isRunning("2026-09-20", "2026-09-23", null)).toBe(false);
+	});
+});
+
+describe("onlyRunning (the installed app opens the trip you're on)", () => {
+	const trip = (slug: string, startDate: string, endDate: string) => ({
+		slug,
+		startDate,
+		endDate,
+	});
+	const asia = trip("asia", "2027-10-02", "2027-11-07");
+	const weekend = trip("weekend", "2027-10-09", "2027-10-10");
+	const later = trip("later", "2028-03-01", "2028-03-10");
+
+	it("the one trip under way today", () => {
+		expect(onlyRunning([later, asia], "2027-10-05")?.slug).toBe("asia");
+	});
+
+	it("none when no trip is on, or when two are (the dashboard picks)", () => {
+		expect(onlyRunning([asia, later], "2027-09-30")).toBeNull();
+		expect(onlyRunning([asia, weekend], "2027-10-09")).toBeNull();
+		expect(onlyRunning([asia], null)).toBeNull();
 	});
 });

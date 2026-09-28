@@ -381,6 +381,7 @@ export const LENSES = ["country", "region", "city", "area", "place"] as const;
 /** Workspace tabs a peer can be on (mirrors `src/lib/workspace/search.ts` TABS). */
 export const TABS = [
 	"overview",
+	"today",
 	"plan",
 	"places",
 	"media",

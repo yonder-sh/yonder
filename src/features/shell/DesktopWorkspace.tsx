@@ -16,7 +16,7 @@
  *   storage for its return. The Places tab is then wide.
  * - The Overview tab (docs/OVERVIEW.md) takes the centre, the map's and the
  *   inspector's space as one scrolling page, at every width; a selection
- *   shows in the right Sheet.
+ *   shows in the right Sheet. So does Today (a centred column).
  */
 import { useMemo, useRef, useSyncExternalStore } from "react";
 import { useDefaultLayout } from "react-resizable-panels";
@@ -49,10 +49,10 @@ import { useShell } from "./shell-store";
 import { TopBar } from "./TopBar";
 import type { Breakpoint } from "./use-breakpoint";
 
-/** The Overview tab is on screen: it takes the map's space too. */
+/** The Overview (or Today) is on screen: it takes the map's space too. */
 function useOverviewTakesAll(): boolean {
 	const { tab } = useWorkspace();
-	return tab === "overview";
+	return tab === "overview" || tab === "today";
 }
 
 /** A folded pane's rail (`PanelToggles`, w-10) and the 1px divider. */

@@ -15,8 +15,15 @@ import {
 	useContext,
 	useEffect,
 	useMemo,
+	useState,
 } from "react";
 import { toast } from "sonner";
+import {
+	asOfZone,
+	nowFor,
+	phaseDays,
+	tripPhase,
+} from "@/features/overview/lib/phase";
 import { can, canRateOwn, type EditMode, editModeOf } from "@/lib/auth/roles";
 import { type GraphIndex, indexGraph } from "@/lib/engine/graph-index";
 import { lensOptions as lensOptionsOf, resolveLens } from "@/lib/engine/lens";
@@ -162,6 +169,8 @@ export interface Workspace {
 	lens: Lens;
 	lensOptions: { lens: Lens; enabled: boolean; visible: boolean }[];
 	tab: Tab;
+	/** The trip is on (its days, or `?asOf` on one): Today replaces the Overview. */
+	underway: boolean;
 	days: DayRange | null;
 	sel: Sel | null;
 	only: boolean;
@@ -257,6 +266,7 @@ export function WorkspaceModelProvider({
 		[graph, overlay.graph, shown],
 	);
 	const schedule = useMemo(() => computeSchedule(ix), [ix]);
+	const underway = useUnderway(ix, schedule, route.search.asOf ?? null);
 
 	const { splat, search, go, href } = route;
 	const resolved = useMemo(
@@ -279,8 +289,8 @@ export function WorkspaceModelProvider({
 	const filter = useMemo(() => parseFilter(search.f), [search.f]);
 
 	const state: N.NavState = useMemo(
-		() => ({ ix, scopeId, lens, search, days }),
-		[ix, scopeId, lens, search, days],
+		() => ({ ix, scopeId, lens, search, days, underway }),
+		[ix, scopeId, lens, search, days, underway],
 	);
 
 	const run = useCallback(
@@ -336,7 +346,8 @@ export function WorkspaceModelProvider({
 			scopeResolved: resolved.complete,
 			lens,
 			lensOptions,
-			tab: tabOf(scopeId, search),
+			tab: tabOf(scopeId, search, underway),
+			underway,
 			days,
 			sel,
 			only: search.only === 1,
@@ -368,6 +379,7 @@ export function WorkspaceModelProvider({
 			schedule,
 			nav,
 			scopeId,
+			underway,
 		],
 	);
 
@@ -402,6 +414,28 @@ export function WorkspaceModelProvider({
 			{children}
 		</WorkspaceContext.Provider>
 	);
+}
+
+/**
+ * Whether the trip is on at `?asOf`, else now (checked every few minutes; it
+ * only flips on the trip's first and last day).
+ */
+function useUnderway(
+	ix: GraphIndex,
+	schedule: ScheduleResult,
+	asOf: string | null,
+): boolean {
+	const [tick, setTick] = useState(0);
+	useEffect(() => {
+		if (asOf) return;
+		const t = setInterval(() => setTick((n) => n + 1), 5 * 60_000);
+		return () => clearInterval(t);
+	}, [asOf]);
+	return useMemo(() => {
+		void tick;
+		const now = nowFor(asOf, asOfZone(ix, schedule));
+		return tripPhase(phaseDays(ix, schedule), now, asOf).kind === "during";
+	}, [ix, schedule, asOf, tick]);
 }
 
 /** The workspace, or null outside a trip (components that also render elsewhere). */

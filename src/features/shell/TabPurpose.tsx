@@ -7,6 +7,7 @@ import type { Tab } from "@/lib/workspace/search";
 
 export const TAB_PURPOSE: Record<Tab, string> = {
 	overview: "The whole trip at a glance.",
+	today: "Where you are, what's next and what's left today.",
 	plan: "When and where you'll be, day by day.",
 	places:
 		"What you want to do. Add places, rate them together, keep the favourites.",

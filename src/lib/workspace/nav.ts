@@ -13,6 +13,8 @@
  *   default for the new URL would be (the Overview is the default only at a
  *   bare trip root, `defaultTab`). The Overview is trip-level: zooming into a
  *   place, selecting something or picking days from it opens the Plan.
+ * - Today (during the trip) is trip-level too, except that a selection opens
+ *   its details over it.
  */
 import type { GraphIndex } from "@/lib/engine/graph-index";
 import {
@@ -73,6 +75,8 @@ export type NavState = {
 	lens: Lens;
 	search: WorkspaceSearch;
 	days: DayRange | null;
+	/** The trip is on: a bare trip link is Today (`defaultTab`). */
+	underway?: boolean;
 };
 
 /** The URL tail for a scope (`japan/tokyo`), '' for the root. */
@@ -100,20 +104,28 @@ function chosen(
 }
 
 /** The tab the current URL shows. */
-const tabNow = (s: NavState): Tab => tabOf(s.scopeId, s.search);
+const tabNow = (s: NavState): Tab => tabOf(s.scopeId, s.search, s.underway);
 
 /** `t` showing `tab` at `scopeId` (the `tab` param only when it isn't the default there). */
-function withTab(t: NavTarget, scopeId: string | null, tab: Tab): NavTarget {
+function withTab(
+	t: NavTarget,
+	scopeId: string | null,
+	tab: Tab,
+	underway = false,
+): NavTarget {
 	const rest = { ...t.search, tab: undefined };
 	return {
 		splat: t.splat,
-		search: cleanSearch({ ...rest, tab: tabParam(scopeId, tab, rest) }),
+		search: cleanSearch({
+			...rest,
+			tab: tabParam(scopeId, tab, rest, underway),
+		}),
 	};
 }
 
-/** The Overview is trip-level: going somewhere specific from it opens the Plan. */
+/** The Overview and Today are trip-level: going somewhere specific from them opens the Plan. */
 const fromOverview = (tab: Tab, specific: boolean): Tab =>
-	tab === "overview" && specific ? "plan" : tab;
+	(tab === "overview" || tab === "today") && specific ? "plan" : tab;
 
 export function zoomIn(s: NavState, nodeId: string): NavTarget {
 	return withTab(
@@ -130,6 +142,7 @@ export function zoomIn(s: NavState, nodeId: string): NavTarget {
 		},
 		nodeId,
 		fromOverview(tabNow(s), true),
+		s.underway,
 	);
 }
 
@@ -151,6 +164,7 @@ export function zoomOut(s: NavState): NavTarget | null {
 		},
 		parentId,
 		fromOverview(tabNow(s), parentId !== null),
+		s.underway,
 	);
 }
 
@@ -172,6 +186,7 @@ export function zoomTo(
 		},
 		nodeId,
 		fromOverview(tabNow(s), nodeId !== null),
+		s.underway,
 	);
 }
 
@@ -191,6 +206,7 @@ const here = (
 		},
 		s.scopeId,
 		patch.tab ?? fromOverview(tabNow(s), toPlan),
+		s.underway,
 	);
 
 export const setLens = (s: NavState, lens: Lens) => here(s, { lens });
@@ -200,7 +216,8 @@ export const stepLens = (s: NavState, dir: 1 | -1) =>
 
 /**
  * A new selection opens on its Overview (FB-21b: `itab` goes with the old
- * one). Selecting something from the trip Overview opens it in the Plan.
+ * one). Selecting something from the trip Overview opens it in the Plan;
+ * from Today its details open over it.
  */
 export const select = (s: NavState, sel: Sel | null) => {
 	const next = serializeSel(sel);
@@ -210,7 +227,7 @@ export const select = (s: NavState, sel: Sel | null) => {
 			sel: next,
 			itab: next === s.search.sel ? s.search.itab : undefined,
 		},
-		next !== undefined,
+		next !== undefined && tabNow(s) !== "today",
 	);
 };
 
@@ -236,20 +253,20 @@ export const openDetails = (s: NavState, section: InspectorTabParam) =>
  * gallery (`tab=media`, no longer in the tab bar).
  */
 export function showMedia(s: NavState, nodeId: string | null): NavTarget {
-	return withTab(zoomTo(s, nodeId), nodeId, "media");
+	return withTab(zoomTo(s, nodeId), nodeId, "media", s.underway);
 }
 
 /**
- * A centre tab. The Overview is the whole trip's: from a place it goes to
- * the trip root, and it drops the selection and the day range.
+ * A centre tab. The Overview (and Today) is the whole trip's: from a place
+ * it goes to the trip root, and it drops the selection and the day range.
  */
 export function setTab(s: NavState, tab: Tab): NavTarget {
-	if (tab !== "overview") return here(s, { tab });
+	if (tab !== "overview" && tab !== "today") return here(s, { tab });
 	const base = s.scopeId
 		? zoomTo(s, null)
 		: here(s, { sel: undefined, itab: undefined });
 	const search = { ...base.search, days: undefined, sel: undefined };
-	return withTab({ splat: base.splat, search }, null, "overview");
+	return withTab({ splat: base.splat, search }, null, tab, s.underway);
 }
 
 /**
@@ -353,5 +370,6 @@ export function openPlaces(
 		},
 		stay ? s.scopeId : (opts.scopeId ?? null),
 		"places",
+		s.underway,
 	);
 }

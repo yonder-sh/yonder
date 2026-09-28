@@ -16,11 +16,13 @@ export type { BundleTarget, LegTarget } from "@/lib/schemas/targets";
 const ID = "[0-9a-f-]{36}";
 
 /**
- * `overview` (docs/OVERVIEW.md) is the trip-level landing page; `money` (E5)
- * is never rendered for guests and is read-only for viewers (EXTENSIONS §1.4).
+ * `overview` (docs/OVERVIEW.md) is the trip-level landing page; `today` (One
+ * Yonder phase 5) takes its place while the trip is on; `money` (E5) is never
+ * rendered for guests and is read-only for viewers (EXTENSIONS §1.4).
  */
 export const TABS = [
 	"overview",
+	"today",
 	"plan",
 	"places",
 	"media",
@@ -100,7 +102,7 @@ export const SEL_RE = new RegExp(
 
 export const WorkspaceSearch = z.object({
 	lens: z.enum(LENS_VALUES).optional().catch(undefined),
-	/** Absent = `defaultTab()`: the Overview at a bare trip root, else the Plan. */
+	/** Absent = `defaultTab()`: the Overview (Today during the trip) at a bare trip root, else the Plan. */
 	tab: z.enum(TABS).optional().catch(undefined),
 	/**
 	 * docs/OVERVIEW.md: "today" for the Overview and Today, so demos and e2e
@@ -156,20 +158,28 @@ export type WorkspaceSearch = z.infer<typeof WorkspaceSearch>;
  */
 const PLAN_VIEW_KEYS = ["sel", "days", "lens", "f"] as const;
 
-/** The tab a URL without `tab` shows: the Overview at a bare trip root, else the Plan. */
+/**
+ * The tab a URL without `tab` shows: the Overview at a bare trip root (Today
+ * while the trip is on: `underway`), else the Plan.
+ */
 export function defaultTab(
 	scopeId: string | null,
 	search: WorkspaceSearch,
+	underway = false,
 ): Tab {
 	if (scopeId) return "plan";
-	return PLAN_VIEW_KEYS.some((k) => search[k] !== undefined)
-		? "plan"
-		: "overview";
+	if (PLAN_VIEW_KEYS.some((k) => search[k] !== undefined)) return "plan";
+	return underway ? "today" : "overview";
 }
 
-/** The tab a URL shows. */
-export function tabOf(scopeId: string | null, search: WorkspaceSearch): Tab {
-	return search.tab ?? defaultTab(scopeId, search);
+/** The tab a URL shows. Today is the trip's own days: outside them it's the Overview. */
+export function tabOf(
+	scopeId: string | null,
+	search: WorkspaceSearch,
+	underway = false,
+): Tab {
+	const tab = search.tab ?? defaultTab(scopeId, search, underway);
+	return tab === "today" && !underway ? "overview" : tab;
 }
 
 /** The `tab` param that shows `tab` at `scopeId` with the rest of `search` (undefined = its default). */
@@ -177,8 +187,9 @@ export function tabParam(
 	scopeId: string | null,
 	tab: Tab,
 	search: WorkspaceSearch,
+	underway = false,
 ): Tab | undefined {
-	return tab === defaultTab(scopeId, { ...search, tab: undefined })
+	return tab === defaultTab(scopeId, { ...search, tab: undefined }, underway)
 		? undefined
 		: tab;
 }

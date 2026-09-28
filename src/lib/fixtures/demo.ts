@@ -13,3 +13,5 @@ export {
 	N,
 	scenario,
 } from "@/lib/engine/__fixtures__/demo";
+/** Today's Tue 5 Oct in Shinjuku (boards P15, P18): `tokyoDay({ bic: … })`. */
+export { tokyoDay } from "@/lib/engine/__fixtures__/today";

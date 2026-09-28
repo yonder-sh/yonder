@@ -2,9 +2,9 @@
  * DESIGN §6 mobile (< 768), One Yonder (P09–P12): a header (home, Where, the
  * map button, the inbox, who's here and the trip menu), the tab's page at
  * full height, and a bottom tab bar (Overview · Plan · Places · Lists ·
- * Money). The map is a button, not the ground: "Map" swaps the page for it,
- * "List" swaps back. The details open as a sheet over either; the (+) sits
- * above the tab bar.
+ * Money; Today in the Overview's place while the trip is on). The map is a
+ * button, not the ground: "Map" swaps the page for it, "List" swaps back.
+ * The details open as a sheet over either; the (+) sits above the tab bar.
  *
  * Which of the two you look at is `sheetSnap` (the pre-One Yonder sheet's
  * name, kept for the follow and cursor code that reads it): its first snap
@@ -19,6 +19,7 @@ import {
 	Map as MapIcon,
 	MapPin,
 	MoreHorizontal,
+	Navigation,
 	Plane,
 	Plus,
 	Wallet,
@@ -235,6 +236,7 @@ const TAB_ICON: Record<
 	ComponentType<{ className?: string }>
 > = {
 	overview: Compass,
+	today: Navigation,
 	plan: CalendarDays,
 	places: MapPin,
 	lists: ListTodo,
@@ -242,6 +244,7 @@ const TAB_ICON: Record<
 };
 const TAB_LABEL: Record<Exclude<Tab, "media" | "notes">, string> = {
 	overview: "Overview",
+	today: "Today",
 	plan: "Plan",
 	places: "Places",
 	lists: "Lists",
@@ -254,7 +257,10 @@ function BottomTabs() {
 	const [, setMapOpen] = useMapOpen();
 	const toDecide = usePlacesToDecide();
 	const overdue = useListsOverdue();
-	const tabs = visibleTabs(ws.graph.me) as Exclude<Tab, "media" | "notes">[];
+	const tabs = visibleTabs(ws.graph.me, ws.underway) as Exclude<
+		Tab,
+		"media" | "notes"
+	>[];
 	return (
 		<div
 			role="tablist"
@@ -264,7 +270,9 @@ function BottomTabs() {
 		>
 			{tabs.map((t) => {
 				const Icon = TAB_ICON[t];
-				const selected = ws.tab === t;
+				// The Overview during the trip sits under Today.
+				const selected =
+					ws.tab === t || (t === "today" && ws.tab === "overview");
 				return (
 					<button
 						key={t}

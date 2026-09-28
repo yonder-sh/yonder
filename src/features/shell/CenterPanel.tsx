@@ -4,7 +4,9 @@
  * something inside it, FB-12), and the tab content from
  * each owning package (OverviewTab, PlanTab, MediaTab, ListsTab, NotesTab,
  * MoneyTab). The tab lives in the URL (`tab`), so it deep-links and survives
- * reloads; a bare trip link opens the Overview (docs/OVERVIEW.md).
+ * reloads; a bare trip link opens the Overview (docs/OVERVIEW.md), or Today
+ * while the trip is on (One Yonder phase 5: it takes the Overview's place in
+ * the bar; `tab=overview` still opens the Overview, under Today).
  *
  * - Counts are summed over the rollup targets (`scope-counts.ts`, SPEC §8.4).
  * - The Plan tab opens with the one-line digest (EXTENSIONS §9).
@@ -29,6 +31,7 @@ import { PlacesTab } from "@/features/places/tab/PlacesTab";
 import { ReminderLine } from "@/features/places/tab/ReminderLine";
 import { usePlacesToDecide } from "@/features/places/tab/use-places";
 import { PlanTab } from "@/features/plan/PlanTab";
+import { TodayTab } from "@/features/today/TodayTab";
 import { seesMoney } from "@/lib/auth/roles";
 import { TESTID } from "@/lib/testids";
 import { cn } from "@/lib/utils";
@@ -43,6 +46,7 @@ import { SHELL_TESTID } from "./testids";
 
 const TAB_LABEL: Record<Tab, string> = {
 	overview: "Overview",
+	today: "Today",
 	plan: "Plan",
 	places: "Places",
 	media: "Media",
@@ -53,13 +57,23 @@ const TAB_LABEL: Record<Tab, string> = {
 
 /**
  * The tabs this viewer gets (One Yonder: five; Media and Notes live in each
- * place's details): Money only for those who pay (`seesMoney`).
+ * place's details): Money only for those who pay (`seesMoney`); Today in the
+ * Overview's place while the trip is on.
  */
-export function visibleTabs(me: {
-	role: Parameters<typeof seesMoney>[0]["role"];
-	isGuest: boolean;
-}): Tab[] {
-	const all: Tab[] = ["overview", "plan", "places", "lists", "money"];
+export function visibleTabs(
+	me: {
+		role: Parameters<typeof seesMoney>[0]["role"];
+		isGuest: boolean;
+	},
+	underway = false,
+): Tab[] {
+	const all: Tab[] = [
+		underway ? "today" : "overview",
+		"plan",
+		"places",
+		"lists",
+		"money",
+	];
 	return seesMoney(me) ? all : all.filter((t) => t !== "money");
 }
 
@@ -81,6 +95,7 @@ export function CenterTabBar({
 	const toDecide = usePlacesToDecide();
 	const count: Record<Tab, number | null> = {
 		overview: null,
+		today: null,
 		plan: null,
 		places: null,
 		media: counts.media || null,
@@ -90,14 +105,17 @@ export function CenterTabBar({
 	};
 	// EXTENSIONS §7: overdue to-dos (or windows open > 72 h) in scope.
 	const listsOverdue = useListsOverdue();
-	const tabs = visibleTabs(ws.graph.me);
+	const tabs = visibleTabs(ws.graph.me, ws.underway);
 	// A guest's URL may still say `tab=money`: show the plan instead.
-	// The full gallery (`tab=media`) isn't in the bar: no tab is lit for it.
+	// The full gallery (`tab=media`) isn't in the bar: no tab is lit for it;
+	// the Overview during the trip is Today's.
 	const active = tabs.includes(ws.tab)
 		? ws.tab
 		: ws.tab === "media"
 			? null
-			: "plan";
+			: ws.tab === "overview"
+				? "today"
+				: "plan";
 	// A narrow bar scrolls sideways: keep the selected tab in view (a `?tab=money`
 	// link, past the Overview and Plan).
 	const bar = useRef<HTMLDivElement>(null);
@@ -211,16 +229,21 @@ export function CenterTabContent({
 	/** The phone's sheet (the Places and Lists tabs lay out for it). */
 	phone?: boolean;
 } = {}) {
-	const { tab, graph, mode } = useWorkspace();
+	const { tab, graph, mode, underway } = useWorkspace();
 	const active =
-		tab === "media" || visibleTabs(graph.me).includes(tab) ? tab : "plan";
+		tab === "media" ||
+		tab === "overview" ||
+		visibleTabs(graph.me, underway).includes(tab)
+			? tab
+			: "plan";
 	const rollupChoice = useRollupChoice();
 	return (
 		<div className="flex min-h-0 flex-1 flex-col">
-			{/* "Dennis reminded you to rate 12 places", on every tab. */}
-			{mode === "live" ? <ReminderLine /> : null}
+			{/* "Dennis reminded you to rate 12 places", on every tab but Today. */}
+			{mode === "live" && active !== "today" ? <ReminderLine /> : null}
 			{active === "plan" ? <DigestBanner /> : null}
 			{active !== "overview" &&
+			active !== "today" &&
 			active !== "plan" &&
 			active !== "money" &&
 			active !== "places" &&
@@ -247,6 +270,7 @@ export function CenterTabContent({
 				data-cursor-vis={active === "money" ? "members" : undefined}
 			>
 				{active === "overview" ? <OverviewTab phone={phone} /> : null}
+				{active === "today" ? <TodayTab phone={phone} /> : null}
 				{active === "plan" ? <PlanTab /> : null}
 				{active === "places" ? <PlacesTab phone={phone} /> : null}
 				{active === "media" ? <MediaView /> : null}

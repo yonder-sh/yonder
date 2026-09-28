@@ -6,6 +6,8 @@
  * with the sheet full height it sits at the foot of the screen. Shown
  * whenever you have places to rate here; hidden at 0, for people who can't
  * rate, and while the feed itself is open. A tap opens the full-screen feed.
+ * Planning prompts step back while you travel: during the trip it shows only
+ * on the Places tab.
  */
 
 import { Star } from "lucide-react";
@@ -21,11 +23,11 @@ export const RATE_PILL_BOTTOM =
 	"calc(56px + var(--plan-dock-h, 0px) + env(safe-area-inset-bottom) + 12px)";
 
 export function RatePill() {
-	const { tab, search } = useWorkspace();
+	const { tab, search, underway } = useWorkspace();
 	const t = useRateTarget();
 	const left = useFlowTally(t.scopeId).toRate ?? 0;
 	const feedOpen = tab === "places" && search.pv === "rate";
-	if (!left || feedOpen) return null;
+	if (!left || feedOpen || (underway && tab !== "places")) return null;
 	const style: CSSProperties = { bottom: RATE_PILL_BOTTOM };
 	return (
 		<a

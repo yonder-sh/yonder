@@ -186,7 +186,7 @@ function usePlaceActionsValue() {
 	 */
 	const addToDay = useCallback(
 		async (
-			row: PlaceRow,
+			row: Pick<PlaceRow, "id" | "name" | "droppedByHand">,
 			dayId: string,
 			label: string,
 			at?: { afterItemId?: string; beforeItemId?: string },
