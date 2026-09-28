@@ -514,7 +514,7 @@ function PlanTabBody() {
 							onToggle={() => toggle(setCollapsedBands, e.key)}
 						/>
 						{open && dayRows ? (
-							<div className="grid gap-1.5 px-4 pb-2">
+							<div className="grid grid-cols-[minmax(0,1fr)] gap-1.5 px-4 pb-2">
 								{e.days.map((d) => (
 									<DayRow key={`${e.key}:${d.dayId}`} dayId={d.dayId} />
 								))}

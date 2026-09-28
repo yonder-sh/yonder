@@ -98,6 +98,16 @@ export function dayCity(
 	return best ? (ix.node(best)?.name ?? null) : null;
 }
 
+/** A title that starts with its city ("Tokyo · Nakano + Shinjuku") shown without it next to the city. */
+export function titleBesideCity(
+	title: string | null,
+	city: string | null,
+): string | null {
+	if (!title || !city) return title;
+	const m = title.match(/^(.+?)\s*[·—–-]\s*(.+)$/);
+	return m && m[1] === city ? (m[2] ?? title) : title;
+}
+
 /** "JST" when the day's zone changed; "ICT → CST" when it changes mid-day. */
 function zoneLabel(
 	ws: ReturnType<typeof useWorkspace>,
@@ -777,7 +787,9 @@ export function DayHeader({
 									className="block max-w-full cursor-pointer truncate rounded-sm text-left outline-none"
 								>
 									{day.title ? (
-										<span data-testid={PLAN_TESTID.dayTitle}>{day.title}</span>
+										<span data-testid={PLAN_TESTID.dayTitle}>
+											{titleBesideCity(day.title, city)}
+										</span>
 									) : (
 										(city ?? `Day ${ix.dayNumber(day.id)}`)
 									)}

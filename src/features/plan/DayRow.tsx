@@ -10,7 +10,7 @@ import { isIdea } from "@/features/outline/ideas";
 import { formatDayDate, formatDayShort } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
-import { dayCity } from "./DayHeader";
+import { dayCity, titleBesideCity } from "./DayHeader";
 import { PLAN_TESTID } from "./testids";
 import { itemName } from "./use-plan-actions";
 
@@ -77,7 +77,8 @@ export function DayRow({ dayId }: { dayId: string }) {
 					<span className="flex min-w-0 items-baseline gap-2">
 						<span className="shrink-0 font-semibold">{city ?? `Day ${n}`}</span>
 						<span className="min-w-0 truncate text-muted-foreground">
-							{day.title ?? (empty ? "No stops yet" : "")}
+							{titleBesideCity(day.title, city ?? null) ??
+								(empty ? "No stops yet" : "")}
 						</span>
 					</span>
 					{empty ? null : (

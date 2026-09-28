@@ -463,9 +463,9 @@ export function BlockHeader({
 }
 
 /**
- * A visit band (64px; city, region and country lenses): "Tokyo" + "12–18 Apr ·
- * 6 nights · 23 stops · Planned 4 days · scheduled 3", on a card with a 4px
- * muted left rule. It expands to its days.
+ * A visit band (city, region and country lenses; One Yonder D02): a light
+ * heading, "Japan  3–14 Oct · 11 nights · 45 stops · Planned 4 days ·
+ * scheduled 3", over its days. The chevron folds them; the name selects it.
  */
 export function BandCard({
 	visit,
@@ -491,54 +491,39 @@ export function BandCard({
 		<div
 			data-testid={PLAN_TESTID.band}
 			data-cursor-anchor={`sec:band.${anchorKey(visit.key)}`}
-			className="px-3 pt-3 pb-1"
+			className="flex min-w-0 items-center gap-1.5 px-3 pt-4 pb-1.5"
 		>
-			{/* The muted bar of an area or city card (plan.css), inside the outline. */}
-			<div
-				data-family="area"
-				className="plan-tone flex min-h-16 items-center gap-3 rounded-lg border bg-card py-2 pr-3 pl-3.5"
+			<button
+				type="button"
+				aria-expanded={open}
+				aria-label={open ? `Collapse ${rep?.name}` : `Expand ${rep?.name}`}
+				onClick={onToggle}
+				className="flex size-6 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
 			>
-				<button
-					type="button"
-					aria-expanded={open}
-					aria-label={open ? `Collapse ${rep?.name}` : `Expand ${rep?.name}`}
-					onClick={onToggle}
-					className="flex size-6 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
-				>
-					{open ? (
-						<ChevronDown className="size-4" strokeWidth={1.5} />
-					) : (
-						<ChevronRight className="size-4" strokeWidth={1.5} />
-					)}
-				</button>
-				<button
-					type="button"
-					onClick={() => rep && nav.select({ kind: "node", id: rep.id })}
-					onDoubleClick={() => rep && nav.zoomIn(rep.id)}
-					className="min-w-0 flex-1 text-left"
-				>
-					<span className="flex items-center gap-2">
-						{rep ? (
-							<TypeGlyph
-								type={rep.type}
-								category={rep.category}
-								className="size-4"
-							/>
-						) : null}
-						<span className="truncate text-lg leading-[22px] font-semibold">
-							{rep?.name ?? "Elsewhere"}
-						</span>
-						{visit.occurrence > 1 ? (
-							<Chip size="sm" className="tnum">
-								visit {visit.occurrence}
-							</Chip>
-						) : null}
-					</span>
-					<span className="mt-0.5 block truncate text-meta text-muted-foreground">
-						{parts.join(" · ")}
-					</span>
-				</button>
-			</div>
+				{open ? (
+					<ChevronDown className="size-4" strokeWidth={1.5} />
+				) : (
+					<ChevronRight className="size-4" strokeWidth={1.5} />
+				)}
+			</button>
+			<button
+				type="button"
+				onClick={() => rep && nav.select({ kind: "node", id: rep.id })}
+				onDoubleClick={() => rep && nav.zoomIn(rep.id)}
+				className="flex min-w-0 flex-1 items-baseline gap-2 text-left"
+			>
+				<span className="shrink-0 font-semibold">
+					{rep?.name ?? "Elsewhere"}
+				</span>
+				{visit.occurrence > 1 ? (
+					<Chip size="sm" className="self-center tnum">
+						visit {visit.occurrence}
+					</Chip>
+				) : null}
+				<span className="min-w-0 truncate text-meta text-muted-foreground">
+					{parts.join(" · ")}
+				</span>
+			</button>
 		</div>
 	);
 }
