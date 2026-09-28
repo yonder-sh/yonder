@@ -13,6 +13,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
 import { expect, type Page, test } from "@playwright/test";
+import { SHELL_TESTID } from "../../../src/features/shell/testids";
 import { TESTID } from "../../../src/lib/testids";
 import { REPO_ROOT, shotPath, storageStateOf } from "./_helpers/env";
 import { collectConsole, expectLive, expectNoHorizontalOverflow } from "./_helpers/page";
@@ -119,7 +120,10 @@ test("SEED-01/02: the imported tree reaches the workspace", async ({ page }, inf
 	expect(g.trip).toMatchObject({ startDate: "2027-10-02", endDate: "2027-11-07" });
 	if (info.project.name === "chromium") {
 		expect(g.trip.coverAttachmentId).not.toBeNull();
-		await expect(page.getByTestId(TESTID.outline)).toContainText("Japan");
+		// The Where picker lists the countries (it replaced the Outline).
+		await page.getByTestId(SHELL_TESTID.whereButton).click();
+		await expect(page.getByTestId(SHELL_TESTID.wherePicker)).toContainText("Japan");
+		await page.keyboard.press("Escape");
 	}
 	await expectNoHorizontalOverflow(page);
 	await page.screenshot({ path: shotPath(`seed/import-trip-${info.project.name}.png`), animations: "disabled" });
