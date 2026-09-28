@@ -1,9 +1,10 @@
 /**
  * Cloudflare Turnstile on the OTP send (Better Auth's captcha plugin), with
- * Cloudflare's documented test keys against the real siteverify endpoint
- * (needs the network): the always-pass secret accepts the test widgets'
- * dummy token, the always-fail secret refuses it, a send without a token is
- * refused, and only the send endpoint is gated (verifying a code is not).
+ * Cloudflare's documented test keys against siteverify answered in process
+ * the way Cloudflare answers those keys (tests never leave this machine): the
+ * always-pass secret accepts the test widgets' dummy token, the always-fail
+ * secret refuses it, a send without a token is refused, and only the send
+ * endpoint is gated (verifying a code is not).
  * https://developers.cloudflare.com/turnstile/troubleshooting/testing/
  */
 import { betterAuth } from "better-auth";
@@ -13,6 +14,30 @@ import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 const PASS_SECRET = "1x0000000000000000000000000000000AA";
 const FAIL_SECRET = "2x0000000000000000000000000000000AA";
 const DUMMY_TOKEN = "XXXX.DUMMY.TOKEN.XXXX";
+const SITEVERIFY = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
+
+/** What siteverify was asked, in order. */
+const asked: { secret?: string; response?: string }[] = [];
+
+/** `fetch` with siteverify answering as for Cloudflare's test secrets. */
+function withSiteverify(real: typeof fetch): typeof fetch {
+	return async (input, init) => {
+		const url = input instanceof Request ? input.url : String(input);
+		if (url !== SITEVERIFY) return real(input, init);
+		const body = JSON.parse(String(init?.body ?? "{}")) as (typeof asked)[0];
+		asked.push(body);
+		return Response.json(
+			body.secret === PASS_SECRET && body.response
+				? {
+						success: true,
+						challenge_ts: new Date().toISOString(),
+						hostname: "example.com",
+						"error-codes": [],
+					}
+				: { success: false, "error-codes": ["invalid-input-response"] },
+		);
+	};
+}
 
 const testEnv = vi.hoisted(() => {
 	const hex = Math.random().toString(16).slice(2, 10);
@@ -47,9 +72,11 @@ beforeAll(async () => {
 	await ensureDatabase(testEnv.scratchUrl);
 	await migrateDatabase(testEnv.scratchUrl);
 	vi.spyOn(console, "log").mockImplementation(() => {});
+	vi.stubGlobal("fetch", withSiteverify(globalThis.fetch));
 });
 
 afterAll(async () => {
+	vi.unstubAllGlobals();
 	const keys = await redis().keys(`${redisPrefix()}:*`);
 	if (keys.length) await redis().del(...keys);
 	await closeRedis();
@@ -102,6 +129,10 @@ describe("Turnstile on the OTP send (test keys)", () => {
 		);
 		expect(ok.status).toBe(200);
 		expect(await ok.json()).toEqual({ success: true });
+		expect(asked.at(-1)).toMatchObject({
+			secret: PASS_SECRET,
+			response: DUMMY_TOKEN,
+		});
 		const missing = await send(auth, `none-${testEnv.hex}@asia2027.test`);
 		expect(missing.status).toBe(400);
 		expect(await missing.json()).toMatchObject({ code: "MISSING_RESPONSE" });
@@ -127,6 +158,10 @@ describe("Turnstile on the OTP send (test keys)", () => {
 		);
 		expect(res.status).toBe(403);
 		expect(await res.json()).toMatchObject({ code: "VERIFICATION_FAILED" });
+		expect(asked.at(-1)).toMatchObject({
+			secret: FAIL_SECRET,
+			response: DUMMY_TOKEN,
+		});
 	});
 
 	it("checking a code needs no token", async () => {
