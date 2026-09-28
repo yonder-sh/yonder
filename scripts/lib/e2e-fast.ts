@@ -152,6 +152,14 @@ const list = (xs: [string, number][], max = 8) =>
 		.map(([k, n]) => (n > 1 ? `${k} ×${n}` : k))
 		.join(", ") + (xs.length > max ? `, … (${xs.length - max} more)` : "");
 
+/** A basemap miss by source and zoom: "ofm z15", "arcgis z7", "ofm/fonts/Noto Sans Bold". */
+function mapKind(key: string): string {
+	const t =
+		/^(ofm)\/planet\/[^/]+\/(\d+)\//.exec(key) ??
+		/^(arcgis)\/.*\/tile\/(\d+)\//.exec(key);
+	return t ? `${t[1]} z${t[2]}` : key.replace(/\/[^/]+\.pbf$/, "");
+}
+
 /**
  * Prints what a run asked of the outside world: per service, the stub's calls
  * and misses (answers it had to make up) since `before`, and the connections
@@ -173,16 +181,21 @@ export function printOfflineReport(
 		const calls = s.calls - (b?.calls ?? 0);
 		const misses = s.misses - (b?.misses ?? 0);
 		if (!calls) continue;
-		const missed = Object.entries(s.missed)
-			.map(([k, n]) => [k, n - (b?.missed[k] ?? 0)] as [string, number])
-			.filter(([, n]) => n > 0)
-			.sort((x, y) => y[1] - x[1]);
+		const kinds = new Map<string, number>();
+		for (const [k, n] of Object.entries(s.missed)) {
+			const d = n - (b?.missed[k] ?? 0);
+			if (d > 0) {
+				const kind = name === "map" ? mapKind(k) : k;
+				kinds.set(kind, (kinds.get(kind) ?? 0) + d);
+			}
+		}
+		const missed = [...kinds].sort((x, y) => y[1] - x[1]);
 		const hint =
 			name === "map" && misses
 				? ` (not in ${MAP_CACHE_DIR}: blank tiles; fill it once with pnpm e2e:tiles:warm)`
 				: "";
 		console.log(
-			`  ${name}: ${calls} call(s), ${misses} miss(es)${hint}${missed.length && name !== "map" ? `: ${list(missed)}` : ""}`,
+			`  ${name}: ${calls} call(s), ${misses} miss(es)${hint}${missed.length ? `: ${list(missed)}` : ""}`,
 		);
 	}
 	type Line = { host: string; port?: number; proc?: string; action?: string };
