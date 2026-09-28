@@ -54,7 +54,7 @@ export function PlacesDecide({ data }: { data: PlacesData }) {
 	return (
 		<div
 			data-testid={PLACES_TAB_TESTID.decide}
-			className="grid min-h-0 flex-1 auto-rows-min grid-cols-1 gap-4 overflow-y-auto px-4 pb-6 sm:px-6 lg:grid-cols-3"
+			className="grid min-h-0 flex-1 auto-rows-min grid-cols-1 items-start gap-4 overflow-y-auto px-4 pb-6 sm:px-6 lg:grid-cols-3"
 		>
 			{COLUMNS.map((col) => (
 				<section
