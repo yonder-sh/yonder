@@ -8,6 +8,7 @@ import { randomBytes } from "node:crypto";
 import path from "node:path";
 import { type Browser, expect, type Page, test } from "@playwright/test";
 import { SHELL_TESTID as SH } from "../../../src/features/shell/testids";
+import { SUGGEST_TESTID as SG } from "../../../src/features/suggest/testids";
 import { TESTID } from "../../../src/lib/testids";
 import { shotPath } from "./_helpers/env";
 import { collectConsole, expectLive } from "./_helpers/page";
@@ -170,7 +171,8 @@ test("DIG-08/09: a mention, a suggestion to review and a rejected suggestion rea
 	const panel = d.page.getByTestId(SH.inboxPanel);
 	await expect(panel).toBeVisible();
 	await expect(panel.getByTestId(SH.inboxRow).filter({ hasText: `cover charge ${tag}` })).toBeVisible({ timeout: 10_000 });
-	await expect(panel.getByTestId(SH.inboxRow).filter({ hasText: /suggestions? to review/ })).toBeVisible();
+	// The suggestion itself, to accept or reject there (One Yonder D14).
+	await expect(panel.getByTestId(SG.group).first()).toBeVisible();
 	await expect(panel.getByTestId(SH.inboxRow).filter({ hasText: `secret ${tag}` })).toHaveCount(0);
 	await d.page.screenshot({ path: shot("dig08-dennis-bell") });
 

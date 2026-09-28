@@ -458,7 +458,8 @@ test("a private to-do's anchor never reaches another member", async ({ browser }
 
 test("a link guest never receives a money anchor; a member does", async ({ browser }) => {
 	// A cost to point at.
-	const a = await open(browser, "dev", `/t/${trip.slug}?tab=money`, A_SIZE);
+	// At the place lens, so the Plan it goes to later shows its stops.
+	const a = await open(browser, "dev", `/t/${trip.slug}?tab=money&lens=place`, A_SIZE);
 	const exp = await a.page.evaluate(
 		async ({ tripId, owner }) => {
 			const m = await import(/* @vite-ignore */ "/src/features/money/money.functions.ts");
@@ -483,7 +484,7 @@ test("a link guest never receives a money anchor; a member does", async ({ brows
 	await loginViaApi(gctx.request, `guest-${randomBytes(3).toString("hex")}@example.com`, { first: "Gina", last: "Guest" });
 	const gpage = await gctx.newPage();
 	// On the Plan: a bare trip address opens the Overview, which has no cards.
-	await openLink(gpage, trip.slug, "viewer", "?tab=plan");
+	await openLink(gpage, trip.slug, "viewer", "?tab=plan&lens=place");
 	await expect(gpage).toHaveURL(new RegExp(`/t/${trip.slug}`), { timeout: 20_000 });
 	await expectLive(gpage);
 	await gpage.waitForFunction(() => !!(window as { __yonderCursors?: unknown }).__yonderCursors);

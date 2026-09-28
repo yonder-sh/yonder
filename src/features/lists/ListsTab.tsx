@@ -2,7 +2,7 @@
  * The Lists tab (SPEC §12.5 `ListsTab()`, DESIGN §7.3, EXTENSIONS §7):
  * to-dos and shopping rolled up over the scope (SPEC §8.4; the rollup toggle
  * "Everything inside · Only Tokyo" above is the shell's). Todo | Shopping
- * switch — or both side by side when the panel is ≥ 640px wide. At the trip
+ * switch (One Yonder D12: one list at a time, under "Lists" when wide). At the trip
  * root Todo opens in View = Due: the MAIN list of everything, overdue first.
  * The list is the URL's `list=todo|shopping` (the inbox deep-links with it).
  */
@@ -21,6 +21,7 @@ import { LISTS_TESTID } from "./testids";
 
 const KIND_KEY = "yonder:lists:kind";
 const isListKind = oneOf<ListKind>(["todo", "shopping"]);
+/** Wide enough for the page's heading. */
 const SIDE_BY_SIDE_PX = 640;
 
 export function ListsTab() {
@@ -154,14 +155,8 @@ export function ListsTab() {
 					<span className="text-meta text-muted-foreground">{where}</span>
 				</h2>
 			) : null}
-			{wide ? (
-				<div className="grid grid-cols-2 divide-x">
-					<ListBoard {...common} kind="todo" title="To-do" />
-					<ListBoard {...common} kind="shopping" title="Shopping" />
-				</div>
-			) : (
-				<ListBoard key={kind} {...common} kind={kind} headerStart={switcher} />
-			)}
+			{/* D12: one list at a time, the switch its tabs, at every width. */}
+			<ListBoard key={kind} {...common} kind={kind} headerStart={switcher} />
 		</div>
 	);
 }

@@ -1339,22 +1339,19 @@ test("X6 one inbox: review, result, due, balance changed and budget notice in on
 	await setDuration(mp, I.itoya, "2h");
 	await expect(mp.getByText(/^Suggested — /).first()).toBeVisible();
 
-	// Dennis: "1 suggestion to review" in the bell opens the review drawer.
+	// Dennis: Maya's suggestion sits in the bell (One Yonder D14); he rejects it there.
 	await owner.goto(url);
 	await expectLive(owner);
 	const bell = (p: Page) => p.getByTestId(TESTID.inboxBell).first();
 	const panel = (p: Page) => p.getByTestId(SHELL_TESTID.inboxPanel);
 	await bell(owner).click();
-	const review = panel(owner).getByTestId(SHELL_TESTID.inboxRow).filter({ hasText: "1 suggestion to review" });
+	const review = panel(owner).getByTestId(S.group).first();
 	await expect(review).toBeVisible({ timeout: 15_000 });
 	await shot(owner, "x6-01-owner-inbox");
-	await review.click();
-	const drawer = owner.getByTestId(TESTID.reviewDrawer);
-	await expect(drawer).toBeVisible();
-	await drawer.getByTestId(S.row).first().getByTestId(S.reject).click();
+	await review.getByTestId(S.row).first().getByTestId(S.reject).click();
 	await owner.getByTestId(S.rejectNote).fill("Itoya stays 1h, we have Loft too");
 	await owner.getByTestId(S.rejectConfirm).click();
-	await expect(drawer.getByText("Nothing to review.")).toBeVisible({ timeout: 15_000 });
+	await expect(panel(owner).getByTestId(S.group)).toHaveCount(0, { timeout: 15_000 });
 	await owner.keyboard.press("Escape");
 
 	// Money and lists set-up through the server functions (as Dennis):
