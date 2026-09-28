@@ -585,7 +585,11 @@ export function startEnv(e: FastEnv, opts: { viteCache: string }): Running {
 			"--config",
 			"scripts/e2e-vite.config.ts",
 		],
-		{ ...e.env, E2E_VITE_CACHE_DIR: opts.viteCache },
+		{
+			...e.env,
+			E2E_VITE_CACHE_DIR: opts.viteCache,
+			E2E_NITRO_BUILD_DIR: path.join(e.dir, "nitro"),
+		},
 		e.env.E2E_APP_LOG as string,
 	);
 	const collab = start(
