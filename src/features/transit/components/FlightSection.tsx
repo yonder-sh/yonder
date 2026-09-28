@@ -323,7 +323,7 @@ export function FlightSection({ ed }: { ed: LegEditor }) {
 	if (target.kind !== "pair")
 		return (
 			<p className="text-sm text-muted-foreground">
-				A flight joins two stops. Use Transit or Other for this stay leg.
+				A flight joins two stops. Use Transit or Other for this journey.
 			</p>
 		);
 	return (

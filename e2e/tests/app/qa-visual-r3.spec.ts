@@ -149,7 +149,7 @@ test.describe("desktop 1440", () => {
 		await page.keyboard.press("Escape");
 		// Today: "Drop a pin…" (it was the first option before the results arrived and keeps the
 		// highlight when they are inserted above it), so Enter opens the pin dropper.
-		expect(selected).not.toMatch(/Drop a pin/);
+		expect(selected).not.toMatch(/Pick on the map/);
 	});
 
 	test("DEFECT (WP-Shell): the overview's 'unrated places' counts match the Places tab (no suggestion ghosts)", async ({ page }) => {

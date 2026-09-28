@@ -547,10 +547,10 @@ export function LegRow({
 							<ModeGlyph mode={s?.suggestion?.mode ?? null} colored={false} />
 							{s && s.minutes > 0 ? (
 								<span className="truncate">
+									about{" "}
 									<span className="tnum">
-										~{formatDuration(s.minutes, { compact: true })}
-									</span>{" "}
-									est.
+										{formatDuration(s.minutes, { compact: true })}
+									</span>
 								</span>
 							) : (
 								<span className="truncate">Not set</span>

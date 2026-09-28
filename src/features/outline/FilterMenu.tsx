@@ -155,7 +155,7 @@ export function PlaceFilterPanel() {
 				</div>
 			</Section>
 
-			<Section title="Priority" htmlFor={ids.min}>
+			<Section title="Rating" htmlFor={ids.min}>
 				<div className="grid gap-2">
 					<Select
 						value={filter.minPriority ?? "any"}
@@ -175,7 +175,7 @@ export function PlaceFilterPanel() {
 							<SelectValue />
 						</SelectTrigger>
 						<SelectContent onEscapeKeyDown={keepEscape}>
-							<SelectItem value="any">Any priority</SelectItem>
+							<SelectItem value="any">Any rating</SelectItem>
 							<SelectSeparator />
 							{PRIORITY_ORDER.map((p) => (
 								<SelectItem key={p} value={p}>
@@ -249,7 +249,7 @@ export function PlaceFilterPanel() {
 
 			<div className="flex items-center justify-between gap-3">
 				<Label htmlFor={ids.ns} className="text-sm font-normal">
-					Not on the plan yet
+					Ideas only (no day yet)
 				</Label>
 				<Switch
 					id={ids.ns}

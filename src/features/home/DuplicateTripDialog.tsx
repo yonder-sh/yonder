@@ -168,7 +168,7 @@ export function DuplicateTripDialog({
 							{start && shiftedEnd ? (
 								<p className="text-xs text-muted-foreground">
 									Every day moves with it, through{" "}
-									{formatDayDate(shiftedEnd, { year: true })}. Pinned times stay
+									{formatDayDate(shiftedEnd, { year: true })}. Set times stay
 									the same.
 								</p>
 							) : null}

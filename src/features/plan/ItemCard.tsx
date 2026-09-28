@@ -400,17 +400,17 @@ function PinForm({ item, onDone }: { item: GraphItem; onDone: () => void }) {
 			}}
 		>
 			<p className="text-xs text-muted-foreground">
-				A pinned start stays put; the plan flows around it.
+				A set time stays put; the plan flows around it.
 			</p>
 			<div className="flex items-center gap-2">
 				<TimeInput
 					value={value}
 					onChange={setValue}
-					aria-label="Pinned start"
+					aria-label="Start time"
 					disabled={guard.disabled}
 				/>
 				<Button type="submit" size="sm" disabled={guard.disabled}>
-					{item.pinnedStart ? "Update" : "Pin"}
+					{item.pinnedStart ? "Update" : "Set"}
 				</Button>
 			</div>
 			{item.pinnedStart ? (
@@ -623,9 +623,7 @@ function ItemMenuContent({
 			</DropdownMenuLabel>
 			{item.dayId && onPin ? (
 				<DropdownMenuItem disabled={guard.disabled} onSelect={handOff(onPin)}>
-					{item.pinnedStart
-						? `Pinned at ${item.pinnedStart}…`
-						: "Pin start time…"}
+					{item.pinnedStart ? `Set for ${item.pinnedStart}…` : "Set a time…"}
 				</DropdownMenuItem>
 			) : null}
 			{item.pinnedStart ? (
@@ -1033,9 +1031,7 @@ export function ItemCard({
 						setPinOpen(true);
 					}}
 					aria-label={
-						item.pinnedStart
-							? `Pinned at ${item.pinnedStart}`
-							: "Pin start time"
+						item.pinnedStart ? `Set for ${item.pinnedStart}` : "Set a time"
 					}
 					className="ml-auto flex flex-col items-end justify-center rounded-md pr-3 text-right text-xs leading-4 tnum outline-none hover:bg-accent/60 focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-default disabled:hover:bg-transparent"
 				>
@@ -1053,7 +1049,7 @@ export function ItemCard({
 								{s.pinned ? (
 									<span
 										role="img"
-										aria-label="pinned"
+										aria-label="set time"
 										className="text-[8px] text-primary"
 									>
 										◆

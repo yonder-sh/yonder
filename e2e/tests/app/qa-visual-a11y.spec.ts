@@ -172,9 +172,9 @@ test.describe("desktop", () => {
 		await expect(page.locator('[data-slot="popover-content"]')).toBeVisible();
 		await page.keyboard.press("Escape");
 		await expect(page.locator('[data-slot="popover-content"]')).toHaveCount(0);
-		await card.getByRole("button", { name: /Pin start time/ }).focus();
+		await card.getByRole("button", { name: /Set a time/ }).focus();
 		await page.keyboard.press("Enter");
-		await expect(page.getByRole("textbox", { name: /Pinned start/ })).toBeFocused();
+		await expect(page.getByRole("textbox", { name: /Start time/ })).toBeFocused();
 		await page.keyboard.press("Escape");
 		// Enter on a card opens its details (the list path to Golden Gai, not the canvas).
 		await card.getByRole("button", { name: "Golden Gai", exact: true }).focus();
@@ -268,7 +268,7 @@ test.describe("desktop", () => {
 		await openTrip(page, `/t/${TRIP}?tab=plan`);
 		await page.keyboard.press("Control+k");
 		await page.keyboard.type("zzqxwv qqpl");
-		await expect(page.getByRole("option", { name: /Drop a pin/ })).toBeVisible({ timeout: 15_000 });
+		await expect(page.getByRole("option", { name: /Pick on the map/ })).toBeVisible({ timeout: 15_000 });
 		// DESIGN §12: "No matches. Try a broader name, or drop a pin."
 		await expect(page.getByRole("dialog")).toContainText(/No matches/);
 	});

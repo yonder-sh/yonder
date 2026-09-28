@@ -109,8 +109,8 @@ export type PlaceGroup<R> = {
 const STATUS_GROUPS: { status: PlaceStatus; label: string }[] = [
 	{ status: "shortlist", label: "Shortlist" },
 	{ status: "idea", label: "Ideas" },
-	{ status: "scheduled", label: "Scheduled" },
-	{ status: "dropped", label: "Dropped" },
+	{ status: "scheduled", label: "On a day" },
+	{ status: "dropped", label: "Not going" },
 ];
 
 export function comparatorFor<R extends Groupable>(

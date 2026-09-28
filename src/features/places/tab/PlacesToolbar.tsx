@@ -193,8 +193,8 @@ const PILLS: { k: PlaceStatus | null; label: string }[] = [
 	{ k: null, label: "All" },
 	{ k: "shortlist", label: "Shortlist" },
 	{ k: "idea", label: "Ideas" },
-	{ k: "scheduled", label: "Scheduled" },
-	{ k: "dropped", label: "Dropped" },
+	{ k: "scheduled", label: "On a day" },
+	{ k: "dropped", label: "Not going" },
 ];
 
 function Pill({
@@ -454,10 +454,10 @@ export function PlacesToolbar({
 					<Pill
 						on={state.talk}
 						testid={PLACES_TAB_TESTID.talkPill}
-						title="Split places: someone is keen, someone isn't"
+						title="Disagreements: someone is keen, someone isn't"
 						onClick={() => nav.setPlaces({ talk: state.talk ? undefined : 1 })}
 					>
-						Talk about it
+						Disagreements
 						<span className="text-xs opacity-75 tnum">{counts.talk}</span>
 					</Pill>
 				</div>

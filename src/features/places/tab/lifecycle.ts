@@ -15,8 +15,8 @@ export type PlaceStatus = "idea" | "shortlist" | "scheduled" | "dropped";
 export const STATUS_LABEL: Record<PlaceStatus, string> = {
 	idea: "Idea",
 	shortlist: "Shortlist",
-	scheduled: "Scheduled",
-	dropped: "Dropped",
+	scheduled: "On a day",
+	dropped: "Not going",
 };
 
 export type StatusInfo = {

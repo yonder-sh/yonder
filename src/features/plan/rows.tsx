@@ -263,7 +263,7 @@ function GhostLeg({ leg, scheduled }: { leg: GraphLeg; scheduled: number }) {
 }
 
 /**
- * "Unlinked transit · Fuji Excursion 7 (Shinjuku → Kawaguchiko) · Relink ·
+ * "Check travel · Fuji Excursion 7 (Shinjuku → Kawaguchiko) · Relink ·
  * Discard" (28px, amber): a significant leg whose pair broke (§7.8).
  */
 export function UnlinkedRow({
@@ -303,7 +303,7 @@ export function UnlinkedRow({
 				<Rail mode={leg.mode ?? "unset"} late />
 			</span>
 			<span className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-0.5 py-1 pr-3 text-xs">
-				<span className="font-semibold text-warning">Unlinked transit</span>
+				<span className="font-semibold text-warning">Check travel</span>
 				<span className="truncate text-muted-foreground">
 					·{" "}
 					{timedLegName(ix, leg) === "the departure" ? (

@@ -322,7 +322,7 @@ describe("grouping (nearest ancestor, falling back a level up)", () => {
 		);
 		expect(
 			groupPlaces(rows, { by: "status", sort: "name", ix }).map((g) => g.label),
-		).toEqual(["Shortlist", "Ideas", "Scheduled"]);
+		).toEqual(["Shortlist", "Ideas", "On a day"]);
 		expect(groupPlaces(rows, { by: "none", sort: "name", ix })).toHaveLength(1);
 	});
 	it(`a city of ${SPLIT_AT}+ places offers "Split by area"; split, it groups by area`, () => {

@@ -2,7 +2,7 @@
  * The ⌘K palette's highlight and its way to the rate screen:
  *
  * - VIS3-01: typing "Tokyo Tower" first offers only the actions, so cmdk
- *   highlights "Drop a pin…"; the OpenStreetMap results arrive ~300 ms later
+ *   highlights "Pick on the map…"; the OpenStreetMap results arrive ~300 ms later
  *   ABOVE it. The first result must take the highlight (the footer says
  *   "↵ open"), unless the user already moved it with the keys.
  * - FB-05: "rate" (and an empty palette) offers "Rate places in <scope>",
@@ -75,14 +75,14 @@ function open(splat = "") {
 }
 
 describe("the highlight when results arrive (VIS3-01)", () => {
-	it("the first result takes it from 'Drop a pin…', and Enter opens that result", async () => {
+	it("the first result takes it from 'Pick on the map…', and Enter opens that result", async () => {
 		open();
 		const input = screen.getByTestId(PLACES_TESTID.paletteInput);
 		fireEvent.change(input, { target: { value: "Tokyo Tower" } });
 		// Before the search answers, the actions are all there is.
 		await waitFor(() => expect(highlighted()).toBeDefined());
 		expect(screen.queryAllByTestId(PLACES_TESTID.paletteResult)).toEqual([]);
-		expect(highlighted()).toHaveTextContent("Drop a pin…");
+		expect(highlighted()).toHaveTextContent("Pick on the map…");
 		// The results arrive above it: the first one is highlighted now.
 		await waitFor(() =>
 			expect(screen.getAllByTestId(PLACES_TESTID.paletteResult)).toHaveLength(
@@ -111,7 +111,9 @@ describe("the highlight when results arrive (VIS3-01)", () => {
 		open();
 		const input = screen.getByTestId(PLACES_TESTID.paletteInput);
 		fireEvent.change(input, { target: { value: "Tokyo Tower" } });
-		await waitFor(() => expect(highlighted()).toHaveTextContent("Drop a pin…"));
+		await waitFor(() =>
+			expect(highlighted()).toHaveTextContent("Pick on the map…"),
+		);
 		// ↓ to "Add “Tokyo Tower” as a new …" before the search answers.
 		fireEvent.keyDown(input, { key: "ArrowDown" });
 		await waitFor(() => expect(highlighted()).toHaveTextContent(/^Add “/));

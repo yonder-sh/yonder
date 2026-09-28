@@ -152,7 +152,7 @@ function DroppedHeader({
 			) : (
 				<ChevronRight className="size-3" />
 			)}
-			Dropped · <span className="tnum">{count}</span>
+			Not going · <span className="tnum">{count}</span>
 		</div>
 	);
 }

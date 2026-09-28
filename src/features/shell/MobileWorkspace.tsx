@@ -290,7 +290,10 @@ function BottomTabs() {
 									className="absolute -top-1.5 left-4 min-w-4.5 rounded-full bg-accent px-1 text-center text-2xs font-semibold text-accent-foreground tnum"
 								>
 									{toDecide}
-									<span className="sr-only"> to decide</span>
+									<span className="sr-only">
+										{" "}
+										{toDecide === 1 ? "idea" : "ideas"}
+									</span>
 								</span>
 							) : null}
 							{t === "lists" && overdue ? (

@@ -541,7 +541,7 @@ function RowShell({
 			aria-expanded={row.hasChildren ? row.open : undefined}
 			aria-selected={selected}
 			aria-current={isScope ? "location" : undefined}
-			aria-label={`${node.name}, ${typeLabel(node.type).toLowerCase()}${node.status === "dropped" ? ", dropped" : ""}`}
+			aria-label={`${node.name}, ${typeLabel(node.type).toLowerCase()}${node.status === "dropped" ? ", not going" : ""}`}
 			aria-description={description}
 			tabIndex={tabbable ? 0 : -1}
 			data-testid={TESTID.outlineRow}

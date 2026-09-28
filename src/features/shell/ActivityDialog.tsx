@@ -60,7 +60,7 @@ export function ActivityDialog() {
 				className="flex max-h-[min(640px,85svh)] flex-col gap-0 p-0 sm:max-w-[520px]"
 			>
 				<DialogHeader className="border-b px-5 pt-5 pb-3">
-					<DialogTitle>What changed</DialogTitle>
+					<DialogTitle>Activity</DialogTitle>
 					<DialogDescription>
 						Other people's changes since you last looked, then everything
 						recent.

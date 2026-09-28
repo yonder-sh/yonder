@@ -1,6 +1,6 @@
 /**
  * The Outline row menu (SPEC §18.3 WP-Outline): Open, Add inside, Rename,
- * Change type, Move…, Set location, My priority, Add to day, Drop/Restore,
+ * Change type, Move…, Set location, My rating, Add to day, Drop/Restore,
  * Delete. The same items render in the right-click ContextMenu and in the
  * row's ⋯ DropdownMenu (touch has no right-click: long-press is the drag).
  * Edit items stay visible but disabled with the reason (SPEC §0 rule 17).
@@ -246,7 +246,7 @@ export function NodeMenuItems({
 				<K.Sub>
 					<K.SubTrigger className="gap-2" disabled={rateOff}>
 						<Star className="size-4 text-muted-foreground" />
-						My priority
+						My rating
 						{mine ? (
 							<span className="ml-auto pl-2 text-xs text-muted-foreground">
 								{PRIORITIES[mine].label}

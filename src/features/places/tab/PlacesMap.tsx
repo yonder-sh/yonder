@@ -116,7 +116,9 @@ function Legend() {
 					{label}
 				</span>
 			))}
-			<span className="text-muted-foreground">Hollow = not on a day yet</span>
+			<span className="text-muted-foreground">
+				Hollow = an idea (no day yet)
+			</span>
 		</div>
 	);
 }

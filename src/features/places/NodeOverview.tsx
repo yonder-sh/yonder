@@ -409,7 +409,7 @@ function PlaceOverview({ node }: { node: GraphNode }) {
 					<PlaceFits />
 				</>
 			) : (
-				<Section title="Priority">
+				<Section title="Rating">
 					<MemberRatings node={node} />
 				</Section>
 			)}
@@ -721,7 +721,7 @@ function CoarseOverview({ node }: { node: GraphNode }) {
 					</ul>
 				) : (
 					<p className="text-meta text-muted-foreground">
-						Not on the plan yet.
+						An idea for now: no day yet.
 					</p>
 				)}
 			</Section>

@@ -31,8 +31,8 @@ export function OrganizePlaces({
 				<DialogHeader className="border-b px-4 pt-4 pb-3">
 					<DialogTitle>Organize places</DialogTitle>
 					<DialogDescription>
-						Drag a row to move it, or use its ⋯ menu to rename, move, drop or
-						delete.
+						Drag a row to move it, or use its ⋯ menu to rename, move, mark not
+						going or delete.
 					</DialogDescription>
 				</DialogHeader>
 				<div className="flex min-h-0 flex-1 flex-col overflow-hidden">

@@ -109,8 +109,8 @@ test("a pin conflict shows one chip on the card and one on the day, and Unpin fi
 	await page.goto(`/t/${c.slug}?lens=place&days=${DAY.d1}`);
 	await expectLive(page);
 	const sky = card(page, I.sky as string);
-	await sky.getByRole("button", { name: "Pinned at 17:30" }).click();
-	await page.getByLabel("Pinned start").fill("10:00");
+	await sky.getByRole("button", { name: "Set for 17:30" }).click();
+	await page.getByLabel("Start time").fill("10:00");
 	await page.getByRole("button", { name: "Update" }).click();
 	await expect(sky.getByTestId(TESTID.itemStart)).toHaveText("10:00");
 	await expect(sky.getByTestId(TESTID.conflictBadge)).toHaveCount(1);
@@ -122,7 +122,7 @@ test("a pin conflict shows one chip on the card and one on the day, and Unpin fi
 	await page.getByRole("button", { name: /^Unpin/ }).click();
 	await expect(sky.getByTestId(TESTID.conflictBadge)).toHaveCount(0);
 	await expect(header.getByTestId(TESTID.conflictBadge)).toHaveCount(0);
-	await expect(sky.getByLabel("pinned")).toHaveCount(0);
+	await expect(sky.getByLabel("set time")).toHaveCount(0);
 });
 
 test("booked for this date shows a lock on the rail and in the Overview; menu items open their editors in one step", async ({
@@ -168,12 +168,12 @@ test("booked for this date shows a lock on the rail and in the Overview; menu it
 	await page.keyboard.press("Enter");
 	await expect(header.getByTestId(PLAN_TESTID.dayTitle)).toHaveText("Knives and pens");
 	await openItemMenu(page, I.sensoji as string);
-	await page.getByRole("menuitem", { name: "Pin start time…" }).click();
+	await page.getByRole("menuitem", { name: "Set a time…" }).click();
 	// The popover's own field and Pin (the selected item's Overview has both too).
-	const pin = page.getByRole("dialog").filter({ has: page.getByLabel("Pinned start") });
-	await expect(pin.getByLabel("Pinned start")).toBeFocused();
-	await pin.getByLabel("Pinned start").fill("09:30");
-	await pin.getByRole("button", { name: "Pin", exact: true }).click();
+	const pin = page.getByRole("dialog").filter({ has: page.getByLabel("Start time") });
+	await expect(pin.getByLabel("Start time")).toBeFocused();
+	await pin.getByLabel("Start time").fill("09:30");
+	await pin.getByRole("button", { name: "Set", exact: true }).click();
 	await expect(card(page, I.sensoji as string).getByTestId(TESTID.itemStart)).toHaveText("09:30");
 	expect(logs.messages).toEqual([]);
 });

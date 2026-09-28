@@ -136,7 +136,7 @@ test("FB-19: JFK then Haneda on the next day → a Flight leg, prefilled, no tim
 	await expect(stub).toBeVisible();
 	await expect(stub).toContainText("JFK");
 	await expect(stub).toContainText("HND");
-	await expect(stub).toContainText("~14h05 est.");
+	await expect(stub).toContainText("about 14h05");
 	await expect(stub.getByTestId(PLAN_TESTID.flightTbd)).toHaveText("· times TBD");
 	await expect(stub).not.toContainText("undefined");
 	await expect(page.getByText(/Misses/)).toHaveCount(0);

@@ -151,13 +151,13 @@ export function CenterTabBar({
 								tone="accent"
 								size="sm"
 								className="tnum"
-								title={`${toDecide} ${toDecide === 1 ? "place" : "places"} to decide`}
+								title={`${toDecide} ${toDecide === 1 ? "idea" : "ideas"}`}
 								data-testid={SHELL_TESTID.placesToDecide}
 							>
 								{toDecide}
 								<span className={inTopBar ? "sr-only" : undefined}>
 									{" "}
-									to decide
+									{toDecide === 1 ? "idea" : "ideas"}
 								</span>
 							</Chip>
 						) : null}

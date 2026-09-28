@@ -281,7 +281,7 @@ function LayerMenu(p: MapControlsProps) {
 				/>
 				<ShowRow
 					id="map-show-dropped"
-					label="Dropped"
+					label="Not going"
 					checked={p.show.dropped}
 					onChange={(v) => p.setShow({ dropped: v })}
 					testId={MAP_TESTID.showDropped}
@@ -603,7 +603,7 @@ export function FilterMenu({
 				</Button>
 			</div>
 			<p className="px-3 pb-1 text-xs text-muted-foreground">
-				Shared with Ideas and the Outline.
+				Shared with the Ideas and Places filters.
 			</p>
 			<Section title="Kinds">
 				<div className="flex flex-wrap gap-1.5">

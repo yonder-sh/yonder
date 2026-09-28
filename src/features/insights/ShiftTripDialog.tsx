@@ -331,8 +331,8 @@ function ShiftBody({ onClose }: { onClose: () => void }) {
 			<div className="min-h-[8rem] flex-1 overflow-y-auto px-4 py-4">
 				{delta === 0 ? (
 					<p className="px-1 text-meta text-muted-foreground">
-						Step a few days either way. Bookings, pinned times, stays and
-						opening hours update as you go.
+						Step a few days either way. Bookings, set times, stays and opening
+						hours update as you go.
 					</p>
 				) : impact ? (
 					<DateImpactList

@@ -546,7 +546,8 @@ export function ListBoard(props: BoardProps) {
 						"Hide dropped places"
 					) : (
 						<>
-							<span className="tnum">{droppedCount}</span> on dropped places ·{" "}
+							<span className="tnum">{droppedCount}</span> on places you're not
+							going to ·{" "}
 							<span className="underline underline-offset-3">Show</span>
 						</>
 					)}

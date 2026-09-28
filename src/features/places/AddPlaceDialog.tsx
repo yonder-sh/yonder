@@ -4,7 +4,7 @@
  * FAB, empty states and the New trip flow.
  *
  * Groups: **In this trip** (Enter jumps, ⌘Enter schedules), **Places** from
- * Google or OpenStreetMap, **Actions** (Drop a pin…, a new node by name, Go to
+ * Google or OpenStreetMap, **Actions** (Pick on the map…, a new node by name, Go to
  * Day N, a pasted Google Maps link). Picking a place opens the preview (a
  * right pane ≥ 768px, full-screen below): photo or map, name, category,
  * address, the filing chip (`TreePicker` per segment), category chips, and
@@ -270,7 +270,7 @@ function steersHighlight(e: {
  * `aria-activedescendant` and scroll follow (VIS3-01). cmdk highlights the
  * first option when the text changes, but options that arrive later (the
  * OpenStreetMap results) are inserted ABOVE the highlight, which then stays
- * on "Drop a pin…".
+ * on "Pick on the map…".
  */
 function highlightFirstOption(root: HTMLElement | null) {
 	const home = new KeyboardEvent("keydown", { key: "Home", bubbles: true });
@@ -999,7 +999,7 @@ function Palette({
 									}}
 								>
 									<MapPin strokeWidth={1.5} />
-									Drop a pin…
+									Pick on the map…
 								</CommandItem>
 							) : null}
 							{q.trim() &&
@@ -1174,7 +1174,7 @@ function DropPin({
 				pick
 				onCenter={setAt}
 				className="h-[320px] overflow-hidden rounded-xl border"
-				label="Map for dropping a pin"
+				label="Map for picking a spot"
 			/>
 			<div className="flex items-center gap-2">
 				<span className="text-xs tnum text-muted-foreground">
@@ -1473,7 +1473,7 @@ function PreviewPane({
 					{q.isError ? humanError(q.error) : "Couldn't find that place."}
 				</p>
 				<p className="text-meta text-muted-foreground">
-					Search by name, or drop a pin.
+					Search by name, or pick a spot on the map.
 				</p>
 			</div>
 		);

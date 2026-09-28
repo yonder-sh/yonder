@@ -79,10 +79,10 @@ export function StatusChip({
 			: info.status === "idea"
 				? "Idea"
 				: info.status === "scheduled"
-					? "Scheduled"
+					? "On a day"
 					: info.autoDropped
-						? "Dropped · all Nah"
-						: "Dropped";
+						? "Not going · all Nah"
+						: "Not going";
 	const suggested = info.status === "shortlist" && !info.pinned;
 	return (
 		<Chip
@@ -107,7 +107,7 @@ export function SplitMark({ className }: { className?: string }) {
 			size="sm"
 			icon={Scale}
 			data-testid={PLACES_TAB_TESTID.splitMark}
-			title="Split: someone is keen, someone isn't. Talk about it."
+			title="A disagreement: someone is keen, someone isn't."
 			className={className}
 		>
 			Split

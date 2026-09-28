@@ -479,8 +479,8 @@ const PAST_TO_IMPERATIVE: Record<string, string> = {
 	reset: "Reset",
 	marked: "Mark",
 	suggested: "Suggest",
-	dropped: "Drop",
-	pinned: "Pin",
+	dropped: "Not going",
+	pinned: "Set time",
 	unpinned: "Unpin",
 };
 
@@ -649,6 +649,9 @@ export function formatValue(
 		case "category":
 			return enumLabel(PLACE_CATEGORIES, value);
 		case "status":
+			// A place's status in the app's words (One Yonder: "Not going").
+			if (value === "dropped") return "Not going";
+			return typeof value === "string" ? humanizeEnum(value) : "—";
 		case "mode":
 			return typeof value === "string" ? humanizeEnum(value) : "—";
 		default:

@@ -178,7 +178,7 @@ function DayValue({ dayId }: { dayId: string | null }) {
 
 /**
  * The details header's ⋯ for a stop (One Yonder D03): the card's own menu
- * (move, pin, expense, unschedule, delete). "Pin start time…" opens the
+ * (move, pin, expense, unschedule, delete). "Set a time…" opens the
  * overview's "Set a time".
  */
 export function ItemDetailsMenu({ itemId }: { itemId: string }) {
@@ -398,7 +398,7 @@ function ItemOverviewBody({ itemId }: { itemId: string }) {
 						className="font-semibold text-warning"
 						data-testid={TESTID.conflictBadge}
 					>
-						Starts {formatDuration(s.late.minutes)} late — pinned at{" "}
+						Starts {formatDuration(s.late.minutes)} late: set for{" "}
 						{item.pinnedStart}.
 					</p>
 					{fixes.length ? (
@@ -516,7 +516,7 @@ function ItemOverviewBody({ itemId }: { itemId: string }) {
 											<span className="text-primary" aria-hidden>
 												◆
 											</span>{" "}
-											Pinned at {item.pinnedStart}
+											Set for {item.pinnedStart}
 										</span>
 										<Button
 											size="xs"
@@ -563,14 +563,14 @@ function ItemOverviewBody({ itemId }: { itemId: string }) {
 											<TimeInput
 												value={pin}
 												onChange={setPin}
-												aria-label="Pinned start"
+												aria-label="Start time"
 											/>
 											<Button
 												type="submit"
 												size="sm"
 												disabled={!/^\d{2}:\d{2}$/.test(pin)}
 											>
-												Pin
+												Set
 											</Button>
 										</form>
 									</PopoverContent>
@@ -695,7 +695,7 @@ function ItemOverviewBody({ itemId }: { itemId: string }) {
 								</button>
 							) : (
 								<span className="text-muted-foreground">
-									No place — a block of time
+									No place: a custom stop
 								</span>
 							)}
 							<EditGuard>

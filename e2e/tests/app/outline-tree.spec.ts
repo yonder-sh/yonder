@@ -253,7 +253,7 @@ test("menu: rename, drop, delete with the affected list, and Undo", async ({ pag
 	// Drop → the Dropped group; Restore from there.
 	await row(page, "Asakusa").click({ button: "right" });
 	await page.getByRole("menuitem", { name: "Drop" }).click();
-	await expect(page.getByTestId(OUTLINE_TESTID.droppedGroup).first()).toContainText("Dropped · 1");
+	await expect(page.getByTestId(OUTLINE_TESTID.droppedGroup).first()).toContainText("Not going · 1");
 	await expect(row(page, "Asakusa")).toHaveCount(0);
 
 	// Delete Shibuya: it has places and plan items, so the dialog lists them.

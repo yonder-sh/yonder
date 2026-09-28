@@ -131,11 +131,11 @@ const CASES: Case[] = [
 	{ name: "day › title", open: dayMenu, item: /Add a title…|Rename day…/, surface: (p) => p.getByLabel("Day title"), focused: true },
 	{ name: "day › Delete day…", open: dayMenu, item: "Delete day…", surface: (p) => p.getByTestId(PLAN_TESTID.dayDeleteConfirm) },
 	{ name: "day › Add expense", open: dayMenu, item: "Add expense", surface: (p) => p.getByRole("dialog") },
-	{ name: "card › Pin start time…", open: itemMenu, item: /Pin start time…|Pinned at/, surface: (p) => p.getByLabel("Pinned start") },
+	{ name: "card › Set a time…", open: itemMenu, item: /Set a time…|Set for/, surface: (p) => p.getByLabel("Start time") },
 	{ name: "card › Add expense", open: itemMenu, item: "Add expense", surface: (p) => p.getByRole("dialog") },
 	{ name: "+ › Place…", open: addMenu, item: "Place…", surface: (p) => p.getByRole("dialog") },
 	{ name: "+ › Flight…", open: addMenu, item: "Flight…", surface: (p) => p.getByRole("dialog") },
-	{ name: "+ › Custom…", open: addMenu, item: "Custom…", surface: (p) => p.getByLabel("Block title"), focused: true },
+	{ name: "+ › Custom…", open: addMenu, item: "Custom…", surface: (p) => p.getByLabel("Stop name"), focused: true },
 ];
 
 for (const c of CASES)

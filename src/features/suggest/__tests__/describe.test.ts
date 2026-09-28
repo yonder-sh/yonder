@@ -296,7 +296,7 @@ describe("proposal-view helpers", () => {
 		expect(formatValue("category", "food_drink", ix)).toBe("Food & Drink");
 		// Unknown values degrade to readable text instead of snake_case.
 		expect(formatValue("category", "night_life", ix)).toBe("Night life");
-		expect(formatValue("status", "dropped", ix)).toBe("Dropped");
+		expect(formatValue("status", "dropped", ix)).toBe("Not going");
 		expect(formatValue("mode", "transit", ix)).toBe("Transit");
 		expect(formatValue("category", null, ix)).toBe("—");
 	});

@@ -191,12 +191,12 @@ describe("Outline", () => {
 		};
 		renderWithWorkspace(<Outline />, { graph: g });
 		const group = screen.getByTestId(OUTLINE_TESTID.droppedGroup);
-		expect(group).toHaveTextContent("Dropped · 1");
+		expect(group).toHaveTextContent("Not going · 1");
 		expect(rowOf("Osaka")).toBeUndefined();
 		fireEvent.click(group);
 		expect(rowOf("Osaka")).toHaveAttribute(
 			"aria-label",
-			"Osaka, city, dropped",
+			"Osaka, city, not going",
 		);
 	});
 

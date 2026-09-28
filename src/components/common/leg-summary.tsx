@@ -108,7 +108,7 @@ export function LegSummary({
 				// DESIGN §7.1 "Estimate (unset) leg": the estimated minutes with
 				// "est." (the suggested mode is offered by the accept chips).
 				<span className="tnum">
-					~{formatDuration(schedule.suggestion.estimateMin, { compact })} est.
+					about {formatDuration(schedule.suggestion.estimateMin, { compact })}
 				</span>
 			) : null}
 			{!unset && details?.kind === "flight" ? (

@@ -132,7 +132,7 @@ export function AddMenu({
 						</DropdownMenuItem>
 						<DropdownMenuSeparator />
 						<DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
-							Block
+							Custom stop
 						</DropdownMenuLabel>
 						{BLOCKS.map((b) => (
 							<DropdownMenuItem
@@ -172,7 +172,7 @@ export function AddMenu({
 							value={title}
 							onChange={(e) => setTitle(e.target.value)}
 							placeholder="Laundry, Check-in…"
-							aria-label="Block title"
+							aria-label="Stop name"
 							maxLength={200}
 						/>
 						<Button type="submit" size="sm">
