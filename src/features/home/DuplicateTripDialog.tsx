@@ -141,8 +141,8 @@ export function DuplicateTripDialog({
 					<DialogHeader>
 						<DialogTitle>Duplicate “{trip.name}”</DialogTitle>
 						<DialogDescription>
-							The places, days, plan and travel legs always come along. Only you
-							are on the copy.
+							The places, days, plan and travel always come along. Only you are
+							on the copy.
 						</DialogDescription>
 					</DialogHeader>
 					<div className="grid gap-2">
