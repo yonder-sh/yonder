@@ -4,8 +4,8 @@
  * the cities from what the shortlist needs (the spare days shared out) and
  * says who still rates; rating moves it; the stops reorder by drag (the map
  * numbers them in that order); − / + adjust it; Use these days sets each
- * city's nights. Then the Places tab's Schedule list, and Change in the
- * Plan: − on a city with a place on its last day confirms in the panel and
+ * city's nights. Then Fill a day puts a shortlisted place on a day, and
+ * Change in the Plan: − on a city with a place on its last day confirms in the panel and
  * sends the place back to the list. With no dates: about how many days,
  * the first day, then the dates and the nights in one go. The phone gets
  * the same at 390 px (Move up / Move down). Screenshots land in
@@ -15,6 +15,7 @@ import path from "node:path";
 import { expect, type Page, test } from "@playwright/test";
 import { MAP_TESTID } from "../../../src/features/map/testids";
 import { PLACES_TAB_TESTID as P } from "../../../src/features/places/tab/testids";
+import { PLAN_TESTID } from "../../../src/features/plan/testids";
 import { SPLIT_TESTID as T } from "../../../src/features/plan/day-split/testids";
 import { REPO_ROOT, storageStateOf } from "./_helpers/env";
 import { expectLive } from "./_helpers/page";
@@ -185,13 +186,8 @@ test.describe("desktop", () => {
 		expect([t.place.castle, t.place.dotonbori]).toContain(await card.getAttribute("data-place"));
 		await page.keyboard.press("1");
 		await expect(card).toHaveAttribute("data-rated", /.+/);
-		// Schedule: no city has days yet, so it says what the shortlist needs.
-		await expect(step(page, "schedule")).toContainText("Schedule");
-		await step(page, "schedule").click();
-		const needs = page.getByTestId(P.scheduleNeeds);
-		await expect(needs).toHaveText(/Your shortlist needs about: Tokyo 2 days · Kyoto 1 · Osaka 1\s*Decide how long in each city/);
-		await needs.getByRole("button", { name: "Decide how long in each city" }).click();
-		await expect(page).toHaveURL(/tab=plan/);
+		// Back in the Plan: the split takes the new rating into account.
+		await page.goto(`/t/${t.slug}?tab=plan`);
 		await expect(split).toBeVisible();
 		expect(await order(page)).toEqual([
 			[t.city.tokyo, "3"],
@@ -233,19 +229,16 @@ test.describe("desktop", () => {
 		await expect(page.getByTestId(MAP_TESTID.splitStop)).toHaveCount(0);
 		await page.screenshot({ path: shot("desktop-3-plan-line"), animations: "disabled" });
 
-		// 6. Schedule: the per-city list; Senso-ji goes on Sat 2 Oct (Tokyo's last day).
-		await page.goto(`/t/${t.slug}?tab=places&pv=schedule`);
-		await expect(page.getByTestId(P.schedule)).toHaveAttribute("data-mode", "schedule", { timeout: 30_000 });
-		await expect(page.getByTestId(P.scheduleIntro)).toContainText("Put your shortlist on days");
-		const tokyo = page.locator(`[data-testid=${P.scheduleWindow}][data-city="${t.city.tokyo}"]`);
-		await expect(tokyo.getByTestId(P.scheduleRow)).toHaveCount(3);
-		const days = await graphOf(page).then((g) => g.days.map((d) => d.id));
-		const sensoji = page.locator(`[data-testid=${P.scheduleRow}][data-place="${t.place.sensoji}"]`);
-		await sensoji.locator(`[data-testid=${P.scheduleDay}][data-day="${days[1]}"]`).click();
+		// 6. Fill a day: Senso-ji goes on Tokyo's last day (the second).
+		const days = await graphOf(page).then((g) => g.days);
+		await page.goto(`/t/${t.slug}?tab=plan&days=${days[1]?.date}&fill=1`);
+		await expect(page.getByTestId(PLAN_TESTID.fillDay)).toBeVisible({ timeout: 30_000 });
+		const sensoji = page.locator(`[data-testid=${PLAN_TESTID.fillIdea}][data-place="${t.place.sensoji}"]`);
+		await sensoji.getByTestId(PLAN_TESTID.fillAdd).click();
 		await expect
 			.poll(async () => (await graphOf(page)).items.find((it) => it.nodeId === t.place.sensoji)?.dayId ?? null, { timeout: 15_000 })
-			.toBe(days[1]);
-		await expect(sensoji).toHaveCount(0);
+			.toBe(days[1]?.id);
+		await expect(sensoji.getByTestId(PLAN_TESTID.fillAdd)).toHaveCount(0);
 		await page.waitForTimeout(300);
 		await page.screenshot({ path: shot("desktop-4-add-to-days"), animations: "disabled" });
 
@@ -312,10 +305,6 @@ test.describe("desktop", () => {
 			[t.city.tokyo, "3"],
 			[t.city.kyoto, "2"],
 		]);
-		// Schedule has the per-city list now.
-		await page.goto(`/t/${t.slug}?tab=places&pv=schedule`);
-		await expect(page.getByTestId(P.schedule)).toHaveAttribute("data-mode", "schedule", { timeout: 30_000 });
-		await expect(page.locator(`[data-testid=${P.scheduleWindow}][data-city="${t.city.kyoto}"]`)).toBeVisible();
 	});
 });
 
@@ -361,13 +350,13 @@ test("phone: the split at 390 px, Move up, Use these days, then the line", async
 	await expectNoOverflow(page, "plan-tab");
 	await page.waitForTimeout(400);
 	await page.screenshot({ path: shot("phone-2-change"), animations: "disabled" });
-	// Schedule on the phone: its label, and the list.
-	await page.goto(`/t/${t.slug}?tab=places&pv=schedule`);
-	await expect(step(page, "schedule")).toContainText("Schedule", { timeout: 30_000 });
+	// Decide on the phone: its label fits, and the columns.
+	await page.goto(`/t/${t.slug}?tab=places&pv=decide`);
+	await expect(step(page, "decide")).toContainText("Decide", { timeout: 30_000 });
 	// The whole label fits the phone's step bar.
-	const label = step(page, "schedule").getByText("Schedule", { exact: true });
+	const label = step(page, "decide").getByText("Decide", { exact: true });
 	expect(await label.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true);
-	await expect(page.getByTestId(P.schedule)).toHaveAttribute("data-mode", "schedule");
+	await expect(page.getByTestId(P.decide)).toBeVisible();
 	await expectNoOverflow(page, P.steps);
 	await page.screenshot({ path: shot("phone-3-add-to-days"), animations: "disabled" });
 });

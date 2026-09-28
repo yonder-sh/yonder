@@ -38,12 +38,13 @@ const D = DEMO_MEMBERS.dennis;
 const A = DEMO_MEMBERS.audrey;
 
 describe("the step in the URL", () => {
-	it("table / board / map are Review, rate is Rate, schedule is Schedule, none is picked", () => {
+	it("table / board / map are Review, rate is Rate, an old schedule link decides, none is picked", () => {
 		expect(stepOfView("table")).toBe("review");
 		expect(stepOfView("board")).toBe("review");
 		expect(stepOfView("map")).toBe("review");
 		expect(stepOfView("rate")).toBe("rate");
-		expect(stepOfView("schedule")).toBe("schedule");
+		expect(stepOfView("decide")).toBe("decide");
+		expect(stepOfView("schedule")).toBe("decide");
 		expect(stepOfView(undefined)).toBeNull();
 	});
 	it("the Review step keeps its view; other steps open theirs", () => {
@@ -52,7 +53,7 @@ describe("the step in the URL", () => {
 		expect(reviewViewOf(undefined)).toBe("table");
 		expect(viewOfStep("review", "board")).toBe("board");
 		expect(viewOfStep("rate", "board")).toBe("rate");
-		expect(viewOfStep("schedule")).toBe("schedule");
+		expect(viewOfStep("decide")).toBe("decide");
 	});
 });
 
@@ -74,8 +75,8 @@ describe("which step Places opens on", () => {
 	it("Rate when you have places to rate", () => {
 		expect(at({ toRate: 4, notOnDay: 2 })).toBe("rate");
 	});
-	it("then Schedule for shortlisted places not on a day (editors, with days)", () => {
-		expect(at({ toRate: 0, notOnDay: 2 })).toBe("schedule");
+	it("then Decide for shortlisted places not on a day (editors, with days)", () => {
+		expect(at({ toRate: 0, notOnDay: 2 })).toBe("decide");
 		expect(at({ notOnDay: 2 }, { canEdit: false })).toBe("review");
 		expect(at({ notOnDay: 2 }, { hasDays: false })).toBe("review");
 	});
@@ -89,18 +90,18 @@ describe("which step Places opens on", () => {
 	});
 	it("a phone never opens the full-screen feed by itself", () => {
 		expect(at({ toRate: 4 }, { phone: true })).toBe("review");
-		expect(at({ toRate: 4, notOnDay: 1 }, { phone: true })).toBe("schedule");
+		expect(at({ toRate: 4, notOnDay: 1 }, { phone: true })).toBe("decide");
 	});
-	it("the dot: the step with work waiting for you (never Review)", () => {
-		expect(nextStep(tally({ toRate: 3, notOnDay: 2 }), EDIT)).toBe("rate");
-		expect(nextStep(tally({ notOnDay: 2 }), EDIT)).toBe("schedule");
-		expect(nextStep(tally({ ideas: 0 }), EDIT)).toBeNull();
-		expect(nextStep(tally({}), EDIT)).toBeNull();
+	it("the dot: places to rate (putting them on days is the Plan's)", () => {
+		expect(nextStep(tally({ toRate: 3, notOnDay: 2 }))).toBe("rate");
+		expect(nextStep(tally({ notOnDay: 2 }))).toBeNull();
+		expect(nextStep(tally({ ideas: 0 }))).toBeNull();
+		expect(nextStep(tally({}))).toBeNull();
 	});
 });
 
 describe("the steps' counts", () => {
-	it('"12 to rate", "48 places", "9 shortlisted · 4 not on a day"', () => {
+	it('"12 to rate", "48 places", "2 places to talk through"', () => {
 		const c = stepCounts(
 			tally({ ideas: 48, toRate: 12, shortlisted: 9, notOnDay: 4, talk: 2 }),
 		);
@@ -108,12 +109,7 @@ describe("the steps' counts", () => {
 			rate: "12 to rate",
 			review: "48 places",
 			decide: "2 places to talk through",
-			schedule: "9 shortlisted · 4 not on a day",
 		});
-		expect(
-			stepCounts(tally({ shortlisted: 9, notOnDay: 4 }), { short: true })
-				.schedule,
-		).toBe("4 not on a day");
 	});
 	it("edge cases read as words", () => {
 		expect(stepCounts(tally({ ideas: 1 })).review).toBe("1 place");
@@ -121,13 +117,10 @@ describe("the steps' counts", () => {
 			rate: "Nothing to rate",
 			review: "No places yet",
 			decide: "0 shortlisted",
-			schedule: "Nothing shortlisted",
 		});
 		expect(stepCounts(tally({ toRate: null })).rate).toBe("View only");
 		expect(stepCounts(tally({ toRate: 0 })).rate).toBe("All rated");
-		expect(stepCounts(tally({ shortlisted: 3 })).schedule).toBe(
-			"3 shortlisted · all on a day",
-		);
+		expect(stepCounts(tally({ shortlisted: 3 })).decide).toBe("3 shortlisted");
 	});
 });
 

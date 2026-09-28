@@ -1,6 +1,6 @@
 /**
  * The Places page's header (One Yonder D06): "Places" and its views as one
- * segmented control, **All places · Rate · Schedule**, each with its count
+ * segmented control, **All places · Rate · Decide**, each with its count
  * ("125", "47 left"; the full line in its title). The view with work
  * waiting for you has the apricot "next" dot (DESIGN §1: now / next). The
  * view is the URL's (`pv`), so it deep-links and follows like the rest of
@@ -18,7 +18,7 @@ import {
 import { PLACES_TAB_TESTID } from "./testids";
 
 /** D06's order: the places first, then rating, then onto the days. */
-const ORDER: readonly FlowStep[] = ["review", "rate", "decide", "schedule"];
+const ORDER: readonly FlowStep[] = ["review", "rate", "decide"];
 
 export function PlacesSteps({
 	step,
@@ -37,7 +37,7 @@ export function PlacesSteps({
 	/** The row's actions ("Show map", "Add a place"). */
 	children?: ReactNode;
 }) {
-	const counts = stepCounts(tally, { short: phone });
+	const counts = stepCounts(tally);
 	const badges = stepBadges(tally);
 	return (
 		<nav

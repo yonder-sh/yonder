@@ -78,7 +78,7 @@ export const PLACES_TAB_TESTID = {
 	feedStage: "places-feed-stage",
 	feedBar: "places-feed-bar",
 	feedInfo: "places-feed-info",
-	// the flow: rate → review → schedule (owner, 2026-09-25)
+	// the views: all places, rate, decide (One Yonder D06)
 	steps: "places-steps",
 	/** One Yonder D08: the Decide view, its columns and cards. */
 	decide: "places-decide",
@@ -92,17 +92,6 @@ export const PLACES_TAB_TESTID = {
 	stepDot: "places-step-dot",
 	addPlace: "places-add-place",
 	flowEmpty: "places-flow-empty",
-	schedule: "places-schedule",
-	scheduleWindow: "places-schedule-window",
-	scheduleRow: "places-schedule-row",
-	scheduleAdd: "places-schedule-add",
-	scheduleDay: "places-schedule-day",
-	scheduleNoDays: "places-schedule-no-days",
-	scheduleCantFit: "places-schedule-cant-fit",
-	scheduleDone: "places-schedule-done",
-	scheduleIntro: "places-schedule-intro",
-	scheduleNeeds: "places-schedule-needs",
-	scheduleCountry: "places-schedule-country",
 	// how long in each city lives in the Plan: `plan/day-split/testids.ts`
 	ratePill: "places-rate-pill",
 	nextStep: "places-next-step",

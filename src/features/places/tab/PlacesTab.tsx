@@ -39,7 +39,6 @@ import { PlacesDecide } from "./PlacesDecide";
 import { PlacesSteps } from "./PlacesSteps";
 import { PlacesTable } from "./PlacesTable";
 import { AddPlaceButton, PlacesToolbar, RatingProgress } from "./PlacesToolbar";
-import { ScheduleNext } from "./ScheduleNext";
 import { PLACES_TAB_TESTID } from "./testids";
 import { PlaceActionsProvider } from "./use-place-actions";
 import {
@@ -153,14 +152,10 @@ function Body({
 	data,
 	step,
 	phone,
-	onStep,
-	tally,
 }: {
 	data: PlacesData;
 	step: FlowStep;
 	phone: boolean;
-	onStep: (s: FlowStep) => void;
-	tally: ReturnType<typeof flowTally>;
 }) {
 	const view = data.state.view;
 	if (data.rows.length === 0) return <FlowEmpty />;
@@ -177,12 +172,6 @@ function Body({
 			<div className="flex min-w-0 flex-1 flex-col">
 				{step === "decide" ? (
 					<PlacesDecide data={data} />
-				) : step === "schedule" ? (
-					<ScheduleNext
-						data={data}
-						tally={tally}
-						onRate={() => onStep("rate")}
-					/>
 				) : empty ? (
 					<Empty data={data} />
 				) : view === "board" ? (
@@ -199,9 +188,9 @@ function Body({
 
 export function PlacesTab({ phone = false }: { phone?: boolean }) {
 	const [q, setQ] = useState("");
-	// The search belongs to the Review step's list; the feed and the schedule are the whole scope.
+	// The search belongs to the Review step's list; the feed is the whole scope.
 	const urlStep = usePlacesState().step;
-	const data = usePlaces(urlStep === "rate" || urlStep === "schedule" ? "" : q);
+	const data = usePlaces(urlStep === "rate" ? "" : q);
 	const { access, ix, sel, search, nav } = useWorkspace();
 	const takesMap = usePlacesWide();
 	const tally = useMemo(
@@ -213,7 +202,7 @@ export function PlacesTab({ phone = false }: { phone?: boolean }) {
 		[data.rows, access],
 	);
 	const ctx = { canEdit: access.mode !== "read", hasDays: ix.days.length > 0 };
-	const next = nextStep(tally, ctx);
+	const next = nextStep(tally);
 	// No step in the URL: the most useful one, written in right away (so it
 	// holds while the counts change, deep-links and follows).
 	const step =
@@ -264,16 +253,8 @@ export function PlacesTab({ phone = false }: { phone?: boolean }) {
 						compact={phone || !takesMap}
 					/>
 				) : null}
-				{step === "schedule" ? null : (
-					<PlaceFilterSummary count={data.visible.length} />
-				)}
-				<Body
-					data={data}
-					step={step}
-					phone={phone}
-					onStep={onStep}
-					tally={tally}
-				/>
+				<PlaceFilterSummary count={data.visible.length} />
+				<Body data={data} step={step} phone={phone} />
 			</div>
 		</PlaceActionsProvider>
 	);

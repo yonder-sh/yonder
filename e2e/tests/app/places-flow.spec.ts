@@ -1,15 +1,16 @@
 /**
  * The planning flow (owner, 2026-09-25): add places → rate places → add
  * them to days. The Places tab's step bar and its counts (and the step it
- * opens on), rating from the Rate step lowering the count, Schedule
- * putting a shortlisted place on a day, the phone's "★ Rate N" pill opening
- * the feed.
+ * opens on), rating from the Rate step lowering the count, the Plan's Fill
+ * a day putting a shortlisted place on a day (One Yonder: the Schedule view
+ * is gone), the phone's "★ Rate N" pill opening the feed.
  * Screenshots land in `.data/flow-shots/`.
  */
 import { randomUUID } from "node:crypto";
 import path from "node:path";
 import { expect, type Page, test } from "@playwright/test";
 import { PLACES_TAB_TESTID as T } from "../../../src/features/places/tab/testids";
+import { PLAN_TESTID } from "../../../src/features/plan/testids";
 import { REPO_ROOT, storageStateOf } from "./_helpers/env";
 import { cloneFixtureTrip, type FixtureClone } from "./_helpers/fixture";
 import { expectLive } from "./_helpers/page";
@@ -93,7 +94,7 @@ async function toRate(page: Page): Promise<number> {
 test.describe("desktop", () => {
 	test.skip(({ isMobile }) => isMobile, "desktop layout (the phone has its own test)");
 
-	test("the views: All places · Rate · Decide · Schedule with their counts; Places opens on Rate", async ({ page }) => {
+	test("the views: All places · Rate · Decide with their counts; Places opens on Rate", async ({ page }) => {
 		const c = await cloneFixtureTrip(page.request);
 		await page.goto(`/t/${c.slug}?tab=plan`);
 		await expectLive(page);
@@ -107,9 +108,8 @@ test.describe("desktop", () => {
 		await expect(page.getByTestId(T.feed)).toBeVisible();
 		await expect(step(page, "review")).toHaveAttribute("title", /^All places · \d+ places$/);
 		await expect(step(page, "rate")).toHaveAttribute("title", /^Rate · \d+ to rate$/);
-		await expect(step(page, "schedule")).toContainText("Schedule");
-		// Tokyo Tower, Yasaka Shrine, the museum and Tōdai-ji wait for a day.
-		await expect(step(page, "schedule")).toHaveAttribute("title", /^Schedule · \d+ shortlisted · 4 not on a day$/);
+		await expect(step(page, "decide")).toHaveAttribute("title", /^Decide · /);
+		await expect(step(page, "schedule")).toHaveCount(0);
 		// Rating is what's waiting for you: the dot.
 		await expect(step(page, "rate")).toHaveAttribute("data-next", "true");
 		await expect(step(page, "rate").getByTestId(T.stepDot)).toBeVisible();
@@ -128,22 +128,13 @@ test.describe("desktop", () => {
 		await expect(page.getByTestId(T.table)).toBeVisible();
 		await page.screenshot({ path: shot("desktop-2b-review"), animations: "disabled" });
 
-		// Schedule: Tokyo Tower in Tokyo's window, Yasaka Shrine under Gion in
-		// Kyoto's; the museum (closed on the Kyoto day) and Tōdai-ji (Nara has
-		// no days) can't fit; Nara is a city with no days yet.
-		await step(page, "schedule").click();
-		await expect(page).toHaveURL(/pv=schedule/);
-		const rows = page.getByTestId(T.scheduleRow);
-		await expect(rows.filter({ hasText: "Tokyo Tower" })).toHaveCount(1);
-		await expect(page.getByTestId(T.scheduleWindow).filter({ hasText: "Kyoto" })).toContainText("Gion");
-		await expect(rows.filter({ hasText: "Yasaka Shrine" })).toHaveCount(1);
-		const cant = page.getByTestId(T.scheduleCantFit);
-		await expect(cant).toContainText("Kyoto National Museum");
-		await expect(cant).toContainText("Closed every day you're in Kyoto");
-		await expect(cant).toContainText("Must, but no days in Nara");
-		await expect(page.getByTestId(T.scheduleNoDays)).toContainText("Nara");
+		// Decide: the pinned Tokyo Tower on the shortlist; an old Schedule link lands here.
+		await page.goto(`/t/${c.slug}?tab=places&pv=schedule`);
+		await expect(page.getByTestId(T.steps)).toHaveAttribute("data-step", "decide", { timeout: 30_000 });
+		const shortlist = page.locator(`[data-testid=${T.decideColumn}][data-column="shortlist"]`);
+		await expect(shortlist.getByTestId(T.decideCard).filter({ hasText: "Tokyo Tower" })).toHaveCount(1);
 		await page.waitForTimeout(300);
-		await page.screenshot({ path: shot("desktop-3-schedule"), animations: "disabled" });
+		await page.screenshot({ path: shot("desktop-3-decide"), animations: "disabled" });
 	});
 
 	test("rating from the Rate step lowers the count", async ({ page }) => {
@@ -165,32 +156,26 @@ test.describe("desktop", () => {
 		await expect(page.getByTestId("rate-button")).toHaveAttribute("data-count", String(before - 1));
 	});
 
-	test("Schedule puts a shortlisted place on a day", async ({ page }) => {
+	test("Fill a day puts a shortlisted place on a day", async ({ page }) => {
 		const c = await cloneFixtureTrip(page.request);
 		await page.goto(`/t/${c.slug}?tab=plan`);
 		await expectLive(page);
 		const tower = await addShortlisted(page, c, "Tokyo Tower");
-		await page.goto(`/t/${c.slug}?tab=places&pv=schedule`);
-		await expect(page.getByTestId(T.schedule)).toBeVisible({ timeout: 30_000 });
+		// Sun 3 Oct: the day's ideas take the map's place.
+		await page.goto(`/t/${c.slug}?tab=plan&days=2027-10-03&fill=1`);
+		await expect(page.getByTestId(PLAN_TESTID.fillDay)).toBeVisible({ timeout: 30_000 });
 		await expectLive(page);
-		const row = page.locator(`[data-testid=${T.scheduleRow}][data-place="${tower}"]`);
-		// Tokyo's days: its window lists the tower with a hint for each of them.
+		const row = page.locator(`[data-testid=${PLAN_TESTID.fillIdea}][data-place="${tower}"]`);
 		await expect(row).toHaveCount(1);
-		const window = page.getByTestId(T.scheduleWindow).filter({ has: row });
-		await expect(window).toContainText("Tokyo");
-		await expect(row.getByTestId(T.scheduleDay).first()).toBeVisible();
-		const bestDay = (await row.getAttribute("data-best-day")) as string;
-		const add = row.getByTestId(T.scheduleAdd);
-		await expect(add).toHaveText(/^Add to \w{3} \d{1,2} \w{3}$/);
-		await expect(row).toContainText(/free/);
-		await add.click();
-		// On the day it named, and off the list.
+		await row.getByTestId(PLAN_TESTID.fillAdd).click();
+		// On that day, and the row says so.
+		const g = await graphOf(page);
+		const day = (g as unknown as { days: { id: string; date: string }[] }).days.find((d) => d.date === "2027-10-03");
 		await expect
 			.poll(async () => (await graphOf(page)).items.find((it) => it.nodeId === tower)?.dayId ?? null, { timeout: 15_000 })
-			.toBe(bestDay);
-		await expect(row).toHaveCount(0);
-		await expect(page.getByTestId(T.scheduleDone)).toBeVisible();
-		await expect(step(page, "schedule")).toHaveAttribute("title", /shortlisted · all on a day$/);
+			.toBe(day?.id);
+		await expect(row).toContainText("On Sun 3");
+		await expect(row.getByTestId(PLAN_TESTID.fillAdd)).toHaveCount(0);
 	});
 });
 

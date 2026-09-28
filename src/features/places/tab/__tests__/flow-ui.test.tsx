@@ -55,7 +55,7 @@ const asViewer: TripGraph = {
 };
 
 describe("the Places tab's steps", () => {
-	it("All places · Rate · Schedule with their counts (D06); the dot on Rate", () => {
+	it("All places · Rate · Decide with their counts (D06); the dot on Rate", () => {
 		renderWithWorkspace(<PlacesTab />, {
 			search: { tab: "places", pv: "table" },
 		});
@@ -66,20 +66,19 @@ describe("the Places tab's steps", () => {
 			"review",
 			"rate",
 			"decide",
-			"schedule",
 		]);
 		expect(all[0]).toHaveAttribute("aria-current", "step");
-		// In the flow's order from here on: Rate, All places, Schedule.
-		const steps = [all[1], all[0], all[3]] as HTMLElement[];
+		// In the flow's order from here on: Rate, All places, Decide.
+		const steps = [all[1], all[0], all[2]] as HTMLElement[];
 		expect(steps.map((s) => s.getAttribute("title"))).toEqual([
 			`Rate · ${rateable} to rate`,
 			`All places · ${rateable} places`,
-			`Schedule · ${rateable} shortlisted · all on a day`,
+			`Decide · ${rateable} shortlisted`,
 		]);
 		const counts = within(bar)
 			.getAllByTestId(T.stepCount)
 			.map((c) => c.textContent);
-		// Every demo place is on a day (scheduled counts as shortlisted): no count on Schedule.
+		// Nothing to talk through: no count on Decide.
 		expect(counts).toEqual([`${rateable}`, `${rateable} left`]);
 		expect(steps[0]).toHaveAttribute("data-next", "true");
 		expect(
@@ -91,21 +90,21 @@ describe("the Places tab's steps", () => {
 		);
 	});
 
-	it("a step click changes the view in the URL; Rate and Schedule drop the status pill", () => {
+	it("a step click changes the view in the URL; Decide drops the status pill", () => {
 		const { navigations } = renderWithWorkspace(<PlacesTab />, {
 			search: { tab: "places", pv: "board", pst: "shortlist" },
 		});
 		fireEvent.click(
 			screen
 				.getAllByTestId(T.step)
-				.find((s) => s.dataset.step === "schedule") as HTMLElement,
+				.find((s) => s.dataset.step === "decide") as HTMLElement,
 		);
 		expect(navigations.at(-1)?.search).toMatchObject({
 			tab: "places",
-			pv: "schedule",
+			pv: "decide",
 		});
 		expect(navigations.at(-1)?.search.pst).toBeUndefined();
-		expect(screen.getByTestId(T.schedule)).toHaveAttribute("data-waiting", "0");
+		expect(screen.getByTestId(T.decide)).toBeInTheDocument();
 		// Back to Review: the board it was on.
 		fireEvent.click(
 			screen

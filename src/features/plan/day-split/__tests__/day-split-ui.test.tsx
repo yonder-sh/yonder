@@ -4,13 +4,10 @@
  * country, − / +, reordering, who still rates, Use these days); with no
  * dates, about how many days and the first one; afterwards "Tokyo 2 days ·
  * Kyoto 2" with Change, which confirms in the panel before places go back
- * to the list. The map gets the stops in order while it's open. And the
- * Places tab's Schedule step: what the shortlist needs until then.
+ * to the list. The map gets the stops in order while it's open.
  */
 import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
-import { PlacesTab } from "@/features/places/tab/PlacesTab";
-import { PLACES_TAB_TESTID as P } from "@/features/places/tab/testids";
 import { PlanTab } from "@/features/plan/PlanTab";
 import type { DaySpec } from "@/lib/engine/__fixtures__/demo";
 import type { GraphNode, Priority, TripGraph } from "@/lib/engine/types";
@@ -513,96 +510,5 @@ describe("once days have cities", () => {
 		expect(rowOf(s.N.tokyo)).toHaveAttribute("data-days", "1");
 		expect(fns.setDayStay).not.toHaveBeenCalled();
 		expect(fns.moveItem).not.toHaveBeenCalled();
-	});
-});
-
-describe("the Places tab's Schedule", () => {
-	const places = (graph: TripGraph) =>
-		renderWithWorkspace(<PlacesTab />, {
-			graph,
-			search: { tab: "places", pv: "schedule" },
-		});
-
-	it("no day in a city yet: what the shortlist needs, and the way to decide it in the Plan", () => {
-		for (const days of [empty(10), []]) {
-			const { graph } = trip(days);
-			const { navigations, unmount } = places(graph);
-			expect(screen.getByTestId(P.schedule)).toHaveAttribute(
-				"data-mode",
-				"needs",
-			);
-			const box = screen.getByTestId(P.scheduleNeeds);
-			expect(box).toHaveTextContent(
-				"Your shortlist needs about: Tokyo 4 days · Kyoto 1",
-			);
-			expect(screen.queryByTestId(T.split)).toBeNull();
-			fireEvent.click(
-				within(box).getByRole("button", {
-					name: "Decide how long in each city",
-				}),
-			);
-			expect(navigations.at(-1)?.search.tab).toBe("plan");
-			expect(fns.setDayStay).not.toHaveBeenCalled();
-			unmount();
-		}
-	});
-
-	it("people who can't edit get the line only", () => {
-		const { graph } = trip(empty(10));
-		places(asRole(graph, "viewer"));
-		expect(screen.getByTestId(P.scheduleNeeds)).toBeInTheDocument();
-		expect(
-			screen.queryByRole("button", { name: /Decide how long/ }),
-		).toBeNull();
-	});
-
-	it("the list under its intro; a country heading where the country changes", () => {
-		const { s, graph } = trip([
-			{ night: "tokyo", items: [] },
-			{ night: "tokyo", items: [] },
-			{ night: "seoul", items: [] },
-			{ items: [] },
-		]);
-		const k: GraphNode = {
-			...(graph.nodes.find((n) => n.id === s.N.k1) as GraphNode),
-			id: "seoul-place",
-			parentId: s.N.seoul as string,
-			name: "Gyeongbokgung",
-			lat: 37.58,
-			lng: 126.98,
-		};
-		places({ ...graph, nodes: [...graph.nodes, k] });
-		expect(screen.getByTestId(P.schedule)).toHaveAttribute(
-			"data-mode",
-			"schedule",
-		);
-		const intro = screen.getByTestId(P.scheduleIntro);
-		expect(intro).toHaveTextContent("Put your shortlist on days");
-		expect(intro).toHaveTextContent(
-			"Each place lists the days you're in its city. The button adds it to the best one.",
-		);
-		expect(
-			screen.getAllByTestId(P.scheduleCountry).map((h) => h.textContent),
-		).toEqual(["Japan · 2 nights", "South Korea · 2 nights"]);
-		// Tokyo's places by area: Shibuya, then the city's own.
-		const tokyo = screen
-			.getAllByTestId(P.scheduleWindow)
-			.find((w) => w.dataset.city === s.N.tokyo) as HTMLElement;
-		expect(
-			within(tokyo)
-				.getAllByRole("heading", { level: 4 })
-				.map((h) => h.textContent?.replace(/ · \d+$/, "")),
-		).toEqual(["Shibuya", "Elsewhere in Tokyo"]);
-	});
-
-	it("one country: no heading", () => {
-		const { graph } = trip([
-			{ night: "tokyo", items: [] },
-			{ night: "kyoto", items: [] },
-			{ items: [] },
-		]);
-		places(graph);
-		expect(screen.getAllByTestId(P.scheduleWindow).length).toBeGreaterThan(0);
-		expect(screen.queryByTestId(P.scheduleCountry)).toBeNull();
 	});
 });

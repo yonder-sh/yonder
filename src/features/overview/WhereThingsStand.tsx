@@ -2,7 +2,7 @@
  * "Where things stand" (owner, 2026-09-25): the trip's progress in five
  * plain lines, each opening where it gets done. The first open line is
  * what's next: it stands out and, when you can do it, carries the action
- * ("Rate 12 places", "Schedule"). The rating line offers "Remind" for
+ * ("Rate 12 places", "Open the plan"). The rating line offers "Remind" for
  * people with places left. Viewers get the lines only. On the Overview's
  * dark hero (`tone="hero"`) and in the welcome (`compact`).
  */
@@ -30,7 +30,7 @@ export function useStandingNav(standing: Standing) {
 	const openAddPlace = useUi((s) => s.openAddPlace);
 	const setSettingsOpen = useUi((s) => s.setSettingsOpen);
 	const canEdit = access.mode !== "read";
-	const places = (pv: "rate" | "schedule" | null) =>
+	const places = (pv: "rate" | null) =>
 		nav.openPlaces({
 			scopeId: null,
 			patch: {
@@ -43,7 +43,8 @@ export function useStandingNav(standing: Standing) {
 		places: () => places(null),
 		rating: () => places("rate"),
 		cities: () => nav.setTab("plan"),
-		days: () => places("schedule"),
+		// Putting places on days is the Plan's (Fill a day).
+		days: () => nav.setTab("plan"),
 		stays: () => nav.setTab("plan"),
 	};
 	const hasDays = ix.days.length > 0;
@@ -73,7 +74,7 @@ export function useStandingNav(standing: Standing) {
 					: { label: "Pick dates", run: () => setSettingsOpen(true) };
 			case "days":
 				return canEdit && hasDays && standing.favourites
-					? { label: "Schedule", run: open.days }
+					? { label: "Open the plan", run: open.days }
 					: null;
 			case "stays":
 				return canEdit && hasDays

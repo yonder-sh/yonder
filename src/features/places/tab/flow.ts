@@ -14,7 +14,7 @@
 import type { PlacesView } from "@/lib/workspace/search";
 import type { PlaceStatus } from "./lifecycle";
 
-export const FLOW_STEPS = ["rate", "review", "decide", "schedule"] as const;
+export const FLOW_STEPS = ["rate", "review", "decide"] as const;
 export type FlowStep = (typeof FLOW_STEPS)[number];
 
 /** The Review step's own views (its switcher). */
@@ -27,15 +27,14 @@ export const STEP_LABEL: Record<FlowStep, string> = {
 	review: "All places",
 	// One Yonder (D08): shortlist, disagreements and not going, side by side.
 	decide: "Decide",
-	schedule: "Schedule",
 };
 
 /** The step a `pv` names (null: none, the tab picks one). */
 export function stepOfView(pv: PlacesView | null | undefined): FlowStep | null {
 	if (!pv) return null;
 	if (pv === "rate") return "rate";
-	if (pv === "decide") return "decide";
-	if (pv === "schedule") return "schedule";
+	// The Schedule view is gone (Fill a day in the Plan does it): old links decide.
+	if (pv === "decide" || pv === "schedule") return "decide";
 	return "review";
 }
 
@@ -104,13 +103,12 @@ export type FlowContext = {
 };
 
 /**
- * The step with work waiting for you, most pressing first: places to rate,
- * then shortlisted places not on a day. Review never waits: the shortlist
- * fills itself from the ratings. Null: nothing waiting.
+ * The step with work waiting for you: places to rate. Review never waits
+ * (the shortlist fills itself from the ratings), and putting the shortlist
+ * on days is the Plan's (Fill a day). Null: nothing waiting.
  */
-export function nextStep(t: FlowTally, c: FlowContext): FlowStep | null {
+export function nextStep(t: FlowTally): FlowStep | null {
 	if (t.toRate) return "rate";
-	if (t.notOnDay && c.hasDays && c.canEdit) return "schedule";
 	return null;
 }
 
@@ -125,28 +123,24 @@ export function pickStep(
 ): FlowStep {
 	if (c.focus) return "review";
 	if (t.toRate && t.ideas && !c.phone) return "rate";
-	if (t.notOnDay && c.hasDays && c.canEdit) return "schedule";
+	if (t.notOnDay && c.hasDays && c.canEdit) return "decide";
 	return "review";
 }
 
 const plural = (n: number, one: string, many = `${one}s`) =>
 	`${n} ${n === 1 ? one : many}`;
 
-/** Each view's count in the segmented header (D06): "125", "47 left", "4 to place"; null says nothing. */
+/** Each view's count in the segmented header (D06): "125", "47 left", "2 to talk"; null says nothing. */
 export function stepBadges(t: FlowTally): Record<FlowStep, string | null> {
 	return {
 		review: t.ideas ? String(t.ideas) : null,
 		rate: t.toRate ? `${t.toRate} left` : null,
 		decide: t.talk ? `${t.talk} to talk` : null,
-		schedule: t.notOnDay ? `${t.notOnDay} to place` : null,
 	};
 }
 
-/** Each step's count line ("12 to rate", "48 places", "9 shortlisted · 4 not on a day"). */
-export function stepCounts(
-	t: FlowTally,
-	opts: { short?: boolean } = {},
-): Record<FlowStep, string> {
+/** Each step's count line ("12 to rate", "48 places", "2 places to talk through"). */
+export function stepCounts(t: FlowTally): Record<FlowStep, string> {
 	const review = t.ideas ? plural(t.ideas, "place") : "No places yet";
 	const rate =
 		t.toRate === null
@@ -156,18 +150,8 @@ export function stepCounts(
 				: t.ideas
 					? "All rated"
 					: "Nothing to rate";
-	let schedule: string;
-	if (!t.shortlisted) schedule = "Nothing shortlisted";
-	else if (opts.short)
-		schedule = t.notOnDay
-			? `${t.notOnDay} not on a day`
-			: `${t.shortlisted} shortlisted`;
-	else
-		schedule = t.notOnDay
-			? `${t.shortlisted} shortlisted · ${t.notOnDay} not on a day`
-			: `${t.shortlisted} shortlisted · all on a day`;
 	const decide = t.talk
 		? `${plural(t.talk, "place")} to talk through`
 		: `${t.shortlisted} shortlisted`;
-	return { rate, review, decide, schedule };
+	return { rate, review, decide };
 }
