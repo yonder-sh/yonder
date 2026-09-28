@@ -237,6 +237,12 @@ test("FB-22: the map camera follows at other window sizes; my own move pauses it
 	await mapUp(pp);
 	await follow(b.page);
 	await spotlight(a.page, [pp]);
+	// A on the map (a wheel over it): the phone shows its map too.
+	const ma = await a.page.getByTestId(MAP_TESTID.canvas).boundingBox();
+	if (!ma) throw new Error("no map");
+	await a.page.mouse.move(ma.x + ma.width / 2, ma.y + ma.height / 2);
+	await a.page.mouse.wheel(0, -60);
+	await expect(pp.getByTestId(S.mobileMapToggle)).toHaveAttribute("aria-pressed", "true", { timeout: 10_000 });
 
 	// A frames Kyoto at bearing 20.
 	await a.page.evaluate(() =>
