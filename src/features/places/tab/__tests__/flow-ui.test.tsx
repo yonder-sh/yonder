@@ -114,18 +114,18 @@ describe("the Places tab's steps", () => {
 		expect(navigations.at(-1)?.search.pv).toBe("board");
 	});
 
-	it("no step in the URL: Rate when you have places to rate, written into the URL", () => {
+	it("no step in the URL: All places, even with places to rate, written into the URL", () => {
 		const { navigations } = renderWithWorkspace(<PlacesTab />, {
 			search: { tab: "places" },
 		});
 		expect(navigations.at(-1)?.search).toMatchObject({
 			tab: "places",
-			pv: "rate",
+			pv: "table",
 		});
-		expect(screen.getByTestId(T.tab)).toHaveAttribute("data-step", "rate");
+		expect(screen.getByTestId(T.tab)).toHaveAttribute("data-step", "review");
 	});
 
-	it("…else Review; a link to one place opens the list; a phone never opens the feed by itself", () => {
+	it("all rated, a link to one place, a phone: All places too", () => {
 		const done = renderWithWorkspace(<PlacesTab />, {
 			graph: allRated,
 			search: { tab: "places" },

@@ -20,7 +20,6 @@ import {
 	type FlowTally,
 	flowTally,
 	nextStep,
-	pickStep,
 	reviewViewOf,
 	stepBadges,
 	stepCounts,
@@ -69,33 +68,8 @@ const tally = (t: Partial<FlowTally>): FlowTally => ({
 	decided: 0,
 	...t,
 });
-const EDIT = { canEdit: true, hasDays: true };
 
-describe("which step Places opens on", () => {
-	const at = (
-		t: Partial<FlowTally>,
-		c: Partial<Parameters<typeof pickStep>[1]> = {},
-	) => pickStep(tally(t), { ...EDIT, phone: false, focus: false, ...c });
-	it("Rate when you have places to rate", () => {
-		expect(at({ toRate: 4, notOnDay: 2 })).toBe("rate");
-	});
-	it("then Decide for shortlisted places not on a day (editors, with days)", () => {
-		expect(at({ toRate: 0, notOnDay: 2 })).toBe("decide");
-		expect(at({ notOnDay: 2 }, { canEdit: false })).toBe("review");
-		expect(at({ notOnDay: 2 }, { hasDays: false })).toBe("review");
-	});
-	it("else Review (nothing to rate, an empty trip, a viewer)", () => {
-		expect(at({})).toBe("review");
-		expect(at({ ideas: 0, toRate: 0 })).toBe("review");
-		expect(at({ toRate: null })).toBe("review");
-	});
-	it("a link to one place or a status filter opens the list", () => {
-		expect(at({ toRate: 4 }, { focus: true })).toBe("review");
-	});
-	it("a phone never opens the full-screen feed by itself", () => {
-		expect(at({ toRate: 4 }, { phone: true })).toBe("review");
-		expect(at({ toRate: 4, notOnDay: 1 }, { phone: true })).toBe("decide");
-	});
+describe("the Places dot", () => {
 	it("the dot: places to rate (putting them on days is the Plan's)", () => {
 		expect(nextStep(tally({ toRate: 3, notOnDay: 2 }))).toBe("rate");
 		expect(nextStep(tally({ notOnDay: 2 }))).toBeNull();

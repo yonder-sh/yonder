@@ -94,17 +94,20 @@ async function toRate(page: Page): Promise<number> {
 test.describe("desktop", () => {
 	test.skip(({ isMobile }) => isMobile, "desktop layout (the phone has its own test)");
 
-	test("the views: All places · Rate · Decide with their counts; Places opens on Rate", async ({ page }) => {
+	test("the views: All places · Rate · Decide with their counts; Places opens on All places", async ({ page }) => {
 		const c = await cloneFixtureTrip(page.request);
 		await page.goto(`/t/${c.slug}?tab=plan`);
 		await expectLive(page);
 		await addShortlisted(page, c, "Tokyo Tower");
 		await addMore(page, c);
-		// No step named: you have places to rate, so it's Rate (and the URL says so).
+		// No step named: All places, even with places to rate (and the URL says so).
 		await page.goto(`/t/${c.slug}?tab=places`);
 		await expect(page.getByTestId(T.steps)).toBeVisible({ timeout: 30_000 });
+		await expect(page).toHaveURL(/pv=table/);
+		await expect(page.getByTestId(T.steps)).toHaveAttribute("data-step", "review");
+		// Rate is one click away.
+		await step(page, "rate").click();
 		await expect(page).toHaveURL(/pv=rate/);
-		await expect(page.getByTestId(T.steps)).toHaveAttribute("data-step", "rate");
 		await expect(page.getByTestId(T.feed)).toBeVisible();
 		await expect(step(page, "review")).toHaveAttribute("title", /^All places · \d+ places$/);
 		await expect(step(page, "rate")).toHaveAttribute("title", /^Rate · \d+ to rate$/);

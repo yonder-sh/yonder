@@ -121,21 +121,6 @@ export function nextStep(t: FlowTally): FlowStep | null {
 	return null;
 }
 
-/**
- * The step Places opens on when the URL names none. A link to one place or
- * a status filter wants the list (Review). On a phone the Rate feed is full
- * screen, so it never opens by itself (the Rate pill is one tap away).
- */
-export function pickStep(
-	t: FlowTally,
-	c: FlowContext & { phone: boolean; focus: boolean },
-): FlowStep {
-	if (c.focus) return "review";
-	if (t.toRate && t.ideas && !c.phone) return "rate";
-	if (t.notOnDay && c.hasDays && c.canEdit) return "decide";
-	return "review";
-}
-
 const plural = (n: number, one: string, many = `${one}s`) =>
 	`${n} ${n === 1 ? one : many}`;
 

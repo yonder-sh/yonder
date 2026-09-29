@@ -10,8 +10,8 @@
  * - Schedule: "Schedule next" (per stay window, with fit hints); before
  *   any day has a city, what the shortlist needs (decided in the Plan).
  * With no places yet, every step shows the empty state that teaches the flow.
- * The step is the URL's view (`pv`); with none the tab picks the most useful
- * one (`pickStep`) and writes it in. Opening a place opens its panel where
+ * The step is the URL's view (`pv`); with none it opens on All places (the
+ * owner's call, 2026-09-28) and writes that in. Opening a place opens its panel where
  * the shell shows any selection (on desktop the details pane at the right
  * edge; the content narrows and keeps scrolling, nothing is covered).
  *
@@ -27,13 +27,7 @@ import { canRateOwn } from "@/lib/auth/roles";
 import { cn } from "@/lib/utils";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { isRateable } from "../lib/rate";
-import {
-	type FlowStep,
-	flowTally,
-	nextStep,
-	pickStep,
-	viewOfStep,
-} from "./flow";
+import { type FlowStep, flowTally, nextStep, viewOfStep } from "./flow";
 import { PlacesBoard } from "./PlacesBoard";
 import { PlacesDecide } from "./PlacesDecide";
 import { PlacesSteps } from "./PlacesSteps";
@@ -191,7 +185,7 @@ export function PlacesTab({ phone = false }: { phone?: boolean }) {
 	// The search belongs to the Review step's list; the feed is the whole scope.
 	const urlStep = usePlacesState().step;
 	const data = usePlaces(urlStep === "rate" ? "" : q);
-	const { access, ix, sel, search, nav } = useWorkspace();
+	const { access, search, nav } = useWorkspace();
 	const takesMap = usePlacesWide();
 	const tally = useMemo(
 		() =>
@@ -201,18 +195,9 @@ export function PlacesTab({ phone = false }: { phone?: boolean }) {
 			}),
 		[data.rows, access],
 	);
-	const ctx = { canEdit: access.mode !== "read", hasDays: ix.days.length > 0 };
 	const next = nextStep(tally);
-	// No step in the URL: the most useful one, written in right away (so it
-	// holds while the counts change, deep-links and follows).
-	const step =
-		data.state.step ??
-		pickStep(tally, {
-			...ctx,
-			phone,
-			focus:
-				sel?.kind === "node" || !!search.pst || !!search.talk || !!search.f,
-		});
+	// No step in the URL: All places, written in right away (so it deep-links and follows).
+	const step = data.state.step ?? "review";
 	const pv = search.pv;
 	useEffect(() => {
 		if (!pv) nav.setPlaces({ pv: viewOfStep(step, lastReviewView.current) });
