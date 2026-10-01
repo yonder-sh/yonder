@@ -53,14 +53,18 @@ describe("Save from other apps", () => {
 		expect(thisDevice()).toBe("computer");
 	});
 
-	it("on an iPhone, leads with the Shortcut and its address", () => {
+	it("on an iPhone, opens only the iPhone section, with the Shortcut's address", () => {
 		ua("Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)");
 		setup.value = { icloudUrl: null, devices: [] };
 		renderDialog();
 		const dialog = screen.getByTestId(HOME_TESTID.saveFromAppsDialog);
-		const first = within(dialog).getAllByRole("heading", { level: 3 })[0];
-		expect(first).toHaveTextContent("iPhone and iPad");
-		expect(first).toHaveTextContent("This device");
+		const sections = within(dialog).getAllByRole("button", { expanded: true });
+		expect(sections).toHaveLength(1);
+		expect(sections[0]).toHaveTextContent("iPhone and iPad");
+		expect(sections[0]).toHaveTextContent("This device");
+		expect(
+			within(dialog).getAllByRole("button", { expanded: false }),
+		).toHaveLength(2);
 		expect(
 			screen.getByTestId(HOME_TESTID.saveFromAppsAddress),
 		).toHaveTextContent(`${window.location.origin}/share?url=`);
@@ -84,7 +88,7 @@ describe("Save from other apps", () => {
 			await screen.findByTestId(HOME_TESTID.shortcutAdd),
 		).toHaveTextContent("Add the Shortcut");
 		expect(screen.getByTestId(HOME_TESTID.shortcutDevices)).toHaveTextContent(
-			"Dennis's iPhone · Not used yet",
+			"Dennis's iPhone · not used yet",
 		);
 		expect(screen.getByTestId(HOME_TESTID.shortcutReconnect)).toBeVisible();
 		expect(screen.queryByTestId(HOME_TESTID.saveFromAppsAddress)).toBeNull();
