@@ -288,7 +288,13 @@ export async function smallJson(request: Request): Promise<unknown> {
 /** A JSON answer the Shortcut can show: `message` is what it puts in its alert. */
 export function shortcutReply(
 	status: number,
-	body: { ok: boolean; message?: string; key?: string },
+	body: {
+		ok: boolean;
+		message?: string;
+		key?: string;
+		/** The phone's key no longer works: the Shortcut forgets it. */
+		reconnect?: boolean;
+	},
 ): Response {
 	return Response.json(body, {
 		status,

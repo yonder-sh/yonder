@@ -41,6 +41,7 @@ export const Route = createFileRoute("/api/shortcut/save")({
 					const over = await shortcutOverLimit(`badkey:${ip}`, 30, 60);
 					return shortcutReply(over ? 429 : 401, {
 						ok: false,
+						reconnect: !over,
 						message:
 							"This phone isn't connected to Yonder. In Yonder, open Save from other apps, tap Copy setup code, then run Save to Yonder once.",
 					});
