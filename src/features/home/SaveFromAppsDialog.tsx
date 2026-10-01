@@ -4,7 +4,8 @@
  * Android's share sheet already; on a computer, paste into ⌘K. iPhone has no
  * web share target: where the server offers the "Save to Yonder" Shortcut
  * (SHORTCUT_ICLOUD_URL), "Add the Shortcut" copies a one-time setup code and
- * opens it, and running it once connects the phone (src/server/shortcut.server.ts);
+ * opens it, and running it once connects the phone ("Copy a new one" for a
+ * code that ran out) (src/server/shortcut.server.ts);
  * otherwise a two-action Shortcut opens `/share?url=` in Safari. This
  * device's way comes first.
  */
@@ -177,19 +178,17 @@ function ShortcutSetup({ icloudUrl }: { icloudUrl: string }) {
 					</Button>
 				</Step>
 				<Step n={2}>
-					<Button
-						size="sm"
-						variant="outline"
-						onClick={() => copy()}
-						data-testid={HOME_TESTID.shortcutReconnect}
-					>
-						Copy setup code
-					</Button>
-					<span className="text-muted-foreground">
-						then run it once in Shortcuts
-					</span>
+					<span>Run it once in Shortcuts within 5 minutes</span>
 				</Step>
 			</ol>
+			<button
+				type="button"
+				onClick={() => copy()}
+				className="justify-self-start text-primary hover:underline"
+				data-testid={HOME_TESTID.shortcutReconnect}
+			>
+				Code ran out? Copy a new one
+			</button>
 			<p className="text-muted-foreground">
 				Then share from any app and pick <b>Save to Yonder</b>.
 			</p>
