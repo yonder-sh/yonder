@@ -113,6 +113,18 @@ const Schema = z.object({
 	FX_FALLBACK_URL: optUrl,
 	/** Optional cross-check source (Frankfurter v2; lacks TWD and VND). */
 	FX_CHECK_URL: optUrl,
+	/**
+	 * The "Save to Yonder" iPhone Shortcut's iCloud link (Share → Copy iCloud
+	 * Link). The Shortcut has this server's address in it, so it is per
+	 * deployment; unset = no "Add the Shortcut" button.
+	 */
+	SHORTCUT_ICLOUD_URL: z.preprocess(
+		blankToUndefined,
+		z
+			.url()
+			.refine((u) => u.startsWith("https://www.icloud.com/shortcuts/"))
+			.optional(),
+	),
 	ENABLE_TEST_ROUTES: flag,
 	AUTOFILL_MAX_PROVIDER_CALLS_PER_TRIP_PER_DAY: z.preprocess(
 		blankToUndefined,

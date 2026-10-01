@@ -9,6 +9,9 @@ export const HOME_TESTID = {
 	saveFromAppsDialog: "home-save-from-apps-dialog",
 	saveFromAppsAddress: "home-save-from-apps-address",
 	saveFromAppsCopy: "home-save-from-apps-copy",
+	shortcutAdd: "home-shortcut-add",
+	shortcutReconnect: "home-shortcut-reconnect",
+	shortcutDevices: "home-shortcut-devices",
 	// Dashboard
 	heroCard: "home-hero",
 	heroWhen: "home-hero-when",

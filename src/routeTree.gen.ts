@@ -21,6 +21,8 @@ import { Route as DevKitRouteImport } from './routes/dev/kit'
 import { Route as TTripRouteImport } from './routes/t/$trip'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as ApiAvatarUserIdRouteImport } from './routes/api/avatar/$userId'
+import { Route as ApiShortcutPairRouteImport } from './routes/api/shortcut/pair'
+import { Route as ApiShortcutSaveRouteImport } from './routes/api/shortcut/save'
 import { Route as ApiTestFixtureRouteImport } from './routes/api/test/fixture'
 import { Route as ApiTestLinkRouteImport } from './routes/api/test/link'
 import { Route as DevFixtureIndexRouteImport } from './routes/dev/fixture/index'
@@ -91,6 +93,16 @@ const ApiAvatarUserIdRoute = ApiAvatarUserIdRouteImport.update({
   path: '/api/avatar/$userId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiShortcutPairRoute = ApiShortcutPairRouteImport.update({
+  id: '/api/shortcut/pair',
+  path: '/api/shortcut/pair',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiShortcutSaveRoute = ApiShortcutSaveRouteImport.update({
+  id: '/api/shortcut/save',
+  path: '/api/shortcut/save',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiTestFixtureRoute = ApiTestFixtureRouteImport.update({
   id: '/api/test/fixture',
   path: '/api/test/fixture',
@@ -154,6 +166,8 @@ export interface FileRoutesByFullPath {
   '/t/$trip': typeof TTripRouteWithChildren
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/avatar/$userId': typeof ApiAvatarUserIdRoute
+  '/api/shortcut/pair': typeof ApiShortcutPairRoute
+  '/api/shortcut/save': typeof ApiShortcutSaveRoute
   '/api/test/fixture': typeof ApiTestFixtureRoute
   '/api/test/link': typeof ApiTestLinkRoute
   '/dev/fixture/$': typeof DevFixtureSplatRoute
@@ -175,6 +189,8 @@ export interface FileRoutesByTo {
   '/dev/kit': typeof DevKitRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/avatar/$userId': typeof ApiAvatarUserIdRoute
+  '/api/shortcut/pair': typeof ApiShortcutPairRoute
+  '/api/shortcut/save': typeof ApiShortcutSaveRoute
   '/api/test/fixture': typeof ApiTestFixtureRoute
   '/api/test/link': typeof ApiTestLinkRoute
   '/dev/fixture/$': typeof DevFixtureSplatRoute
@@ -200,6 +216,8 @@ export interface FileRoutesById {
   '/t/$trip': typeof TTripRouteWithChildren
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/avatar/$userId': typeof ApiAvatarUserIdRoute
+  '/api/shortcut/pair': typeof ApiShortcutPairRoute
+  '/api/shortcut/save': typeof ApiShortcutSaveRoute
   '/api/test/fixture': typeof ApiTestFixtureRoute
   '/api/test/link': typeof ApiTestLinkRoute
   '/dev/fixture/$': typeof DevFixtureSplatRoute
@@ -225,6 +243,8 @@ export interface FileRouteTypes {
     | '/t/$trip'
     | '/api/auth/$'
     | '/api/avatar/$userId'
+    | '/api/shortcut/pair'
+    | '/api/shortcut/save'
     | '/api/test/fixture'
     | '/api/test/link'
     | '/dev/fixture/$'
@@ -246,6 +266,8 @@ export interface FileRouteTypes {
     | '/dev/kit'
     | '/api/auth/$'
     | '/api/avatar/$userId'
+    | '/api/shortcut/pair'
+    | '/api/shortcut/save'
     | '/api/test/fixture'
     | '/api/test/link'
     | '/dev/fixture/$'
@@ -270,6 +292,8 @@ export interface FileRouteTypes {
     | '/t/$trip'
     | '/api/auth/$'
     | '/api/avatar/$userId'
+    | '/api/shortcut/pair'
+    | '/api/shortcut/save'
     | '/api/test/fixture'
     | '/api/test/link'
     | '/dev/fixture/$'
@@ -293,6 +317,8 @@ export interface RootRouteChildren {
   TTripRoute: typeof TTripRouteWithChildren
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiAvatarUserIdRoute: typeof ApiAvatarUserIdRoute
+  ApiShortcutPairRoute: typeof ApiShortcutPairRoute
+  ApiShortcutSaveRoute: typeof ApiShortcutSaveRoute
   ApiTestFixtureRoute: typeof ApiTestFixtureRoute
   ApiTestLinkRoute: typeof ApiTestLinkRoute
   MediaIdVariantRoute: typeof MediaIdVariantRoute
@@ -385,6 +411,20 @@ declare module '@tanstack/react-router' {
       path: '/api/avatar/$userId'
       fullPath: '/api/avatar/$userId'
       preLoaderRoute: typeof ApiAvatarUserIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/shortcut/pair': {
+      id: '/api/shortcut/pair'
+      path: '/api/shortcut/pair'
+      fullPath: '/api/shortcut/pair'
+      preLoaderRoute: typeof ApiShortcutPairRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/shortcut/save': {
+      id: '/api/shortcut/save'
+      path: '/api/shortcut/save'
+      fullPath: '/api/shortcut/save'
+      preLoaderRoute: typeof ApiShortcutSaveRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/test/fixture': {
@@ -510,6 +550,8 @@ const rootRouteChildren: RootRouteChildren = {
   TTripRoute: TTripRouteWithChildren,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiAvatarUserIdRoute: ApiAvatarUserIdRoute,
+  ApiShortcutPairRoute: ApiShortcutPairRoute,
+  ApiShortcutSaveRoute: ApiShortcutSaveRoute,
   ApiTestFixtureRoute: ApiTestFixtureRoute,
   ApiTestLinkRoute: ApiTestLinkRoute,
   MediaIdVariantRoute: MediaIdVariantRoute,

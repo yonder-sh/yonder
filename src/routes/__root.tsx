@@ -13,6 +13,7 @@ import { ThemeProvider, themeInitScript } from "@/components/theme-provider";
 import { buttonVariants } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { useShortcutPickup } from "@/features/home/use-shortcut-pickup";
 import { useHomeLifecycle } from "@/features/offline/app-lifecycle";
 import { usePushBridge } from "@/features/push/use-push";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -85,6 +86,8 @@ function RootDocument({ children }: { children: ReactNode }) {
 	useHomeLifecycle();
 	// Web Push: a notification click navigates this window; sign-out drops the device.
 	usePushBridge();
+	// The iPhone Shortcut: links it sent open the save screen when the app comes up.
+	useShortcutPickup();
 	// The CJK @font-face rules, after first paint (QA VIS2-10 / PERF-05).
 	useEffect(() => {
 		void loadCjkFonts();

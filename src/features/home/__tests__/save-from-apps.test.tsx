@@ -1,11 +1,38 @@
 /**
- * Account → Save from other apps: this device's way first, and on iPhone the
- * Shortcut's address (`/share?url=`, followed by the encoded shared link).
+ * Account → Save from other apps: this device's way first; on iPhone the
+ * server's Shortcut (Add the Shortcut, the connected phones) when it offers
+ * one, else the Shortcut's address (`/share?url=` + the encoded link).
  */
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+
+const setup = vi.hoisted(() => ({
+	value: {
+		icloudUrl: null as string | null,
+		devices: [] as {
+			id: string;
+			label: string;
+			createdAt: string;
+			lastUsedAt: string | null;
+		}[],
+	},
+}));
+vi.mock("@/functions/shortcut.functions", () => ({
+	getShortcutSetup: async () => setup.value,
+	removeShortcutDevice: async () => ({ ok: true }),
+	startShortcutPairing: async () => ({ code: "yonder-pair_x", expiresAt: 0 }),
+}));
+
 import { SaveFromAppsDialog, thisDevice } from "../SaveFromAppsDialog";
 import { HOME_TESTID } from "../testids";
+
+const renderDialog = () =>
+	render(
+		<QueryClientProvider client={new QueryClient()}>
+			<SaveFromAppsDialog open onOpenChange={() => {}} />
+		</QueryClientProvider>,
+	);
 
 afterEach(() => vi.restoreAllMocks());
 
@@ -28,7 +55,8 @@ describe("Save from other apps", () => {
 
 	it("on an iPhone, leads with the Shortcut and its address", () => {
 		ua("Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)");
-		render(<SaveFromAppsDialog open onOpenChange={() => {}} />);
+		setup.value = { icloudUrl: null, devices: [] };
+		renderDialog();
 		const dialog = screen.getByTestId(HOME_TESTID.saveFromAppsDialog);
 		const first = within(dialog).getAllByRole("heading", { level: 3 })[0];
 		expect(first).toHaveTextContent("iPhone and iPad");
@@ -36,5 +64,29 @@ describe("Save from other apps", () => {
 		expect(
 			screen.getByTestId(HOME_TESTID.saveFromAppsAddress),
 		).toHaveTextContent(`${window.location.origin}/share?url=`);
+	});
+
+	it("offers the server's Shortcut and lists the connected phones", async () => {
+		ua("Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)");
+		setup.value = {
+			icloudUrl: "https://www.icloud.com/shortcuts/abc",
+			devices: [
+				{
+					id: "k1",
+					label: "Dennis's iPhone",
+					createdAt: new Date().toISOString(),
+					lastUsedAt: null,
+				},
+			],
+		};
+		renderDialog();
+		expect(
+			await screen.findByTestId(HOME_TESTID.shortcutAdd),
+		).toHaveTextContent("Add the Shortcut");
+		expect(screen.getByTestId(HOME_TESTID.shortcutDevices)).toHaveTextContent(
+			"Dennis's iPhone · Not used yet",
+		);
+		expect(screen.getByTestId(HOME_TESTID.shortcutReconnect)).toBeVisible();
+		expect(screen.queryByTestId(HOME_TESTID.saveFromAppsAddress)).toBeNull();
 	});
 });

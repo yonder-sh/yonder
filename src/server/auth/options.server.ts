@@ -1,3 +1,4 @@
+import { apiKey } from "@better-auth/api-key";
 import { redisStorage } from "@better-auth/redis-storage";
 import type { BetterAuthOptions, SecondaryStorage } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
@@ -17,6 +18,7 @@ import { announceUserChange } from "./announce-user.server";
 import { maskEmail, otpEmail, sendMail } from "./email.server";
 import { authEnv } from "./env.server";
 import { type AuthLimits, authLimits, normalizeEmail } from "./limits.server";
+import { SHORTCUT_KEY, SHORTCUT_PAIR } from "./shortcut-key";
 import { applyUserCreate, applyUserUpdate, UserRuleError } from "./user-hooks";
 
 /**
@@ -52,6 +54,13 @@ const DISABLED_PATHS = [
 	"/email-otp/reset-password",
 	"/forget-password/email-otp",
 	"/email-otp/request-email-change",
+	// The Shortcut's keys are made and removed only by the app's server
+	// (src/server/shortcut.server.ts); nothing manages them over HTTP.
+	"/api-key/create",
+	"/api-key/get",
+	"/api-key/list",
+	"/api-key/update",
+	"/api-key/delete",
 	"/email-otp/change-email",
 ];
 
@@ -380,6 +389,37 @@ export function buildAuthOptions(opts: { limits?: AuthLimits } = {}) {
 			// `Authorization: Bearer <session token>` for the collab socket and
 			// non-browser clients (ADDENDUM §3).
 			bearer(),
+			// The iPhone Shortcut's keys (src/server/shortcut.server.ts): hashed,
+			// never a session, made and checked only by the server (the HTTP
+			// endpoints are disabled above). A phone's key may only save a link,
+			// 60 times an hour; a setup code works once, for 5 minutes.
+			apiKey([
+				{
+					configId: SHORTCUT_KEY.config,
+					defaultPrefix: SHORTCUT_KEY.prefix,
+					requireName: true,
+					maximumNameLength: 60,
+					enableSessionForAPIKeys: false,
+					enableMetadata: false,
+					startingCharactersConfig: { shouldStore: false },
+					rateLimit: {
+						enabled: true,
+						timeWindow: SHORTCUT_KEY.windowMs,
+						maxRequests: SHORTCUT_KEY.perWindow,
+					},
+					permissions: { defaultPermissions: SHORTCUT_KEY.permissions },
+				},
+				{
+					configId: SHORTCUT_PAIR.config,
+					defaultPrefix: SHORTCUT_PAIR.prefix,
+					enableSessionForAPIKeys: false,
+					enableMetadata: false,
+					startingCharactersConfig: { shouldStore: false },
+					keyExpiration: { minExpiresIn: 0, maxExpiresIn: 1 },
+					rateLimit: { enabled: false },
+					permissions: { defaultPermissions: SHORTCUT_PAIR.permissions },
+				},
+			]),
 			// Cloudflare Turnstile on the endpoint that SENDS a code (sign-in and
 			// sign-up are the same step), only when both keys are set. The token
 			// travels in `x-captcha-response`.

@@ -63,6 +63,7 @@ import { TripSketch } from "./TripSketch";
 import { HOME_TESTID } from "./testids";
 import { rememberZone } from "./today";
 import type { MyTrip } from "./types";
+import { SHARED_CHANGED } from "./use-shortcut-pickup";
 
 function greeting(): string {
 	const h = new Date().getHours();
@@ -498,10 +499,14 @@ function SharedWaiting() {
 	const [label, setLabel] = useState<string | null>(null);
 	const [firstId, setFirstId] = useState<string | null>(null);
 	useEffect(() => {
-		void listShared().then((l) => {
-			setLabel(l.length ? sharedToSaveLabel(l) : null);
-			setFirstId(l[0]?.id ?? null);
-		});
+		const read = () =>
+			void listShared().then((l) => {
+				setLabel(l.length ? sharedToSaveLabel(l) : null);
+				setFirstId(l[0]?.id ?? null);
+			});
+		read();
+		window.addEventListener(SHARED_CHANGED, read);
+		return () => window.removeEventListener(SHARED_CHANGED, read);
 	}, []);
 	if (!label || !firstId) return null;
 	return (
