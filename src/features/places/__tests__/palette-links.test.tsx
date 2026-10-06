@@ -301,3 +301,23 @@ describe("a pasted link in ⌘K (D10)", () => {
 		expect(calls.navigate).toEqual([{ to: "/share", search: { url: REEL } }]);
 	});
 });
+
+describe("a search miss at whole-trip scope (U149)", () => {
+	it("adds a place filed under the trip, never a new country", async () => {
+		open();
+		paste("Ichiran Shibuya");
+		const add = await screen.findByText(/Add “Ichiran Shibuya” as a new/);
+		expect(add).toHaveTextContent("as a new place");
+		fireEvent.click(add);
+		await waitFor(() =>
+			expect(calls.paths).toEqual([
+				{
+					chain: [
+						{ type: "place", name: "Ichiran Shibuya", category: "other" },
+					],
+					ids: [expect.any(String)],
+				},
+			]),
+		);
+	});
+});

@@ -682,7 +682,8 @@ function Palette({
 		// A link is about a place.
 		if (pending) return "place";
 		const parent = parentForNew ? ix.node(parentForNew) : null;
-		if (!parent) return "country";
+		// A miss at whole-trip scope is a place filed under the trip, not a country.
+		if (!parent) return "place";
 		const order: NodeType[] = ["place", "area", "city", "region", "country"];
 		return order.find((t) => canNest(parent.type, t)) ?? null;
 	})();
