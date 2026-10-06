@@ -33,6 +33,8 @@ export type MediaMeta = AttachmentMeta & {
 	fileName?: string;
 	imageW?: number;
 	imageH?: number;
+	/** Uploaded as a booking's confirmation (U001). */
+	confirmation?: boolean;
 };
 
 export function metaOf(row: Pick<AttachmentRow, "meta">): MediaMeta {
@@ -83,6 +85,7 @@ export function toDto(row: AttachmentRow, userId: string | null): MediaDto {
 		pages: row.kind === "pdf" ? (m.pages ?? 0) : 0,
 		pageCount: row.kind === "pdf" ? (m.pageCount ?? null) : null,
 		igType: m.igType ?? null,
+		...(m.confirmation ? { confirmation: true as const } : {}),
 		license: m.license ?? null,
 		licenseUrl: m.licenseUrl ?? null,
 		sourceUrl: m.sourceUrl ?? null,

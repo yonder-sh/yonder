@@ -59,6 +59,8 @@ export type UploadItem = {
 	attachmentId: string | null;
 	/** `UploadContext.guest`, kept so a retry says the same thing. */
 	guest: boolean;
+	/** `UploadContext.confirmation`, kept for a retry. */
+	confirmation?: boolean;
 };
 
 type Store = {
@@ -322,6 +324,8 @@ export type UploadContext = {
 	 * ADDENDUM §9) — their own upload included, so the toast says so.
 	 */
 	guest?: boolean;
+	/** A booking's confirmation (U001): members only, never a cover. */
+	confirmation?: boolean;
 	videoMaxBytes?: number;
 	/** EXIF GPS → a nearby place other than the target ("Taken near … — attach there?"). */
 	suggestNear?: (gps: { lat: number; lng: number }) => {
@@ -364,6 +368,7 @@ async function runOne(key: string, ctx: UploadContext): Promise<MediaDto> {
 			type: prepared.type,
 			size: prepared.blob.size,
 			name: prepared.name,
+			...(ctx.confirmation ? { confirmation: true } : {}),
 		},
 	});
 	const { id } = created;
@@ -572,6 +577,7 @@ export function startUploads(
 					retryable: true,
 					attachmentId: null,
 					guest: !!ctx.guest,
+					...(ctx.confirmation ? { confirmation: true } : {}),
 				},
 			],
 		}));
@@ -625,6 +631,7 @@ export function retryUpload(
 	removeItem(key);
 	startUploads([file], {
 		guest: item.guest,
+		confirmation: item.confirmation,
 		...ctx,
 		tripId: item.tripId,
 		target: item.target,

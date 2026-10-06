@@ -1,7 +1,8 @@
 /**
  * A booking's confirmation (One Yonder D12): the PDFs and photos on the stop
  * or leg it is for, the same media attach as places and stops — drop a file
- * here or pick one. PDFs on a stop count as "Confirmation attached".
+ * here or pick one. PDFs on a stop count as "Confirmation attached". Files
+ * attached here are members only and never a cover photo (U001).
  */
 import { useQueryClient } from "@tanstack/react-query";
 import { Paperclip } from "lucide-react";
@@ -27,12 +28,14 @@ import { cn } from "@/lib/utils";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { LISTS_TESTID } from "./testids";
 
-/** A confirmation on this stop or leg: a PDF attached to it. */
+/** A confirmation on this stop or leg: one attached here, or a PDF on it. */
 export function hasConfirmation(
 	media: readonly MediaDto[],
 	target: BundleTarget,
 ): boolean {
-	return media.some((m) => m.kind === "pdf" && sameTarget(m.target, target));
+	return media.some(
+		(m) => (m.confirmation || m.kind === "pdf") && sameTarget(m.target, target),
+	);
 }
 
 export function BookingConfirmation({
@@ -49,7 +52,7 @@ export function BookingConfirmation({
 	const actions = useMediaActions(ws.graph.trip.id);
 	const input = useRef<HTMLInputElement>(null);
 	const guard = useEditGuard("edit-only", UPLOAD_EDIT_ONLY_REASON);
-	const drop = useAttachDrop(target, { label });
+	const drop = useAttachDrop(target, { label, confirmation: true });
 	const items = useMemo(
 		() =>
 			data.filter(
@@ -113,6 +116,7 @@ export function BookingConfirmation({
 									queryClient: qc,
 									label,
 									guest: mustRedact(ws.graph.me),
+									confirmation: true,
 								});
 							e.target.value = "";
 						}}

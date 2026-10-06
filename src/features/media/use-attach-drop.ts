@@ -29,7 +29,12 @@ import { nearestPlace } from "./nearest";
 import { startUploads } from "./upload/uploader";
 import { addLinkAndCache } from "./use-media-actions";
 
-export type AttachDropOptions = { disabled?: boolean; label?: string };
+export type AttachDropOptions = {
+	disabled?: boolean;
+	label?: string;
+	/** Files are a booking's confirmation (U001). */
+	confirmation?: boolean;
+};
 
 function carries(e: DragEvent): boolean {
 	const types = [...(e.dataTransfer?.types ?? [])];
@@ -110,12 +115,17 @@ export function useAttachDrop(
 					queryClient: qc,
 					label,
 					guest: mustRedact(ws.graph.me),
-					suggestNear: (gps) => {
-						const n = nearestPlace(ws.ix, gps);
-						return n && !(target.kind === "node" && target.nodeId === n.id)
-							? { nodeId: n.id, name: n.name }
-							: null;
-					},
+					...(opts?.confirmation
+						? { confirmation: true }
+						: {
+								suggestNear: (gps) => {
+									const n = nearestPlace(ws.ix, gps);
+									return n &&
+										!(target.kind === "node" && target.nodeId === n.id)
+										? { nodeId: n.id, name: n.name }
+										: null;
+								},
+							}),
 				});
 				return;
 			}
@@ -138,6 +148,7 @@ export function useAttachDrop(
 			linkBlocked,
 			linkReason,
 			opts?.label,
+			opts?.confirmation,
 		],
 	);
 

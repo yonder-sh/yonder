@@ -196,6 +196,8 @@ export const createUpload = createServerFn({ method: "POST" })
 				type: z.enum(UPLOAD_TYPES),
 				size: z.number().int().positive(),
 				name: z.string().max(255),
+				/** A booking's confirmation (U001): members only, never a cover. */
+				confirmation: z.boolean().optional(),
 			})
 			.strict(),
 	)
@@ -261,12 +263,9 @@ export const createUpload = createServerFn({ method: "POST" })
 						tripId: data.tripId,
 						target: data.target,
 					});
-					const visibility = await defaultVisibility(
-						tx,
-						data.tripId,
-						data.target,
-						kind,
-					);
+					const visibility = data.confirmation
+						? "members"
+						: await defaultVisibility(tx, data.tripId, data.target, kind);
 					const fileName = cleanFileName(data.name);
 					const mp: MultipartMeta | null = uploadId
 						? {
@@ -286,7 +285,11 @@ export const createUpload = createServerFn({ method: "POST" })
 						mime: data.type,
 						sizeBytes: data.size,
 						title: kind === "pdf" ? fileName : null,
-						meta: mp ? { fileName, multipart: mp } : { fileName },
+						meta: {
+							fileName,
+							...(mp ? { multipart: mp } : {}),
+							...(data.confirmation ? { confirmation: true } : {}),
+						},
 						position,
 						createdBy: context.user.id,
 					});

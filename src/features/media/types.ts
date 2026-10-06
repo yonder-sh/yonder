@@ -60,6 +60,8 @@ export type MediaDto = {
 	fetch: "unfetched" | "ok" | "failed" | null;
 	/** The current user uploaded it. */
 	mine: boolean;
+	/** A booking's confirmation (U001): members only, never a cover. */
+	confirmation?: true;
 	/** Client-only: an open `attachment.link` proposal drawn as a ghost tile (E7). */
 	proposed?: ProposalMark;
 };

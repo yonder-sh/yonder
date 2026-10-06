@@ -35,7 +35,9 @@ export function CoverStrip({ target }: { target: BundleTarget }) {
 				(d) =>
 					(d.kind === "photo" || d.kind === "video") &&
 					d.hasThumb &&
-					d.status === "ready",
+					d.status === "ready" &&
+					// A booking's ticket is never a cover (U001).
+					!d.confirmation,
 			),
 			{
 				scopeId: target.nodeId,

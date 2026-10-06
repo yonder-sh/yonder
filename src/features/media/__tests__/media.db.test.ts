@@ -283,6 +283,37 @@ describe("uploads (SPEC §15.2, MED-01/06/07, SEC-05)", () => {
 		expect(guest.some((m) => m.id === dto.id)).toBe(true);
 	});
 
+	it("a booking's confirmation is members only and marked as one (U001)", async () => {
+		const c = await freshTrip();
+		const body = await jpeg();
+		const { id, url } = await call<{ id: string; url: string }>(
+			createUpload,
+			U.owner,
+			{
+				tripId: c.tripId,
+				target: { kind: "trip" },
+				type: "image/jpeg",
+				size: body.length,
+				name: "ticket.jpg",
+				confirmation: true,
+			},
+		);
+		await fetch(url, {
+			method: "PUT",
+			body: new Uint8Array(body),
+			headers: { "content-type": "image/jpeg" },
+		});
+		const dto = await call<MediaDto>(completeUpload, U.owner, {
+			id,
+			hasPoster: false,
+		});
+		expect(dto).toMatchObject({ visibility: "members", confirmation: true });
+		const guest = await call<MediaDto[]>(listTripMedia, U.guestViewer, {
+			tripId: c.tripId,
+		});
+		expect(guest.some((m) => m.id === id)).toBe(false);
+	});
+
 	it("signs the type and length: another type or size is refused by storage", async () => {
 		const c = await freshTrip();
 		const body = await jpeg();
