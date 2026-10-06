@@ -187,13 +187,15 @@ export function usePlaces(q = "") {
 		() =>
 			filterRows(rows, {
 				status: state.status,
+				// Decide has a Not going column.
+				keepDropped: state.step === "decide",
 				talk: state.talk,
 				filter,
 				ctx,
 				q,
 				extra,
 			}),
-		[rows, state.status, state.talk, filter, ctx, q, extra],
+		[rows, state.status, state.step, state.talk, filter, ctx, q, extra],
 	);
 	// Groups visit in trip order: the first day anything inside is on.
 	const groupVisit = useCallback(

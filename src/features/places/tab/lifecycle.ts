@@ -88,6 +88,26 @@ export function toggleShortlist(s: {
 	return { shortlistPin: "pinned" };
 }
 
+/** Decide's Keep: pin it whatever its score (on a day too); Kept hands it back to the ratings. */
+export function keepToggle(pin: ShortlistPin | undefined): ShortlistToggle {
+	return { shortlistPin: pin === "pinned" ? "auto" : "pinned" };
+}
+
+/** Split ratings still to talk through: not dropped, not decided, not kept. */
+export function toTalk(r: {
+	status: PlaceStatus;
+	split?: boolean;
+	decided?: boolean;
+	node?: { shortlistPin?: ShortlistPin };
+}): boolean {
+	return (
+		!!r.split &&
+		!r.decided &&
+		r.status !== "dropped" &&
+		r.node?.shortlistPin !== "pinned"
+	);
+}
+
 /** D: drop, or bring a dropped place back. */
 export function toggleDrop(droppedByHand: boolean): LifecycleFields {
 	return droppedByHand

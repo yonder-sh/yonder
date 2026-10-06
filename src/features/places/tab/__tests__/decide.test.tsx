@@ -11,6 +11,8 @@ import { PLACES_TAB_TESTID as T } from "../testids";
 const calls = vi.hoisted(() => ({
 	setDecided: [] as unknown[],
 	undo: [] as { label: string; undo: () => unknown }[],
+	// Node patches and stop moves, in order.
+	log: [] as unknown[],
 }));
 vi.mock("@/components/common/undo-toast", () => ({
 	undoToast: (label: string, undo: () => unknown) => {
@@ -24,9 +26,21 @@ vi.mock("@/functions/nodes.functions", () => ({
 		return { decidedAt: null };
 	},
 	setNodePriority: async () => ({ ok: true }),
-	updateNode: async () => ({ ok: true }),
+	updateNode: async (opts: { data: { patch: unknown } }) => {
+		calls.log.push({ patch: opts.data.patch });
+		return { ok: true };
+	},
 	createNodePath: async () => ({ ok: true }),
 	moveNode: async () => ({ ok: true }),
+}));
+vi.mock("@/functions/items.functions", async (orig) => ({
+	...(await orig<typeof import("@/functions/items.functions")>()),
+	moveItem: async (opts: {
+		data: { itemId: string; dayId: string | null };
+	}) => {
+		calls.log.push({ move: opts.data.itemId, dayId: opts.data.dayId });
+		return { ok: true };
+	},
 }));
 
 const row = (r: Partial<{ status: string; split: boolean }>) =>
@@ -89,6 +103,106 @@ describe("Decide (D08)", () => {
 					),
 				),
 		).toBe(true);
+	});
+});
+
+describe("Keep and Not going (D08)", () => {
+	beforeEach(() => {
+		calls.undo.length = 0;
+		calls.log.length = 0;
+	});
+	const column = (key: string) =>
+		screen
+			.getAllByTestId(T.decideColumn)
+			.find((c) => c.dataset.column === key) as HTMLElement;
+	const card = (key: string, id: string) =>
+		within(column(key))
+			.getAllByTestId(T.decideCard)
+			.find((c) => c.dataset.place === id) as HTMLElement;
+
+	it("Keep pins a place the ratings shortlisted (never unpins it)", async () => {
+		renderWithWorkspace(<PlacesTab />, {
+			search: { tab: "places", pv: "decide" },
+		});
+		const shortlisted = within(column("shortlist")).getAllByTestId(
+			T.decideCard,
+		);
+		const keep = shortlisted
+			.map((c) => within(c).getByTestId(T.decideKeep))
+			.find((b) => b.getAttribute("aria-pressed") === "false");
+		if (!keep) throw new Error("fixture: a shortlisted place not kept");
+		fireEvent.click(keep);
+		await waitFor(() =>
+			expect(calls.log).toEqual([{ patch: { shortlistPin: "pinned" } }]),
+		);
+		expect(calls.undo[0]?.label).toMatch(/^Kept /);
+	});
+
+	it("a kept split place leaves Disagreements, on a day too", () => {
+		const graph = structuredClone(demoGraph);
+		graph.nodes = graph.nodes.map((n) =>
+			n.id === N.sensoji
+				? {
+						...n,
+						shortlistPin: "pinned",
+						priorities: {
+							[DEMO_MEMBERS.dennis]: "must",
+							[DEMO_MEMBERS.audrey]: "nah",
+						},
+					}
+				: n,
+		);
+		renderWithWorkspace(<PlacesTab />, {
+			graph,
+			search: { tab: "places", pv: "decide" },
+		});
+		const kept = card("shortlist", N.sensoji as string);
+		expect(within(kept).getByTestId(T.decideKeep)).toHaveAttribute(
+			"aria-pressed",
+			"true",
+		);
+		expect(within(kept).getByTestId(T.decideKeep)).toHaveTextContent("Kept");
+	});
+
+	it("a dropped place waits under Not going, with Bring back", () => {
+		const graph = structuredClone(demoGraph);
+		graph.nodes = graph.nodes.map((n) =>
+			n.id === N.kiyomizu
+				? { ...n, status: "dropped", ideaStatus: "dropped" }
+				: n,
+		);
+		renderWithWorkspace(<PlacesTab />, {
+			graph,
+			search: { tab: "places", pv: "decide" },
+		});
+		const out = card("out", N.kiyomizu as string);
+		expect(within(out).getByTestId(T.decideBack)).toBeInTheDocument();
+	});
+
+	it("Not going on a place on a day takes its stops off; Undo puts them back", async () => {
+		const stops = demoGraph.items.filter(
+			(it) => it.nodeId === N.sensoji && it.dayId,
+		);
+		if (!stops.length) throw new Error("fixture: Senso-ji on a day");
+		renderWithWorkspace(<PlacesTab />, {
+			search: { tab: "places", pv: "decide" },
+		});
+		const senso = screen
+			.getAllByTestId(T.decideCard)
+			.find((c) => c.dataset.place === N.sensoji) as HTMLElement;
+		fireEvent.click(within(senso).getByTestId(T.decideDrop));
+		await waitFor(() => expect(calls.undo).toHaveLength(1));
+		expect(calls.log).toEqual([
+			...stops.map((s) => ({ move: s.id, dayId: null })),
+			{ patch: { status: "dropped", ideaStatus: "dropped" } },
+		]);
+		expect(calls.undo[0]?.label).toMatch(/· off Days? \d/);
+		calls.log.length = 0;
+		await calls.undo[0]?.undo();
+		expect(calls.log).toEqual([
+			{ patch: { status: "active" } },
+			...stops.map((s) => ({ move: s.id, dayId: s.dayId })),
+		]);
 	});
 });
 

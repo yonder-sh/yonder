@@ -22,7 +22,12 @@ import {
 	matchesFilter,
 } from "@/lib/workspace/filter-match";
 import { type Groupable, levelGroupOf } from "./grouping";
-import { type PlaceStatus, placeStatus, type StatusInfo } from "./lifecycle";
+import {
+	type PlaceStatus,
+	placeStatus,
+	type StatusInfo,
+	toTalk,
+} from "./lifecycle";
 import { allNah, groupScore, isSplit, topRating } from "./score";
 
 /** A row's `when` with no day for it in the trip. */
@@ -235,7 +240,7 @@ export function countRows(rows: readonly PlaceRow[]): PlacesCounts {
 	for (const r of rows) {
 		out[r.status] += 1;
 		if (r.status !== "dropped") out.all += 1;
-		if (r.split && !r.decided && r.status !== "dropped") out.talk += 1;
+		if (toTalk(r)) out.talk += 1;
 		if (r.status === "idea" || r.status === "shortlist") out.toDecide += 1;
 	}
 	return out;
@@ -266,7 +271,9 @@ export function matchesText(
 export function filterRows(
 	rows: readonly PlaceRow[],
 	f: {
+		/** Null: every place but the dropped ones, unless `keepDropped` (Decide's Not going). */
 		status: PlaceStatus | null;
+		keepDropped?: boolean;
 		talk: boolean;
 		filter: WorkspaceFilter;
 		ctx: FilterContext;
@@ -276,8 +283,10 @@ export function filterRows(
 ): PlaceRow[] {
 	return rows.filter(
 		(r) =>
-			(f.status ? r.status === f.status : r.status !== "dropped") &&
-			(!f.talk || (r.split && !r.decided)) &&
+			(f.status
+				? r.status === f.status
+				: f.keepDropped || r.status !== "dropped") &&
+			(!f.talk || toTalk(r)) &&
 			matchesFilter(r.node, f.filter, f.ctx) &&
 			matchesText(r, f.q ?? "", f.extra),
 	);

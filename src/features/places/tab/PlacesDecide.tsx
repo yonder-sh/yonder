@@ -2,7 +2,8 @@
  * Decide (One Yonder D08): the places in three columns, **Shortlist** (from
  * the group's ratings), **Disagreements** (split ratings, with what people
  * said) and **Not going**. Each card shows everyone's rating; Keep pins it
- * on the shortlist, Not going drops it, Bring back undoes that. Above them:
+ * on the shortlist (settling a disagreement), Not going drops it, Bring back
+ * undoes that. Above them:
  * who the rest are waiting on (Remind), how the shortlist works, and "Mark
  * Kyoto decided" (the Where picker's scope; `lib/decided.ts`): decided
  * places stop asking, so a split one leaves Disagreements for a quiet note.
@@ -22,6 +23,7 @@ import {
 } from "@/components/ui/popover";
 import { cardTone } from "@/features/plan/card-tone";
 import { PRIORITIES, PRIORITY_ORDER } from "@/lib/domain/taxonomy";
+import type { ShortlistPin } from "@/lib/engine/types";
 import { humanError } from "@/lib/errors";
 import { formatDuration } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -34,6 +36,7 @@ import {
 } from "../lib/decided";
 import { commentVisibleText, ratingMembers, ratingsCount } from "../lib/rate";
 import { useSetDecided } from "../mutations";
+import { toTalk } from "./lifecycle";
 import { buildRows, type PlaceRow, placesInScope } from "./model";
 import { categoryLabel } from "./PlacesTable";
 import { personName, RemindButton } from "./RatingPeople";
@@ -46,10 +49,14 @@ type Column = "shortlist" | "talk" | "out";
 
 /** Which column a place is in: a split rating is talked through first, unless it's decided. */
 export function decideColumn(
-	row: Pick<PlaceRow, "status" | "split"> & { decided?: boolean },
+	row: Pick<PlaceRow, "status" | "split"> & {
+		decided?: boolean;
+		node?: { shortlistPin?: ShortlistPin };
+	},
 ): Column | null {
 	if (row.status === "dropped") return "out";
-	if (row.split && !row.decided) return "talk";
+	// Kept settles a disagreement: it goes on the shortlist.
+	if (toTalk(row)) return "talk";
 	if (row.status === "shortlist" || row.status === "scheduled")
 		return "shortlist";
 	return null;
@@ -349,6 +356,8 @@ function DecideCard({
 	const act = usePlaceActions();
 	const { sel, nav } = useWorkspace();
 	const node = row.node;
+	// Pinned, on a day too (`info.pinned` is only set off a day).
+	const kept = node.shortlistPin === "pinned";
 	const selected = sel?.kind === "node" && sel.id === node.id;
 	const open = () => nav.select({ kind: "node", id: node.id });
 	const comments = data.memberIds
@@ -440,14 +449,14 @@ function DecideCard({
 					<>
 						<Button
 							size="sm"
-							variant={row.info.pinned ? "secondary" : "outline"}
-							aria-pressed={row.info.pinned}
+							variant={kept ? "secondary" : "outline"}
+							aria-pressed={kept}
 							disabled={!act.canEdit}
 							data-testid={PLACES_TAB_TESTID.decideKeep}
-							onClick={() => act.togglePin(row, data.threshold)}
+							onClick={() => act.keep(row)}
 						>
 							<Check />
-							{row.info.pinned ? "Kept" : "Keep"}
+							{kept ? "Kept" : "Keep"}
 						</Button>
 						<Button
 							size="sm"

@@ -11,8 +11,10 @@
  * still lands where it did. Without `pv` the tab picks the most useful
  * step (`pickStep`).
  */
+
+import type { ShortlistPin } from "@/lib/engine/types";
 import type { PlacesView } from "@/lib/workspace/search";
-import type { PlaceStatus } from "./lifecycle";
+import { type PlaceStatus, toTalk } from "./lifecycle";
 
 export const FLOW_STEPS = ["rate", "review", "decide"] as const;
 export type FlowStep = (typeof FLOW_STEPS)[number];
@@ -63,7 +65,7 @@ export type FlowTally = {
 	shortlisted: number;
 	/** Shortlisted and not on a day yet. */
 	notOnDay: number;
-	/** Split ratings to talk through (not dropped, not decided). */
+	/** Split ratings to talk through (not dropped, decided or kept). */
 	talk: number;
 	/** Marked decided (not dropped): they ask no one. */
 	decided: number;
@@ -74,7 +76,10 @@ export function flowTally(
 		status: PlaceStatus;
 		split?: boolean;
 		decided?: boolean;
-		node: { priorities: Readonly<Record<string, unknown>> };
+		node: {
+			priorities: Readonly<Record<string, unknown>>;
+			shortlistPin?: ShortlistPin;
+		};
 	}[],
 	opts: { me: string | null; canRate: boolean },
 ): FlowTally {
@@ -99,7 +104,7 @@ export function flowTally(
 		}
 		if (out.toRate !== null && opts.me && r.node.priorities[opts.me] == null)
 			out.toRate += 1;
-		if (r.split) out.talk += 1;
+		if (toTalk(r)) out.talk += 1;
 	}
 	return out;
 }

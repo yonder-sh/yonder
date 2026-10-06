@@ -16,6 +16,7 @@ import {
 import { toast } from "sonner";
 import { useEditGuard } from "@/components/common/edit-guard";
 import { undoToast } from "@/components/common/undo-toast";
+import { slotOf } from "@/features/plan/use-plan-actions";
 import { deleteItem } from "@/functions/items.functions";
 import type { LifecycleFields } from "@/lib/domain/places-lifecycle";
 import { humanError } from "@/lib/errors";
@@ -29,8 +30,8 @@ import {
 	useUpdateNode,
 } from "../mutations";
 import { mayRate } from "../ui/member-ratings";
-import { toggleDrop, toggleShortlist } from "./lifecycle";
-import type { PlaceRow } from "./model";
+import { keepToggle, toggleDrop, toggleShortlist } from "./lifecycle";
+import { formatDayNumbers, type PlaceRow } from "./model";
 
 /**
  * Whether I may set my own rating here, and why not. The same check as the
@@ -164,18 +165,67 @@ function usePlaceActionsValue() {
 		[lifecycle],
 	);
 
-	/** D: drop, or bring back. */
-	const toggleDropped = useCallback(
+	/** Decide's Keep: pin it (on a day too), or hand a kept one back to the ratings. */
+	const keep = useCallback(
 		(row: PlaceRow) => {
-			const patch = toggleDrop(row.droppedByHand);
+			const was = row.node.shortlistPin ?? "auto";
+			const next = keepToggle(was);
+			const kept = next.shortlistPin === "pinned";
+			// Keeping a dropped place brings it back first.
+			const patch: LifecycleFields =
+				row.status === "dropped" && kept ? { status: "active", ...next } : next;
 			lifecycle(
 				row,
 				patch,
-				row.droppedByHand ? `${row.name} is back` : `Dropped ${row.name}`,
-				toggleDrop(!row.droppedByHand),
+				kept ? `Kept ${row.name}` : `${row.name} follows the ratings again`,
+				row.status === "dropped"
+					? { status: "dropped", shortlistPin: was }
+					: { shortlistPin: was },
 			);
 		},
 		[lifecycle],
+	);
+
+	/** D: drop, or bring back. */
+	const toggleDropped = useCallback(
+		async (row: PlaceRow) => {
+			// Everyone rated it Nah: bringing it back keeps it (dropping it by hand would change nothing).
+			if (!row.droppedByHand && row.info.autoDropped) return keep(row);
+			const patch = toggleDrop(row.droppedByHand);
+			const back = toggleDrop(!row.droppedByHand);
+			// A dropped place can't be on a day: its stops wait in Ideas, and Undo puts them back.
+			const stops =
+				row.droppedByHand || access.mode === "suggest"
+					? []
+					: row.occurrences.filter((it) => it.dayId !== null);
+			if (!stops.length)
+				return lifecycle(
+					row,
+					patch,
+					row.droppedByHand ? `${row.name} is back` : `Dropped ${row.name}`,
+					back,
+				);
+			if (guard.disabled) return;
+			const slots = stops.map((it) => ({
+				itemId: it.id,
+				...slotOf(ix, it.id),
+			}));
+			const days = formatDayNumbers(
+				stops.map((it) => ix.dayNumber(it.dayId ?? "")),
+			);
+			try {
+				for (const it of stops)
+					await moveItem.mutateAsync({ itemId: it.id, dayId: null });
+				await update.mutateAsync({ nodeId: row.id, patch });
+				undoToast(`Dropped ${row.name} · off ${days}`, async () => {
+					await update.mutateAsync({ nodeId: row.id, patch: back });
+					for (const s of slots) await moveItem.mutateAsync(s);
+				});
+			} catch (e) {
+				toast.error(humanError(e));
+			}
+		},
+		[keep, lifecycle, access.mode, guard.disabled, ix, moveItem, update],
 	);
 
 	const setTime = useCallback(
@@ -244,6 +294,7 @@ function usePlaceActionsValue() {
 			rate,
 			ratePlaceholder,
 			togglePin,
+			keep,
 			toggleDropped,
 			setTime,
 			addToDay,
@@ -258,6 +309,7 @@ function usePlaceActionsValue() {
 			rate,
 			ratePlaceholder,
 			togglePin,
+			keep,
 			toggleDropped,
 			setTime,
 			addToDay,

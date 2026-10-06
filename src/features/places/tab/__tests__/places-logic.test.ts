@@ -25,7 +25,7 @@ import {
 	startSession,
 } from "../feed";
 import { groupPlaces, levelGroupOf, SPLIT_AT, splitByArea } from "../grouping";
-import { placeStatus, toggleShortlist } from "../lifecycle";
+import { keepToggle, placeStatus, toggleShortlist, toTalk } from "../lifecycle";
 import {
 	buildRows,
 	countRows,
@@ -176,6 +176,20 @@ describe("lifecycle (docs/PLACES.md §3)", () => {
 		expect(t({ ...on, pinned: true, suggested: false, score: 5 })).toBe(
 			"unpinned",
 		);
+	});
+	it("Keep pins whatever the score; Kept goes back to the ratings", () => {
+		expect(keepToggle(undefined).shortlistPin).toBe("pinned");
+		expect(keepToggle("auto").shortlistPin).toBe("pinned");
+		expect(keepToggle("unpinned").shortlistPin).toBe("pinned");
+		expect(keepToggle("pinned").shortlistPin).toBe("auto");
+	});
+	it("a kept, decided or dropped split place is not to talk through", () => {
+		const split = { status: "idea" as const, split: true };
+		expect(toTalk(split)).toBe(true);
+		expect(toTalk({ ...split, node: { shortlistPin: "pinned" } })).toBe(false);
+		expect(toTalk({ ...split, decided: true })).toBe(false);
+		expect(toTalk({ ...split, status: "dropped" })).toBe(false);
+		expect(toTalk({ ...split, split: false })).toBe(false);
 	});
 	it("the stored columns stay in step (drop ⇔ status dropped, pin ⇔ shortlist)", () => {
 		const active = { status: "active" as const, shortlistPin: "auto" as const };
@@ -424,6 +438,9 @@ describe("rows (status, when, time needed, filters)", () => {
 		const f = { talk: false, filter: EMPTY_FILTER, ctx };
 		const all = filterRows(rows, { ...f, status: null });
 		expect(all.some((r) => r.id === nishiki)).toBe(false);
+		// Decide keeps them for its Not going column.
+		const decide = filterRows(rows, { ...f, status: null, keepDropped: true });
+		expect(decide.some((r) => r.id === nishiki)).toBe(true);
 		const talk = filterRows(rows, { ...f, status: null, talk: true });
 		expect(talk.map((r) => r.id)).toEqual([nijo]);
 		const dropped = filterRows(rows, { ...f, status: "dropped" });
