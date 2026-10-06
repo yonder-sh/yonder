@@ -74,9 +74,11 @@ import { useWorkspace } from "@/lib/workspace/use-workspace";
 export const Route = createFileRoute("/t/$trip")({
 	ssr: false,
 	validateSearch: WorkspaceSearch,
-	beforeLoad: ({ params, location, context }) =>
+	beforeLoad: ({ params, location, context, cause }) =>
 		requireTripViewer(params.trip, location.href, {
 			queryClient: context.queryClient,
+			// A tab, a selection or a preload inside this trip: no session round trip.
+			stay: cause !== "enter",
 		}),
 	loader: async ({ context, params }) => {
 		try {

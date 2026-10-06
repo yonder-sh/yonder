@@ -128,6 +128,25 @@ describe("requireTripViewer: the address is the link", () => {
 		expect(m.peek).not.toHaveBeenCalled();
 	});
 
+	it("moves inside the open trip skip the session fetch; another trip doesn't", async () => {
+		const eve = { ...guestIbis, id: "u-eve", isAnonymous: false };
+		m.session.mockResolvedValue(eve);
+		const qc = new QueryClient();
+		await requireTripViewer(SLUG, `/t/${SLUG}`, { queryClient: qc });
+		expect(m.session).toHaveBeenCalledOnce();
+		const r = await requireTripViewer(SLUG, `/t/${SLUG}?tab=plan`, {
+			queryClient: qc,
+			stay: true,
+		});
+		expect(r.viewer.id).toBe("u-eve");
+		expect(m.session).toHaveBeenCalledOnce();
+		await requireTripViewer("other-trip-a1b2c3d4", "/t/other-trip-a1b2c3d4", {
+			queryClient: qc,
+			stay: true,
+		});
+		expect(m.session).toHaveBeenCalledTimes(2);
+	});
+
 	it("an account without names goes to /welcome first", async () => {
 		m.session.mockResolvedValue({
 			...guestIbis,

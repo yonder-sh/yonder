@@ -32,6 +32,12 @@ export type GuardOptions = {
 	 * offline"). Server answers (401, …) never fall back.
 	 */
 	queryClient?: QueryClient;
+	/**
+	 * A navigation inside the trip already open (the router's `cause` is not
+	 * "enter": a tab, a selection, a preload). The session checked on entry
+	 * stands; server functions and the live channel catch a lost one.
+	 */
+	stay?: boolean;
 };
 
 /** A fetch that never reached the server (offline, DNS, a dropped socket). */
@@ -211,6 +217,9 @@ async function enterAsLinkGuest(
 	return viewer;
 }
 
+/** The trip each page's guard last let in, so moves inside it skip the session fetch. */
+const guardedTrip = new WeakMap<QueryClient, string>();
+
 /**
  * The workspace's guard. The trip's address is its share link (like Google
  * Drive): a signed-out visitor becomes an anonymous link guest when the trip
@@ -227,10 +236,16 @@ export async function requireTripViewer(
 	href: string,
 	opts: GuardOptions = {},
 ): Promise<{ viewer: Viewer }> {
+	const qc = opts.queryClient;
+	if (opts.stay && qc && guardedTrip.get(qc) === slug) {
+		const cached = qc.getQueryData<Viewer | null>(sessionKey);
+		if (cached?.named) return { viewer: cached };
+	}
 	let viewer = await loadViewer(opts);
 	if (!viewer && typeof window !== "undefined")
 		viewer = await enterAsLinkGuest(slug, opts);
 	if (!viewer) throw notFound();
 	if (!viewer.named) throw redirect({ href: withNext(WELCOME_PATH, href) });
+	if (qc) guardedTrip.set(qc, slug);
 	return { viewer };
 }
