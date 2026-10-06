@@ -43,7 +43,7 @@ describe("ShareButton", () => {
 		);
 		expect(screen.getByTestId(T.button)).toHaveTextContent("Make a share card");
 		rerender(<ShareButton slug="asia-2027" variant="toolbar" />);
-		expect(screen.getByTestId(T.button)).toHaveTextContent("Share");
+		expect(screen.getByTestId(T.button)).toHaveTextContent(/^Share card$/);
 	});
 
 	it("opens the dialog with the story card, loads the square on the toggle, and downloads the one shown", async () => {

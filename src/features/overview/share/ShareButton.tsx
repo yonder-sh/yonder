@@ -1,6 +1,7 @@
 /**
  * docs/OVERVIEW.md §Sharing: "Make a share card" (the Overview's primary
- * action) or "Share" (its toolbar). Opens a dialog with the card, rendered on
+ * action) or "Share card" (its toolbar; not "Share", which invites people,
+ * U150). Opens a dialog with the card, rendered on
  * the server (`GET /t/<slug>/share-card.png?size=story|square`), and a Story /
  * Square toggle:
  *
@@ -72,8 +73,8 @@ function ShareCardButton({
 				className={className}
 				onClick={() => setOpen(true)}
 			>
-				{variant === "primary" ? <ImageIcon /> : <Share2 />}
-				{variant === "primary" ? "Make a share card" : "Share"}
+				<ImageIcon />
+				{variant === "primary" ? "Make a share card" : "Share card"}
 			</Button>
 			{open && (
 				<ShareCardDialog slug={slug} open={open} onOpenChange={setOpen} />

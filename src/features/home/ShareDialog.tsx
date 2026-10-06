@@ -759,8 +759,22 @@ const LINK_BLURB: Record<ShareRole, string> = {
 	editor: "They can change the plan.",
 };
 
-/** The trip's address with "Copy link": the one link for everyone. */
-function AddressRow({ url }: { url: string }) {
+/**
+ * The trip's address with "Copy link": the one link for everyone. With the
+ * link off (`onTurnOn`), copying says only people on the trip can open it (U146).
+ */
+function AddressRow({ url, onTurnOn }: { url: string; onTurnOn?: () => void }) {
+	const onCopy = () => {
+		if (!onTurnOn) return copy(url);
+		void navigator.clipboard
+			?.writeText(url)
+			.then(() =>
+				toast.message("Link copied, but only people on the trip can open it", {
+					action: { label: "Turn on link", onClick: onTurnOn },
+				}),
+			)
+			.catch(() => toast.message("Select the link to copy it"));
+	};
 	return (
 		<div className="flex gap-2">
 			<Input
@@ -774,7 +788,7 @@ function AddressRow({ url }: { url: string }) {
 			<Button
 				variant="outline"
 				size="sm"
-				onClick={() => copy(url)}
+				onClick={onCopy}
 				data-testid={TESTID.shareLinkCopy}
 			>
 				<Copy /> Copy link
@@ -853,7 +867,17 @@ function TripLink({ tripId, data }: { tripId: string; data: SharingDto }) {
 						</span>
 					) : null}
 				</div>
-				<AddressRow url={data.url} />
+				<AddressRow
+					url={data.url}
+					onTurnOn={
+						on || disabled
+							? undefined
+							: () =>
+									act.mutate(() =>
+										setShareLink({ data: { tripId, enabled: true } }),
+									)
+					}
+				/>
 				{on ? <LinkNote tripId={tripId} note={link?.note ?? null} /> : null}
 				{!confirm ? (
 					<div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
