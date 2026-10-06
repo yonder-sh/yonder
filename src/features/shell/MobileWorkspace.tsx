@@ -23,6 +23,7 @@ import {
 	Navigation,
 	Plane,
 	Plus,
+	Search,
 	Wallet,
 } from "lucide-react";
 import { type ComponentType, useEffect, useState } from "react";
@@ -114,6 +115,7 @@ function MobileHeader() {
 	const setSettingsOpen = useUi((s) => s.setSettingsOpen);
 	const setProfileOpen = useUi((s) => s.setProfileOpen);
 	const openShiftTrip = useUi((s) => s.openShiftTrip);
+	const openAddPlace = useUi((s) => s.openAddPlace);
 	const setViewSettingsOpen = useShell((s) => s.setViewSettingsOpen);
 	// Web Push settings (the desktop has them in the account menu).
 	const account = useHasAccount(mode === "live");
@@ -153,6 +155,17 @@ function MobileHeader() {
 					) : (
 						<MapIcon className="size-5" />
 					)}
+				</Button>
+				{/* The desktop's "Search, add or jump" (QA U122: no search on a phone). */}
+				<Button
+					variant="ghost"
+					size="icon"
+					data-testid={SHELL_TESTID.mobileSearch}
+					aria-label="Search, add or jump"
+					onClick={() => openAddPlace({ mode: "search" })}
+					className="size-11 shrink-0"
+				>
+					<Search className="size-5" />
 				</Button>
 				<SuggestModeControl />
 				<InboxBell className="size-11 rounded-full" />

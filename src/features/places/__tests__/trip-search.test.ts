@@ -205,6 +205,13 @@ describe("matchTripLegs (HIER-10)", () => {
 		expect(titles("ke 724")).toEqual(["KE 724 (KIX → ICN)"]);
 		expect(titles("icn")).toEqual(["KE 724 (KIX → ICN)"]);
 	});
+	it("finds legs by the words for their mode (QA U122)", () => {
+		expect(titles("flight")).toContain("KE 724 (KIX → ICN)");
+		expect(titles("fly")).toContain("KE 724 (KIX → ICN)");
+		expect(titles("train")).toEqual([
+			"Fuji Excursion (Shinjuku → Kawaguchiko)",
+		]);
+	});
 	it("nameless legs (a walk, an unset leg) never match", () => {
 		expect(titles("walk")).toEqual([]);
 		expect(titles("hands")).toEqual([]);

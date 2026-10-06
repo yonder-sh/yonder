@@ -7,6 +7,7 @@
 export const SHELL_TESTID = {
 	/** The phone header's Map / List button (One Yonder: the map is a button). */
 	mobileMapToggle: "mobile-map-toggle",
+	mobileSearch: "mobile-search",
 	/** The full gallery's way back to the Plan (`tab=media`). */
 	mediaBack: "media-back",
 	/** The Where button in the top bar ("Japan › Tokyo"). */

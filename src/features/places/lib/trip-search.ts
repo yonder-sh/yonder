@@ -47,6 +47,17 @@ export function matchTripNodes(
 }
 
 /** What a leg is called and the words it can be found by (null: nameless). */
+/** The words people search a leg by its mode ("flight", "train"). */
+const MODE_WORDS: Partial<Record<string, string>> = {
+	bus: "bus",
+	subway: "train subway metro",
+	train: "train",
+	rail: "train",
+	high_speed: "train",
+	tram: "tram",
+	ferry: "ferry boat",
+};
+
 export function legSearchText(
 	d: LegDetails,
 ): { title: string; words: string[] } | null {
@@ -72,6 +83,7 @@ export function legSearchText(
 					s.lineShort,
 					s.from?.name,
 					s.to?.name,
+					MODE_WORDS[s.mode],
 				]),
 			].filter((w): w is string => !!w),
 		};
@@ -88,6 +100,9 @@ export function legSearchText(
 				f.airline?.name,
 				f.from.name,
 				f.to.name,
+				f.from.iata,
+				f.to.iata,
+				"flight fly",
 			].filter((w): w is string => !!w),
 		};
 	}
