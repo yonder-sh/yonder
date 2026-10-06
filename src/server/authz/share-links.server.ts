@@ -175,6 +175,19 @@ export async function joinRateLinks(
 	return joined;
 }
 
+/** Drops the user's link grants on trips they are an active member of (SHARE-04: membership alone sets their role). */
+export async function dropMemberGrants(
+	tx: SqlExec,
+	userId: string,
+): Promise<void> {
+	await tx.execute(sql`
+		delete from share_grants g
+		 where g.user_id = ${userId}
+		   and exists (select 1 from trip_members m
+		                where m.trip_id = g.trip_id and m.user_id = g.user_id
+		                  and m.status = 'active')`);
+}
+
 /**
  * SECURITY §2 "a guest can't pose as Dennis": whether `name` (cleaned) is the
  * full or first name of a current member (or placeholder) of any trip this

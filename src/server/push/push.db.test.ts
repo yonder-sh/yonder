@@ -306,6 +306,13 @@ describe("subscription store", () => {
 		expect((await mutedTrips(db(), a.id)).map((m) => m.name)).toEqual([t.name]);
 		const map = await settingsFor(db(), [a.id, maya.id]);
 		expect(map.has(maya.id)).toBe(false);
+		// Once removed, a mute no longer names the trip.
+		await setTripMuted(db(), maya.id, t.tripId, true);
+		expect(await mutedTrips(db(), maya.id)).toHaveLength(1);
+		await db().execute(
+			sql`update trip_members set status = 'removed', user_id = null, display_name = 'Maya' where id = ${t.mayaMember}`,
+		);
+		expect(await mutedTrips(db(), maya.id)).toEqual([]);
 		await setTripMuted(db(), a.id, t.tripId, false);
 		expect((await getSettings(db(), a.id)).mutedTripIds).toEqual([]);
 	});

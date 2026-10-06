@@ -107,7 +107,7 @@ describe("loadTripAccess", () => {
 		await expect(loadTripAccess("not-a-uuid", t.userId)).resolves.toBeNull();
 	});
 
-	it("takes the max of membership and live grants", async () => {
+	it("a leftover link grant never lifts a member's role (SHARE-04)", async () => {
 		const t = await newTrip();
 		const kai = await newUser();
 		await db().insert(tripMembers).values({
@@ -120,7 +120,7 @@ describe("loadTripAccess", () => {
 		const link = await newLink(t.tripId, "editor");
 		await grantRow(t.tripId, link.id, kai);
 		await expect(loadTripAccess(t.tripId, kai)).resolves.toMatchObject({
-			role: "editor",
+			role: "viewer",
 			isGuest: false,
 			color: 1,
 		});
@@ -366,6 +366,34 @@ describe("claimInvites", () => {
 		);
 		expect((leftovers.rows[0] as { n: number }).n).toBe(0);
 		expect(await claimInvites(audrey)).toBe(0); // idempotent
+	});
+
+	it("an editor link grant carried over from a guest doesn't outrank the invite (SHARE-04)", async () => {
+		const email = `maya-${randomBytes(3).toString("hex")}@asia2027.test`;
+		const t = await newTrip();
+		const anon = await newUser({ anonymous: true });
+		const maya = await newUser({ email });
+		await db().insert(tripMembers).values({
+			tripId: t.tripId,
+			status: "invited",
+			role: "viewer",
+			email,
+			color: 1,
+		});
+		await grantRow(t.tripId, (await newLink(t.tripId, "editor")).id, anon);
+
+		await migrateGuestToUser(anon, maya);
+		expect(await claimInvites(maya)).toBe(1);
+
+		await expect(loadTripAccess(t.tripId, maya)).resolves.toMatchObject({
+			role: "viewer",
+			isGuest: false,
+		});
+		const grants = await db()
+			.select()
+			.from(shareGrants)
+			.where(eq(shareGrants.userId, maya));
+		expect(grants).toHaveLength(0);
 	});
 
 	it("skips anonymous users", async () => {

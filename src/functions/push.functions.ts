@@ -36,7 +36,7 @@ export type PushSettingsDto = {
 	/** The VAPID public key; null = push is not set up on this server. */
 	publicKey: string | null;
 	offTypes: PushType[];
-	mutedTrips: { id: string; name: string; slug: string }[];
+	mutedTrips: { id: string; name: string }[];
 	/** The calling device's endpoint is registered for this account. */
 	thisDevice: boolean;
 };

@@ -35,10 +35,7 @@ export function MuteTripMenuItem({
 					? {
 							...d,
 							mutedTrips: next
-								? [
-										...d.mutedTrips,
-										{ id: trip.id, name: trip.name, slug: trip.slug },
-									]
+								? [...d.mutedTrips, { id: trip.id, name: trip.name }]
 								: d.mutedTrips.filter((t) => t.id !== trip.id),
 						}
 					: d,

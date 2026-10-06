@@ -21,7 +21,8 @@ export interface AccessRow {
 /**
  * Folds access rows into a TripAccess (SPEC §11.3):
  * - no rows → null (the caller answers NOT_FOUND, so non-members can't probe);
- * - role = the strongest of the membership role and every live grant's role;
+ * - a member's role is their membership's alone: a leftover link grant
+ *   never lifts it (SHARE-04); a guest's is the strongest live grant;
  * - memberId and colour come from the member row when there is one;
  * - `isGuest` = no active membership.
  * Rows with an unknown role are ignored (defensive; the enums forbid them).
@@ -33,10 +34,10 @@ export function resolveAccess(
 	const valid = rows.filter((r): r is AccessRow & { role: TripRole } =>
 		isTripRole(r.role),
 	);
-	const role = maxRole(valid.map((r) => r.role));
-	if (!role) return null;
 	const member = valid.find((r) => r.via === "member") ?? null;
 	const grant = valid.find((r) => r.via === "grant") ?? null;
+	const role = member ? member.role : maxRole(valid.map((r) => r.role));
+	if (!role) return null;
 	const source = member ?? grant;
 	const color = Number(source?.color ?? 0);
 	return {

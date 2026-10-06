@@ -275,11 +275,20 @@ export async function setTripMuted(
 export async function mutedTrips(
 	exec: Exec,
 	userId: string,
-): Promise<{ id: string; name: string; slug: string }[]> {
+): Promise<{ id: string; name: string }[]> {
+	// Only trips they can still open: a mute must not outlive their access.
 	const res = await exec.execute(sql`
-		select t.id::text as id, t.name, t.slug from notification_mutes n
+		select t.id::text as id, t.name from notification_mutes n
 		  join trips t on t.id = n.trip_id and t.deleted_at is null
 		 where n.user_id = ${userId}
+		   and (exists (select 1 from trip_members m
+		                 where m.trip_id = t.id and m.user_id = n.user_id
+		                   and m.status = 'active')
+		     or exists (select 1 from share_grants g
+		                  join share_links l on l.id = g.share_link_id and l.trip_id = g.trip_id
+		                 where g.trip_id = t.id and g.user_id = n.user_id
+		                   and l.enabled and l.revoked_at is null
+		                   and (l.expires_at is null or l.expires_at > now())))
 		 order by n.created_at`);
-	return res.rows as { id: string; name: string; slug: string }[];
+	return res.rows as { id: string; name: string }[];
 }

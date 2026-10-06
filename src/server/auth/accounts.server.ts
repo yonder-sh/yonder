@@ -1,7 +1,10 @@
 import { sql } from "drizzle-orm";
 import { db } from "@/db/db.server";
 import { announceTripChange } from "@/server/announce.server";
-import { joinRateLinks } from "@/server/authz/share-links.server";
+import {
+	dropMemberGrants,
+	joinRateLinks,
+} from "@/server/authz/share-links.server";
 import { mergeMember } from "@/server/members.server";
 
 /**
@@ -48,6 +51,7 @@ export async function claimInvites(userId: string): Promise<number> {
 			intoId: string;
 		}[])
 			await mergeMember(tx, null, d.tripId, d.id, d.intoId);
+		await dropMemberGrants(tx, userId);
 		return (claimed.rows as { tripId: string }[]).map((r) => r.tripId);
 	});
 	// After COMMIT: the invite turned into a member on those trips' Share dialogs and member lists.
@@ -112,6 +116,7 @@ export async function migrateGuestToUser(
 			sql`update share_grants set user_id = ${userId} where user_id = ${anonId}`,
 		);
 		joined = await joinRateLinks(tx, userId);
+		await dropMemberGrants(tx, userId);
 
 		const columns = rows<{ table_name: string; column_name: string }>(
 			await tx.execute(sql`
