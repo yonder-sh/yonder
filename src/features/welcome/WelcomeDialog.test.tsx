@@ -204,4 +204,32 @@ describe("the welcome", () => {
 		);
 		expect(screen.getByTestId(T.primary)).toHaveTextContent("See the plan");
 	});
+
+	it("a guest on a Can rate link: Sign in to rate first, Continue as guest second", async () => {
+		session = { isAnonymous: true, name: "Guest Heron" };
+		const guest: TripGraph = {
+			...asEditor,
+			me: {
+				...asEditor.me,
+				memberId: null,
+				isGuest: true,
+				role: "rater",
+				name: "Guest Heron",
+			},
+			members: asEditor.members.filter((m) => m.id !== DEMO_MEMBERS.dennis),
+		};
+		renderWithWorkspace(
+			<WelcomeDialog
+				info={{ ...invite, via: "link", invitedBy: null, inviterUserId: null }}
+			/>,
+			{ graph: guest, mode: "live" },
+		);
+		await screen.findByTestId(T.nameStep);
+		expect(screen.getByTestId(T.signIn)).toHaveTextContent("Sign in to rate");
+		expect(screen.getByTestId(T.nameContinue)).toHaveTextContent(
+			"Continue as guest",
+		);
+		// Above the phone's Rate feed (z-60).
+		expect(screen.getByTestId(T.dialog).className).toMatch(/\bz-\[70\]/);
+	});
 });

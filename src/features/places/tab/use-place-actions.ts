@@ -41,6 +41,8 @@ export function useCanRateOwn(): {
 	canRate: boolean;
 	reason: string | null;
 	memberId: string | null;
+	/** A "Can rate" link guest: signing in makes them a member who rates. */
+	signIn: boolean;
 } {
 	const { graph, access } = useWorkspace();
 	const guard = useEditGuard("rate");
@@ -48,16 +50,25 @@ export function useCanRateOwn(): {
 		? graph.members.find((m) => m.id === access.memberId)
 		: undefined;
 	if (!me)
-		return {
-			canRate: false,
-			reason: "Only trip members rate places.",
-			memberId: null,
-		};
+		return access.role === "rater"
+			? {
+					canRate: false,
+					reason: "Sign in to rate. Your name shows next to your ratings.",
+					memberId: null,
+					signIn: true,
+				}
+			: {
+					canRate: false,
+					reason: "Only trip members rate places.",
+					memberId: null,
+					signIn: false,
+				};
 	const allowed = mayRate(access, me);
 	return {
 		canRate: allowed && !guard.disabled,
 		reason: guard.disabled ? guard.reason : allowed ? null : "View only",
 		memberId: me.id,
+		signIn: false,
 	};
 }
 
@@ -240,6 +251,7 @@ function usePlaceActionsValue() {
 			editReason: guard.reason,
 			canRate: own.canRate,
 			rateReason: own.reason,
+			rateSignIn: own.signIn,
 			me: own.memberId,
 		}),
 		[
@@ -253,6 +265,7 @@ function usePlaceActionsValue() {
 			guard.reason,
 			own.canRate,
 			own.reason,
+			own.signIn,
 			own.memberId,
 		],
 	);

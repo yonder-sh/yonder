@@ -153,6 +153,8 @@ export function WelcomeDialog({ info }: { info: WelcomeInfo | undefined }) {
 				data-step={step}
 				showCloseButton={false}
 				aria-describedby={undefined}
+				// Above the phone's full-screen Rate feed (z-60), where raters land.
+				overlayClassName="z-[70]"
 				// Focus lands on the step's main control (the name, or the button).
 				onOpenAutoFocus={(e) => {
 					e.preventDefault();
@@ -161,7 +163,7 @@ export function WelcomeDialog({ info }: { info: WelcomeInfo | undefined }) {
 					(el ?? box)?.focus({ preventScroll: true });
 				}}
 				className={cn(
-					"max-h-[calc(100svh-2rem)] gap-0 overflow-y-auto p-0 sm:max-w-[480px]",
+					"z-[70] max-h-[calc(100svh-2rem)] gap-0 overflow-y-auto p-0 sm:max-w-[480px]",
 					// Phones: a full-screen sheet.
 					"max-sm:top-0 max-sm:left-0 max-sm:h-[100svh] max-sm:max-h-none max-sm:max-w-none max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-none max-sm:border-0",
 				)}
@@ -208,11 +210,13 @@ function NameStep({ onDone }: { onDone: () => void }) {
 		save.mutate(n);
 	};
 	const next = `${location.pathname}${location.searchStr ?? ""}`;
+	const rater = graph.me.role === "rater";
 	return (
 		<form
 			onSubmit={submit}
 			data-testid={T.nameStep}
-			className="grid gap-4 p-6 max-sm:pt-[calc(env(safe-area-inset-top)+2.5rem)]"
+			// Stacked at the top, not spread over a phone's full height.
+			className="grid content-start gap-4 p-6 max-sm:pt-[calc(env(safe-area-inset-top)+2.5rem)]"
 		>
 			<DialogTitle className="font-display text-2xl leading-7 font-semibold">
 				What should the group call you?
@@ -240,27 +244,55 @@ function NameStep({ onDone }: { onDone: () => void }) {
 					</p>
 				) : null}
 			</div>
-			<p className="text-meta text-muted-foreground">
-				{graph.me.role === "rater"
-					? "Sign in to rate places and keep your ratings on other devices. "
-					: "Sign in to keep this trip on your other devices. "}
-				<Link
-					to="/login"
-					search={{ next } as never}
-					data-testid={T.signIn}
-					className="font-medium text-primary hover:underline"
-				>
-					Sign in
-				</Link>
-			</p>
-			<Button
-				type="submit"
-				disabled={save.isPending}
-				data-testid={T.nameContinue}
-				className="justify-self-start"
-			>
-				Continue
-			</Button>
+			{rater ? (
+				// A "Can rate" link rates only once signed in: that's the main action.
+				<>
+					<p className="text-meta text-muted-foreground">
+						Sign in to rate places and keep your ratings on other devices.
+					</p>
+					<div className="flex flex-wrap items-center gap-2">
+						<Button asChild>
+							<Link
+								to="/login"
+								search={{ next } as never}
+								data-testid={T.signIn}
+							>
+								Sign in to rate
+							</Link>
+						</Button>
+						<Button
+							type="submit"
+							variant="ghost"
+							disabled={save.isPending}
+							data-testid={T.nameContinue}
+						>
+							Continue as guest
+						</Button>
+					</div>
+				</>
+			) : (
+				<>
+					<p className="text-meta text-muted-foreground">
+						Sign in to keep this trip on your other devices.{" "}
+						<Link
+							to="/login"
+							search={{ next } as never}
+							data-testid={T.signIn}
+							className="font-medium whitespace-nowrap text-primary hover:underline"
+						>
+							Sign in
+						</Link>
+					</p>
+					<Button
+						type="submit"
+						disabled={save.isPending}
+						data-testid={T.nameContinue}
+						className="justify-self-start"
+					>
+						Continue
+					</Button>
+				</>
+			)}
 		</form>
 	);
 }

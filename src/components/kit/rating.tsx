@@ -25,11 +25,6 @@ import {
 	DropdownMenuShortcut,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-	Tooltip,
-	TooltipContent,
-	TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { PRIORITIES, PRIORITY_ORDER } from "@/lib/domain/taxonomy";
 import type { Priority } from "@/lib/schemas/enums";
 import { cn } from "@/lib/utils";
@@ -173,12 +168,16 @@ export function RatingButtons({
 	label = "Your rating",
 	buttonTestId,
 	revealTestId,
+	reasonTestId,
+	action,
 }: {
 	value: Priority | null;
 	onRate: (p: Priority | null) => void;
 	disabled?: boolean;
-	/** Why they're disabled (a tooltip). */
+	/** Why they're disabled (a line under them). */
 	reason?: string | null;
+	/** Next to the reason, e.g. "Sign in". */
+	action?: ReactNode;
 	variant?: "filled" | "outline";
 	/** Others' picks: rating → member ids (shown once revealed). */
 	reveal?: Partial<Record<Priority, string[]>> | null;
@@ -188,6 +187,7 @@ export function RatingButtons({
 	label?: string;
 	buttonTestId?: string;
 	revealTestId?: string;
+	reasonTestId?: string;
 }) {
 	const reduce = useReducedMotion();
 	const filled = variant === "filled";
@@ -297,13 +297,20 @@ export function RatingButtons({
 		</fieldset>
 	);
 	if (!disabled || !reason) return buttons;
+	// On screen, not a tooltip: a touch screen never hovers.
 	return (
-		<Tooltip>
-			<TooltipTrigger asChild>
-				<div>{buttons}</div>
-			</TooltipTrigger>
-			<TooltipContent>{reason}</TooltipContent>
-		</Tooltip>
+		<div className="grid gap-2">
+			{buttons}
+			<div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+				<p
+					data-testid={reasonTestId}
+					className="text-meta text-muted-foreground"
+				>
+					{reason}
+				</p>
+				{action}
+			</div>
+		</div>
 	);
 }
 

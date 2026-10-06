@@ -4,6 +4,7 @@
  * page for it, List (or any tab) swaps back.
  */
 import { act, fireEvent, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { demoGraph } from "@/lib/fixtures/demo";
@@ -17,8 +18,22 @@ import { SHELL_TESTID } from "./testids";
 
 vi.mock("@tanstack/react-router", async (orig) => ({
 	...(await orig<typeof import("@tanstack/react-router")>()),
-	Link: ({ children }: { children?: ReactNode }) => <a href="/">{children}</a>,
+	Link: ({
+		children,
+		to: _to,
+		search: _search,
+		...p
+	}: {
+		children?: ReactNode;
+		to?: unknown;
+		search?: unknown;
+	}) => (
+		<a href="/" {...p}>
+			{children}
+		</a>
+	),
 	useNavigate: () => vi.fn(),
+	useLocation: () => ({ pathname: "/t/demo", searchStr: "" }),
 }));
 vi.mock("./MapRegion", () => ({
 	MapRegion: () => <div data-testid="map-stub" />,
@@ -102,5 +117,33 @@ describe("the phone", () => {
 		expect(screen.queryByTestId("map-stub")).toBeNull();
 		act(() => useFollowPause.getState().resume());
 		expect(screen.getByTestId("map-stub")).toBeInTheDocument();
+	});
+
+	it("a link guest without an account: Sign in on screen and in ⋯, never Sign out", async () => {
+		const user = userEvent.setup();
+		renderWithWorkspace(<MobileWorkspace />, {
+			graph: {
+				...demoGraph,
+				me: {
+					...demoGraph.me,
+					memberId: null,
+					isGuest: true,
+					role: "rater",
+					name: "Guest Heron",
+				},
+			},
+			search: { tab: "overview" },
+		});
+		expect(screen.getByTestId(TESTID.guestNudge)).toHaveTextContent(
+			"Sign in to rate places",
+		);
+		await user.click(screen.getByRole("button", { name: "More" }));
+		expect(
+			await screen.findByRole("menuitem", { name: "Sign in to rate places" }),
+		).toBeInTheDocument();
+		expect(
+			screen.getByRole("menuitem", { name: "Change your name" }),
+		).toBeInTheDocument();
+		expect(screen.queryByRole("menuitem", { name: "Sign out" })).toBeNull();
 	});
 });

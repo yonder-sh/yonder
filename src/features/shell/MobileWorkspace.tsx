@@ -10,7 +10,8 @@
  * name, kept for the follow and cursor code that reads it): its first snap
  * is the map, anything else the page.
  */
-import { Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { Link, useLocation } from "@tanstack/react-router";
 import {
 	CalendarDays,
 	Compass,
@@ -36,6 +37,7 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { GuestNudge } from "@/features/home/GuestNudge";
 import { WhatIfChip } from "@/features/insights/WhatIfChip";
 import { useListsOverdue } from "@/features/lists/use-lists-overdue";
 import { OfflineBanner } from "@/features/offline/OfflineBanner";
@@ -54,6 +56,7 @@ import {
 import { WelcomeMenuItem } from "@/features/welcome/WelcomeDialog";
 import { mustRedact } from "@/lib/auth/roles";
 import { signOut } from "@/lib/auth/sign-out";
+import { sessionQuery } from "@/lib/query/trip-queries";
 import { useFollowedStore } from "@/lib/realtime/view-ui";
 import { TESTID } from "@/lib/testids";
 import { cn } from "@/lib/utils";
@@ -99,8 +102,14 @@ function useMapOpen(): [boolean, (open: boolean) => void] {
 }
 
 function MobileHeader() {
-	const { graph, mode } = useWorkspace();
+	const { graph, mode, access } = useWorkspace();
 	const [mapOpen, setMapOpen] = useMapOpen();
+	const location = useLocation();
+	const session = useQuery({ ...sessionQuery(), enabled: mode === "live" });
+	// A link guest without an account: sign in (back to this trip), not out.
+	const anonymous =
+		!!session.data?.isAnonymous || (access.isGuest && !session.data);
+	const next = `${location.pathname}${location.searchStr ?? ""}`;
 	const setShareOpen = useUi((s) => s.setShareOpen);
 	const setSettingsOpen = useUi((s) => s.setSettingsOpen);
 	const setProfileOpen = useUi((s) => s.setProfileOpen);
@@ -190,8 +199,17 @@ function MobileHeader() {
 						</DropdownMenuItem>
 						<WelcomeMenuItem iconless />
 						<DropdownMenuSeparator />
+						{anonymous ? (
+							<DropdownMenuItem asChild>
+								<Link to="/login" search={{ next } as never}>
+									{access.role === "rater"
+										? "Sign in to rate places"
+										: "Sign in to keep this trip"}
+								</Link>
+							</DropdownMenuItem>
+						) : null}
 						<DropdownMenuItem onSelect={() => setProfileOpen(true)}>
-							Profile
+							{anonymous ? "Change your name" : "Profile"}
 						</DropdownMenuItem>
 						{account ? (
 							<DropdownMenuItem
@@ -201,9 +219,11 @@ function MobileHeader() {
 								Notifications
 							</DropdownMenuItem>
 						) : null}
-						<DropdownMenuItem onSelect={() => void signOut()}>
-							Sign out
-						</DropdownMenuItem>
+						{anonymous ? null : (
+							<DropdownMenuItem onSelect={() => void signOut()}>
+								Sign out
+							</DropdownMenuItem>
+						)}
 					</DropdownMenuContent>
 				</DropdownMenu>
 			</div>
@@ -445,6 +465,8 @@ export function MobileWorkspace() {
 			<div className="shrink-0 empty:hidden">
 				<OfflineBanner />
 			</div>
+			{/* "You're viewing as … · Sign in to rate places", as on the desktop. */}
+			<GuestNudge />
 			{/* One Yonder (P09/P10): the Plan's own stepper and day rows move
 			    between days; on the road, what's now and next. */}
 			{!mapOpen && tab === "plan" ? (

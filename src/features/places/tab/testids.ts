@@ -49,6 +49,9 @@ export const PLACES_TAB_TESTID = {
 	feedCard: "places-feed-card",
 	feedButton: "places-feed-button",
 	feedReveal: "places-feed-reveal",
+	/** Why I can't rate, under the rating buttons. */
+	rateReason: "places-rate-reason",
+	feedSignIn: "places-feed-sign-in",
 	feedTag: "places-feed-tag",
 	feedTime: "places-feed-time",
 	/** D07: "The group", after you rate. */

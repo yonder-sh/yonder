@@ -48,6 +48,22 @@ describe("RatingButtons", () => {
 		for (const b of buttons()) expect(b).toBeDisabled();
 	});
 
+	it("says why on screen (a touch screen never hovers), with its action", () => {
+		renderWithWorkspace(
+			<RatingButtons
+				value={null}
+				onRate={() => {}}
+				disabled
+				reason="Sign in to rate."
+				action={<a href="/login">Sign in</a>}
+			/>,
+		);
+		expect(screen.getByTestId(PLACES_TAB_TESTID.rateReason)).toHaveTextContent(
+			"Sign in to rate.",
+		);
+		expect(screen.getByRole("link", { name: "Sign in" })).toBeInTheDocument();
+	});
+
 	it("the reveal: the others' avatars on the buttons they picked", () => {
 		renderWithWorkspace(
 			<RatingButtons

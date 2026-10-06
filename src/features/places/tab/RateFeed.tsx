@@ -99,7 +99,7 @@ import {
 import type { PlaceRow } from "./model";
 import { CoverPlaceholder } from "./PlacesBoard";
 import { categoryLabel, ownsKeys } from "./PlacesTable";
-import { RatingButtons } from "./RatingButtons";
+import { RateSignIn, RatingButtons } from "./RatingButtons";
 import { RemindButton } from "./RatingPeople";
 import { formatScore } from "./score";
 import { PLACES_TAB_TESTID } from "./testids";
@@ -816,6 +816,7 @@ function PlaceCard({
 			reveal={reveal}
 			disabled={!act.canRate}
 			reason={act.rateReason}
+			action={act.rateSignIn ? <RateSignIn /> : null}
 			keys={!phone}
 			onRate={onRate}
 		/>
