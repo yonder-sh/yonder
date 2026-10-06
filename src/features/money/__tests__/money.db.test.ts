@@ -490,8 +490,9 @@ describe("expenses", () => {
 		expect(e?.payments).toHaveLength(2);
 		expect(e?.payments[1]?.amountMinor).toBe(50_000);
 		expect(e?.payments[1]?.homeAmountMinor).toBe(33_333); // ¥50k at 150
+		// The rest is on Audrey, who paid the deposit (not on whoever taps Mark paid).
 		expect(e?.payments[1]?.payers).toEqual([
-			{ memberId: t.members.owner, amountMinor: 50_000 },
+			{ memberId: t.members.audrey, amountMinor: 50_000 },
 		]);
 		expect(await codeOf(call(markExpensePaid, U.owner, { id: r.id }))).toBe(
 			"VALIDATION",

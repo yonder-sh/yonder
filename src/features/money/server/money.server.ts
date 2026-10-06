@@ -1669,7 +1669,7 @@ export async function updateExpenseRow(
 	return { updatedAt: iso((row as { updatedAt: Date }).updatedAt) };
 }
 
-/** "Mark paid": one payment for the remainder (me, now, the expense's currency). */
+/** "Mark paid": one payment for the remainder (by the one payer so far, else me; now; the expense's currency). */
 export function paymentForRemainder(
 	e: ExpenseDto,
 	me: Me,
@@ -1689,12 +1689,18 @@ export function paymentForRemainder(
 		if (rem === 0) bad("This is already paid.");
 		amount = rem;
 	}
+	const payers = new Set(
+		e.payments.flatMap((p) => p.payers.map((x) => x.memberId)),
+	);
+	const payer = payers.size === 1 ? [...payers][0] : undefined;
 	return normPayment({
 		paidAt: patch.paidAt ?? now.toISOString(),
 		paidTz: patch.paidTz ?? tz,
 		currency,
 		amountMinor: amount,
-		payers: patch.payers ?? [{ memberId: me.memberId, amountMinor: amount }],
+		payers: patch.payers ?? [
+			{ memberId: payer ?? me.memberId, amountMinor: amount },
+		],
 		...(patch.method ? { method: patch.method } : {}),
 		...(patch.fxRate !== undefined ? { fxRate: patch.fxRate } : {}),
 	});

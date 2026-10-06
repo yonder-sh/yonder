@@ -132,8 +132,8 @@ test("MONEY-16/03: a deposit, then Mark paid; settle-up records a payment and sq
 	await expect(dialog).toBeHidden();
 	await expect(row).toHaveAttribute("data-status", "paid");
 
-	// Maya paid ¥10k, I paid ¥50k, split 50/50 → Maya owes me ¥20k (in USD).
-	await expect(page.getByTestId(M.balances)).toContainText("Maya owes you");
+	// Mark paid books the rest on Maya, who paid the deposit: split 50/50 → I owe her ¥30k (in USD).
+	await expect(page.getByTestId(M.balances)).toContainText("You owe Maya");
 	await page.screenshot({ path: shotPath("money/trip-root-1440.png"), animations: "disabled", fullPage: true });
 	await page.getByTestId(M.settleUpButton).click();
 	const settle = page.getByTestId(M.settleUpDialog);

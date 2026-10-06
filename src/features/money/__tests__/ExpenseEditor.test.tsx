@@ -39,6 +39,10 @@ vi.mock("../money.functions", async (importOriginal) => ({
 		server.calls.push(["update", data]);
 		return { updatedAt: new Date().toISOString() };
 	},
+	markExpensePaid: async ({ data }: { data: Record<string, unknown> }) => {
+		server.calls.push(["markPaid", data]);
+		return { updatedAt: new Date().toISOString() };
+	},
 }));
 
 const { dennis, audrey } = DEMO_MEMBERS;
@@ -179,8 +183,14 @@ describe("Add an expense (P13)", () => {
 			) as HTMLButtonElement;
 		await user.click(audreyPill());
 		expect(pressed(pills(dialog, M.payerPerson))).toEqual([audrey]);
-		// Tapping her again: nobody has paid yet.
+		expect(audreyPill().querySelector(".lucide-check")).toBeTruthy();
+		// Tapping her again keeps her; nobody yet is More's Planned.
 		await user.click(audreyPill());
+		expect(pressed(pills(dialog, M.payerPerson))).toEqual([audrey]);
+		await user.click(d.getByTestId(M.more));
+		await user.click(
+			within(d.getByTestId(M.status)).getByRole("radio", { name: "Planned" }),
+		);
 		expect(pressed(pills(dialog, M.payerPerson))).toEqual([]);
 		expect(d.getByTestId(M.payer).textContent).toContain("Not paid yet");
 		expect(d.getByTestId(M.when).getAttribute("aria-label")).toBe(
@@ -442,8 +452,12 @@ describe("Add an expense (P13)", () => {
 			target: { kind: "day", dayId: demo.D.d4 ?? "" },
 		});
 		await user.type(d.getByTestId(M.amount), "1200");
-		// Tapping the picked payer again: not paid yet, expected on its day.
-		await user.click(pills(dialog, M.payerPerson)[0] as HTMLElement);
+		// Planned: not paid yet, expected on its day.
+		await user.click(d.getByTestId(M.more));
+		await user.click(
+			within(d.getByTestId(M.status)).getByRole("radio", { name: "Planned" }),
+		);
+		expect(pressed(pills(dialog, M.payerPerson))).toEqual([]);
 		expect(d.getByTestId(M.when).textContent).toBe("Expected Wed 6 Oct");
 		await user.click(d.getByTestId(M.when));
 		await user.click(await screen.findByRole("button", { name: "No date" }));
@@ -467,5 +481,77 @@ describe("Add an expense (P13)", () => {
 		await user.click(screen.getByRole("button", { name: "Person" }));
 		await user.click(await screen.findByRole("option", { name: /Audrey/ }));
 		expect(onChange).toHaveBeenCalledWith(audrey);
+	});
+});
+
+describe("Money on the phone", () => {
+	it("a trip-wide expense during the trip opens in the plan's currency", async () => {
+		const { d } = await open({ target: { kind: "trip" } });
+		expect(d.getByTestId(M.currency).textContent).toBe("JPY");
+	});
+
+	it("view-only members aren't ticked in a new split", async () => {
+		const priya = "00000000-0000-4000-8000-0000000000f7";
+		const base = demoGraph.members[0];
+		if (!base) throw new Error("no member");
+		const graph = {
+			...demoGraph,
+			members: [
+				...demoGraph.members,
+				{
+					...base,
+					id: priya,
+					userId: "user-priya",
+					role: "viewer" as const,
+					name: "Priya",
+				},
+			],
+		};
+		const { dialog } = await open(tokyo, graph);
+		const split = pills(dialog, M.splitPerson);
+		expect(split.map((p) => p.dataset.memberId)).toContain(priya);
+		expect(pressed(split)).toEqual([dennis, audrey]);
+	});
+
+	it("correcting a paid total moves its one payment along", async () => {
+		const kiyomizu = scenario.money.expenses[0];
+		const { d, user } = await open({ expenseId: kiyomizu?.id ?? "" });
+		const amount = d.getByTestId(M.amount);
+		await user.clear(amount);
+		await user.type(amount, "1200");
+		expect(d.queryByTestId(M.markPaid)).toBeNull();
+		await user.click(d.getByTestId(M.save));
+		await waitFor(() =>
+			expect(server.calls.filter(([k]) => k === "update")).toHaveLength(1),
+		);
+		const patch = server.calls[0]?.[1].patch as {
+			amountMinor: number;
+			payments: { amountMinor: number; payers: unknown[] }[];
+		};
+		expect(patch.amountMinor).toBe(1200);
+		expect(patch.payments).toHaveLength(1);
+		expect(patch.payments[0]).toMatchObject({
+			amountMinor: 1200,
+			payers: [{ memberId: dennis, amountMinor: 1200 }],
+		});
+	});
+
+	it("Mark paid follows the typed total, names the payer and saves the edit first", async () => {
+		const ryokan = scenario.money.expenses[1];
+		const { d, user } = await open({ expenseId: ryokan?.id ?? "" });
+		expect(d.getByTestId(M.markPaid).textContent).toBe(
+			"Mark paid · ¥50,000 by Audrey",
+		);
+		const amount = d.getByTestId(M.amount);
+		await user.clear(amount);
+		await user.type(amount, "61000");
+		expect(d.getByTestId(M.markPaid).textContent).toBe(
+			"Mark paid · ¥51,000 by Audrey",
+		);
+		await user.click(d.getByTestId(M.markPaid));
+		await waitFor(() =>
+			expect(server.calls.map(([k]) => k)).toEqual(["update", "markPaid"]),
+		);
+		expect(server.calls[0]?.[1].patch).toMatchObject({ amountMinor: 61_000 });
 	});
 });

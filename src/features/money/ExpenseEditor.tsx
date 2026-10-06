@@ -151,6 +151,8 @@ type PaymentDraft = {
 	 * keep while only the payment's amount changes (until one is edited).
 	 */
 	follow?: number[];
+	/** The one payment of the whole total: it follows a corrected total until edited by hand. */
+	followsTotal?: boolean;
 };
 
 type Draft = {
@@ -267,7 +269,33 @@ function paymentDraft(
 		parts.reduce((a, b) => a + b, 0) === Math.abs(p.amountMinor)
 			? { follow: parts }
 			: {}),
+		...(e.payments.length === 1 &&
+		p.currency === e.currency &&
+		Math.abs(p.amountMinor) === Math.abs(e.amountMinor ?? Number.NaN)
+			? { followsTotal: true }
+			: {}),
 	};
+}
+
+/** A corrected total moves the payment that paid all of it (and its payers). */
+function followTotal(
+	payments: PaymentDraft[],
+	total: string,
+	currency: string,
+): PaymentDraft[] {
+	if (parseMoneyInput(total, currency) === null) return payments;
+	return payments.map((p) =>
+		p.followsTotal && p.currency === currency
+			? {
+					...p,
+					amount: total,
+					payers:
+						p.payers.length > 1
+							? rescalePayers(p, total)
+							: p.payers.map((x) => ({ ...x, amount: total })),
+				}
+			: p,
+	);
 }
 
 /**
@@ -352,13 +380,26 @@ export function ExpenseEditor({
 					? (ix.leg(t.legId)?.assigneeIds ?? [])
 					: [];
 		const live = tagged.filter((id) => people.some((p) => p.id === id));
-		return live.length ? live : people.map((p) => p.id);
+		if (live.length) return live;
+		// "Can view" members follow along rather than pay: never ticked by default.
+		const payers = people.filter((p) => p.role !== "viewer");
+		return (payers.length ? payers : people).map((p) => p.id);
 	};
+	// The trip's latest expense's currency, for a trip-wide one.
+	const lastCurrency = data?.expenses
+		.filter((e) => e.currency && !e.refundOfId)
+		.reduce<ExpenseDto | null>(
+			(a, e) => (!a || e.createdAt > a.createdAt ? e : a),
+			null,
+		)?.currency;
 	const currencyFor = (t: BundleTarget) => {
-		const anchor = expenseAnchor(ix, t).nodeId;
+		const anchor = expenseAnchor(ix, t).nodeId ?? scope?.id ?? null;
+		// Trip-wide during the trip: the country of today's plan, else the last currency used.
+		const today = ix.dayOfDate(localParts(new Date(), deviceTz()).date);
+		const here = today ? (ix.lastLocated(today.id)?.nodeId ?? null) : null;
 		return currencyForCountry(
-			scopeCountry(ix, anchor ?? scope?.id ?? null),
-			home,
+			scopeCountry(ix, anchor) ?? scopeCountry(ix, here),
+			today ? (lastCurrency ?? home) : home,
 		);
 	};
 	// The date of the day it hangs on (a stop's, a leg's, a day's), if any.
@@ -886,26 +927,30 @@ export function ExpenseEditor({
 		return f;
 	};
 
+	const saveEdit = async (e: ExpenseDto) => {
+		const { refundOfId: _r, listItemId: _l, ...patch } = fieldsOut();
+		// Split/lines of a refund follow the original (server); private rows have none.
+		if (isRefund) {
+			delete (patch as Record<string, unknown>).split;
+			delete (patch as Record<string, unknown>).lines;
+			delete (patch as Record<string, unknown>).fees;
+		}
+		if (!draft.rate.trim() && e.fxManual)
+			(patch as Record<string, unknown>).fxRate = null;
+		await update.mutateAsync({
+			id: e.id,
+			patch,
+			expectedUpdatedAt: e.updatedAt,
+		});
+		await uploadReceipt(e.id);
+	};
+
 	const save = async () => {
 		if (problems.length || readOnly) return;
 		const f = fieldsOut();
 		try {
 			if (editing) {
-				const { refundOfId: _r, listItemId: _l, ...patch } = f;
-				// Split/lines of a refund follow the original (server); private rows have none.
-				if (isRefund) {
-					delete (patch as Record<string, unknown>).split;
-					delete (patch as Record<string, unknown>).lines;
-					delete (patch as Record<string, unknown>).fees;
-				}
-				if (!draft.rate.trim() && editing.fxManual)
-					(patch as Record<string, unknown>).fxRate = null;
-				await update.mutateAsync({
-					id: editing.id,
-					patch,
-					expectedUpdatedAt: editing.updatedAt,
-				});
-				await uploadReceipt(editing.id);
+				await saveEdit(editing);
 			} else {
 				const input: ExpenseInput = {
 					tripId,
@@ -963,9 +1008,28 @@ export function ExpenseEditor({
 		}
 	};
 
+	// Typed changes to an existing expense (Mark paid saves them first).
+	const [loaded] = useState(() => JSON.stringify(draft));
+	const dirty =
+		editing !== null && (receipt !== null || JSON.stringify(draft) !== loaded);
+	// Mark paid: what's left of the total as typed, by the one payer so far (else me).
+	const rest = editing
+		? remainingInCurrency({
+				...editing,
+				amountMinor: pointsOnly ? null : cashAmount,
+				currency: draft.currency,
+				payments: paymentsOut() as unknown as ExpenseDto["payments"],
+			})
+		: null;
+	const paidSoFar = new Set(
+		draft.payments.flatMap((p) => p.payers.map((x) => x.memberId)),
+	);
+	const restBy = paidSoFar.size === 1 ? [...paidSoFar][0] : meId;
+
 	const onMarkPaid = async () => {
-		if (!editing) return;
+		if (!editing || (dirty && problems.length)) return;
 		try {
+			if (dirty) await saveEdit(editing);
 			await markPaid.mutateAsync({ id: editing.id });
 			toast("Marked paid");
 			onClose();
@@ -1123,7 +1187,16 @@ export function ExpenseEditor({
 											placeholder="0"
 											className="col-start-1 row-start-1 w-full min-w-0 bg-transparent tnum outline-none placeholder:text-muted-foreground disabled:opacity-50"
 											value={draft.amount}
-											onChange={(e) => set({ amount: e.target.value })}
+											onChange={(e) =>
+												set({
+													amount: e.target.value,
+													payments: followTotal(
+														draft.payments,
+														e.target.value,
+														draft.currency,
+													),
+												})
+											}
 										/>
 									</span>
 								</div>
@@ -1200,7 +1273,7 @@ export function ExpenseEditor({
 							/>
 						</div>
 
-						{/* Paid by: one pill picked (inverted); none = not paid yet */}
+						{/* Paid by: one pill picked (inverted, ✓); "Planned" under More = not paid yet */}
 						{!editing && !draft.isPrivate ? (
 							<fieldset
 								aria-labelledby={`${uid}-paid`}
@@ -1231,19 +1304,22 @@ export function ExpenseEditor({
 									/>
 								) : (
 									<div className="flex flex-wrap gap-1.5">
-										{choices([payerId]).map((id) => (
-											<FilterPill
-												key={id}
-												pressed={!planned && id === payerId}
-												onPressedChange={(on) =>
-													on ? pickPayer(id) : set({ status: "planned" })
-												}
-												data-testid={MONEY_TESTID.payerPerson}
-												data-member-id={id}
-											>
-												{nameOf(id)}
-											</FilterPill>
-										))}
+										{choices([payerId]).map((id) => {
+											const on = !planned && id === payerId;
+											return (
+												<FilterPill
+													key={id}
+													pressed={on}
+													// Tapping the payer again keeps them.
+													onPressedChange={() => pickPayer(id)}
+													data-testid={MONEY_TESTID.payerPerson}
+													data-member-id={id}
+												>
+													{nameOf(id)}
+													{on ? <Check aria-hidden="true" /> : null}
+												</FilterPill>
+											);
+										})}
 										{addPerson ? (
 											<PersonSelect
 												value={payerId}
@@ -1274,6 +1350,9 @@ export function ExpenseEditor({
 								costRate={parseRate(draft.rate)}
 								sign={sign}
 								onMarkPaid={onMarkPaid}
+								rest={rest}
+								restBy={restBy && restBy !== meId ? nameOf(restBy) : null}
+								markBlocked={dirty && problems.length > 0}
 								readOnly={readOnly}
 							/>
 						) : null}
@@ -2458,6 +2537,9 @@ function PaymentsEditor({
 	costRate,
 	sign,
 	onMarkPaid,
+	rest,
+	restBy,
+	markBlocked,
 	readOnly,
 }: {
 	draft: Draft;
@@ -2468,6 +2550,11 @@ function PaymentsEditor({
 	costRate: number | null;
 	sign: number;
 	onMarkPaid: () => void;
+	/** What Mark paid would pay, from the total as typed (null: payments in other currencies). */
+	rest: number | null;
+	/** Who Mark paid books it on, when not me. */
+	restBy: string | null;
+	markBlocked: boolean;
 	readOnly: boolean;
 }) {
 	const { graph } = useWorkspace();
@@ -2478,7 +2565,6 @@ function PaymentsEditor({
 		set({
 			payments: draft.payments.map((x) => (x.key === key ? { ...x, ...p } : x)),
 		});
-	const rem = remainingInCurrency(expense);
 	return (
 		<div data-testid={MONEY_TESTID.payments} className="grid gap-2">
 			<div className="flex items-center justify-between">
@@ -2486,19 +2572,19 @@ function PaymentsEditor({
 					Payments
 				</span>
 				{!readOnly &&
-				expense.status !== "paid" &&
-				expense.amountMinor !== null ? (
+				expense.amountMinor !== null &&
+				(rest === null ? expense.status !== "paid" : rest !== 0) ? (
 					<Button
 						type="button"
 						size="xs"
 						variant="outline"
 						data-testid={MONEY_TESTID.markPaid}
+						disabled={markBlocked}
 						onClick={onMarkPaid}
 					>
 						Mark paid
-						{rem
-							? ` · ${formatMoney(Math.abs(rem), expense.currency ?? draft.currency)}`
-							: ""}
+						{rest ? ` · ${formatMoney(Math.abs(rest), draft.currency)}` : ""}
+						{restBy ? ` by ${restBy}` : ""}
 					</Button>
 				) : null}
 			</div>
@@ -2518,6 +2604,7 @@ function PaymentsEditor({
 					setP(p.key, {
 						payers: p.payers.map((y, j) => (j === i ? { ...y, ...x } : y)),
 						follow: undefined,
+						followsTotal: undefined,
 					});
 				const inherits =
 					costRate !== null && p.currency === draft.currency && !p.rate.trim();
@@ -2560,9 +2647,14 @@ function PaymentsEditor({
 									setP(
 										p.key,
 										multi
-											? { amount: v, payers: rescalePayers(p, v) }
+											? {
+													amount: v,
+													payers: rescalePayers(p, v),
+													followsTotal: undefined,
+												}
 											: {
 													amount: v,
+													followsTotal: undefined,
 													payers: [
 														{
 															memberId: p.payers[0]?.memberId ?? "",
@@ -2727,11 +2819,8 @@ function PaymentsEditor({
 						const tz = deviceTz();
 						const { date, time } = localParts(new Date(), tz);
 						const amt =
-							rem !== null && rem !== 0
-								? minorToInput(
-										Math.abs(rem),
-										expense.currency ?? draft.currency,
-									)
+							rest !== null && rest !== 0
+								? minorToInput(Math.abs(rest), draft.currency)
 								: "";
 						set({
 							payments: [
