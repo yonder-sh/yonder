@@ -22,9 +22,9 @@ describe("LazySlot", () => {
 	});
 
 	it("only chunk errors are caught", () => {
-		expect(isChunkError(new TypeError("Importing a module script failed."))).toBe(
-			true,
-		);
+		expect(
+			isChunkError(new TypeError("Importing a module script failed.")),
+		).toBe(true);
 		expect(isChunkError(new Error("x is not a function"))).toBe(false);
 	});
 });

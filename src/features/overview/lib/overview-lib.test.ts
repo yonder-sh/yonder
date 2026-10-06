@@ -9,7 +9,12 @@ import { indexGraph } from "@/lib/engine/graph-index";
 import { zonedEpoch } from "@/lib/engine/time";
 import { declutterLabels, type LabelCandidate } from "../globe/labels";
 import { arcPoints, pathOf, projector } from "../globe/projection";
-import { type DayLine, dayLines, daySections, hereStayIndex } from "./day-lines";
+import {
+	type DayLine,
+	dayLines,
+	daySections,
+	hereStayIndex,
+} from "./day-lines";
 import {
 	favourites,
 	type HighlightCandidate,

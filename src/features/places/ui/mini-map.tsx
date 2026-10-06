@@ -4,13 +4,7 @@
  * stands in, so the layout never jumps.
  */
 
-import {
-	Component,
-	lazy,
-	type ReactNode,
-	useEffect,
-	useState,
-} from "react";
+import { Component, lazy, type ReactNode, useEffect, useState } from "react";
 import { LazySlot } from "@/components/common/lazy-slot";
 import { pinStyle } from "@/lib/domain/taxonomy";
 import { cn } from "@/lib/utils";

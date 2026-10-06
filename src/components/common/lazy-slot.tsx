@@ -17,13 +17,13 @@ export class LazySlot extends Component<
 	{ fallback: ReactNode; children: ReactNode },
 	{ error: unknown }
 > {
-	state = { error: null as unknown };
+	override state = { error: null as unknown };
 
 	static getDerivedStateFromError(error: unknown) {
 		return { error };
 	}
 
-	render() {
+	override render() {
 		const { error } = this.state;
 		if (error !== null) {
 			if (!isChunkError(error)) throw error;

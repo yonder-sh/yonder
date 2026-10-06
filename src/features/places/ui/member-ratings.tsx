@@ -11,9 +11,9 @@
 
 import { MessageSquare, Pencil } from "lucide-react";
 import { lazy, useEffect, useRef, useState } from "react";
-import { LazySlot } from "@/components/common/lazy-slot";
 import { toast } from "sonner";
 import { EditGuard, useEditGuard } from "@/components/common/edit-guard";
+import { LazySlot } from "@/components/common/lazy-slot";
 import { MarkdownText } from "@/components/common/markdown-text";
 import { MemberAvatar } from "@/components/common/member";
 import { RatingMenu, RatingPill } from "@/components/kit";

@@ -17,8 +17,8 @@ import { toast } from "sonner";
 import { EmptyState } from "@/components/common/empty-state";
 import { YonderMark } from "@/components/common/yonder-mark";
 import { buttonVariants } from "@/components/ui/button";
-import { rewarmSavedTrip } from "@/features/offline/register-sw";
 import { Skeleton } from "@/components/ui/skeleton";
+import { rewarmSavedTrip } from "@/features/offline/register-sw";
 import {
 	isNetworkFailure,
 	markTripSaved,
