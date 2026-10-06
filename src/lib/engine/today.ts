@@ -284,6 +284,8 @@ export interface TodayOptions {
 	here?: LngLat | null;
 	/** Public holidays for opening hours (`trip.settings.holidays`). */
 	holidays?: readonly Holiday[];
+	/** A `?asOf` view: a Done stamped after `now` isn't done yet (live, it counts as done now). */
+	asOf?: boolean;
 }
 
 const round = (ms: number) => Math.round(ms / MS_PER_MINUTE);
@@ -525,13 +527,14 @@ export function computeToday(
 		schedule.days[prevId]?.end.getTime() ?? midnight,
 	);
 
-	// A stamp before the day is done on plan (its planned end); one after now isn't done yet (an earlier `asOf`).
+	// A stamp before the day is done on plan (its planned end); one after now isn't done yet
+	// in an earlier `asOf`, and done now live (the clock ticks behind a fresh tap).
 	const doneMs = (it: GraphItem): number | null => {
 		const raw = it.doneAt ? Date.parse(it.doneAt) : Number.NaN;
 		if (!Number.isFinite(raw)) return null;
 		const at =
 			raw < dayStart ? (schedule.items[it.id]?.end.getTime() ?? raw) : raw;
-		return at > now ? null : at;
+		return at <= now ? at : opts.asOf ? null : now;
 	};
 	let lastDone = -1;
 	list.forEach((it, i) => {
@@ -705,7 +708,7 @@ export function computeToday(
 	const drift = measured
 		? round(measured.flowArrive - measured.plannedArrive)
 		: 0;
-	const pace: TodayPace | null = !paced
+	let pace: TodayPace | null = !paced
 		? null
 		: drift >= PACE_MIN
 			? { kind: "behind", minutes: drift }
@@ -823,7 +826,8 @@ export function computeToday(
 		return saved;
 	};
 	const fixesFor = (target: Target, spare: number, plannedSpare: number) => {
-		const need = Math.min(TIGHT_MIN, plannedSpare) - spare;
+		// At least enough to arrive on time, even when the plan itself was late.
+		const need = Math.max(-spare, Math.min(TIGHT_MIN, plannedSpare) - spare);
 		const want = Math.max(need, Math.min(plannedSpare, COMFORT_MIN) - spare);
 		// Not started, or under way (the stop you're at, a floating one in its time).
 		const open = target.before.filter(
@@ -876,8 +880,9 @@ export function computeToday(
 	for (const t of targets) {
 		const spare = round(t.at - t.arrive);
 		const plannedSpare = round(t.at - t.plannedArrive);
-		// Within `PACE_MIN` of the plan's own room is on time, as the pace says.
-		if (spare >= TIGHT_MIN || plannedSpare - spare < PACE_MIN) continue;
+		// Late is always a risk; tight within `PACE_MIN` of the plan's own room is on time.
+		if (spare >= 0 && (spare >= TIGHT_MIN || plannedSpare - spare < PACE_MIN))
+			continue;
 		risky.add(t);
 		risks.push({
 			itemId: t.itemId,
@@ -893,6 +898,10 @@ export function computeToday(
 			fixes: fixesFor(t, spare, plannedSpare),
 		});
 	}
+	// Never "early" while a fixed stop is reached late.
+	const lateBy = Math.max(0, ...risks.map((r) => -r.spareMin));
+	if (lateBy > 0 && pace && pace.kind !== "behind")
+		pace = { kind: "behind", minutes: lateBy };
 
 	// ---- the next fixed stop, free time before it, and ideas for it -----------
 	let leave: TodayLeave | null = null;

@@ -557,6 +557,31 @@ describe("computeToday: running late (board P15)", () => {
 	});
 });
 
+describe("computeToday: a booking the plan itself reaches late", () => {
+	const late = (mark?: LocalAt) =>
+		scenario({
+			firstDate: DAY,
+			days: [
+				{
+					items: [
+						{ k: "sensoji", node: "sensoji", min: 60, done: mark },
+						{ k: "knives", node: "knifeShop", min: 90 },
+						{ k: "itoya", node: "itoya", pin: "11:00", min: 60 },
+					],
+				},
+			],
+		});
+
+	it("a Done that gains a little still leaves it late: a risk with a fix, and never early", () => {
+		const { v } = view(late(done("09:50")), at("09:55"));
+		const r = v.risks.find((x) => x.name === "Itoya Ginza");
+		expect(r?.late).toBe(true);
+		expect(r?.plannedSpareMin).toBeLessThan(0);
+		expect(r?.fixes.length).toBeGreaterThan(0);
+		expect(v.pace?.kind).toBe("behind");
+	});
+});
+
 describe("computeToday: running early (board P18)", () => {
 	const marks = {
 		cha: done("09:50"),
@@ -729,7 +754,7 @@ describe("computeToday: following your pace after a Done", () => {
 	it("a Done from before the day counts from its planned end: before that the morning follows the plan", () => {
 		// Bic Camera (16:10–17:40) tapped the evening before.
 		const s = tokyoDay({ bic: done("21:30", "2027-10-04") });
-		const { v } = view(s, at("10:30"));
+		const { v } = view(s, at("10:30"), { asOf: true });
 		expect(v.done).toEqual([]);
 		expect(names(v.passed)).toEqual(["Cha no Ikedaya"]);
 		expect(v.current?.name).toBe("Nakano Broadway");
@@ -745,22 +770,30 @@ describe("computeToday: following your pace after a Done", () => {
 		const { v } = view(s, at("10:30"));
 		expect(t(v.done[0]?.doneAt as number)).toBe("00:00");
 		expect(t(v.done[1]?.doneAt as number)).toBe("10:30");
-		const { v: before } = view(s, at("10:29"));
+		const { v: before } = view(s, at("10:29"), { asOf: true });
 		expect(names(before.done)).toEqual(["Cha no Ikedaya"]);
 	});
 
 	it("a Done stamped after now isn't done yet: an earlier `asOf` shows the day as it was", () => {
 		const s = tokyoDay({ cha: done("09:50"), broadway: done("13:00") });
-		const { v } = view(s, at("09:30"));
+		const { v } = view(s, at("09:30"), { asOf: true });
 		expect(v.done).toEqual([]);
 		expect(v.current?.name).toBe("Cha no Ikedaya");
 		expect(v.pace).toBeNull();
-		const { v: noon } = view(s, at("12:00"));
+		const { v: noon } = view(s, at("12:00"), { asOf: true });
 		expect(names(noon.done)).toEqual(["Cha no Ikedaya"]);
 		expect(noon.current?.name).toBe("Nakano Broadway");
 		// At the stamp itself it's done.
 		const { v: one } = view(s, at("13:00"));
 		expect(names(one.done)).toEqual(["Cha no Ikedaya", "Nakano Broadway"]);
+	});
+
+	it("live, a Done stamped just after the ticking clock counts as done now", () => {
+		const s = tokyoDay({ cha: done("09:51") });
+		const { v } = view(s, at("09:50"));
+		expect(names(v.done)).toEqual(["Cha no Ikedaya"]);
+		expect(t(v.done[0]?.doneAt as number)).toBe("09:50");
+		expect(v.current?.name).not.toBe("Cha no Ikedaya");
 	});
 
 	it("dinner before a booking makes way when you leave for it: the booking is tight, not late; the only fix left is to shorten dinner", () => {
@@ -1473,7 +1506,7 @@ describe("todayDayId", () => {
 		});
 		const { schedule } = view(s, at("12:00", "2027-10-06"), undefined, "d2");
 		const end = schedule.items[s.I.next as string]?.end.getTime() as number;
-		const { v: early } = view(s, end - 60_000, undefined, "d2");
+		const { v: early } = view(s, end - 60_000, { asOf: true }, "d2");
 		expect(early.done).toEqual([]);
 		expect(early.current?.name).toBe("Senso-ji");
 		const { v } = view(s, at("12:00", "2027-10-06"), undefined, "d2");

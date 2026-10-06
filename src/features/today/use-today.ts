@@ -37,8 +37,14 @@ export function useToday(here: LngLat | null = null): TodayData {
 	);
 	const view = useMemo(
 		() =>
-			dayId ? computeToday(ix, schedule, dayId, now, { raterIds, here }) : null,
-		[ix, schedule, dayId, now, raterIds, here],
+			dayId
+				? computeToday(ix, schedule, dayId, now, {
+						raterIds,
+						here,
+						asOf: !!asOf,
+					})
+				: null,
+		[ix, schedule, dayId, now, raterIds, here, asOf],
 	);
 	const city = useMemo(() => {
 		const day = ix.day(dayId);
