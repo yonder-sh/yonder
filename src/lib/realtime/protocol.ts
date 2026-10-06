@@ -18,6 +18,7 @@ import { z } from "zod";
 import { TRIP_KEYS, type TripKey } from "@/lib/query/keys";
 import { TRIP_ROLE_VALUES } from "@/lib/schemas/enums";
 import type { BundleTarget } from "@/lib/schemas/targets";
+import { DaysParam, SEL_RE } from "@/lib/workspace/search";
 import { ViewUi } from "./view-protocol";
 
 export type { TripKey } from "@/lib/query/keys";
@@ -416,8 +417,9 @@ export const AwarenessView = z.object({
 	scopeName: z.string().max(200),
 	lens: z.enum(LENSES),
 	tab: z.enum(TABS),
-	days: z.string().max(40).nullable(),
-	sel: z.string().max(120).nullable(),
+	/** Both reach peers' CSS selectors: only the URL's own shapes pass. */
+	days: DaysParam.nullable(),
+	sel: z.string().regex(SEL_RE).nullable(),
 	path: z.string().max(600),
 	/**
 	 * FB-21: ephemeral view state beyond the URL (plan folds, sub-views…),

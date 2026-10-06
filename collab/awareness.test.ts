@@ -72,6 +72,19 @@ describe("sanitizeAwarenessUpdate", () => {
 		}
 	});
 
+	it("drops a view whose selection or days aren't the URL's own shapes", () => {
+		for (const extra of [
+			{ sel: 'i.x"],body{display:none}[x="' },
+			{ days: "x}body{display:none}" },
+		]) {
+			const bad = new Map<number, Record<string, unknown> | null>([
+				[1, { view: { ...view("/t/asia-2027"), ...extra } }],
+			]);
+			sanitizeAwarenessUpdate(bad, new Map(), ctx);
+			expect(bad.get(1)?.view).toBeUndefined();
+		}
+	});
+
 	it("validates editing and keeps TipTap carets only on note docs", () => {
 		const s = new Map<number, Record<string, unknown> | null>([
 			[

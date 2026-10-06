@@ -7,6 +7,7 @@ import "./__fixtures__/host-tz";
 import { describe, expect, it } from "vitest";
 import {
 	AUTO_FLIGHT_MIN_KM,
+	airportNameScore,
 	flightArrDate,
 	flightDepDate,
 	flightEstimateBetween,
@@ -196,6 +197,14 @@ describe("airport detection by coordinates + name (FB-19)", () => {
 				JFK,
 			),
 		).toBe(true);
+	});
+
+	it("survives a crafted airport code (no regex from it)", () => {
+		const shibuya = node("area", "Shibuya");
+		expect(() =>
+			airportNameScore(shibuya, { iata: "a(b", name: "Nowhere" }),
+		).not.toThrow();
+		expect(airportNameScore(node("place", "JFK T4"), JFK)).toBe(2);
 	});
 
 	it("keeps ground transfers between airports out of the default", () => {

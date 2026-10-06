@@ -85,5 +85,7 @@ describe("followers and spotlight", () => {
 		expect(selectionAnchors(`d.${KYOTO}`)).toEqual([`dayh:${KYOTO}`]);
 		expect(selectionAnchors(`n.${KYOTO}`)).toEqual([]);
 		expect(selectionAnchors(null)).toEqual([]);
+		// A crafted one never reaches the style sheet.
+		expect(selectionAnchors('i.x"],body{display:none}[x="')).toEqual([]);
 	});
 });

@@ -44,6 +44,7 @@ import {
 	isMapCameraFollowed,
 	onMapMoved,
 } from "@/lib/workspace/map-projector";
+import { SEL_RE } from "@/lib/workspace/search";
 import { useFollowPause } from "../follow-pause";
 import {
 	anchorSelector,
@@ -159,7 +160,8 @@ function anchorKey(a: CursorAnchor | null | undefined): string {
 
 /** The anchor ids a peer's `view.sel` highlights (their selection, FB-17 touch). */
 export function selectionAnchors(sel: string | null | undefined): string[] {
-	if (!sel) return [];
+	// It ends up in a style sheet: only a well-formed selection.
+	if (!sel || !SEL_RE.test(sel)) return [];
 	const [k, id] = sel.split(".");
 	if (!id) return [];
 	if (k === "i") return [`item:${id}`];

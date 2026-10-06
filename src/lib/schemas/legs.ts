@@ -143,7 +143,7 @@ export type TransitBooking = z.infer<typeof TransitBooking>;
 
 /** The server REPLACES tz/lat/lng from airports.json by IATA (D14). */
 export const Airport = z.object({
-	iata: z.string().length(3),
+	iata: z.string().regex(/^[A-Za-z]{3}$/),
 	name: Str(200),
 	city: Str(200).optional(),
 	country: z.string().length(2).optional(),

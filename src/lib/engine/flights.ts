@@ -243,7 +243,12 @@ export function airportNameScore(
 ): number {
 	if (nodeIata(node) === airport.iata.toUpperCase()) return 3;
 	if (looksLikeAirportNode(node)) return 2;
-	if (new RegExp(`\\b${airport.iata}\\b`, "i").test(node.name)) return 2;
+	// Only a plain 3-letter code goes into the pattern (a crafted one would throw).
+	if (
+		/^[a-z]{3}$/i.test(airport.iata) &&
+		new RegExp(`\\b${airport.iata}\\b`, "i").test(node.name)
+	)
+		return 2;
 	const n = fold(node.name);
 	if (n.length >= 4 && fold(airport.name).includes(n)) return 1;
 	return 0;
