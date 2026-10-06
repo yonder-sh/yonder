@@ -41,6 +41,7 @@ import {
 	migrateDatabase,
 } from "@/db/migrate.server";
 import { tripMembers, user } from "@/db/schema";
+import { setOpeningHours } from "@/features/insights/insights.functions";
 import { createListItem } from "@/features/lists/lists.functions";
 import { getTripGraph, listActivity } from "@/functions/graph.functions";
 import {
@@ -416,6 +417,52 @@ describe("amend (SUG-06)", () => {
 		).toHaveLength(1);
 		await call<P>(moveItem, U.sue, { itemId: itoya, dayId: home });
 		expect((await rowOf(a.proposed.id)).status).toBe("withdrawn");
+	});
+
+	it("two reorders on the same day, or two hours edits, stay one open suggestion (A298, A053)", async () => {
+		const t = await freshTrip();
+		const itoya = t.ids.items.itoya ?? "";
+		const home = (await itemDay(t.tripId, itoya)) as string;
+		const sibs = (
+			await getDb().execute(sql`
+				select id::text as id from items
+				 where day_id = ${home} and id <> ${itoya} and deleted_at is null
+				 order by position collate "C", id`)
+		).rows.map((r) => (r as { id: string }).id);
+		expect(sibs.length).toBeGreaterThan(1);
+		const a = await call<P>(moveItem, U.sue, {
+			itemId: itoya,
+			dayId: home,
+			afterItemId: sibs[0],
+		});
+		const b = await call<P>(moveItem, U.sue, {
+			itemId: itoya,
+			dayId: home,
+			afterItemId: sibs[1],
+		});
+		expect(b.proposed?.id).toBe(a.proposed.id);
+		const moved = await rowOf(a.proposed.id);
+		expect(moved.status).toBe("open");
+		expect(moved.payload.afterItemId).toBe(sibs[1]);
+
+		const nodeId = t.ids.nodes.itoya ?? "";
+		const hours = (alwaysOpen: boolean) => ({
+			nodeId,
+			hours: {
+				source: "manual",
+				alwaysOpen,
+				periods: [],
+				updatedAt: new Date().toISOString(),
+			},
+		});
+		const h1 = await call<P>(setOpeningHours, U.sue, hours(false));
+		const h2 = await call<P>(setOpeningHours, U.sue, hours(true));
+		expect(h2.proposed?.id).toBe(h1.proposed.id);
+		const row = await rowOf(h1.proposed.id);
+		expect(row.status).toBe("open");
+		expect((row.payload.hours as { alwaysOpen: boolean }).alwaysOpen).toBe(
+			true,
+		);
 	});
 
 	it("renaming my own proposed place twice is one proposal; deleting it withdraws it and its dependants", async () => {

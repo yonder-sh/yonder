@@ -8,9 +8,10 @@
  * - a field whose value differs from the snapshot → `changed` (forceable).
  *
  * Fields are the def's `fields(input)` names (camelCase columns of the
- * entity's table), plus three derived ones: `assigneeIds` (the assignee
- * table), `priority:<memberId>` (`node_priorities`) and `deleted`/`deletedAt`
- * (the row is live). `position` is snapshotted but never makes a proposal
+ * entity's table, or a JSON path into one: `details.flight`), plus derived
+ * ones: `assigneeIds` (the assignee table), `priority:<memberId>`
+ * (`node_priorities`), `extraTargetNodeIds` (`list_item_targets`), `target`
+ * (a bundle row's target) and `deleted`/`deletedAt` (the row is live). `position` is snapshotted but never makes a proposal
  * "equal to its base" on its own (a move back to the same day gets a new key).
  */
 import { sql } from "drizzle-orm";
@@ -81,6 +82,30 @@ function normalise(field: string, v: unknown): Json {
 	return v as Json;
 }
 
+/** `details.openingHours` → the row's `details.openingHours` (a column, then JSON keys). */
+function pathOf(row: Record<string, unknown>, field: string): unknown {
+	const [col = "", ...keys] = field.split(".");
+	let v: unknown = row[snakeCase(col)];
+	for (const k of keys)
+		v = v && typeof v === "object" ? (v as Record<string, unknown>)[k] : null;
+	return v;
+}
+
+/** A bundle row's target, shaped like the `target` of its move/update payload. */
+function targetOf(row: Record<string, unknown>): Json {
+	if (row.expense_id)
+		return {
+			kind: "expense",
+			expenseId: row.expense_id as string,
+			...(row.payment_id ? { paymentId: row.payment_id as string } : {}),
+		};
+	for (const kind of ["node", "leg", "item", "day"] as const) {
+		const id = row[`${kind}_id`];
+		if (id) return { kind, [`${kind}Id`]: id as string };
+	}
+	return { kind: "trip" };
+}
+
 /**
  * The row's current snapshot for `fields`, or null when the row is missing or
  * deleted (or belongs to another trip).
@@ -125,7 +150,15 @@ export async function snapshotRef(
 				| { priority: string; comment: string | null }
 				| undefined;
 			out[f] = r ? { priority: r.priority, comment: r.comment } : null;
-		} else out[f] = normalise(f, hit.row[snakeCase(f)]);
+		} else if (f === "extraTargetNodeIds" && kind === "list") {
+			const a = await exec.execute(sql`
+				select coalesce(array_agg(node_id::text order by node_id), '{}') as ids
+				  from list_item_targets where list_item_id = ${rowId}`);
+			out[f] = ((a.rows[0] as { ids: string[] } | undefined)?.ids ??
+				[]) as Json;
+		} else if (f === "target" && (kind === "list" || kind === "att"))
+			out[f] = targetOf(hit.row);
+		else out[f] = normalise(f, pathOf(hit.row, f));
 	}
 	return { kind, id: rowId, updatedAt: hit.updatedAt, fields: out };
 }

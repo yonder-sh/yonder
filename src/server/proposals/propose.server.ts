@@ -41,6 +41,7 @@ import {
 	entityLabel,
 	legIdOfTarget,
 	snapshotRef,
+	stableJson,
 } from "./base.server";
 import { REGISTRY } from "./registry.server";
 import { actorOf, type ProposableDef } from "./types";
@@ -629,6 +630,7 @@ export async function proposeChange(
 			? toProposalRow(res.rows[0] as Record<string, unknown>)
 			: null;
 		if (prev) {
+			const prevPayload = prev.payload;
 			payload = mergePayload(prev.payload, payload);
 			const prevFields = fieldsOf(def, payload);
 			const chain = (await requiresChain(tx, tripId, ghosts)).filter(
@@ -673,10 +675,23 @@ export async function proposeChange(
 					baseRef = grown;
 				}
 			}
-			// Moved back / renamed back: the proposal would change nothing.
+			// Moved back / renamed back: the proposal would change nothing. A
+			// reorder in place (the earlier suggestion kept the day/parent/target
+			// too) is never "back": a new position key can't tell.
+			const reorder =
+				!!baseRef &&
+				"position" in baseRef.fields &&
+				Object.keys(baseRef.fields).every(
+					(f) =>
+						f === "position" ||
+						!(f in prevPayload) ||
+						stableJson(prevPayload[f]) ===
+							stableJson((baseRef as BaseRef).fields[f]),
+				);
 			if (
 				baseRef &&
 				dry.after &&
+				!reorder &&
 				Object.keys(baseRef.fields).some((f) => f !== "position") &&
 				changedFields(baseRef, dry.after, { ignorePosition: true }).length === 0
 			)

@@ -70,6 +70,9 @@ function redactDetails(v: Json): Json {
 	}
 }
 
+const partOf = (v: Json, key: string): Json =>
+	v && typeof v === "object" && !Array.isArray(v) ? (v[key] ?? null) : null;
+
 /** The DTO for one row (`before` from the server-only base; guests redacted). */
 export function proposalDto(
 	r: ProposalRow & { dependants: string[] },
@@ -95,6 +98,23 @@ export function proposalDto(
 			) as Record<string, Json>;
 		}
 		if ("details" in before) before.details = redactDetails(before.details);
+		// Snapshots of one part of a leg's details (`details.flight`).
+		if ("details.flight" in before)
+			before["details.flight"] = partOf(
+				redactDetails({
+					kind: "flight",
+					flight: before["details.flight"],
+				}),
+				"flight",
+			);
+		if ("details.booking" in before)
+			before["details.booking"] = partOf(
+				redactDetails({
+					kind: "transit",
+					booking: before["details.booking"],
+				}),
+				"booking",
+			);
 	}
 	return {
 		id: r.id,
