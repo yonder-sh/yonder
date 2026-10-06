@@ -184,6 +184,9 @@ export function BookingDetails({
 							onPick={(target) => {
 								setForOpen(false);
 								actions.move(row.id, { target });
+								// Already booked: the stop it's now for is booked too (U002).
+								if (row.status === "done")
+									booking.bookStop({ target, dueRule: null });
 							}}
 						>
 							<Button
@@ -374,7 +377,7 @@ export function BookingDetails({
 							<Button
 								size="sm"
 								data-testid={LISTS_TESTID.bookingMarkBooked}
-								onClick={() => booking.markBooked(entry, f)}
+								onClick={() => booking.markBooked(entry)}
 							>
 								<CalendarCheck /> Mark booked
 							</Button>

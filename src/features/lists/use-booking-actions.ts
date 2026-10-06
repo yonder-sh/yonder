@@ -1,7 +1,8 @@
 /**
  * The Bookings tab's writes (One Yonder D12): "Mark booked" ticks the
  * booking to-do and sets its stop "Booked for this date" (`items.fixed_date`,
- * the what-if's "Needs rebooking"); "Not booked yet" (or unticking it, in
+ * the what-if's "Needs rebooking"), as does ticking it in To-dos or linking a
+ * booked one to a stop (U002); "Not booked yet" (or unticking it, in
  * Bookings or To-dos) reopens the to-do and clears its stop's "Booked for
  * this date" too, with Undo for both.
  */
@@ -14,11 +15,12 @@ import { isProposed } from "@/lib/schemas/proposals";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import {
 	type BookingEntry,
-	type BookingFor,
 	bookedStopOf,
+	bookingStopId,
 } from "./bookings-model";
 import { plainOf } from "./format";
 import { itemName } from "./list-model";
+import type { ListItemDto } from "./lists.functions";
 import { useListActions } from "./use-list-actions";
 
 export function useBookingActions() {
@@ -46,15 +48,19 @@ export function useBookingActions() {
 				),
 		},
 	);
+	/** The stop a booking to-do is for becomes "Booked for this date". */
+	const bookStop = (row: Pick<ListItemDto, "target" | "dueRule">) => {
+		const item = ix.item(bookingStopId(ix, row));
+		if (item?.dayId && !item.fixedDate)
+			fixDate.mutate({ itemId: item.id, fixedDate: true });
+	};
 	return {
+		bookStop,
 		/** Ticks the to-do; a stop it is for becomes "Booked for this date". */
-		markBooked: (e: BookingEntry, f: BookingFor | null) => {
+		markBooked: (e: BookingEntry) => {
 			if (e.kind !== "todo") return;
 			lists.setStatus(e.row.id, "done");
-			if (f?.target.kind !== "item") return;
-			const item = ix.item(f.target.itemId);
-			if (item?.dayId && !item.fixedDate)
-				fixDate.mutate({ itemId: item.id, fixedDate: true });
+			bookStop(e.row);
 		},
 		/**
 		 * Reopens a ticked booking to-do and clears its stop's "Booked for this

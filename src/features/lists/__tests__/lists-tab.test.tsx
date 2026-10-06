@@ -585,6 +585,51 @@ describe("Bookings", () => {
 		);
 	});
 
+	it("ticking a booking in To-dos books its stop too (U002)", async () => {
+		mount({ list: "todo" });
+		fireEvent.click(
+			await screen.findByRole("checkbox", {
+				name: "Done: Shibuya Sky sunset slot",
+			}),
+		);
+		await waitFor(() =>
+			expect(server.calls).toEqual(
+				expect.arrayContaining([
+					["status", { id: SKY, status: "done" }],
+					["item", { itemId: I.sky, patch: { fixedDate: true } }],
+				]),
+			),
+		);
+	});
+
+	it("linking a booked booking to a stop books the stop (U002)", async () => {
+		const user = userEvent.setup();
+		const ghibli = row({
+			id: ID(35),
+			text: "Ghibli Museum tickets",
+			dueKind: "opens",
+			status: "done",
+		});
+		mount({ list: "bookings" }, [ghibli]);
+		const r = screen
+			.getAllByTestId(L.bookingRow)
+			.find((x) => x.dataset.id === ID(35)) as HTMLElement;
+		await user.click(within(r).getByTestId(L.bookingOpen));
+		const d = await screen.findByTestId(L.bookingDetails);
+		await user.click(within(d).getByTestId(L.bookingForPick));
+		const picker = await screen.findByTestId(L.bookingForPicker);
+		const sky = within(picker)
+			.getAllByRole("option")
+			.find((o) => o.textContent?.startsWith("Shibuya Sky")) as HTMLElement;
+		await user.click(sky);
+		await waitFor(() =>
+			expect(server.calls).toContainEqual([
+				"item",
+				{ itemId: I.sky, patch: { fixedDate: true } },
+			]),
+		);
+	});
+
 	it("a booked stop on its own offers Not booked yet", async () => {
 		const user = userEvent.setup();
 		mount({ list: "bookings" });

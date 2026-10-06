@@ -302,6 +302,8 @@ export function ListBoard(props: BoardProps) {
 			timers.current.delete(row.id);
 			if (row.status === "open") {
 				actions.setStatus(row.id, "done");
+				// D12: ticking a booking books its stop too (U002).
+				if (isBookingTodo(row)) booking.bookStop(row);
 				setLingering((l) => ({ ...l, [row.id]: true }));
 				timers.current.set(
 					row.id,

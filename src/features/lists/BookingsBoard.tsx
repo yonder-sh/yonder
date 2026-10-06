@@ -282,9 +282,7 @@ export function BookingsBoard({
 										canEdit={editable(e)}
 										onSelect={() => setSelId(e.id === selId ? null : e.id)}
 										onToggle={() =>
-											isBooked(e)
-												? booking.notBooked(e)
-												: booking.markBooked(e, bookingFor(ix, schedule, e))
+											isBooked(e) ? booking.notBooked(e) : booking.markBooked(e)
 										}
 									>
 										{beside ? null : details}
