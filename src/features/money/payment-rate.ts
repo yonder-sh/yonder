@@ -15,7 +15,7 @@ type SavedPayment = {
 };
 
 /** `YYYY-MM-DD` of an instant in a zone. */
-function dateIn(iso: string, tz: string): string {
+export function dateIn(iso: string, tz: string): string {
 	const d = new Date(iso);
 	try {
 		return new Intl.DateTimeFormat("en-CA", {
@@ -27,6 +27,15 @@ function dateIn(iso: string, tz: string): string {
 	} catch {
 		return d.toISOString().slice(0, 10);
 	}
+}
+
+/** The day an expense was paid (its first payment), else when it's expected. */
+export function expenseDate(e: {
+	payments: readonly { paidAt: string; paidTz: string }[];
+	expectedOn: string | null;
+}): string | null {
+	const p = e.payments[0];
+	return p ? dateIn(p.paidAt, p.paidTz) : e.expectedOn;
 }
 
 /**

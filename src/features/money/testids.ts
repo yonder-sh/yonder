@@ -27,6 +27,7 @@ export const MONEY_TESTID = {
 	breakdown: "money-breakdown",
 	expenseList: "money-expense-list",
 	expenseRow: "money-expense-row",
+	expenseDate: "money-expense-date",
 	shoppingRow: "money-shopping-row",
 	addButton: "money-add",
 	displayCurrency: "money-display-currency",

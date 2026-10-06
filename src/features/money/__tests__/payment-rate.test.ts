@@ -3,7 +3,7 @@
  * (its own paid date), never today's rate labelled "that day's rate".
  */
 import { describe, expect, it } from "vitest";
-import { autoPaymentRate, formatRate } from "../payment-rate";
+import { autoPaymentRate, expenseDate, formatRate } from "../payment-rate";
 
 const p1 = {
 	id: "p1",
@@ -86,5 +86,18 @@ describe("autoPaymentRate (MONEY-R2-06)", () => {
 				TODAY,
 			).rate,
 		).toBeNull();
+	});
+});
+
+describe("expenseDate", () => {
+	it("is the first payment's day where it was paid, else the expected day", () => {
+		const paid = { paidAt: "2027-10-03T16:30:00.000Z", paidTz: "Asia/Tokyo" };
+		expect(expenseDate({ payments: [paid], expectedOn: null })).toBe(
+			"2027-10-04",
+		);
+		expect(expenseDate({ payments: [], expectedOn: "2027-10-06" })).toBe(
+			"2027-10-06",
+		);
+		expect(expenseDate({ payments: [], expectedOn: null })).toBeNull();
 	});
 });

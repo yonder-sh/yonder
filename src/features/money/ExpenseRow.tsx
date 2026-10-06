@@ -9,10 +9,12 @@ import { Lock, Undo2 } from "lucide-react";
 import { Crumbs } from "@/components/common/crumbs";
 import { PersonAvatar, resolveMember } from "@/components/common/member";
 import { targetLabel } from "@/lib/engine/money-scope";
+import { formatDayDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { useUi } from "@/lib/workspace/ui-store";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { CategoryGlyph, MonoNumbers, Num, statusText } from "./money-ui";
+import { expenseDate } from "./payment-rate";
 import { MONEY_TESTID } from "./testids";
 import { type Display, originalAndApprox, type Row } from "./use-money";
 
@@ -45,6 +47,7 @@ export function ExpenseRow({
 		: e.shares.length;
 	const { original, approx } = originalAndApprox(e, display);
 	const where = targetLabel(ix, e.target);
+	const date = expenseDate(e);
 	const status = statusText(e);
 	const cashless = e.amountMinor === null;
 	return (
@@ -118,6 +121,11 @@ export function ExpenseRow({
 						) : null}
 						{!e.isPrivate && splitN > 0 ? (
 							<span className="shrink-0">split {splitN}</span>
+						) : null}
+						{date ? (
+							<span data-testid={MONEY_TESTID.expenseDate} className="shrink-0">
+								{formatDayDate(date)}
+							</span>
 						) : null}
 						{showWhere ? (
 							<span className="flex min-w-0 items-center gap-1 truncate">

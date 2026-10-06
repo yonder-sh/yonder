@@ -20,6 +20,7 @@ import {
 } from "@/lib/schemas/enums";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { Bar, CategoryIcon, Num } from "./money-ui";
+import { expenseDate } from "./payment-rate";
 import { MONEY_TESTID } from "./testids";
 import type { Display, Row, ShoppingRow } from "./use-money";
 
@@ -41,6 +42,8 @@ type Line = {
 type Part = {
 	category: ExpenseCategory;
 	anchor: Row["anchor"];
+	/** Paid (or expected) on: its day when it hangs on none. */
+	date: string | null;
 	planned: number;
 	actual: number;
 	exact: Exact;
@@ -57,6 +60,7 @@ export function breakdownParts(
 			.map((r) => ({
 				category: r.expense.category,
 				anchor: r.anchor,
+				date: expenseDate(r.expense),
 				planned: r.facts.plannedHome ?? 0,
 				actual: r.facts.actualHome,
 				exact: originalAmounts(r.expense),
@@ -66,6 +70,7 @@ export function breakdownParts(
 			.map((s) => ({
 				category: "shopping" as const,
 				anchor: s.anchor,
+				date: null,
 				planned: s.homeMinor ?? 0,
 				actual: 0,
 				exact: { currency: s.currency, planned: s.amountMinor, actual: 0 },
@@ -149,7 +154,11 @@ export function Breakdown({
 			return [...acc.values()].sort((a, b) => b.planned - a.planned);
 		}
 		for (const r of pub) {
-			const day = r.anchor.dayId ? ix.day(r.anchor.dayId) : undefined;
+			const day = r.anchor.dayId
+				? ix.day(r.anchor.dayId)
+				: r.date
+					? ix.dayOfDate(r.date)
+					: undefined;
 			if (day)
 				add(
 					day.id,
