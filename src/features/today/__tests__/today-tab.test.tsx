@@ -547,7 +547,7 @@ describe("Today's own states", () => {
 		expect(next).toHaveTextContent("Cha no Ikedaya");
 	});
 
-	it("the end of the day: nothing left, tomorrow's first stop and where you sleep", () => {
+	it("the end of the day: nothing left, tomorrow's first stop and where you sleep", async () => {
 		const all = Object.fromEntries(
 			["cha", "broadway", "yodobashi", "bic", "dinner", "bar", "gai"].map(
 				(k, i) => [k, done(`1${i}:00`)],
@@ -565,6 +565,10 @@ describe("Today's own states", () => {
 			expect.stringContaining("travelmode=walking"),
 		);
 		expect(screen.queryByTestId(T.next)).toBeNull();
+		fireEvent.click(screen.getByTestId(T.tonightAddress));
+		expect(await screen.findByTestId(T.driver)).toHaveTextContent(
+			"Hotel Gracery",
+		);
 	});
 
 	it("a day without stops says so and opens the Plan", () => {

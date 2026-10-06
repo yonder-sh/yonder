@@ -160,7 +160,12 @@ function TodayPage({ phone }: { phone: boolean }) {
 					</Button>
 				</div>
 			)}
-			{view?.tonight ? <Tonight view={view} /> : null}
+			{view?.tonight ? (
+				<Tonight
+					view={view}
+					onAddress={(nodeId, by) => setDriver({ nodeId, by })}
+				/>
+			) : null}
 			<div className="flex flex-wrap items-center justify-between gap-2 pt-2">
 				{loc.supported ? (
 					<Button
@@ -931,7 +936,13 @@ function Ended({ view }: { view: TodayView }) {
 	);
 }
 
-function Tonight({ view }: { view: TodayView }) {
+function Tonight({
+	view,
+	onAddress,
+}: {
+	view: TodayView;
+	onAddress: (nodeId: string, by: TravelBy) => void;
+}) {
 	const { nav } = useWorkspace();
 	const night = view.tonight;
 	if (!night) return null;
@@ -974,8 +985,10 @@ function Tonight({ view }: { view: TodayView }) {
 						</span>
 					</span>
 				</button>
-				{night.coord ? (
-					<Button asChild variant="outline" size="lg">
+			</div>
+			{night.coord ? (
+				<div className="flex gap-3">
+					<Button asChild variant="outline" size="lg" className="flex-1">
 						<a
 							href={directionsUrl(night.coord, by)}
 							target="_blank"
@@ -986,8 +999,17 @@ function Tonight({ view }: { view: TodayView }) {
 							Directions
 						</a>
 					</Button>
-				) : null}
-			</div>
+					<Button
+						variant="outline"
+						size="lg"
+						data-testid={T.tonightAddress}
+						onClick={() => onAddress(night.nodeId, by)}
+					>
+						<Languages />
+						Address
+					</Button>
+				</div>
+			) : null}
 		</section>
 	);
 }

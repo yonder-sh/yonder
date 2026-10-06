@@ -174,6 +174,19 @@ describe("a stop's details on the road (P11)", () => {
 		expect(sheet).toHaveTextContent("Shibuya Loft");
 	});
 
+	it("a stay's own sheet has them too; an ordinary place's doesn't", () => {
+		const { unmount } = renderWithWorkspace(
+			<StopActions nodeId={demo.N.ryokan as string} />,
+			{ search: { asOf: DURING } },
+		);
+		expect(screen.getByTestId(T.stopAddress)).toBeInTheDocument();
+		unmount();
+		renderWithWorkspace(<StopActions nodeId={demo.N.loft as string} />, {
+			search: { asOf: DURING },
+		});
+		expect(screen.queryByTestId(T.stopAddress)).toBeNull();
+	});
+
 	it("nothing before the trip", () => {
 		renderWithWorkspace(<StopActions itemId={loft} />, {
 			search: { asOf: "2027-09-30" },

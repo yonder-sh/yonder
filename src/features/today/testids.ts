@@ -53,6 +53,7 @@ export const TODAY_TESTID = {
 	driverCopy: "today-driver-copy",
 	driverDirections: "today-driver-directions",
 	tonightDirections: "today-tonight-directions",
+	tonightAddress: "today-tonight-address",
 	/** A stop's details while the trip is on (P11). */
 	stopDirections: "today-stop-directions",
 	stopAddress: "today-stop-address",

@@ -328,6 +328,7 @@ function Body({
 			) : null}
 			{/* On the road (P11): Directions and the driver's Address. */}
 			{sel?.kind === "item" ? <StopActions itemId={sel.id} /> : null}
+			{sel?.kind === "node" ? <StopActions nodeId={sel.id} /> : null}
 			<div className="mt-3 empty:hidden">
 				<ProposalBar sel={sel} />
 			</div>
