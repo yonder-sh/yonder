@@ -1,14 +1,33 @@
 "use client";
 
 import type * as React from "react";
+import { useEffect } from "react";
+import { toast } from "sonner";
 import { Drawer as DrawerPrimitive } from "vaul";
 import { keepToastClicks } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 
 function Drawer({
+	open,
+	onOpenChange,
 	...props
 }: React.ComponentProps<typeof DrawerPrimitive.Root>) {
-	return <DrawerPrimitive.Root data-slot="drawer" {...props} />;
+	// The sheet's buttons sit where the phone's toasts do: an earlier Undo
+	// must not catch a tap meant for Save.
+	useEffect(() => {
+		if (open) toast.dismiss();
+	}, [open]);
+	return (
+		<DrawerPrimitive.Root
+			data-slot="drawer"
+			open={open}
+			onOpenChange={(v) => {
+				if (v && open === undefined) toast.dismiss();
+				onOpenChange?.(v);
+			}}
+			{...props}
+		/>
+	);
 }
 
 function DrawerTrigger({
