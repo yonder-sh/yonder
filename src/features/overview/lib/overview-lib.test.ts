@@ -9,14 +9,14 @@ import { indexGraph } from "@/lib/engine/graph-index";
 import { zonedEpoch } from "@/lib/engine/time";
 import { declutterLabels, type LabelCandidate } from "../globe/labels";
 import { arcPoints, pathOf, projector } from "../globe/projection";
-import { dayLines, daySections } from "./day-lines";
+import { type DayLine, dayLines, daySections, hereStayIndex } from "./day-lines";
 import {
 	favourites,
 	type HighlightCandidate,
 	pickHighlights,
 } from "./highlights";
 import { asOfDate, nowFor, tripPhase } from "./phase";
-import { tripRoute } from "./trip-route";
+import { type TripRoute, tripRoute } from "./trip-route";
 
 describe("tripPhase", () => {
 	// Day 1 leaves New York; the rest are in Japan.
@@ -202,6 +202,25 @@ describe("dayLines", () => {
 				],
 			],
 		]);
+	});
+
+	it("you are here: the night's stay; an unknown night in the city the day ends in, else where it leads", () => {
+		expect(hereStayIndex(route, lines, "2027-10-04")).toBe(0);
+		expect(hereStayIndex(route, lines, lines[3]?.date ?? "")).toBe(2);
+		// Mon 4 in Tokyo with no stay set and Mt. Fuji next (QA U170).
+		const r = {
+			stays: [
+				{ name: "Tokyo", firstDate: "2027-10-03", lastDate: "2027-10-03" },
+				{ name: "Mt. Fuji", firstDate: "2027-10-05", lastDate: "2027-10-05" },
+			],
+		} as unknown as TripRoute;
+		const day = (date: string, city: string) => ({ date, city }) as DayLine;
+		expect(hereStayIndex(r, [day("2027-10-04", "Tokyo")], "2027-10-04")).toBe(
+			0,
+		);
+		expect(
+			hereStayIndex(r, [day("2027-10-04", "Tokyo → Mt. Fuji")], "2027-10-04"),
+		).toBe(1);
 	});
 
 	it("an empty trip has no lines", () => {

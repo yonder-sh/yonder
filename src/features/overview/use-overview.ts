@@ -16,7 +16,7 @@ import {
 	useTripListItems,
 } from "@/features/shell/trip-deadlines";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
-import { type DayLine, dayLines } from "./lib/day-lines";
+import { type DayLine, dayLines, hereStayIndex } from "./lib/day-lines";
 import type { HighlightCandidate } from "./lib/highlights";
 import {
 	asOfZone,
@@ -163,14 +163,8 @@ export function useOverview(): OverviewData {
 
 	const hereStay = useMemo(() => {
 		if (phase.kind !== "during") return null;
-		const i = route.stays.findIndex(
-			(s) => s.firstDate <= phase.today && phase.today <= s.lastDate,
-		);
-		if (i >= 0) return i;
-		// A travel day: the stay it leads to.
-		const next = route.stays.findIndex((s) => s.firstDate > phase.today);
-		return next >= 0 ? next : null;
-	}, [phase, route]);
+		return hereStayIndex(route, lines, phase.today);
+	}, [phase, route, lines]);
 
 	return {
 		route,

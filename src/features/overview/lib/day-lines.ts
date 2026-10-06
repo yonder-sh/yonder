@@ -68,6 +68,30 @@ export function dayLines(ix: GraphIndex, route: TripRoute): DayLine[] {
 	});
 }
 
+/**
+ * "You are here" on `today` (index into `route.stays`): the stay that night
+ * is in; a night left unknown takes the stay in the city the day ends in
+ * (its line's), else the one it leads to.
+ */
+export function hereStayIndex(
+	route: TripRoute,
+	lines: readonly DayLine[],
+	today: string,
+): number | null {
+	const i = route.stays.findIndex(
+		(s) => s.firstDate <= today && today <= s.lastDate,
+	);
+	if (i >= 0) return i;
+	const next = route.stays.findIndex((s) => s.firstDate > today);
+	const prev = (next >= 0 ? next : route.stays.length) - 1;
+	const at = lines
+		.find((l) => l.date === today)
+		?.city.split(" → ")
+		.at(-1);
+	if (at && route.stays[prev]?.name === at) return prev;
+	return next >= 0 ? next : null;
+}
+
 export interface DayGroup {
 	/** The stay (null: travel days between stays, or a trip with none). */
 	stayIndex: number | null;
