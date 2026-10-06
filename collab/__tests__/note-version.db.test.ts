@@ -57,7 +57,7 @@ import { closeRedis, redis, redisPrefix } from "@/server/live/redis.server";
 import type { CollabContext } from "../auth";
 import type { CollabDb } from "../db";
 import { notesHooks } from "../notes-hooks";
-import { storeNoteState } from "../persistence";
+import { NoteTargetGone, storeNoteState } from "../persistence";
 
 vi.setConfig({ testTimeout: 30_000, hookTimeout: 60_000 });
 
@@ -292,5 +292,29 @@ describe("typing in a note never refuses a reviewed date change (QA NOTE-VERSION
 				}),
 			),
 		).toBe("CONFLICT");
+	});
+});
+
+describe("a note whose target is gone (A162)", () => {
+	it("a store to a removed leg's note throws NoteTargetGone, not the wrapped FK error", async () => {
+		const c = await cloneDemoTrip(getDb(), U.dev.id);
+		const name = noteDocName(c.tripId, { kind: "leg", legId: randomUUID() });
+		const document = new Y.Doc();
+		document.transact(() => {
+			const p = new Y.XmlElement("paragraph");
+			p.insert(0, [new Y.XmlText("typed after the route went")]);
+			document.getXmlFragment(NOTE_FRAGMENT).insert(0, [p]);
+		});
+		await expect(
+			storeNoteState(
+				{ db: cdb, hooks: notesHooks },
+				{
+					documentName: name,
+					state: Y.encodeStateAsUpdate(document),
+					document,
+					context: null,
+				},
+			),
+		).rejects.toBeInstanceOf(NoteTargetGone);
 	});
 });

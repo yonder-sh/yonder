@@ -13,6 +13,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { and, eq, isNull } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db/db.server";
+import { pgErrorCode } from "@/db/pg-error";
 import { tripDays, tripMembers, trips } from "@/db/schema";
 import { newId } from "@/lib/ids";
 import { slugBaseFromName } from "@/lib/trip-slug";
@@ -50,14 +51,7 @@ import { mutationMeta, withTripTx } from "@/server/tx.server";
 
 export type { PreviewTripDatesResult } from "@/server/cores/trips.server";
 
-function isUniqueViolation(e: unknown): boolean {
-	return (
-		typeof e === "object" &&
-		e !== null &&
-		"code" in e &&
-		(e as { code: unknown }).code === "23505"
-	);
-}
+const isUniqueViolation = (e: unknown): boolean => pgErrorCode(e) === "23505";
 
 // ---------------------------------------------------------------------------
 // createTrip (A)

@@ -3,6 +3,7 @@ import { yXmlFragmentToProsemirrorJSON } from "@tiptap/y-tiptap";
 import { sql } from "drizzle-orm";
 import type pg from "pg";
 import * as Y from "yjs";
+import { pgErrorCode } from "@/db/pg-error";
 import {
 	NOTE_FRAGMENT,
 	type NoteTarget,
@@ -183,8 +184,7 @@ export async function storeNoteState(
 		);
 	} catch (e) {
 		// 23503: the day/leg/item/node row the note hangs on is gone.
-		if ((e as { code?: string }).code === "23503")
-			throw new NoteTargetGone(doc.name);
+		if (pgErrorCode(e) === "23503") throw new NoteTargetGone(doc.name);
 		throw e;
 	}
 }

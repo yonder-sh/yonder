@@ -11,6 +11,7 @@ import { sql } from "drizzle-orm";
 import { v7 as uuidv7 } from "uuid";
 import { z } from "zod";
 import type { Tx } from "@/db/db.server";
+import { pgErrorCode } from "@/db/pg-error";
 import { nodePriorities, nodes, trips } from "@/db/schema";
 import { enqueueOsmHours } from "@/features/insights/server/osm-hours-queue.server";
 import { lifecycleSet } from "@/lib/domain/places-lifecycle";
@@ -548,10 +549,7 @@ export async function moveNodeCore(
 			 where id = ${node.id} and trip_id = ${tripId}`);
 	} catch (e) {
 		// The cycle trigger (23514 'cycle') is the backstop for the check above.
-		const code =
-			(e as { cause?: { code?: string }; code?: string }).cause?.code ??
-			(e as { code?: string }).code;
-		if (code === "23514")
+		if (pgErrorCode(e) === "23514")
 			return fail("VALIDATION", "a place can't go inside itself");
 		throw e;
 	}

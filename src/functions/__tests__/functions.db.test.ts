@@ -64,7 +64,13 @@ import {
 	setItemAssignees,
 	updateItem,
 } from "../items.functions";
-import { ensureLeg, getLeg, relinkLeg, setLeg } from "../legs.functions";
+import {
+	deleteLeg,
+	ensureLeg,
+	getLeg,
+	relinkLeg,
+	setLeg,
+} from "../legs.functions";
 import {
 	createNode,
 	deleteNode,
@@ -681,6 +687,107 @@ describe("days (§7.7): never lose items", () => {
 			sql`select 1 from yjs_documents where day_id = ${d2}`,
 		);
 		expect(left.rows).toHaveLength(0);
+	});
+
+	it("a removed day's stay legs and a discarded route keep their files, to-dos, notes and mentions (A136, A137, A139)", async () => {
+		const c = await freshTrip();
+		const D = c.ids.days;
+		const db = getDb();
+		const sharedRoot = noteDocName(c.tripId, { kind: "trip" });
+		const mayaRoot = noteDocName(c.tripId, { kind: "trip" }, U.maya.id);
+		const putNote = async (
+			target: { kind: "day"; dayId: string } | { kind: "leg"; legId: string },
+			owner: string | null,
+			md: string,
+		) => {
+			const snap = markdownToYdoc(md);
+			const name = noteDocName(c.tripId, target, owner);
+			await db.execute(sql`delete from yjs_documents where name = ${name}`);
+			await db.execute(sql`
+				insert into yjs_documents (name, trip_id, day_id, leg_id, owner_user_id, state, json, plain_text)
+				values (${name}, ${c.tripId}, ${target.kind === "day" ? target.dayId : null},
+				        ${target.kind === "leg" ? target.legId : null}, ${owner},
+				        ${Buffer.from(snap.state)}, ${JSON.stringify(snap.json)}::jsonb, ${snap.plainText})`);
+			return name;
+		};
+		const putBundle = async (legId: string) => {
+			const [a] = (
+				await db.execute(sql`
+					insert into attachments (id, trip_id, leg_id, kind, status, position, url)
+					values (${randomUUID()}, ${c.tripId}, ${legId}, 'photo', 'ready', 'a0', 'https://example.com/t.jpg')
+					returning id::text as id`)
+			).rows as { id: string }[];
+			const [l] = (
+				await db.execute(sql`
+					insert into list_items (id, trip_id, leg_id, list, text, position)
+					values (${randomUUID()}, ${c.tripId}, ${legId}, 'todo', 'Buy Suica', 'a0')
+					returning id::text as id`)
+			).rows as { id: string }[];
+			return { att: a?.id as string, todo: l?.id as string };
+		};
+		const leftAt = async (b: { att: string; todo: string }) => [
+			(
+				await db.execute(
+					sql`select leg_id, day_id from attachments where id = ${b.att}`,
+				)
+			).rows[0],
+			(
+				await db.execute(
+					sql`select leg_id, day_id from list_items where id = ${b.todo}`,
+				)
+			).rows[0],
+		];
+		const textOf = async (name: string) =>
+			(
+				(
+					await db.execute(
+						sql`select plain_text as text from yjs_documents where name = ${name}`,
+					)
+				).rows[0] as { text: string } | undefined
+			)?.text ?? "";
+
+		// No shared trip note yet: the day's note (with an @mention) becomes it.
+		await db.execute(sql`delete from yjs_documents where name = ${sharedRoot}`);
+		const dayNote = await putNote(
+			{ kind: "day", dayId: D.d1 as string },
+			null,
+			"Book the ryokan",
+		);
+		await db.execute(sql`
+			insert into mentions (id, trip_id, member_id, doc_name, day_id)
+			values (${randomUUID()}, ${c.tripId}, ${c.members.maya}, ${dayNote}, ${D.d1})`);
+		const { legId: stay } = await call<{ legId: string }>(ensureLeg, U.owner, {
+			target: { kind: "stay", dayId: D.d1, end: "start" },
+		});
+		const stayBundle = await putBundle(stay);
+		await putNote({ kind: "leg", legId: stay }, U.maya.id, "Maya's bus note");
+		expect(await codeOf(call(deleteDay, U.owner, { dayId: D.d1 }))).toBe("ok");
+		expect(await leftAt(stayBundle)).toEqual([
+			{ leg_id: null, day_id: null },
+			{ leg_id: null, day_id: null },
+		]);
+		expect(await textOf(sharedRoot)).toContain("Book the ryokan");
+		expect(await textOf(mayaRoot)).toMatch(
+			/From Sun 3 Oct \(removed day\)\s+Maya's bus note/,
+		);
+		const mention = await db.execute(
+			sql`select doc_name as "docName", day_id as "dayId" from mentions where trip_id = ${c.tripId} and doc_name is not null`,
+		);
+		expect(mention.rows).toContainEqual({ docName: sharedRoot, dayId: null });
+
+		// Discard route: Maya's private note and everyone's bundle stay.
+		const route = c.ids.legs.handsLoft as string;
+		const routeBundle = await putBundle(route);
+		await putNote({ kind: "leg", legId: route }, U.maya.id, "Gift for Aiko");
+		await putNote({ kind: "leg", legId: route }, null, "Take the express");
+		expect(await codeOf(call(deleteLeg, U.owner, { legId: route }))).toBe("ok");
+		expect(await leftAt(routeBundle)).toEqual([
+			{ leg_id: null, day_id: null },
+			{ leg_id: null, day_id: null },
+		]);
+		expect(await textOf(mayaRoot)).toContain("Gift for Aiko");
+		expect(await textOf(mayaRoot)).toContain("(discarded route)");
+		expect(await textOf(sharedRoot)).toContain("Take the express");
 	});
 
 	it("setDayStay sets the night for a range", async () => {

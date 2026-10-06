@@ -8,7 +8,7 @@
  * `(trip_id, date)` uniqueness is DEFERRABLE INITIALLY DEFERRED (§6.4), so days
  * can swap and shift dates freely until COMMIT.
  */
-import { sql } from "drizzle-orm";
+import { type SQL, sql } from "drizzle-orm";
 import * as Y from "yjs";
 import type { Tx } from "@/db/db.server";
 import { tripDays } from "@/db/schema";
@@ -102,16 +102,23 @@ const bytesOf = (b: Buffer | Uint8Array): Uint8Array =>
 /** What happens to a removed day's shared note; private notes always move. */
 export type DayNotesChoice = "keep" | "delete";
 
-/** A day note's state with "From Tue 5 Oct (removed day)" put first, so it reads apart in the trip's note. */
-export function labelledDayNote(state: Uint8Array, date: string): Uint8Array {
+/** A note's state with `label` put first as a heading, so it reads apart in the trip's note. */
+export function labelledNote(state: Uint8Array, label: string): Uint8Array {
 	const doc = ydocFromState(state);
 	const heading = new Y.XmlElement("heading");
 	heading.setAttribute("level", 3 as unknown as string);
-	heading.insert(0, [
-		new Y.XmlText(`From ${formatDayDate(date)} (removed day)`),
-	]);
+	heading.insert(0, [new Y.XmlText(label)]);
 	doc.getXmlFragment(NOTE_FIELD).insert(0, [heading]);
 	return Y.encodeStateAsUpdate(doc);
+}
+
+/** "From Tue 5 Oct (removed day)": the heading a removed day's notes get. */
+export const removedDayLabel = (date: string): string =>
+	`From ${formatDayDate(date)} (removed day)`;
+
+/** A day note's state with "From Tue 5 Oct (removed day)" put first. */
+export function labelledDayNote(state: Uint8Array, date: string): Uint8Array {
+	return labelledNote(state, removedDayLabel(date));
 }
 
 /**
@@ -119,11 +126,7 @@ export function labelledDayNote(state: Uint8Array, date: string): Uint8Array {
  * cascaded away with it. Every member's private note moves to that member's
  * private trip note; the shared note to the trip's shared note, unless
  * `shared` is "delete" (it then goes with the day). Each moved text starts
- * with "From Tue 5 Oct (removed day)"; it is renamed when the target has no
- * note yet, else merged into it (a Yjs merge, so both texts survive). Empty
- * notes go with the day. Returns the moves (`from` → `to` document names)
- * for collab, which folds in anything still unsaved and refreshes an open
- * target (QA P1).
+ * with "From Tue 5 Oct (removed day)". Returns the moves (`rehomeNotes`).
  */
 export async function rehomeDayNotes(
 	tx: Tx,
@@ -131,9 +134,36 @@ export async function rehomeDayNotes(
 	day: { id: string; date: string },
 	shared: DayNotesChoice = "keep",
 ): Promise<{ from: string; to: string }[]> {
+	return rehomeNotes(
+		tx,
+		tripId,
+		sql`day_id = ${day.id}`,
+		removedDayLabel(day.date),
+		shared,
+	);
+}
+
+/**
+ * Moves the notes matching `where` (a day's, a leg's) to the trip's: each
+ * private note to its owner's private trip note, the shared one to the trip's
+ * shared note unless `shared` is "delete". Each text is headed with `label`;
+ * it becomes the target when there is none yet, else is merged into it (a Yjs
+ * merge, so both texts survive). Its @mentions move along (the FK on
+ * `mentions.doc_name` never lets a name change under them). Empty notes are
+ * left to the caller's cascade. Returns the moves (`from` → `to` document
+ * names) for collab, which folds in anything still unsaved and refreshes an
+ * open target (QA P1).
+ */
+export async function rehomeNotes(
+	tx: Tx,
+	tripId: string,
+	where: SQL,
+	label: string,
+	shared: DayNotesChoice = "keep",
+): Promise<{ from: string; to: string }[]> {
 	const res = await tx.execute(sql`
 		select name, owner_user_id as "ownerUserId", state from yjs_documents
-		 where trip_id = ${tripId} and day_id = ${day.id}
+		 where trip_id = ${tripId} and ${where}
 		   and coalesce(plain_text, '') <> ''
 		   ${shared === "keep" ? sql`` : sql`and owner_user_id is not null`}
 		 order by name`);
@@ -145,7 +175,7 @@ export async function rehomeDayNotes(
 	}[]) {
 		const target = noteDocName(tripId, { kind: "trip" }, r.ownerUserId);
 		moved.push({ from: r.name, to: target });
-		const labelled = labelledDayNote(bytesOf(r.state), day.date);
+		const labelled = labelledNote(bytesOf(r.state), label);
 		const cur = await tx.execute(
 			sql`select state from yjs_documents where name = ${target} for update`,
 		);
@@ -160,33 +190,75 @@ export async function rehomeDayNotes(
 			markdown: jsonToMarkdown(json),
 			plainText: notePlainText(json),
 		};
-		if (!root) {
+		if (root)
 			await tx.execute(sql`
-				update yjs_documents set name = ${target}, day_id = null,
-				  state = ${derived.state}, json = ${derived.json}::jsonb,
-				  markdown = ${derived.markdown}, plain_text = ${derived.plainText},
+				update yjs_documents set
+				  state = ${derived.state},
+				  json = ${derived.json}::jsonb,
+				  markdown = ${derived.markdown},
+				  plain_text = ${derived.plainText},
 				  updated_at = now()
-				 where name = ${r.name}`);
-			continue;
-		}
+				 where name = ${target}`);
+		else
+			await tx.execute(sql`
+				insert into yjs_documents
+				  (name, trip_id, owner_user_id, state, json, markdown, plain_text, updated_by)
+				select ${target}, trip_id, owner_user_id, ${derived.state}, ${derived.json}::jsonb,
+				       ${derived.markdown}, ${derived.plainText}, updated_by
+				  from yjs_documents where name = ${r.name}`);
+		// Mentions follow the text (one per member and note).
 		await tx.execute(sql`
-			update yjs_documents set
-			  state = ${derived.state},
-			  json = ${derived.json}::jsonb,
-			  markdown = ${derived.markdown},
-			  plain_text = ${derived.plainText},
-			  updated_at = now()
-			 where name = ${target}`);
+			delete from mentions m where m.doc_name = ${r.name}
+			   and exists (select 1 from mentions t where t.doc_name = ${target} and t.member_id = m.member_id)`);
+		await tx.execute(sql`
+			update mentions set doc_name = ${target}, node_id = null, leg_id = null,
+			  item_id = null, day_id = null
+			 where doc_name = ${r.name}`);
 		await tx.execute(sql`delete from yjs_documents where name = ${r.name}`);
 	}
 	return moved;
 }
 
 /**
+ * Moves everything off legs that are about to be deleted (a discarded route,
+ * a removed day's stay legs): their attachments and list items to the trip
+ * root, and their notes to the trip's (`rehomeNotes`, headed with `label`).
+ * `out` tells collab to close the legs' open note documents.
+ */
+export async function evacuateLegs(
+	tx: Tx,
+	tripId: string,
+	legIds: readonly string[],
+	label: string,
+	out?: Pick<TxOutbox, "notes">,
+	shared: DayNotesChoice = "keep",
+): Promise<void> {
+	if (!legIds.length) return;
+	const ids = sql`leg_id = any(${sql.param([...legIds])}::uuid[])`;
+	const docs = await tx.execute(
+		sql`select name from yjs_documents where trip_id = ${tripId} and ${ids}`,
+	);
+	const moved = await rehomeNotes(tx, tripId, ids, label, shared);
+	out?.notes({
+		gone: [
+			...(docs.rows as { name: string }[]).map((r) => r.name),
+			...legIds.map((legId) => noteDocName(tripId, { kind: "leg", legId })),
+		],
+		moved,
+	});
+	await tx.execute(
+		sql`update attachments set leg_id = null, updated_at = now() where trip_id = ${tripId} and ${ids}`,
+	);
+	await tx.execute(
+		sql`update list_items set leg_id = null, updated_at = now() where trip_id = ${tripId} and ${ids}`,
+	);
+}
+
+/**
  * Moves everything off a day that is about to be deleted: its items (live and
  * soft-deleted, which the NO ACTION FK would otherwise block) to the end of
- * Unscheduled in their order, its attachments and list items to the trip
- * root, and its notes to the trip's (`rehomeDayNotes`; a shared note the
+ * Unscheduled in their order, its attachments and list items (its stay legs'
+ * too) to the trip root, and its notes to the trip's (`rehomeDayNotes`; a shared note the
  * remover chose to delete, and empty ones, cascade with the day). `out`
  * tells collab to close the day's open note documents (QA P1). Returns the
  * moved live item ids.
@@ -205,6 +277,18 @@ export async function evacuateDay(
 		sql`select name from yjs_documents where trip_id = ${tripId} and day_id = ${dayId}`,
 	);
 	const moved = await rehomeDayNotes(tx, tripId, day, notes);
+	// Its stay legs cascade with it: their bundles and notes stay (A136).
+	const stays = await tx.execute(
+		sql`select id::text as id from legs where trip_id = ${tripId} and stay_day_id = ${dayId}`,
+	);
+	await evacuateLegs(
+		tx,
+		tripId,
+		(stays.rows as { id: string }[]).map((r) => r.id),
+		removedDayLabel(day.date),
+		out,
+		notes,
+	);
 	out?.notes({
 		gone: [
 			...(docs.rows as { name: string }[]).map((r) => r.name),

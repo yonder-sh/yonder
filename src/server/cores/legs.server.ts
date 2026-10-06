@@ -15,6 +15,7 @@ import { LegDetails } from "@/lib/schemas/legs";
 import { LegTarget } from "@/lib/schemas/targets";
 import { logActivity } from "@/server/activity.server";
 import { fail } from "@/server/authz/session.server";
+import { evacuateLegs } from "@/server/days.server";
 import { redactLegDetails } from "@/server/graph.server";
 import { ensureLegRow, indexTx, writeLeg } from "@/server/legs.server";
 import type { TxOutbox } from "@/server/live/outbox.server";
@@ -161,7 +162,7 @@ export async function relinkLegCore(
 	return { ok: true as const };
 }
 
-/** `leg.delete`. Keys: graph, counts, media, lists, notes. */
+/** `leg.delete`: its bundle moves to the trip root first. Keys: graph, counts, media, lists, notes. */
 export async function deleteLegCore(
 	tx: Tx,
 	out: TxOutbox,
@@ -169,6 +170,28 @@ export async function deleteLegCore(
 	ctx: CoreCtx,
 ): Promise<{ ok: true }> {
 	const tripId = ctx.access.tripId;
+	// Its notes, files and to-dos (others' private ones too) go to the trip root.
+	const named = await tx.execute(sql`
+		select coalesce(fn.name, fi.title) as "from", coalesce(tn.name, ti.title) as "to"
+		  from legs l
+		  left join items fi on fi.id = l.from_item_id
+		  left join nodes fn on fn.id = fi.node_id
+		  left join items ti on ti.id = l.to_item_id
+		  left join nodes tn on tn.id = ti.node_id
+		 where l.id = ${data.legId} and l.trip_id = ${tripId}`);
+	const ends = named.rows[0] as
+		| { from: string | null; to: string | null }
+		| undefined;
+	if (!ends) return fail("NOT_FOUND");
+	await evacuateLegs(
+		tx,
+		tripId,
+		[data.legId],
+		ends.from && ends.to
+			? `From ${ends.from} → ${ends.to} (discarded route)`
+			: "From a discarded route",
+		out,
+	);
 	const [row] = await tx
 		.delete(legs)
 		.where(sql`${legs.id} = ${data.legId} and ${legs.tripId} = ${tripId}`)
