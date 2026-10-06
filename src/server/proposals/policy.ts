@@ -37,6 +37,10 @@ export const MUTATION_POLICY = {
 	deletePushSubscription: "account",
 	setPushType: "account",
 	setTripMuted: "account",
+	/** The caller's own iPhone Shortcut: setup code, phones, links it sent. */
+	startShortcutPairing: "account",
+	removeShortcutDevice: "account",
+	takeShortcutShares: "account",
 
 	// ---- trips (F) ----
 	updateTrip: { direct: "tripSettings" },

@@ -70,7 +70,8 @@ describe("the inbox panel (One Yonder kit)", () => {
 		kind: "due",
 		tripId: demoGraph.trip.id,
 		tripName: demoGraph.trip.name,
-		at: new Date().toISOString(),
+		// Fixed and ordered (newest first is "a"), so the panel's order never depends on the clock.
+		at: new Date(Date.UTC(2027, 0, 2) - key.charCodeAt(0) * 1000).toISOString(),
 		read: false,
 		actor: null,
 		title: `Book it (${key})`,
