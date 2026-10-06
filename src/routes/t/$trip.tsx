@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { EmptyState } from "@/components/common/empty-state";
 import { YonderMark } from "@/components/common/yonder-mark";
 import { buttonVariants } from "@/components/ui/button";
+import { rewarmSavedTrip } from "@/features/offline/register-sw";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
 	isNetworkFailure,
@@ -183,7 +184,8 @@ function TripWorkspace({
 	}).data;
 
 	useEffect(() => {
-		void markTripSaved(slug, tripId, graph.trip.name);
+		// Opened in-app, no page request stored its offline shell: ask the worker.
+		void markTripSaved(slug, tripId, graph.trip.name).then(rewarmSavedTrip);
 	}, [slug, tripId, graph.trip.name]);
 	// The address changed while the trip was open (the owner edited it in
 	// settings, or reset the link): this tab moves to the new one, so a reload

@@ -5,8 +5,9 @@
  * - registers `/sw.js` (production builds only; `vite dev` has none);
  * - a waiting worker shows the toast "Update ready · Reload"; Reload sends
  *   SKIP_WAITING and the page reloads once the new worker controls it;
- * - on `sw-activated` (the worker dropped its `pages` cache) the page re-warms
- *   its saved trip's shell, so the offline copy never points at deleted assets;
+ * - `rewarmSavedTrip()` asks the worker to keep the saved trip's shell
+ *   (`WARM_TRIP`): a trip opened in-app sends no page request to store. On
+ *   saving, on the first control and on `sw-activated`;
  * - when a worker first controls the page, every `/assets/` file the page
  *   already loaded is fetched once through it, so chunks the precache left
  *   out (the 2.5 MB budget, `sw.config.ts`) land in the runtime cache;
@@ -19,17 +20,17 @@ import { readSavedTrips } from "./saved-trips";
 
 let started = false;
 
-/** Fetches the saved trip's page so the worker caches its shell again. */
-export async function rewarmSavedTrip(): Promise<void> {
-	const saved = readSavedTrips()[0];
-	if (!saved || !navigator.onLine) return;
+/** Asks the worker to keep the saved trip's page shell (it skips one it has). */
+export function rewarmSavedTrip(): void {
 	try {
-		await fetch(`/t/${encodeURIComponent(saved.slug)}`, {
-			credentials: "same-origin",
-			headers: { Accept: "text/html" },
+		const saved = readSavedTrips()[0];
+		if (!saved || !navigator.onLine) return;
+		navigator.serviceWorker?.controller?.postMessage({
+			type: "WARM_TRIP",
+			slug: saved.slug,
 		});
 	} catch {
-		// offline or blocked: it re-caches on the next visit
+		// no worker: it's kept on the next full visit
 	}
 }
 
@@ -108,14 +109,19 @@ export async function registerServiceWorker(): Promise<void> {
 		});
 	});
 	navigator.serviceWorker.addEventListener("message", (e) => {
-		if ((e.data as { type?: string } | null)?.type === "sw-activated")
-			void rewarmSavedTrip().then(warmLoadedAssets);
+		if ((e.data as { type?: string } | null)?.type === "sw-activated") {
+			rewarmSavedTrip();
+			void warmLoadedAssets();
+		}
 	});
 	// The first install: nothing this page loaded went through the worker yet.
 	if (!navigator.serviceWorker.controller)
 		navigator.serviceWorker.addEventListener(
 			"controllerchange",
-			() => void warmLoadedAssets(),
+			() => {
+				rewarmSavedTrip();
+				void warmLoadedAssets();
+			},
 			{ once: true },
 		);
 	try {

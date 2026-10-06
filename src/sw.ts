@@ -28,8 +28,10 @@
  *   `WARM_SHARE`), so offline the inbox still opens and says "You're
  *   offline — it's kept on this device"; with no shell yet, `offline.html`
  *   says the same (never the browser's error page).
- * - Updates wait for the page's "Reload" (SKIP_WAITING); on activate the
- *   `pages` cache is dropped and pages are told to re-warm their saved trip.
+ * - Updates wait for the page's "Reload" (SKIP_WAITING); on activate every
+ *   kept page is fetched again (dropped when that fails) and pages are told
+ *   to re-warm their saved trip. A trip opened in-app has no navigation
+ *   request, so the page asks for its shell (`WARM_TRIP`).
  * - Web Push (`src/server/push`): a `push` shows the payload's title (the
  *   trip name first), body, app icon and badge; a click focuses an open
  *   Yonder window and navigates it in-app (`push-open`, `usePushBridge`),
@@ -157,28 +159,53 @@ const tripPagePlugin: SerwistPlugin = {
 const shareKey = () => new URL(SHARE_PATH, self.location.origin).href;
 
 /**
- * Keeps a copy of the `/share` shell (client-rendered: no trip data in it)
- * so a share sent offline lands in ShareInbox. Signed out, `/share` redirects
- * to /login: nothing is kept. Never throws.
+ * Fetches a page and keeps it under `key` when it's the page itself (200
+ * HTML, not redirected: signed out it's /login). `fresh` replaces a kept one.
+ * Never throws; false when nothing was stored.
  */
-async function warmShareShell(): Promise<void> {
+async function warmPage(key: string, fresh = false): Promise<boolean> {
 	try {
 		const cache = await caches.open(PAGES);
-		if (await cache.match(shareKey())) return;
-		const res = await fetch(shareKey(), {
+		if (!fresh && (await cache.match(key))) return true;
+		const res = await fetch(key, {
 			credentials: "same-origin",
 			headers: { Accept: "text/html" },
 		});
 		if (
 			res.ok &&
 			!res.redirected &&
-			new URL(res.url).pathname === SHARE_PATH &&
+			new URL(res.url).pathname === new URL(key).pathname &&
 			(res.headers.get("Content-Type") ?? "").includes("text/html")
-		)
-			await cache.put(shareKey(), res);
+		) {
+			await cache.put(key, res);
+			return true;
+		}
 	} catch {
 		// offline or blocked: the next visit or warm-up keeps it
 	}
+	return false;
+}
+
+/**
+ * Keeps a copy of the `/share` shell (client-rendered: no trip data in it)
+ * so a share sent offline lands in ShareInbox. Signed out, nothing is kept.
+ */
+const warmShareShell = () => warmPage(shareKey());
+
+/** A trip opened in-app (no navigation request) keeps its shell too. */
+const warmTripShell = (slug: string) =>
+	/^[a-z0-9-]{1,100}$/.test(slug)
+		? warmPage(tripShellKey(new URL(`/t/${slug}`, self.location.origin)))
+		: Promise.resolve(false);
+
+/**
+ * After an update the kept pages are fetched again here (no window needed);
+ * one that can't be refreshed goes, as it points at the old build's assets.
+ */
+async function refreshPages(): Promise<void> {
+	const cache = await caches.open(PAGES);
+	for (const req of await cache.keys())
+		if (!(await warmPage(req.url, true))) await cache.delete(req);
 }
 
 const sharePagePlugin: SerwistPlugin = {
@@ -476,19 +503,23 @@ self.addEventListener("message", (event) => {
 	if (data?.type === "SKIP_WAITING") void self.skipWaiting();
 	// A signed-in page (the dashboard) asks for the offline share inbox.
 	if (data?.type === "WARM_SHARE") event.waitUntil(warmShareShell());
+	// The page's saved trip, opened in-app or after an update.
+	const slug = (data as { slug?: unknown } | null)?.slug;
+	if (data?.type === "WARM_TRIP" && typeof slug === "string")
+		event.waitUntil(warmTripShell(slug));
 });
 
 self.addEventListener("activate", (event) => {
 	event.waitUntil(
 		(async () => {
 			// The old shells may point at deleted hashed assets (spikes/pwa gotcha 5).
-			await caches.delete(PAGES);
+			await refreshPages().catch(() => caches.delete(PAGES));
 			// Round 1 kept server-function answers in "api"; nothing uses it now.
 			await caches.delete("api");
 			await self.clients.claim();
 			for (const c of await self.clients.matchAll({ type: "window" }))
 				c.postMessage({ type: "sw-activated" });
-			// The pages cache was just dropped: keep the share inbox (if signed in).
+			// Keep the share inbox (if signed in).
 			await warmShareShell();
 		})(),
 	);

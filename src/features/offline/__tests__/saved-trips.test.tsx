@@ -10,6 +10,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { myTripsQuery } from "@/features/home/queries";
 import { BRAND } from "@/lib/brand";
 import { tripKeys } from "@/lib/query/keys";
+import { rewarmSavedTrip } from "../register-sw";
 import {
 	forgetLostTrips,
 	isNetworkFailure,
@@ -146,5 +147,23 @@ describe("isNetworkFailure", () => {
 		} finally {
 			vi.restoreAllMocks();
 		}
+	});
+});
+
+describe("rewarmSavedTrip (a trip opened in-app sends no page request)", () => {
+	it("asks the worker to keep the saved trip's shell", () => {
+		const postMessage = vi.fn();
+		vi.stubGlobal("navigator", {
+			onLine: true,
+			serviceWorker: { controller: { postMessage } },
+		});
+		rewarmSavedTrip();
+		expect(postMessage).not.toHaveBeenCalled();
+		save([{ slug: "japan-x1", tripId: "t1", name: "Japan", savedAt: 1 }]);
+		rewarmSavedTrip();
+		expect(postMessage).toHaveBeenCalledWith({
+			type: "WARM_TRIP",
+			slug: "japan-x1",
+		});
 	});
 });
