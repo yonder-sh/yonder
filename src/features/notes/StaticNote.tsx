@@ -6,7 +6,8 @@
  * first load (QA VIS3-08, SPEC §19 PERF-05); until it's there, `PlainNote`
  * shows the same text in the same styles.
  */
-import { lazy, memo, Suspense } from "react";
+import { lazy, memo } from "react";
+import { LazySlot } from "@/components/common/lazy-slot";
 import { PlainNote } from "./plain-note";
 import "./notes.css";
 
@@ -14,9 +15,9 @@ const Render = lazy(() => import("./StaticNoteRender"));
 
 function StaticNoteLazy(props: { json: unknown; className?: string }) {
 	return (
-		<Suspense fallback={<PlainNote {...props} />}>
+		<LazySlot fallback={<PlainNote {...props} />}>
 			<Render {...props} />
-		</Suspense>
+		</LazySlot>
 	);
 }
 

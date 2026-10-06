@@ -17,7 +17,8 @@
  *   note (QA VIS3-08, SPEC §19 PERF-05); until then the saved copy shows.
  */
 
-import { lazy, Suspense, useEffect, useRef, useState } from "react";
+import { lazy, useEffect, useRef, useState } from "react";
+import { LazySlot } from "@/components/common/lazy-slot";
 import { useCollabDoc } from "@/lib/realtime/use-collab-doc";
 import { cn } from "@/lib/utils";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
@@ -85,7 +86,7 @@ export function NoteEditor(props: NoteEditorProps) {
 		<div className={cn("relative", props.className)}>
 			{note.doc && note.provider && ready === props.docName ? (
 				// While the editor's code loads, a live note still shows its text.
-				<Suspense
+				<LazySlot
 					fallback={
 						live ? (
 							<StaticNote json={props.savedJson} className="min-h-24 py-1" />
@@ -100,7 +101,7 @@ export function NoteEditor(props: NoteEditorProps) {
 						writable={writable}
 						{...props}
 					/>
-				</Suspense>
+				</LazySlot>
 			) : null}
 			{live ? null : (
 				<div data-testid={NOTES_TESTID.savedCopy} aria-busy={!paused}>

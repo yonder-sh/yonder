@@ -10,7 +10,8 @@
  */
 
 import { MessageSquare, Pencil } from "lucide-react";
-import { lazy, Suspense, useEffect, useRef, useState } from "react";
+import { lazy, useEffect, useRef, useState } from "react";
+import { LazySlot } from "@/components/common/lazy-slot";
 import { toast } from "sonner";
 import { EditGuard, useEditGuard } from "@/components/common/edit-guard";
 import { MarkdownText } from "@/components/common/markdown-text";
@@ -124,7 +125,7 @@ export function RatingCommentEditor({
 			}}
 		>
 			<div ref={box}>
-				<Suspense
+				<LazySlot
 					fallback={
 						<div
 							aria-hidden="true"
@@ -138,7 +139,7 @@ export function RatingCommentEditor({
 						onChange={setDraft}
 						placeholder="Why? “only if we have time after Nishiki”"
 					/>
-				</Suspense>
+				</LazySlot>
 			</div>
 			<div className="flex items-center gap-2">
 				<span

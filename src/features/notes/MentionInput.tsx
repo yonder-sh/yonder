@@ -16,7 +16,8 @@
  * VIS3-08, SPEC §19 PERF-05); a stand-in with the same box shows until then.
  */
 
-import { lazy, Suspense, useState } from "react";
+import { lazy, useState } from "react";
+import { LazySlot } from "@/components/common/lazy-slot";
 import { MENTION_TOKEN_RE } from "@/lib/notes/mentions";
 import { cn } from "@/lib/utils";
 import "./notes.css";
@@ -49,7 +50,7 @@ export function MentionInput(props: MentionInputProps) {
 	// A click or tap on the stand-in focuses the field once it's there.
 	const [wantsFocus, setWantsFocus] = useState(false);
 	return (
-		<Suspense
+		<LazySlot
 			fallback={
 				<MentionInputStandIn
 					{...props}
@@ -58,7 +59,7 @@ export function MentionInput(props: MentionInputProps) {
 			}
 		>
 			<Editor {...props} autoFocus={props.autoFocus || wantsFocus} />
-		</Suspense>
+		</LazySlot>
 	);
 }
 

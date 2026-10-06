@@ -8,10 +8,10 @@ import {
 	Component,
 	lazy,
 	type ReactNode,
-	Suspense,
 	useEffect,
 	useState,
 } from "react";
+import { LazySlot } from "@/components/common/lazy-slot";
 import { pinStyle } from "@/lib/domain/taxonomy";
 import { cn } from "@/lib/utils";
 import type { MiniMapProps } from "./mini-map.impl";
@@ -58,9 +58,9 @@ export function MiniMap(props: MiniMapProps) {
 	if (!client) return fallback;
 	return (
 		<Boundary fallback={fallback}>
-			<Suspense fallback={fallback}>
+			<LazySlot fallback={fallback}>
 				<Impl {...props} />
-			</Suspense>
+			</LazySlot>
 		</Boundary>
 	);
 }
