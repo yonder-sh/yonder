@@ -12,6 +12,7 @@ import { db } from "@/db/db.server";
 import * as schema from "@/db/schema";
 import { AUTH_BRAND } from "@/lib/auth/constants";
 import { randomGuestName } from "@/lib/auth/names";
+import { guestNameClashes } from "@/server/authz/share-links.server";
 import { key, redis } from "@/server/live/redis.server";
 import { claimInvites, migrateGuestToUser } from "./accounts.server";
 import { announceUserChange } from "./announce-user.server";
@@ -54,6 +55,9 @@ const DISABLED_PATHS = [
 	"/email-otp/reset-password",
 	"/forget-password/email-otp",
 	"/email-otp/request-email-change",
+	// Both read the sign-in code outside the per-email lock (VERIFY_PATH).
+	"/email-otp/check-verification-otp",
+	"/email-otp/verify-email",
 	// The Shortcut's keys are made and removed only by the app's server
 	// (src/server/shortcut.server.ts); nothing manages them over HTTP.
 	"/api-key/create",
@@ -263,20 +267,26 @@ export function buildAuthOptions(opts: { limits?: AuthLimits } = {}) {
 				update: {
 					before: async (patch, ctx) => {
 						const sessionUser = ctx?.context.session?.user as
-							| { isAnonymous?: boolean | null }
+							| { id: string; isAnonymous?: boolean | null }
 							| undefined;
 						try {
-							return {
-								data: applyUserUpdate(
-									patch,
-									sessionUser
-										? {
-												kind: "session",
-												isAnonymous: sessionUser.isAnonymous === true,
-											}
-										: { kind: "internal" },
-								),
-							};
+							const data = applyUserUpdate(
+								patch,
+								sessionUser
+									? {
+											kind: "session",
+											isAnonymous: sessionUser.isAnonymous === true,
+										}
+									: { kind: "internal" },
+							);
+							// SECURITY §2: a guest can't take a member's name, whichever endpoint writes it.
+							if (
+								sessionUser?.isAnonymous === true &&
+								typeof data.name === "string" &&
+								(await guestNameClashes(sessionUser.id, data.name))
+							)
+								throw new UserRuleError("That name belongs to a trip member.");
+							return { data };
 						} catch (e) {
 							toApiError(e);
 						}
@@ -352,8 +362,15 @@ export function buildAuthOptions(opts: { limits?: AuthLimits } = {}) {
 					const returned = ctx.context.returned;
 					const code =
 						returned instanceof APIError ? returned.body?.code : undefined;
-					if (code === "INVALID_OTP" || code === "TOO_MANY_ATTEMPTS")
-						await limits.recordOtpFailure(email);
+					// A wrong guess counts only against a live code: with none sent there is
+					// nothing to guess, and counting it would let anyone lock the email out.
+					const guessed =
+						code === "TOO_MANY_ATTEMPTS" ||
+						(code === "INVALID_OTP" &&
+							!!(await ctx.context.internalAdapter.findVerificationValue(
+								`sign-in-otp-${email}`,
+							)));
+					if (guessed) await limits.recordOtpFailure(email);
 					else if (!(returned instanceof Error))
 						await limits.clearOtpFailures(email);
 					return;

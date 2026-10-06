@@ -41,6 +41,19 @@ describe("user.create.before", () => {
 			applyUserCreate({ name: "Guest Heron", isAnonymous: true }).name,
 		).toBe("Guest Heron");
 	});
+
+	it("ignores `image` and a bare `name` sent in the sign-in body", () => {
+		expect(
+			applyUserCreate({
+				email: "a@b.c",
+				name: "x".repeat(5000),
+				image: "/api/avatar/owner-id",
+			}),
+		).toMatchObject({ name: "", image: null });
+		expect(
+			applyUserCreate({ name: "x".repeat(41), isAnonymous: true }).name,
+		).toBe("");
+	});
 });
 
 describe("user.update.before", () => {
@@ -85,6 +98,10 @@ describe("user.update.before", () => {
 		expect(() => applyUserUpdate({ name: "  " }, session(true))).toThrow(
 			UserRuleError,
 		);
+		// First and last names would skip the 40-character guest cap.
+		expect(() =>
+			applyUserUpdate({ firstName: "Olga", lastName: "Owner" }, session(true)),
+		).toThrow(UserRuleError);
 	});
 
 	it("a request can't set `image` (FB-16: only the avatar upload does)", () => {

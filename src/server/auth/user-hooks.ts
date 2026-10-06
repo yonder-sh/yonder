@@ -1,4 +1,4 @@
-import { cleanName, GuestName, PersonName } from "@/lib/auth/names";
+import { GuestName, PersonName } from "@/lib/auth/names";
 
 /**
  * Rules for writes to Better Auth's `user` row (SPEC §11.1 databaseHooks).
@@ -8,8 +8,10 @@ import { cleanName, GuestName, PersonName } from "@/lib/auth/names";
  * - `firstName`/`lastName` travel together, are cleaned and validated
  *   (1–60 chars), and `name` is always derived as "First Last".
  * - Signed-in accounts can never set `name` directly (it is derived).
- * - Anonymous guests may set `name` (their display name, 1–40 chars).
- * - Nobody sets `image` from a request (only `avatar.server.ts` does, FB-16).
+ * - Anonymous guests may set `name` (their display name, 1–40 chars), never
+ *   first and last names; `options.server.ts` adds the member-name clash check.
+ * - Nobody sets `image` from a request (only `avatar.server.ts` does, FB-16),
+ *   not even at sign-up.
  * - Server-internal writes (no request session) are trusted.
  */
 export class UserRuleError extends Error {}
@@ -30,7 +32,9 @@ function parseNames(patch: Patch): { firstName: string; lastName: string } {
 }
 
 /** `user.create.before`: names are optional at sign-up but validated if sent. */
-export function applyUserCreate<T extends Patch>(user: T): T {
+export function applyUserCreate<T extends Patch>(input: T): T {
+	// The sign-in body can carry `image`; a new account never brings its own picture.
+	const user = { ...input, image: null };
 	const hasF =
 		typeof user.firstName === "string" && user.firstName.trim() !== "";
 	const hasL = typeof user.lastName === "string" && user.lastName.trim() !== "";
@@ -38,7 +42,9 @@ export function applyUserCreate<T extends Patch>(user: T): T {
 		const names = parseNames(user);
 		return { ...user, ...names, name: `${names.firstName} ${names.lastName}` };
 	}
-	const name = typeof user.name === "string" ? cleanName(user.name) : "";
+	// An account's name comes from first and last names; only a guest has a bare one.
+	const guest = GuestName.safeParse(user.name ?? "");
+	const name = user.isAnonymous === true && guest.success ? guest.data : "";
 	return { ...user, firstName: "", lastName: "", name };
 }
 
@@ -57,6 +63,8 @@ export function applyUserUpdate<T extends Patch>(
 	if (hasF !== hasL)
 		throw new UserRuleError("send firstName and lastName together");
 	if (hasF) {
+		if (writer.kind === "session" && writer.isAnonymous)
+			throw new UserRuleError("a guest has one display name");
 		const names = parseNames(patch);
 		return { ...patch, ...names, name: `${names.firstName} ${names.lastName}` };
 	}

@@ -264,6 +264,8 @@ test("AUTH-09: email OTP is the only way in", async ({ page, request }) => {
 		["/api/auth/sign-in/social", { provider: "google" }],
 		["/api/auth/forget-password", { email: "dennis@asia2027.test" }],
 		["/api/auth/request-password-reset", { email: "dennis@asia2027.test" }],
+		["/api/auth/email-otp/check-verification-otp", { email: "dennis@asia2027.test", type: "sign-in", otp: "000000" }],
+		["/api/auth/email-otp/verify-email", { email: "dennis@asia2027.test", otp: "000000" }],
 	] as const) {
 		const r = await request.post(p, { headers: h, data: body });
 		results[p] = r.status();

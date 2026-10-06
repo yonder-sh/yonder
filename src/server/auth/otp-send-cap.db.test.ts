@@ -89,3 +89,37 @@ describe("OTP send cap (before hook)", () => {
 		warn.mockRestore();
 	});
 });
+
+describe("OTP verify failures (after hook)", () => {
+	const verify = (
+		auth: { handler: (r: Request) => Promise<Response> },
+		email: string,
+	) =>
+		auth.handler(
+			new Request("http://localhost:3000/api/auth/sign-in/email-otp", {
+				method: "POST",
+				headers: {
+					"content-type": "application/json",
+					origin: "http://localhost:3000",
+				},
+				body: JSON.stringify({ email, otp: "000000" }),
+			}),
+		);
+
+	it("counts a wrong guess only when a code was sent", async () => {
+		const limits = memoryAuthLimits();
+		const record = vi.spyOn(limits, "recordOtpFailure");
+		const auth = betterAuth(buildAuthOptions({ limits }));
+		const log = vi.spyOn(console, "log").mockImplementation(() => {});
+		const email = `nocode-${testEnv.hex}@asia2027.test`;
+		for (let i = 0; i <= LIMITS.otpFailuresPerDay; i++)
+			expect((await verify(auth, email)).status).toBe(400);
+		expect(record).not.toHaveBeenCalled();
+		expect(await limits.otpLockRemaining(email)).toBe(0);
+
+		await auth.api.sendVerificationOTP({ body: { email, type: "sign-in" } });
+		expect((await verify(auth, email)).status).toBe(400);
+		expect(record).toHaveBeenCalledWith(email);
+		log.mockRestore();
+	});
+});
