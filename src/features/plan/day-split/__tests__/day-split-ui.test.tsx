@@ -26,7 +26,7 @@ import { DEMO_MEMBERS, scenario } from "@/lib/fixtures/demo";
 import { tripKeys } from "@/lib/query/keys";
 import { useUi } from "@/lib/workspace/ui-store";
 import { renderWithWorkspace } from "@/test/render-workspace";
-import { splitDrafts } from "../DaySplit";
+import { pendingNights, splitDrafts } from "../DaySplit";
 import { SPLIT_TESTID as T } from "../testids";
 
 const fns = vi.hoisted(() => ({
@@ -40,6 +40,7 @@ const fns = vi.hoisted(() => ({
 		}),
 	),
 	getTripGraph: vi.fn(async (_: { data: unknown }): Promise<unknown> => null),
+	updateNode: vi.fn(async (_: { data: unknown }): Promise<unknown> => ({})),
 }));
 vi.mock("@/functions/days.functions", async (orig) => ({
 	...(await orig<typeof import("@/functions/days.functions")>()),
@@ -53,6 +54,10 @@ vi.mock("@/functions/items.functions", async (orig) => ({
 vi.mock("@/functions/trips.functions", async (orig) => ({
 	...(await orig<typeof import("@/functions/trips.functions")>()),
 	setTripDates: fns.setTripDates,
+}));
+vi.mock("@/functions/nodes.functions", async (orig) => ({
+	...(await orig<typeof import("@/functions/nodes.functions")>()),
+	updateNode: fns.updateNode,
 }));
 vi.mock("@/functions/graph.functions", async (orig) => ({
 	...(await orig<typeof import("@/functions/graph.functions")>()),
@@ -76,6 +81,8 @@ beforeAll(() => {
 afterEach(() => {
 	for (const f of Object.values(fns)) f.mockReset();
 	splitDrafts.clear();
+	pendingNights.clear();
+	localStorage.clear();
 	useUi.getState().resetUi();
 });
 
@@ -448,7 +455,7 @@ describe("no dates yet", () => {
 			"When do you arrive?",
 		);
 		expect(screen.getByTestId(T.arrive)).toHaveTextContent(
-			"A rough date is fine. The route is saved once it has one, and the trip ends when the route does.",
+			"A rough date is fine. Until then the nights are kept on this device only; once it has a date, the route is saved for everyone and the trip ends when the route does.",
 		);
 		expect(shape()).toEqual([
 			[s.N.tokyo, "4", "1"],
@@ -489,6 +496,39 @@ describe("no dates yet", () => {
 		expect(screen.getByTestId(T.split)).toHaveTextContent("6 nights");
 		expect(fns.setTripDates).not.toHaveBeenCalled();
 		expect(fns.setDayStays).not.toHaveBeenCalled();
+	});
+
+	it("a city with no nights can be removed from the trip; one with nights says how", async () => {
+		const { s, graph } = trip([]);
+		plan(graph);
+		const menu = async (id: string | undefined) => {
+			fireEvent.pointerDown(within(rowOf(id)).getByTestId(T.menu), {
+				button: 0,
+				pointerType: "mouse",
+			});
+			return screen.findByTestId(T.remove);
+		};
+		const tokyo = await menu(s.N.tokyo);
+		expect(tokyo).toHaveAttribute("data-disabled");
+		expect(tokyo).toHaveTextContent("To remove it, set its nights to 0");
+		fireEvent.keyDown(tokyo, { key: "Escape" });
+		await waitFor(() => expect(screen.queryByTestId(T.remove)).toBeNull());
+		fireEvent.click(await menu(s.N.osaka));
+		await waitFor(() => expect(fns.updateNode).toHaveBeenCalledTimes(1));
+		expect(fns.updateNode.mock.calls[0]?.[0].data).toMatchObject({
+			nodeId: s.N.osaka,
+			patch: { status: "dropped" },
+		});
+	});
+
+	it("no day you arrive yet: the nights you set are still there after leaving", () => {
+		const { s, graph } = trip([]);
+		const first = plan(graph);
+		fireEvent.click(within(rowOf(s.N.osaka)).getByTestId(T.splitPlus));
+		first.unmount();
+		splitDrafts.clear(); // a reload: only this device's copy is left
+		plan(graph);
+		expect(rowOf(s.N.osaka)).toHaveAttribute("data-days", "1");
 	});
 
 	it("suggesting: says the dates are only suggested, and sets no nights", async () => {
@@ -557,7 +597,7 @@ describe("once days have cities", () => {
 		fireEvent.click(within(rowOf(s.N.tokyo)).getByTestId(T.splitMinus));
 		fireEvent.click(screen.getByTestId(T.splitApply));
 		expect(screen.getByTestId(T.splitConfirm)).toHaveTextContent(
-			"1 place is on a day that moves to another city. It'll go back to your list to schedule again.",
+			/^T1 is on a day that moves to another city\. It goes back to Ideas to schedule again\./,
 		);
 		expect(fns.moveItem).not.toHaveBeenCalled();
 		fireEvent.click(
@@ -597,6 +637,21 @@ describe("once days have cities", () => {
 			{ fromDayId: s.D.d1, toDayId: s.D.d1, nodeId: s.N.kyoto },
 			{ fromDayId: s.D.d3, toDayId: s.D.d3, nodeId: s.N.tokyo },
 		]);
+	});
+
+	it("leaving with a change not applied keeps it for when you come back; Cancel drops it", () => {
+		const { s, graph } = planned();
+		plan(graph);
+		fireEvent.click(screen.getByTestId(T.splitChange));
+		fireEvent.click(within(rowOf(s.N.tokyo)).getByTestId(T.splitMinus));
+		fireEvent.click(screen.getByRole("radio", { name: "Days" }));
+		expect(screen.queryByTestId(T.splitRow)).toBeNull();
+		fireEvent.click(screen.getByTestId(T.splitChange));
+		expect(rowOf(s.N.tokyo)).toHaveAttribute("data-days", "1");
+		fireEvent.click(screen.getByTestId(T.splitCancel));
+		fireEvent.click(screen.getByTestId(T.splitChange));
+		expect(rowOf(s.N.tokyo)).toHaveAttribute("data-days", "2");
+		expect(fns.setDayStays).not.toHaveBeenCalled();
 	});
 
 	it("Cancel in the confirm keeps the panel; nothing is written", () => {

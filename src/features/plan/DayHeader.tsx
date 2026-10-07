@@ -55,7 +55,7 @@ import { DaySun } from "@/features/insights/DaySun";
 import { useHoursIssues } from "@/features/insights/use-hours-issues";
 import { noteFor, tripNotesQuery } from "@/features/notes/queries";
 import { can } from "@/lib/auth/roles";
-import { dayWhere, dayWhereText } from "@/lib/engine/day-place";
+import { dayWhere, dayWhereText, nightPlaces } from "@/lib/engine/day-place";
 import { tzLabel } from "@/lib/engine/time";
 import type { GraphDay } from "@/lib/engine/types";
 import { formatDayDate, formatDuration, formatTime } from "@/lib/format";
@@ -711,6 +711,9 @@ export function DayHeader({
 	const focused = sel?.kind === "day" && sel.id === day.id;
 	const inRange = days !== null && day.date >= days.from && day.date <= days.to;
 	const city = dayCity(ix, day.id);
+	// A night the route doesn't place (the last day has none of its own).
+	const noCity =
+		!city && ix.days.at(-1)?.id !== day.id && nightPlaces(ix).some(Boolean);
 	const zone = zoneLabel(ws, day.id);
 	const hasItems = (ix.itemsByDay.get(day.id)?.length ?? 0) > 0;
 	const estimate = (sd?.unsetLegs ?? 0) > 0;
@@ -786,6 +789,7 @@ export function DayHeader({
 					<div className="flex min-w-0 flex-wrap items-center gap-x-2 text-meta text-muted-foreground">
 						{/* "09:00–23:35 · …": the start is a button, the rest reads on from it. */}
 						<span className="flex min-w-0 items-center">
+							{noCity ? <NoCityYet /> : null}
 							<StartTime day={day} />
 							{sd && hasItems ? (
 								<span
@@ -813,6 +817,21 @@ export function DayHeader({
 				<DeleteConfirm day={day} onDone={() => setConfirmDelete(false)} />
 			) : null}
 		</>
+	);
+}
+
+/** A trip with a route, on a day it doesn't place: "No city yet", which opens Cities & nights. */
+function NoCityYet() {
+	const askSplit = useUi((s) => s.askSplit);
+	return (
+		<button
+			type="button"
+			data-testid={PLAN_TESTID.dayNoCity}
+			onClick={() => askSplit(true)}
+			className="mr-2 shrink-0 cursor-pointer text-warning underline-offset-2 hover:underline"
+		>
+			No city yet
+		</button>
 	);
 }
 

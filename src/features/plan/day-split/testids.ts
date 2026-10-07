@@ -27,6 +27,7 @@ export const SPLIT_TESTID = {
 	menu: "split-menu",
 	moveUp: "split-move-up",
 	moveDown: "split-move-down",
+	remove: "split-remove",
 	area: "split-area",
 	tripDays: "split-trip-days",
 	start: "split-start",

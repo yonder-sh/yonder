@@ -126,7 +126,7 @@ export type DayWhere = {
 	/**
 	 * Where the day is: where you sleep that night; on the trip's last day
 	 * (no night of its own), where you slept; else where its last stop is,
-	 * else where the day before ended. Null: nowhere known yet.
+	 * else (no route yet) where the day before ended. Null: nowhere known yet.
 	 */
 	placeId: string | null;
 	/** A travel day: where it starts (the night before's place, else its first stop's), when it isn't `placeId`. */
@@ -182,6 +182,9 @@ export function dayWhere(ix: GraphIndex, dayId: string): DayWhere {
 			placeId: end,
 			fromId: stops[0] && stops[0] !== end ? stops[0] : null,
 		};
+	// With a route, a day without a night or stops has no city yet (a night
+	// not placed), never the city before it.
+	if (ix.days.some((d) => nightPlace(ix, d.id))) return none;
 	for (let k = i - 1; k >= 0; k--) {
 		const d = ix.days[k];
 		if (!d) break;

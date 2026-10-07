@@ -31,6 +31,7 @@ import {
 	GripVertical,
 	Minus,
 	Plus,
+	Trash2,
 } from "lucide-react";
 import { useMemo } from "react";
 import { CategoryIcon } from "@/components/common/glyphs";
@@ -41,6 +42,7 @@ import {
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useOutlineActions } from "@/features/outline/use-outline-actions";
 import type { PlaceRow } from "@/features/places/tab/model";
 import { ScoreChip } from "@/features/places/tab/ui";
 import { formatDuration } from "@/lib/format";
@@ -203,6 +205,7 @@ function StopRow({
 	unused,
 	onStep,
 	onMove,
+	onRemove,
 	busy,
 	open,
 	onToggle,
@@ -215,6 +218,8 @@ function StopRow({
 	unused: number;
 	onStep: ((index: number, delta: 1 | -1) => void) | null;
 	onMove: ((from: number, to: number) => void) | null;
+	/** Drops the city from the trip (its places too, with Undo); null when it has nights. */
+	onRemove: (() => void) | null;
 	busy: boolean;
 	open: boolean;
 	onToggle: () => void;
@@ -357,7 +362,7 @@ function StopRow({
 								variant="ghost"
 								size="icon-xs"
 								data-testid={T.menu}
-								aria-label={`Move ${row.name}`}
+								aria-label={`More for ${row.name}`}
 								disabled={busy}
 								className="shrink-0 text-muted-foreground"
 							>
@@ -378,6 +383,16 @@ function StopRow({
 								onSelect={() => onMove(i, i + 1)}
 							>
 								<ArrowDown className="size-4" strokeWidth={1.5} /> Move down
+							</DropdownMenuItem>
+							<DropdownMenuItem
+								data-testid={T.remove}
+								disabled={!onRemove}
+								onSelect={() => onRemove?.()}
+							>
+								<Trash2 className="size-4" strokeWidth={1.5} />
+								{onRemove
+									? "Remove from the trip"
+									: "To remove it, set its nights to 0"}
 							</DropdownMenuItem>
 						</DropdownMenuContent>
 					</DropdownMenu>
@@ -415,6 +430,7 @@ export function SplitRows({
 	busy: boolean;
 }) {
 	const { ix } = useWorkspace();
+	const { setStatus } = useOutlineActions();
 	// The cities opened to their places travel with my view.
 	const [openKeys, setOpen] = useFollowState<string[]>(
 		"plan.split.open",
@@ -479,6 +495,11 @@ export function SplitRows({
 								unused={unused}
 								onStep={onStep}
 								onMove={onMove}
+								onRemove={
+									onMove && !rows.some((r) => r.id === row.id && r.days > 0)
+										? () => setStatus(row.id, "dropped")
+										: null
+								}
 								busy={busy}
 								open={open.has(row.key)}
 								onToggle={() => toggle(row.key)}

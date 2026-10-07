@@ -871,10 +871,17 @@ export function unusedText(unused: number): string {
 }
 
 /** "3 places are on days that move to another city. They'll go back to your list to schedule again." */
-export function displacedText(n: number): string {
-	return n === 1
-		? "1 place is on a day that moves to another city. It'll go back to your list to schedule again."
-		: `${n} places are on days that move to another city. They'll go back to your list to schedule again.`;
+/** "Senso-ji, Meiji Jingu and 2 more": up to two names, then a count. */
+export function namesText(names: readonly string[]): string {
+	if (names.length <= 2) return names.join(" and ");
+	return `${names.slice(0, 2).join(", ")} and ${names.length - 2} more`;
+}
+
+/** The confirm before Apply, naming the places that leave their day. */
+export function displacedText(names: readonly string[]): string {
+	return names.length === 1
+		? `${names[0]} is on a day that moves to another city. It goes back to Ideas to schedule again.`
+		: `${namesText(names)} are on days that move to another city. They go back to Ideas to schedule again.`;
 }
 
 /** "Sat 2 – Fri 15 Oct", "Thu 30 Sep – Wed 6 Oct". */

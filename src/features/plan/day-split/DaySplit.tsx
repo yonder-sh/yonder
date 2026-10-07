@@ -60,6 +60,7 @@ import {
 	leftToRate,
 	leftToRateText,
 	moveAt,
+	namesText,
 	nightRunsOf,
 	nightsIn,
 	overText,
@@ -333,18 +334,44 @@ type SplitDraft = {
 	start?: string | null;
 };
 
-/** Your changes to the suggestion while they wait (suggesting, or no dates yet), per trip: kept while the page is open. */
+/** Your changes to the suggestion while they wait (suggesting, or no dates yet), per trip, also kept on this device. */
 export const splitDrafts = new Map<string, SplitDraft>();
+
+/** Cities & nights changes not applied yet, per trip: they wait there when you leave. */
+export const pendingNights = new Map<string, KeyedEntry[]>();
+
+const draftKey = (tripId: string) => `yonder.splitDraft.${tripId}`;
+
+/** This device's copy, so leaving before picking a date keeps the nights. */
+function storedDraft(tripId: string): SplitDraft | undefined {
+	try {
+		const raw = localStorage.getItem(draftKey(tripId));
+		return raw ? (JSON.parse(raw) as SplitDraft) : undefined;
+	} catch {
+		return undefined;
+	}
+}
+
+function storeDraft(tripId: string, draft: SplitDraft | null) {
+	if (draft) splitDrafts.set(tripId, draft);
+	else splitDrafts.delete(tripId);
+	try {
+		if (draft) localStorage.setItem(draftKey(tripId), JSON.stringify(draft));
+		else localStorage.removeItem(draftKey(tripId));
+	} catch {
+		// Private mode or blocked storage: kept while the page is open.
+	}
+}
 
 function useSplitDraft(tripId: string) {
 	const [draft, setDraft] = useState<SplitDraft>(
-		() => splitDrafts.get(tripId) ?? {},
+		() => splitDrafts.get(tripId) ?? storedDraft(tripId) ?? {},
 	);
 	const update = useCallback(
 		(patch: SplitDraft) =>
 			setDraft((d) => {
 				const next = { ...d, ...patch };
-				splitDrafts.set(tripId, next);
+				storeDraft(tripId, next);
 				return next;
 			}),
 		[tripId],
@@ -503,7 +530,7 @@ function SplitSuggestion({
 		[suggestion],
 	);
 	const split = useMemo(() => splitOf(draft), [splitOf, draft]);
-	const done = () => splitDrafts.delete(tripId);
+	const done = () => storeDraft(tripId, null);
 	const put = async (s: DaySplit) => {
 		const list = entriesOf(s);
 		const next = layoutNights(list, ix.days.length);
@@ -625,7 +652,8 @@ function SplitSuggestion({
 						</div>
 					</div>
 					<p className="text-xs text-muted-foreground">
-						A rough date is fine. The route is saved once it has one, and the
+						A rough date is fine. Until then the nights are kept on this device
+						only; once it has a date, the route is saved for everyone and the
 						trip ends when the route does.
 					</p>
 				</div>
@@ -786,7 +814,10 @@ function ChangePanel({
 		},
 		[ix, info.cities, nights],
 	);
-	const [entries, setEntries] = useState<KeyedEntry[]>(() => withRest(initial));
+	const tripId = graph.trip.id;
+	const [entries, setEntries] = useState<KeyedEntry[]>(
+		() => (!live && pendingNights.get(tripId)) || withRest(initial),
+	);
 	const saver = useRouteSaver((list) => apply.save(list, openEnded));
 	const [saved, setSaved] = useState(false);
 	// Saving as you go: a change made elsewhere, or a save that didn't take,
@@ -867,8 +898,40 @@ function ChangePanel({
 			first ? Array.from({ length: span }, (_, i) => addDays(first, i)) : [],
 		[first, span],
 	);
+	// Leaving with changes not applied: they wait here, and a toast says so.
+	const left = useRef<KeyedEntry[] | null>(null);
+	left.current = !live && changed ? entries : null;
+	const askSplit = useUi((s) => s.askSplit);
+	useEffect(
+		() => () => {
+			const list = left.current;
+			if (!list) {
+				pendingNights.delete(tripId);
+				return;
+			}
+			pendingNights.set(tripId, list);
+			toast("Your changes to the nights aren't applied yet.", {
+				id: "nights-pending",
+				action: { label: "Back to them", onClick: () => askSplit(true) },
+			});
+		},
+		[tripId, askSplit],
+	);
+	const nameOf = (it: (typeof plan.displaced)[number]) =>
+		it.title ?? ix.node(it.nodeId)?.name ?? "A place";
+	const discard = () => {
+		left.current = null;
+		onClose();
+	};
 	const run = async () => {
-		if (await apply.apply(plan)) onClose();
+		const moved = plan.displaced.map(nameOf);
+		if (!(await apply.apply(plan))) return;
+		toast.success(
+			moved.length
+				? `Nights changed. ${namesText(moved)} ${moved.length === 1 ? "is" : "are"} back in Ideas.`
+				: "Nights changed.",
+		);
+		discard();
 	};
 	if (live) {
 		const total = Math.max(nights, used);
@@ -950,22 +1013,26 @@ function ChangePanel({
 		);
 	}
 	return (
-		<div
+		<section
 			data-cursor-anchor="sec:split.change"
-			className="flex flex-col gap-3 rounded-xl bg-muted/50 p-3 sm:p-4"
+			className="flex flex-col gap-3"
 		>
-			{/* D05: what this is, and how far along. */}
-			<p className="flex flex-wrap items-baseline justify-between gap-x-3 text-meta text-muted-foreground">
-				<span>
-					The order you travel in and the nights in each. Your days follow from
-					this.
-				</span>
-				{nights ? (
-					<span className="font-medium text-foreground tnum">
-						{Math.min(used, nights)} of {nights} nights placed
-					</span>
-				) : null}
-			</p>
+			{/* The same heading as while the route is built; changes wait for Apply now. */}
+			<header className="flex flex-col gap-1">
+				<div className="flex flex-wrap items-baseline justify-between gap-x-3">
+					<h2 className="font-display text-lg font-semibold">
+						How long in each city?
+					</h2>
+					{nights ? (
+						<span className="text-sm text-muted-foreground tnum">
+							{Math.min(used, nights)} of {nightWord(nights)} placed
+						</span>
+					) : null}
+				</div>
+				<p className="max-w-prose text-sm text-muted-foreground">
+					Places are on your days now, so a change here waits for Apply.
+				</p>
+			</header>
 			<SplitRows
 				info={info}
 				rows={rows}
@@ -981,7 +1048,7 @@ function ChangePanel({
 					data-testid={T.splitConfirm}
 					className="flex flex-col gap-2 rounded-lg bg-warning-wash px-3 py-2.5"
 				>
-					<p className="text-sm">{displacedText(plan.displaced.length)}</p>
+					<p className="text-sm">{displacedText(plan.displaced.map(nameOf))}</p>
 					<div className="flex gap-2">
 						<Button
 							size="sm"
@@ -1019,13 +1086,13 @@ function ChangePanel({
 						variant="ghost"
 						data-testid={T.splitCancel}
 						disabled={busy}
-						onClick={onClose}
+						onClick={discard}
 					>
 						Cancel
 					</Button>
 				</div>
 			)}
-		</div>
+		</section>
 	);
 }
 

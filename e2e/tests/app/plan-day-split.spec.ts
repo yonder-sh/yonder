@@ -271,7 +271,7 @@ test.describe("desktop", () => {
 		await page.getByTestId(T.splitApply).click();
 		const confirm = page.getByTestId(T.splitConfirm);
 		await expect(confirm).toContainText(
-			"1 place is on a day that moves to another city. It'll go back to your list to schedule again.",
+			"Senso-ji is on a day that moves to another city. It goes back to Ideas to schedule again.",
 		);
 		await page.waitForTimeout(200);
 		await page.screenshot({ path: shot("desktop-5-change"), animations: "disabled" });

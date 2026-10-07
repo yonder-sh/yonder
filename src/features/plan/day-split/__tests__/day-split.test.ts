@@ -851,11 +851,11 @@ describe("applying a split", () => {
 		// Tokyo's t2 leaves day 2 (the airport isn't a place to schedule); the
 		// Nara day trip stays on a day that stays Kyoto's.
 		expect(plan.displaced.map((it) => it.id)).toEqual([I.b]);
-		expect(displacedText(plan.displaced.length)).toBe(
-			"1 place is on a day that moves to another city. It'll go back to your list to schedule again.",
+		expect(displacedText(["Senso-ji"])).toBe(
+			"Senso-ji is on a day that moves to another city. It goes back to Ideas to schedule again.",
 		);
-		expect(displacedText(3)).toBe(
-			"3 places are on days that move to another city. They'll go back to your list to schedule again.",
+		expect(displacedText(["A", "B", "C", "D"])).toBe(
+			"A, B and 2 more are on days that move to another city. They go back to Ideas to schedule again.",
 		);
 		// Freeing a day with a place on it sends it back too.
 		const shorter = layoutDays(

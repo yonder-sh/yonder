@@ -33,6 +33,12 @@ describe("dayWhere", () => {
 		]);
 	});
 
+	it("a night not placed yet has no city, never the one before it", () => {
+		expect(
+			texts([{ night: "kyoto", items: [] }, { items: [] }, { items: [] }]),
+		).toEqual(["Kyoto", null, null]);
+	});
+
 	it("a last day with no flight is going home", () => {
 		expect(texts([{ night: "kyoto", items: [] }, { items: [] }])).toEqual([
 			"Kyoto",

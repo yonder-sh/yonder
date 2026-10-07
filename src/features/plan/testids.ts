@@ -25,6 +25,7 @@ export const PLAN_TESTID = {
 	dayFilter: "plan-day-filter",
 	dayStart: "plan-day-start",
 	dayTitle: "plan-day-title",
+	dayNoCity: "plan-day-no-city",
 	daySummary: "plan-day-summary",
 	dayIssues: "plan-day-issues",
 	dayStay: "plan-day-stay",
