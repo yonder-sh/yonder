@@ -81,7 +81,7 @@ test("DASH-01/02: own vs shared trips, card content, card opens the trip", async
 	const hero = page.getByTestId("home-hero");
 	await expect(hero).toContainText("Asia 2027");
 	await expect(hero).toContainText(/2 Oct\s*–\s*5 Nov 2027/);
-	await expect(hero).toContainText("35 days");
+	await expect(hero).toContainText("34 nights");
 	const text = await page.getByTestId("dashboard").innerText();
 	expect(text.toLowerCase()).toContain("shared with you");
 	expect(text).toContain("Phu Quoc detour");
@@ -179,7 +179,7 @@ test("TRIP-01: create a trip with 35 dated days; invalid input refused", async (
 		await pop.getByRole("button", { name: /next/i }).click();
 	}
 	await pop.locator('button[data-day="11/5/2027"]').first().click();
-	await expect(page.getByTestId("home-new-trip-dates")).toContainText("35 days");
+	await expect(page.getByTestId("home-new-trip-dates")).toContainText("34 nights");
 	await shot(page, "t01-dialog-filled");
 	await page.getByTestId("new-trip-submit").click();
 	await expect(page.getByTestId("workspace")).toBeVisible({ timeout: 30_000 });

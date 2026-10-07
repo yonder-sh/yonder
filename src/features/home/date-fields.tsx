@@ -108,7 +108,10 @@ export function DateRangeField({
 							</span>
 							{days ? (
 								<span className="text-xs text-muted-foreground tnum">
-									{days} {days === 1 ? "day" : "days"}
+									{/* Nights, as the route counts them (a one-day trip has none). */}
+									{days === 1
+										? "1 day"
+										: `${days - 1} ${days === 2 ? "night" : "nights"}`}
 								</span>
 							) : null}
 						</span>

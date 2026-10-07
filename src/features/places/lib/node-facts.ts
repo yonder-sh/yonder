@@ -23,17 +23,24 @@ export type NodeVisit = {
 	stops: number;
 };
 
-/** Consecutive-day runs whose items (or night's stay) are inside `nodeId`. */
+/**
+ * Consecutive-day runs whose items (or night's stay) are inside `nodeId`,
+ * through the day you leave after its last night ("10–14 Oct · 4 nights",
+ * as Cities & nights has it).
+ */
 export function visitsOf(ix: GraphIndex, nodeId: string): NodeVisit[] {
 	const out: NodeVisit[] = [];
 	let cur: NodeVisit | null = null;
 	let prevIndex = -2;
+	let sleptHere = false;
 	for (const [i, day] of ix.days.entries()) {
 		const items = (ix.itemsByDay.get(day.id) ?? []).filter((it) =>
 			ix.isWithin(it.nodeId, nodeId),
 		);
 		const night = ix.isWithin(day.nightNodeId, nodeId);
-		if (!items.length && !night) continue;
+		const leaving = sleptHere && i === prevIndex + 1;
+		sleptHere = night;
+		if (!items.length && !night && !leaving) continue;
 		if (!cur || i !== prevIndex + 1) {
 			cur = { days: [], nights: 0, stops: 0 };
 			out.push(cur);
