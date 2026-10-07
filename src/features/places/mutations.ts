@@ -7,7 +7,7 @@
 import type { QueryClient } from "@tanstack/react-query";
 import { useTripMutation } from "@/components/common/use-trip-mutation";
 import { optimisticMove } from "@/features/plan/use-plan-actions";
-import { setDayStay } from "@/functions/days.functions";
+import { setDayStay, setDayStays } from "@/functions/days.functions";
 import { createItem, moveItem } from "@/functions/items.functions";
 import {
 	createNodePath,
@@ -225,25 +225,43 @@ export type DayStayVars = {
 	nodeId: string | null;
 };
 
+/** `g` with the night of a range of days set. */
+function withStay(g: TripGraph, v: DayStayVars): TripGraph {
+	const date = (id: string) => g.days.find((d) => d.id === id)?.date;
+	const from = date(v.fromDayId);
+	const to = date(v.toDayId ?? v.fromDayId);
+	if (!from || !to) return g;
+	return {
+		...g,
+		days: g.days.map((d) =>
+			d.date >= from && d.date <= to ? { ...d, nightNodeId: v.nodeId } : d,
+		),
+	};
+}
+
 /** The night's stay for a range of days (`day.stay`). */
 export function useSetDayStay(tripId: string) {
 	return useTripMutation((v: DayStayVars) => setDayStay({ data: v }), {
 		keys: [tripKeys.graph(tripId)],
 		tripId,
 		optimistic: (qc, v) =>
-			qc.setQueryData(tripKeys.graph(tripId), (g?: TripGraph) => {
-				const date = (id: string) => g?.days.find((d) => d.id === id)?.date;
-				const from = date(v.fromDayId);
-				const to = date(v.toDayId ?? v.fromDayId);
-				if (!g || !from || !to) return g;
-				return {
-					...g,
-					days: g.days.map((d) =>
-						d.date >= from && d.date <= to
-							? { ...d, nightNodeId: v.nodeId }
-							: d,
-					),
-				};
-			}),
+			qc.setQueryData(tripKeys.graph(tripId), (g?: TripGraph) =>
+				g ? withStay(g, v) : g,
+			),
 	});
+}
+
+/** The route's nights in one go (`day.stays`): Cities & nights. */
+export function useSetDayStays(tripId: string) {
+	return useTripMutation(
+		(v: { stays: DayStayVars[] }) => setDayStays({ data: v }),
+		{
+			keys: [tripKeys.graph(tripId)],
+			tripId,
+			optimistic: (qc, v) =>
+				qc.setQueryData(tripKeys.graph(tripId), (g?: TripGraph) =>
+					g ? v.stays.reduce(withStay, g) : g,
+				),
+		},
+	);
 }

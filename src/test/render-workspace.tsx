@@ -8,12 +8,17 @@
  *   await user.click(screen.getByText("Shibuya Sky"))
  *   expect(ws().sel).toEqual({ kind: "item", id: … })
  */
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import {
+	QueryClient,
+	QueryClientProvider,
+	useQuery,
+} from "@tanstack/react-query";
 import { type RenderResult, render } from "@testing-library/react";
 import { type ReactElement, type ReactNode, useMemo, useState } from "react";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import type { TripCounts, TripGraph } from "@/lib/engine/types";
 import { demoGraph } from "@/lib/fixtures/demo";
+import { tripKeys } from "@/lib/query/keys";
 import type { ProposalDto } from "@/lib/schemas/proposals";
 import {
 	type ConnectionState,
@@ -38,6 +43,11 @@ export type RenderWorkspaceOptions = {
 	queryClient?: QueryClient;
 	/** E7 open proposals (none by default; `scenario.proposals` for ghosts). */
 	proposals?: ProposalDto[];
+	/**
+	 * The graph lives in the query cache (`tripKeys.graph`), as in the app:
+	 * optimistic writes and fetched graphs show. Else it stays `graph`.
+	 */
+	cached?: boolean;
 };
 
 export function renderWithWorkspace(
@@ -54,6 +64,25 @@ export function renderWithWorkspace(
 		new QueryClient({ defaultOptions: { queries: { retry: false } } });
 	const navigations: NavTarget[] = [];
 	let latest: Workspace | null = null;
+	const first = opts.graph ?? demoGraph;
+	const key = tripKeys.graph(first.trip.id);
+	if (opts.cached) queryClient.setQueryData(key, first);
+
+	/** The cached graph (a refetch keeps what's there: tests mock the server). */
+	function useGraph(): TripGraph {
+		// The Harness renders the provider, so the client is passed in.
+		const q = useQuery(
+			{
+				queryKey: key,
+				queryFn: () => queryClient.getQueryData<TripGraph>(key) ?? first,
+				enabled: !!opts.cached,
+				staleTime: Number.POSITIVE_INFINITY,
+			},
+			queryClient,
+		);
+		// Uncached: read at each render (tests swap `opts.graph` and rerender).
+		return opts.cached ? (q.data ?? first) : (opts.graph ?? demoGraph);
+	}
 
 	function Capture() {
 		latest = useWorkspaceOptional();
@@ -61,6 +90,7 @@ export function renderWithWorkspace(
 	}
 
 	function Harness({ children }: { children: ReactNode }) {
+		const graph = useGraph();
 		const [loc, setLoc] = useState<NavTarget>({
 			splat: opts.splat ?? "",
 			search: opts.search ?? {},
@@ -84,7 +114,7 @@ export function renderWithWorkspace(
 			<QueryClientProvider client={queryClient}>
 				<TooltipProvider>
 					<WorkspaceModelProvider
-						graph={opts.graph ?? demoGraph}
+						graph={graph}
 						counts={opts.counts}
 						mode={opts.mode ?? "fixture"}
 						connection={opts.connection ?? "live"}

@@ -49,6 +49,12 @@ export const TripSettings = z
 		shortlistMinScore: z.number().int().min(-20).max(60).default(3),
 		/** The shortlist's per-person level (default 1.5), see `shortlistBar`. */
 		shortlistLevel: ShortlistLevel.default(1.5),
+		/**
+		 * The trip's end follows its route: its dates came from "When do you
+		 * arrive?" and the nights (`trip.dates` with `followRoute`). Dates set
+		 * any other way are fixed and clear it.
+		 */
+		datesFollowRoute: z.boolean(),
 	})
 	.partial();
 export type TripSettings = z.infer<typeof TripSettings>;

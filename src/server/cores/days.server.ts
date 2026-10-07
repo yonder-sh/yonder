@@ -9,7 +9,9 @@ import { sql } from "drizzle-orm";
 import { z } from "zod";
 import type { Tx } from "@/db/db.server";
 import { tripDays } from "@/db/schema";
+import type { GraphIndex } from "@/lib/engine/graph-index";
 import { addDays } from "@/lib/engine/time";
+import type { GraphDay } from "@/lib/engine/types";
 import { HHmm, IsoDate } from "@/lib/schemas/common";
 import { logActivity } from "@/server/activity.server";
 import { fail } from "@/server/authz/session.server";
@@ -65,6 +67,11 @@ export const SetDayStayInput = z
 		toDayId: z.uuid().optional(),
 		nodeId: z.uuid().nullable(),
 	})
+	.strict();
+
+/** The route's nights in one go: ranges in order (a day in two takes the later one); a trip has 366 days at most. */
+export const SetDayStaysInput = z
+	.object({ stays: z.array(SetDayStayInput).min(1).max(366) })
 	.strict();
 
 type In<S extends z.ZodType> = z.output<S>;
@@ -232,19 +239,13 @@ export async function updateDayCore(
 	return { updatedAt: row.updatedAt.toISOString() };
 }
 
-/**
- * `day.stay`: the night's stay for a day range: a live place (the hotel), or
- * the town you sleep in before one is picked (a city, region or area; the
- * Schedule step's day split). Never a country. Keys: graph.
- */
-export async function setDayStayCore(
+/** Checks one range of `day.stay` / `day.stays` and writes its nights: the days it set. */
+async function writeStay(
 	tx: Tx,
-	out: TxOutbox,
+	ix: GraphIndex,
+	tripId: string,
 	data: In<typeof SetDayStayInput>,
-	ctx: CoreCtx,
-): Promise<{ dayIds: string[] }> {
-	const tripId = ctx.access.tripId;
-	const ix = await indexTx(tx, tripId);
+): Promise<{ from: GraphDay; dayIds: string[] }> {
 	const from = ix.day(data.fromDayId);
 	const to = ix.day(data.toDayId ?? data.fromDayId);
 	if (!from || !to) return fail("NOT_FOUND");
@@ -264,6 +265,23 @@ export async function setDayStayCore(
 	await tx.execute(sql`
 		update trip_days set night_node_id = ${data.nodeId}, updated_at = now()
 		 where trip_id = ${tripId} and id = any(${sql.param(dayIds)}::uuid[])`);
+	return { from, dayIds };
+}
+
+/**
+ * `day.stay`: the night's stay for a day range: a live place (the hotel), or
+ * the town you sleep in before one is picked (a city, region or area; the
+ * Schedule step's day split). Never a country. Keys: graph.
+ */
+export async function setDayStayCore(
+	tx: Tx,
+	out: TxOutbox,
+	data: In<typeof SetDayStayInput>,
+	ctx: CoreCtx,
+): Promise<{ dayIds: string[] }> {
+	const tripId = ctx.access.tripId;
+	const ix = await indexTx(tx, tripId);
+	const { from, dayIds } = await writeStay(tx, ix, tripId, data);
 	// Stay legs whose anchors or stays changed get autofilled after COMMIT.
 	await reconcileLegs(tx, out, tripId, ix);
 	const name = data.nodeId
@@ -277,6 +295,74 @@ export async function setDayStayCore(
 		dayId: from.id,
 		nodeId: data.nodeId,
 		meta: { name, count: dayIds.length },
+	});
+	out.emit({ entity: "day", ids: dayIds });
+	return { dayIds };
+}
+
+/** "Tokyo 3 nights · Kyoto 3 · Osaka 2": each run of nights by its city (four, then "…"); null without any. */
+export function routeText(
+	ix: Pick<GraphIndex, "node" | "path">,
+	nights: readonly (string | null)[],
+): string | null {
+	const runs: { name: string; n: number }[] = [];
+	let prev: string | null = null;
+	for (const id of nights) {
+		const city = id
+			? (ix.path(id).findLast((n) => n.type === "city") ?? ix.node(id))
+			: null;
+		const last = runs.at(-1);
+		if (city && city.id === prev && last) last.n += 1;
+		else if (city) runs.push({ name: city.name, n: 1 });
+		prev = city?.id ?? null;
+	}
+	if (!runs.length) return null;
+	const parts = runs
+		.slice(0, 4)
+		.map((r, i) =>
+			i
+				? `${r.name} ${r.n}`
+				: `${r.name} ${r.n} ${r.n === 1 ? "night" : "nights"}`,
+		);
+	return runs.length > 4 ? `${parts.join(" · ")} · …` : parts.join(" · ");
+}
+
+/**
+ * `day.stays`: the route's nights in one go (Cities & nights): each range as
+ * `day.stay`, and one activity line with the route it leaves ("set the
+ * nights: Tokyo 3 nights · Kyoto 3"), so a change saved as you make it reads
+ * as one. Keys: graph.
+ */
+export async function setDayStaysCore(
+	tx: Tx,
+	out: TxOutbox,
+	data: In<typeof SetDayStaysInput>,
+	ctx: CoreCtx,
+): Promise<{ dayIds: string[] }> {
+	const tripId = ctx.access.tripId;
+	const ix = await indexTx(tx, tripId);
+	const nights = new Map(ix.days.map((d) => [d.id, d.nightNodeId ?? null]));
+	const changed = new Set<string>();
+	for (const s of data.stays) {
+		const { dayIds } = await writeStay(tx, ix, tripId, s);
+		for (const id of dayIds) {
+			nights.set(id, s.nodeId);
+			changed.add(id);
+		}
+	}
+	await reconcileLegs(tx, out, tripId, ix);
+	const dayIds = [...changed];
+	const route = routeText(
+		ix,
+		ix.days.map((d) => nights.get(d.id) ?? null),
+	);
+	await logActivity(tx, out, {
+		tripId,
+		actor: ctx.actor,
+		verb: "day.stays",
+		summary: route ? `set the nights: ${route}` : "cleared the nights",
+		dayId: dayIds[0] ?? null,
+		meta: { count: dayIds.length },
 	});
 	out.emit({ entity: "day", ids: dayIds });
 	return { dayIds };

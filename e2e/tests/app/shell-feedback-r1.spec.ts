@@ -314,7 +314,7 @@ test.describe("phone 390", () => {
 		// The map's empty card shows with the map open.
 		await page.getByTestId(SHELL_TESTID.mobileMapToggle).tap();
 		await expect(page.getByTestId("map-empty")).toBeInViewport();
-		// A city but no dates: the Plan asks how long in it, and when you arrive.
+		// A city but no dates: the Plan asks when you arrive, and how long in it.
 		const tripId = (created as { tripId: string }).tripId;
 		await page.evaluate(async (tripId) => {
 			const m = await import(/* @vite-ignore */ "/src/functions/nodes.functions.ts");
@@ -322,6 +322,6 @@ test.describe("phone 390", () => {
 		}, tripId);
 		await openTrip(page, `/t/${slug}?tab=plan`);
 		await expect(page.getByTestId(TESTID.planTab)).toContainText("How long in each city?", { timeout: 15_000 });
-		await expect(page.getByTestId(TESTID.planTab)).toContainText("You arrive on");
+		await expect(page.getByTestId(TESTID.planTab)).toContainText("When do you arrive?");
 	});
 });

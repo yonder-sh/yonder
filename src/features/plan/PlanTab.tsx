@@ -243,14 +243,6 @@ function PlanTabBody() {
 	// One Yonder: Days | Cities & nights (D02/D05); without a day in view the
 	// coarse lenses list the days as rows (D02), a day in view is its timeline.
 	const [nights, setNights] = useSplitOpen();
-	// A city just added to the route, or the checklist's "How long in each city".
-	const splitAsked = useUi((s) => s.splitAsked);
-	const askSplit = useUi((s) => s.askSplit);
-	useEffect(() => {
-		if (!splitAsked) return;
-		askSplit(false);
-		setNights(true);
-	}, [splitAsked, askSplit, setNights]);
 	const dayRows = !days && isCoarse(lens);
 	const actions = usePlanActions();
 	const openAddPlace = useUi((s) => s.openAddPlace);

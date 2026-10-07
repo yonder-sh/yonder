@@ -27,6 +27,7 @@ export const PROPOSAL_OPS = [
 	"item.assignees",
 	"day.update",
 	"day.stay",
+	"day.stays",
 	"day.insert",
 	"day.move",
 	"day.delete",

@@ -11,6 +11,7 @@ import {
 	InsertDayInput,
 	MoveDayInput,
 	SetDayStayInput,
+	SetDayStaysInput,
 	UpdateDayInput,
 } from "@/server/cores/days.server";
 import { proposable } from "@/server/proposals/proposable.server";
@@ -46,3 +47,9 @@ export const setDayStay = createServerFn({ method: "POST" })
 	.middleware([withNamedUser])
 	.validator(proposable.input(SetDayStayInput))
 	.handler(proposable.run("day.stay"));
+
+/** `day.stays`: the route's nights in one go (Cities & nights). Keys: graph. */
+export const setDayStays = createServerFn({ method: "POST" })
+	.middleware([withNamedUser])
+	.validator(proposable.input(SetDayStaysInput))
+	.handler(proposable.run("day.stays"));

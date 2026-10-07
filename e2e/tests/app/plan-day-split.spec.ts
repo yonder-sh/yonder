@@ -4,12 +4,14 @@
  * Plan shares the trip's nights (7 days: 6, the last day is the day you
  * leave) between the cities from what the shortlist needs (the spare nights
  * shared out) and says who still rates; rating moves it; the stops reorder
- * by drag (the map numbers them in that order); − / + adjust it; Put it on
- * the days sets each city's nights. Then Fill a day puts a shortlisted place
- * on a day, and Change in the Plan: − on a city with a place on its last day
- * confirms in the panel and sends the place back to the list. With no
- * dates: the nights, the day you arrive, then the dates and the nights in
- * one go. The phone gets the same at 390 px (Move up / Move down).
+ * by drag (the map numbers them in that order), and from then on each change
+ * is saved as it's made (Cities & nights); − / + adjust it. Then Fill a day
+ * puts a shortlisted place on a day, and Change in the Plan: − on a city
+ * with a place on its last day confirms in the panel and sends the place
+ * back to the list. With no dates: "When do you arrive?" first; the day
+ * picked puts the dates and the nights on the trip at once, and the trip
+ * then grows with its route. The phone gets the same at 390 px (Move up /
+ * Move down).
  * Screenshots land in `.data/split-shots/`.
  */
 import path from "node:path";
@@ -163,7 +165,7 @@ test.describe("desktop", () => {
 		await expect(split).toBeVisible();
 		await expect(split.getByRole("heading")).toHaveText("How long in each city?");
 		await expect(split).toContainText(
-			"Based on your shortlist. Change the nights, reorder the stops, then put them on the days.",
+			"Based on your shortlist. Change the nights or the order, or put it on the days as it is.",
 		);
 		await expect(split).toContainText("6 nights, Fri 1 – Thu 7 Oct");
 		// Tokyo needs 2, Kyoto 1; the 3 spare nights go in turn, Tokyo first.
@@ -203,7 +205,8 @@ test.describe("desktop", () => {
 		]);
 		await expect(page.getByTestId(T.splitRate)).toContainText("You have 1 place to rate.");
 
-		// 3. Reorder: Kyoto dragged below Osaka; the numbers and the map follow.
+		// 3. Reorder: Kyoto dragged below Osaka; the numbers and the map follow,
+		// and the route is on the days at once (Cities & nights, saving as you go).
 		await dragRow(page, t.city.kyoto, t.city.osaka);
 		await expect.poll(() => order(page)).toEqual([
 			[t.city.tokyo, "3"],
@@ -212,21 +215,28 @@ test.describe("desktop", () => {
 		]);
 		await expect(rowOf(page, t.city.osaka)).toHaveAttribute("data-stop", "2");
 		await expect.poll(() => mapStops(page)).toEqual([`1:${t.city.tokyo}`, `2:${t.city.osaka}`, `3:${t.city.kyoto}`]);
+		await expect
+			.poll(async () => (await graphOf(page)).days.map((d) => d.nightNodeId), { timeout: 15_000 })
+			.toEqual([t.city.tokyo, t.city.tokyo, t.city.tokyo, t.city.osaka, t.city.kyoto, t.city.kyoto, null]);
+		await expect(split).toHaveAttribute("data-live", "");
 		await page.waitForTimeout(300);
 		await page.screenshot({ path: shot("desktop-2-reordered"), animations: "disabled" });
 
-		// 4. − on Tokyo leaves a night not placed; + on Kyoto takes it.
+		// 4. − on Tokyo leaves a night not placed; + on Kyoto takes it; each saved.
 		await rowOf(page, t.city.tokyo).getByTestId(T.splitMinus).click();
 		await expect(page.getByTestId(T.splitUnused)).toHaveText("1 night not placed yet");
 		await rowOf(page, t.city.kyoto).getByTestId(T.splitPlus).click();
 		await expect(rowOf(page, t.city.kyoto)).toHaveAttribute("data-days", "3");
 		await expect(page.getByTestId(T.splitUnused)).toHaveText("No free nights left. Take one from another city first.");
-		await expect(page.getByTestId(T.splitUse)).toHaveText("Put it on the days");
-		await page.getByTestId(T.splitUse).click();
 		// Thu 7, the day you leave, is a Kyoto day with no night of its own.
 		await expect
 			.poll(async () => (await graphOf(page)).days.map((d) => d.nightNodeId), { timeout: 15_000 })
 			.toEqual([t.city.tokyo, t.city.tokyo, t.city.osaka, t.city.kyoto, t.city.kyoto, t.city.kyoto, null]);
+		await expect(page.getByTestId(T.saveState)).toHaveText("Saved");
+		// A reload keeps it.
+		await page.reload();
+		await expectLive(page);
+		await expect(page.getByTestId(T.splitChange)).toBeVisible({ timeout: 30_000 });
 
 		// 5. Cities & nights says so; the map goes back to normal.
 		await expectNights(page, [
@@ -283,11 +293,15 @@ test.describe("desktop", () => {
 		await expect(page.getByTestId(MAP_TESTID.splitStop)).toHaveCount(0);
 	});
 
-	test("no dates: the nights, the day you arrive, then the dates and the nights", async ({ page }) => {
+	test("no dates: When do you arrive? first, then the dates and the nights at once; the trip grows with its route", async ({
+		page,
+	}) => {
 		const t = await newTrip(page, false);
 		await openPlan(page, t);
 		const split = page.getByTestId(T.split);
-		await expect(split.getByRole("heading")).toHaveText("How long in each city?");
+		await expect(split.getByRole("heading").first()).toHaveText("How long in each city?");
+		await expect(page.getByTestId(T.arrive)).toContainText("When do you arrive?");
+		await expect(page.getByTestId(T.splitUse)).toHaveCount(0);
 		// What the shortlist needs, with no cap: one more night in Tokyo.
 		expect(await order(page)).toEqual([
 			[t.city.tokyo, "2"],
@@ -297,30 +311,36 @@ test.describe("desktop", () => {
 		await rowOf(page, t.city.tokyo).getByTestId(T.splitPlus).click();
 		await expect(rowOf(page, t.city.tokyo)).toHaveAttribute("data-days", "3");
 		await expect(split).toContainText("4 nights");
-		await expect(split).toContainText("You arrive on");
-		await expect(page.getByTestId(T.splitUse)).toBeDisabled();
-		// Starting on the 15th of the month the calendar opens on.
+		await page.waitForTimeout(200);
+		await page.screenshot({ path: shot("desktop-6-no-dates"), animations: "disabled" });
+		// Arriving on the 15th of the month the calendar opens on.
 		await page.getByTestId(T.start).click();
 		const cal = page.locator('[data-slot="popover-content"]');
 		await cal.locator("button[data-day]").filter({ hasText: /^15$/ }).first().click();
-		await expect(page.getByTestId(T.start)).toContainText("15");
-		await page.waitForTimeout(200);
-		await page.screenshot({ path: shot("desktop-6-no-dates"), animations: "disabled" });
-		await page.getByTestId(T.splitUse).click();
 		await expect
 			.poll(async () => (await graphOf(page)).days.map((d) => d.nightNodeId), { timeout: 20_000 })
 			.toEqual([t.city.tokyo, t.city.tokyo, t.city.tokyo, t.city.kyoto, null]);
 		const dates = (await graphOf(page)).days.map((d) => d.date);
 		expect(dates).toHaveLength(5);
 		expect(Number(dates[0]?.slice(8))).toBe(15);
+		// Cities & nights, saving as you go: the trip ends when the route does.
+		await expect(split).toHaveAttribute("data-live", "", { timeout: 15_000 });
+		await expect(split).toContainText("The trip ends when the route does.");
+		await rowOf(page, t.city.kyoto).getByTestId(T.splitPlus).click();
+		await expect
+			.poll(async () => (await graphOf(page)).days.map((d) => d.nightNodeId), { timeout: 20_000 })
+			.toEqual([t.city.tokyo, t.city.tokyo, t.city.tokyo, t.city.kyoto, t.city.kyoto, null]);
+		await page.waitForTimeout(200);
+		await page.screenshot({ path: shot("desktop-7-grows"), animations: "disabled" });
+		await page.getByTestId(T.done).click();
 		await expectNights(page, [
 			[t.city.tokyo, "3"],
-			[t.city.kyoto, "1"],
+			[t.city.kyoto, "2"],
 		]);
 	});
 });
 
-test("phone: the split at 390 px, Move up, Put it on the days, then Cities & nights", async ({ page, isMobile }) => {
+test("phone: the split at 390 px, Move up (saved at once), − / +, then Cities & nights", async ({ page, isMobile }) => {
 	test.skip(!isMobile, "phone layout");
 	await page.setViewportSize({ width: 390, height: 844 });
 	const t = await newTrip(page);
@@ -344,7 +364,7 @@ test("phone: the split at 390 px, Move up, Put it on the days, then Cities & nig
 	await rowOf(page, t.city.tokyo).getByTestId(T.splitMinus).tap();
 	await rowOf(page, t.city.osaka).getByTestId(T.splitPlus).tap();
 	await expect(rowOf(page, t.city.osaka)).toHaveAttribute("data-days", "1");
-	await page.getByTestId(T.splitUse).tap();
+	await expect(page.getByTestId(T.done)).toBeVisible();
 	await expect
 		.poll(async () => (await graphOf(page)).days.map((d) => d.nightNodeId), { timeout: 15_000 })
 		.toEqual([t.city.kyoto, t.city.kyoto, t.city.tokyo, t.city.tokyo, t.city.tokyo, t.city.osaka, null]);

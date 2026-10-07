@@ -36,6 +36,7 @@ export const ACTIVITY_VERBS = [
 	"day.move",
 	"day.delete",
 	"day.stay",
+	"day.stays",
 	"leg.update",
 	"leg.relink",
 	"leg.delete",

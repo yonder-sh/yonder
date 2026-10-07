@@ -76,6 +76,7 @@ export const MUTATION_POLICY = {
 	deleteDay: "proposable",
 	updateDay: "proposable",
 	setDayStay: "proposable",
+	setDayStays: "proposable",
 
 	// ---- legs (F) ----
 	/** Idempotent, structural: a suggester needs the row before a link or an expense on a leg. */

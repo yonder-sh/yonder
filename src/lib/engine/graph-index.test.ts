@@ -444,6 +444,7 @@ describe("settings", () => {
 			compact: false,
 			autofillLegs: true,
 			dayCapacityMin: 840,
+			datesFollowRoute: false,
 		});
 	});
 });

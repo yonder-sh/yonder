@@ -33,6 +33,8 @@ export interface ResolvedSettings {
 	compact: boolean;
 	autofillLegs: boolean;
 	dayCapacityMin: number;
+	/** The trip's end follows its route (`TripSettings.datesFollowRoute`). */
+	datesFollowRoute: boolean;
 }
 
 export interface Pair {
@@ -168,6 +170,7 @@ export function resolveSettings(trip: GraphTrip): ResolvedSettings {
 		compact: s.compact ?? false,
 		autofillLegs: s.autofillLegs ?? true,
 		dayCapacityMin: s.dayCapacityMin ?? 840,
+		datesFollowRoute: s.datesFollowRoute ?? false,
 	};
 }
 

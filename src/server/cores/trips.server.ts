@@ -95,6 +95,8 @@ const DatesShape = z
 		endDate: IsoDate,
 		expectedVersion: ExpectedVersion,
 		dayNotes: DayNotes,
+		/** The route builder's dates: the trip's end follows its nights from now on (`settings.datesFollowRoute`). */
+		followRoute: z.boolean().optional(),
 	})
 	.strict();
 export const SetTripDatesInput = DatesShape.refine(
@@ -117,7 +119,11 @@ export const ShiftTripDatesInput = z
  * what-if, where only `blockedBy` matters).
  */
 export const PreviewTripDatesInput = z.union([
-	DatesShape.omit({ expectedVersion: true, dayNotes: true }).refine(
+	DatesShape.omit({
+		expectedVersion: true,
+		dayNotes: true,
+		followRoute: true,
+	}).refine(
 		(v) =>
 			v.startDate <= v.endDate &&
 			datesBetween(v.startDate, v.endDate).length <= MAX_TRIP_DAYS,
@@ -262,6 +268,15 @@ export async function setTripDatesCore(
 		plan.ix.settings.defaultDayStart,
 	);
 	await syncTripDates(tx, data.tripId);
+	// Dates from the route builder follow the route; dates set any other way are fixed.
+	await tx
+		.update(trips)
+		.set({
+			settings: data.followRoute
+				? sql`${trips.settings} || '{"datesFollowRoute": true}'::jsonb`
+				: sql`${trips.settings} - 'datesFollowRoute'`,
+		})
+		.where(eq(trips.id, data.tripId));
 	await reconcileLegs(tx, out, data.tripId, plan.ix, { changed: moved });
 	await logActivity(tx, out, {
 		tripId: data.tripId,

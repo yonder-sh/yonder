@@ -213,6 +213,19 @@ function describeLive(p: ProposalDto, ix: GraphIndex): string | null {
 			if (pay.nodeId === null) return `Clear the stay on the ${nights}`;
 			return place ? `Stay at ${place} on the ${nights}` : null;
 		}
+		case "day.stays": {
+			// The route's nights in one go: where they change, in trip order.
+			const names: string[] = [];
+			for (const r of pArr(pay, "stays") ?? []) {
+				const id =
+					r && typeof r === "object" && !Array.isArray(r) ? r.nodeId : null;
+				const n = typeof id === "string" ? nodeName(ix, id) : null;
+				if (n && names.at(-1) !== n) names.push(n);
+			}
+			return names.length
+				? `Change the nights: ${joinShort(names)}`
+				: "Clear the nights";
+		}
 		case "day.insert": {
 			const day = dayLabel(ix, pStr(pay, "dayId"));
 			if (!day) return null;

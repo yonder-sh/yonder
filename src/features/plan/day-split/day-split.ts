@@ -705,6 +705,22 @@ export function stepEntry<E extends SplitEntry>(
 	);
 }
 
+/**
+ * A place is on a day (a flight or a note doesn't count): a change of route
+ * could move it off its day, so changes wait for Apply. Before that, each
+ * change is saved as it's made.
+ */
+export function hasPlacesOnDays(
+	ix: Pick<GraphIndex, "days" | "itemsByDay" | "node">,
+): boolean {
+	return ix.days.some((d) =>
+		(ix.itemsByDay.get(d.id) ?? []).some((it) => {
+			const n = ix.node(it.nodeId);
+			return !!n && isRateable(n);
+		}),
+	);
+}
+
 export type StayRange = {
 	fromDayId: string;
 	toDayId: string;

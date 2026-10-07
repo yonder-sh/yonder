@@ -13,7 +13,9 @@ import {
 	MoveDayInput,
 	moveDayCore,
 	SetDayStayInput,
+	SetDayStaysInput,
 	setDayStayCore,
+	setDayStaysCore,
 	UpdateDayInput,
 	updateDayCore,
 } from "@/server/cores/days.server";
@@ -209,6 +211,14 @@ export const defs = {
 		entityOf: (i) => ({ kind: "day", id: i.fromDayId }),
 		fields: () => ["nightNodeId"],
 		core: setDayStayCore,
+	}),
+	"day.stays": defineProposable({
+		input: SetDayStaysInput,
+		tripIdOf: (i, exec) =>
+			rowTrip(exec, "trip_days", i.stays[0]?.fromDayId ?? ""),
+		entityOf: (i) => ({ kind: "day", id: i.stays[0]?.fromDayId ?? null }),
+		fields: () => ["nightNodeId"],
+		core: setDayStaysCore,
 	}),
 	"day.insert": defineProposable({
 		input: InsertDayInput,

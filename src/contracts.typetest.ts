@@ -405,6 +405,7 @@ export type ServerFnContracts = [
 	Assert<Equals<Out<Fns["deleteDay"]>, P<DayMutationResult>>>,
 	Assert<Equals<Out<Fns["updateDay"]>, P<{ updatedAt: string }>>>,
 	Assert<Equals<Out<Fns["setDayStay"]>, P<{ dayIds: string[] }>>>,
+	Assert<Equals<Out<Fns["setDayStays"]>, P<{ dayIds: string[] }>>>,
 	Assert<Equals<Out<Fns["getSharing"]>, SharingDto>>,
 	Assert<Equals<Out<Fns["setShareLink"]>, { ok: true }>>,
 	Assert<Equals<Out<Fns["resetShareLink"]>, { url: string; slug: string }>>,

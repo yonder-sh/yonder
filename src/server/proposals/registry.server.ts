@@ -76,6 +76,10 @@ export const REGISTRY = {
 		capability: "edit",
 		load: () => f().then((d) => d["day.stay"]),
 	},
+	"day.stays": {
+		capability: "edit",
+		load: () => f().then((d) => d["day.stays"]),
+	},
 	"day.insert": {
 		capability: "edit",
 		load: () => f().then((d) => d["day.insert"]),

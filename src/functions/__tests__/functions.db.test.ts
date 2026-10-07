@@ -54,7 +54,13 @@ import {
 } from "@/server/fixture.server";
 import { closeQueues, getQueue } from "@/server/live/jobs.server";
 import { closeRedis, redis, redisPrefix } from "@/server/live/redis.server";
-import { deleteDay, insertDay, moveDay, setDayStay } from "../days.functions";
+import {
+	deleteDay,
+	insertDay,
+	moveDay,
+	setDayStay,
+	setDayStays,
+} from "../days.functions";
 import { getTripGraph, listActivity } from "../graph.functions";
 import {
 	createItem,
@@ -245,6 +251,7 @@ describe("permission matrix (F mutations)", () => {
 			],
 			[insertDay, { tripId: c.tripId, dayId: c.ids.days.d1, where: "after" }],
 			[deleteDay, { dayId: c.ids.days.d1 }],
+			[setDayStays, { stays: [{ fromDayId: c.ids.days.d1, nodeId: null }] }],
 			[
 				setTripDates,
 				{ tripId: c.tripId, startDate: "2027-10-03", endDate: "2027-10-09" },
@@ -544,6 +551,28 @@ describe("days (§7.7): never lose items", () => {
 		expect(g.items.filter((i) => i.dayId === D.d1).length).toBe(5);
 	});
 
+	it("setTripDates with followRoute: the trip's end follows its route; a shift keeps that, dates set any other way fix them", async () => {
+		const c = await freshTrip();
+		const settings = async () =>
+			(await graphOf(c.tripId)).trip.settings as Record<string, unknown>;
+		const kept = await settings();
+		const range = {
+			tripId: c.tripId,
+			startDate: "2027-10-03",
+			endDate: "2027-10-10",
+		};
+		await call(setTripDates, U.owner, { ...range, followRoute: true });
+		expect(await settings()).toEqual({ ...kept, datesFollowRoute: true });
+		await call(shiftTripDates, U.owner, { tripId: c.tripId, deltaDays: 1 });
+		expect((await settings()).datesFollowRoute).toBe(true);
+		await call(setTripDates, U.owner, {
+			...range,
+			startDate: "2027-10-04",
+			endDate: "2027-10-11",
+		});
+		expect(await settings()).toEqual(kept);
+	});
+
 	it("setTripDates: preview first, refuse to split a flight, shrink moves items to Unscheduled", async () => {
 		const c = await freshTrip();
 		const range = {
@@ -821,6 +850,46 @@ describe("days (§7.7): never lose items", () => {
 				}),
 			),
 		).toBe("VALIDATION");
+	});
+
+	it("setDayStays: the route's nights in one go, one activity line naming the route; one bad range writes nothing", async () => {
+		const c = await freshTrip();
+		const D = c.ids.days;
+		const N = c.ids.nodes;
+		const acts = () =>
+			call<{ summary: string }[]>(listActivity, U.owner, {
+				tripId: c.tripId,
+			});
+		const before = (await acts()).length;
+		await call(setDayStays, U.owner, {
+			stays: [
+				{ fromDayId: D.d1, toDayId: D.d2, nodeId: N.tokyo },
+				{ fromDayId: D.d3, nodeId: N.kyoto },
+			],
+		});
+		const night = async (id: string | undefined) =>
+			(await graphOf(c.tripId)).days.find((d) => d.id === id)?.nightNodeId;
+		expect([await night(D.d1), await night(D.d2), await night(D.d3)]).toEqual([
+			N.tokyo,
+			N.tokyo,
+			N.kyoto,
+		]);
+		const after = await acts();
+		expect(after.length).toBe(before + 1);
+		expect(after[0]?.summary).toMatch(
+			/^set the nights: Tokyo 2 nights · Kyoto \d/,
+		);
+		expect(
+			await codeOf(
+				call(setDayStays, U.owner, {
+					stays: [
+						{ fromDayId: D.d1, nodeId: N.kyoto },
+						{ fromDayId: D.d2, nodeId: N.japan },
+					],
+				}),
+			),
+		).toBe("VALIDATION");
+		expect(await night(D.d1)).toBe(N.tokyo);
 	});
 });
 

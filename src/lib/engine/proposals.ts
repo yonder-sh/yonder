@@ -103,6 +103,7 @@ export function markKindOf(op: ProposalOp): ProposalMarkKind {
 		verb === "priority" ||
 		verb === "hours" ||
 		verb === "stay" ||
+		verb === "stays" ||
 		verb === "status" ||
 		verb === "targets" ||
 		verb === "details" ||
@@ -557,14 +558,21 @@ function reduce(sim: Sim, p: ProposalDto): void {
 			});
 			return;
 		}
-		case "day.stay": {
-			const from = sim.days.get(strOr(pl.fromDayId, "") ?? "");
-			const to = sim.days.get(strOr(pl.toDayId, null) ?? "") ?? from;
-			const nodeId = strOr(pl.nodeId, null);
-			if (!from || !to || (nodeId && !sim.nodes.has(nodeId))) return;
-			for (const d of sim.days.values())
-				if (d.date >= from.date && d.date <= to.date)
-					sim.days.set(d.id, { ...d, nightNodeId: nodeId, updatedAt: at });
+		case "day.stay":
+		case "day.stays": {
+			const ranges =
+				p.op === "day.stays"
+					? (Array.isArray(pl.stays) ? pl.stays : []).map(obj)
+					: [pl];
+			for (const r of ranges) {
+				const from = sim.days.get(strOr(r.fromDayId, "") ?? "");
+				const to = sim.days.get(strOr(r.toDayId, null) ?? "") ?? from;
+				const nodeId = strOr(r.nodeId, null);
+				if (!from || !to || (nodeId && !sim.nodes.has(nodeId))) continue;
+				for (const d of sim.days.values())
+					if (d.date >= from.date && d.date <= to.date)
+						sim.days.set(d.id, { ...d, nightNodeId: nodeId, updatedAt: at });
+			}
 			return;
 		}
 		case "leg.set": {
@@ -655,6 +663,7 @@ export const SIMULATED: ReadonlySet<ProposalOp> = new Set<ProposalOp>([
 	"item.assignees",
 	"day.update",
 	"day.stay",
+	"day.stays",
 	"leg.set",
 	"leg.assignees",
 ]);

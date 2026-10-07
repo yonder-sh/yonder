@@ -166,12 +166,11 @@ test("J1 sign up, new trip, Where to first? → Japan › Tokyo › Shibuya Sky,
 	await expect
 		.poll(async () => (await yon(page))?.graph.nodes.map((n) => n.name).sort().join(","), { timeout: 20_000 })
 		.toMatch(/Japan.*Tokyo|Tokyo.*Japan/);
-	// The Plan: Tokyo on the route with the trip's two nights, then on the days
-	// (the third day is the day you leave, a Tokyo day too).
+	// The Plan: Tokyo on the route with the trip's two nights, on the days at
+	// once (the third day is the day you leave, a Tokyo day too).
 	const tokyoRow = page.getByTestId(SPLIT.splitRow).filter({ hasText: "Tokyo" });
 	await expect(tokyoRow).toHaveAttribute("data-days", "2", { timeout: 20_000 });
 	await shot(page, "j1-02b-route");
-	await page.getByTestId(SPLIT.splitUse).click();
 	await expect
 		.poll(async () => (await yon(page))?.graph.days.map((d) => (d.nightNodeId ? "night" : "-")).join(","), {
 			timeout: 20_000,

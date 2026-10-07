@@ -35,4 +35,9 @@ export const SPLIT_TESTID = {
 	routeStart: "split-route-start",
 	routeStartSearch: "split-route-start-search",
 	whereNext: "split-where-next",
+	// saved as you go (2026-10-07)
+	arrive: "split-arrive",
+	saveState: "split-save-state",
+	done: "split-done",
+	endTrip: "split-end-trip",
 } as const;
