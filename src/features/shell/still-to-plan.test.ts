@@ -10,6 +10,7 @@ import type { TripGraph } from "@/lib/engine/types";
 import { DEMO_MEMBERS, demo, N, scenario } from "@/lib/fixtures/demo";
 import { selForRefs } from "./activity-sel";
 import {
+	citiesHint,
 	cityOf,
 	isRateable,
 	stillToPlan,
@@ -233,6 +234,48 @@ describe("stillToPlan on the demo trip", () => {
 		});
 		expect(bare.route).toBeNull();
 		expect(bare.open).toBeGreaterThan(r.open - 1);
+	});
+
+	it("Cities & nights stays open while a night is in no city", () => {
+		const s = scenario({
+			days: [
+				{ night: "tokyo", items: [] },
+				{ items: [] },
+				{ night: "kyoto", items: [] },
+				{ items: [] },
+			],
+		});
+		const r = run(s.graph);
+		expect(r.route).toBe("Tokyo 1 night · Kyoto 1");
+		expect(r.unplaced).toBe(1);
+		expect(citiesHint(r.route, r.unplaced)).toBe(
+			"Tokyo 1 night · Kyoto 1 · 1 night in no city yet",
+		);
+		const placed = run({
+			...s.graph,
+			days: s.graph.days.map((d, i) =>
+				i === 1 ? { ...d, nightNodeId: N.tokyo ?? null } : d,
+			),
+		});
+		expect(placed.unplaced).toBe(0);
+		expect(citiesHint(placed.route, 0)).toBe("Tokyo 2 nights · Kyoto 1");
+	});
+
+	it("a new trip with no city has its first step left, not nothing", () => {
+		const empty = run({
+			...demo.graph,
+			nodes: [],
+			items: [],
+			days: [],
+			legs: [],
+		});
+		expect(empty.noCity).toBe(true);
+		expect(empty.open).toBeGreaterThan(0);
+		// A city but no dates yet: its nights are next, not another city.
+		const city = run({ ...demo.graph, items: [], days: [], legs: [] });
+		expect(city.noCity).toBe(false);
+		expect(city.route).toBeNull();
+		expect(city.open).toBeGreaterThan(0);
 	});
 
 	it("each booking to-do opens its own context, not the whole list (PLAN-I2-14)", () => {

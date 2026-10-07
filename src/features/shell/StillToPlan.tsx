@@ -1,6 +1,6 @@
 /**
  * "Still to plan" on the trip overview (ADDENDUM §10): counts that link to a
- * filtered view — nights with no stay, still to book, booking windows opening
+ * filtered view — the first city on a new trip, nights not booked yet, still to book, booking windows opening
  * in the next 14 days, places unrated by each member (each count opens the
  * Rate screen on that person's unrated places, FB-05; "Show on the map" keeps
  * the shared filter), city-to-city moves with no transport, and days per city
@@ -15,6 +15,7 @@ import {
 	BedDouble,
 	CalendarClock,
 	ChevronRight,
+	MapPin,
 	Star,
 	Table2,
 	Ticket,
@@ -41,6 +42,7 @@ import { useUi } from "@/lib/workspace/ui-store";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { useShell } from "./shell-store";
 import {
+	citiesHint,
 	stillToPlan,
 	type TodoList,
 	todoTitle,
@@ -88,8 +90,9 @@ export function StillToPlan({
 
 function StillToPlanList() {
 	const ws = useWorkspace();
-	const { ix, schedule, graph, nav } = ws;
+	const { ix, schedule, graph, nav, access } = ws;
 	const askSplit = useUi((s) => s.askSplit);
+	const openAddPlace = useUi((s) => s.openAddPlace);
 	const { items, due } = useTripListItems();
 	const go = useTripGo();
 	const [now] = useState(() => Date.now());
@@ -145,6 +148,18 @@ function StillToPlanList() {
 				</p>
 			) : null}
 			<ul className="-mx-2">
+				{s.noCity ? (
+					// A new trip: the first city is the first step.
+					<Row
+						id="first"
+						icon={<MapPin />}
+						label="Pick where to go first"
+						onClick={() => {
+							nav.setTab("plan");
+							if (access.mode !== "read") openAddPlace({ mode: "first" });
+						}}
+					/>
+				) : null}
 				{s.nights.length ? (
 					<Row
 						id="nights"
@@ -152,8 +167,8 @@ function StillToPlanList() {
 						count={s.nights.length}
 						label={
 							s.nights.length === 1
-								? "night without a stay"
-								: "nights without a stay"
+								? "night not booked yet"
+								: "nights not booked yet"
 						}
 					>
 						{s.nights.map((n) => (
@@ -300,13 +315,13 @@ function StillToPlanList() {
 						))}
 					</Row>
 				) : null}
-				{ix.days.length ? (
+				{!s.noCity ? (
 					// The route (owner, 2026-10-07): the nights in each city, set in the Plan.
 					<Row
 						id="days"
 						icon={<Table2 />}
 						label="Cities & nights"
-						countHint={s.route ?? "not set yet"}
+						countHint={citiesHint(s.route, s.unplaced)}
 						onClick={() => {
 							nav.setTab("plan");
 							askSplit(true);

@@ -21,7 +21,9 @@
  *   has no city: Kawaguchiko's ryokan is "Mt. Fuji"). Cross-day pairs covered
  *   by a stay are skipped (their stay legs are checked instead).
  * - **Cities & nights:** the route as the days hold it ("Tokyo 3 nights ·
- *   Kyoto 3"), or not set yet (the Plan's Cities & nights sets it).
+ *   Kyoto 3"), or not set yet (the Plan's Cities & nights sets it), with the
+ *   nights not in any city yet. A trip with no city yet asks for the first.
+ * - **Nights not booked:** the nights with no stay above, in other words.
  *
  * Privacy: list items come from F's `listTripListItems`, which already drops
  * other people's private rows, so a private to-do only counts for its author.
@@ -34,6 +36,7 @@ import {
 } from "@/features/lists/list-model";
 import type { ListItemDto } from "@/features/lists/lists.functions";
 import { citiesDetail } from "@/features/overview/lib/standing";
+import { cityRowNodes } from "@/features/places/lib/days";
 import { decidedIds } from "@/features/places/lib/decided";
 import {
 	isRateable as isRateableNode,
@@ -91,6 +94,10 @@ export type StillToPlan = {
 	 * null before any night has a city: the "Cities & nights" row.
 	 */
 	route: string | null;
+	/** Nights in no city yet (a night flight or train has its own). */
+	unplaced: number;
+	/** No city on the trip yet: the first step is picking one. */
+	noCity: boolean;
 	/** Rows with something to do (the panel's "all planned" state when 0). */
 	open: number;
 };
@@ -282,11 +289,9 @@ export function cityOf(ix: GraphIndex, nodeId: string | null): string | null {
 	return null;
 }
 
-/** Nights with no stay, or only a town (no hotel yet); a night flight covers its night. */
-export function nightsWithoutStay(ix: GraphIndex): StillToPlan["nights"] {
-	const days = ix.days;
+/** Days whose night is spent travelling: a timed leg departs that day and lands on a later one. */
+export function travelNights(ix: GraphIndex): Set<string> {
 	const covered = new Set<string>();
-	// A timed leg that departs one day and lands on a later one covers that night.
 	for (const p of ix.pairs) {
 		if (!p.crossDay) continue;
 		const leg = ix.legByPair.get(p.key);
@@ -294,12 +299,34 @@ export function nightsWithoutStay(ix: GraphIndex): StillToPlan["nights"] {
 		const d = ix.item(p.fromItemId)?.dayId;
 		if (d) covered.add(d);
 	}
+	return covered;
+}
+
+/** The trip's nights (every day but the last) in no city yet, not counting nights spent travelling. */
+export function unplacedNights(ix: GraphIndex): number {
+	const covered = travelNights(ix);
+	const at = nightPlaces(ix);
+	return ix.days.slice(0, -1).filter((d, i) => !at[i] && !covered.has(d.id))
+		.length;
+}
+
+/** Nights with no stay, or only a town (no hotel yet); a night flight covers its night. */
+export function nightsWithoutStay(ix: GraphIndex): StillToPlan["nights"] {
+	const days = ix.days;
+	const covered = travelNights(ix);
 	return days
 		.slice(0, -1)
 		.filter(
 			(d) => ix.node(d.nightNodeId)?.type !== "place" && !covered.has(d.id),
 		)
 		.map((d) => ({ dayId: d.id, date: d.date }));
+}
+
+/** "Tokyo 3 nights · Kyoto 3 · 2 nights in no city yet", or "not set yet". */
+export function citiesHint(route: string | null, unplaced: number): string {
+	if (!route) return "not set yet";
+	if (!unplaced) return route;
+	return `${route} · ${unplaced} ${unplaced === 1 ? "night" : "nights"} in no city yet`;
 }
 
 function movesWithoutMode(
@@ -413,12 +440,24 @@ export function stillToPlan(input: StillToPlanInput): StillToPlan {
 	const route = nightsAt.some(Boolean)
 		? citiesDetail(nightsAt, (id) => ix.node(id)?.name ?? "")
 		: null;
+	const unplaced = unplacedNights(ix);
+	const noCity = !route && !cityRowNodes(ix, null).length;
 	const open =
 		(nights.length ? 1 : 0) +
 		(toBook.length ? 1 : 0) +
 		(opening.length ? 1 : 0) +
 		(unrated.some((u) => u.count > 0) ? 1 : 0) +
 		(moves.length ? 1 : 0) +
-		(ix.days.length && !route ? 1 : 0);
-	return { nights, toBook, opening, unrated, moves, route, open };
+		(!route || unplaced ? 1 : 0);
+	return {
+		nights,
+		toBook,
+		opening,
+		unrated,
+		moves,
+		route,
+		unplaced,
+		noCity,
+		open,
+	};
 }

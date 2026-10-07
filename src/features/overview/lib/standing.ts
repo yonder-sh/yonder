@@ -6,16 +6,22 @@
  *   ○ Rating: Dennis and Audrey are done. You and Maya haven't started.
  *   ○ How long in each city: not decided yet
  *   ○ What to do each day: 8 of 12 favourites have a day
- *   ○ Where you're staying: 3 nights not set yet
+ *   ○ Booking where you stay: 3 nights not booked yet
+ *
+ * The cities line is done once every night is in a city (`nightPlaces`); the
+ * last one once every night has a booked place to stay.
  *
  * Favourites are the shortlist (on a day or not); people are those whose
  * ratings count; places marked decided are left to no one. Pure.
  */
-import { cityRowNodes } from "@/features/places/lib/days";
 import { decidedIds } from "@/features/places/lib/decided";
 import { raters } from "@/features/places/lib/rate";
 import { buildRows, openPlaces } from "@/features/places/tab/model";
-import { nightsWithoutStay } from "@/features/shell/still-to-plan";
+import {
+	nightsWithoutStay,
+	unplacedNights,
+} from "@/features/shell/still-to-plan";
+import { nightPlaces } from "@/lib/engine/day-place";
 import type { GraphIndex } from "@/lib/engine/graph-index";
 import type { GraphMember, ScheduleResult } from "@/lib/engine/types";
 
@@ -29,7 +35,7 @@ export type RatingPerson = {
 
 export type StandingLine = {
 	key: StandingKey;
-	/** "Rating", "Where you're staying"; null for the places line ("48 places added"). */
+	/** "Rating", "Booking where you stay"; null for the places line ("48 places added"). */
 	label: string | null;
 	/** "Dennis and Audrey are done. Maya has 12 left." */
 	detail: string;
@@ -48,7 +54,7 @@ export type Standing = {
 	favourites: number;
 	/** Favourites on a day. */
 	onDays: number;
-	/** City days are set on the plan. */
+	/** Some night is in a city (the route has begun). */
 	citiesDecided: boolean;
 };
 
@@ -175,14 +181,10 @@ export function whereThingsStand(input: StandingInput): Standing {
 	).length;
 	const onDays = rows.filter((r) => r.status === "scheduled").length;
 	const hasDays = ix.days.length > 0;
-	const cityRows = cityRowNodes(ix, null);
-	// Each day's night, as its city (null: none yet).
-	const nightCities = ix.days.map((d) =>
-		d.nightNodeId
-			? (cityRows.find((r) => ix.isWithin(d.nightNodeId, r.id))?.id ?? null)
-			: null,
-	);
+	// Each day's night, as its place (null: none yet).
+	const nightCities = nightPlaces(ix);
 	const citiesDecided = nightCities.some((c) => c !== null);
+	const unplaced = unplacedNights(ix);
 	const nights = hasDays ? nightsWithoutStay(ix).length : 0;
 
 	const lines: StandingLine[] = [
@@ -207,9 +209,9 @@ export function whereThingsStand(input: StandingInput): Standing {
 		label: "How long in each city",
 		// No dates needed: the nights and the day you arrive make them.
 		detail: citiesDecided
-			? citiesDetail(nightCities, (id) => ix.node(id)?.name ?? "")
+			? `${citiesDetail(nightCities, (id) => ix.node(id)?.name ?? "")}${unplaced ? ` · ${plural(unplaced, "night")} in no city yet` : ""}`
 			: "not decided yet",
-		done: citiesDecided,
+		done: citiesDecided && unplaced === 0,
 	});
 	lines.push({
 		key: "days",
@@ -227,12 +229,12 @@ export function whereThingsStand(input: StandingInput): Standing {
 	});
 	lines.push({
 		key: "stays",
-		label: "Where you're staying",
+		label: "Booking where you stay",
 		detail: !hasDays
 			? "Pick your dates first"
 			: nights
-				? `${plural(nights, "night")} not set yet`
-				: "every night is set",
+				? `${plural(nights, "night")} not booked yet`
+				: "every night is booked",
 		done: hasDays && nights === 0,
 	});
 	return {

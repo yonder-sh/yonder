@@ -117,7 +117,7 @@ const NEXT_TITLE: Record<StandingKey, (s: Standing) => string> = {
 			: "Get everyone's ratings in",
 	cities: () => "Decide how long you stay in each city",
 	days: () => "Put your favourites on days",
-	stays: () => "Add where you sleep",
+	stays: () => "Book where you stay",
 };
 
 /** D01's "Next for you": the first open step with its action, and what comes after it. */

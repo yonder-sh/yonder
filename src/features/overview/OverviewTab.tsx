@@ -356,6 +356,7 @@ function Header({
 	const { graph, ix, schedule, nav, underway } = useWorkspace();
 	const guard = useEditGuard();
 	const openAddPlace = useUi((s) => s.openAddPlace);
+	const askSplit = useUi((s) => s.askSplit);
 	const setSettingsOpen = useUi((s) => s.setSettingsOpen);
 	const { route, phase } = data;
 	const standing = useStanding();
@@ -421,6 +422,8 @@ function Header({
 	// ---- empty: no days, or no stays yet ----------------------------------------
 	if (phase.kind === "empty" || !route.stays.length) {
 		const noDays = phase.kind === "empty";
+		// With a city already, the next step is its nights, not another city.
+		const hasCity = cityRowNodes(ix).length > 0;
 		return (
 			<div
 				data-testid={OVERVIEW_TESTID.header}
@@ -434,29 +437,35 @@ function Header({
 				</div>
 				<div
 					data-testid={OVERVIEW_TESTID.empty}
+					data-step={hasCity ? "nights" : "first"}
 					className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-white/[.04] p-4"
 				>
 					<p className="font-display text-lg font-semibold text-white">
-						Where to first?
+						{hasCity ? "How long in each city?" : "Where to first?"}
 					</p>
 					<p className="text-sm text-white/65">
-						{noDays
-							? "Add the cities you'll sleep in and the nights in each, and pick your dates: the route draws itself here."
-							: "Add the cities you'll sleep in, in order, and the nights in each: the route draws itself here, night by night."}
+						{hasCity
+							? noDays
+								? "Set the nights in each city in Cities & nights, and pick your dates: the route draws itself here."
+								: "Set the nights in each city in Cities & nights: the route draws itself here, night by night."
+							: noDays
+								? "Add the cities you'll sleep in and the nights in each, and pick your dates: the route draws itself here."
+								: "Add the cities you'll sleep in, in order, and the nights in each: the route draws itself here, night by night."}
 					</p>
 					<div className="flex flex-wrap gap-2">
 						<Button
 							data-testid={OVERVIEW_TESTID.planRoute}
 							onClick={() => {
-								// The route lives on the Plan; with no city yet, it starts searching.
+								// The route lives on the Plan: Cities & nights, or with no city yet, a search.
 								nav.setTab("plan");
-								if (!cityRowNodes(ix).length) openAddPlace({ mode: "first" });
+								if (hasCity) askSplit(true);
+								else openAddPlace({ mode: "first" });
 							}}
 							disabled={guard.disabled}
 							title={guard.reason ?? undefined}
 							className={PRIMARY}
 						>
-							Plan the route
+							{hasCity ? "Set the nights" : "Plan the route"}
 						</Button>
 						{noDays ? (
 							<Button

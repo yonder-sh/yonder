@@ -19,6 +19,7 @@ import {
 	fitTitle,
 	type Rect,
 	type ShareCardData,
+	statsOf,
 	tierOf,
 } from "./card-svg";
 import { type CardFont, createMeasurer, readFontMetrics } from "./metrics";
@@ -316,5 +317,14 @@ describe("card data", () => {
 			expect(card.layout.rows).toHaveLength(0);
 			expect(card.svg).toContain("No stays planned yet");
 		}
+	});
+});
+
+describe("the card's numbers", () => {
+	it("leave out 0 km", () => {
+		const route = data(ASIA_2027).route;
+		expect(statsOf(route).map((x) => x.k)).toContain("km");
+		const none = { ...route, stats: { ...route.stats, km: 0 } };
+		expect(statsOf(none).map((x) => x.k)).not.toContain("km");
 	});
 });

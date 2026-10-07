@@ -155,9 +155,26 @@ describe("whereThingsStand", () => {
 			detail: "2 of 3 favourites have a day",
 			done: false,
 		});
-		// Every night is only a town: all three need a hotel.
+		// Every night is only a town: all three need a hotel booked.
 		expect(line(s, "stays")).toMatchObject({
-			detail: "3 nights not set yet",
+			label: "Booking where you stay",
+			detail: "3 nights not booked yet",
+			done: false,
+		});
+	});
+
+	it("how long in each city is done only when every night is in a city", () => {
+		const { graph } = scenario({
+			days: [
+				{ night: "tokyo", items: [] },
+				{ items: [] },
+				{ items: [] },
+				{ night: "kyoto", items: [] },
+				{ items: [] },
+			],
+		});
+		expect(line(stand(graph), "cities")).toMatchObject({
+			detail: "Tokyo 1 night · Kyoto 1 · 2 nights in no city yet",
 			done: false,
 		});
 	});

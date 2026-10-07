@@ -208,7 +208,7 @@ export function Stats({
 		},
 		{ k: "km", v: fmt(stats.km), label: "km travelled" },
 		{ k: "media", v: fmt(data.media), label: "photos & videos saved" },
-	];
+	].filter((s) => s.k !== "km" || stats.km > 0);
 	if (row)
 		return (
 			<dl
@@ -288,8 +288,8 @@ export function PlanningLine({ data }: { data: OverviewData }) {
 			key: "nights",
 			node: (
 				<>
-					{n(p.nightsWithoutStay)} {plural(p.nightsWithoutStay, "night")}{" "}
-					without a stay
+					{n(p.nightsWithoutStay)} {plural(p.nightsWithoutStay, "night")} not
+					booked yet
 				</>
 			),
 		});

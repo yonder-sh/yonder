@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { scenario as buildScenario } from "@/lib/engine/__fixtures__/demo";
 import { indexGraph } from "@/lib/engine/graph-index";
+import { routeLine } from "../PhaseHeader";
 import {
 	countryLabel,
 	ROUTE_PALETTE,
@@ -385,7 +386,54 @@ describe("nights with no stay set", () => {
 	});
 	const r = tripRoute(indexGraph(half.graph));
 
-	it("take the day's city while the next stop is in it too; a move or the last day leaves it unknown", () => {
-		expect(r.stays.map((x) => [x.name, x.nights])).toEqual([["Tokyo", 2]]);
+	it("stay unknown: only the nights make the route (owner, 2026-10-07)", () => {
+		expect(r.stays.map((x) => [x.name, x.nights])).toEqual([["Tokyo", 1]]);
+	});
+});
+
+describe("the route's ends, countries and distance come from the nights", () => {
+	// Nights set per city (Cities & nights), places planned only in Kyoto, and
+	// one night between Tokyo and Kyoto in no city yet.
+	const nights = buildScenario({
+		nodes: [
+			{
+				key: "busan",
+				parent: "southKorea",
+				type: "city",
+				name: "Busan",
+				at: [35.18, 129.08],
+			},
+		],
+		days: [
+			{ night: "tokyo", items: [] },
+			{ night: "tokyo", items: [] },
+			{ items: [] },
+			{ night: "kyoto", items: [{ k: "kiyomizu", node: "kiyomizu" }] },
+			{ night: "busan", items: [] },
+			{ night: "busan", items: [] },
+			{ items: [] },
+		],
+	});
+	const r = tripRoute(indexGraph(nights.graph));
+
+	it("starts in the first night's city and ends in the last one's, not where the last stop is", () => {
+		expect(r.start?.name).toBe("Tokyo");
+		expect(r.end?.name).toBe("Busan");
+		expect(r.endsHome).toBe(false);
+		expect(r.via).toEqual([]);
+		expect(routeLine(r)).toBe("Tokyo → Busan");
+	});
+
+	it("counts each country's nights from the nights in it (an unplaced night isn't Japan's)", () => {
+		expect(r.rows.map((x) => [x.countryName, x.nights])).toEqual([
+			["Japan", 3],
+			["South Korea", 2],
+		]);
+	});
+
+	it("measures the way between the route's cities before the stops are planned", () => {
+		// Tokyo → Kyoto ≈ 370 km, Kyoto → Busan ≈ 600 km.
+		expect(r.stats.km).toBeGreaterThan(900);
+		expect(r.stats.km).toBeLessThan(1100);
 	});
 });

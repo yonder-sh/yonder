@@ -7,11 +7,11 @@
  * - **Stays**: runs of consecutive nights in one city. A night's city is the
  *   stay node's nearest `city` ancestor-or-self, else `region` (Mt. Fuji),
  *   else `area`, else the node itself.
- * - **Nights with no stay** fall back to the day's city when the day ends
- *   where the next stop is (`dayCity`). The rest count toward a country only
- *   when the stays on both sides are in that country (a night train or bus:
- *   `transitNights` on the stay after it). Red-eye flights out, between
- *   countries and home don't.
+ * - **Nights with no place** (`nightPlaces`, owner 2026-10-07: the night
+ *   decides) stay unknown. One spent on a ground leg (a night train or bus)
+ *   counts toward a country when the stays on both sides are in it
+ *   (`transitNights` on the stay after it). Red-eye flights and unplaced
+ *   nights don't.
  * - **Rows** (share card list): consecutive stays in one country; going back
  *   to a country is a new row.
  * - **Hops** (the Overview's globe): every change of city between consecutive
@@ -24,6 +24,7 @@
  *   the horizon), else a flat Equal Earth map whose edge falls in the widest
  *   gap between the stays' longitudes.
  */
+import { nightPlaces } from "@/lib/engine/day-place";
 import { haversineKm, type LngLat } from "@/lib/engine/geo";
 import { type GraphIndex, pairKey } from "@/lib/engine/graph-index";
 import type { EdgeMode, GraphLeg, GraphNode } from "@/lib/engine/types";
@@ -97,7 +98,7 @@ export interface RouteStats {
 	days: number;
 	countries: number;
 	cities: number;
-	/** Great-circle between consecutive located items; ×1.2 when not flown. */
+	/** Great-circle between consecutive located items (×1.2 when not flown), at least the route's cities apart. */
 	km: number;
 	flights: number;
 	/** Timed flights by their times, others ≈ distance / 800 km/h + 30 min. */
@@ -111,9 +112,9 @@ export type RouteView =
 	| { kind: "flat"; centerLng: number; spreadDeg: number };
 
 export interface TripRoute {
-	/** City of the first located item (New York), null for an empty trip. */
+	/** Where the trip starts: a stop before the first night (New York), else the first stay; null for an empty trip. */
 	start: RoutePlace | null;
-	/** City of the last located item (Newark). */
+	/** Where it ends: a stop after the last night (Newark), else the last stay. */
 	end: RoutePlace | null;
 	/** The end is in the start's country: "Home" rather than "To <end>". */
 	endsHome: boolean;
@@ -177,6 +178,12 @@ export function cityOf(ix: GraphIndex, nodeId: string): RoutePlace | null {
 	};
 }
 
+/** A stay as a plain place (no nights or colour). */
+function placeOfStay(s: RouteStay): RoutePlace {
+	const { id, name, countryKey, countryCode, countryName, coord } = s;
+	return { id, name, countryKey, countryCode, countryName, coord };
+}
+
 function legOfPair(ix: GraphIndex, from: string, to: string): GraphLeg | null {
 	return ix.legByPair.get(pairKey(from, to)) ?? null;
 }
@@ -233,46 +240,36 @@ export function routeView(points: readonly LngLat[]): RouteView {
 	return { kind: "flat", centerLng, spreadDeg };
 }
 
-const TRANSIT_CATEGORIES = new Set(["airport", "station", "port"]);
-
-/**
- * A night with no stay set: the city of the day's last stop, but only when
- * the trip's next stop is in that city too. A move, the last day, or an
- * airport at the end of the day leaves the night unknown, so a
- * half-planned trip reads short, never wrong (owner, 2026-09-27).
- */
-function dayCity(ix: GraphIndex, dayId: string): RoutePlace | null {
-	const last = ix.lastLocated(dayId);
-	const node = ix.node(last?.nodeId);
-	if (!last || !node || ix.isDropped(node.id)) return null;
-	if (node.category && TRANSIT_CATEGORIES.has(node.category)) return null;
-	const city = cityOf(ix, node.id);
-	const next = ix.nextLocated(last.id);
-	if (!city || !next?.nodeId) return null;
-	return cityOf(ix, next.nodeId)?.id === city.id ? city : null;
+/** A night spent on a ground leg (night train or bus) leaving that day. */
+function groundNight(ix: GraphIndex, dayId: string): boolean {
+	return ix.pairs.some((p) => {
+		if (!p.crossDay || ix.item(p.fromItemId)?.dayId !== dayId) return false;
+		const mode = ix.legByPair.get(p.key)?.mode;
+		return !!mode && mode !== "flight";
+	});
 }
 
 export function tripRoute(ix: GraphIndex): TripRoute {
 	// ---- stays --------------------------------------------------------------
 	const stays: RouteStay[] = [];
+	const nights = nightPlaces(ix);
 	let pendingNull = 0;
-	for (const day of ix.days) {
-		const nightId =
-			day.nightNodeId &&
-			ix.node(day.nightNodeId) &&
-			!ix.isDropped(day.nightNodeId)
-				? day.nightNodeId
-				: null;
-		const city = nightId ? cityOf(ix, nightId) : dayCity(ix, day.id);
+	let pendingGround = 0;
+	ix.days.forEach((day, i) => {
+		const placeId = nights[i];
+		const city = placeId ? cityOf(ix, placeId) : null;
 		if (!city) {
-			if (stays.length) pendingNull++;
-			continue;
+			if (stays.length) {
+				pendingNull++;
+				if (groundNight(ix, day.id)) pendingGround++;
+			}
+			return;
 		}
 		const last = stays.at(-1);
 		if (last && last.id === city.id && pendingNull === 0) {
 			last.nights++;
 			last.lastDate = day.date;
-			continue;
+			return;
 		}
 		const sameCountry = !!last && last.countryKey === city.countryKey;
 		stays.push({
@@ -281,12 +278,13 @@ export function tripRoute(ix: GraphIndex): TripRoute {
 			firstDate: day.date,
 			lastDate: day.date,
 			nights: 1,
-			transitNights: sameCountry ? pendingNull : 0,
+			transitNights: sameCountry ? pendingGround : 0,
 			modeIn: "unset",
 			color: ROUTE_NEUTRAL,
 		});
 		pendingNull = 0;
-	}
+		pendingGround = 0;
+	});
 
 	// ---- colours ------------------------------------------------------------
 	// By the stays' countries; a trip with no stays yet (just a flight) goes by
@@ -346,11 +344,30 @@ export function tripRoute(ix: GraphIndex): TripRoute {
 	});
 
 	// ---- start, end, via ----------------------------------------------------
+	// The route's ends are its nights; a stop before the first night (the
+	// flight out) or after the last one (the way home) goes beyond them.
 	const located = ix.located;
-	const first = located[0]?.nodeId;
-	const final = located.at(-1)?.nodeId;
-	const start = first ? cityOf(ix, first) : null;
-	const end = final ? cityOf(ix, final) : null;
+	const dayAt = (dayId: string | null) =>
+		ix.days.findIndex((d) => d.id === dayId);
+	const firstNight = nights.findIndex(Boolean);
+	const lastNight = nights.findLastIndex(Boolean);
+	const firstIt = located[0];
+	const lastIt = located.at(-1);
+	const startOut =
+		!!firstIt?.nodeId && (!stays.length || dayAt(firstIt.dayId) <= firstNight);
+	const endOut =
+		!!lastIt?.nodeId && (!stays.length || dayAt(lastIt.dayId) > lastNight);
+	const firstStay = stays[0] ?? null;
+	const start =
+		startOut && firstIt?.nodeId
+			? cityOf(ix, firstIt.nodeId)
+			: firstStay && placeOfStay(firstStay);
+	const end =
+		endOut && lastIt?.nodeId
+			? cityOf(ix, lastIt.nodeId)
+			: lastStay
+				? placeOfStay(lastStay)
+				: null;
 	// Home: back in the start's city or near it (out of JFK, back into EWR),
 	// not merely the same country (Philadelphia → San Francisco isn't home).
 	const endsHome =
@@ -364,8 +381,7 @@ export function tripRoute(ix: GraphIndex): TripRoute {
 	// trip (TPE → IST → EWR: Istanbul), never every city after the last stay
 	// (a trip with few nights set would list half of it).
 	const viaPlaces: RoutePlace[] = [];
-	const lastItem = located.at(-1);
-	const homeChain = lastItem ? (ix.blockOf(lastItem.id) ?? []) : [];
+	const homeChain = endOut && lastIt ? (ix.blockOf(lastIt.id) ?? []) : [];
 	for (const id of homeChain.slice(1, -1)) {
 		const nodeId = ix.item(id)?.nodeId;
 		const c = nodeId ? cityOf(ix, nodeId) : null;
@@ -420,6 +436,17 @@ export function tripRoute(ix: GraphIndex): TripRoute {
 					: d / 800 + 0.5;
 		} else km += d * 1.2;
 	}
+	// Before the stops are planned, the way between the route's cities.
+	const ends = [start, ...stays, end].filter(
+		(p, i, all): p is RoutePlace => !!p && p.id !== all[i - 1]?.id,
+	);
+	let routeKm = 0;
+	for (let i = 1; i < ends.length; i++) {
+		const a = ends[i - 1]?.coord;
+		const b = ends[i]?.coord;
+		if (a && b) routeKm += haversineKm(a, b);
+	}
+	km = Math.max(km, routeKm);
 	let placesPlanned = 0;
 	for (const id of ix.scheduledNodeIds) {
 		const n = ix.node(id);

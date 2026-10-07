@@ -37,7 +37,7 @@ test("desktop: the trip overview shows what's still to plan", async ({ page }, i
 	await expect(panel).toBeVisible();
 	const row = (id: string) => panel.locator(`[data-row="${id}"]`);
 	// The demo: no stay on Days 1, 2 and 4; Mt. Fuji → Kyoto and Kyoto → Osaka have no mode.
-	await expect(row("nights")).toContainText("3 nights without a stay");
+	await expect(row("nights")).toContainText("3 nights not booked yet");
 	await expect(row("moves")).toContainText("2 city moves without transport");
 	await expect(row("book")).toContainText("1 still to book");
 	await expect(row("unrated")).toContainText("unrated places");

@@ -201,7 +201,8 @@ interface Stat {
 	v: string;
 	k: string;
 }
-function statsOf(route: TripRoute): Stat[] {
+/** The card's numbers (no km before there's a distance). */
+export function statsOf(route: TripRoute): Stat[] {
 	const s = route.stats;
 	const plural = (n: number, one: string, many: string) =>
 		n === 1 ? one : many;
@@ -209,7 +210,8 @@ function statsOf(route: TripRoute): Stat[] {
 		{ v: String(s.days), k: plural(s.days, "day", "days") },
 		{ v: String(s.countries), k: plural(s.countries, "country", "countries") },
 		{ v: String(s.cities), k: plural(s.cities, "city", "cities") },
-		{ v: s.km.toLocaleString("en-US"), k: "km" },
+		// No distance yet says nothing: left out.
+		...(s.km ? [{ v: s.km.toLocaleString("en-US"), k: "km" }] : []),
 	];
 }
 
