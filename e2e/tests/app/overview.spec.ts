@@ -45,7 +45,8 @@ test("desktop: a trip link lands on the Overview, with the stats and the route",
 	// The demo: 5 days; Tokyo (from its days' stops) and Mt. Fuji (the one stay).
 	const stat = (k: string) => page.locator(`[data-testid=${O.stat}][data-stat=${k}]`);
 	await expect(stat("days")).toContainText("5");
-	await expect(stat("cities")).toContainText("2");
+	// Tokyo and Kyoto (stops) and Mt. Fuji (the night).
+	await expect(stat("cities")).toContainText("3");
 	await expect(stat("flights")).toContainText(/flights?/);
 	await expect(stat("places")).toContainText("places planned");
 	await expect(stat("km")).toContainText("km travelled");
