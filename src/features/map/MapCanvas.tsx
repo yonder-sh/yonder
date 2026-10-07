@@ -299,6 +299,43 @@ const reducedMotion = () =>
 	typeof window !== "undefined" &&
 	window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 
+/**
+ * After a pin's first click: the second click of a double-click (the OS's
+ * click count, `detail` 2) runs `onDouble` and nothing else, wherever it
+ * lands. The first click opens the details beside the map, which narrows it,
+ * so the pin can move from under the pointer (onto the map, into the details).
+ */
+function armPinDoubleClick(onDouble: () => void): void {
+	const opts = { capture: true } as const;
+	const swallow = (e: Event) => {
+		e.preventDefault();
+		e.stopPropagation();
+	};
+	const end = () => {
+		clearTimeout(timer);
+		document.removeEventListener("mousedown", down, opts);
+		document.removeEventListener("mouseup", swallow, opts);
+		document.removeEventListener("click", swallow, opts);
+		document.removeEventListener("dblclick", last, opts);
+	};
+	const last = (e: Event) => {
+		swallow(e);
+		end();
+	};
+	const down = (e: MouseEvent) => {
+		if (e.detail < 2) return end();
+		swallow(e);
+		document.removeEventListener("mousedown", down, opts);
+		document.addEventListener("mouseup", swallow, opts);
+		document.addEventListener("click", swallow, opts);
+		document.addEventListener("dblclick", last, opts);
+		onDouble();
+	};
+	// No OS default waits longer between the two clicks.
+	const timer = setTimeout(end, 1000);
+	document.addEventListener("mousedown", down, opts);
+}
+
 const LENS_PLURAL: Record<Lens, string> = {
 	country: "countries",
 	region: "regions",
@@ -923,9 +960,24 @@ export default function MapCanvas({
 	pinsRef.current = pins;
 	useEffect(() => {
 		void fitPadding;
-		if (!loaded || !selectedRep) return;
-		const p = pinsRef.current.find((x) => x.repId === selectedRep);
-		if (p) reveal([[p.lng, p.lat]]);
+		const map = mapRef.current?.getMap();
+		if (!map || !loaded || !selectedRep) return;
+		const show = () => {
+			const p = pinsRef.current.find((x) => x.repId === selectedRep);
+			if (p) reveal([[p.lng, p.lat]]);
+		};
+		show();
+		// …and when the map narrows: the details docking beside it can cover the pin.
+		let timer: ReturnType<typeof setTimeout> | undefined;
+		const resized = () => {
+			clearTimeout(timer);
+			timer = setTimeout(show, 120);
+		};
+		map.on("resize", resized);
+		return () => {
+			clearTimeout(timer);
+			map.off("resize", resized);
+		};
 	}, [selectedRep, loaded, fitPadding, reveal]);
 
 	// ---- clusters -----------------------------------------------------------
@@ -1276,7 +1328,10 @@ export default function MapCanvas({
 	const ghostHover = useRef<string | number | null>(null);
 	const [cursor, setCursor] = useState<string | undefined>(undefined);
 	const selectPin = useCallback(
-		(repId: string) => nav.select({ kind: "node", id: repId }),
+		(repId: string, clicks: number) => {
+			if (clicks === 1) armPinDoubleClick(() => nav.zoomIn(repId));
+			nav.select({ kind: "node", id: repId });
+		},
 		[nav],
 	);
 	const zoomInPin = useCallback((repId: string) => nav.zoomIn(repId), [nav]);

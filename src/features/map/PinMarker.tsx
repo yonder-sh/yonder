@@ -33,7 +33,8 @@ export type PinMarkerProps = {
 	label: LabelSide | null;
 	/** Spiderfied: pixel offset from the cluster centre. */
 	offset?: [number, number];
-	onSelect(repId: string): void;
+	/** `clicks`: the click's count (2: the second click of a double-click). */
+	onSelect(repId: string, clicks: number): void;
 	onZoomIn(repId: string): void;
 	onHover(repId: string | null): void;
 };
@@ -180,7 +181,7 @@ export const PinMarker = memo(function PinMarker({
 					className="yonder-pin-btn"
 					onClick={(e) => {
 						stop(e);
-						onSelect(pin.repId);
+						onSelect(pin.repId, e.detail);
 					}}
 					onDoubleClick={(e) => {
 						stop(e);
