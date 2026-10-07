@@ -295,6 +295,20 @@ export function tripRoute(ix: GraphIndex): TripRoute {
 		if (c && !visited.some((v) => v.id === c.id)) visited.push(c);
 	}
 	const basis: RoutePlace[] = stays.length ? stays : visited;
+	// The stats count where you sleep, and the cities you spend time in
+	// (a stop that isn't an airport or a station), each once.
+	const spent = new Set<string>();
+	for (const it of ix.located) {
+		const n = it.nodeId ? ix.node(it.nodeId) : null;
+		if (!n || n.category === "airport" || n.category === "station") continue;
+		const c = cityOf(ix, n.id);
+		if (c) spent.add(c.id);
+	}
+	// Just a flight so far: the cities it touches.
+	const counted =
+		stays.length || spent.size
+			? [...stays, ...visited.filter((v) => spent.has(v.id))]
+			: visited;
 	const colors: Record<string, string> = {};
 	for (const s of basis)
 		if (!(s.countryKey in colors))
@@ -467,8 +481,8 @@ export function tripRoute(ix: GraphIndex): TripRoute {
 		colors,
 		stats: {
 			days: ix.days.length,
-			countries: new Set(basis.map((s) => s.countryKey)).size,
-			cities: new Set(basis.map((s) => s.id)).size,
+			countries: new Set(counted.map((s) => s.countryKey)).size,
+			cities: new Set(counted.map((s) => s.id)).size,
 			km: Math.round(km / 10) * 10,
 			flights,
 			airHours: Math.round(airHours),

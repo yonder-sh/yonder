@@ -81,7 +81,7 @@ test("DASH-01/02: own vs shared trips, card content, card opens the trip", async
 	const hero = page.getByTestId("home-hero");
 	await expect(hero).toContainText("Asia 2027");
 	await expect(hero).toContainText(/2 Oct\s*–\s*5 Nov 2027/);
-	await expect(hero).toContainText("34 nights");
+	await expect(hero).toContainText("35 days");
 	const text = await page.getByTestId("dashboard").innerText();
 	expect(text.toLowerCase()).toContain("shared with you");
 	expect(text).toContain("Phu Quoc detour");

@@ -101,7 +101,7 @@ test("new trip with a date range lands in the workspace", async ({ page }, info)
 	await days.filter({ hasText: /^10$/ }).first().click();
 	await days.filter({ hasText: /^14$/ }).first().click();
 	await expect(page.getByTestId(HOME_TESTID.newTripDates)).toContainText(
-		"5 days",
+		"4 nights",
 	);
 	await page.screenshot({
 		path: shotPath("home/new-trip-desktop.png"),
