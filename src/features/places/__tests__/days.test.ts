@@ -3,7 +3,7 @@ import { indexGraph } from "@/lib/engine/graph-index";
 import { computeSchedule } from "@/lib/engine/schedule";
 import type { TripGraph } from "@/lib/engine/types";
 import { demoGraph, N, scenario } from "@/lib/fixtures/demo";
-import { cityDayTable, cityRowNodes, formatDays, parseDays } from "../lib/days";
+import { cityDayTable, cityRowNodes } from "../lib/days";
 import {
 	levelSummary,
 	openListCounts,
@@ -99,17 +99,6 @@ describe("days per city (ADDENDUM §10)", () => {
 			gap.D.d2,
 			gap.D.d3,
 		]);
-	});
-	it("formats and parses day counts", () => {
-		expect(formatDays(2)).toBe("2");
-		expect(formatDays(2.5)).toBe("2.5");
-		expect(formatDays(null)).toBe("–");
-		expect(parseDays("")).toBeNull();
-		expect(parseDays("3")).toBe(3);
-		expect(parseDays("2,5")).toBe(2.5);
-		expect(parseDays("2.4")).toBe(2.5);
-		expect(parseDays("-1")).toBe("invalid");
-		expect(parseDays("abc")).toBe("invalid");
 	});
 });
 

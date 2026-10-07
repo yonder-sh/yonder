@@ -211,3 +211,14 @@ export function dayWhereText(ix: GraphIndex, w: DayWhere): string | null {
 export function nightPlaces(ix: GraphIndex): (string | null)[] {
 	return ix.days.map((d) => nightPlace(ix, d.id));
 }
+
+/** Nights per place in route order ("Tokyo 3, Kyoto 3"), only places within `scopeId` when given. */
+export function nightsByPlace(
+	ix: GraphIndex,
+	scopeId: string | null = null,
+): { placeId: string; nights: number }[] {
+	const on = new Map<string, number>();
+	for (const id of nightPlaces(ix))
+		if (id && ix.isWithin(id, scopeId)) on.set(id, (on.get(id) ?? 0) + 1);
+	return [...on].map(([placeId, nights]) => ({ placeId, nights }));
+}

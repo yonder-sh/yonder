@@ -4,8 +4,8 @@
  * its stops, else where the day before ended.
  */
 import { describe, expect, it } from "vitest";
-import { scenario } from "@/lib/fixtures/demo";
-import { dayWhere, dayWhereText } from "./day-place";
+import { N, scenario } from "@/lib/fixtures/demo";
+import { dayWhere, dayWhereText, nightsByPlace } from "./day-place";
 import { indexGraph } from "./graph-index";
 
 const texts = (days: Parameters<typeof scenario>[0]["days"]) => {
@@ -50,5 +50,26 @@ describe("dayWhere", () => {
 			]),
 		).toEqual(["Tokyo", "Tokyo", "Kyoto", "Kyoto"]);
 		expect(texts([{ items: [] }, { items: [] }])).toEqual([null, null]);
+	});
+});
+
+describe("nightsByPlace", () => {
+	it("counts each place's nights in route order, within a scope when given", () => {
+		const ix = indexGraph(
+			scenario({
+				days: [
+					{ night: "tokyo", items: [] },
+					{ night: "tokyo", items: [] },
+					{ night: "kyoto", items: [] },
+					{ items: [] },
+				],
+			}).graph,
+		);
+		const named = (scope: string | null) =>
+			nightsByPlace(ix, scope).map(
+				(r) => `${ix.node(r.placeId)?.name} ${r.nights}`,
+			);
+		expect(named(null)).toEqual(["Tokyo 2", "Kyoto 1"]);
+		expect(named(N.kyoto ?? null)).toEqual(["Kyoto 1"]);
 	});
 });

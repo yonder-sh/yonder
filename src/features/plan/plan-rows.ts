@@ -750,11 +750,9 @@ export type BandSummary = {
 	to: string | null;
 	nights: number;
 	stops: number;
-	plannedDays: number | null;
-	scheduledDays: number;
 };
 
-/** "12–18 Apr · 6 nights · 23 stops · Planned 4 days · scheduled 3" (SPEC §8.3). */
+/** "12–18 Apr · 6 nights · 23 stops" (SPEC §8.3). */
 export function bandSummary(ix: GraphIndex, visit: Visit): BandSummary {
 	const dates = visit.dayIds
 		.map((id) => ix.day(id)?.date)
@@ -770,14 +768,11 @@ export function bandSummary(ix: GraphIndex, visit: Visit): BandSummary {
 				)
 			: 0;
 	const stops = visit.itemIds.filter((id) => ix.item(id)?.nodeId).length;
-	const planned = ix.node(visit.repId)?.details?.plannedDays;
 	return {
 		from,
 		to,
 		nights,
 		stops,
-		plannedDays: typeof planned === "number" ? planned : null,
-		scheduledDays: new Set(dates).size,
 	};
 }
 

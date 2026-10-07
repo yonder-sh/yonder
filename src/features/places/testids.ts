@@ -58,11 +58,9 @@ export const PLACES_TESTID = {
 	/** "Now 14:05 EDT" (FB-20: the only label that reads the current time). */
 	localTimeNow: "places-local-time-now",
 	// days per city
-	daysTable: "places-days-table",
-	daysRow: "places-days-row",
-	daysInput: "places-days-input",
-	daysUnallocated: "places-days-unallocated",
-	plannedDays: "places-planned-days",
+	cityNights: "places-city-nights",
+	scopeNights: "places-scope-nights",
+	changeNights: "places-change-nights",
 	// rate screen
 	rateScreen: "rate-screen",
 	/** The "Ideas ×" chip: the screen holds the Ideas list's places (FB-05). */

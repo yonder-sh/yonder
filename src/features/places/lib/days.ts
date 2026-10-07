@@ -157,19 +157,3 @@ export function cityDayTable(
 		unassignedDayIds: scopeId === null ? unassigned : [],
 	};
 }
-
-/** "3", "2.5", "½": planned days as typed (halves allowed). */
-export function formatDays(n: number | null): string {
-	if (n === null) return "–";
-	if (Number.isInteger(n)) return String(n);
-	return n.toFixed(1).replace(/\.0$/, "");
-}
-
-/** Parses a typed day count: "", "3", "2.5", "2,5" → number | null (invalid). */
-export function parseDays(raw: string): number | null | "invalid" {
-	const s = raw.trim().replace(",", ".");
-	if (s === "") return null;
-	const n = Number(s);
-	if (!Number.isFinite(n) || n < 0 || n > 366) return "invalid";
-	return Math.round(n * 2) / 2;
-}

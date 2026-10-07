@@ -10,9 +10,9 @@
  *   stay nights, travel in and out, and where it's filed with Re-file. The
  *   name, category, status and actions are the panel's header (InspectorBody).
  * - **Country, region, city, area:** visits ("12–18 Apr · 6 nights · 23
- *   stops" with day links), planned vs scheduled days, place and idea counts,
- *   children, local time, open todos and shopping, `ClimateCard` (WP-Insights),
- *   the days-per-city table for countries and regions, Rate…, and Zoom in;
+ *   stops" with day links), a city's nights, place and idea counts, children,
+ *   local time, open todos and shopping, `ClimateCard` (WP-Insights), the
+ *   cities' nights for countries and regions, Rate…, and Zoom in;
  *   a rateable one (an area) leads with its ratings and where it fits.
  */
 import { useQuery } from "@tanstack/react-query";
@@ -66,7 +66,7 @@ import { TESTID } from "@/lib/testids";
 import { cn } from "@/lib/utils";
 import { useUi } from "@/lib/workspace/ui-store";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
-import { DaysPerCityTable, PlannedDaysLine } from "./DaysPerCityTable";
+import { CityNightsLine, ScopeNights } from "./CityNights";
 import {
 	ancestorsOf,
 	occurrencesOf,
@@ -725,9 +725,9 @@ function CoarseOverview({ node }: { node: GraphNode }) {
 			</Section>
 
 			<dl className="grid grid-cols-[88px_1fr] items-baseline gap-x-3 gap-y-2">
-				{node.type === "city" || node.details.plannedDays !== undefined ? (
-					<Row label="Days">
-						<PlannedDaysLine node={node} />
+				{node.type === "city" ? (
+					<Row label="Nights">
+						<CityNightsLine nodeId={node.id} />
 					</Row>
 				) : null}
 				<Row label="Places">
@@ -812,8 +812,8 @@ function CoarseOverview({ node }: { node: GraphNode }) {
 			{showTable ? (
 				<>
 					<ClimateCard nodeId={node.id} />
-					<Section title="Days per city">
-						<DaysPerCityTable scopeId={node.id} compact />
+					<Section title="Nights">
+						<ScopeNights scopeId={node.id} />
 					</Section>
 				</>
 			) : null}

@@ -82,27 +82,17 @@ test("Tokyo's overview lists its visits and children; Zoom in goes inside", asyn
 	await expect(page).toHaveURL(new RegExp(`/t/${c.slug}/japan/tokyo`));
 });
 
-test("the days-per-city table edits planned days and shows what's unallocated", async ({ page }, info) => {
+test("a country lists its cities' nights from the route and opens Cities & nights", async ({ page }, info) => {
 	test.skip(info.project.name !== "chromium", "desktop inspector");
 	const c = await cloneFixtureTrip(page.request);
-	const tokyo = c.ids.nodes.tokyo as string;
 	await page.goto(`/t/${c.slug}?sel=n.${c.ids.nodes.japan}`);
 	await expectLive(page);
-	const table = page.getByTestId(P.daysTable);
-	const row = table.locator(`[data-testid=${P.daysRow}][data-node="${tokyo}"]`);
-	await expect(row).toContainText("Tokyo");
-	const input = row.getByTestId(P.daysInput);
-	await input.fill("3");
-	await input.press("Enter");
-	await expect.poll(async () => (await nodeOf(page, tokyo))?.details.plannedDays).toBe(3);
-	// Scheduled days come from the plan: Tokyo holds day 1 and day 2.
-	await expect(row).toContainText("2");
+	const nights = page.getByTestId(P.scopeNights);
+	await expect(nights).toContainText("Mt. Fuji");
+	await expect(nights).toContainText("1 night");
 	await page.screenshot({ path: shotPath("places/overview-country-1440.png"), animations: "disabled" });
-	// Emptying the field clears the planned days (the key is deleted, not 0).
-	await input.fill("");
-	await input.press("Enter");
-	await expect.poll(async () => (await nodeOf(page, tokyo))?.details.plannedDays).toBeUndefined();
-	await expect(input).toHaveValue("");
+	await nights.getByTestId(P.changeNights).click();
+	await expect(page.getByRole("radio", { name: "Cities & nights" })).toBeChecked();
 });
 
 test("on a phone the overview is a sheet: a place, then a city, without sideways scrolling", async ({ page }, info) => {
@@ -119,7 +109,7 @@ test("on a phone the overview is a sheet: a place, then a city, without sideways
 
 	await page.goto(`/t/${c.slug}?sel=n.${c.ids.nodes.tokyo}`);
 	await expect(overview).toHaveAttribute("data-type", "city");
-	await expect(overview.getByTestId(P.plannedDays)).toContainText("2 scheduled");
+	await expect(overview.getByTestId(P.cityNights)).toContainText("None yet");
 	await expect(overview.getByTestId(P.children)).toContainText("Asakusa");
 	await expectNoHorizontalOverflow(page);
 	await page.screenshot({ path: shotPath("places/overview-city-390.png"), animations: "disabled" });

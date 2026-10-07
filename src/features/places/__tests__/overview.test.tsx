@@ -9,7 +9,6 @@ import type { TripGraph } from "@/lib/engine/types";
 import { DEMO_MEMBERS, demoGraph, N } from "@/lib/fixtures/demo";
 import { TESTID } from "@/lib/testids";
 import { renderWithWorkspace } from "@/test/render-workspace";
-import { DaysPerCityTable } from "../DaysPerCityTable";
 import { NodeOverview } from "../NodeOverview";
 import { PLACES_TESTID } from "../testids";
 
@@ -100,8 +99,9 @@ describe("NodeOverview", () => {
 		);
 		expect(o).toHaveTextContent("7 places");
 		expect(o).not.toHaveTextContent("0 ideas");
-		expect(within(o).getByTestId(PLACES_TESTID.plannedDays)).toHaveTextContent(
-			"planned · 2 scheduled",
+		// Nights come from the route (the demo's Tokyo has none).
+		expect(within(o).getByTestId(PLACES_TESTID.cityNights)).toHaveTextContent(
+			"None yet",
 		);
 		fireEvent.click(within(o).getByTestId(PLACES_TESTID.zoomIn));
 		expect(ws().scope?.id).toBe(N.tokyo);
@@ -115,28 +115,14 @@ describe("NodeOverview", () => {
 	});
 });
 
-describe("DaysPerCityTable", () => {
-	it("lists the cities by country with planned and scheduled days", () => {
-		const g: TripGraph = {
-			...demoGraph,
-			nodes: demoGraph.nodes.map((n) =>
-				n.id === N.tokyo
-					? { ...n, details: { ...n.details, plannedDays: 3 } }
-					: n,
-			),
-		};
-		renderWithWorkspace(<DaysPerCityTable />, { graph: g });
-		const table = screen.getByTestId(PLACES_TESTID.daysTable);
-		const tokyo = within(table)
-			.getAllByTestId(PLACES_TESTID.daysRow)
-			.find((r) => r.getAttribute("data-node") === N.tokyo);
-		expect(
-			within(tokyo as HTMLElement).getByTestId(PLACES_TESTID.daysInput),
-		).toHaveValue("3");
-		expect(tokyo).toHaveTextContent("2");
-		// 5 trip days, 3 planned.
-		expect(screen.getByTestId(PLACES_TESTID.daysUnallocated)).toHaveTextContent(
-			"Unallocated 2 days",
+describe("a country's nights", () => {
+	it("lists the route's cities inside it, and opens Cities & nights", () => {
+		const { ws } = renderWithWorkspace(
+			<NodeOverview nodeId={N.japan as string} />,
 		);
+		const nights = screen.getByTestId(PLACES_TESTID.scopeNights);
+		expect(nights).toHaveTextContent("Mt. Fuji1 night");
+		fireEvent.click(within(nights).getByTestId(PLACES_TESTID.changeNights));
+		expect(ws().tab).toBe("plan");
 	});
 });

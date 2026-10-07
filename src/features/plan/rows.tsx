@@ -483,9 +483,6 @@ export function BandCard({
 		s.from ? formatDateRange(s.from, s.to) : null,
 		s.nights > 0 ? `${s.nights} ${s.nights === 1 ? "night" : "nights"}` : null,
 		`${s.stops} ${s.stops === 1 ? "stop" : "stops"}`,
-		s.plannedDays !== null
-			? `Planned ${s.plannedDays} ${s.plannedDays === 1 ? "day" : "days"} · scheduled ${s.scheduledDays}`
-			: null,
 	].filter(Boolean);
 	return (
 		<div
