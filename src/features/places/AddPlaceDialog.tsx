@@ -112,6 +112,12 @@ import type {
 } from "./lib/providers";
 import { rateableNodes } from "./lib/rate";
 import {
+	newCountryOf,
+	queryNamesCity,
+	rankInTripCountries,
+	tripCountries,
+} from "./lib/trip-countries";
+import {
 	isPlaceSearch,
 	looksLikeUrl,
 	matchesRateCommand,
@@ -405,13 +411,18 @@ function Palette({
 	// box) shows none: "Use this location" must be the first, chosen option,
 	// not the stale "Bar Kuro" hits from Ningbo and Vancouver (HIER-12).
 	const searching = canSearch && isPlaceSearch(q, mode !== "first");
+	const countries = useMemo(() => tripCountries(ix.outline), [ix]);
 	const results = useMemo(() => {
-		const all = searching ? (search.data?.results ?? []) : [];
+		// Golden Gai in Shinjuku before the one in Ghent.
+		const all = rankInTripCountries(
+			searching ? (search.data?.results ?? []) : [],
+			countries,
+		);
 		if (mode !== "first") return all;
 		return all.filter((r) =>
 			["country", "region", "city"].includes(resultKind(r.types).level),
 		);
-	}, [search.data, mode, searching]);
+	}, [search.data, mode, searching, countries]);
 
 	const tripHits = useMemo(
 		() =>
@@ -1036,6 +1047,7 @@ function Palette({
 								canSearch={canSearch}
 								mode={mode}
 								linking={pending !== null}
+								next={mode === "first" && onRoute && !firstIn}
 							/>
 						) : null}
 
@@ -1291,7 +1303,9 @@ function Palette({
 								mode !== "locate" &&
 								!coords &&
 								!mapsLink &&
-								!otherLink ? (
+								!otherLink &&
+								// "Kyoto" is the city in the results, not a new country.
+								!(newType === "country" && queryNamesCity(q, results)) ? (
 									<CommandItem
 										value="action:add"
 										onSelect={addNamed}
@@ -1435,18 +1449,23 @@ function EmptyHints({
 	canSearch,
 	mode,
 	linking,
+	next,
 }: {
 	canSearch: boolean;
 	mode: AddPlaceRequest["mode"];
 	/** New place…'s search, a link waiting. */
 	linking: boolean;
+	/** "Where next?": the route has started. */
+	next?: boolean;
 }) {
 	return (
 		<div className="grid gap-1 px-4 pt-5 pb-3 text-meta text-muted-foreground">
 			<p className="flex items-center gap-2">
 				<Search className="size-3.5" strokeWidth={1.5} />
 				{mode === "first"
-					? "Type a country or a city to start the trip."
+					? next
+						? "Type a city to go to next."
+						: "Type a country or a city to start the trip."
 					: linking
 						? "Search for the place in the link, or type its name to add it."
 						: canSearch
@@ -1887,6 +1906,15 @@ function PreviewBody({
 	const update = useUpdateNode(tripId);
 	const busy = createPath.isPending || createItem.isPending || update.isPending;
 	const mode = request.mode;
+	// A save that adds a country to a trip that has one asks first.
+	const newCountry =
+		mode === "first" || mode === "locate"
+			? null
+			: newCountryOf(filing, tripCountries(ix.outline));
+	const [askCountry, setAskCountry] = useState<SchedulePick | "ideas" | null>(
+		null,
+	);
+	const asking = newCountry !== null && askCountry !== null;
 	const openAddPlace = useUi((s) => s.openAddPlace);
 	const addToRoute = useUi((s) => s.addToRoute);
 	const askSplit = useUi((s) => s.askSplit);
@@ -1953,7 +1981,8 @@ function PreviewBody({
 		return level === "place" ? { ...base, category } : base;
 	};
 
-	const save = (target: SchedulePick | "ideas") => {
+	const save = (target: SchedulePick | "ideas", sure = false) => {
+		if (newCountry && !sure) return setAskCountry(target);
 		const leafId = newId();
 		const ids = [...filing.create.map(() => newId()), leafId];
 		const chain = [
@@ -1985,7 +2014,24 @@ function PreviewBody({
 					if (target === "ideas" && openAdded && level === "place") {
 						onDone("inspector");
 						nav.select({ kind: "node", id: leafId });
-						toast(`Saved to ${where} ideas`);
+						// Collecting a few: back to the search in one tap.
+						toast(
+							`Saved to ${where} ideas`,
+							mode === "search" && !onPlace
+								? {
+										action: {
+											label: "Add another",
+											onClick: () =>
+												openAddPlace({
+													mode: "search",
+													...(request.parentId
+														? { parentId: request.parentId }
+														: {}),
+												}),
+										},
+									}
+								: undefined,
+						);
 						return;
 					}
 					if (target === "ideas") {
@@ -2196,6 +2242,14 @@ function PreviewBody({
 					</div>
 				) : null}
 
+				{newCountry ? (
+					<p
+						data-testid={PLACES_TESTID.newCountry}
+						className="rounded-lg border border-warning-hairline bg-warning-wash px-3 py-2 text-meta text-warning"
+					>
+						This is in {newCountry}, not on your trip yet.
+					</p>
+				) : null}
 				{mode !== "locate" ? (
 					<FilingChip
 						filing={filing}
@@ -2208,7 +2262,27 @@ function PreviewBody({
 				) : null}
 			</div>
 			<div className="sticky bottom-0 flex flex-wrap items-center justify-end gap-2 border-t bg-popover/95 px-4 py-3 backdrop-blur">
-				{mode === "locate" ? (
+				{asking ? (
+					<>
+						<Button
+							variant="ghost"
+							size="sm"
+							onClick={() => setAskCountry(null)}
+						>
+							Not now
+						</Button>
+						<EditGuard>
+							<Button
+								size="sm"
+								data-testid={PLACES_TESTID.newCountryConfirm}
+								disabled={busy || guard.disabled}
+								onClick={() => askCountry && save(askCountry, true)}
+							>
+								Add {newCountry} too
+							</Button>
+						</EditGuard>
+					</>
+				) : mode === "locate" ? (
 					<EditGuard>
 						<Button
 							data-testid={PLACES_TESTID.useLocation}

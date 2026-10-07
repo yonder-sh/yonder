@@ -12,6 +12,9 @@ export const PLACES_TESTID = {
 	filingChip: "places-filing",
 	categoryChips: "places-categories",
 	saveToIdeas: "places-save-ideas",
+	/** The preview's "This is in Belgium, not on your trip yet." and its "Add Belgium too". */
+	newCountry: "places-new-country",
+	newCountryConfirm: "places-new-country-confirm",
 	schedule: "places-schedule",
 	scheduleMenu: "places-schedule-menu",
 	useLocation: "places-use-location",

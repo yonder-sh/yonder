@@ -21,6 +21,8 @@ export type PlaceSearchResult = {
 	types: string[];
 	lat?: number;
 	lng?: number;
+	/** ISO code when the provider says (Photon), to rank the trip's countries first. */
+	countryCode?: string;
 };
 
 export type PlacePhoto = {
@@ -189,6 +191,7 @@ export function photonResult(f: PhotonFeature): PlaceSearchResult | null {
 		types: photonTypes(p),
 		lat: lat as number,
 		lng: lng as number,
+		...(p.countrycode ? { countryCode: p.countrycode.toUpperCase() } : {}),
 	};
 }
 
