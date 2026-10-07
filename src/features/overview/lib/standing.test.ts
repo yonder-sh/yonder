@@ -126,7 +126,7 @@ describe("whereThingsStand", () => {
 		});
 	});
 
-	it("city days, favourites with a day, and nights without a hotel", () => {
+	it("city nights, favourites with a day, and nights without a hotel", () => {
 		const { graph } = scenario({
 			days: [
 				{ night: "tokyo", items: [{ k: "sky", node: "shibuyaSky" }] },
@@ -148,7 +148,7 @@ describe("whereThingsStand", () => {
 		};
 		const s = stand(g);
 		expect(line(s, "cities")).toMatchObject({
-			detail: "Tokyo 2 days · Kyoto 2",
+			detail: "Tokyo 2 nights · Kyoto 1",
 			done: true,
 		});
 		expect(line(s, "days")).toMatchObject({
@@ -162,7 +162,7 @@ describe("whereThingsStand", () => {
 		});
 	});
 
-	it("no city nights yet: not decided; no dates: pick them first", () => {
+	it("no city nights yet: not decided, dates or not (the route makes them); the days and stays wait for dates", () => {
 		const { graph } = scenario({ days: [{ items: [] }, { items: [] }] });
 		expect(line(stand(graph), "cities")).toMatchObject({
 			detail: "not decided yet",
@@ -170,7 +170,8 @@ describe("whereThingsStand", () => {
 		});
 		const noDays: TripGraph = { ...graph, days: [], items: [] };
 		const s = stand(noDays);
-		for (const key of ["cities", "days", "stays"])
+		expect(line(s, "cities")?.detail).toBe("not decided yet");
+		for (const key of ["days", "stays"])
 			expect(line(s, key)?.detail).toBe("Pick your dates first");
 	});
 
@@ -217,18 +218,20 @@ describe("the words", () => {
 		).toBe("You have 3 left, Maya 2.");
 	});
 
-	it("cities in trip order, three at most", () => {
-		const rows = [
-			{ name: "Kyoto", dayIds: ["c", "d"] },
-			{ name: "Tokyo", dayIds: ["a", "b"] },
-			{ name: "Osaka", dayIds: ["e"] },
-			{ name: "Nara", dayIds: [] },
-			{ name: "Seoul", dayIds: ["f"] },
-		];
-		const at = (id: string) => "abcdef".indexOf(id) + 1;
-		expect(citiesDetail(rows.slice(0, 3), at)).toBe(
-			"Tokyo 2 days · Kyoto 2 · Osaka 1",
+	it("the nights in each city, in trip order, three at most", () => {
+		const names: Record<string, string> = {
+			t: "Tokyo",
+			k: "Kyoto",
+			o: "Osaka",
+			s: "Seoul",
+		};
+		const name = (id: string) => names[id] ?? "";
+		// The last day, the day you leave, has no night.
+		expect(citiesDetail(["t", "t", "k", "k", "o", null], name)).toBe(
+			"Tokyo 2 nights · Kyoto 2 · Osaka 1",
 		);
-		expect(citiesDetail(rows, at)).toBe("Tokyo 2 days · Kyoto 2 · Osaka 1 · …");
+		expect(citiesDetail(["t", "t", "k", "k", "o", "s", null], name)).toBe(
+			"Tokyo 2 nights · Kyoto 2 · Osaka 1 · …",
+		);
 	});
 });

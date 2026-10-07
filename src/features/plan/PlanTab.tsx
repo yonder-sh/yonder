@@ -243,6 +243,14 @@ function PlanTabBody() {
 	// One Yonder: Days | Cities & nights (D02/D05); without a day in view the
 	// coarse lenses list the days as rows (D02), a day in view is its timeline.
 	const [nights, setNights] = useSplitOpen();
+	// A city just added to the route, or the checklist's "How long in each city".
+	const splitAsked = useUi((s) => s.splitAsked);
+	const askSplit = useUi((s) => s.askSplit);
+	useEffect(() => {
+		if (!splitAsked) return;
+		askSplit(false);
+		setNights(true);
+	}, [splitAsked, askSplit, setNights]);
 	const dayRows = !days && isCoarse(lens);
 	const actions = usePlanActions();
 	const openAddPlace = useUi((s) => s.openAddPlace);
@@ -433,7 +441,7 @@ function PlanTabBody() {
 		return () => dnd.setOverlay("item", null);
 	}, [dnd]);
 
-	// ---- empty trip: how long in each city (places, no dates), else the way in --
+	// ---- empty trip: the route ("Where to first?", then how long in each city) --
 	if (empty) {
 		return (
 			<div data-testid={TESTID.planTab}>
@@ -444,23 +452,7 @@ function PlanTabBody() {
 					fallback={
 						<EmptyState
 							lead={<TabPurpose tab="plan" />}
-							line={
-								graph.nodes.length
-									? "Set the trip dates to plan your days."
-									: "Where to first?"
-							}
-							action={
-								<Button
-									size="sm"
-									onClick={() =>
-										openAddPlace({
-											mode: graph.nodes.length ? "search" : "first",
-										})
-									}
-								>
-									Search places
-								</Button>
-							}
+							line="Nothing planned yet."
 						/>
 					}
 				/>

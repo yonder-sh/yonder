@@ -34,6 +34,7 @@ export const OVERVIEW_TESTID = {
 	wholeTrip: "overview-whole-trip",
 	empty: "overview-empty",
 	openPlan: "overview-open-plan",
+	planRoute: "overview-plan-route",
 	seePlaces: "overview-see-places",
 	openToday: "overview-open-today",
 	/** The inspector's "Open the Overview →" at the trip root. */

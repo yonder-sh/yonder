@@ -1,12 +1,18 @@
 /**
- * How long in each city, at the top of the Plan: before any day has a city,
- * the trip's days shared between the cities (numbered stops under their
- * country, − / +, reordering, who still rates, Use these days); with no
- * dates, about how many days and the first one; afterwards "Tokyo 2 days ·
- * Kyoto 2" with Change, which confirms in the panel before places go back
- * to the list. The map gets the stops in order while it's open.
+ * How long in each city, at the top of the Plan: before any night has a
+ * city, the trip's nights (a trip of N days has N − 1) shared between the
+ * cities (numbered stops under their country, − / +, reordering, who still
+ * rates, Put it on the days); with no dates, the nights you set and the day
+ * you arrive; afterwards Cities & nights, which confirms in the panel before
+ * places go back to the list. The map gets the stops in order while it's open.
  */
-import { fireEvent, screen, waitFor, within } from "@testing-library/react";
+import {
+	act,
+	fireEvent,
+	screen,
+	waitFor,
+	within,
+} from "@testing-library/react";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { PlanTab } from "@/features/plan/PlanTab";
 import type { DaySpec } from "@/lib/engine/__fixtures__/demo";
@@ -126,7 +132,7 @@ const asRole = (graph: TripGraph, role: "viewer" | "suggester"): TripGraph => ({
 });
 
 describe("how long in each city (no day has a city yet)", () => {
-	it("the days per city, the spare ones shared out, numbered under their country; who still rates", () => {
+	it("the nights per city, the spare ones shared out, numbered under their country; who still rates", () => {
 		const { s, graph } = trip(empty(10));
 		plan(graph);
 		const split = screen.getByTestId(T.split);
@@ -134,25 +140,28 @@ describe("how long in each city (no day has a city yet)", () => {
 			"How long in each city?",
 		);
 		expect(split).toHaveTextContent(
-			"Based on your shortlist. Change the days, reorder the stops, then use them.",
+			"Based on your shortlist. Change the nights, reorder the stops, then put them on the days.",
 		);
-		expect(split).toHaveTextContent("10 days, Sat 2 – Mon 11 Oct");
-		// Tokyo needs 4, Kyoto 1; the 5 spare days go in turn, Tokyo first.
+		// Ten days are nine nights: the last day is the day you leave.
+		expect(split).toHaveTextContent("9 nights, Sat 2 – Mon 11 Oct");
+		// Tokyo needs 4, Kyoto 1; the 4 spare nights go in turn, Tokyo first.
 		expect(shape()).toEqual([
-			[s.N.tokyo, "7", "1"],
+			[s.N.tokyo, "6", "1"],
 			[s.N.kyoto, "3", "2"],
 			[s.N.osaka, "0", ""],
 		]);
 		expect(screen.getAllByTestId(T.heading).map((h) => h.textContent)).toEqual([
-			"Japan · 10 nights",
+			"Japan · 9 nights",
 		]);
+		// Each stay from the day you arrive to the day you leave.
+		expect(rowOf(s.N.tokyo)).toHaveTextContent("Sat 2 – Fri 8 Oct");
+		expect(rowOf(s.N.kyoto)).toHaveTextContent("Fri 8 – Mon 11 Oct");
 		// The demo's seven Tokyo places are unrated; Audrey rated nothing.
 		expect(rowOf(s.N.tokyo)).toHaveTextContent(
 			"4 shortlisted · 11 not rated yet",
 		);
-		expect(rowOf(s.N.osaka)).toHaveTextContent(
-			"0 shortlisted · 1 not rated yet",
-		);
+		expect(rowOf(s.N.osaka)).toHaveTextContent("1 not rated yet");
+		expect(rowOf(s.N.osaka)).not.toHaveTextContent("0 shortlisted");
 		expect(screen.getByTestId(T.splitRate)).toHaveTextContent(
 			"You have 9 places to rate and Audrey 14. These days will change as you rate.",
 		);
@@ -210,15 +219,15 @@ describe("how long in each city (no day has a city yet)", () => {
 		expect(navigations.at(-1)?.splat).toBe("");
 	});
 
-	it("− leaves a day not planned yet, + takes it; + waits for a free day", () => {
+	it("− leaves a night not placed yet, + takes it; + waits for a free night", () => {
 		const { s, graph } = trip(empty(6));
 		plan(graph);
-		// Tokyo 5 (4 + the spare day), Kyoto 1.
-		expect(rowOf(s.N.tokyo)).toHaveAttribute("data-days", "5");
+		// Five nights: Tokyo 4, Kyoto 1 (nothing spare).
+		expect(rowOf(s.N.tokyo)).toHaveAttribute("data-days", "4");
 		for (const b of screen.getAllByTestId(T.splitPlus))
 			expect(b).toBeDisabled();
 		fireEvent.click(within(rowOf(s.N.tokyo)).getByTestId(T.splitMinus));
-		expect(rowOf(s.N.tokyo)).toHaveAttribute("data-days", "4");
+		expect(rowOf(s.N.tokyo)).toHaveAttribute("data-days", "3");
 		expect(screen.getByTestId(T.splitUnused)).toHaveTextContent(
 			"1 night not placed yet",
 		);
@@ -234,19 +243,19 @@ describe("how long in each city (no day has a city yet)", () => {
 		const { s, graph } = trip(empty(4));
 		plan(graph);
 		expect(screen.getByTestId(T.splitOver)).toHaveTextContent(
-			"Your shortlist needs about 5 days, and you have 4. Remove a city or some places.",
+			"Your shortlist needs about 5 nights, and the trip has 3. Remove a city or some places.",
 		);
-		expect(rowOf(s.N.tokyo)).toHaveAttribute("data-days", "3");
+		expect(rowOf(s.N.tokyo)).toHaveAttribute("data-days", "2");
 		expect(rowOf(s.N.kyoto)).toHaveAttribute("data-days", "1");
 	});
 
-	it("Move up / Move down reorder the stops; the numbers, the map and Use these days follow", async () => {
+	it("Move up / Move down reorder the stops; the numbers, the map and Put it on the days follow", async () => {
 		const { s, graph } = trip(empty(10));
 		plan(graph);
 		expect(
 			useUi.getState().splitRoute?.map((x) => [x.name, x.stop, x.days]),
 		).toEqual([
-			["Tokyo", 1, 7],
+			["Tokyo", 1, 6],
 			["Kyoto", 2, 3],
 		]);
 		const kyoto = rowOf(s.N.kyoto);
@@ -257,7 +266,7 @@ describe("how long in each city (no day has a city yet)", () => {
 		fireEvent.click(await screen.findByTestId(T.moveUp));
 		expect(shape()).toEqual([
 			[s.N.kyoto, "3", "1"],
-			[s.N.tokyo, "7", "2"],
+			[s.N.tokyo, "6", "2"],
 			[s.N.osaka, "0", ""],
 		]);
 		expect(useUi.getState().splitRoute?.map((x) => x.name)).toEqual([
@@ -285,26 +294,31 @@ describe("how long in each city (no day has a city yet)", () => {
 			s.N.tokyo,
 			s.N.osaka,
 		]);
+		expect(screen.getByTestId(T.splitUse)).toHaveTextContent(
+			"Put it on the days",
+		);
 		fireEvent.click(screen.getByTestId(T.splitUse));
 		await waitFor(() => expect(fns.setDayStay).toHaveBeenCalledTimes(2));
+		// Mon 11, the day you leave, is a Tokyo day with no night of its own.
 		expect(fns.setDayStay.mock.calls.map((c) => c[0].data)).toEqual([
 			{ fromDayId: s.D.d1, toDayId: s.D.d3, nodeId: s.N.kyoto },
 			{ fromDayId: s.D.d4, toDayId: s.D.d9, nodeId: s.N.tokyo },
 		]);
 	});
 
-	it("Use these days: each city's nights in turn from the first day", async () => {
+	it("Put it on the days: each city's nights in turn from the first day; none on the day you leave", async () => {
 		const { s, graph } = trip(empty(10));
 		plan(graph);
 		fireEvent.click(within(rowOf(s.N.tokyo)).getByTestId(T.splitMinus));
 		fireEvent.click(within(rowOf(s.N.osaka)).getByTestId(T.splitPlus));
+		expect(rowOf(s.N.osaka)).toHaveTextContent("Sun 10 – Mon 11 Oct");
 		fireEvent.click(screen.getByTestId(T.splitUse));
 		await waitFor(() => expect(fns.setDayStay).toHaveBeenCalledTimes(3));
-		// Every day used: the last one is the day you leave Osaka.
+		// Every night used; Mon 11 is an Osaka day ending with the way home.
 		expect(fns.setDayStay.mock.calls.map((c) => c[0].data)).toEqual([
-			{ fromDayId: s.D.d1, toDayId: s.D.d6, nodeId: s.N.tokyo },
-			{ fromDayId: s.D.d7, toDayId: s.D.d9, nodeId: s.N.kyoto },
-			{ fromDayId: s.D.d10, toDayId: s.D.d10, nodeId: s.N.osaka },
+			{ fromDayId: s.D.d1, toDayId: s.D.d5, nodeId: s.N.tokyo },
+			{ fromDayId: s.D.d6, toDayId: s.D.d8, nodeId: s.N.kyoto },
+			{ fromDayId: s.D.d9, toDayId: s.D.d9, nodeId: s.N.osaka },
 		]);
 		expect(fns.moveItem).not.toHaveBeenCalled();
 	});
@@ -336,7 +350,7 @@ describe("no dates yet", () => {
 		return { ...graph, days: d.days };
 	};
 
-	it("about how many days, then the split; the first day sets the dates and the nights in one go", async () => {
+	it("the nights each city needs, then the day you arrive: the dates and the nights in one go", async () => {
 		const { s, graph } = trip([]);
 		const after = dated(graph);
 		fns.getTripGraph.mockResolvedValueOnce(after);
@@ -346,18 +360,15 @@ describe("no dates yet", () => {
 		expect(within(split).getByRole("heading")).toHaveTextContent(
 			"How long in each city?",
 		);
-		expect(split).toHaveTextContent("About how many days?");
-		expect(split).toHaveTextContent("Your shortlist needs about 5 days.");
-		expect(screen.queryByTestId(T.splitRow)).toBeNull();
-		fireEvent.change(screen.getByTestId(T.tripDays), {
-			target: { value: "6" },
-		});
 		expect(shape()).toEqual([
-			[s.N.tokyo, "5", "1"],
+			[s.N.tokyo, "4", "1"],
 			[s.N.kyoto, "1", "2"],
 			[s.N.osaka, "0", ""],
 		]);
-		expect(split).toHaveTextContent("Starting on");
+		// Five nights from Sat 2: the trip runs to Thu 7, the day you leave.
+		expect(split).toHaveTextContent("5 nights, Sat 2 – Thu 7 Oct");
+		expect(split).toHaveTextContent("You arrive on");
+		expect(rowOf(s.N.kyoto)).toHaveTextContent("Wed 6 – Thu 7 Oct");
 		fireEvent.click(screen.getByTestId(T.splitUse));
 		await waitFor(() => expect(fns.setDayStay).toHaveBeenCalledTimes(2));
 		expect(fns.setTripDates.mock.calls[0]?.[0].data).toMatchObject({
@@ -365,26 +376,23 @@ describe("no dates yet", () => {
 			startDate: "2027-10-02",
 			endDate: "2027-10-07",
 		});
-		const [d1, , , , d5, d6] = after.days.map((d) => d.id);
+		const [d1, , , d4, d5] = after.days.map((d) => d.id);
 		expect(fns.setDayStay.mock.calls.map((c) => c[0].data)).toEqual([
-			{ fromDayId: d1, toDayId: d5, nodeId: s.N.tokyo },
-			{ fromDayId: d6, toDayId: d6, nodeId: s.N.kyoto },
+			{ fromDayId: d1, toDayId: d4, nodeId: s.N.tokyo },
+			{ fromDayId: d5, toDayId: d5, nodeId: s.N.kyoto },
 		]);
 		expect(splitDrafts.has(graph.trip.id)).toBe(false);
 	});
 
-	it("out of range, or no first day yet: nothing to use", () => {
-		const { graph } = trip([]);
+	it("no day you arrive yet: nothing to put on the days; nights have no cap", () => {
+		const { s, graph } = trip([]);
 		plan(graph);
-		fireEvent.change(screen.getByTestId(T.tripDays), {
-			target: { value: "61" },
-		});
-		expect(screen.queryByTestId(T.splitRow)).toBeNull();
-		fireEvent.change(screen.getByTestId(T.tripDays), {
-			target: { value: "9" },
-		});
 		expect(rows()).toHaveLength(3);
 		expect(screen.getByTestId(T.splitUse)).toBeDisabled();
+		expect(screen.queryByTestId(T.splitUnused)).toBeNull();
+		fireEvent.click(within(rowOf(s.N.osaka)).getByTestId(T.splitPlus));
+		expect(rowOf(s.N.osaka)).toHaveAttribute("data-days", "1");
+		expect(screen.getByTestId(T.split)).toHaveTextContent("6 nights");
 	});
 
 	it("suggesting: says the dates are only suggested, and sets no nights", async () => {
@@ -392,10 +400,10 @@ describe("no dates yet", () => {
 		fns.setTripDates.mockResolvedValueOnce({
 			proposed: { id: "p1", summary: "Change the trip dates" },
 		});
-		splitDrafts.set(graph.trip.id, { start: "2027-10-02", tripDays: 6 });
+		splitDrafts.set(graph.trip.id, { start: "2027-10-02" });
 		plan(asRole(graph, "suggester"));
 		expect(screen.getByTestId(T.suggestNote)).toHaveTextContent(
-			"You're suggesting, so this suggests the dates only. Once they're accepted, come back here to use these days.",
+			"You're suggesting, so this suggests the dates only. Once they're accepted, come back here to put the nights on the days.",
 		);
 		const use = screen.getByTestId(T.splitUse);
 		expect(use).toHaveTextContent("Suggest these dates");
@@ -408,7 +416,7 @@ describe("no dates yet", () => {
 });
 
 describe("once days have cities", () => {
-	/** Tokyo Sat 2 – Sun 3 (T1 on the 3rd), Kyoto Mon 4 – Tue 5 (the day you leave). */
+	/** Tokyo Sat 2 and Sun 3 (T1 on the 3rd), Kyoto Mon 4; Tue 5 is the day you leave. */
 	const planned = () =>
 		trip([
 			{ night: "tokyo", items: [] },
@@ -436,12 +444,13 @@ describe("once days have cities", () => {
 		const { s, graph } = planned();
 		plan(graph);
 		fireEvent.click(screen.getByTestId(T.splitChange));
-		// Prefilled from the days, then the cities with no days.
+		// Prefilled from the nights, then the cities with none.
 		expect(shape()).toEqual([
 			[s.N.tokyo, "2", "1"],
-			[s.N.kyoto, "2", "2"],
+			[s.N.kyoto, "1", "2"],
 			[s.N.osaka, "0", ""],
 		]);
+		expect(rowOf(s.N.kyoto)).toHaveTextContent("Mon 4 – Tue 5 Oct");
 		expect(useUi.getState().splitRoute?.map((x) => x.name)).toEqual([
 			"Tokyo",
 			"Kyoto",
@@ -458,22 +467,22 @@ describe("once days have cities", () => {
 		fireEvent.click(
 			within(screen.getByTestId(T.splitConfirm)).getByTestId(T.splitApply),
 		);
-		await waitFor(() => expect(fns.setDayStay).toHaveBeenCalledTimes(1));
+		await waitFor(() => expect(fns.setDayStay).toHaveBeenCalledTimes(2));
 		expect(fns.moveItem.mock.calls.map((c) => c[0].data)).toEqual([
 			{ itemId: s.I.t1, dayId: null },
 		]);
-		expect(fns.setDayStay.mock.calls[0]?.[0].data).toEqual({
-			fromDayId: s.D.d2,
-			toDayId: s.D.d2,
-			nodeId: s.N.kyoto,
-		});
+		// Kyoto's night moves up to Sun 3; Mon 4's night is free now.
+		expect(fns.setDayStay.mock.calls.map((c) => c[0].data)).toEqual([
+			{ fromDayId: s.D.d2, toDayId: s.D.d2, nodeId: s.N.kyoto },
+			{ fromDayId: s.D.d3, toDayId: s.D.d3, nodeId: null },
+		]);
 		await waitFor(() =>
 			expect(screen.queryByTestId(T.splitConfirm)).toBeNull(),
 		);
 		expect(useUi.getState().splitRoute).toBeNull();
 	});
 
-	it("Change → Kyoto first: the days swap, T1's day becomes Kyoto's", async () => {
+	it("Change → Kyoto first: its night comes first, and T1's day stays a Tokyo day", async () => {
 		const { s, graph } = planned();
 		plan(graph);
 		fireEvent.click(screen.getByTestId(T.splitChange));
@@ -483,16 +492,13 @@ describe("once days have cities", () => {
 		});
 		fireEvent.click(await screen.findByTestId(T.moveUp));
 		expect(shape().map((r) => r[0])).toEqual([s.N.kyoto, s.N.tokyo, s.N.osaka]);
+		// Nothing on a day that changes city: no confirm.
 		fireEvent.click(screen.getByTestId(T.splitApply));
-		fireEvent.click(
-			within(screen.getByTestId(T.splitConfirm)).getByTestId(T.splitApply),
-		);
 		await waitFor(() => expect(fns.setDayStay).toHaveBeenCalledTimes(2));
-		expect(fns.moveItem.mock.calls.map((c) => c[0].data)).toEqual([
-			{ itemId: s.I.t1, dayId: null },
-		]);
+		expect(screen.queryByTestId(T.splitConfirm)).toBeNull();
+		expect(fns.moveItem).not.toHaveBeenCalled();
 		expect(fns.setDayStay.mock.calls.map((c) => c[0].data)).toEqual([
-			{ fromDayId: s.D.d1, toDayId: s.D.d2, nodeId: s.N.kyoto },
+			{ fromDayId: s.D.d1, toDayId: s.D.d1, nodeId: s.N.kyoto },
 			{ fromDayId: s.D.d3, toDayId: s.D.d3, nodeId: s.N.tokyo },
 		]);
 	});
@@ -510,5 +516,123 @@ describe("once days have cities", () => {
 		expect(rowOf(s.N.tokyo)).toHaveAttribute("data-days", "1");
 		expect(fns.setDayStay).not.toHaveBeenCalled();
 		expect(fns.moveItem).not.toHaveBeenCalled();
+	});
+});
+
+describe("the route from nothing (Where to first?)", () => {
+	/** The trip's countries and `keep` cities (none: no city yet), nothing saved in them. */
+	const bare = (days: DaySpec[], keep: string[] = []) => {
+		const { s, graph } = trip(days);
+		const ids = new Set(keep.map((k) => s.N[k]));
+		const nodes = graph.nodes.filter(
+			(n) => n.type === "country" || ids.has(n.id),
+		);
+		return { s, graph: { ...graph, nodes } as TripGraph };
+	};
+
+	it("no city yet: Where to first? opens the city search", () => {
+		const { graph } = bare(empty(10));
+		plan(graph);
+		expect(screen.queryByTestId(T.splitRow)).toBeNull();
+		expect(screen.getByTestId(T.routeStart)).toHaveTextContent(
+			"Where to first?",
+		);
+		fireEvent.click(screen.getByTestId(T.routeStartSearch));
+		expect(useUi.getState().addPlace).toEqual({ mode: "first" });
+	});
+
+	it("people who can't edit get no start", () => {
+		const { graph } = bare(empty(10));
+		plan(asRole(graph, "viewer"));
+		expect(screen.queryByTestId(T.routeStart)).toBeNull();
+	});
+
+	it("a city that only holds an airport isn't a stop", () => {
+		const { s, graph } = trip(empty(10));
+		plan(graph);
+		// The demo's Seoul, Taipei, Istanbul and Newark hold only their airports.
+		expect(shape().map((r) => r[0])).toEqual([s.N.tokyo, s.N.kyoto, s.N.osaka]);
+	});
+
+	it("a city with nothing saved yet is a stop, its nights still to set", () => {
+		const { s, graph } = bare(empty(10), ["kyoto"]);
+		plan(graph);
+		expect(shape()).toEqual([[s.N.kyoto, "0", ""]]);
+		expect(screen.getByTestId(T.splitUnused)).toHaveTextContent(
+			"9 nights not placed yet",
+		);
+	});
+
+	it("a city picked there leads with 3 nights, the next one follows it; Put it on the days", async () => {
+		const { s, graph } = bare(empty(10), ["tokyo", "kyoto"]);
+		plan(graph);
+		act(() => useUi.getState().addToRoute(s.N.tokyo as string));
+		await waitFor(() =>
+			expect(rowOf(s.N.tokyo)).toHaveAttribute("data-days", "3"),
+		);
+		act(() => useUi.getState().addToRoute(s.N.kyoto as string));
+		await waitFor(() =>
+			expect(rowOf(s.N.kyoto)).toHaveAttribute("data-days", "3"),
+		);
+		expect(shape()).toEqual([
+			[s.N.tokyo, "3", "1"],
+			[s.N.kyoto, "3", "2"],
+		]);
+		expect(useUi.getState().routeAdds).toEqual([]);
+		expect(screen.getByTestId(T.split)).toHaveTextContent(
+			"Where you'll sleep, in the order you travel.",
+		);
+		expect(rowOf(s.N.tokyo)).toHaveTextContent("Sat 2 – Tue 5 Oct");
+		expect(rowOf(s.N.tokyo)).not.toHaveTextContent("shortlisted");
+		expect(screen.getByTestId(T.splitUnused)).toHaveTextContent(
+			"3 nights not placed yet",
+		);
+		fireEvent.click(screen.getByTestId(T.whereNext));
+		expect(useUi.getState().addPlace).toEqual({ mode: "first", next: true });
+		fireEvent.click(screen.getByTestId(T.splitUse));
+		await waitFor(() => expect(fns.setDayStay).toHaveBeenCalledTimes(2));
+		expect(fns.setDayStay.mock.calls.map((c) => c[0].data)).toEqual([
+			{ fromDayId: s.D.d1, toDayId: s.D.d3, nodeId: s.N.tokyo },
+			{ fromDayId: s.D.d4, toDayId: s.D.d6, nodeId: s.N.kyoto },
+		]);
+	});
+
+	it("Where next? on Cities & nights: after the last stop with nights, with the nights still free", async () => {
+		const { s, graph } = trip([
+			{ night: "tokyo", items: [] },
+			{ night: "tokyo", items: [] },
+			{ night: "kyoto", items: [] },
+			{ items: [] },
+			{ items: [] },
+		]);
+		plan(graph);
+		fireEvent.click(screen.getByTestId(T.splitChange));
+		expect(screen.getByTestId(T.splitUnused)).toHaveTextContent(
+			"1 night not placed yet",
+		);
+		act(() => useUi.getState().addToRoute(s.N.seoul as string));
+		await waitFor(() =>
+			expect(shape().map((r) => r[0])).toEqual([
+				s.N.tokyo,
+				s.N.kyoto,
+				s.N.seoul,
+				s.N.osaka,
+			]),
+		);
+		expect(rowOf(s.N.seoul)).toHaveAttribute("data-days", "1");
+		expect(rowOf(s.N.seoul)).toHaveTextContent("Tue 5 – Wed 6 Oct");
+	});
+
+	it("asked from elsewhere (the checklist, a city just added), the Plan opens Cities & nights", async () => {
+		const { graph } = trip([
+			{ night: "tokyo", items: [] },
+			{ night: "kyoto", items: [] },
+			{ items: [] },
+		]);
+		plan(graph);
+		expect(screen.queryByTestId(T.splitRow)).toBeNull();
+		act(() => useUi.getState().askSplit(true));
+		await waitFor(() => expect(rows()).not.toHaveLength(0));
+		expect(useUi.getState().splitAsked).toBe(false);
 	});
 });

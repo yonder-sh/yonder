@@ -300,13 +300,18 @@ test.describe("desktop", () => {
 		await page.getByTestId("new-trip-submit").click();
 		await page.waitForURL(/\/t\//);
 		await expect(page.getByTestId("workspace")).toBeVisible();
-		// A new trip opens on its Overview, which says what to add first.
-		await expect(page.getByTestId("overview-empty")).toContainText("Add where you're staying");
+		// A new trip opens on its Plan, already asking where to first.
+		await expect(page.getByTestId("add-place-dialog")).toContainText("Where to first?");
+		await page.keyboard.press("Escape");
+		// Skipped: the Plan keeps the start, and the Overview offers it too.
+		await expect(page.getByTestId("split-route-start")).toContainText("Where to first?");
+		await expect(page.getByTestId("center-panel")).toContainText("A free day.");
 		const base = page.url().split("?")[0];
+		await page.goto(`${base}?tab=overview`);
+		await expect(page.getByTestId("overview-empty")).toContainText("Where to first?");
+		await expect(page.getByTestId("overview-plan-route")).toBeVisible();
 		await page.goto(`${base}?tab=plan`);
 		await expect(page.getByTestId("workspace")).toBeVisible();
-		await page.keyboard.press("Escape");
-		await expect(page.getByTestId("center-panel")).toContainText("A free day.");
 		await expect(page.getByTestId("trip-map")).toContainText("Nothing on the map here yet.");
 		await page.goto(`${base}?tab=media`);
 		await expect(page.getByTestId("center-panel").getByTestId("empty-state").last()).toContainText("No photos, videos, PDFs or links");

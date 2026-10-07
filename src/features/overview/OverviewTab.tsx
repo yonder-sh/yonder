@@ -24,6 +24,7 @@ import {
 import { useEditGuard } from "@/components/common/edit-guard";
 import { Button } from "@/components/ui/button";
 import { ClimateCard } from "@/features/insights/ClimateCard";
+import { cityRowNodes } from "@/features/places/lib/days";
 import { useCovers } from "@/features/places/tab/PlacesBoard";
 import { StillToPlan } from "@/features/shell/StillToPlan";
 import type { LngLat } from "@/lib/engine/geo";
@@ -436,37 +437,38 @@ function Header({
 					className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-white/[.04] p-4"
 				>
 					<p className="font-display text-lg font-semibold text-white">
-						{noDays ? "Where to first?" : "Add where you're staying"}
+						Where to first?
 					</p>
 					<p className="text-sm text-white/65">
 						{noDays
-							? "Set the trip's dates and add places: the route draws itself here."
-							: "Pick where you sleep each night in the plan, and the route draws itself here, night by night."}
+							? "Add the cities you'll sleep in and the nights in each, and pick your dates: the route draws itself here."
+							: "Add the cities you'll sleep in, in order, and the nights in each: the route draws itself here, night by night."}
 					</p>
 					<div className="flex flex-wrap gap-2">
+						<Button
+							data-testid={OVERVIEW_TESTID.planRoute}
+							onClick={() => {
+								// The route lives on the Plan; with no city yet, it starts searching.
+								nav.setTab("plan");
+								if (!cityRowNodes(ix).length) openAddPlace({ mode: "first" });
+							}}
+							disabled={guard.disabled}
+							title={guard.reason ?? undefined}
+							className={PRIMARY}
+						>
+							Plan the route
+						</Button>
 						{noDays ? (
-							<>
-								<Button
-									className="h-10 rounded-[10px] bg-[#a3aefa] px-4 text-[#11132c] hover:bg-[#b7c0fb]"
-									onClick={() => setSettingsOpen(true)}
-									disabled={guard.disabled}
-									title={guard.reason ?? undefined}
-								>
-									Set dates
-								</Button>
-								<Button
-									variant="outline"
-									onClick={() => openAddPlace({ mode: "first" })}
-									disabled={guard.disabled}
-									title={guard.reason ?? undefined}
-									className="h-10 rounded-[10px] border-white/20 bg-transparent px-4 text-white hover:bg-white/10 hover:text-white"
-								>
-									Search places
-								</Button>
-							</>
-						) : (
-							openPlan
-						)}
+							<Button
+								variant="outline"
+								onClick={() => setSettingsOpen(true)}
+								disabled={guard.disabled}
+								title={guard.reason ?? undefined}
+								className={MUTED}
+							>
+								Set dates
+							</Button>
+						) : null}
 					</div>
 				</div>
 				{!noDays && wide ? <Stats data={data} cols={3} after={false} /> : null}

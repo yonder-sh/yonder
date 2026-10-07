@@ -28,10 +28,13 @@ import {
 	fitDays,
 	headingText,
 	layoutDays,
+	layoutNights,
 	leftToRate,
 	leftToRateText,
 	moveAt,
 	needText,
+	nightRunsOf,
+	nightsIn,
 	overText,
 	routeOrder,
 	rowRanges,
@@ -272,10 +275,10 @@ describe("the suggestion", () => {
 		expect(unusedText(1)).toBe("1 night not placed yet");
 	});
 
-	it("gives each row its dates in row order (D05)", () => {
+	it("gives each row its dates in row order: the day you arrive to the day you leave (D05)", () => {
 		const dates = ["2027-10-02", "2027-10-03", "2027-10-04", "2027-10-05"];
-		expect(rowRanges([{ days: 1 }, { days: 0 }, { days: 3 }], dates)).toEqual([
-			"Sat 2 Oct",
+		expect(rowRanges([{ days: 1 }, { days: 0 }, { days: 2 }], dates)).toEqual([
+			"Sat 2 – Sun 3 Oct",
 			null,
 			"Sun 3 – Tue 5 Oct",
 		]);
@@ -292,7 +295,7 @@ describe("the suggestion", () => {
 			["Osaka", 0],
 		]);
 		// What the shortlist needs, in travel order (the Places tab's line).
-		expect(needText(ix, cities)).toBe("Tokyo 4 days · Kyoto 3 · Hiroshima 1");
+		expect(needText(ix, cities)).toBe("Tokyo 4 nights · Kyoto 3 · Hiroshima 1");
 		expect(
 			needText(
 				ix,
@@ -312,7 +315,7 @@ describe("the suggestion", () => {
 		]);
 		expect(split.unused).toBe(0);
 		expect(overText(split.need, split.tripDays)).toBe(
-			"Your shortlist needs about 8 days, and you have 7. Remove a city or some places.",
+			"Your shortlist needs about 8 nights, and the trip has 7. Remove a city or some places.",
 		);
 	});
 
@@ -721,11 +724,34 @@ describe("the split the days hold", () => {
 			{ cityId: N.kyoto, days: 3 },
 		]);
 		expect(unused).toBe(0);
+		// In nights: the last day, the day you leave, has none of its own.
+		const nights = nightRunsOf(cities);
+		expect(nights).toEqual({
+			entries: [
+				{ cityId: N.tokyo, days: 2 },
+				{ cityId: N.kyoto, days: 2 },
+			],
+			unused: 0,
+		});
 		const name = (id: string) => w.ix.node(id)?.name ?? "";
-		expect(splitText(entries, name)).toBe("Tokyo 2 days · Kyoto 3");
+		expect(splitText(nights.entries, name)).toBe("Tokyo 2 nights · Kyoto 2");
 		expect(splitText([{ cityId: N.kyoto as string, days: 1 }], name)).toBe(
-			"Kyoto 1 day",
+			"Kyoto 1 night",
 		);
+	});
+
+	it("a trip of N days has N − 1 nights; the last day stays where the last night was", () => {
+		expect([nightsIn(5), nightsIn(1), nightsIn(0)]).toEqual([4, 0, 0]);
+		const e = [
+			{ cityId: "t", days: 2 },
+			{ cityId: "k", days: 2 },
+		];
+		// Thu 7, the day you fly home, is a Kyoto day like the others.
+		expect(layoutNights(e, 5)).toEqual(["t", "t", "k", "k", "k"]);
+		const less = stepEntry(e, 0, -1, 4) ?? [];
+		expect(layoutNights(less, 5)).toEqual(["t", "k", "k", null, null]);
+		expect(stepEntry(e, 1, 1, 4)).toBeNull();
+		expect(layoutNights([], 0)).toEqual([]);
 	});
 
 	it("days with no night and nothing on them are unused; runs split around them", () => {

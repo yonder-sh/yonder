@@ -1,30 +1,31 @@
 /**
  * "How long in each city?" at the top of the Plan (`day-split.ts`), always
- * for the whole trip. Before any trip day has a city: the trip's days shared
- * between the cities with places, from what their shortlists need, with − /
- * +, the stops to reorder and "Use these days" (each city's nights in turn
- * from the first day). With no dates yet: about how many days first, and the
- * first day to use them (the trip's dates, then the nights). After: "Tokyo 4
- * days · Kyoto 3" with Change (the same panel, prefilled from the days).
- * While it's open the map shows the stops in order. Writes go through
- * `trip.dates`, `day.stay` and `item.move`, so suggest mode, proposals and
- * live sync hold.
+ * for the whole trip: the route, in nights. With no city yet: "Where to
+ * first?". Before any night has a city: the trip's nights shared between its
+ * cities, from what their shortlists need (a city added on its own gets a
+ * few), with − / +, the stops to reorder, "Where next?" and "Put it on the
+ * days" (each city's nights in turn from the first day; the last day, the
+ * day you leave, is a day of the last city). With no dates yet: the nights
+ * you set and the day you arrive make the trip's dates. After: Cities &
+ * nights (the same rows, prefilled from the days). While it's open the map
+ * shows the stops in order. Writes go through `trip.dates`, `day.stay` and
+ * `item.move`, so suggest mode, proposals and live sync hold.
  */
 import { useQueryClient } from "@tanstack/react-query";
-import { Star } from "lucide-react";
+import { Plus, Search, Star } from "lucide-react";
 import {
 	type ReactNode,
 	useCallback,
 	useEffect,
 	useMemo,
+	useRef,
 	useState,
 } from "react";
 import { toast } from "sonner";
 import { useTripMutation } from "@/components/common/use-trip-mutation";
 import { DateInput, Segmented } from "@/components/kit";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { cityDayTable } from "@/features/places/lib/days";
+import { cityDayTable, cityRowNodes } from "@/features/places/lib/days";
 import { raters } from "@/features/places/lib/rate";
 import { useMoveItem, useSetDayStay } from "@/features/places/mutations";
 import { buildRows, placesInScope } from "@/features/places/tab/model";
@@ -46,12 +47,13 @@ import {
 	dayCityIds,
 	dayRange,
 	displacedText,
-	layoutDays,
+	layoutNights,
 	leftToRate,
 	leftToRateText,
 	moveAt,
+	nightRunsOf,
+	nightsIn,
 	overText,
-	runsOf,
 	type SplitEntry,
 	splitCities,
 	stepCity,
@@ -64,7 +66,10 @@ import {
 import { NO_FREE_DAY, SplitRows, type SplitRowView } from "./SplitRows";
 import { SPLIT_TESTID as T } from "./testids";
 
-const dayWord = (n: number) => `${n} ${n === 1 ? "day" : "days"}`;
+const nightWord = (n: number) => `${n} ${n === 1 ? "night" : "nights"}`;
+
+/** What you travel through, not to: a city holding only these isn't a stop. */
+const THROUGH = new Set(["airport", "station", "port"]);
 
 /** The split's inputs, always for the whole trip (the days are the whole trip's). */
 export function useDaySplit() {
@@ -86,15 +91,26 @@ export function useDaySplit() {
 		});
 		return { rows, raters: members };
 	}, [ix, graph, threshold, counts, cityDays]);
-	const cities = useMemo(
-		() =>
-			splitCities(ix, trip.rows, cityDays, {
-				raterIds: trip.raters.map((m) => m.id),
-				capacityMin: ix.settings.dayCapacityMin,
-			}),
-		[ix, trip, cityDays],
-	);
 	const current = useMemo(() => dayCityIds(ix, cityDays), [ix, cityDays]);
+	// The route's cities: every city but one that only holds what you travel
+	// through (Newark for its airport), unless it has nights or was picked in
+	// "Where to first?".
+	const routeCities = useUi((s) => s.routeCities);
+	const cities = useMemo(() => {
+		const on = new Set([...routeCities, ...current.filter((c) => c !== null)]);
+		const through = (id: string) => {
+			const kids = ix.children(id);
+			return (
+				kids.length > 0 &&
+				kids.every((k) => k.type === "place" && THROUGH.has(k.category ?? ""))
+			);
+		};
+		return splitCities(ix, trip.rows, cityDays, {
+			raterIds: trip.raters.map((m) => m.id),
+			capacityMin: ix.settings.dayCapacityMin,
+			cities: cityRowNodes(ix).filter((n) => on.has(n.id) || !through(n.id)),
+		});
+	}, [ix, trip, cityDays, current, routeCities]);
 	const left = useMemo(
 		() => leftToRate(trip.rows, trip.raters, access.memberId),
 		[trip, access.memberId],
@@ -172,7 +188,7 @@ export function useApplySplit() {
 				const next = indexGraph(g);
 				const plan = applyPlan(
 					next,
-					layoutDays(entries, next.days.length),
+					layoutNights(entries, next.days.length),
 					next.days.map(() => null),
 				);
 				for (const s of plan.stays) await stayAsync(s);
@@ -227,8 +243,7 @@ type SplitDraft = {
 	days?: Record<string, number>;
 	/** The stops in the order you set. */
 	order?: string[];
-	/** No dates yet: about how many days, and the first. */
-	tripDays?: number;
+	/** No dates yet: the day you arrive. */
 	start?: string | null;
 };
 
@@ -251,9 +266,87 @@ function useSplitDraft(tripId: string) {
 	return [draft, update] as const;
 }
 
-const MAX_DAYS = 60;
+/** With no dates, the nights you set make the trip: no cap but this. */
+const MAX_NIGHTS = 120;
+/** The nights a city added on its own starts with (within what's free). */
+const ADDED_NIGHTS = 3;
 
-/** The first split: the suggestion with − / + and your order on top, and "Use these days". */
+/**
+ * The cities just picked in "Where to first?" / "Where next?" once the route
+ * has them (each once): `onAdd` places them.
+ */
+function useRouteAdds(info: DaySplitInfo, onAdd: (ids: string[]) => void) {
+	const waiting = useUi((s) => s.routeAdds);
+	const take = useUi((s) => s.takeRouteAdds);
+	const add = useRef(onAdd);
+	add.current = onAdd;
+	useEffect(() => {
+		if (!waiting.length) return;
+		const known = new Set(info.cities.map((c) => c.id));
+		const ids = take((id) => known.has(id));
+		if (ids.length) add.current(ids);
+	}, [waiting, info.cities, take]);
+}
+
+/** "+ Where next?": a city at the end of the route (a country asks for its city). */
+function WhereNext() {
+	const openAddPlace = useUi((s) => s.openAddPlace);
+	return (
+		<Button
+			variant="outline"
+			size="sm"
+			data-testid={T.whereNext}
+			className="self-start"
+			onClick={() => openAddPlace({ mode: "first", next: true })}
+		>
+			<Plus />
+			Where next?
+		</Button>
+	);
+}
+
+/** No city yet: the route starts here, or with places saved first. */
+function RouteStart() {
+	const { nav } = useWorkspace();
+	const openAddPlace = useUi((s) => s.openAddPlace);
+	return (
+		<section
+			data-testid={T.routeStart}
+			data-cursor-anchor="sec:split"
+			className="flex flex-col items-start gap-3 rounded-xl border border-dashed p-4 sm:p-5"
+		>
+			<h2 className="font-display text-lg font-semibold">Where to first?</h2>
+			<p className="max-w-prose text-sm text-muted-foreground">
+				Add the cities you'll sleep in, in the order you travel, and the nights
+				in each. Your days follow, and you can change it any time.
+			</p>
+			<Button
+				data-testid={T.routeStartSearch}
+				onClick={() => openAddPlace({ mode: "first" })}
+			>
+				<Search />
+				Find a city or country
+			</Button>
+			<p className="max-w-prose text-sm text-muted-foreground">
+				Not sure yet?{" "}
+				<button
+					type="button"
+					onClick={() => nav.openPlaces({ scopeId: null })}
+					className="cursor-pointer font-medium text-foreground underline underline-offset-2"
+				>
+					Save places first
+				</button>{" "}
+				and Yonder suggests a route from what everyone likes.
+			</p>
+		</section>
+	);
+}
+
+/**
+ * The first split: the suggestion with − / + and your order on top, "Where
+ * next?" and "Put it on the days". With no dates, the nights you set and the
+ * day you arrive make the trip's dates.
+ */
 function SplitSuggestion({
 	info,
 	canEdit,
@@ -267,45 +360,74 @@ function SplitSuggestion({
 	const tripId = graph.trip.id;
 	const [draft, update] = useSplitDraft(tripId);
 	const dated = ix.days.length > 0;
-	const [typed, setTyped] = useState(() =>
-		draft.tripDays ? String(draft.tripDays) : "",
-	);
-	const tripDays = dated ? ix.days.length : (draft.tripDays ?? 0);
-	const suggestion = useMemo(
-		() => suggestSplit(ix, info.cities, tripDays),
-		[ix, info.cities, tripDays],
-	);
+	const nights = nightsIn(ix.days.length);
+	const suggestion = useMemo(() => {
+		if (dated) return suggestSplit(ix, info.cities, nights);
+		// No dates: what each city needs, with room for more.
+		const need = info.cities.reduce((s, c) => s + c.need, 0);
+		return { ...suggestSplit(ix, info.cities, need), tripDays: MAX_NIGHTS };
+	}, [ix, info.cities, dated, nights]);
 	const split = useMemo(
 		() => withOrder(withOverrides(suggestion, draft.days ?? {}), draft.order),
 		[suggestion, draft.days, draft.order],
 	);
+	// A city picked in "Where next?": after the stops with nights, with a few.
+	useRouteAdds(info, (ids) => {
+		let free = split.unused;
+		const days = { ...draft.days };
+		for (const id of ids) {
+			if (split.rows.find((r) => r.id === id)?.days) continue;
+			const n = Math.min(ADDED_NIGHTS, free);
+			days[id] = n;
+			free -= n;
+		}
+		const rest = split.rows.filter((r) => !ids.includes(r.id));
+		const order = [
+			...rest.filter((r) => r.days > 0).map((r) => r.id),
+			...ids,
+			...rest.filter((r) => r.days === 0).map((r) => r.id),
+		];
+		update({ days, order });
+	});
 	const rows = useMemo<SplitRowView[]>(
 		() => split.rows.map((r) => ({ ...r, key: r.id })),
 		[split.rows],
 	);
-	const shown = tripDays > 0;
-	useRouteOnMap(shown ? rows : []);
+	useRouteOnMap(rows);
 	const rateLine = leftToRateText(info.left);
 	const entries: SplitEntry[] = split.rows
 		.filter((r) => r.days > 0)
 		.map((r) => ({ cityId: r.id, days: r.days }));
+	const used = entries.reduce((s, e) => s + e.days, 0);
 	const suggesting = access.mode === "suggest";
 	const done = () => splitDrafts.delete(tripId);
 	const use = async () => {
 		if (dated) {
-			const next = layoutDays(entries, ix.days.length);
+			const next = layoutNights(entries, ix.days.length);
 			if (await apply.apply(applyPlan(ix, next, info.current))) done();
 		} else if (draft.start) {
-			if (await apply.applyWithDates(draft.start, tripDays, entries)) done();
+			if (await apply.applyWithDates(draft.start, used + 1, entries)) done();
 		}
 	};
-	const need = info.cities.reduce((s, c) => s + c.need, 0);
-	const first = ix.days[0]?.date ?? "";
-	const last = ix.days.at(-1)?.date ?? first;
+	const shortlisted = info.cities.some((c) => c.shortlisted > 0);
+	// Each city's dates: the trip's, or (no dates yet) from the day you arrive.
+	const start = draft.start ?? null;
+	const dates = useMemo(
+		() =>
+			dated
+				? ix.days.map((d) => d.date)
+				: start
+					? Array.from({ length: used + 1 }, (_, i) => addDays(start, i))
+					: [],
+		[dated, ix.days, start, used],
+	);
+	const first = dates[0];
+	const last = dates.at(-1);
+	const total = dated ? nights : used;
 	return (
 		<section
 			data-testid={T.split}
-			data-unused={split.unused}
+			data-unused={dated ? split.unused : 0}
 			data-cursor-anchor="sec:split"
 			className="flex flex-col gap-3"
 		>
@@ -314,49 +436,21 @@ function SplitSuggestion({
 					<h2 className="font-display text-lg font-semibold">
 						How long in each city?
 					</h2>
-					{dated ? (
-						<span className="text-sm text-muted-foreground">
-							{dayWord(tripDays)}, {dayRange(first, last)}
+					{total ? (
+						<span className="text-sm text-muted-foreground tnum">
+							{nightWord(total)}
+							{first && last ? `, ${dayRange(first, last)}` : ""}
 						</span>
 					) : null}
 				</div>
 				<p className="max-w-prose text-sm text-muted-foreground">
-					{canEdit
-						? "Based on your shortlist. Change the days, reorder the stops, then use them."
-						: "Based on your shortlist."}
+					{shortlisted
+						? canEdit
+							? "Based on your shortlist. Change the nights, reorder the stops, then put them on the days."
+							: "Based on your shortlist."
+						: "Where you'll sleep, in the order you travel. Every day of a stay is a day to plan, the days you travel too."}
 				</p>
 			</header>
-			{dated ? null : (
-				<div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-					<label
-						htmlFor="split-trip-days"
-						className="text-sm font-medium whitespace-nowrap"
-					>
-						About how many days?
-					</label>
-					<Input
-						id="split-trip-days"
-						type="number"
-						inputMode="numeric"
-						min={1}
-						max={MAX_DAYS}
-						data-testid={T.tripDays}
-						value={typed}
-						onChange={(e) => {
-							setTyped(e.target.value);
-							const n = Number(e.target.value);
-							const ok = Number.isInteger(n) && n >= 1 && n <= MAX_DAYS;
-							update({ tripDays: ok ? n : undefined });
-						}}
-						className="w-20"
-					/>
-					{need && !shown ? (
-						<span className="text-sm text-muted-foreground">
-							Your shortlist needs about {dayWord(need)}.
-						</span>
-					) : null}
-				</div>
-			)}
 			{rateLine ? (
 				<div
 					data-testid={T.splitRate}
@@ -377,81 +471,77 @@ function SplitSuggestion({
 					) : null}
 				</div>
 			) : null}
-			{shown ? (
-				<>
-					{split.need > split.tripDays ? (
-						<p data-testid={T.splitOver} className="text-sm text-warning">
-							{overText(split.need, split.tripDays)}
-						</p>
-					) : null}
-					<SplitRows
-						info={info}
-						rows={rows}
-						unused={split.unused}
-						busy={apply.busy}
-						onStep={
-							canEdit
-								? (i, delta) => {
-										const id = split.rows[i]?.id;
-										const o = id
-											? stepCity(split, draft.days ?? {}, id, delta)
-											: null;
-										if (o) update({ days: o });
-									}
-								: null
-						}
-						onMove={
-							canEdit
-								? (from, to) => {
-										const order = moveAt(
-											split.rows.map((r) => r.id),
-											from,
-											to,
-										);
-										if (order) update({ order });
-									}
-								: null
-						}
-					/>
-					<UnusedLine unused={split.unused} canEdit={canEdit} />
-					{canEdit && !dated && suggesting ? (
-						<p
-							data-testid={T.suggestNote}
-							className="max-w-prose text-sm text-muted-foreground"
-						>
-							You're suggesting, so this suggests the dates only. Once they're
-							accepted, come back here to use these days.
-						</p>
-					) : null}
-					{canEdit ? (
-						<div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-							{dated ? null : (
-								<div className="flex items-center gap-2">
-									<span className="text-sm whitespace-nowrap">Starting on</span>
-									<div className="w-44">
-										<DateInput
-											full
-											value={draft.start ?? null}
-											onChange={(start) => update({ start })}
-											testId={T.start}
-										/>
-									</div>
-								</div>
-							)}
-							<Button
-								data-testid={T.splitUse}
-								disabled={
-									apply.busy || !entries.length || (!dated && !draft.start)
-								}
-								onClick={() => void use()}
-							>
-								{!dated && suggesting
-									? "Suggest these dates"
-									: "Use these days"}
-							</Button>
+			{dated && split.need > nights ? (
+				<p data-testid={T.splitOver} className="text-sm text-warning">
+					{overText(split.need, nights)}
+				</p>
+			) : null}
+			<SplitRows
+				info={info}
+				rows={rows}
+				dates={dates}
+				unused={split.unused}
+				busy={apply.busy}
+				onStep={
+					canEdit
+						? (i, delta) => {
+								const id = split.rows[i]?.id;
+								const o = id
+									? stepCity(split, draft.days ?? {}, id, delta)
+									: null;
+								if (o) update({ days: o });
+							}
+						: null
+				}
+				onMove={
+					canEdit
+						? (from, to) => {
+								const order = moveAt(
+									split.rows.map((r) => r.id),
+									from,
+									to,
+								);
+								if (order) update({ order });
+							}
+						: null
+				}
+			/>
+			{dated ? <UnusedLine unused={split.unused} canEdit={canEdit} /> : null}
+			{canEdit ? <WhereNext /> : null}
+			{canEdit && !dated && suggesting ? (
+				<p
+					data-testid={T.suggestNote}
+					className="max-w-prose text-sm text-muted-foreground"
+				>
+					You're suggesting, so this suggests the dates only. Once they're
+					accepted, come back here to put the nights on the days.
+				</p>
+			) : null}
+			{canEdit ? (
+				<div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+					{dated ? null : (
+						<div className="flex items-center gap-2">
+							<span className="text-sm whitespace-nowrap">You arrive on</span>
+							<div className="w-44">
+								<DateInput
+									full
+									value={start}
+									onChange={(v) => update({ start: v })}
+									testId={T.start}
+								/>
+							</div>
 						</div>
-					) : null}
-				</>
+					)}
+					<Button
+						data-testid={T.splitUse}
+						disabled={apply.busy || !entries.length || (!dated && !start)}
+						onClick={() => void use()}
+					>
+						{!dated && suggesting
+							? "Suggest these dates"
+							: "Put it on the days"}
+					</Button>
+				</div>
 			) : null}
 		</section>
 	);
@@ -471,9 +561,9 @@ function ChangePanel({
 	onClose: () => void;
 }) {
 	const { ix } = useWorkspace();
-	const tripDays = ix.days.length;
+	const nights = nightsIn(ix.days.length);
 	const busy = apply.busy;
-	// The runs, then the cities with places and no days yet (a city can come back: keys stay put as rows move).
+	// The runs, then the cities with no nights yet (a city can come back: keys stay put as rows move).
 	const [entries, setEntries] = useState<KeyedEntry[]>(() => {
 		const seen = new Map<string, number>();
 		const key = (cityId: string) => {
@@ -481,7 +571,7 @@ function ChangePanel({
 			seen.set(cityId, n);
 			return `${cityId}:${n}`;
 		};
-		const rest = suggestSplit(ix, info.cities, tripDays).rows.filter(
+		const rest = suggestSplit(ix, info.cities, nights).rows.filter(
 			(r) => !initial.some((e) => e.cityId === r.id),
 		);
 		return [
@@ -489,20 +579,37 @@ function ChangePanel({
 			...rest.map((r) => ({ cityId: r.id, days: 0, key: key(r.id) })),
 		];
 	});
+	// A city picked in "Where next?": after the last stop with nights, with a
+	// few (a city already on the route comes back for another stay).
+	useRouteAdds(info, (ids) =>
+		setEntries((list) => {
+			let free = Math.max(0, nights - list.reduce((s, e) => s + e.days, 0));
+			const out = list.filter((e) => e.days > 0 || !ids.includes(e.cityId));
+			const at = out.findLastIndex((e) => e.days > 0) + 1;
+			const fresh = ids.map((cityId) => {
+				const days = Math.min(ADDED_NIGHTS, free);
+				free -= days;
+				const n = list.filter((e) => e.cityId === cityId).length + 1;
+				return { cityId, days, key: `${cityId}:${n}` };
+			});
+			out.splice(at, 0, ...fresh);
+			return out;
+		}),
+	);
 	const [confirm, setConfirm] = useState(false);
 	const byId = useMemo(
 		() => new Map(info.cities.map((c) => [c.id, c])),
 		[info.cities],
 	);
 	const used = entries.reduce((s, e) => s + e.days, 0);
-	const unused = Math.max(0, tripDays - used);
+	const unused = Math.max(0, nights - used);
 	const next = useMemo(
 		() =>
-			layoutDays(
+			layoutNights(
 				entries.filter((e) => e.days > 0),
-				tripDays,
+				ix.days.length,
 			),
-		[entries, tripDays],
+		[entries, ix.days.length],
 	);
 	const plan = useMemo(
 		() => applyPlan(ix, next, info.current),
@@ -538,11 +645,12 @@ function ChangePanel({
 			{/* D05: what this is, and how far along. */}
 			<p className="flex flex-wrap items-baseline justify-between gap-x-3 text-meta text-muted-foreground">
 				<span>
-					The order you travel in and how long you stay. Days follow from this.
+					The order you travel in and the nights in each. Your days follow from
+					this.
 				</span>
-				{tripDays ? (
+				{nights ? (
 					<span className="font-medium text-foreground tnum">
-						{Math.min(used, tripDays)} of {tripDays} nights placed
+						{Math.min(used, nights)} of {nights} nights placed
 					</span>
 				) : null}
 			</p>
@@ -551,10 +659,11 @@ function ChangePanel({
 				rows={rows}
 				unused={unused}
 				busy={busy}
-				onStep={(i, delta) => edit(stepEntry(entries, i, delta, tripDays))}
+				onStep={(i, delta) => edit(stepEntry(entries, i, delta, nights))}
 				onMove={(from, to) => edit(moveAt(entries, from, to))}
 			/>
 			<UnusedLine unused={unused} canEdit />
+			<WhereNext />
 			{confirm ? (
 				<div
 					data-testid={T.splitConfirm}
@@ -653,7 +762,10 @@ export function PlanSplit({
 	useEffect(() => {
 		if (open && !views) onOpenChange(false);
 	}, [open, views, onOpenChange]);
-	const current = useMemo(() => runsOf(info.current).entries, [info.current]);
+	const current = useMemo(
+		() => nightRunsOf(info.current).entries,
+		[info.current],
+	);
 	const switcher = views ? (
 		<Segmented
 			size="sm"
@@ -675,7 +787,13 @@ export function PlanSplit({
 			) : null}
 			{banner}
 			{!cities ? (
-				fallback
+				access.canEdit ? (
+					<div className={cn("px-4 pb-4", className)}>
+						<RouteStart />
+					</div>
+				) : (
+					fallback
+				)
 			) : line ? (
 				open && views ? (
 					<div className={cn("px-4 pb-4", className)}>

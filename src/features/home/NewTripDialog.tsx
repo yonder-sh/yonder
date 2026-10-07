@@ -1,8 +1,9 @@
 /**
  * New trip (DESIGN §10.4): name and dates (a Calendar range, two months at
- * ≥ 768) → `createTrip` → the new trip, with the palette open in "Where to
- * first?" mode. Dates are optional; both or neither (QA TRIP-01: an empty
- * name or an end before the start is refused inline, nothing is created).
+ * ≥ 768) → `createTrip` → the new trip's Plan, with the palette open in
+ * "Where to first?" mode (the route: a city, its nights, where next). Dates
+ * are optional; both or neither (QA TRIP-01: an empty name or an end before
+ * the start is refused inline, nothing is created).
  */
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
@@ -53,7 +54,12 @@ export function NewTripDialog({ trigger }: { trigger?: React.ReactNode }) {
 		onSuccess: async ({ slug }) => {
 			await qc.invalidateQueries({ queryKey: meKeys.trips });
 			setOpen(false);
-			await navigate({ to: "/t/$trip", params: { trip: slug } });
+			// The route comes first: the Plan, already asking where to.
+			await navigate({
+				to: "/t/$trip",
+				params: { trip: slug },
+				search: { tab: "plan" },
+			});
 			openAddPlace({ mode: "first" });
 		},
 	});

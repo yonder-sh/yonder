@@ -23,6 +23,8 @@ export type HoverTarget = {
 
 export type AddPlaceRequest = {
 	mode: "search" | "schedule" | "locate" | "first";
+	/** "Where next?" (mode "first"): a city after the ones on the route. */
+	next?: boolean;
 	dayId?: string;
 	afterItemId?: string;
 	/** Insert before this item (the "+" above a day's first card). */
@@ -94,6 +96,16 @@ export type UiState = {
 	/** The Plan sets it while the days per city are being changed; WP-Map draws it. */
 	splitRoute: SplitStop[] | null;
 	setSplitRoute(r: SplitStop[] | null): void;
+	/** Cities picked in "Where to first?" / "Where next?": the route takes each in once it's in the trip. */
+	routeAdds: readonly string[];
+	/** Every city picked there on this visit: on the route even with no places or nights yet. */
+	routeCities: readonly string[];
+	addToRoute(cityId: string): void;
+	/** Takes the waiting cities `known` has (the others keep waiting for the trip's data). */
+	takeRouteAdds(known: (cityId: string) => boolean): string[];
+	/** Asks the Plan to show Cities & nights (a city added to the route, the checklist). */
+	splitAsked: boolean;
+	askSplit(v: boolean): void;
 	/** WP-Shell sets it (inspector width, sheet height); WP-Map fits with it. */
 	mapPadding: MapPadding;
 	setMapPadding(p: MapPadding): void;
@@ -154,6 +166,9 @@ const PER_TRIP = {
 	hover: null,
 	previewRoute: null,
 	splitRoute: null,
+	routeAdds: [],
+	routeCities: [],
+	splitAsked: false,
 	addPlace: null,
 	addFlight: null,
 	shareOpen: false,
@@ -169,7 +184,7 @@ const PER_TRIP = {
 	dateDraft: null,
 } satisfies Partial<UiState>;
 
-export const useUi = create<UiState>()((set) => ({
+export const useUi = create<UiState>()((set, get) => ({
 	...PER_TRIP,
 	mapPadding: { top: 16, right: 16, bottom: 16, left: 16 },
 	dayFilterMode: "only",
@@ -178,6 +193,20 @@ export const useUi = create<UiState>()((set) => ({
 	setHover: (hover) => set({ hover }),
 	setPreviewRoute: (previewRoute) => set({ previewRoute }),
 	setSplitRoute: (splitRoute) => set({ splitRoute }),
+	addToRoute: (cityId) =>
+		set((s) => ({
+			routeAdds: [...s.routeAdds, cityId],
+			routeCities: s.routeCities.includes(cityId)
+				? s.routeCities
+				: [...s.routeCities, cityId],
+		})),
+	takeRouteAdds: (known) => {
+		const ready = get().routeAdds.filter(known);
+		if (ready.length)
+			set((s) => ({ routeAdds: s.routeAdds.filter((id) => !known(id)) }));
+		return ready;
+	},
+	askSplit: (splitAsked) => set({ splitAsked }),
 	setMapPadding: (mapPadding) => set({ mapPadding }),
 	setDayFilterMode: (dayFilterMode) => set({ dayFilterMode }),
 	openAddPlace: (addPlace) => set({ addPlace }),

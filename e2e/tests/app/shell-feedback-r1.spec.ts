@@ -291,7 +291,7 @@ test.describe("phone 390", () => {
 		await page.screenshot({ path: shotPath("shell/vis3-03-phone-tab-lists.png"), animations: "disabled" });
 	});
 
-	test("VIS3-09: a new trip's Plan says 'Where to first?'; with a place but no dates it asks for the dates", async ({ page }, info) => {
+	test("VIS3-09: a new trip's Plan says 'Where to first?'; with a city but no dates it asks how long, and the day you arrive", async ({ page }, info) => {
 		test.skip(info.project.name !== "chromium", "chromium project (the viewport is set here)");
 		await signIn(page);
 		await page.goto("/dashboard");
@@ -303,24 +303,25 @@ test.describe("phone 390", () => {
 		await openTrip(page, `/t/${slug}?tab=plan`);
 		const plan = page.getByTestId(TESTID.mobileSheet).getByTestId(TESTID.planTab);
 		await expect(plan).toContainText("Where to first?");
-		await expect(plan.getByRole("button", { name: /Search places/ })).toBeInViewport();
+		await expect(plan.getByRole("button", { name: /Find a city or country/ })).toBeInViewport();
 		await settle(page);
 		await page.screenshot({ path: shotPath("shell/vis3-09-phone-empty.png"), animations: "disabled" });
-		// "Search places" opens "Where to first?".
-		await plan.getByRole("button", { name: /Search places/ }).tap();
+		// "Find a city or country" opens "Where to first?".
+		await plan.getByRole("button", { name: /Find a city or country/ }).tap();
 		await expect(page.getByTestId(TESTID.addPlaceDialog)).toBeVisible();
 		await expect(page.getByTestId(TESTID.addPlaceDialog)).toContainText("Where to first?");
 		await page.keyboard.press("Escape");
 		// The map's empty card shows with the map open.
 		await page.getByTestId(SHELL_TESTID.mobileMapToggle).tap();
 		await expect(page.getByTestId("map-empty")).toBeInViewport();
-		// A place but no dates: the Plan asks how long in each city.
+		// A city but no dates: the Plan asks how long in it, and when you arrive.
 		const tripId = (created as { tripId: string }).tripId;
 		await page.evaluate(async (tripId) => {
 			const m = await import(/* @vite-ignore */ "/src/functions/nodes.functions.ts");
 			await m.createNode({ data: { tripId, id: crypto.randomUUID(), parentId: null, type: "city", name: "Kyoto", lat: 35.01, lng: 135.77 } });
 		}, tripId);
 		await openTrip(page, `/t/${slug}?tab=plan`);
-		await expect(page.getByTestId(TESTID.planTab)).toContainText("Set the trip dates to plan your days.", { timeout: 15_000 });
+		await expect(page.getByTestId(TESTID.planTab)).toContainText("How long in each city?", { timeout: 15_000 });
+		await expect(page.getByTestId(TESTID.planTab)).toContainText("You arrive on");
 	});
 });

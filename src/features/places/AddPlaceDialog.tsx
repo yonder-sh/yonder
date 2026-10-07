@@ -181,6 +181,19 @@ function restoreFocus(target: AfterClose, before: HTMLElement | null) {
 	tick();
 }
 
+/**
+ * "Where to first?" is about where you sleep: a region it finds (Tokyo, the
+ * metropolis) is a stop, a city, as "Add a place" shows it.
+ */
+function asStop<K extends { level: NodeType }>(
+	kind: K,
+	mode: AddPlaceRequest["mode"],
+): K {
+	return mode === "first" && kind.level === "region"
+		? { ...kind, level: "city" }
+		: kind;
+}
+
 export function AddPlaceDialog() {
 	const request = useUi((s) => s.addPlace);
 	const close = useUi((s) => s.openAddPlace);
@@ -323,6 +336,7 @@ function Palette({
 	const { ix, graph, nav, access, scope } = ws;
 	const tripId = graph.trip.id;
 	const mode = request.mode;
+	const routeCities = useUi((s) => s.routeCities);
 	const locating = mode === "locate" ? ix.node(request.nodeId) : undefined;
 	const [q, setQ] = useState(locating?.name ?? "");
 	const [selected, setSelected] = useState<Selection | null>(null);
@@ -538,9 +552,20 @@ function Palette({
 		legHits.length === 0 &&
 		results.length === 0;
 
+	// "Where to first?" builds the route: a country picked first asks for its city.
+	const firstIn =
+		mode === "first" && request.parentId ? ix.node(request.parentId) : null;
+	const onRoute =
+		request.next ||
+		routeCities.length > 0 ||
+		ix.days.some((d) => d.nightNodeId);
 	const title =
 		mode === "first"
-			? "Where to first?"
+			? firstIn
+				? `Where in ${firstIn.name}?`
+				: onRoute
+					? "Where next?"
+					: "Where to first?"
 			: mode === "locate"
 				? `Set location for ${locating?.name ?? "this place"}`
 				: mode === "schedule"
@@ -549,7 +574,9 @@ function Palette({
 	const placeholder = !canSearch
 		? "Find a place in this trip…"
 		: mode === "first"
-			? "A country or a city…"
+			? firstIn
+				? "A city…"
+				: "A country or a city…"
 			: pending
 				? "Search for the place, or type its name…"
 				: "Search places, or type Day 4…";
@@ -1071,7 +1098,7 @@ function Palette({
 								}
 							>
 								{results.map((r, i) => {
-									const kind = resultKind(r.types);
+									const kind = asStop(resultKind(r.types), mode);
 									const active =
 										selected?.kind === "result" &&
 										selected.result.ref === r.ref;
@@ -1661,7 +1688,11 @@ function PreviewPhoto({
 			lat={preview.lat}
 			lng={preview.lng}
 			zoom={
-				preview.level === "country" ? 4 : preview.level === "city" ? 10 : 15
+				preview.level === "country"
+					? 4
+					: preview.level === "city" || preview.level === "region"
+						? 10
+						: 15
 			}
 			type={preview.level ?? "place"}
 			category={(preview.category as PlaceCategory | undefined) ?? null}
@@ -1816,7 +1847,10 @@ function PreviewBody({
 	// the preview only shows the spot and the nearest address (HIER-12).
 	const locating = request.mode === "locate" ? ix.node(request.nodeId) : null;
 	const locatePin = fromPin && !!locating;
-	const level: NodeType = preview.level ?? "place";
+	const level: NodeType = asStop(
+		{ level: preview.level ?? "place" },
+		request.mode,
+	).level;
 	const [name, setName] = useState(preview.name);
 	const [category, setCategory] = useState<PlaceCategory>(
 		(preview.category as PlaceCategory | undefined) ?? "other",
@@ -1853,6 +1887,25 @@ function PreviewBody({
 	const update = useUpdateNode(tripId);
 	const busy = createPath.isPending || createItem.isPending || update.isPending;
 	const mode = request.mode;
+	const openAddPlace = useUi((s) => s.openAddPlace);
+	const addToRoute = useUi((s) => s.addToRoute);
+	const askSplit = useUi((s) => s.askSplit);
+	// "Where to first?" builds the route: a city joins it (on the Plan, with a
+	// few nights); a country or region asks for its city next.
+	const routeType = existing?.type ?? level;
+	const routable =
+		routeType === "city" || routeType === "country" || routeType === "region";
+	const toRoute = (id: string, type: NodeType) => {
+		onDone();
+		if (type === "city") {
+			addToRoute(id);
+			nav.setTab("plan");
+			askSplit(true);
+			return;
+		}
+		// After this palette has closed, so the next one starts fresh.
+		setTimeout(() => openAddPlace({ mode: "first", parentId: id }), 0);
+	};
 	const pick = defaultSchedulePick(ix, {
 		request,
 		sel: ws.sel,
@@ -1923,6 +1976,8 @@ function PreviewBody({
 					onPlace?.(leafId);
 					// Its "Suggested — …" toast has said so; there's nothing to show yet.
 					if (target === "ideas" && isProposed(r)) return onDone();
+					if (target === "ideas" && mode === "first" && routable)
+						return toRoute(leafId, level);
 					const where =
 						filing.create.at(-1)?.name ??
 						ix.node(filing.existing.at(-1))?.name ??
@@ -2165,7 +2220,7 @@ function PreviewBody({
 					</EditGuard>
 				) : (
 					<>
-						{existing && ix.days.length ? (
+						{existing && ix.days.length && mode !== "first" ? (
 							<SchedulePicker
 								ix={ix}
 								schedule={schedule}
@@ -2181,17 +2236,36 @@ function PreviewBody({
 								</Button>
 							</SchedulePicker>
 						) : null}
-						<EditGuard>
-							<Button
-								variant="outline"
-								size="sm"
-								data-testid={PLACES_TESTID.saveToIdeas}
-								disabled={busy || guard.disabled}
-								onClick={() => save("ideas")}
-							>
-								{mode === "first" ? "Add to trip" : "Save to Ideas"}
-							</Button>
-						</EditGuard>
+						{mode === "first" && routable ? (
+							<EditGuard>
+								<Button
+									size="sm"
+									data-testid={PLACES_TESTID.saveToIdeas}
+									disabled={busy || guard.disabled}
+									onClick={() =>
+										existing
+											? toRoute(existing.id, existing.type)
+											: save("ideas")
+									}
+								>
+									{routeType === "city"
+										? "Add to the route"
+										: `Choose a city in ${existing?.name ?? (name.trim() || preview.name)}`}
+								</Button>
+							</EditGuard>
+						) : (
+							<EditGuard>
+								<Button
+									variant="outline"
+									size="sm"
+									data-testid={PLACES_TESTID.saveToIdeas}
+									disabled={busy || guard.disabled}
+									onClick={() => save("ideas")}
+								>
+									{mode === "first" ? "Add to trip" : "Save to Ideas"}
+								</Button>
+							</EditGuard>
+						)}
 						{mode !== "first" && ix.days.length && !pick ? (
 							<SchedulePicker
 								ix={ix}

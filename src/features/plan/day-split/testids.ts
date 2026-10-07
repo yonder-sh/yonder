@@ -31,4 +31,8 @@ export const SPLIT_TESTID = {
 	tripDays: "split-trip-days",
 	start: "split-start",
 	suggestNote: "split-suggest-note",
+	// the route: "Where to first?" and "Where next?" (2026-10-07)
+	routeStart: "split-route-start",
+	routeStartSearch: "split-route-start-search",
+	whereNext: "split-where-next",
 } as const;

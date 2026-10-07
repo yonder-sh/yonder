@@ -11,7 +11,7 @@
  * Favourites are the shortlist (on a day or not); people are those whose
  * ratings count; places marked decided are left to no one. Pure.
  */
-import { cityDayTable, cityRowNodes } from "@/features/places/lib/days";
+import { cityRowNodes } from "@/features/places/lib/days";
 import { decidedIds } from "@/features/places/lib/decided";
 import { raters } from "@/features/places/lib/rate";
 import { buildRows, openPlaces } from "@/features/places/tab/model";
@@ -137,25 +137,19 @@ export function ratingDetail(
 	return out.join(" ");
 }
 
-/** "Tokyo 4 days · Kyoto 3 · Osaka 2", in trip order (at most three, then "…"). */
+/** "Tokyo 3 nights · Kyoto 3 · Osaka 2": the nights in each city, in trip order (three, then "…"). */
 export function citiesDetail(
-	rows: readonly { name: string; dayIds: readonly string[] }[],
-	dayIndex: (dayId: string) => number,
+	nights: readonly (string | null)[],
+	nameOf: (cityId: string) => string,
 ): string {
-	const on = rows
-		.filter((r) => r.dayIds.length)
-		.map((r) => ({
-			name: r.name,
-			days: r.dayIds.length,
-			first: Math.min(...r.dayIds.map(dayIndex)),
-		}))
-		.sort((a, b) => a.first - b.first);
-	const parts = on
+	const on = new Map<string, number>();
+	for (const id of nights) if (id) on.set(id, (on.get(id) ?? 0) + 1);
+	const parts = [...on]
 		.slice(0, 3)
-		.map((c, i) =>
-			i === 0 ? `${c.name} ${plural(c.days, "day")}` : `${c.name} ${c.days}`,
+		.map(([id, n], i) =>
+			i === 0 ? `${nameOf(id)} ${plural(n, "night")}` : `${nameOf(id)} ${n}`,
 		);
-	return on.length > 3 ? `${parts.join(" · ")} · …` : parts.join(" · ");
+	return on.size > 3 ? `${parts.join(" · ")} · …` : parts.join(" · ");
 }
 
 export function whereThingsStand(input: StandingInput): Standing {
@@ -182,10 +176,13 @@ export function whereThingsStand(input: StandingInput): Standing {
 	const onDays = rows.filter((r) => r.status === "scheduled").length;
 	const hasDays = ix.days.length > 0;
 	const cityRows = cityRowNodes(ix, null);
-	const citiesDecided = ix.days.some(
-		(d) =>
-			!!d.nightNodeId && cityRows.some((r) => ix.isWithin(d.nightNodeId, r.id)),
+	// Each day's night, as its city (null: none yet).
+	const nightCities = ix.days.map((d) =>
+		d.nightNodeId
+			? (cityRows.find((r) => ix.isWithin(d.nightNodeId, r.id))?.id ?? null)
+			: null,
 	);
+	const citiesDecided = nightCities.some((c) => c !== null);
 	const nights = hasDays ? nightsWithoutStay(ix).length : 0;
 
 	const lines: StandingLine[] = [
@@ -208,13 +205,10 @@ export function whereThingsStand(input: StandingInput): Standing {
 	lines.push({
 		key: "cities",
 		label: "How long in each city",
-		detail: !hasDays
-			? "Pick your dates first"
-			: citiesDecided
-				? citiesDetail(cityDayTable(ix, input.schedule, null).rows, (id) =>
-						ix.dayNumber(id),
-					)
-				: "not decided yet",
+		// No dates needed: the nights and the day you arrive make them.
+		detail: citiesDecided
+			? citiesDetail(nightCities, (id) => ix.node(id)?.name ?? "")
+			: "not decided yet",
 		done: citiesDecided,
 	});
 	lines.push({

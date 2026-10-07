@@ -351,7 +351,7 @@ export function EdgeChipMarker({
 	);
 }
 
-/** A city's stop(s) on the route while the days per city change: "1 · 4d" over it. */
+/** A city's stop(s) on the route while the nights per city change: "1 · 4 nights" over it. */
 export function SplitStopMarker({ stops }: { stops: readonly SplitStop[] }) {
 	const s = stops[0];
 	if (!s) return null;
@@ -371,7 +371,7 @@ export function SplitStopMarker({ stops }: { stops: readonly SplitStop[] }) {
 				aria-label={stops
 					.map(
 						(x) =>
-							`${x.stop}. ${x.name}, ${x.days} ${x.days === 1 ? "day" : "days"}`,
+							`${x.stop}. ${x.name}, ${x.days} ${x.days === 1 ? "night" : "nights"}`,
 					)
 					.join("; ")}
 				className="yonder-split-stop"
@@ -379,7 +379,7 @@ export function SplitStopMarker({ stops }: { stops: readonly SplitStop[] }) {
 				{stops.map((x) => (
 					<span key={x.stop}>
 						<b>{x.stop}</b>
-						{x.days}d
+						{x.days} {x.days === 1 ? "night" : "nights"}
 					</span>
 				))}
 			</div>

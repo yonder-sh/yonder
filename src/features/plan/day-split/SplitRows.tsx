@@ -218,11 +218,18 @@ function StopRow({
 	busy: boolean;
 	open: boolean;
 	onToggle: () => void;
-	/** "Sun 3 – Wed 6 Oct" (D05); null without dates. */
+	/** "Sun 3 – Wed 6 Oct" (D05): the day you arrive to the day you leave; null without dates. */
 	dates: string | null;
 }) {
 	const i = line.index;
 	const sort = useSortable({ id: row.key, disabled: !onMove || busy });
+	// A city added on its own has nothing saved yet: no "0 shortlisted".
+	const facts = [
+		row.shortlisted ? `${row.shortlisted} shortlisted` : null,
+		row.notRated ? `${row.notRated} not rated yet` : null,
+	]
+		.filter(Boolean)
+		.join(" · ");
 	const t = sort.transform;
 	return (
 		<li
@@ -312,10 +319,10 @@ function StopRow({
 					</div>
 					<span className="block truncate text-xs text-muted-foreground">
 						{dates ? (
-							<span className="text-foreground/80 tnum">{dates} · </span>
+							<span className="text-foreground/80 tnum">{dates}</span>
 						) : null}
-						{row.shortlisted} shortlisted
-						{row.notRated ? ` · ${row.notRated} not rated yet` : ""}
+						{dates && facts ? " · " : null}
+						{facts}
 					</span>
 				</div>
 				{onStep ? (
@@ -390,6 +397,7 @@ function StopRow({
 export function SplitRows({
 	info,
 	rows,
+	dates,
 	unused,
 	onStep,
 	onMove,
@@ -397,6 +405,8 @@ export function SplitRows({
 }: {
 	info: DaySplitInfo;
 	rows: readonly SplitRowView[];
+	/** The days the nights run on (default: the trip's; no dates yet: from the day you arrive). */
+	dates?: readonly string[];
 	unused: number;
 	/** Null: read-only (no − / +). */
 	onStep: ((index: number, delta: 1 | -1) => void) | null;
@@ -416,12 +426,8 @@ export function SplitRows({
 		setOpen((s) => (s.includes(id) ? s.filter((k) => k !== id) : [...s, id]));
 	const lines = useMemo(() => splitLines(ix, rows), [ix, rows]);
 	const ranges = useMemo(
-		() =>
-			rowRanges(
-				rows,
-				ix.days.map((d) => d.date),
-			),
-		[rows, ix.days],
+		() => rowRanges(rows, dates ?? ix.days.map((d) => d.date)),
+		[rows, dates, ix.days],
 	);
 	const sensors = useSensors(
 		useSensor(MouseSensor, { activationConstraint: { distance: 4 } }),

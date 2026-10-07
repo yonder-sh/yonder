@@ -1,12 +1,15 @@
 /**
  * How long in each city (the top of the Plan while no trip day has a city):
- * how many of the trip's days each city with places gets, from the time its
- * shortlist needs, the spare days shared out, in the order with the least
- * travel from where you land to where you fly home. The stops read in
- * travel order under their country (and region) headings, and can be
- * reordered. Afterwards: the days each city holds now (runs of nights in one
- * city), a change laid out on the days, and what applying it writes (the
- * nights) and moves off a day (places on a day that changes city). Pure.
+ * how many of the trip's nights each city gets (a trip of N days has N − 1:
+ * the last day is the day you leave), from the time its shortlist needs, the
+ * spare nights shared out, in the order with the least travel from where you
+ * land to where you fly home. Cities without places yet take part with none
+ * suggested. The stops read in travel order under their country (and region)
+ * headings, and can be reordered. Afterwards: the nights each city holds now
+ * (runs of nights in one city), a change laid out on the days, and what
+ * applying it writes (the nights) and moves off a day (places on a day that
+ * changes city). Every day stays a day to plan: a city's dates run from the
+ * day you arrive to the day you leave. Pure.
  */
 
 import type { CityDaysTable } from "@/features/places/lib/days";
@@ -84,12 +87,20 @@ export function daysNeeded(minutes: number, capacityMin: number): number {
 	return Math.ceil(sightDays(minutes, capacityMin));
 }
 
-/** Every city with places that aren't dropped, with its shortlist and what's left to rate. */
+/**
+ * Every city with places that aren't dropped, with its shortlist and what's
+ * left to rate; then the trip's other cities (`opts.cities`, places or not:
+ * a route starts before anything is saved), with nothing in them yet.
+ */
 export function splitCities(
 	ix: Tree & Pick<GraphIndex, "coordOf">,
 	rows: readonly PlaceRow[],
 	cityDays: Pick<CityDaysTable, "rows">,
-	opts: { raterIds: readonly string[]; capacityMin: number },
+	opts: {
+		raterIds: readonly string[];
+		capacityMin: number;
+		cities?: readonly { id: string; name: string }[];
+	},
 ): SplitCity[] {
 	const by = new Map<string, SplitCity>();
 	const short = new Map<string, PlaceRow[]>();
@@ -127,6 +138,21 @@ export function splitCities(
 		else c.belowShortlist += 1;
 		if (unrated) c.notRated += 1;
 	}
+	for (const city of opts.cities ?? [])
+		if (!by.has(city.id))
+			by.set(city.id, {
+				id: city.id,
+				name: city.name,
+				at: ix.coordOf(city.id),
+				shortlisted: 0,
+				notRated: 0,
+				minutes: 0,
+				need: 0,
+				shortlistIds: [],
+				toRateIds: [],
+				belowShortlist: 0,
+				areas: [],
+			});
 	const out = [...by.values()];
 	for (const c of out) {
 		c.need = c.shortlisted ? daysNeeded(c.minutes, opts.capacityMin) : 0;
@@ -619,6 +645,32 @@ export function runsOf(cityIds: readonly (string | null)[]): {
 	return { entries, unused };
 }
 
+/** The nights in a trip of `days` days: the last day is the day you leave. */
+export const nightsIn = (days: number): number => Math.max(0, days - 1);
+
+/**
+ * A split in nights laid on the days: each city's nights in turn from the
+ * first day, the rest unused; the last day, the day you leave, stays where
+ * the last night was (a day to plan like any other, ending with the way home).
+ */
+export function layoutNights(
+	entries: readonly SplitEntry[],
+	dayCount: number,
+): (string | null)[] {
+	if (dayCount < 1) return [];
+	const out = layoutDays(entries, dayCount - 1);
+	out.push(out.at(-1) ?? null);
+	return out;
+}
+
+/** The nights the days hold (`runsOf` without the last day: it has no night of its own). */
+export function nightRunsOf(cityIds: readonly (string | null)[]): {
+	entries: SplitEntry[];
+	unused: number;
+} {
+	return runsOf(cityIds.slice(0, nightsIn(cityIds.length)));
+}
+
 /** A split laid on the days: each city's days in turn from the first day, the rest unused. */
 export function layoutDays(
 	entries: readonly SplitEntry[],
@@ -715,18 +767,20 @@ export function applyPlan(
 const plural = (n: number, one: string, many = `${one}s`) =>
 	`${n} ${n === 1 ? one : many}`;
 
-/** "Tokyo 4 days · Kyoto 3 · Osaka 2". */
+/** "Tokyo 4 nights · Kyoto 3 · Osaka 2". */
 export function splitText(
 	entries: readonly SplitEntry[],
 	nameOf: (id: string) => string,
 ): string {
 	return entries
 		.filter((e) => e.days > 0)
-		.map((e, i) => `${nameOf(e.cityId)} ${i ? e.days : plural(e.days, "day")}`)
+		.map(
+			(e, i) => `${nameOf(e.cityId)} ${i ? e.days : plural(e.days, "night")}`,
+		)
 		.join(" · ");
 }
 
-/** What the shortlist needs per city, in travel order ("Tokyo 4 days · Kyoto 3 · Osaka 1"). */
+/** What the shortlist needs per city, in travel order ("Tokyo 4 nights · Kyoto 3 · Osaka 1"). */
 export function needText(
 	ix: Trip,
 	cities: readonly SplitCity[],
@@ -741,7 +795,7 @@ export function needText(
 	);
 }
 
-/** "Japan · 9 days". */
+/** "Japan · 9 nights". */
 export function headingText(name: string, days: number): string {
 	return `${name} · ${plural(days, "night")}`;
 }
@@ -790,9 +844,9 @@ export function leftToRateText(left: readonly LeftToRate[]): string | null {
 	return `${head}${tail}. These days will change as ${first.you ? "you" : "they"} rate.`;
 }
 
-/** "Your shortlist needs about 16 days, and you have 14. Remove a city or some places." */
-export function overText(need: number, tripDays: number): string {
-	return `Your shortlist needs about ${need} days, and you have ${tripDays}. Remove a city or some places.`;
+/** "Your shortlist needs about 16 nights, and the trip has 13. Remove a city or some places." */
+export function overText(need: number, nights: number): string {
+	return `Your shortlist needs about ${plural(need, "night")}, and the trip has ${nights}. Remove a city or some places.`;
 }
 
 /** "4 days not planned yet". */
@@ -817,7 +871,11 @@ export function dayRange(first: string, last: string): string {
 		: `${a} – ${b}`;
 }
 
-/** Each row's dates when the split's days run in row order from the trip's first day. */
+/**
+ * Each row's dates when its nights run in row order from the trip's first
+ * day: the day you arrive to the day you leave, travel days included (2
+ * nights from Sun 3: "Sun 3 – Tue 5"). Every one of them is a day to plan.
+ */
 export function rowRanges(
 	rows: readonly { days: number }[],
 	dates: readonly string[],
@@ -825,7 +883,7 @@ export function rowRanges(
 	let at = 0;
 	return rows.map((r) => {
 		const first = dates[at];
-		const last = dates[at + r.days - 1];
+		const last = dates[at + r.days];
 		at += r.days;
 		return r.days && first && last ? dayRange(first, last) : null;
 	});

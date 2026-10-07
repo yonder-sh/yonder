@@ -28,7 +28,7 @@ type Action = { label: string; run: () => void };
 export function useStandingNav(standing: Standing) {
 	const { nav, access, ix } = useWorkspace();
 	const openAddPlace = useUi((s) => s.openAddPlace);
-	const setSettingsOpen = useUi((s) => s.setSettingsOpen);
+	const askSplit = useUi((s) => s.askSplit);
 	const canEdit = access.mode !== "read";
 	const places = (pv: "rate" | null) =>
 		nav.openPlaces({
@@ -42,7 +42,11 @@ export function useStandingNav(standing: Standing) {
 	const open: Record<StandingKey, () => void> = {
 		places: () => places(null),
 		rating: () => places("rate"),
-		cities: () => nav.setTab("plan"),
+		// The route: Cities & nights (with no nights yet, it leads the Plan anyway).
+		cities: () => {
+			nav.setTab("plan");
+			askSplit(true);
+		},
 		// Putting places on days is the Plan's (Fill a day).
 		days: () => nav.setTab("plan"),
 		stays: () => nav.setTab("plan"),
@@ -68,10 +72,7 @@ export function useStandingNav(standing: Standing) {
 						}
 					: null;
 			case "cities":
-				if (!canEdit) return null;
-				return hasDays
-					? { label: "Open the plan", run: open.cities }
-					: { label: "Pick dates", run: () => setSettingsOpen(true) };
+				return canEdit ? { label: "Set the nights", run: open.cities } : null;
 			case "days":
 				return canEdit && hasDays && standing.favourites
 					? { label: "Open the plan", run: open.days }

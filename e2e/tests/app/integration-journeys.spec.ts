@@ -22,6 +22,7 @@ import { SHELL_TESTID } from "../../../src/features/shell/testids";
 import { SUGGEST_TESTID as S } from "../../../src/features/suggest/testids";
 import { PLACES_TESTID as P } from "../../../src/features/places/testids";
 import { PLACES_TAB_TESTID as PT } from "../../../src/features/places/tab/testids";
+import { SPLIT_TESTID as SPLIT } from "../../../src/features/plan/day-split/testids";
 import { PLAN_TESTID } from "../../../src/features/plan/testids";
 import { TRANSIT_TESTID as T } from "../../../src/features/transit/testids";
 import { TESTID } from "../../../src/lib/testids";
@@ -40,7 +41,7 @@ type Y = {
 			trip: { id: string; slug: string; startDate: string | null };
 			nodes: { id: string; name: string; parentId: string | null; type: string }[];
 			items: { id: string; nodeId: string | null; dayId: string | null; title: string | null }[];
-			days: { id: string; date: string }[];
+			days: { id: string; date: string; nightNodeId: string | null }[];
 			members: { id: string; name: string; userId: string | null; status: string }[];
 		};
 		model: { pins: { repId: string; hollow: boolean }[]; visits: { repId: string }[] };
@@ -113,7 +114,8 @@ async function userContext(
 
 // ---------------------------------------------------------------------------
 // Journey 1: sign up → welcome → dashboard → new trip → "Where to first?" →
-// Japan › Tokyo › Shibuya Sky → schedule it.
+// Tokyo on the route, its nights on the days → Japan › Tokyo › Shibuya Sky →
+// schedule it.
 // ---------------------------------------------------------------------------
 test("J1 sign up, new trip, Where to first? → Japan › Tokyo › Shibuya Sky, scheduled", async ({ page }, info) => {
 	test.skip(info.project.name !== "chromium", "desktop journey");
@@ -158,11 +160,23 @@ test("J1 sign up, new trip, Where to first? → Japan › Tokyo › Shibuya Sky,
 	const preview = page.getByTestId(P.previewCard);
 	await expect(preview.getByTestId(P.filingChip)).toContainText(/Japan/, { timeout: 25_000 });
 	await shot(page, "j1-02-where-to-first");
+	await expect(preview.getByTestId(P.saveToIdeas)).toHaveText("Add to the route");
 	await preview.getByTestId(P.saveToIdeas).click();
 	await expect(dialog).toBeHidden();
 	await expect
 		.poll(async () => (await yon(page))?.graph.nodes.map((n) => n.name).sort().join(","), { timeout: 20_000 })
 		.toMatch(/Japan.*Tokyo|Tokyo.*Japan/);
+	// The Plan: Tokyo on the route with the trip's two nights, then on the days
+	// (the third day is the day you leave, a Tokyo day too).
+	const tokyoRow = page.getByTestId(SPLIT.splitRow).filter({ hasText: "Tokyo" });
+	await expect(tokyoRow).toHaveAttribute("data-days", "2", { timeout: 20_000 });
+	await shot(page, "j1-02b-route");
+	await page.getByTestId(SPLIT.splitUse).click();
+	await expect
+		.poll(async () => (await yon(page))?.graph.days.map((d) => (d.nightNodeId ? "night" : "-")).join(","), {
+			timeout: 20_000,
+		})
+		.toBe("night,night,-");
 
 	// ⌘K: Shibuya Sky, filed under Japan › Tokyo, scheduled on the first day.
 	await page.keyboard.press("Control+k");
