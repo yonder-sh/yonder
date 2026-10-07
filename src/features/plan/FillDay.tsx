@@ -17,6 +17,7 @@ import {
 	usePlaceActions,
 } from "@/features/places/tab/use-place-actions";
 import { usePlaces } from "@/features/places/tab/use-places";
+import { dayWhere } from "@/lib/engine/day-place";
 import { formatDayDate, formatDayShort, formatDuration } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { ratingOf } from "@/lib/workspace/filter-match";
@@ -37,10 +38,9 @@ function FillDayBody() {
 	const act = usePlaceActions();
 	const data = usePlaces("");
 	const day = days ? ix.days.find((d) => d.date === days.from) : undefined;
-	const city = day?.nightNodeId
-		? (ix.hierarchy.nearestOfType(day.nightNodeId, "city") ??
-			ix.hierarchy.collapseTo(day.nightNodeId, "region"))
-		: undefined;
+	// Where the day is (`dayWhere`): where you sleep, the last day where you slept.
+	const placeId = day ? dayWhere(ix, day.id).placeId : null;
+	const city = placeId ? ix.node(placeId) : undefined;
 	const onDay = useMemo(
 		() =>
 			new Set(

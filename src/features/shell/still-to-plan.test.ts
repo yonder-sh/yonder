@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import type { ListItemDto } from "@/features/lists/lists.functions";
-import { cityDayTable } from "@/features/places/lib/days";
 import {
 	isRateable as isRateableNode,
 	rateableNodes,
@@ -12,7 +11,6 @@ import { DEMO_MEMBERS, demo, N, scenario } from "@/lib/fixtures/demo";
 import { selForRefs } from "./activity-sel";
 import {
 	cityOf,
-	daysHint,
 	isRateable,
 	stillToPlan,
 	todoContext,
@@ -226,63 +224,15 @@ describe("stillToPlan on the demo trip", () => {
 		expect(r.opening.map((x) => x.text)).toEqual([soon.text]);
 	});
 
-	it("days per city: planned against the trip length", () => {
-		const nodes = demo.graph.nodes.map((x) =>
-			x.id === N.tokyo
-				? { ...x, details: { plannedDays: 2 } }
-				: x.id === N.kyoto
-					? { ...x, details: { plannedDays: 1 } }
-					: x,
-		);
-		const r = run({ ...demo.graph, nodes });
-		expect(r.days.tripDays).toBe(5);
-		expect(r.days.planned).toBe(3);
-		expect(r.days.unallocated).toBe(2);
-		const tokyo = r.days.cities.find((c) => c.name === "Tokyo");
-		expect(tokyo).toMatchObject({ planned: 2, scheduled: 2 });
-	});
-
-	it("days per city: one number with the table (region stand-ins count; PLAN-I2-13)", () => {
-		// Mt. Fuji is a region with no city inside: WP-Places' table counts it.
-		const nodes = demo.graph.nodes.map((x) =>
-			x.id === N.tokyo
-				? { ...x, details: { plannedDays: 2 } }
-				: x.id === N.mtFuji
-					? { ...x, details: { plannedDays: 1 } }
-					: x,
-		);
-		const graph = { ...demo.graph, nodes };
-		const r = run(graph);
-		const ix = indexGraph(graph);
-		const table = cityDayTable(ix, computeSchedule(ix), null);
-		expect(r.days.planned).toBe(3);
-		expect(r.days.planned).toBe(table.plannedTotal);
-		expect(r.days.unallocated).toBe(table.unallocated);
-		expect(r.days.tripDays).toBe(table.tripDays);
-		expect(r.days.cities.map((c) => c.name)).toContain("Mt. Fuji");
-		expect(daysHint(r.days)).toBe(`${table.unallocated} of 5 unallocated`);
-	});
-
-	it("days hint: over-allocated, all planned, not planned", () => {
-		const d = { tripDays: 5, planned: 7, unallocated: -2, cities: [] };
-		expect(daysHint(d)).toBe("2 over-allocated");
-		expect(daysHint({ ...d, planned: 5, unallocated: 0 })).toBe(
-			"all 5 planned",
-		);
-		expect(daysHint({ ...d, planned: 0, unallocated: 5 })).toBe(
-			"not planned yet",
-		);
-		expect(daysHint({ ...d, planned: 4.5, unallocated: 0.5 })).toBe(
-			"0.5 of 5 unallocated",
-		);
-		const over = run({
+	it("Cities & nights: the route as the days hold it; none set yet is something to do", () => {
+		const r = run(demo.graph);
+		expect(r.route).toBe("Mt. Fuji 1 night");
+		const bare = run({
 			...demo.graph,
-			nodes: demo.graph.nodes.map((x) =>
-				x.id === N.tokyo ? { ...x, details: { plannedDays: 9 } } : x,
-			),
+			days: demo.graph.days.map((d) => ({ ...d, nightNodeId: null })),
 		});
-		expect(over.days.unallocated).toBe(-4);
-		expect(over.open).toBeGreaterThan(0);
+		expect(bare.route).toBeNull();
+		expect(bare.open).toBeGreaterThan(r.open - 1);
 	});
 
 	it("each booking to-do opens its own context, not the whole list (PLAN-I2-14)", () => {

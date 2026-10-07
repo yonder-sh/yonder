@@ -7,6 +7,7 @@ import { Plane, Plus } from "lucide-react";
 import { Chip } from "@/components/kit";
 import { Button } from "@/components/ui/button";
 import { isIdea } from "@/features/outline/ideas";
+import { dayWhere } from "@/lib/engine/day-place";
 import { formatDayDate, formatDayShort } from "@/lib/format";
 import { copyAnchorId } from "@/lib/realtime/cursor-protocol";
 import { cn } from "@/lib/utils";
@@ -16,19 +17,6 @@ import { PLAN_TESTID } from "./testids";
 import { itemName } from "./use-plan-actions";
 
 const SHOWN = 4;
-
-/** Where the day sleeps (its city), else where most of its time goes. */
-function dayCityId(
-	ix: ReturnType<typeof useWorkspace>["ix"],
-	nightNodeId: string | null,
-): string | null {
-	if (!nightNodeId) return null;
-	return (
-		ix.hierarchy.nearestOfType(nightNodeId, "city")?.id ??
-		ix.hierarchy.collapseTo(nightNodeId, "region")?.id ??
-		null
-	);
-}
 
 export function DayRow({
 	dayId,
@@ -48,8 +36,9 @@ export function DayRow({
 	const all = ix.itemsByDay.get(dayId) ?? [];
 	const items = only ? all.filter((i) => only.has(i.id)) : all;
 	const empty = items.length === 0;
-	const cityId = dayCityId(ix, day.nightNodeId);
-	const city = dayCity(ix, dayId) ?? (cityId ? ix.node(cityId)?.name : null);
+	// The one rule: where you sleep ("Tokyo → Kyoto" on a travel day).
+	const cityId = dayWhere(ix, dayId).placeId;
+	const city = dayCity(ix, dayId);
 	const names = items.map((i) => itemName(ix, i));
 	const more = names.length - SHOWN;
 	const flight = items.some((i) => ix.node(i.nodeId)?.category === "airport");

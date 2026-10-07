@@ -5,9 +5,9 @@
  */
 import { useMemo } from "react";
 import { asOfZone, nowFor } from "@/features/overview/lib/phase";
-import { cityOf } from "@/features/overview/lib/trip-route";
 import { raters } from "@/features/places/lib/rate";
 import { useNow } from "@/features/plan/use-media";
+import { dayWhere, dayWhereText } from "@/lib/engine/day-place";
 import type { LngLat } from "@/lib/engine/geo";
 import { computeToday, type TodayView, todayDayId } from "@/lib/engine/today";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
@@ -18,7 +18,7 @@ export interface TodayData {
 	/** 1-based, of `days`. */
 	dayNumber: number;
 	days: number;
-	/** Where you are today: the night's city, else the first stop's. */
+	/** Where today is (`dayWhere`): "Tokyo", "Tokyo → Kyoto", "Kyoto · fly home". */
 	city: string | null;
 }
 
@@ -46,14 +46,11 @@ export function useToday(here: LngLat | null = null): TodayData {
 				: null,
 		[ix, schedule, dayId, now, raterIds, here, asOf],
 	);
-	const city = useMemo(() => {
-		const day = ix.day(dayId);
-		const first = (ix.itemsByDay.get(dayId ?? "") ?? []).find(
-			(it) => it.nodeId,
-		);
-		const at = day?.nightNodeId ?? first?.nodeId;
-		return at ? (cityOf(ix, at)?.name ?? null) : null;
-	}, [ix, dayId]);
+	// Where today is, by the one rule: "Tokyo → Kyoto" on a travel day.
+	const city = useMemo(
+		() => (dayId ? dayWhereText(ix, dayWhere(ix, dayId)) : null),
+		[ix, dayId],
+	);
 	return {
 		now,
 		view,

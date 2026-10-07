@@ -20,9 +20,8 @@
  *   whose endpoints sit in different cities (a region or country when a place
  *   has no city: Kawaguchiko's ryokan is "Mt. Fuji"). Cross-day pairs covered
  *   by a stay are skipped (their stay legs are checked instead).
- * - **Days per city:** the planned days against the trip's length, from
- *   WP-Places' own `cityDayTable` (cities plus region/area stand-ins such as
- *   Mt. Fuji), so the header and the table's footer are one number.
+ * - **Cities & nights:** the route as the days hold it ("Tokyo 3 nights ·
+ *   Kyoto 3"), or not set yet (the Plan's Cities & nights sets it).
  *
  * Privacy: list items come from F's `listTripListItems`, which already drops
  * other people's private rows, so a private to-do only counts for its author.
@@ -34,12 +33,13 @@ import {
 	legLabel,
 } from "@/features/lists/list-model";
 import type { ListItemDto } from "@/features/lists/lists.functions";
-import { cityDayTable } from "@/features/places/lib/days";
+import { citiesDetail } from "@/features/overview/lib/standing";
 import { decidedIds } from "@/features/places/lib/decided";
 import {
 	isRateable as isRateableNode,
 	rateableNodes,
 } from "@/features/places/lib/rate";
+import { nightPlaces } from "@/lib/engine/day-place";
 import type { GraphIndex } from "@/lib/engine/graph-index";
 import { localDateOf } from "@/lib/engine/time";
 import type { GraphMember, ScheduleResult } from "@/lib/engine/types";
@@ -86,18 +86,11 @@ export type StillToPlan = {
 		from: string;
 		to: string;
 	}[];
-	days: {
-		tripDays: number;
-		planned: number;
-		/** `tripDays − planned`; negative = over-allocated (the table's footer). */
-		unallocated: number;
-		cities: {
-			nodeId: string;
-			name: string;
-			planned: number | null;
-			scheduled: number;
-		}[];
-	};
+	/**
+	 * The route as the days hold it ("Tokyo 3 nights · Kyoto 3 · Osaka 2"),
+	 * null before any night has a city: the "Cities & nights" row.
+	 */
+	route: string | null;
 	/** Rows with something to do (the panel's "all planned" state when 0). */
 	open: number;
 };
@@ -349,43 +342,6 @@ function movesWithoutMode(
 	return out.sort((x, y) => order(x.dayId) - order(y.dayId));
 }
 
-function daysPerCity(
-	ix: GraphIndex,
-	schedule: ScheduleResult,
-): StillToPlan["days"] {
-	// The same table the panel expands to (WP-Places' DaysPerCityTable).
-	const table = cityDayTable(ix, schedule, null);
-	return {
-		tripDays: table.tripDays,
-		planned: table.plannedTotal,
-		unallocated: table.unallocated,
-		cities: table.rows.map((r) => ({
-			nodeId: r.nodeId,
-			name: r.name,
-			planned: r.planned,
-			scheduled: r.scheduled,
-		})),
-	};
-}
-
-/**
- * The "Days per city" row's hint, the same number as the table's footer
- * ("Unallocated 4 days · 31 planned of 35 trip days"): "4 of 35 unallocated",
- * "2 over-allocated", "all 35 planned", "not planned yet".
- */
-export function daysHint(days: StillToPlan["days"]): string {
-	if (!days.planned) return "not planned yet";
-	const n = formatHalf(Math.abs(days.unallocated));
-	if (days.unallocated > 0) return `${n} of ${days.tripDays} unallocated`;
-	if (days.unallocated < 0) return `${n} over-allocated`;
-	return `all ${days.tripDays} planned`;
-}
-
-/** "3", "2.5" (planned days allow halves). */
-function formatHalf(n: number): string {
-	return Number.isInteger(n) ? String(n) : n.toFixed(1).replace(/\.0$/, "");
-}
-
 export function stillToPlan(input: StillToPlanInput): StillToPlan {
 	const { ix, schedule, members, listItems, now } = input;
 	const dueOf = (li: ListItemDto): StillToPlanDue | null => {
@@ -453,13 +409,16 @@ export function stillToPlan(input: StillToPlanInput): StillToPlan {
 			total: rateable.length,
 		}));
 	const moves = movesWithoutMode(ix, schedule);
-	const days = daysPerCity(ix, schedule);
+	const nightsAt = nightPlaces(ix);
+	const route = nightsAt.some(Boolean)
+		? citiesDetail(nightsAt, (id) => ix.node(id)?.name ?? "")
+		: null;
 	const open =
 		(nights.length ? 1 : 0) +
 		(toBook.length ? 1 : 0) +
 		(opening.length ? 1 : 0) +
 		(unrated.some((u) => u.count > 0) ? 1 : 0) +
 		(moves.length ? 1 : 0) +
-		(days.unallocated !== 0 && days.planned > 0 ? 1 : 0);
-	return { nights, toBook, opening, unrated, moves, days, open };
+		(ix.days.length && !route ? 1 : 0);
+	return { nights, toBook, opening, unrated, moves, route, open };
 }

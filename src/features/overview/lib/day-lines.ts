@@ -4,6 +4,7 @@
  * stay, and the stays by country row (the route model's rows) so a long trip
  * can fold per country. Pure.
  */
+import { dayWhere, dayWhereText } from "@/lib/engine/day-place";
 import type { GraphIndex } from "@/lib/engine/graph-index";
 import { cityOf, type RouteRow, type TripRoute } from "./trip-route";
 
@@ -12,7 +13,7 @@ export interface DayLine {
 	/** 1-based day number. */
 	n: number;
 	date: string;
-	/** "Tokyo", or "New York → Tokyo" on a day with no night in a city. */
+	/** Where the day is (`dayWhere`): "Tokyo", "Tokyo → Kyoto", "Kyoto · fly home". */
 	city: string;
 	countryKey: string | null;
 	/** The night city's country accent (null: nowhere to colour). */
@@ -59,7 +60,8 @@ export function dayLines(ix: GraphIndex, route: TripRoute): DayLine[] {
 			dayId: day.id,
 			n: i + 1,
 			date: day.date,
-			city,
+			// The one rule every screen names a day by; the stops' cities without it.
+			city: dayWhereText(ix, dayWhere(ix, day.id)) ?? city,
 			countryKey,
 			color: countryKey ? (route.colors[countryKey] ?? null) : null,
 			stayIndex: stay ? stayIndex : null,

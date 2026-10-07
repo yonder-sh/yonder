@@ -44,9 +44,8 @@ test("desktop: the trip overview shows what's still to plan", async ({ page }, i
 	await settle(page);
 	await page.screenshot({ path: shotPath("shell/desktop-root-overview.png"), animations: "disabled" });
 
-	// Days per city: planned vs scheduled (WP-Places' editable table in the merged build).
-	await row("days").getByRole("button").first().click();
-	await expect(row("days").getByRole("table")).toContainText("Tokyo");
+	// Cities & nights: the route the days hold (it opens in the Plan).
+	await expect(row("days")).toContainText("Cities & nights · Mt. Fuji 1 night");
 	await row("nights").getByRole("button").first().click();
 	await expect(row("nights")).toContainText("Day 1");
 	await settle(page);

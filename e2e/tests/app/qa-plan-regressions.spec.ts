@@ -142,15 +142,16 @@ test("DEFECT Rate (WP-Places): an unaccepted suggestion isn't offered as an ordi
 	if ((await row.count()) > 0) await expect(row.first()).toContainText(/Suggest|Maya/);
 });
 
-test("DEFECT Still to plan (WP-Shell/WP-Places): header and table agree on unallocated days", async ({ page }) => {
+test("Still to plan: Cities & nights reads the route the days hold, and opens it in the Plan", async ({ page }) => {
 	await openTrip(page, `/t/${TRIP}?sel=root`);
 	const stp = page.getByTestId("still-to-plan");
 	await expect(stp).toBeVisible();
-	const header = (await stp.innerText()).match(/(\d+) of \d+ unallocated/)?.[1];
-	await stp.getByRole("button", { name: /Days per city/ }).click();
-	const table = (await stp.innerText()).match(/Unallocated\s+(\d+)\s+day/)?.[1];
-	expect(header, "header count").toBeDefined();
-	expect(table, "table count").toBe(header);
+	// The demo's one night with a place: the ryokan's Mt. Fuji (owner, 2026-10-07: the route replaces "Days per city").
+	const row = stp.getByRole("button", { name: /Cities & nights/ });
+	await expect(row).toContainText("Cities & nights · Mt. Fuji 1 night");
+	await row.click();
+	// The Plan (the default tab) on Cities & nights.
+	await expect(page.getByTestId("places-split-row").first()).toBeVisible();
 });
 
 test("DEFECT Outline (WP-Outline): 'Add inside…' puts the caret in the new row", async ({ page }) => {

@@ -4,6 +4,7 @@
 
 import { describeProposal } from "@/features/suggest/describe-proposal";
 import { baseIndexOf } from "@/features/suggest/use-base-index";
+import { dayWhere, dayWhereText } from "@/lib/engine/day-place";
 import {
 	formatDateRange,
 	formatDayDate,
@@ -85,10 +86,12 @@ export function inspectorHeader(ws: Workspace): InspectorHeader {
 		}
 		case "day": {
 			const d = ix.day(sel.id);
+			// Where the day is, by the one rule ("Day 4 · Tokyo → Kyoto"), else its title.
+			const where = d ? dayWhereText(ix, dayWhere(ix, d.id)) : null;
 			return {
 				title: d ? formatDayDate(d.date) : "Unknown day",
 				chip: d
-					? `Day ${ix.dayNumber(d.id)}${d.title ? ` · ${d.title}` : ""}`
+					? `Day ${ix.dayNumber(d.id)}${where ? ` · ${where}` : d.title ? ` · ${d.title}` : ""}`
 					: null,
 				display: true,
 			};

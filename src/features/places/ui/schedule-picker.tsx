@@ -18,12 +18,12 @@ import {
 	PopoverContent,
 	PopoverTrigger,
 } from "@/components/ui/popover";
+import { dayWhere, dayWhereText } from "@/lib/engine/day-place";
 import type { GraphIndex } from "@/lib/engine/graph-index";
 import type { ScheduleResult } from "@/lib/engine/types";
 import { formatDayDate } from "@/lib/format";
 import type { Sel } from "@/lib/workspace/search";
 import type { AddPlaceRequest } from "@/lib/workspace/ui-store";
-import { cityDayTable } from "../lib/days";
 
 export type SchedulePick = {
 	dayId: string | null;
@@ -31,14 +31,16 @@ export type SchedulePick = {
 	label: string;
 };
 
-/** The day's city ("Tokyo"), for day lists. */
+/** Where each day is ("Tokyo", "Tokyo → Kyoto", `dayWhere`), for day lists. */
 export function dayCities(
 	ix: GraphIndex,
-	schedule: ScheduleResult | null,
+	_schedule?: ScheduleResult | null,
 ): Map<string, string> {
 	const out = new Map<string, string>();
-	for (const r of cityDayTable(ix, schedule, null).rows)
-		for (const d of r.dayIds) out.set(d, r.name);
+	for (const d of ix.days) {
+		const at = dayWhereText(ix, dayWhere(ix, d.id));
+		if (at) out.set(d.id, at);
+	}
 	return out;
 }
 

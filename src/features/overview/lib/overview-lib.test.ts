@@ -165,11 +165,11 @@ const route = tripRoute(ix);
 describe("dayLines", () => {
 	const lines = dayLines(ix, route);
 
-	it("one line per day: the night's city, its colour and the day's places", () => {
+	it("one line per day: the night's city (the move day from → to), its colour and the day's places", () => {
 		expect(lines.map((l) => [l.n, l.city, l.stayIndex])).toEqual([
 			[1, "Tokyo", 0],
 			[2, "Tokyo", 0],
-			[3, "Kyoto", 1],
+			[3, "Tokyo → Kyoto", 1],
 			[4, "Osaka → Seoul", null],
 			[5, "Seoul", 2],
 		]);

@@ -55,6 +55,7 @@ import { DaySun } from "@/features/insights/DaySun";
 import { useHoursIssues } from "@/features/insights/use-hours-issues";
 import { noteFor, tripNotesQuery } from "@/features/notes/queries";
 import { can } from "@/lib/auth/roles";
+import { dayWhere, dayWhereText } from "@/lib/engine/day-place";
 import { tzLabel } from "@/lib/engine/time";
 import type { GraphDay } from "@/lib/engine/types";
 import { formatDayDate, formatDuration, formatTime } from "@/lib/format";
@@ -73,29 +74,12 @@ import { PLAN_TESTID } from "./testids";
 import { useMediaQuery } from "./use-media";
 import { itemName, usePlanActions } from "./use-plan-actions";
 
-/** The city (else the coarsest place below the country) most of the day happens in. */
+/** Where the day is, by the one rule (`dayWhere`): "Tokyo", "Tokyo → Kyoto", "Kyoto · fly home". */
 export function dayCity(
 	ix: ReturnType<typeof useWorkspace>["ix"],
 	dayId: string,
 ): string | null {
-	const tally = new Map<string, number>();
-	for (const it of ix.itemsByDay.get(dayId) ?? []) {
-		const eff = ix.effectiveNodeId(it.id);
-		if (!eff) continue;
-		const city =
-			ix.hierarchy.nearestOfType(eff, "city") ??
-			ix.hierarchy.collapseTo(eff, "region");
-		if (!city) continue;
-		tally.set(city.id, (tally.get(city.id) ?? 0) + it.durationMin + 1);
-	}
-	let best: string | null = null;
-	let max = -1;
-	for (const [id, n] of tally)
-		if (n > max) {
-			best = id;
-			max = n;
-		}
-	return best ? (ix.node(best)?.name ?? null) : null;
+	return dayWhereText(ix, dayWhere(ix, dayId));
 }
 
 /** A title that starts with its city ("Tokyo · Nakano + Shinjuku") shown without it next to the city. */
@@ -105,7 +89,9 @@ export function titleBesideCity(
 ): string | null {
 	if (!title || !city) return title;
 	const m = title.match(/^(.+?)\s*[·—–-]\s*(.+)$/);
-	return m && m[1] === city ? (m[2] ?? title) : title;
+	// "Tokyo → Kyoto" and "Kyoto · fly home" name their places too.
+	const names = city.split(/ → | · /);
+	return m?.[1] && names.includes(m[1]) ? (m[2] ?? title) : title;
 }
 
 /** "JST" when the day's zone changed; "ICT → CST" when it changes mid-day. */

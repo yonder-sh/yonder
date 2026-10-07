@@ -118,16 +118,10 @@ test.describe("desktop", () => {
 		// "Still to plan" stays in the root inspector.
 		await openTrip(page, `/t/${TRIP}?sel=root`);
 		await expect(page.getByTestId("trip-overview")).toBeVisible();
-		// PLAN-I2-13
+		// PLAN-I2-13, now the route: one line, the nights the days hold.
 		const stp = page.getByTestId("still-to-plan");
-		const hint = (await stp.innerText()).match(
-			/Days per city · (\d+(?:\.\d)?) of \d+ unallocated/,
-		)?.[1];
-		await stp.getByRole("button", { name: /Days per city/ }).click();
-		const table = (await stp.innerText()).match(
-			/Unallocated\s+(\d+(?:\.\d)?)\s+day/,
-		)?.[1];
-		if (hint || table) expect(table).toBe(hint);
+		await expect(stp).toContainText("Cities & nights · Mt. Fuji 1 night");
+		await expect(stp).not.toContainText("Days per city");
 	});
 
 	test("PLAN-I2-14: 'still to book' expands to its to-dos; one opens its own context", async ({

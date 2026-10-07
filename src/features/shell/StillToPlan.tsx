@@ -37,12 +37,10 @@ import type { BundleTarget } from "@/lib/schemas/targets";
 import { cn } from "@/lib/utils";
 import { EMPTY_FILTER, serializeFilter } from "@/lib/workspace/filter";
 import { parseSel } from "@/lib/workspace/search";
+import { useUi } from "@/lib/workspace/ui-store";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
-import { PlacesDaysTable } from "./places-days-table";
 import { useShell } from "./shell-store";
 import {
-	daysHint,
-	type StillToPlan as StillToPlanResult,
 	stillToPlan,
 	type TodoList,
 	todoTitle,
@@ -91,6 +89,7 @@ export function StillToPlan({
 function StillToPlanList() {
 	const ws = useWorkspace();
 	const { ix, schedule, graph, nav } = ws;
+	const askSplit = useUi((s) => s.askSplit);
 	const { items, due } = useTripListItems();
 	const go = useTripGo();
 	const [now] = useState(() => Date.now());
@@ -301,57 +300,21 @@ function StillToPlanList() {
 						))}
 					</Row>
 				) : null}
-				{s.days.tripDays && (PlacesDaysTable || s.days.cities.length) ? (
+				{ix.days.length ? (
+					// The route (owner, 2026-10-07): the nights in each city, set in the Plan.
 					<Row
 						id="days"
 						icon={<Table2 />}
-						label="Days per city"
-						countHint={daysHint(s.days)}
-					>
-						<li className="pr-2 pl-8">
-							{PlacesDaysTable ? (
-								<PlacesDaysTable />
-							) : (
-								<ReadOnlyDaysTable days={s.days} />
-							)}
-						</li>
-					</Row>
+						label="Cities & nights"
+						countHint={s.route ?? "not set yet"}
+						onClick={() => {
+							nav.setTab("plan");
+							askSplit(true);
+						}}
+					/>
 				) : null}
 			</ul>
 		</section>
-	);
-}
-
-/** Planned vs scheduled days per city, read-only (until WP-Places' table is in the build). */
-function ReadOnlyDaysTable({ days }: { days: StillToPlanResult["days"] }) {
-	const { nav } = useWorkspace();
-	return (
-		<table className="w-full text-meta">
-			<thead>
-				<tr className="text-left text-2xs text-muted-foreground">
-					<th className="py-1 font-medium">City</th>
-					<th className="py-1 text-right font-medium">Planned</th>
-					<th className="py-1 text-right font-medium">Scheduled</th>
-				</tr>
-			</thead>
-			<tbody>
-				{days.cities.map((c) => (
-					<tr key={c.nodeId} className="border-t border-border/60">
-						<td className="py-1">
-							<button
-								type="button"
-								className="hover:underline"
-								onClick={() => nav.select({ kind: "node", id: c.nodeId })}
-							>
-								{c.name}
-							</button>
-						</td>
-						<td className="py-1 text-right tnum">{c.planned ?? "–"}</td>
-						<td className="py-1 text-right tnum">{c.scheduled}</td>
-					</tr>
-				))}
-			</tbody>
-		</table>
 	);
 }
 
