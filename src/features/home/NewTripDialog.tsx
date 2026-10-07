@@ -1,7 +1,7 @@
 /**
  * New trip (DESIGN §10.4): name and dates (a Calendar range, two months at
- * ≥ 768) → `createTrip` → the new trip's Plan, with the palette open in
- * "Where to first?" mode (the route: a city, its nights, where next). Dates
+ * ≥ 768) → `createTrip` → the new trip's Plan, with the palette open on
+ * "What do you want to see?" (places first; the nights follow). Dates
  * are optional; both or neither (QA TRIP-01: an empty name or an end before
  * the start is refused inline, nothing is created).
  */
@@ -54,13 +54,13 @@ export function NewTripDialog({ trigger }: { trigger?: React.ReactNode }) {
 		onSuccess: async ({ slug }) => {
 			await qc.invalidateQueries({ queryKey: meKeys.trips });
 			setOpen(false);
-			// The route comes first: the Plan, already asking where to.
+			// Places come first (owner, 2026-10-07): the Plan, asking what you want to see.
 			await navigate({
 				to: "/t/$trip",
 				params: { trip: slug },
 				search: { tab: "plan" },
 			});
-			openAddPlace({ mode: "first" });
+			openAddPlace({ mode: "search", want: true });
 		},
 	});
 	const submit = (e: FormEvent) => {

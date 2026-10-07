@@ -581,7 +581,9 @@ function Palette({
 				? `Set location for ${locating?.name ?? "this place"}`
 				: mode === "schedule"
 					? "Add a place to the plan"
-					: "Search, add or jump";
+					: request.want
+						? "What do you want to see?"
+						: "Search, add or jump";
 	const placeholder = !canSearch
 		? "Find a place in this trip…"
 		: mode === "first"
@@ -590,7 +592,9 @@ function Palette({
 				: "A country or a city…"
 			: pending
 				? "Search for the place, or type its name…"
-				: "Search places, or type Day 4…";
+				: request.want
+					? "A place you'd love to go to…"
+					: "Search places, or type Day 4…";
 
 	const showPreview = selected !== null || pinning;
 	// The results on a map, numbered as in the list, to pick the right one.
@@ -1048,6 +1052,7 @@ function Palette({
 								mode={mode}
 								linking={pending !== null}
 								next={mode === "first" && onRoute && !firstIn}
+								want={request.want}
 							/>
 						) : null}
 
@@ -1450,11 +1455,14 @@ function EmptyHints({
 	mode,
 	linking,
 	next,
+	want,
 }: {
 	canSearch: boolean;
 	mode: AddPlaceRequest["mode"];
 	/** New place…'s search, a link waiting. */
 	linking: boolean;
+	/** "What do you want to see?": a new trip collecting places. */
+	want?: boolean;
 	/** "Where next?": the route has started. */
 	next?: boolean;
 }) {
@@ -1466,11 +1474,13 @@ function EmptyHints({
 					? next
 						? "Type a city to go to next."
 						: "Type a country or a city to start the trip."
-					: linking
-						? "Search for the place in the link, or type its name to add it."
-						: canSearch
-							? "Type a place, a shop, a temple — or “Day 4”."
-							: "Type a place in this trip, or “Day 4”."}
+					: want
+						? "A temple, a museum, a view, a restaurant: anything you'd love to go to. Add as many as you like; your group rates them next."
+						: linking
+							? "Search for the place in the link, or type its name to add it."
+							: canSearch
+								? "Type a place, a shop, a temple — or “Day 4”."
+								: "Type a place in this trip, or “Day 4”."}
 			</p>
 		</div>
 	);

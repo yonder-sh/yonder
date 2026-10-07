@@ -871,9 +871,12 @@ export function unusedText(unused: number): string {
 }
 
 /** "3 places are on days that move to another city. They'll go back to your list to schedule again." */
-/** "Senso-ji, Meiji Jingu and 2 more": up to two names, then a count. */
+/** "Tokyo, Kyoto and Osaka"; past three, "Senso-ji, Meiji Jingu and 2 more". */
 export function namesText(names: readonly string[]): string {
-	if (names.length <= 2) return names.join(" and ");
+	if (names.length <= 3)
+		return names.length > 1
+			? `${names.slice(0, -1).join(", ")} and ${names.at(-1)}`
+			: (names[0] ?? "");
 	return `${names.slice(0, 2).join(", ")} and ${names.length - 2} more`;
 }
 

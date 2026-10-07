@@ -653,12 +653,12 @@ function OutlineInner({ headerEnd }: OutlineProps) {
 				) : null}
 				{graph.nodes.length === 0 ? (
 					<EmptyState
-						line="Where to first?"
+						line="What do you want to see?"
 						action={
 							<EditGuard>
 								<Button
 									size="sm"
-									onClick={() => openAddPlace({ mode: "first" })}
+									onClick={() => openAddPlace({ mode: "search", want: true })}
 								>
 									Search places
 								</Button>

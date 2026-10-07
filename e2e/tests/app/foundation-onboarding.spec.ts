@@ -55,10 +55,10 @@ test("sign in, onboarding, dashboard, new trip, workspace", async ({ page }, inf
 	await expect(page).toHaveURL(/\/t\/lisbon-/);
 	await expect(page.getByTestId(TESTID.workspace)).toBeVisible();
 	await expectLive(page);
-	// A new trip opens the "Where to first?" palette; close it.
+	// A new trip opens the "What do you want to see?" palette (places first); close it.
 	const palette = page.getByTestId(TESTID.addPlaceDialog);
 	await expect(palette).toBeVisible();
-	await expect(palette).toContainText("Where to first?");
+	await expect(palette).toContainText("What do you want to see?");
 	await page.keyboard.press("Escape");
 	await expect(palette).toBeHidden();
 	await page.screenshot({ path: shotPath(`foundation/03-workspace-${info.project.name}.png`), animations: "disabled" });

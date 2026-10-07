@@ -149,14 +149,15 @@ function StillToPlanList() {
 			) : null}
 			<ul className="-mx-2">
 				{s.noCity ? (
-					// A new trip: the first city is the first step.
+					// A new trip: places first (owner, 2026-10-07), the cities follow.
 					<Row
 						id="first"
 						icon={<MapPin />}
-						label="Pick where to go first"
+						label="Add places you want to see"
 						onClick={() => {
 							nav.setTab("plan");
-							if (access.mode !== "read") openAddPlace({ mode: "first" });
+							if (access.mode !== "read")
+								openAddPlace({ mode: "search", want: true });
 						}}
 					/>
 				) : null}

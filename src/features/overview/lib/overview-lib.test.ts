@@ -20,7 +20,7 @@ import {
 	type HighlightCandidate,
 	pickHighlights,
 } from "./highlights";
-import { asOfDate, nowFor, tripPhase } from "./phase";
+import { asOfDate, firstStep, nowFor, tripPhase } from "./phase";
 import { type TripRoute, tripRoute } from "./trip-route";
 
 describe("tripPhase", () => {
@@ -387,5 +387,21 @@ describe("globe projection", () => {
 		expect(full.startsWith("M")).toBe(true);
 		expect(half.length).toBeLessThan(full.length);
 		expect(pathOf(pts, proj, null, 0)).toMatch(/^M[\d.]+ [\d.]+$/);
+	});
+});
+
+describe("firstStep (places first)", () => {
+	it("what you want to see, then everyone's ratings, then the nights", () => {
+		expect(firstStep({ places: 0, hasCity: false, leftToRate: 0 })).toBe(
+			"want",
+		);
+		expect(firstStep({ places: 3, hasCity: true, leftToRate: 5 })).toBe("rate");
+		expect(firstStep({ places: 3, hasCity: true, leftToRate: 0 })).toBe(
+			"nights",
+		);
+		// The route set first: a city with no places goes to its nights.
+		expect(firstStep({ places: 0, hasCity: true, leftToRate: 0 })).toBe(
+			"nights",
+		);
 	});
 });

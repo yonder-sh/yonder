@@ -138,12 +138,20 @@ const shape = () =>
 	]);
 
 /** The Plan; `cached`: saves land on the trip, as in the app. */
-const plan = (graph: TripGraph, cached = false) =>
-	renderWithWorkspace(<PlanTab />, {
+/** The Plan; past "Get everyone's ratings" ("Suggest it now") unless `rateFirst`. */
+const plan = (graph: TripGraph, cached = false, rateFirst = false) => {
+	const id = graph.trip.id;
+	if (!rateFirst) {
+		const stored = localStorage.getItem(`yonder.splitDraft.${id}`);
+		const d = splitDrafts.get(id) ?? (stored ? JSON.parse(stored) : {});
+		splitDrafts.set(id, { ...d, early: true });
+	}
+	return renderWithWorkspace(<PlanTab />, {
 		graph,
 		search: { tab: "plan" },
 		cached,
 	});
+};
 
 /**
  * A server for the mocks: the dates and nights they write land on the trip
@@ -852,15 +860,52 @@ describe("the route from nothing (Where to first?)", () => {
 		return { s, graph: { ...graph, nodes } as TripGraph };
 	};
 
-	it("no city yet: Where to first? opens the city search", () => {
+	it("nothing saved yet: places first; a group that knows its route sets the cities", () => {
 		const { graph } = bare(empty(10));
 		plan(graph);
 		expect(screen.queryByTestId(T.splitRow)).toBeNull();
 		expect(screen.getByTestId(T.routeStart)).toHaveTextContent(
-			"Where to first?",
+			"What do you want to see?",
 		);
+		fireEvent.click(screen.getByTestId(T.wantSearch));
+		expect(useUi.getState().addPlace).toEqual({ mode: "search", want: true });
 		fireEvent.click(screen.getByTestId(T.routeStartSearch));
 		expect(useUi.getState().addPlace).toEqual({ mode: "first" });
+	});
+
+	it("places saved, ratings coming: Get everyone's ratings first, then the nights when asked", () => {
+		const { graph } = trip(empty(10));
+		plan(graph, false, true);
+		const card = screen.getByTestId(T.rateFirst);
+		expect(card).toHaveTextContent("Get everyone's ratings");
+		expect(card).toHaveTextContent(/places saved in Tokyo, Kyoto and Osaka\./);
+		expect(card).toHaveTextContent(/Left to rate: /);
+		expect(screen.queryByTestId(T.splitRow)).toBeNull();
+		fireEvent.click(screen.getByTestId(T.invite));
+		expect(useUi.getState().shareOpen).toBe(true);
+		fireEvent.click(screen.getByTestId(T.suggestNow));
+		expect(screen.queryByTestId(T.rateFirst)).toBeNull();
+		expect(screen.getAllByTestId(T.splitRow).length).toBeGreaterThan(0);
+	});
+
+	it("everyone has rated: the nights straight away", () => {
+		const { graph } = trip(empty(10));
+		const rated: TripGraph = {
+			...graph,
+			nodes: graph.nodes.map((n) =>
+				n.type === "place"
+					? {
+							...n,
+							priorities: Object.fromEntries(
+								graph.members.map((m) => [m.id, "really_want"]),
+							),
+						}
+					: n,
+			),
+		};
+		plan(rated, false, true);
+		expect(screen.queryByTestId(T.rateFirst)).toBeNull();
+		expect(screen.getAllByTestId(T.splitRow).length).toBeGreaterThan(0);
 	});
 
 	it("people who can't edit get no start", () => {

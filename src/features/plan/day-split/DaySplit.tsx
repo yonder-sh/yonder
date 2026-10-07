@@ -17,7 +17,7 @@
  * `item.move`, so suggest mode, proposals and live sync hold.
  */
 import { useQueryClient } from "@tanstack/react-query";
-import { Plus, Search, Star } from "lucide-react";
+import { Plus, Search, Star, UserPlus } from "lucide-react";
 import {
 	type ReactNode,
 	useCallback,
@@ -135,7 +135,19 @@ export function useDaySplit() {
 	);
 	// A place on a day: route changes wait for Apply (before, each is saved as it's made).
 	const planned = useMemo(() => hasPlacesOnDays(ix), [ix]);
-	return { cities, current, left, hasDays, rowById, planned };
+	// Places saved (not dropped), and who rates them: the steps before the nights.
+	const places = trip.rows.filter((r) => r.status !== "dropped").length;
+	const raterCount = trip.raters.length;
+	return {
+		cities,
+		current,
+		left,
+		hasDays,
+		rowById,
+		planned,
+		places,
+		raterCount,
+	};
 }
 
 export type DaySplitInfo = ReturnType<typeof useDaySplit>;
@@ -332,6 +344,8 @@ type SplitDraft = {
 	order?: string[];
 	/** No dates yet: the day you arrive. */
 	start?: string | null;
+	/** "Suggest them now": the nights before everyone has rated. */
+	early?: boolean;
 };
 
 /** Your changes to the suggestion while they wait (suggesting, or no dates yet), per trip, also kept on this device. */
@@ -450,9 +464,12 @@ function WhereNext() {
 	);
 }
 
-/** No city yet: the route starts here, or with places saved first. */
+/**
+ * Nothing saved yet: places first (owner, 2026-10-07: "we pick the places we
+ * want to go to first, then rate, then figure out how many days for each
+ * area"), or the route, for a group that already knows it.
+ */
 function RouteStart() {
-	const { nav } = useWorkspace();
 	const openAddPlace = useUi((s) => s.openAddPlace);
 	return (
 		<section
@@ -460,29 +477,129 @@ function RouteStart() {
 			data-cursor-anchor="sec:split"
 			className="flex flex-col items-start gap-3 rounded-xl border border-dashed p-4 sm:p-5"
 		>
-			<h2 className="font-display text-lg font-semibold">Where to first?</h2>
+			<h2 className="font-display text-lg font-semibold">
+				What do you want to see?
+			</h2>
 			<p className="max-w-prose text-sm text-muted-foreground">
-				Add the cities you'll sleep in, in the order you travel, and the nights
-				in each. Your days follow, and you can change it any time.
+				Save the places you'd love to go to. Your group rates them, then Yonder
+				suggests how long in each city from what made the shortlist.
 			</p>
 			<Button
-				data-testid={T.routeStartSearch}
-				onClick={() => openAddPlace({ mode: "first" })}
+				data-testid={T.wantSearch}
+				onClick={() => openAddPlace({ mode: "search", want: true })}
 			>
 				<Search />
-				Find a city or country
+				Find a place
 			</Button>
 			<p className="max-w-prose text-sm text-muted-foreground">
-				Not sure yet?{" "}
+				Already know your route?{" "}
 				<button
 					type="button"
-					onClick={() => nav.openPlaces({ scopeId: null })}
+					data-testid={T.routeStartSearch}
+					onClick={() => openAddPlace({ mode: "first" })}
 					className="cursor-pointer font-medium text-foreground underline underline-offset-2"
 				>
-					Save places first
-				</button>{" "}
-				and Yonder suggests a route from what everyone likes.
+					Set the cities and nights
+				</button>
 			</p>
+		</section>
+	);
+}
+
+/** "You 4 · Audrey 12": who has places left to rate. */
+function leftLine(left: DaySplitInfo["left"]): string {
+	return left.map((x) => `${x.you ? "you" : x.name} ${x.count}`).join(" · ");
+}
+
+/**
+ * Places saved, ratings still coming: "Get everyone's ratings" before the
+ * nights, which come from what made the shortlist. "Suggest them now" goes
+ * on without waiting.
+ */
+function RateFirst({
+	info,
+	canEdit,
+	onSuggest,
+}: {
+	info: DaySplitInfo;
+	canEdit: boolean;
+	onSuggest: () => void;
+}) {
+	const { ix, nav } = useWorkspace();
+	const openAddPlace = useUi((s) => s.openAddPlace);
+	const setShareOpen = useUi((s) => s.setShareOpen);
+	const mine = info.left.find((x) => x.you)?.count ?? 0;
+	const others = info.left.filter((x) => !x.you);
+	const where = namesText(
+		info.cities.flatMap((c) => {
+			const n = ix.node(c.id)?.name;
+			return n ? [n] : [];
+		}),
+	);
+	return (
+		<section
+			data-testid={T.rateFirst}
+			data-cursor-anchor="sec:split"
+			className="flex flex-col items-start gap-3 rounded-xl border border-dashed p-4 sm:p-5"
+		>
+			<h2 className="font-display text-lg font-semibold">
+				Get everyone's ratings
+			</h2>
+			<p className="max-w-prose text-sm text-muted-foreground">
+				{info.places} {info.places === 1 ? "place" : "places"} saved
+				{where ? ` in ${where}` : ""}.{" "}
+				{info.raterCount < 2
+					? "Invite your group so everyone can rate them."
+					: mine
+						? `Left to rate: ${leftLine(info.left)}.`
+						: `You've rated them all. Waiting on ${leftLine(others)}.`}
+			</p>
+			<div className="flex flex-wrap gap-2">
+				{mine ? (
+					<Button
+						data-testid={T.rateNow}
+						onClick={() =>
+							nav.openPlaces({ scopeId: null, patch: { pv: "rate" } })
+						}
+					>
+						<Star />
+						Rate ({mine})
+					</Button>
+				) : null}
+				{canEdit ? (
+					<Button
+						variant="outline"
+						data-testid={T.invite}
+						onClick={() => setShareOpen(true)}
+					>
+						<UserPlus />
+						Invite
+					</Button>
+				) : null}
+				{canEdit ? (
+					<Button
+						variant="outline"
+						onClick={() => openAddPlace({ mode: "search", want: true })}
+					>
+						<Plus />
+						Add more places
+					</Button>
+				) : null}
+			</div>
+			{canEdit ? (
+				<p className="max-w-prose text-sm text-muted-foreground">
+					Once everyone has rated, Yonder suggests how long in each city from
+					what made the shortlist.{" "}
+					<button
+						type="button"
+						data-testid={T.suggestNow}
+						onClick={onSuggest}
+						className="cursor-pointer font-medium text-foreground underline underline-offset-2"
+					>
+						Suggest it now
+					</button>
+				</p>
+			) : null}
 		</section>
 	);
 }
@@ -1162,6 +1279,24 @@ export function PlanSplit({
 		() => nightRunsOf(info.current).entries,
 		[info.current],
 	);
+	// Places first: while ratings are coming and no route is set, they come
+	// before the nights (a city picked in "Where to first?" skips this).
+	const tripId = useWorkspace().graph.trip.id;
+	const routeCities = useUi((s) => s.routeCities);
+	const [early, setEarly] = useState(
+		() => !!(splitDrafts.get(tripId) ?? storedDraft(tripId))?.early,
+	);
+	const rateFirst =
+		!line &&
+		!early &&
+		info.places > 0 &&
+		info.left.length > 0 &&
+		routeCities.length === 0;
+	const suggestNow = () => {
+		const d = splitDrafts.get(tripId) ?? storedDraft(tripId) ?? {};
+		storeDraft(tripId, { ...d, early: true });
+		setEarly(true);
+	};
 	const switcher = views ? (
 		<Segmented
 			size="sm"
@@ -1204,6 +1339,14 @@ export function PlanSplit({
 						/>
 					</div>
 				) : null
+			) : rateFirst ? (
+				<div className={cn("px-4 pb-4", className)}>
+					<RateFirst
+						info={info}
+						canEdit={access.canEdit}
+						onSuggest={suggestNow}
+					/>
+				</div>
 			) : (
 				<div className={cn("px-4 pb-4", className)}>
 					<SplitSuggestion

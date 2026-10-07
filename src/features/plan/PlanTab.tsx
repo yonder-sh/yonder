@@ -433,7 +433,7 @@ function PlanTabBody() {
 		return () => dnd.setOverlay("item", null);
 	}, [dnd]);
 
-	// ---- empty trip: the route ("Where to first?", then how long in each city) --
+	// ---- empty trip: places first, everyone's ratings, then how long in each city --
 	if (empty) {
 		return (
 			<div data-testid={TESTID.planTab}>

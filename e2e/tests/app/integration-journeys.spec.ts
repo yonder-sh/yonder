@@ -113,7 +113,8 @@ async function userContext(
 }
 
 // ---------------------------------------------------------------------------
-// Journey 1: sign up → welcome → dashboard → new trip → "Where to first?" →
+// Journey 1: sign up → welcome → dashboard → new trip → "Set the cities and
+// nights" → "Where to first?" →
 // Tokyo on the route, its nights on the days → Japan › Tokyo › Shibuya Sky →
 // schedule it.
 // ---------------------------------------------------------------------------
@@ -149,8 +150,13 @@ test("J1 sign up, new trip, Where to first? → Japan › Tokyo › Shibuya Sky,
 	await expect(page.getByTestId(TESTID.workspace)).toBeVisible({ timeout: 20_000 });
 	await expectLive(page);
 
-	// A new trip opens the palette as "Where to first?" (countries and cities).
+	// A new trip asks what you want to see (places first); this group knows
+	// its route: "Set the cities and nights" opens "Where to first?".
 	const dialog = page.getByTestId(TESTID.addPlaceDialog);
+	await expect(dialog).toContainText("What do you want to see?");
+	await page.keyboard.press("Escape");
+	await expect(dialog).toBeHidden();
+	await page.getByTestId(SPLIT.routeStartSearch).click();
 	await expect(dialog).toContainText("Where to first?");
 	const input = page.getByTestId(P.paletteInput);
 	await input.fill("Tokyo");
@@ -218,6 +224,68 @@ test("J1 sign up, new trip, Where to first? → Japan › Tokyo › Shibuya Sky,
 	await page.goto("/dashboard");
 	await expect(page.getByTestId(TESTID.tripCard).filter({ hasText: tripName })).toBeVisible();
 	expect(logs.messages).toEqual([]);
+});
+
+// ---------------------------------------------------------------------------
+// Journey 1b, places first (owner, 2026-10-07): a new trip → "What do you want
+// to see?" → Shibuya Sky (filed Japan › Tokyo) → "Get everyone's ratings" →
+// "Suggest it now" → Tokyo's nights → on the days.
+// ---------------------------------------------------------------------------
+test("J1b places first: what you want to see, ratings, then the nights", async ({ browser }, info) => {
+	test.skip(info.project.name !== "chromium", "desktop journey");
+	test.setTimeout(120_000);
+	const ctx = await userContext(browser, `j1b-${tag()}@example.com`, { first: "Places", last: "First" });
+	const page = await ctx.newPage();
+	const logs = collectConsole(page, MAP_NOISE);
+	await page.goto("/dashboard");
+	await (await hydrated(page.getByTestId(TESTID.newTripButton))).click();
+	await page.getByTestId(TESTID.newTripName).fill(`Japan ${tag()}`);
+	await page.getByTestId(HOME_TESTID.newTripDates).click();
+	const dayBtns = page.locator('[data-slot="popover-content"] button[data-day]');
+	await dayBtns.filter({ hasText: /^10$/ }).first().click();
+	await dayBtns.filter({ hasText: /^13$/ }).first().click();
+	await page.getByTestId(TESTID.newTripSubmit).click();
+	await expect(page.getByTestId(TESTID.workspace)).toBeVisible({ timeout: 20_000 });
+	await expectLive(page);
+
+	const dialog = page.getByTestId(TESTID.addPlaceDialog);
+	await expect(dialog).toContainText("What do you want to see?");
+	await page.getByTestId(P.paletteInput).fill("Shibuya Sky");
+	const result = page.getByTestId(P.paletteResult).filter({ hasText: /Shibuya Sky/i }).first();
+	await expect(result).toBeVisible({ timeout: 25_000 });
+	await result.click();
+	const preview = page.getByTestId(P.previewCard);
+	await expect(preview.getByTestId(P.filingChip)).toContainText(/Japan.*›.*Tokyo/, { timeout: 25_000 });
+	await preview.getByTestId(P.saveToIdeas).click();
+	await expect(dialog).toBeHidden();
+
+	// The Plan: ratings before the nights.
+	await page.goto(`${page.url().split("?")[0]}?tab=plan`);
+	const card = page.getByTestId(SPLIT.rateFirst);
+	await expect(card).toContainText("Get everyone's ratings", { timeout: 20_000 });
+	await expect(card).toContainText("1 place saved in Tokyo.");
+	await shot(page, "j1b-01-rate-first");
+	// Rate it Must ("1"): it makes the shortlist, and the ratings are in.
+	await card.getByTestId(SPLIT.rateNow).click();
+	await expect(page).toHaveURL(/pv=rate/);
+	const feed = page.locator(`[data-testid=${PT.feedCard}][data-active]`);
+	await expect(feed).toBeVisible({ timeout: 20_000 });
+	await page.keyboard.press("1");
+	await expect(feed).toHaveAttribute("data-rated", /.+/);
+	// Back on the Plan: the nights, suggested from the shortlist.
+	await page.goto(`${page.url().split("?")[0]}?tab=plan`);
+	await expect(page.getByTestId(SPLIT.rateFirst)).toHaveCount(0);
+	const tokyo = page.getByTestId(SPLIT.splitRow).filter({ hasText: "Tokyo" });
+	await expect(tokyo).not.toHaveAttribute("data-days", "0", { timeout: 20_000 });
+	await page.getByTestId(SPLIT.splitUse).click();
+	await expect
+		.poll(async () => (await yon(page))?.graph.days.map((d) => (d.nightNodeId ? "night" : "-")).join(","), {
+			timeout: 20_000,
+		})
+		.toBe("night,night,night,-");
+	await shot(page, "j1b-02-nights");
+	expect(logs.messages).toEqual([]);
+	await ctx.close();
 });
 
 // ---------------------------------------------------------------------------

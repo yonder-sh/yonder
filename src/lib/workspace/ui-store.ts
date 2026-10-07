@@ -25,6 +25,8 @@ export type AddPlaceRequest = {
 	mode: "search" | "schedule" | "locate" | "first";
 	/** "Where next?" (mode "first"): a city after the ones on the route. */
 	next?: boolean;
+	/** "What do you want to see?" (mode "search"): a new trip collecting places first. */
+	want?: boolean;
 	dayId?: string;
 	afterItemId?: string;
 	/** Insert before this item (the "+" above a day's first card). */

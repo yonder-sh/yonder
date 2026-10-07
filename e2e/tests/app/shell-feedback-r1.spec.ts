@@ -291,7 +291,7 @@ test.describe("phone 390", () => {
 		await page.screenshot({ path: shotPath("shell/vis3-03-phone-tab-lists.png"), animations: "disabled" });
 	});
 
-	test("VIS3-09: a new trip's Plan says 'Where to first?'; with a city but no dates it asks how long, and the day you arrive", async ({ page }, info) => {
+	test("VIS3-09: a new trip's Plan says 'What do you want to see?'; with a city but no dates it asks how long, and the day you arrive", async ({ page }, info) => {
 		test.skip(info.project.name !== "chromium", "chromium project (the viewport is set here)");
 		await signIn(page);
 		await page.goto("/dashboard");
@@ -302,13 +302,16 @@ test.describe("phone 390", () => {
 		const slug = (created as { slug: string }).slug;
 		await openTrip(page, `/t/${slug}?tab=plan`);
 		const plan = page.getByTestId(TESTID.mobileSheet).getByTestId(TESTID.planTab);
-		await expect(plan).toContainText("Where to first?");
-		await expect(plan.getByRole("button", { name: /Find a city or country/ })).toBeInViewport();
+		await expect(plan).toContainText("What do you want to see?");
+		await expect(plan.getByRole("button", { name: /Find a place/ })).toBeInViewport();
 		await settle(page);
 		await page.screenshot({ path: shotPath("shell/vis3-09-phone-empty.png"), animations: "disabled" });
-		// "Find a city or country" opens "Where to first?".
-		await plan.getByRole("button", { name: /Find a city or country/ }).tap();
-		await expect(page.getByTestId(TESTID.addPlaceDialog)).toBeVisible();
+		// Places first: "Find a place" opens "What do you want to see?".
+		await plan.getByRole("button", { name: /Find a place/ }).tap();
+		await expect(page.getByTestId(TESTID.addPlaceDialog)).toContainText("What do you want to see?");
+		await page.keyboard.press("Escape");
+		// A group that knows its route: "Set the cities and nights" opens "Where to first?".
+		await plan.getByRole("button", { name: /Set the cities and nights/ }).tap();
 		await expect(page.getByTestId(TESTID.addPlaceDialog)).toContainText("Where to first?");
 		await page.keyboard.press("Escape");
 		// The map's empty card shows with the map open.

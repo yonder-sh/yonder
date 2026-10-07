@@ -115,6 +115,15 @@ async function openPlan(page: Page, t: Trip) {
 	await page.goto(`/t/${t.slug}?tab=plan`);
 	await expect(page.getByTestId("plan-tab")).toBeVisible({ timeout: 30_000 });
 	await expectLive(page);
+	await pastRatings(page);
+}
+
+/** Osaka's places aren't rated yet: "Get everyone's ratings" first, then "Suggest it now". */
+async function pastRatings(page: Page) {
+	const card = page.getByTestId(T.rateFirst);
+	await expect(card).toContainText("Get everyone's ratings", { timeout: 30_000 });
+	await card.getByTestId(T.suggestNow).click();
+	await expect(card).toBeHidden();
 }
 
 /** Drags a row by its handle onto another row. */
@@ -345,6 +354,7 @@ test("phone: the split at 390 px, Move up (saved at once), − / +, then Cities 
 	await page.setViewportSize({ width: 390, height: 844 });
 	const t = await newTrip(page);
 	await page.goto(`/t/${t.slug}?tab=plan`);
+	await pastRatings(page);
 	const split = page.getByTestId(T.split);
 	await expect(split).toBeVisible({ timeout: 30_000 });
 	await expectLive(page);

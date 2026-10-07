@@ -35,6 +35,7 @@ import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { DayByDay } from "./DayByDay";
 import { OverviewGlobe } from "./globe/OverviewGlobe";
 import { Highlights } from "./Highlights";
+import { firstStep } from "./lib/phase";
 import {
 	CountryChips,
 	dateLine,
@@ -357,6 +358,7 @@ function Header({
 	const guard = useEditGuard();
 	const openAddPlace = useUi((s) => s.openAddPlace);
 	const askSplit = useUi((s) => s.askSplit);
+	const setShareOpen = useUi((s) => s.setShareOpen);
 	const setSettingsOpen = useUi((s) => s.setSettingsOpen);
 	const { route, phase } = data;
 	const standing = useStanding();
@@ -422,8 +424,32 @@ function Header({
 	// ---- empty: no days, or no stays yet ----------------------------------------
 	if (phase.kind === "empty" || !route.stays.length) {
 		const noDays = phase.kind === "empty";
-		// With a city already, the next step is its nights, not another city.
 		const hasCity = cityRowNodes(ix).length > 0;
+		const raters = standing.people.length;
+		const leftToRate = standing.people.reduce((n, p) => n + p.left, 0);
+		const step = firstStep({ places: standing.places, hasCity, leftToRate });
+		const copy = {
+			want: {
+				title: "What do you want to see?",
+				text: "Save the places you'd love to go to. Your group rates them, then the nights in each city follow from what made the shortlist.",
+				go: "Find a place",
+			},
+			rate: {
+				title: "Get everyone's ratings",
+				text:
+					raters < 2
+						? `${standing.places} ${standing.places === 1 ? "place" : "places"} saved. Invite your group so everyone can rate them; the nights in each city follow from the shortlist.`
+						: `${standing.places} ${standing.places === 1 ? "place" : "places"} saved, ${leftToRate} ${leftToRate === 1 ? "rating" : "ratings"} to go. The nights in each city follow from the shortlist.`,
+				go: standing.myLeft ? `Rate (${standing.myLeft})` : "Invite",
+			},
+			nights: {
+				title: "How long in each city?",
+				text: noDays
+					? "Set the nights in each city in Cities & nights, and pick your dates: the route draws itself here."
+					: "Set the nights in each city in Cities & nights: the route draws itself here, night by night.",
+				go: "Set the nights",
+			},
+		}[step];
 		return (
 			<div
 				data-testid={OVERVIEW_TESTID.header}
@@ -437,36 +463,42 @@ function Header({
 				</div>
 				<div
 					data-testid={OVERVIEW_TESTID.empty}
-					data-step={hasCity ? "nights" : "first"}
+					data-step={step}
 					className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-white/[.04] p-4"
 				>
 					<p className="font-display text-lg font-semibold text-white">
-						{hasCity ? "How long in each city?" : "Where to first?"}
+						{copy.title}
 					</p>
-					<p className="text-sm text-white/65">
-						{hasCity
-							? noDays
-								? "Set the nights in each city in Cities & nights, and pick your dates: the route draws itself here."
-								: "Set the nights in each city in Cities & nights: the route draws itself here, night by night."
-							: noDays
-								? "Add the cities you'll sleep in and the nights in each, and pick your dates: the route draws itself here."
-								: "Add the cities you'll sleep in, in order, and the nights in each: the route draws itself here, night by night."}
-					</p>
+					<p className="text-sm text-white/65">{copy.text}</p>
 					<div className="flex flex-wrap gap-2">
 						<Button
 							data-testid={OVERVIEW_TESTID.planRoute}
 							onClick={() => {
-								// The route lives on the Plan: Cities & nights, or with no city yet, a search.
+								if (step === "rate") {
+									if (standing.myLeft)
+										nav.openPlaces({ scopeId: null, patch: { pv: "rate" } });
+									else setShareOpen(true);
+									return;
+								}
 								nav.setTab("plan");
-								if (hasCity) askSplit(true);
-								else openAddPlace({ mode: "first" });
+								if (step === "nights") askSplit(true);
+								else openAddPlace({ mode: "search", want: true });
 							}}
-							disabled={guard.disabled}
-							title={guard.reason ?? undefined}
+							disabled={step !== "rate" && guard.disabled}
+							title={step !== "rate" ? (guard.reason ?? undefined) : undefined}
 							className={PRIMARY}
 						>
-							{hasCity ? "Set the nights" : "Plan the route"}
+							{copy.go}
 						</Button>
+						{step === "rate" && standing.myLeft ? (
+							<Button
+								variant="outline"
+								onClick={() => setShareOpen(true)}
+								className={MUTED}
+							>
+								Invite
+							</Button>
+						) : null}
 						{noDays ? (
 							<Button
 								variant="outline"

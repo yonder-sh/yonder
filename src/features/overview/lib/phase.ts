@@ -91,3 +91,17 @@ export function nowFor(
 	const time = asOf.length > 10 ? asOf.slice(11, 16) : "12:00";
 	return zonedEpoch(date, time, typeof tz === "string" ? tz : tz(date));
 }
+
+/**
+ * A trip with no route yet, places first (owner, 2026-10-07): what you want
+ * to see, then everyone's ratings, then the nights in each city. A city with
+ * no places (the route set first) goes straight to its nights.
+ */
+export function firstStep(v: {
+	places: number;
+	hasCity: boolean;
+	leftToRate: number;
+}): "want" | "rate" | "nights" {
+	if (!v.places) return v.hasCity ? "nights" : "want";
+	return v.leftToRate > 0 ? "rate" : "nights";
+}

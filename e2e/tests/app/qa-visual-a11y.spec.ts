@@ -300,15 +300,15 @@ test.describe("desktop", () => {
 		await page.getByTestId("new-trip-submit").click();
 		await page.waitForURL(/\/t\//);
 		await expect(page.getByTestId("workspace")).toBeVisible();
-		// A new trip opens on its Plan, already asking where to first.
-		await expect(page.getByTestId("add-place-dialog")).toContainText("Where to first?");
+		// A new trip opens on its Plan, already asking what you want to see.
+		await expect(page.getByTestId("add-place-dialog")).toContainText("What do you want to see?");
 		await page.keyboard.press("Escape");
 		// Skipped: the Plan keeps the start, and the Overview offers it too.
-		await expect(page.getByTestId("split-route-start")).toContainText("Where to first?");
+		await expect(page.getByTestId("split-route-start")).toContainText("What do you want to see?");
 		await expect(page.getByTestId("center-panel")).toContainText("A free day.");
 		const base = page.url().split("?")[0];
 		await page.goto(`${base}?tab=overview`);
-		await expect(page.getByTestId("overview-empty")).toContainText("Where to first?");
+		await expect(page.getByTestId("overview-empty")).toContainText("What do you want to see?");
 		await expect(page.getByTestId("overview-plan-route")).toBeVisible();
 		await page.goto(`${base}?tab=plan`);
 		await expect(page.getByTestId("workspace")).toBeVisible();
