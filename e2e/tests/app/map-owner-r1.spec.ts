@@ -225,6 +225,8 @@ function readStyle(page: Page) {
 		const m = (window as unknown as MapWin).__tripMap;
 		if (!m) throw new Error("no map");
 		const st = m.getStyle();
+		// Between two styles (a theme or Satellite switch) the map has none for a moment.
+		if (!st) return { attr: null, name: null, sources: {}, dark: false, attribution: "" };
 		const ground = document.querySelector(".yonder-map-ground");
 		return {
 			attr: document.querySelector("[data-testid=map-canvas]")?.getAttribute("data-map-style") ?? null,
