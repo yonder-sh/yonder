@@ -218,6 +218,30 @@ export const shareLinks = pgTable(
 );
 
 /**
+ * Invite links (owner, 2026-10-09): `/join/<token>` makes whoever opens it,
+ * signed in, a member at `role` (the trip's own address only lets people
+ * look). As many as the owner likes; deleting one stops it working.
+ */
+export const inviteLinks = pgTable(
+	"invite_links",
+	{
+		id: pk(),
+		tripId: tripRef(),
+		/** Random, URL-safe; the link's secret. */
+		token: text().notNull().unique(),
+		role: shareRole().notNull(),
+		useCount: integer().notNull().default(0),
+		lastUsedAt: timestamp({ withTimezone: true }),
+		createdBy: text().references(() => user.id, { onDelete: "set null" }),
+		createdAt: createdAt(),
+	},
+	(t) => [
+		index("invite_links_trip_idx").on(t.tripId),
+		check("invite_links_use_count_ck", sql`${t.useCount} >= 0`),
+	],
+);
+
+/**
  * A non-member's access through the trip's link (D2: guests are Better Auth
  * anonymous users, or accounts that opened the address). Revoking the link
  * row (off, "Reset link") deletes its grants.

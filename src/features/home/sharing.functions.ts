@@ -31,6 +31,7 @@ import {
 import { SHARE_ROLE_VALUES } from "@/lib/schemas/enums";
 import { PlaceholderName } from "@/lib/schemas/people";
 import { logActivity } from "@/server/activity.server";
+import { announceTripChange } from "@/server/announce.server";
 import { getTripAccess, requireTripRole } from "@/server/authz/access.server";
 import {
 	withAccount,
@@ -39,6 +40,13 @@ import {
 } from "@/server/authz/middleware";
 import { fail, withStatus } from "@/server/authz/session.server";
 import { rateLimitPer } from "@/server/cache.server";
+import {
+	createInviteLink as createInvite,
+	deleteInviteLink as deleteInvite,
+	inviteUrl,
+	listInviteLinks,
+	redeemInviteLink as redeemInvite,
+} from "@/server/invite-links.server";
 import {
 	changeMemberRole,
 	claimPlaceholderRow,
@@ -112,6 +120,14 @@ export type SharingDto = {
 		role: ShareRole;
 		signedIn: boolean;
 		lastSeenAt: string;
+	}[];
+	/** Invite links (owner only): each joins whoever opens it, signed in, at its role. */
+	invites: {
+		id: string;
+		url: string;
+		role: ShareRole;
+		useCount: number;
+		createdAt: string;
 	}[];
 };
 
@@ -197,7 +213,84 @@ export const getSharing = createServerFn({ method: "GET" })
 						lastSeenAt: new Date(g.lastSeenAt).toISOString(),
 					}))
 				: [],
+			invites: linkManager
+				? (await listInviteLinks(db, data.tripId)).map((i) => ({
+						id: i.id,
+						url: inviteUrl(i.token),
+						role: i.role,
+						useCount: Number(i.useCount),
+						createdAt: new Date(i.createdAt).toISOString(),
+					}))
+				: [],
 		};
+	});
+
+/** Owner only: a new invite link at `role` ("Can edit" unless they pick another). */
+export const createInviteLink = createServerFn({ method: "POST" })
+	.middleware([withAccount])
+	.validator(TripId.extend({ role: Role }).strict())
+	.handler(async ({ data, context }): Promise<{ id: string; url: string }> => {
+		const access = await requireDirect(
+			"createInviteLink",
+			data.tripId,
+			context.user,
+		);
+		await rateLimitPer(
+			`shareLink:${context.user.id}`,
+			SHARE_LINK_WRITES_PER_HOUR,
+			3600,
+		);
+		return withTripTx(
+			data.tripId,
+			async (tx, out) => {
+				const row = await createInvite(
+					tx,
+					out,
+					data.tripId,
+					data.role,
+					context.user.id,
+				);
+				return { id: row.id, url: inviteUrl(row.token) };
+			},
+			mutationMeta(access, context.user),
+		);
+	});
+
+/** Owner only: the ✕ on an invite link. It stops working at once; people who joined stay. */
+export const deleteInviteLink = createServerFn({ method: "POST" })
+	.middleware([withAccount])
+	.validator(TripId.extend({ id: z.uuid() }).strict())
+	.handler(async ({ data, context }): Promise<{ ok: true }> => {
+		const access = await requireDirect(
+			"deleteInviteLink",
+			data.tripId,
+			context.user,
+		);
+		return withTripTx(
+			data.tripId,
+			async (tx, out) => {
+				if (!(await deleteInvite(tx, out, data.tripId, data.id)))
+					return fail("NOT_FOUND");
+				return { ok: true as const };
+			},
+			mutationMeta(access, context.user),
+		);
+	});
+
+/**
+ * Opening `/join/<token>` signed in (with an account; the route sends
+ * everyone else to sign in first): a member at the link's role. NOT_FOUND
+ * for an unknown or deleted link, and over the per-IP limit.
+ */
+export const redeemInviteLink = createServerFn({ method: "POST" })
+	.middleware([withAccount])
+	.validator(z.object({ token: z.string().min(1).max(64) }).strict())
+	.handler(async ({ data, context }): Promise<{ slug: string }> => {
+		await rateLimitPer(`invite:${context.user.id}`, 30, 60);
+		const r = await redeemInvite(data.token, context.user.id);
+		if (!r) return fail("NOT_FOUND");
+		if (r.joined) await announceTripChange([r.tripId], ["sharing", "graph"]);
+		return { slug: r.slug };
 	});
 
 /**

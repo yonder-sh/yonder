@@ -19,6 +19,7 @@ import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as DevFixtureRouteImport } from './routes/dev/fixture'
 import { Route as DevKitRouteImport } from './routes/dev/kit'
 import { Route as TTripRouteImport } from './routes/t/$trip'
+import { Route as AuthedJoinTokenRouteImport } from './routes/_authed/join.$token'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as ApiAvatarUserIdRouteImport } from './routes/api/avatar/$userId'
 import { Route as ApiShortcutPairRouteImport } from './routes/api/shortcut/pair'
@@ -82,6 +83,11 @@ const TTripRoute = TTripRouteImport.update({
   id: '/t/$trip',
   path: '/t/$trip',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthedJoinTokenRoute = AuthedJoinTokenRouteImport.update({
+  id: '/join/$token',
+  path: '/join/$token',
+  getParentRoute: () => AuthedRoute,
 } as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
@@ -164,6 +170,7 @@ export interface FileRoutesByFullPath {
   '/dev/fixture': typeof DevFixtureRouteWithChildren
   '/dev/kit': typeof DevKitRoute
   '/t/$trip': typeof TTripRouteWithChildren
+  '/join/$token': typeof AuthedJoinTokenRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/avatar/$userId': typeof ApiAvatarUserIdRoute
   '/api/shortcut/pair': typeof ApiShortcutPairRoute
@@ -187,6 +194,7 @@ export interface FileRoutesByTo {
   '/share': typeof AuthedShareRoute
   '/api/health': typeof ApiHealthRoute
   '/dev/kit': typeof DevKitRoute
+  '/join/$token': typeof AuthedJoinTokenRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/avatar/$userId': typeof ApiAvatarUserIdRoute
   '/api/shortcut/pair': typeof ApiShortcutPairRoute
@@ -214,6 +222,7 @@ export interface FileRoutesById {
   '/dev/fixture': typeof DevFixtureRouteWithChildren
   '/dev/kit': typeof DevKitRoute
   '/t/$trip': typeof TTripRouteWithChildren
+  '/_authed/join/$token': typeof AuthedJoinTokenRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/avatar/$userId': typeof ApiAvatarUserIdRoute
   '/api/shortcut/pair': typeof ApiShortcutPairRoute
@@ -241,6 +250,7 @@ export interface FileRouteTypes {
     | '/dev/fixture'
     | '/dev/kit'
     | '/t/$trip'
+    | '/join/$token'
     | '/api/auth/$'
     | '/api/avatar/$userId'
     | '/api/shortcut/pair'
@@ -264,6 +274,7 @@ export interface FileRouteTypes {
     | '/share'
     | '/api/health'
     | '/dev/kit'
+    | '/join/$token'
     | '/api/auth/$'
     | '/api/avatar/$userId'
     | '/api/shortcut/pair'
@@ -290,6 +301,7 @@ export interface FileRouteTypes {
     | '/dev/fixture'
     | '/dev/kit'
     | '/t/$trip'
+    | '/_authed/join/$token'
     | '/api/auth/$'
     | '/api/avatar/$userId'
     | '/api/shortcut/pair'
@@ -399,6 +411,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TTripRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authed/join/$token': {
+      id: '/_authed/join/$token'
+      path: '/join/$token'
+      fullPath: '/join/$token'
+      preLoaderRoute: typeof AuthedJoinTokenRouteImport
+      parentRoute: typeof AuthedRoute
+    }
     '/api/auth/$': {
       id: '/api/auth/$'
       path: '/api/auth/$'
@@ -503,11 +522,13 @@ declare module '@tanstack/react-router' {
 interface AuthedRouteChildren {
   AuthedDashboardRoute: typeof AuthedDashboardRoute
   AuthedShareRoute: typeof AuthedShareRoute
+  AuthedJoinTokenRoute: typeof AuthedJoinTokenRoute
 }
 
 const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedDashboardRoute: AuthedDashboardRoute,
   AuthedShareRoute: AuthedShareRoute,
+  AuthedJoinTokenRoute: AuthedJoinTokenRoute,
 }
 
 const AuthedRouteWithChildren =

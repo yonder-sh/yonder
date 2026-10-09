@@ -34,6 +34,7 @@ import {
 	RotateCcw,
 	UserPlus,
 	Users,
+	X,
 } from "lucide-react";
 import { type FormEvent, type ReactNode, useState } from "react";
 import { toast } from "sonner";
@@ -92,6 +93,8 @@ import { useDialogFocus } from "./dialog-focus";
 import { formatLocalDay } from "./link-dates";
 import {
 	addPlaceholder,
+	createInviteLink,
+	deleteInviteLink,
 	extendShareLink,
 	getSharing,
 	inviteMember,
@@ -99,7 +102,6 @@ import {
 	promoteGuest,
 	removeGuest,
 	removeMember,
-	resetShareLink,
 	type SharingDto,
 	setShareLink,
 	updateMemberRole,
@@ -796,9 +798,103 @@ function AddressRow({ url, onTurnOn }: { url: string; onTurnOn?: () => void }) {
 	);
 }
 
+/**
+ * Invite links (owner, 2026-10-09): whoever opens one joins after signing in,
+ * at its role ("Can edit" unless picked). One per group chat; the ✕ stops it.
+ */
+function InviteLinks({ tripId, data }: { tripId: string; data: SharingDto }) {
+	const act = useShareAction(tripId);
+	const { disabled } = useEditGuard();
+	const [role, setRole] = useState<ShareRole>("editor");
+	return (
+		<Section title="Invite links">
+			<p className="text-xs text-muted-foreground">
+				Whoever opens one joins the trip once they sign in. Post one in your
+				group chat.
+			</p>
+			{data.invites.length ? (
+				<ul className="grid gap-1" data-testid={HOME_TESTID.inviteLinks}>
+					{data.invites.map((i) => (
+						<li
+							key={i.id}
+							data-testid={HOME_TESTID.inviteLink}
+							data-role={i.role}
+							className="flex min-h-9 items-center gap-2"
+						>
+							<span className="grid min-w-0 flex-1">
+								<span className="truncate font-mono text-xs">{i.url}</span>
+								<span className="text-xs text-muted-foreground">
+									{roleLabel(i.role)}
+									{i.useCount ? (
+										<span className="tnum"> · opened {i.useCount}×</span>
+									) : null}
+								</span>
+							</span>
+							<Button
+								size="sm"
+								variant="outline"
+								onClick={() => copy(i.url)}
+								data-testid={HOME_TESTID.inviteLinkCopy}
+							>
+								<Copy /> Copy
+							</Button>
+							<Button
+								size="icon"
+								variant="ghost"
+								className="size-8 text-muted-foreground"
+								aria-label="Delete this invite link"
+								disabled={disabled}
+								data-testid={HOME_TESTID.inviteLinkDelete}
+								onClick={() =>
+									act.mutate(
+										() => deleteInviteLink({ data: { tripId, id: i.id } }),
+										{
+											onSuccess: () =>
+												toast.success(
+													"Invite link deleted. It doesn't work any more.",
+												),
+										},
+									)
+								}
+							>
+								<X />
+							</Button>
+						</li>
+					))}
+				</ul>
+			) : null}
+			<div className="flex flex-wrap items-center gap-2">
+				<Button
+					size="sm"
+					variant="secondary"
+					disabled={disabled || act.isPending}
+					data-testid={HOME_TESTID.inviteLinkNew}
+					onClick={() =>
+						act.mutate(() => createInviteLink({ data: { tripId, role } }), {
+							onSuccess: (r) => {
+								const url = (r as { url: string }).url;
+								copy(url, "Invite link made and copied");
+							},
+						})
+					}
+				>
+					<UserPlus /> New invite link
+				</Button>
+				<span className="text-xs text-muted-foreground">joins as</span>
+				<RoleSelect
+					value={role}
+					onChange={setRole}
+					disabled={disabled}
+					label="What people who join through it can do"
+					testId={HOME_TESTID.inviteLinkRole}
+				/>
+			</div>
+		</Section>
+	);
+}
+
 function TripLink({ tripId, data }: { tripId: string; data: SharingDto }) {
 	const act = useShareAction(tripId);
-	const [confirm, setConfirm] = useState(false);
 	const { disabled } = useEditGuard();
 	const link = data.link;
 	const on = !!link?.enabled;
@@ -878,77 +974,39 @@ function TripLink({ tripId, data }: { tripId: string; data: SharingDto }) {
 					}
 				/>
 				{on ? <LinkNote tripId={tripId} note={link?.note ?? null} /> : null}
-				{!confirm ? (
-					<div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-						<p
-							className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground"
-							data-testid={TESTID.shareLinkExpiry}
-						>
-							{on && link?.createdAt ? (
-								<span data-testid={HOME_TESTID.linkCreated}>
-									Created {formatLocalDay(link.createdAt)}
-								</span>
-							) : null}
-							{on && link?.expiresAt ? (
-								<span>
-									{link.createdAt ? "· " : null}
-									Works until {formatLocalDay(link.expiresAt)}
-								</span>
-							) : null}
-							{on && link?.useCount ? (
-								<span className="tnum">· opened {link.useCount}×</span>
-							) : null}
-							{on && link?.expiresAt ? (
-								<Button
-									variant="link"
-									size="sm"
-									className="h-auto p-0 text-xs"
-									disabled={disabled}
-									data-testid={TESTID.shareLinkExtend}
-									onClick={() =>
-										act.mutate(() => extendShareLink({ data: { tripId } }))
-									}
-								>
-									Extend
-								</Button>
-							) : null}
-						</p>
-						<Button
-							variant="ghost"
-							size="sm"
-							className="-mr-2 text-muted-foreground"
-							disabled={disabled}
-							data-testid={TESTID.shareLinkReset}
-							onClick={() => setConfirm(true)}
-						>
-							<RotateCcw /> Reset link
-						</Button>
-					</div>
-				) : (
-					<div className="flex flex-wrap items-center gap-2 rounded-lg bg-muted/60 px-3 py-2 text-meta">
-						<span className="flex-1">
-							{on
-								? "The trip gets a new address: the old one stops working, and everyone who joined with the link is removed. Reset?"
-								: "The trip gets a new address: the old one stops working. Reset?"}
+				<p
+					className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground"
+					data-testid={TESTID.shareLinkExpiry}
+				>
+					{on && link?.createdAt ? (
+						<span data-testid={HOME_TESTID.linkCreated}>
+							Created {formatLocalDay(link.createdAt)}
 						</span>
+					) : null}
+					{on && link?.expiresAt ? (
+						<span>
+							{link.createdAt ? "· " : null}
+							Works until {formatLocalDay(link.expiresAt)}
+						</span>
+					) : null}
+					{on && link?.useCount ? (
+						<span className="tnum">· opened {link.useCount}×</span>
+					) : null}
+					{on && link?.expiresAt ? (
 						<Button
+							variant="link"
 							size="sm"
-							variant="destructive"
-							data-testid={HOME_TESTID.resetConfirm}
+							className="h-auto p-0 text-xs"
+							disabled={disabled}
+							data-testid={TESTID.shareLinkExtend}
 							onClick={() =>
-								act.mutate(() => resetShareLink({ data: { tripId } }), {
-									onSuccess: () => toast.success("The trip has a new address"),
-									onSettled: () => setConfirm(false),
-								})
+								act.mutate(() => extendShareLink({ data: { tripId } }))
 							}
 						>
-							Reset
+							Extend
 						</Button>
-						<Button size="sm" variant="ghost" onClick={() => setConfirm(false)}>
-							Cancel
-						</Button>
-					</div>
-				)}
+					) : null}
+				</p>
 			</div>
 			<p className="text-xs text-muted-foreground">
 				{on
@@ -1177,6 +1235,7 @@ export function ShareDialog() {
 					</ul>
 					{adder && mode === "live" ? <AddPersonRow tripId={tripId} /> : null}
 				</Section>
+				{owner && data ? <InviteLinks tripId={tripId} data={data} /> : null}
 				{owner && data ? <TripLink tripId={tripId} data={data} /> : null}
 				{owner && data ? <Guests tripId={tripId} data={data} /> : null}
 				{owner && data ? null : (

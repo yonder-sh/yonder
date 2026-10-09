@@ -24,6 +24,7 @@ export const MUTATION_POLICY = {
 	/** The trip's address is its link: a non-member opening it gets a grant. */
 	openTripByLink: "account",
 	joinTripByLink: "account",
+	redeemInviteLink: "account",
 	renameGuest: "account",
 	createTrip: "account",
 	setUserPrefs: "account",
@@ -156,6 +157,8 @@ export const MUTATION_POLICY = {
 	/** FB-13: the trip's one link (on/off and its role). */
 	setShareLink: { direct: "manageShareLinks" },
 	resetShareLink: { direct: "manageShareLinks" },
+	createInviteLink: { direct: "manageShareLinks" },
+	deleteInviteLink: { direct: "manageShareLinks" },
 	extendShareLink: { direct: "manageShareLinks" },
 	removeGuest: { direct: "manageShareLinks" },
 	/** ADDENDUM §10: the caller's own access to the trip is checked inside. */

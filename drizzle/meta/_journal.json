@@ -169,6 +169,13 @@
       "when": 1791500000000,
       "tag": "0023_guests_only_view",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1791529666487,
+      "tag": "0024_invite_links",
+      "breakpoints": true
     }
   ]
 }

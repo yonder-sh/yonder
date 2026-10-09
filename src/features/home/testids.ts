@@ -85,6 +85,12 @@ export const HOME_TESTID = {
 	avatarSave: "home-avatar-save",
 	// Guest nudge / claim
 	joinTrip: "guest-join-trip",
+	inviteLinks: "share-invite-links",
+	inviteLink: "share-invite-link",
+	inviteLinkCopy: "share-invite-link-copy",
+	inviteLinkDelete: "share-invite-link-delete",
+	inviteLinkNew: "share-invite-link-new",
+	inviteLinkRole: "share-invite-link-role",
 	guestRename: "home-guest-rename",
 	claimPrompt: "home-claim-prompt",
 	claimButton: "home-claim-button",
