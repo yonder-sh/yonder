@@ -29,12 +29,11 @@
 import { sql } from "drizzle-orm";
 import type { Tx } from "@/db/db.server";
 import { shareLinks } from "@/db/schema";
-import { can, type ShareRole, type TripRole } from "@/lib/auth/roles";
+import type { ShareRole, TripRole } from "@/lib/auth/roles";
 import { fail } from "./authz/session.server";
 import { getEnv } from "./env.server";
 import type { SqlExec } from "./graph.server";
 import type { TxOutbox } from "./live/outbox.server";
-import { withdrawAuthorProposals } from "./proposals/withdraw.server";
 import { ensureTripTail, giveTripNewTail } from "./trip-slug.server";
 
 /** Days until a new or extended link expires, per role (SECURITY §2). */
@@ -80,22 +79,18 @@ async function liveLinks(tx: SqlExec, tripId: string): Promise<LiveLink[]> {
 
 /**
  * Deletes every grant of a link and announces it: collab closes the holders'
- * sockets (`out.access`) and their open proposals are withdrawn.
+ * sockets (`out.access`). Guests only view, so there's nothing of theirs to withdraw.
  */
 async function revokeGrants(
 	tx: Tx,
 	out: TxOutbox,
-	tripId: string,
 	linkId: string,
 ): Promise<string[]> {
 	const res = await tx.execute(sql`
 		delete from share_grants where share_link_id = ${linkId}
 		returning user_id as "userId"`);
 	const holders = (res.rows as { userId: string }[]).map((r) => r.userId);
-	if (holders.length) {
-		out.access(holders);
-		await withdrawAuthorProposals(tx, out, tripId, holders);
-	}
+	if (holders.length) out.access(holders);
 	return holders;
 }
 
@@ -103,14 +98,13 @@ async function revokeGrants(
 async function retire(
 	tx: Tx,
 	out: TxOutbox,
-	tripId: string,
 	links: readonly LiveLink[],
 ): Promise<void> {
 	for (const l of links) {
 		await tx.execute(
 			sql`update share_links set revoked_at = now(), enabled = false where id = ${l.id}`,
 		);
-		await revokeGrants(tx, out, tripId, l.id);
+		await revokeGrants(tx, out, l.id);
 	}
 }
 
@@ -124,7 +118,7 @@ async function theLink(
 	tripId: string,
 ): Promise<LiveLink | null> {
 	const [link, ...others] = await liveLinks(tx, tripId);
-	if (others.length) await retire(tx, out, tripId, others);
+	if (others.length) await retire(tx, out, others);
 	return link ?? null;
 }
 
@@ -152,17 +146,13 @@ async function createLink(
 }
 
 /**
- * The link's role. Every guest who came in through it has the new role on
- * their next request (access is read from the link); their sockets re-check
- * now (`out.access`), and a downgrade to viewer or rater withdraws their
- * open suggestions, like a member's. The expiry never ends up later than a new
- * link of that role would get (a view link turned into an edit link expires
- * within 30 days).
+ * The link's role: what joining through it gives (its guests only view,
+ * whatever it is; owner, 2026-10-09). The expiry never ends up later than a
+ * new link of that role would get (a view link turned into an edit link
+ * expires within 30 days).
  */
 async function applyRole(
 	tx: Tx,
-	out: TxOutbox,
-	tripId: string,
 	link: LiveLink,
 	role: ShareRole,
 ): Promise<void> {
@@ -173,21 +163,6 @@ async function applyRole(
 		   set role = ${role},
 		       expires_at = least(coalesce(expires_at, ${cap}), ${cap})
 		 where id = ${link.id}`);
-	const res = await tx.execute(sql`
-		select user_id as "userId" from share_grants where share_link_id = ${link.id}`);
-	const holders = (res.rows as { userId: string }[]).map((r) => r.userId);
-	if (!holders.length) return;
-	out.access(holders);
-	if (!can({ role, isGuest: true }, "propose"))
-		await withdrawAuthorProposals(
-			tx,
-			out,
-			tripId,
-			holders,
-			role === "viewer"
-				? "the link became view-only"
-				: "the link can only rate now",
-		);
 }
 
 /**
@@ -219,9 +194,9 @@ export async function setLinkEnabled(
 			await tx.execute(
 				sql`update share_links set enabled = false where id = ${link.id}`,
 			);
-		await revokeGrants(tx, out, tripId, link.id);
+		await revokeGrants(tx, out, link.id);
 	} else {
-		if (role) await applyRole(tx, out, tripId, link, role);
+		if (role) await applyRole(tx, link, role);
 		if (enabled && (!link.enabled || link.expired)) {
 			const now = role ?? link.role;
 			await tx.execute(sql`
@@ -280,7 +255,7 @@ export async function resetLink(
 	userId: string,
 ): Promise<string> {
 	const links = await liveLinks(tx, tripId);
-	await retire(tx, out, tripId, links);
+	await retire(tx, out, links);
 	const slug = await giveTripNewTail(tx, tripId);
 	const was = links[0];
 	if (was || role)
@@ -306,10 +281,7 @@ export async function removeGuestGrants(
 ): Promise<number> {
 	const res = await tx.execute(sql`
 		delete from share_grants where trip_id = ${tripId} and user_id = ${userId} returning 1`);
-	if (res.rows.length) {
-		out.access([userId]);
-		await withdrawAuthorProposals(tx, out, tripId, [userId]);
-	}
+	if (res.rows.length) out.access([userId]);
 	out.emit({ keys: ["sharing", "graph"] });
 	return res.rows.length;
 }
@@ -369,7 +341,7 @@ export async function loadSharing(
 		 order by created_at desc, id desc
 		 limit 1`);
 	const guests = await exec.execute(sql`
-		select g.user_id as "userId", u.name, g.color, max(l.role::text) as role,
+		select g.user_id as "userId", u.name, g.color, 'viewer' as role,
 		       not coalesce(u.is_anonymous, false) as "signedIn", max(g.last_seen_at) as "lastSeenAt"
 		  from share_grants g
 		  join share_links l on l.id = g.share_link_id and l.revoked_at is null

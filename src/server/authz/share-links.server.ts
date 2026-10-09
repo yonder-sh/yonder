@@ -13,8 +13,11 @@ import { leastUsedColor } from "./resolve";
  * "Anyone with the link" is on gets a `share_grants` row on the live link;
  * access is then resolved from the grant on every request, so turning the
  * link off, expiring or resetting it (a new address tail) cuts the guest off
- * immediately. A grant never makes anyone a member, with one exception: a
- * signed-in account on a "Can rate" link (`joinRateLinks`, PLACES §1c).
+ * immediately. A grant never makes anyone a member by itself (`joinLinks`):
+ * a signed-in account opening a "Can rate" link joins (PLACES §1c); a guest
+ * who signs in joins at the link's role, and a signed-in guest by asking
+ * ("Join the trip", owner 2026-10-09). Until then a guest only views
+ * (`loadAccessRows`): only members change things.
  */
 
 export interface OpenedLink {
@@ -117,7 +120,8 @@ export async function openTripLink(
 				returning color`)
 		).rows[0] as ColorRow;
 
-		if (link.role === "rater") await joinRateLinks(tx, userId, link.trip_id);
+		if (link.role === "rater")
+			await joinLinks(tx, userId, { tripId: link.trip_id, roles: ["rater"] });
 
 		return {
 			tripId: link.trip_id,
@@ -130,41 +134,53 @@ export async function openTripLink(
 }
 
 /**
- * PLACES §1c "Can rate": a rating belongs to a member row, so a signed-in
- * ACCOUNT holding a grant on a live rate link becomes a `rater` member (the
- * one exception to "a grant never makes anyone a member"; the owner asked
- * for rating through the one trip link, and the joiner must sign in). The
- * grant is then dropped: the membership is the one source of their role, and
- * the owner manages them under People like anyone invited. Anonymous guests
- * stay guests (view only: nothing to rate as), and a user who already has a
- * row on the trip (a member, or a removed former member) is left as they
- * are. No placeholder is merged: "Are you Audrey?" stays the member's own
- * claim. Called on redemption and when a guest signs in
- * (`migrateGuestToUser`). Returns the trips that gained a member.
+ * A signed-in ACCOUNT holding a grant on a live link becomes a member at the
+ * link's role (`roles`: only links of these roles; all by default): a rating
+ * belongs to a member row (PLACES §1c), and the owner manages them under
+ * People like anyone invited. The grant is then dropped: the membership is
+ * the one source of their role. Anonymous guests stay guests, and a user who
+ * already has a row on the trip (a member, or a removed former member), or
+ * an email invite waiting there (it sets their role), is left as they are. No placeholder is merged: "Are you Audrey?" stays the
+ * member's own claim. Called when a signed-in account opens a "Can rate"
+ * link, when a guest signs in (`migrateGuestToUser`), and on "Join the trip".
+ * Returns the trips that gained a member.
  */
-export async function joinRateLinks(
+export async function joinLinks(
 	tx: SqlExec,
 	userId: string,
-	tripId?: string,
+	opts: { tripId?: string; roles?: readonly ShareRole[] } = {},
 ): Promise<string[]> {
+	const { tripId, roles } = opts;
 	const res = await tx.execute(sql`
-		select distinct on (g.trip_id) g.trip_id::text as "tripId", g.color
+		select distinct on (g.trip_id) g.trip_id::text as "tripId", g.color, l.role::text as role
 		  from share_grants g
 		  join share_links l on l.id = g.share_link_id
 		  join trips t on t.id = g.trip_id and t.deleted_at is null
 		  join "user" u on u.id = g.user_id and not coalesce(u.is_anonymous, false)
 		 where g.user_id = ${userId}
-		   and l.role::text = 'rater' and l.enabled and l.revoked_at is null
+		   ${roles ? sql`and l.role::text in ${roles}` : sql``}
+		   and l.enabled and l.revoked_at is null
 		   and (l.expires_at is null or l.expires_at > now())
 		   ${tripId ? sql`and g.trip_id = ${tripId}` : sql``}
 		   and not exists (select 1 from trip_members m
 		                    where m.trip_id = g.trip_id and m.user_id = g.user_id)
-		 order by g.trip_id, g.created_at`);
+		   -- An email invite waiting for them sets their role (SHARE-04: claimInvites).
+		   and not exists (select 1 from trip_members m
+		                    where m.trip_id = g.trip_id and m.status = 'invited'
+		                      and m.email = lower(trim(u.email)))
+		 -- The strongest live link they hold on the trip.
+		 order by g.trip_id,
+		          case l.role::text when 'editor' then 4 when 'suggester' then 3 when 'rater' then 2 else 1 end desc,
+		          g.created_at`);
 	const joined: string[] = [];
-	for (const r of res.rows as { tripId: string; color: number | string }[]) {
+	for (const r of res.rows as {
+		tripId: string;
+		color: number | string;
+		role: ShareRole;
+	}[]) {
 		const ins = await tx.execute(sql`
 			insert into trip_members (id, trip_id, user_id, status, role, color, joined_at, joined_by_link)
-			values (${newId()}, ${r.tripId}, ${userId}, 'active', 'rater', ${Number(r.color)}, now(), true)
+			values (${newId()}, ${r.tripId}, ${userId}, 'active', ${r.role}, ${Number(r.color)}, now(), true)
 			on conflict do nothing
 			returning trip_id`);
 		if (!ins.rows.length) continue;

@@ -21,7 +21,7 @@ import {
 	migrateGuestToUser,
 } from "@/server/auth/accounts.server";
 import { pinTestLink } from "@/server/fixture.server";
-import { openTripLink, tripLinkIsOpen } from "./share-links.server";
+import { joinLinks, openTripLink, tripLinkIsOpen } from "./share-links.server";
 import { loadTripAccess } from "./trip-access.server";
 
 // .env is loaded by vitest.config.ts (variables already set win).
@@ -235,13 +235,58 @@ describe("openTripLink: the trip's address is its link", () => {
 		expect(await loadTripAccess(deleted.tripId, g)).toBeNull();
 	});
 
+	it("a link guest only views, whatever the link allows: members change things (owner, 2026-10-09)", async () => {
+		const t = await newTrip();
+		const anon = await newUser({ anonymous: true });
+		const signedIn = await newUser();
+		await newLink(t.tripId, "editor");
+		await openTripLink(t.tripSlug, anon);
+		await openTripLink(t.tripSlug, signedIn);
+		await expect(loadTripAccess(t.tripId, anon)).resolves.toMatchObject({
+			role: "viewer",
+			linkRole: "editor",
+			isGuest: true,
+		});
+		// Signed in too: a guest until they join (no membership by itself).
+		await expect(loadTripAccess(t.tripId, signedIn)).resolves.toMatchObject({
+			role: "viewer",
+			linkRole: "editor",
+			isGuest: true,
+			memberId: null,
+		});
+	});
+
+	it("Join the trip: a signed-in guest becomes a member at the link's role; a signed-out one can't", async () => {
+		const t = await newTrip();
+		const anon = await newUser({ anonymous: true });
+		const g = await newUser();
+		await newLink(t.tripId, "editor");
+		await openTripLink(t.tripSlug, anon);
+		await openTripLink(t.tripSlug, g);
+		expect(
+			await db().transaction((tx) => joinLinks(tx, anon, { tripId: t.tripId })),
+		).toEqual([]);
+		expect(
+			await db().transaction((tx) => joinLinks(tx, g, { tripId: t.tripId })),
+		).toEqual([t.tripId]);
+		await expect(loadTripAccess(t.tripId, g)).resolves.toMatchObject({
+			role: "editor",
+			isGuest: false,
+		});
+		// Once: a member joins nothing more.
+		expect(
+			await db().transaction((tx) => joinLinks(tx, g, { tripId: t.tripId })),
+		).toEqual([]);
+	});
+
 	it("turning the link off or resetting it cuts existing guests off at once (QA LINK-04/05)", async () => {
 		const t = await newTrip();
-		const g = await newUser({ anonymous: true });
+		const g = await newUser();
 		const link = await newLink(t.tripId, "editor");
 		await openTripLink(t.tripSlug, g);
 		await expect(loadTripAccess(t.tripId, g)).resolves.toMatchObject({
-			role: "editor",
+			role: "viewer",
+			linkRole: "editor",
 		});
 
 		await db()
@@ -270,13 +315,13 @@ describe("openTripLink: the trip's address is its link", () => {
 	it("test fixtures: `pinTestLink` lets each guest in with the role set when they opened it", async () => {
 		const t = await newTrip();
 		const v = await newUser({ anonymous: true });
-		const e = await newUser({ anonymous: true });
+		const e = await newUser();
 		await pinTestLink(db(), t.tripId, "viewer");
 		await openTripLink(t.tripSlug, v);
 		await pinTestLink(db(), t.tripId, "editor");
 		await openTripLink(t.tripSlug, e);
-		expect((await loadTripAccess(t.tripId, v))?.role).toBe("viewer");
-		expect((await loadTripAccess(t.tripId, e))?.role).toBe("editor");
+		expect((await loadTripAccess(t.tripId, v))?.linkRole).toBe("viewer");
+		expect((await loadTripAccess(t.tripId, e))?.linkRole).toBe("editor");
 		await pinTestLink(db(), t.tripId, null);
 		expect(await loadTripAccess(t.tripId, v)).toBeNull();
 		expect(await loadTripAccess(t.tripId, e)).toBeNull();
@@ -285,7 +330,7 @@ describe("openTripLink: the trip's address is its link", () => {
 });
 
 describe("migrateGuestToUser", () => {
-	it("moves grants and attribution to the account, de-duplicating, without membership", async () => {
+	it("moves grants and attribution to the account, then joins at the strongest link's role", async () => {
 		const t = await newTrip();
 		const anon = await newUser({ anonymous: true });
 		const account = await newUser();
@@ -301,12 +346,12 @@ describe("migrateGuestToUser", () => {
 
 		await migrateGuestToUser(anon, account);
 
+		// Signing in is how a link guest takes part: a member now, the grants gone.
 		const grants = await db()
 			.select()
 			.from(shareGrants)
 			.where(eq(shareGrants.tripId, t.tripId));
-		expect(grants.map((g) => g.userId).sort()).toEqual([account, account]);
-		expect(grants.some((g) => g.userId === anon)).toBe(false);
+		expect(grants).toEqual([]);
 		const [trip] = await db()
 			.select()
 			.from(trips)
@@ -314,13 +359,15 @@ describe("migrateGuestToUser", () => {
 		expect(trip?.createdBy).toBe(account);
 		await expect(loadTripAccess(t.tripId, account)).resolves.toMatchObject({
 			role: "editor",
-			isGuest: true,
+			isGuest: false,
 		});
 		const members = await db()
 			.select()
 			.from(tripMembers)
 			.where(eq(tripMembers.userId, account));
-		expect(members).toHaveLength(0);
+		expect(members.map((m) => [m.role, m.joinedByLink])).toEqual([
+			["editor", true],
+		]);
 	});
 });
 

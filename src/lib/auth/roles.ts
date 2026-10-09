@@ -77,6 +77,8 @@ export interface TripAccess {
 	/** The active `trip_members.id`, or null for guests. */
 	memberId: string | null;
 	isGuest: boolean;
+	/** A guest's link role: what joining makes them (`role` is "viewer" while a guest). */
+	linkRole?: TripRole;
 	/** Presence colour index 0..7 (member row, else the grant). */
 	color: number;
 }
@@ -117,12 +119,8 @@ export const CAPABILITIES = [
 ] as const;
 export type Capability = (typeof CAPABILITIES)[number];
 
-type Who =
-	| TripRole
-	| "guestEditor"
-	| "guestSuggester"
-	| "guestRater"
-	| "guestViewer";
+/** A link guest only views, whatever the link allows: only members change things (owner, 2026-10-09). */
+type Who = TripRole | "guest";
 
 /**
  * SPEC §11.3 + EXTENSIONS §3.1, row by row. "Rename self" is account-level, not
@@ -130,43 +128,27 @@ type Who =
  * other row lists `rater` exactly where it lists `viewer`.
  */
 const MATRIX: Record<Capability, readonly Who[]> = {
-	read: [
-		"owner",
-		"editor",
-		"suggester",
-		"rater",
-		"viewer",
-		"guestEditor",
-		"guestSuggester",
-		"guestRater",
-		"guestViewer",
-	],
+	read: ["owner", "editor", "suggester", "rater", "viewer", "guest"],
 	// Refs, seats, costs and money: never for guests of any kind.
 	seeBookingDetails: ["owner", "editor", "suggester", "rater", "viewer"],
-	edit: ["owner", "editor", "guestEditor"],
-	editNotes: ["owner", "editor", "guestEditor"],
-	editTripDates: ["owner", "editor", "guestEditor"],
+	edit: ["owner", "editor"],
+	editNotes: ["owner", "editor"],
+	editTripDates: ["owner", "editor"],
 	beMentioned: ["owner", "editor", "suggester", "rater", "viewer"],
 	manageMembers: ["owner"],
 	manageShareLinks: ["owner"],
-	tripSettings: ["owner", "editor", "guestEditor"],
+	tripSettings: ["owner", "editor"],
 	changeSlug: ["owner"],
 	deleteTrip: ["owner"],
 	seeMemberEmails: ["owner"],
 	// The owner must transfer first (not in v1); guests simply close the tab.
 	leaveTrip: ["editor", "suggester", "rater", "viewer"],
-	// QA MED-* lets link editors upload; viewers, raters and suggesters never can.
-	uploadMedia: ["owner", "editor", "guestEditor"],
+	// Viewers, raters and suggesters never upload.
+	uploadMedia: ["owner", "editor"],
 	// Editors propose only in suggest mode (the x-yonder-mode header); the gate decides.
-	propose: ["owner", "editor", "suggester", "guestEditor", "guestSuggester"],
-	reviewProposals: ["owner", "editor", "guestEditor"],
-	searchPlaces: [
-		"owner",
-		"editor",
-		"suggester",
-		"guestEditor",
-		"guestSuggester",
-	],
+	propose: ["owner", "editor", "suggester"],
+	reviewProposals: ["owner", "editor"],
+	searchPlaces: ["owner", "editor", "suggester"],
 	// Money is a ledger, not a plan: suggester members write it directly (X5).
 	manageExpenses: ["owner", "editor", "suggester"],
 	manageBudgets: ["owner", "editor"],
@@ -180,27 +162,9 @@ const MATRIX: Record<Capability, readonly Who[]> = {
 	markDone: ["owner", "editor"],
 };
 
-/**
- * The matrix column for an access. Exhaustive on purpose: a ternary would turn
- * a guest suggester into a guestEditor, escalating a public link to edit.
- */
+/** The matrix column for an access: any link guest is "guest", whatever its role says. */
 function who(access: Pick<TripAccess, "role" | "isGuest">): Who {
-	const guest = access.isGuest;
-	switch (access.role) {
-		case "owner":
-		case "editor":
-			return guest ? "guestEditor" : access.role;
-		case "suggester":
-			return guest ? "guestSuggester" : "suggester";
-		case "rater":
-			return guest ? "guestRater" : "rater";
-		case "viewer":
-			return guest ? "guestViewer" : "viewer";
-		default: {
-			const _x: never = access.role;
-			throw new Error(`unknown trip role ${String(_x)}`);
-		}
-	}
+	return access.isGuest ? "guest" : access.role;
 }
 
 /** Whether the access allows the capability. */
@@ -240,7 +204,7 @@ export function seesMoney(access: Pick<TripAccess, "role" | "isGuest">) {
 }
 
 /**
- * Follows along ("Can view": a member, or a guest on a view link): during the
+ * Follows along ("Can view": a member, or any link guest): during the
  * trip they open on the Overview (route, today's plan, photos), with Today
  * next to it; everyone else opens on Today (flow 11, board P17).
  */

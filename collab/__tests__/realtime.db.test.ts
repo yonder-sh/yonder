@@ -254,7 +254,7 @@ beforeAll(async () => {
 	await mkUser("ge", "Wren", "", true);
 	await mkUser("sue", "Sue", "Suggester");
 	await mkUser("gs", "Lark", "", true);
-	await mkUser("ivy", "Ivy", "Revoked", true);
+	await mkUser("ivy", "Ivy", "Revoked");
 
 	const [t1] = await db
 		.insert(schema.trips)
@@ -289,6 +289,7 @@ beforeAll(async () => {
 			member("hal", "editor", 5),
 			member("eve", "editor", 6),
 			member("sue", "suggester", 7),
+			member("ivy", "editor", 3),
 		]);
 	const [lv, le, ls] = await db
 		.insert(schema.shareLinks)
@@ -319,12 +320,6 @@ beforeAll(async () => {
 			shareLinkId: ls.id,
 			userId: users.gs?.id ?? "",
 			color: 7,
-		},
-		{
-			tripId: ids.t1,
-			shareLinkId: le.id,
-			userId: users.ivy?.id ?? "",
-			color: 3,
 		},
 	]);
 	const [n1] = await db
@@ -610,13 +605,14 @@ describe("collab server", () => {
 		expect(status(lease).status).toBe("connecting");
 	});
 
-	it("admits share-link guests with the link's role, and refuses a disabled link", async () => {
+	it("admits share-link guests read-only, whatever the link allows, and refuses a disabled link", async () => {
 		const name = mod.noteDocName(ids.t1, { kind: "trip" });
 		const gv = connect(users.gv as U).acquire(name);
 		const ge = connect(users.ge as U).acquire(name);
 		await Promise.all([authed(gv), authed(ge)]);
 		expect(status(gv).readOnly).toBe(true);
-		expect(status(ge).readOnly).toBe(false);
+		// Only members change things (owner, 2026-10-09).
+		expect(status(ge).readOnly).toBe(true);
 		const gvLive = live(connect(users.gv as U));
 		await until(
 			() => gvLive.messages.some((m) => m.type === "hello"),
@@ -826,9 +822,9 @@ describe("collab server", () => {
 		await Promise.all([authed(owner), authed(ivy, "ivy")]);
 		expect(status(ivy).readOnly).toBe(false);
 		await until(() => status(ivy).synced, 3_000, "ivy synced");
-		// Revoke WITHOUT publishing an access event (a Redis blip, a lost message).
+		// Remove WITHOUT publishing an access event (a Redis blip, a lost message).
 		await db.execute(
-			sql`delete from share_grants where user_id = ${users.ivy?.id ?? ""}`,
+			sql`delete from trip_members where user_id = ${users.ivy?.id ?? ""}`,
 		);
 		await new Promise((r) => setTimeout(r, 400)); // > recheckMs
 		paragraph(ivy.doc, "WRITE AFTER REVOKE");

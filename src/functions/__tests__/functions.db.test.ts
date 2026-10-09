@@ -2,8 +2,8 @@
  * The foundation's server functions against real Postgres and Redis (SPEC
  * §18.2 F1s acceptance): the permission matrix for the F mutations, flight
  * blocks, re-keying and detached legs, day operations that never lose items,
- * nodes (slugs, zones, rank rules, delete/restore), leg writes with guest
- * redaction and merge, mentions, activity, and the dev seed.
+ * nodes (slugs, zones, rank rules, delete/restore), leg writes and guest
+ * redaction, mentions, activity, and the dev seed.
  *
  * The handlers run for real (validator + body) through `src/test/start-mock.ts`;
  * each test passes `context.user` itself. A throwaway migrated database and
@@ -203,12 +203,14 @@ afterAll(async () => {
 });
 
 describe("permission matrix (F mutations)", () => {
-	it("editors and guest editors write; viewers get 403, strangers 404", async () => {
+	it("editors write; viewers and link guests (even on an edit link) get 403, strangers 404", async () => {
 		const c = await freshTrip();
 		const input = { tripId: c.tripId, dayId: c.ids.days.d2, title: "Coffee" };
 		expect(await codeOf(call(createItem, U.owner, input))).toBe("ok");
 		expect(await codeOf(call(createItem, U.maya, input))).toBe("ok");
-		expect(await codeOf(call(createItem, U.guestEditor, input))).toBe("ok");
+		expect(await codeOf(call(createItem, U.guestEditor, input))).toBe(
+			"FORBIDDEN",
+		);
 		expect(await codeOf(call(createItem, U.viewer, input))).toBe("FORBIDDEN");
 		expect(await codeOf(call(createItem, U.guestViewer, input))).toBe(
 			"FORBIDDEN",
@@ -227,7 +229,7 @@ describe("permission matrix (F mutations)", () => {
 				call(updateTrip, U.maya, { tripId: c.tripId, slug: `x-${hex}` }),
 			),
 		).toBe("FORBIDDEN");
-		// Every F mutation refuses a viewer.
+		// Every F mutation refuses a viewer and a link guest.
 		const viewerCalls: [unknown, unknown][] = [
 			[updateItem, { itemId: c.ids.items.hands, patch: { durationMin: 10 } }],
 			[moveItem, { itemId: c.ids.items.hands, dayId: null }],
@@ -258,7 +260,8 @@ describe("permission matrix (F mutations)", () => {
 			],
 		];
 		for (const [fn, data] of viewerCalls)
-			expect(await codeOf(call(fn, U.viewer, data))).toBe("FORBIDDEN");
+			for (const who of [U.viewer, U.guestEditor])
+				expect(await codeOf(call(fn, who, data))).toBe("FORBIDDEN");
 	});
 
 	it("every mutation bumps trips.version by exactly one", async () => {
@@ -429,7 +432,7 @@ describe("items and legs (§7.8, §7.9)", () => {
 		expect(after.rows).toHaveLength(0);
 	});
 
-	it("setLeg: a flight gets its instants; a guest editor can't wipe the booking ref and never sees it", async () => {
+	it("setLeg: a flight gets its instants; a link guest never sees the booking ref and can't write the leg", async () => {
 		const c = await freshTrip();
 		const I = c.ids.items;
 		const target = {
@@ -476,20 +479,24 @@ describe("items and legs (§7.8, §7.9)", () => {
 		}>(getLeg, U.guestEditor, { target });
 		expect(JSON.stringify(asGuest)).not.toContain("E7K2Q9");
 		expect(asGuest.details.flight.seats[0]?.seat).toBe("••");
-		// The guest saves the redacted form back: the ref and the seat survive.
-		await call(setLeg, U.guestEditor, {
-			target,
-			patch: {
-				details: {
-					...flight,
-					flight: {
-						...flight.flight,
-						bookingRef: undefined,
-						seats: [{ memberId: c.members.owner, seat: "••" }],
+		// Saving the redacted form back is refused (guests only view): the ref and the seat stay.
+		expect(
+			await codeOf(
+				call(setLeg, U.guestEditor, {
+					target,
+					patch: {
+						details: {
+							...flight,
+							flight: {
+								...flight.flight,
+								bookingRef: undefined,
+								seats: [{ memberId: c.members.owner, seat: "••" }],
+							},
+						},
 					},
-				},
-			},
-		});
+				}),
+			),
+		).toBe("FORBIDDEN");
 		leg = (await graphOf(c.tripId)).legs.find((l) => l.fromItemId === I.kix);
 		const stored = leg?.details as {
 			flight: { bookingRef?: string; seats: { seat: string }[] };

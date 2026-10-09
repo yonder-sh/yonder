@@ -322,7 +322,9 @@ function RaterLanding({ tripId, slug }: { tripId: string; slug: string }) {
 	useEffect(() => {
 		if (landed.current === tripId) return;
 		landed.current = tripId;
-		if (graph.me.role !== "rater" || scope || underway) return;
+		// A rater, or a guest on a "Can rate" link (they rate once they join).
+		if ((graph.me.linkRole ?? graph.me.role) !== "rater" || scope || underway)
+			return;
 		if (search.tab || tab !== "overview") return;
 		void navigate({
 			to: "/t/$trip",
@@ -330,7 +332,17 @@ function RaterLanding({ tripId, slug }: { tripId: string; slug: string }) {
 			search: { ...search, tab: "places", pv: "rate" },
 			replace: true,
 		});
-	}, [tripId, graph.me.role, scope, search, tab, underway, slug, navigate]);
+	}, [
+		tripId,
+		graph.me.role,
+		graph.me.linkRole,
+		scope,
+		search,
+		tab,
+		underway,
+		slug,
+		navigate,
+	]);
 	return null;
 }
 

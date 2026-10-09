@@ -18,6 +18,7 @@ import { useEditGuard } from "@/components/common/edit-guard";
 import { undoToast } from "@/components/common/undo-toast";
 import { slotOf } from "@/features/plan/use-plan-actions";
 import { deleteItem } from "@/functions/items.functions";
+import { can } from "@/lib/auth/roles";
 import type { LifecycleFields } from "@/lib/domain/places-lifecycle";
 import { humanError } from "@/lib/errors";
 import { newId } from "@/lib/ids";
@@ -50,11 +51,14 @@ export function useCanRateOwn(): {
 	const me = access.memberId
 		? graph.members.find((m) => m.id === access.memberId)
 		: undefined;
+	// A link guest whose link rates once they join (sign in, or Join the trip).
+	const linkRole = graph.me.linkRole;
 	if (!me)
-		return access.role === "rater"
+		return linkRole && can({ role: linkRole, isGuest: false }, "rate")
 			? {
 					canRate: false,
-					reason: "Sign in to rate. Your name shows next to your ratings.",
+					reason:
+						"Join the trip to rate. Your name shows next to your ratings.",
 					memberId: null,
 					signIn: true,
 				}

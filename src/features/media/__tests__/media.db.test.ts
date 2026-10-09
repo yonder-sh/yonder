@@ -1,8 +1,8 @@
 /**
  * WP-Media server functions against real Postgres, Redis and S3 (s3proxy):
  * the upload flow (presigned PUT with signed type/length, HeadObject + magic
- * bytes, the variants job), permissions (edit-only uploads, receipts under
- * manageExpenses, viewers and guests), ADDENDUM §9 visibility (defaults for
+ * bytes, the variants job), permissions (member-editor uploads, receipts under
+ * manageExpenses, viewers; link guests only view), ADDENDUM §9 visibility (defaults for
  * PDFs on flights/stays/reserved transit, "Hide from guests" by any member,
  * never a guest; hidden rows invisible to guests in lists, updates and
  * deletes), links, captions, moves, delete/restore and the purge.
@@ -386,7 +386,7 @@ describe("uploads (SPEC §15.2, MED-01/06/07, SEC-05)", () => {
 		expect(await codeOf(call(deleteAttachment, U.owner, { id }))).toBe("ok");
 	});
 
-	it("viewers and guest viewers can't upload; guest editors can; strangers get 404; caps apply", async () => {
+	it("viewers and link guests (even on an edit link) can't upload; strangers get 404; caps apply", async () => {
 		const c = await freshTrip();
 		const input = {
 			tripId: c.tripId,
@@ -399,7 +399,9 @@ describe("uploads (SPEC §15.2, MED-01/06/07, SEC-05)", () => {
 		expect(await codeOf(call(createUpload, U.guestViewer, input))).toBe(
 			"FORBIDDEN",
 		);
-		expect(await codeOf(call(createUpload, U.guestEditor, input))).toBe("ok");
+		expect(await codeOf(call(createUpload, U.guestEditor, input))).toBe(
+			"FORBIDDEN",
+		);
 		expect(await codeOf(call(createUpload, U.stranger, input))).toBe(
 			"NOT_FOUND",
 		);
@@ -428,11 +430,11 @@ describe("uploads (SPEC §15.2, MED-01/06/07, SEC-05)", () => {
 				}),
 			),
 		).toBe("NOT_FOUND");
-		// A guest editor finishes their own upload, even one that starts
-		// hidden from guests (a flight's PDF).
+		// The uploader finishes their own upload, even one that starts hidden
+		// from guests (a flight's PDF).
 		expect(
 			await upload(
-				U.guestEditor,
+				U.owner,
 				c.tripId,
 				{ kind: "leg", legId: c.ids.legs.flight },
 				makePdf(["E-ticket"]),
@@ -724,7 +726,7 @@ describe("multipart uploads (files over 16 MB)", () => {
 
 	it("parts: only the uploader, only this upload's part numbers; per-file caps (videos 2 GB, photos and PDFs 50 MB)", async () => {
 		const c = await freshTrip();
-		const { id } = await call<CreatedUpload>(createUpload, U.guestEditor, {
+		const { id } = await call<CreatedUpload>(createUpload, U.owner, {
 			tripId: c.tripId,
 			target: { kind: "trip" },
 			type: "application/pdf",
@@ -732,16 +734,18 @@ describe("multipart uploads (files over 16 MB)", () => {
 			name: "guide.pdf",
 		});
 		expect(
-			await codeOf(call(signUploadParts, U.owner, { id, parts: [1] })),
+			await codeOf(call(signUploadParts, U.guestEditor, { id, parts: [1] })),
 		).toBe("NOT_FOUND");
 		expect(
-			await codeOf(call(signUploadParts, U.guestEditor, { id, parts: [5] })),
+			await codeOf(call(signUploadParts, U.owner, { id, parts: [5] })),
 		).toBe("VALIDATION");
 		expect(
-			await codeOf(call(signUploadParts, U.guestEditor, { id, parts: [4] })),
+			await codeOf(call(signUploadParts, U.owner, { id, parts: [4] })),
 		).toBe("ok");
-		expect(await codeOf(call(abortUpload, U.owner, { id }))).toBe("NOT_FOUND");
-		expect(await codeOf(call(abortUpload, U.guestEditor, { id }))).toBe("ok");
+		expect(await codeOf(call(abortUpload, U.guestEditor, { id }))).toBe(
+			"NOT_FOUND",
+		);
+		expect(await codeOf(call(abortUpload, U.owner, { id }))).toBe("ok");
 		const input = {
 			tripId: c.tripId,
 			target: { kind: "trip" },
@@ -771,7 +775,7 @@ describe("storage quota (ADDENDUM §12: the uploader pays)", () => {
 			sql`update "user" set storage_quota_bytes = ${bytes} where id = ${who.id}`,
 		);
 
-	it("counts the uploader's originals in every trip; a guest's upload counts against the trip owner", async () => {
+	it("counts the uploader's originals in every trip; a link guest uploads nothing to count", async () => {
 		const owner = await newUser({ first: "Quinn", last: "Owner" });
 		const editor = await newUser({ first: "Eddie", last: "Editor" });
 		sessions.byId.set(owner.id, owner);
@@ -801,7 +805,7 @@ describe("storage quota (ADDENDUM §12: the uploader pays)", () => {
 		);
 		expect(await usedBytes(getDb(), owner.id)).toBe(photo.length);
 		// The editor pays for their upload to the owner's trip, and for their own trip's.
-		await upload(
+		const g = await upload(
 			editor,
 			a.tripId,
 			{ kind: "trip" },
@@ -819,17 +823,19 @@ describe("storage quota (ADDENDUM §12: the uploader pays)", () => {
 		);
 		expect(await usedBytes(getDb(), owner.id)).toBe(photo.length);
 		expect(await usedBytes(getDb(), editor.id)).toBe(pdf.length + photo.length);
-		// A link guest's upload counts against the trip's owner, not the guest.
-		const g = await upload(
-			U.guestEditor,
-			a.tripId,
-			{ kind: "trip" },
-			pdf,
-			"application/pdf",
-			"guest.pdf",
-		);
-		expect(await usedBytes(getDb(), owner.id)).toBe(photo.length + pdf.length);
-		expect(await usedBytes(getDb(), U.guestEditor.id)).toBe(0);
+		// A link guest, even on an edit link, can't upload (guests only view).
+		expect(
+			await codeOf(
+				call(createUpload, U.guestEditor, {
+					tripId: a.tripId,
+					target: { kind: "trip" },
+					type: "application/pdf",
+					size: pdf.length,
+					name: "guest.pdf",
+				}),
+			),
+		).toBe("FORBIDDEN");
+		expect(await usedBytes(getDb(), owner.id)).toBe(photo.length);
 		// A pending upload counts at once (parallel uploads can't overshoot).
 		const pending = await call<CreatedUpload>(createUpload, owner, {
 			tripId: a.tripId,
@@ -838,17 +844,16 @@ describe("storage quota (ADDENDUM §12: the uploader pays)", () => {
 			size: 1000,
 			name: "p.jpg",
 		});
-		expect(await usedBytes(getDb(), owner.id)).toBe(
-			photo.length + pdf.length + 1000,
-		);
+		expect(await usedBytes(getDb(), owner.id)).toBe(photo.length + 1000);
 		// Cancel, delete and a deleted trip free the space at once.
 		await call(abortUpload, owner, { id: pending.id });
-		await call(deleteAttachment, owner, { id: g.id });
 		expect(await usedBytes(getDb(), owner.id)).toBe(photo.length);
+		await call(deleteAttachment, editor, { id: g.id });
+		expect(await usedBytes(getDb(), editor.id)).toBe(photo.length);
 		await getDb().execute(
 			sql`update trips set deleted_at = now() where id = ${b.tripId}`,
 		);
-		expect(await usedBytes(getDb(), editor.id)).toBe(pdf.length);
+		expect(await usedBytes(getDb(), editor.id)).toBe(0);
 	});
 
 	it("a duplicated trip's re-referenced objects count once", async () => {
@@ -910,11 +915,10 @@ describe("storage quota (ADDENDUM §12: the uploader pays)", () => {
 		expect((err as Error).message).toMatch(
 			/^STORAGE_QUOTA: This upload needs 20\.0 MB but you have \d+ KB left \(\d+ (B|KB) of 1\.0 MB used\)\. Delete some uploads or ask the trip owner\.$/,
 		);
-		// A link guest hits the owner's quota, and is told so.
-		const guest = await call(createUpload, U.guestEditor, input).catch(
-			(e: unknown) => e,
+		// A link guest never gets as far as the quota: guests only view.
+		expect(await codeOf(call(createUpload, U.guestEditor, input))).toBe(
+			"FORBIDDEN",
 		);
-		expect((guest as Error).message).toContain("but the trip owner has");
 		// Nothing was left behind.
 		expect(await usedBytes(getDb(), owner.id)).toBe(photo.length);
 		// Back to the default: it fits.
@@ -1012,7 +1016,8 @@ describe("PDFs and 'Hide from guests' (ADDENDUM §9)", () => {
 		);
 		expect(photo.visibility).toBe("everyone");
 
-		// Guests never get members rows: not listed, not updatable, not deletable.
+		// Guests never get members rows: not listed. Nor do they change any row
+		// (guests only view): a hidden one answers like a visible one.
 		for (const g of [U.guestViewer, U.guestEditor]) {
 			const list = await call<MediaDto[]>(listTripMedia, g, {
 				tripId: c.tripId,
@@ -1020,14 +1025,16 @@ describe("PDFs and 'Hide from guests' (ADDENDUM §9)", () => {
 			expect(list.map((m) => m.id)).not.toContain(flight.id);
 			expect(list.map((m) => m.id)).toContain(guide.id);
 		}
-		expect(
-			await codeOf(
-				call(updateAttachment, U.guestEditor, { id: flight.id, caption: "x" }),
-			),
-		).toBe("NOT_FOUND");
-		expect(
-			await codeOf(call(deleteAttachment, U.guestEditor, { id: flight.id })),
-		).toBe("NOT_FOUND");
+		for (const id of [flight.id, guide.id]) {
+			expect(
+				await codeOf(
+					call(updateAttachment, U.guestEditor, { id, caption: "x" }),
+				),
+			).toBe("FORBIDDEN");
+			expect(await codeOf(call(deleteAttachment, U.guestEditor, { id }))).toBe(
+				"FORBIDDEN",
+			);
+		}
 		expect(
 			await codeOf(
 				call(setAttachmentVisibility, U.guestEditor, {
@@ -1106,21 +1113,22 @@ describe("links, captions, moves, delete and restore", () => {
 			status: "processing",
 			aspect: 16 / 9,
 		});
-		const web = await call<MediaDto>(addLink, U.guestEditor, {
+		const web = await call<MediaDto>(addLink, U.owner, {
 			tripId: c.tripId,
 			target: { kind: "node", nodeId: c.ids.nodes.mtFuji },
 			url: "https://www.japan-guide.com/e/e2172.html",
 		});
 		expect(web).toMatchObject({ kind: "link", provider: "web" });
-		expect(
-			await codeOf(
-				call(addLink, U.viewer, {
-					tripId: c.tripId,
-					target: { kind: "trip" },
-					url: "https://example.com/",
-				}),
-			),
-		).toBe("FORBIDDEN");
+		for (const u of [U.viewer, U.guestEditor])
+			expect(
+				await codeOf(
+					call(addLink, u, {
+						tripId: c.tripId,
+						target: { kind: "trip" },
+						url: "https://example.com/",
+					}),
+				),
+			).toBe("FORBIDDEN");
 		expect(
 			await codeOf(
 				call(addLink, U.owner, {

@@ -9,6 +9,7 @@ import { type AccessRow, resolveAccess, UUID_RE } from "./resolve";
  * server, scripts). Always read live: never cache it, and never trust a
  * cookie for it (SECURITY §1), so removing a member, changing a role, or
  * disabling/expiring/resetting a link takes effect on the very next call.
+ * A link guest only views, whatever the link allows; members change things.
  */
 
 /** Raw access rows for one user on one trip (live trips and live links only). */
@@ -17,12 +18,14 @@ export async function loadAccessRows(
 	userId: string,
 ): Promise<AccessRow[]> {
 	const res = await db.execute(sql`
-		select 'member' as via, m.role::text as role, m.id::text as "memberId", m.color, t.slug
+		select 'member' as via, m.role::text as role, m.id::text as "memberId", m.color, t.slug, null as "linkRole"
 		  from trip_members m
 		  join trips t on t.id = m.trip_id and t.deleted_at is null
 		 where m.trip_id = ${tripId} and m.user_id = ${userId} and m.status = 'active'
 		union all
-		select 'grant', l.role::text, null, g.color, t.slug
+		-- A link guest only views, whatever the link allows: only members change
+		-- things (owner, 2026-10-09). The link's role is what joining gives them.
+		select 'grant', 'viewer', null, g.color, t.slug, l.role::text
 		  from share_grants g
 		  join share_links l on l.id = g.share_link_id and l.trip_id = g.trip_id
 		  join trips t on t.id = l.trip_id and t.deleted_at is null

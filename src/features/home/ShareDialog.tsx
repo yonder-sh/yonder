@@ -15,9 +15,8 @@
  * the name (QA MOB-01).
  * LINK (owner; FB-13, like Google Drive): the trip's address IS its link,
  * one URL for everyone — "Anyone with the link" on/off, what they can do
- * (Can view / Can rate / Can suggest / Can edit; changing it changes
- * everyone who joined with it; a signed-in joiner of a "Can rate" link
- * becomes a rater member), the address with "Copy link", when the link was
+ * (Can view / Can rate / Can suggest / Can edit: what they can do once they
+ * sign in and join; until then a link guest only looks, owner 2026-10-09), the address with "Copy link", when the link was
  * made, expiry + Extend, and "Reset link" (a new address tail: the old
  * address stops working and link guests are removed) with an inline
  * confirmation (QA SHARE-08). Everyone else sees the same address to copy.
@@ -754,9 +753,9 @@ function AddPersonRow({ tripId }: { tripId: string }) {
 /** What "anyone with the link" can do, per role. */
 const LINK_BLURB: Record<ShareRole, string> = {
 	viewer: "They can see the plan.",
-	rater: "They can see the plan and rate places once they sign in.",
-	suggester: "They can suggest changes for you to review.",
-	editor: "They can change the plan.",
+	rater: "They see the plan, and rate places once they sign in.",
+	suggester: "They see the plan, and suggest changes once they sign in.",
+	editor: "They see the plan, and change it once they sign in.",
 };
 
 /**
@@ -858,7 +857,7 @@ function TripLink({ tripId, data }: { tripId: string; data: SharingDto }) {
 										{
 											onSuccess: () =>
 												toast.success(
-													`Everyone with the link ${roleLabel(r).toLowerCase()} now`,
+													`Anyone who joins through the link ${roleLabel(r).toLowerCase()}`,
 												),
 										},
 									)
@@ -953,7 +952,7 @@ function TripLink({ tripId, data }: { tripId: string; data: SharingDto }) {
 			</div>
 			<p className="text-xs text-muted-foreground">
 				{on
-					? "People on the trip open it at this address too. Changing what anyone with the link can do changes it for everyone who joined with it; turning it off removes them."
+					? "People on the trip open it at this address too. Guests only look until they sign in and join; turning the link off removes them."
 					: "People on the trip open it at this address. Turn the link on to share the trip with anyone, no account needed."}
 			</p>
 		</Section>
@@ -1008,7 +1007,7 @@ function Guests({ tripId, data }: { tripId: string; data: SharingDto }) {
 								) : null}
 							</span>
 							<span className="text-xs text-muted-foreground">
-								{roleLabel(g.role)} · joined with the link · {ago(g.lastSeenAt)}
+								Can view · opened the link · {ago(g.lastSeenAt)}
 							</span>
 						</span>
 						{g.signedIn ? (

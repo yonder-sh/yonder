@@ -335,7 +335,7 @@ describe("list cores", () => {
 		expect(verbs).toContain("list.delete");
 	});
 
-	it("roles: viewers and guest viewers can't write, strangers get 404, guest editors can", async () => {
+	it("roles: viewers and link guests (even on an edit link) can't write, strangers get 404, members can", async () => {
 		const c = await freshTrip();
 		const input = {
 			tripId: c.tripId,
@@ -352,13 +352,14 @@ describe("list cores", () => {
 		expect(await codeOf(call(createListItem, U.stranger, input))).toBe(
 			"NOT_FOUND",
 		);
-		expect(await codeOf(call(createListItem, U.guestEditor, input))).toBe("ok");
-		// A guest can't keep a private item, nor be assigned.
-		expect(
-			await codeOf(
-				call(createListItem, U.guestEditor, { ...input, isPrivate: true }),
-			),
-		).toBe("VALIDATION");
+		for (const isPrivate of [false, true])
+			expect(
+				await codeOf(
+					call(createListItem, U.guestEditor, { ...input, isPrivate }),
+				),
+			).toBe("FORBIDDEN");
+		expect(await codeOf(call(createListItem, U.maya, input))).toBe("ok");
+		// Nobody is assigned who isn't on the trip.
 		expect(
 			await codeOf(
 				call(createListItem, U.owner, {
@@ -1048,18 +1049,19 @@ describe("One Yonder D12: booking references, booking links and packing", () => 
 		expect(await refOf(U.guestEditor)).toBe(REDACTED_BOOKING_REF);
 		expect(await refOf(U.guestViewer)).toBe(REDACTED_BOOKING_REF);
 
-		// A guest editor saving the mask back (or anything else) keeps the real one.
-		await call(updateListItem, U.guestEditor, {
-			id: booking.id,
-			patch: {
-				text: "Fuji Excursion 7 seats",
-				bookingRef: REDACTED_BOOKING_REF,
-			},
-		});
-		expect(await refOf(U.owner)).toBe("E7K2Q9");
+		// A guest on an edit link can't save the mask back (guests only view): the real one stays.
 		expect(
-			(await list(U.owner, c.tripId)).find((r) => r.id === booking.id)?.text,
-		).toBe("Fuji Excursion 7 seats");
+			await codeOf(
+				call(updateListItem, U.guestEditor, {
+					id: booking.id,
+					patch: {
+						text: "Fuji Excursion 7 seats",
+						bookingRef: REDACTED_BOOKING_REF,
+					},
+				}),
+			),
+		).toBe("FORBIDDEN");
+		expect(await refOf(U.owner)).toBe("E7K2Q9");
 
 		// Changed, then cleared.
 		await call(updateListItem, U.maya, {
@@ -1168,7 +1170,7 @@ describe("One Yonder D12: booking references, booking links and packing", () => 
 		});
 		expect(acts.some((a) => a.summary.includes("to packing"))).toBe(true);
 		expect(acts.some((a) => a.summary.includes("Birthday card"))).toBe(false);
-		// A link guest can't keep a Just mine row.
+		// A link guest can't add a row, Just mine or not (guests only view).
 		expect(
 			await codeOf(
 				call(createListItem, U.guestEditor, {
@@ -1179,6 +1181,6 @@ describe("One Yonder D12: booking references, booking links and packing", () => 
 					isPrivate: true,
 				}),
 			),
-		).toBe("VALIDATION");
+		).toBe("FORBIDDEN");
 	});
 });

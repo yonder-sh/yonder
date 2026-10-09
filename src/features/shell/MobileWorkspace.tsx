@@ -38,7 +38,7 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { GuestNudge } from "@/features/home/GuestNudge";
+import { GuestNudge, signInText } from "@/features/home/GuestNudge";
 import { WhatIfChip } from "@/features/insights/WhatIfChip";
 import { useListsOverdue } from "@/features/lists/use-lists-overdue";
 import { OfflineBanner } from "@/features/offline/OfflineBanner";
@@ -217,9 +217,7 @@ function MobileHeader() {
 						{anonymous ? (
 							<DropdownMenuItem asChild>
 								<Link to="/login" search={{ next } as never}>
-									{access.role === "rater"
-										? "Sign in to rate places"
-										: "Sign in to keep this trip"}
+									{signInText(graph.me.linkRole ?? access.role)}
 								</Link>
 							</DropdownMenuItem>
 						) : null}

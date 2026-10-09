@@ -23,6 +23,7 @@ export const MUTATION_POLICY = {
 	// ---- auth / account (not trip-scoped) ----
 	/** The trip's address is its link: a non-member opening it gets a grant. */
 	openTripByLink: "account",
+	joinTripByLink: "account",
 	renameGuest: "account",
 	createTrip: "account",
 	setUserPrefs: "account",

@@ -77,7 +77,11 @@ describe("trip assertions", () => {
 	});
 
 	it("capabilities follow the matrix, including guest limits", () => {
-		expect(assertCapability(access("editor", true), "edit").isGuest).toBe(true);
+		// A link guest only views, whatever the link allows.
+		expect(
+			thrown(() => assertCapability(access("editor", true), "edit")).code,
+		).toBe("FORBIDDEN");
+		expect(assertCapability(access("editor", true), "read").isGuest).toBe(true);
 		expect(
 			thrown(() => assertCapability(access("editor", true), "manageShareLinks"))
 				.code,

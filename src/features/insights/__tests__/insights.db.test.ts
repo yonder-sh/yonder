@@ -245,7 +245,7 @@ afterAll(async () => {
 });
 
 describe("setOpeningHours (node.hours)", () => {
-	it("owners and guest editors save manual hours; viewers 403; strangers 404", async () => {
+	it("owners save manual hours; viewers and link guests (even on an edit link) 403; strangers 404", async () => {
 		const c = await freshTrip();
 		const nodeId = c.ids.nodes.itoya;
 		const input = { nodeId, hours: HOURS };
@@ -259,7 +259,7 @@ describe("setOpeningHours (node.hours)", () => {
 			"NOT_FOUND",
 		);
 		expect(await codeOf(call(setOpeningHours, U.guestEditor, input))).toBe(
-			"ok",
+			"FORBIDDEN",
 		);
 		const r = await call<{ updatedAt: string }>(
 			setOpeningHours,
@@ -401,9 +401,8 @@ describe("fetchOpeningHours", () => {
 	it("is edit-only and needs a Google key", async () => {
 		const c = await freshTrip();
 		const input = { tripId: c.tripId, nodeIds: [c.ids.nodes.itoya] };
-		expect(await codeOf(call(fetchOpeningHours, U.viewer, input))).toBe(
-			"FORBIDDEN",
-		);
+		for (const u of [U.viewer, U.guestEditor])
+			expect(await codeOf(call(fetchOpeningHours, u, input))).toBe("FORBIDDEN");
 		expect(await codeOf(call(fetchOpeningHours, U.stranger, input))).toBe(
 			"NOT_FOUND",
 		);
@@ -418,7 +417,7 @@ describe("fetchOpeningHours", () => {
 			env.GOOGLE_MAPS_API_KEY = key;
 		}
 		placesAnswer = {};
-		expect(await call(fetchOpeningHours, U.guestEditor, input)).toEqual({
+		expect(await call(fetchOpeningHours, U.owner, input)).toEqual({
 			updated: [],
 		});
 	});

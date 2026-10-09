@@ -83,6 +83,8 @@ export interface GraphMe {
 	memberId: string | null;
 	role: TripRole;
 	isGuest: boolean;
+	/** A guest's link role: what joining makes them (`role` is "viewer" while a guest). */
+	linkRole?: TripRole;
 	name: string;
 	color: number;
 	/** `user.image` (FB-16: `/api/avatar/<userId>?v=…`), null without a picture. */

@@ -114,7 +114,8 @@ export type CollabContext = {
 
 /**
  * The user's access to a trip: an active membership, or a grant on an enabled,
- * unrevoked, unexpired share link of a live trip. Null = no access.
+ * unrevoked, unexpired share link of a live trip (a guest only views).
+ * Null = no access.
  */
 export async function loadTripAccess(
 	pool: pg.Pool,
@@ -127,7 +128,8 @@ export async function loadTripAccess(
 		   join trips t on t.id = m.trip_id and t.deleted_at is null
 		  where m.trip_id = $1 and m.user_id = $2 and m.status = 'active'
 		 union all
-		 select 'grant', l.role::text, null, g.color, t.slug
+		 -- A link guest only views, as \`loadAccessRows\` has it (members change things).
+		 select 'grant', 'viewer', null, g.color, t.slug
 		   from share_grants g
 		   join share_links l on l.id = g.share_link_id and l.trip_id = g.trip_id
 		   join trips t on t.id = l.trip_id and t.deleted_at is null

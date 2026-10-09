@@ -150,19 +150,19 @@ describe("the gate's decision (EXTENSIONS §3.4 step 1)", () => {
 	const direct = { directIf: () => true };
 	const proposeOnly = { proposeOnly: true as const };
 
-	it("applies for the op's capability, proposes for suggesters, forbids viewers", () => {
+	it("applies for the op's capability, proposes for suggesters, forbids viewers and link guests", () => {
 		expect(
 			decide({ role: "editor", isGuest: false }, "edit", plain, false),
 		).toBe("apply");
 		expect(
 			decide({ role: "editor", isGuest: true }, "edit", plain, false),
-		).toBe("apply");
+		).toBe("forbid");
 		expect(
 			decide({ role: "suggester", isGuest: false }, "edit", plain, false),
 		).toBe("propose");
 		expect(
 			decide({ role: "suggester", isGuest: true }, "edit", plain, false),
-		).toBe("propose");
+		).toBe("forbid");
 		expect(
 			decide({ role: "viewer", isGuest: false }, "edit", plain, false),
 		).toBe("forbid");

@@ -793,7 +793,7 @@ describe("custom routes and reserved times", () => {
 		).toBe("FORBIDDEN");
 	});
 
-	it("reserved Fuji Excursion 08:30 → 10:26 pins the leg; a guest editor keeps the stored ref and never sees it", async () => {
+	it("reserved Fuji Excursion 08:30 → 10:26 pins the leg; a link guest never sees the ref and can't save over it", async () => {
 		const c = await freshTrip();
 		const I = c.ids.items;
 		const target = pair(I.itoya as string, I.dropBags as string);
@@ -849,25 +849,29 @@ describe("custom routes and reserved times", () => {
 		const asGuest = await call(getLeg, U.guestEditor, { target });
 		expect(JSON.stringify(asGuest)).not.toContain("E7K2Q9");
 		expect(JSON.stringify(asGuest)).not.toContain('"5A"');
-		// The guest saves the masked booking back with a new class.
-		await call(saveTransitDetails, U.guestEditor, {
-			target,
-			booking: {
-				trainNumber: "Fuji Excursion 7",
-				class: "Reserved",
-				car: "3",
-				seats: [
-					{ memberId: c.members.owner, seat: "••" },
-					{ memberId: c.members.audrey, seat: "••" },
-				],
-			},
-		});
+		// Saving the masked booking back is refused (guests only view): the booking stays.
+		expect(
+			await codeOf(
+				call(saveTransitDetails, U.guestEditor, {
+					target,
+					booking: {
+						trainNumber: "Fuji Excursion 7",
+						class: "Reserved",
+						car: "3",
+						seats: [
+							{ memberId: c.members.owner, seat: "••" },
+							{ memberId: c.members.audrey, seat: "••" },
+						],
+					},
+				}),
+			),
+		).toBe("FORBIDDEN");
 		leg = await legOf(c, I.itoya as string, I.dropBags as string);
 		const after = leg?.details as {
-			booking: { ref: string; class: string; seats: { seat: string }[] };
+			booking: { ref: string; class?: string; seats: { seat: string }[] };
 		};
 		expect(after.booking.ref).toBe("E7K2Q9");
-		expect(after.booking.class).toBe("Reserved");
+		expect(after.booking.class).toBeUndefined();
 		expect(after.booking.seats.map((s) => s.seat)).toEqual(["5A", "5B"]);
 	});
 });

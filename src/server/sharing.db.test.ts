@@ -1,14 +1,13 @@
 /**
  * FB-13 and the 2026-09-25 redesign: ONE link per trip, like Google Drive,
  * and it is the trip's address, against real Postgres. The link's role is
- * every link guest's role (changing it changes theirs at once, re-checks
- * their sockets and, down to "Can view", withdraws their open suggestions);
+ * what joining through it gives (its guests only view, whatever it is);
  * OFF and "Reset link" (a new address tail) still remove everyone who came
  * in through it; turning it on gives a tail-less (seeded) address a tail; any
  * write folds a leftover second live link into the one the owner sees. Also
  * the migrations `0008_single_trip_link` (older per-role links become one,
- * per-person join links are gone) and `0016_trip_link_address` (every trip
- * gets an address tail, tokens are gone).
+ * per-person join links are gone), `0016_trip_link_address` (every trip
+ * gets an address tail, tokens are gone) and `0023_guests_only_view`.
  * Uses its own throwaway databases (created, migrated and dropped here).
  */
 import { createHash, randomBytes, randomUUID } from "node:crypto";
@@ -159,7 +158,7 @@ beforeAll(async () => {
 }, 60_000);
 
 describe("one link per trip, at the trip's address (FB-13)", () => {
-	it("changing the link's role changes every guest who came in through it, at once", async () => {
+	it("the link's role is what joining gives; its guests only view, whatever it is", async () => {
 		const slug = await freshLink("viewer");
 		expect(await liveLinks(c.tripId)).toHaveLength(1);
 		const anon = await newUser("Heron", true);
@@ -171,10 +170,15 @@ describe("one link per trip, at the trip's address (FB-13)", () => {
 		const up = await run(c.tripId, (tx, out) =>
 			setLinkEnabled(tx, out, c.tripId, "editor", null, owner),
 		);
-		// Their open sockets re-check (collab closes and reconnects them).
-		expect(up.access.sort()).toEqual([anon, signed].sort());
-		expect(await roleOf(c.tripId, anon)).toBe("editor");
-		expect(await roleOf(c.tripId, signed)).toBe("editor");
+		// Their access is unchanged, so no socket needs a re-check.
+		expect(up.access).toEqual([]);
+		// Only members change things (owner, 2026-10-09); joining would make them editors.
+		for (const g of [anon, signed])
+			await expect(loadTripAccess(c.tripId, g)).resolves.toMatchObject({
+				role: "viewer",
+				linkRole: "editor",
+				isGuest: true,
+			});
 		// Same link, same address: nobody needs a new one.
 		expect((await tripSlug(c.tripId))?.slug).toBe(slug);
 		expect((await openTripLink(slug, await newUser("Lee")))?.role).toBe(
@@ -185,21 +189,24 @@ describe("one link per trip, at the trip's address (FB-13)", () => {
 		await run(c.tripId, (tx, out) =>
 			setLinkEnabled(tx, out, c.tripId, "suggester", null, owner),
 		);
-		expect(await roleOf(c.tripId, anon)).toBe("suggester");
+		expect(await roleOf(c.tripId, anon)).toBe("viewer");
+		expect(await roleOf(c.tripId, signed)).toBe("viewer");
 		const sharing = await loadSharing(db(), c.tripId);
 		expect(sharing.slug).toBe(slug);
 		expect(sharing.link?.role).toBe("suggester");
 		expect(sharing.guests.map((g) => g.role)).toEqual([
-			"suggester",
-			"suggester",
-			"suggester",
+			"viewer",
+			"viewer",
+			"viewer",
 		]);
+		expect((await loadTripAccess(c.tripId, anon))?.linkRole).toBe("suggester");
 	});
 
-	it("down to 'Can view' withdraws the link guests' open suggestions; a member's stay", async () => {
+	it("changing the link's role withdraws nobody's open suggestions, a guest's (older) included", async () => {
 		const slug = await freshLink("suggester");
 		const guest = await newUser("Wren", true);
 		await openTripLink(slug, guest);
+		// From before guests only viewed (0023 withdraws these on deploy).
 		const theirs = await openProposal(c.tripId, guest);
 		const members = await openProposal(c.tripId, owner);
 		await run(c.tripId, (tx, out) =>
@@ -210,7 +217,7 @@ describe("one link per trip, at the trip's address (FB-13)", () => {
 			setLinkEnabled(tx, out, c.tripId, "viewer", null, owner),
 		);
 		expect(await roleOf(c.tripId, guest)).toBe("viewer");
-		expect(await statusOf(theirs)).toBe("withdrawn");
+		expect(await statusOf(theirs)).toBe("open");
 		expect(await statusOf(members)).toBe("open");
 	});
 
@@ -367,10 +374,16 @@ describe("migration 0008_single_trip_link", () => {
 			const journal = JSON.parse(readFileSync(journalPath, "utf8")) as {
 				entries: { tag: string }[];
 			};
-			journal.entries = journal.entries.filter(
-				(e) => e.tag < "0008_single_trip_link",
-			);
-			writeFileSync(journalPath, JSON.stringify(journal));
+			const all = journal.entries;
+			const upTo = (last: string) =>
+				writeFileSync(
+					journalPath,
+					JSON.stringify({
+						...journal,
+						entries: all.filter((e) => e.tag <= last),
+					}),
+				);
+			upTo("0007_rating_comment_mentions");
 			await ensureDatabase(url);
 			await migrateDatabase(url, { migrationsFolder: dir });
 
@@ -475,7 +488,9 @@ describe("migration 0008_single_trip_link", () => {
 					[dependant, trip, users.owner, lostP],
 				);
 
-				await migrateDatabase(url);
+				// Just 0008: later migrations (0023 withdraws every open guest suggestion) come after.
+				upTo("0008_single_trip_link");
+				await migrateDatabase(url, { migrationsFolder: dir });
 
 				const live = await exec(
 					`select id::text as id, trip_id::text as "tripId", role::text as role
@@ -520,6 +535,13 @@ describe("migration 0008_single_trip_link", () => {
 					`select count(*)::int as n from pg_class where relname like '_fb13_%'`,
 				);
 				expect(temp.rows[0]?.n).toBe(0);
+
+				// 0023: guests only view now, so their open suggestions are withdrawn.
+				await migrateDatabase(url);
+				expect(await status(keptP)).toEqual({
+					s: "withdrawn",
+					note: "guests only view now",
+				});
 			} finally {
 				await client.end();
 			}

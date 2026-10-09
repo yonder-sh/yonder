@@ -134,18 +134,9 @@ const EXPECTED: Record<string, Capability[]> = {
 		"leaveTrip",
 		"setMediaVisibility",
 	],
-	guestEditor: [
-		"read",
-		"edit",
-		"editNotes",
-		"editTripDates",
-		"tripSettings",
-		"uploadMedia",
-		"propose",
-		"reviewProposals",
-		"searchPlaces",
-	],
-	guestSuggester: ["read", "propose", "searchPlaces"],
+	// A link guest only views, whatever the link allows (owner, 2026-10-09).
+	guestEditor: ["read"],
+	guestSuggester: ["read"],
 	guestRater: ["read"],
 	guestViewer: ["read"],
 };
@@ -170,18 +161,10 @@ describe("permission matrix (SPEC §11.3, EXTENSIONS §3.1)", () => {
 		});
 	}
 
-	it("a guest suggester can never edit, upload, change settings or dates (no escalation of a public link)", () => {
-		for (const cap of [
-			"edit",
-			"editNotes",
-			"uploadMedia",
-			"tripSettings",
-			"editTripDates",
-			"reviewProposals",
-			"manageExpenses",
-			"seeBookingDetails",
-		] as const)
-			expect(can({ role: "suggester", isGuest: true }, cap)).toBe(false);
+	it("a link guest only views, whatever the link allows: only members change things", () => {
+		for (const role of ["editor", "suggester", "rater", "viewer"] as const)
+			for (const cap of CAPABILITIES)
+				expect(can({ role, isGuest: true }, cap)).toBe(cap === "read");
 	});
 
 	it("guests never manage sharing, members, emails, money or the trip itself (SECURITY §1)", () => {
@@ -261,7 +244,8 @@ describe("permission matrix (SPEC §11.3, EXTENSIONS §3.1)", () => {
 			"suggest",
 		);
 		expect(editModeOf({ role: "suggester", isGuest: false })).toBe("suggest");
-		expect(editModeOf({ role: "suggester", isGuest: true })).toBe("suggest");
+		expect(editModeOf({ role: "suggester", isGuest: true })).toBe("read");
+		expect(editModeOf({ role: "editor", isGuest: true })).toBe("read");
 		expect(editModeOf({ role: "viewer", isGuest: false })).toBe("read");
 		expect(editModeOf({ role: "viewer", isGuest: true }, true)).toBe("read");
 		// Raters are read-only outside their own rating (`useEditGuard('rate')`).

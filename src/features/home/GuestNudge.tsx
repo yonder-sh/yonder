@@ -2,13 +2,13 @@
  * The quiet line above the workspace (SPEC §12.5 `GuestNudge()`, §11.2 flow
  * 7; ADDENDUM §10 "placeholders ↔ accounts"):
  *
- * - Link guests: "You're viewing as Guest Heron · Rename · Sign in to keep
- *   this trip". A signed-in guest whose name matches a person without an
- *   account ("Audrey") sees "Are you Audrey? Ask the owner to add you": a
- *   link never makes anyone a member by itself (QA A-10, SPEC R25). The
- *   owner's "Add to trip" merges that placeholder into the new membership
- *   (`promoteGuestCore`), or links it to her email (FB-14: no per-person
- *   join links).
+ * - Signed-out link guests only view (owner, 2026-10-09): "You're viewing
+ *   as Guest Heron · Rename · Sign in to edit and rate places" (as the link
+ *   allows; "Sign in to keep this trip" on a view link). Signing in joins
+ *   them at the link's role (`migrateGuestToUser`).
+ * - Signed-in link guests: "You're a guest here as Ana · Join the trip":
+ *   one tap makes them a member at the link's role (`joinTripByLink`); a
+ *   link never makes anyone a member by itself (QA A-10, SPEC R25).
  * - Members get "Are you Audrey?" → "That's me" once when their name matches
  *   a placeholder (e.g. they signed up without the invite email); it asks
  *   first (FB-15: the merge can't be undone) and then `claimPlaceholder`.
@@ -20,7 +20,8 @@ import { Check, Pencil, X } from "lucide-react";
 import { type FormEvent, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { renameGuest } from "@/lib/auth/share.functions";
+import type { TripRole } from "@/lib/auth/roles";
+import { joinTripByLink, renameGuest } from "@/lib/auth/share.functions";
 import type { GraphMember } from "@/lib/engine/types";
 import { sessionKey, tripKeys } from "@/lib/query/keys";
 import { sessionQuery } from "@/lib/query/trip-queries";
@@ -86,31 +87,6 @@ function ClaimPrompt({
  * A signed-in link guest who looks like a placeholder: only the owner can
  * make them a member (QA A-10: a link never grants money or booking refs).
  */
-function GuestClaimHint({
-	placeholder,
-	onDone,
-}: {
-	placeholder: GraphMember;
-	onDone: () => void;
-}) {
-	return (
-		<span
-			data-testid={HOME_TESTID.claimPrompt}
-			className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1"
-		>
-			<span>
-				Are you{" "}
-				<span className="font-medium text-foreground">{placeholder.name}</span>?
-				Ask the owner to add you to the trip. What's tagged {placeholder.name}{" "}
-				becomes yours.
-			</span>
-			<Button size="xs" variant="ghost" onClick={onDone}>
-				Not me
-			</Button>
-		</span>
-	);
-}
-
 function RenameInline({
 	current,
 	onDone,
@@ -155,6 +131,52 @@ function RenameInline({
 	);
 }
 
+/** What signing in lets a link guest do, as the link allows. */
+export function signInText(linkRole: TripRole): string {
+	if (linkRole === "editor" || linkRole === "owner")
+		return "Sign in to edit and rate places";
+	if (linkRole === "suggester")
+		return "Sign in to suggest changes and rate places";
+	if (linkRole === "rater") return "Sign in to rate places";
+	return "Sign in to keep this trip";
+}
+
+/** "Join the trip": a signed-in guest becomes a member at the link's role. */
+export function JoinTrip({
+	tripId,
+	linkRole,
+	bare = false,
+}: {
+	tripId: string;
+	linkRole: TripRole;
+	/** Just the button (on a rating card, which says why). */
+	bare?: boolean;
+}) {
+	const qc = useQueryClient();
+	const join = useMutation({
+		mutationFn: () => joinTripByLink({ data: { tripId } }),
+		onSuccess: () => qc.invalidateQueries({ queryKey: tripKeys.graph(tripId) }),
+	});
+	return (
+		<span className="flex items-center gap-2">
+			{bare || linkRole === "viewer" ? null : <span>Join to rate places.</span>}
+			<Button
+				size="xs"
+				data-testid={HOME_TESTID.joinTrip}
+				disabled={join.isPending}
+				onClick={() => join.mutate()}
+			>
+				Join the trip
+			</Button>
+			{join.isError ? (
+				<span className="text-destructive" role="alert">
+					Couldn't join. The link may be off now.
+				</span>
+			) : null}
+		</span>
+	);
+}
+
 export function GuestNudge() {
 	const { access, graph, mode } = useWorkspace();
 	const session = useQuery({ ...sessionQuery(), enabled: mode === "live" });
@@ -178,6 +200,7 @@ export function GuestNudge() {
 		}
 	};
 	const viewer = session.data;
+	const linkRole = graph.me.linkRole ?? access.role;
 	const anonymous = viewer?.isAnonymous ?? access.isGuest;
 	const candidate =
 		viewer && !anonymous
@@ -233,14 +256,10 @@ export function GuestNudge() {
 					className="font-medium text-primary hover:underline"
 				>
 					{/* PLACES §1c: a "Can rate" link rates once you sign in (you become a member). */}
-					{access.role === "rater"
-						? "Sign in to rate places"
-						: "Sign in to keep this trip"}
+					{signInText(linkRole)}
 				</Link>
-			) : candidate && !dismissed ? (
-				<GuestClaimHint placeholder={candidate} onDone={dismiss} />
 			) : (
-				<span>Ask the owner to add you to be taggable.</span>
+				<JoinTrip tripId={tripId} linkRole={linkRole} />
 			)}
 		</div>
 	);

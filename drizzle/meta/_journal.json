@@ -162,6 +162,13 @@
       "when": 1790829851987,
       "tag": "0022_shortcut",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1791500000000,
+      "tag": "0023_guests_only_view",
+      "breakpoints": true
     }
   ]
 }

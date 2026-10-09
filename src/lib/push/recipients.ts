@@ -139,7 +139,7 @@ export function planAudience(
 		: memberUserIds(members);
 }
 
-/** Who may review a suggestion (owner, editor, link editor), never its author. */
+/** Who may review a suggestion (owners and editors), never its author. */
 export function reviewAudience(
 	people: readonly {
 		userId: string;

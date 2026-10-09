@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getRequestHeaders, getRequestIP } from "@tanstack/react-start/server";
 import { z } from "zod";
+import { db } from "@/db/db.server";
 import { announceTripChange } from "@/server/announce.server";
 import { authLimits } from "@/server/auth/limits.server";
 import { auth } from "@/server/auth.server";
@@ -12,6 +13,7 @@ import {
 import { fail } from "@/server/authz/session.server";
 import {
 	guestNameClashes,
+	joinLinks,
 	openTripLink,
 	tripLinkIsOpen,
 } from "@/server/authz/share-links.server";
@@ -69,6 +71,25 @@ export const openTripByLink = createServerFn({ method: "POST" })
 		// The owner's Share dialog and guest list show the new guest (after COMMIT).
 		await announceTripChange([opened.tripId], ["sharing", "graph"]);
 		return { tripId: opened.tripId, slug: opened.slug, role: opened.role };
+	});
+
+/**
+ * "Join the trip" (owner, 2026-10-09): a signed-in guest becomes a member at
+ * their link's role, so they rate and show in the group. Signed-out guests
+ * sign in instead (that joins them, `migrateGuestToUser`). No live grant on
+ * the trip (or already a member): NOT_FOUND.
+ */
+export const joinTripByLink = createServerFn({ method: "POST" })
+	.middleware([withNamedUser])
+	.validator(z.object({ tripId: z.string().uuid() }).strict())
+	.handler(async ({ data, context }): Promise<{ ok: true }> => {
+		if (context.user.isAnonymous) return fail("FORBIDDEN", "sign in first");
+		const joined = await db.transaction((tx) =>
+			joinLinks(tx, context.user.id, { tripId: data.tripId }),
+		);
+		if (!joined.length) return fail("NOT_FOUND");
+		await announceTripChange(joined, ["sharing", "graph"]);
+		return { ok: true };
 	});
 
 /**

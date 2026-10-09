@@ -1,10 +1,7 @@
 import { sql } from "drizzle-orm";
 import { db } from "@/db/db.server";
 import { announceTripChange } from "@/server/announce.server";
-import {
-	dropMemberGrants,
-	joinRateLinks,
-} from "@/server/authz/share-links.server";
+import { dropMemberGrants, joinLinks } from "@/server/authz/share-links.server";
 import { mergeMember } from "@/server/members.server";
 
 /**
@@ -95,9 +92,9 @@ const SKIP_COLUMNS = new Set(["yjs_documents.owner_user_id"]);
 /**
  * `migrateGuestToUser(anonId, userId)` (SPEC §11.1): when a guest signs in,
  * move their share grants and every attribution column from the anonymous
- * user to the account, in one transaction. No membership is created, except
- * on a "Can rate" link (`joinRateLinks`, PLACES §1c: signing in is what lets
- * a rate-link guest rate).
+ * user to the account, in one transaction. Signing in is how a link guest
+ * takes part: they join each trip at its link's role (`joinLinks`, owner
+ * 2026-10-09).
  * Columns are discovered from the catalog (FKs to "user".id plus the
  * attribution names), so later tables are covered without editing this.
  */
@@ -115,7 +112,7 @@ export async function migrateGuestToUser(
 		await tx.execute(
 			sql`update share_grants set user_id = ${userId} where user_id = ${anonId}`,
 		);
-		joined = await joinRateLinks(tx, userId);
+		joined = await joinLinks(tx, userId);
 		await dropMemberGrants(tx, userId);
 
 		const columns = rows<{ table_name: string; column_name: string }>(

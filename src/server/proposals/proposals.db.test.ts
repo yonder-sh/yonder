@@ -1,9 +1,9 @@
 /**
  * E7 proposals against real Postgres and Redis (EXTENSIONS §3.4–§3.5, QA
  * SUG-*): the gate's propose path (dry run, amend, chain, ghosts), the
- * permission matrix incl. member and guest suggesters, accept with its
- * conflicts, reject/withdraw cascades, access loss, guest redaction, and the
- * private-item guard. The server functions run for real through
+ * permission matrix (member suggesters propose; link guests only view),
+ * accept with its conflicts, reject/withdraw cascades, access loss, guest
+ * redaction, and the private-item guard. The server functions run for real through
  * `src/test/start-mock.ts`; the suggest-mode header comes from `hdr.mode`.
  */
 import { randomUUID } from "node:crypto";
@@ -60,6 +60,7 @@ import {
 } from "@/functions/proposals.functions";
 import { shiftTripDates, updateTrip } from "@/functions/trips.functions";
 import type { ProposalDto } from "@/lib/schemas/proposals";
+import { logActivity } from "@/server/activity.server";
 import type { AuthUser } from "@/server/auth.server";
 import { errorCode } from "@/server/authz/errors";
 import {
@@ -233,64 +234,60 @@ afterAll(async () => {
 });
 
 describe("the gate: permission matrix (EXTENSIONS §3.1, §3.4)", () => {
-	it("applies, proposes or refuses per role, incl. member and guest suggesters", async () => {
+	it("applies, proposes or refuses per role; link guests only view, whatever the link allows", async () => {
 		const t = await freshTrip();
 		const move = (dayId: string) => ({ itemId: t.ids.items.itoya, dayId });
 		const d = t.ids.days;
 		expect(await codeOf(call(moveItem, U.owner, move(d.d1 ?? "")))).toBe("ok");
 		expect(await codeOf(call(moveItem, U.editor, move(d.d2 ?? "")))).toBe("ok");
-		expect(await codeOf(call(moveItem, U.guestEditor, move(d.d3 ?? "")))).toBe(
-			"ok",
-		);
-		// Suggesters (member and link guest) propose; the item doesn't move.
+		// Member suggesters propose; the item doesn't move.
 		expect(await codeOf(call(moveItem, U.sue, move(d.d4 ?? "")))).toBe(
 			"proposed",
 		);
-		expect(
-			await codeOf(call(moveItem, U.guestSuggester, move(d.d5 ?? ""))),
-		).toBe("proposed");
-		expect(await itemDay(t.tripId, t.ids.items.itoya ?? "")).toBe(d.d3);
+		expect(await itemDay(t.tripId, t.ids.items.itoya ?? "")).toBe(d.d2);
 		// An editor in suggest mode proposes too.
 		expect(
 			await codeOf(call(moveItem, U.editor, move(d.d1 ?? ""), "suggest")),
 		).toBe("proposed");
-		// A guest suggester never becomes a guest editor, even with the header off.
+		// Viewers and link guests (edit and suggest links too) neither write nor
+		// propose, in either mode; strangers don't see the trip.
+		for (const u of [U.viewer, U.guestViewer, U.guestEditor, U.guestSuggester])
+			for (const mode of [null, "suggest"] as const)
+				expect(await codeOf(call(moveItem, u, move(d.d1 ?? ""), mode))).toBe(
+					"FORBIDDEN",
+				);
 		expect(
 			await codeOf(
-				call(updateTrip, U.guestSuggester, { tripId: t.tripId, name: "x" }),
+				call(updateTrip, U.guestEditor, { tripId: t.tripId, name: "x" }),
 			),
 		).toBe("FORBIDDEN");
-		// Viewers can't propose; strangers don't see the trip.
-		expect(await codeOf(call(moveItem, U.viewer, move(d.d1 ?? "")))).toBe(
-			"FORBIDDEN",
-		);
-		expect(await codeOf(call(moveItem, U.guestViewer, move(d.d1 ?? "")))).toBe(
-			"FORBIDDEN",
-		);
+		expect(await itemDay(t.tripId, t.ids.items.itoya ?? "")).toBe(d.d2);
 		expect(await codeOf(call(moveItem, U.stranger, move(d.d1 ?? "")))).toBe(
 			"NOT_FOUND",
 		);
-		// The header only downgrades: a viewer "suggesting" is still refused.
-		expect(
-			await codeOf(call(moveItem, U.viewer, move(d.d1 ?? ""), "suggest")),
-		).toBe("FORBIDDEN");
 	});
 
-	it("lists proposals for proposers and reviewers only; resolving needs reviewProposals", async () => {
+	it("lists proposals for member proposers and reviewers only; resolving needs reviewProposals", async () => {
 		const t = await freshTrip();
 		const p = await call<P>(moveItem, U.sue, {
 			itemId: t.ids.items.itoya,
 			dayId: t.ids.days.d1,
 		});
-		for (const u of [U.owner, U.editor, U.guestEditor, U.sue, U.guestSuggester])
+		for (const u of [U.owner, U.editor, U.sue])
 			expect((await proposalsOf(u, t.tripId)).map((x) => x.id)).toContain(
 				p.proposed.id,
 			);
-		expect(await proposalsOf(U.viewer, t.tripId)).toEqual([]);
-		expect(await proposalsOf(U.guestViewer, t.tripId)).toEqual([]);
+		for (const u of [U.viewer, U.guestViewer, U.guestEditor, U.guestSuggester])
+			expect(await proposalsOf(u, t.tripId)).toEqual([]);
 		expect(await codeOf(proposalsOf(U.stranger, t.tripId))).toBe("NOT_FOUND");
 		const reject = { proposalId: p.proposed.id, decision: "reject" as const };
-		for (const u of [U.sue, U.guestSuggester, U.viewer, U.guestViewer])
+		for (const u of [
+			U.sue,
+			U.viewer,
+			U.guestViewer,
+			U.guestEditor,
+			U.guestSuggester,
+		])
 			expect(await codeOf(call(resolveProposal, u, reject))).toBe("FORBIDDEN");
 		expect(await codeOf(call(resolveProposal, U.stranger, reject))).toBe(
 			"NOT_FOUND",
@@ -308,8 +305,8 @@ describe("the gate: permission matrix (EXTENSIONS §3.1, §3.4)", () => {
 				call(withdrawProposal, U.owner, { proposalId: p.proposed.id }),
 			),
 		).toBe("FORBIDDEN");
-		// A guest editor reviews.
-		expect(await call(resolveProposal, U.guestEditor, reject)).toEqual({
+		// A member editor reviews.
+		expect(await call(resolveProposal, U.editor, reject)).toEqual({
 			ok: true,
 			status: "rejected",
 		});
@@ -657,17 +654,19 @@ describe("chains, conflicts and cascades", () => {
 			itemId: knives,
 			dayId: t.ids.days.d4,
 		});
-		const guest = await call<P>(moveItem, U.guestSuggester, {
-			itemId: knives,
-			dayId: t.ids.days.d1,
-		});
-		expect(guest.proposed.id).not.toBe(maya.proposed.id);
+		const editor = await call<P>(
+			moveItem,
+			U.editor,
+			{ itemId: knives, dayId: t.ids.days.d1 },
+			"suggest",
+		);
+		expect(editor.proposed.id).not.toBe(maya.proposed.id);
 		const res = await call<Record<string, { ok: boolean }>>(
 			resolveProposals,
 			U.owner,
-			{ ids: [guest.proposed.id], decision: "accept" },
+			{ ids: [editor.proposed.id], decision: "accept" },
 		);
-		expect(res[guest.proposed.id]?.ok).toBe(true);
+		expect(res[editor.proposed.id]?.ok).toBe(true);
 		const other = await rowOf(maya.proposed.id);
 		expect(other.status).toBe("open");
 		expect(other.lastError?.reason).toBe("changed");
@@ -701,7 +700,7 @@ describe("chains, conflicts and cascades", () => {
 });
 
 describe("withdraw and access loss", () => {
-	it("the author withdraws; turning away a guest withdraws their proposals and dependants (SUG-10, SUG-12)", async () => {
+	it("the author withdraws (SUG-10); a link guest can't propose, and turning them away cuts them off", async () => {
 		const t = await freshTrip();
 		const p = await call<P>(moveItem, U.sue, {
 			itemId: t.ids.items.itoya,
@@ -717,18 +716,26 @@ describe("withdraw and access loss", () => {
 			),
 		).toBe("CONFLICT");
 
-		const nodeId = randomUUID();
-		const node = await call<P>(createNode, U.guestSuggester, {
-			tripId: t.tripId,
-			id: nodeId,
-			parentId: t.ids.nodes.tokyo,
-			type: "place",
-			name: "Guest spot",
+		// Guests only view, so there's nothing of theirs to withdraw (owner, 2026-10-09).
+		expect(
+			await codeOf(
+				call(createNode, U.guestSuggester, {
+					tripId: t.tripId,
+					id: randomUUID(),
+					parentId: t.ids.nodes.tokyo,
+					type: "place",
+					name: "Guest spot",
+				}),
+			),
+		).toBe("FORBIDDEN");
+		const ev = await withTripTx(t.tripId, async (tx, out) => {
+			await removeGuestGrants(tx, out, t.tripId, U.guestSuggester.id);
+			return out.events();
 		});
-		await withTripTx(t.tripId, (tx, out) =>
-			removeGuestGrants(tx, out, t.tripId, U.guestSuggester.id),
-		);
-		expect((await rowOf(node.proposed.id)).status).toBe("withdrawn");
+		expect(ev.some((e) => e.type === "access")).toBe(true);
+		expect(
+			await codeOf(call(getTripGraph, U.guestSuggester, { tripId: t.tripId })),
+		).toBe("NOT_FOUND");
 	});
 
 	it("changeMemberRole: a downgrade re-checks sockets; to viewer withdraws open proposals (SUG-17)", async () => {
@@ -774,33 +781,30 @@ describe("withdraw and access loss", () => {
 });
 
 describe("guests and private items", () => {
-	it("a guest suggester's leg proposal is stored without booking refs or seats (SUG-08)", async () => {
+	it("a link guest can't propose a leg; a member's booking ref is stored but never reaches guests (SUG-08)", async () => {
 		const t = await freshTrip();
 		const target = {
 			kind: "pair",
 			fromItemId: t.ids.items.hands,
 			toItemId: t.ids.items.loft,
 		};
-		const p = await call<P>(setLeg, U.guestSuggester, {
-			target,
-			patch: {
-				mode: "transit",
-				details: {
-					kind: "transit",
-					booking: {
-						ref: "PNR123",
-						seats: [{ memberId: t.members.owner, seat: "12A" }],
+		expect(
+			await codeOf(
+				call(setLeg, U.guestSuggester, {
+					target,
+					patch: {
+						mode: "transit",
+						details: {
+							kind: "transit",
+							booking: {
+								ref: "PNR123",
+								seats: [{ memberId: t.members.owner, seat: "12A" }],
+							},
+						},
 					},
-				},
-			},
-		});
-		const stored = JSON.stringify((await rowOf(p.proposed.id)).payload);
-		expect(stored).not.toContain("PNR123");
-		expect(stored).not.toContain("12A");
-		const [dto] = (await proposalsOf(U.guestEditor, t.tripId)).filter(
-			(x) => x.id === p.proposed.id,
-		);
-		expect(JSON.stringify(dto)).not.toContain("PNR123");
+				}),
+			),
+		).toBe("FORBIDDEN");
 		// A member suggester's booking ref stays in the DB but never reaches guests.
 		const q = await call<P>(setLeg, U.sue, {
 			target,
@@ -812,8 +816,10 @@ describe("guests and private items", () => {
 		expect(JSON.stringify((await rowOf(q.proposed.id)).payload)).toContain(
 			"SECRET9",
 		);
-		const guestView = await proposalsOf(U.guestSuggester, t.tripId);
-		expect(JSON.stringify(guestView)).not.toContain("SECRET9");
+		for (const g of [U.guestSuggester, U.guestEditor])
+			expect(JSON.stringify(await proposalsOf(g, t.tripId))).not.toContain(
+				"SECRET9",
+			);
 		const memberView = await proposalsOf(U.owner, t.tripId);
 		expect(JSON.stringify(memberView)).toContain("SECRET9");
 	});
@@ -905,17 +911,30 @@ describe("guests and private items", () => {
 		expect(await coverOf(U.guestViewer)).toBe(att);
 	});
 
-	it("a guest's activity is always marked, and a guest can't take a member's name (SEC-R1-04)", async () => {
+	it("a guest's activity row is always marked, and a guest can't take a member's name (SEC-R1-04)", async () => {
 		const t = await freshTrip();
 		const { renameGuest } = await import("@/lib/auth/share.functions");
 		for (const name of ["Dennis Owner", "dennis", "Maya Editor"])
 			expect(await codeOf(call(renameGuest, U.guestEditor, { name }))).toBe(
 				"VALIDATION",
 			);
-		await call(moveItem, U.guestEditor, {
-			itemId: t.ids.items.itoya,
-			dayId: t.ids.days.d2,
-		});
+		// Guests only view now; a row an anonymous actor writes (an older guest edit) is still marked.
+		expect(
+			await codeOf(
+				call(moveItem, U.guestEditor, {
+					itemId: t.ids.items.itoya,
+					dayId: t.ids.days.d2,
+				}),
+			),
+		).toBe("FORBIDDEN");
+		await withTripTx(t.tripId, (tx, out) =>
+			logActivity(tx, out, {
+				tripId: t.tripId,
+				actor: { userId: U.guestEditor.id, name: "Guest Wren" },
+				verb: "item.move",
+				summary: "moved Itoya",
+			}),
+		);
 		await call(moveItem, U.owner, {
 			itemId: t.ids.items.itoya,
 			dayId: t.ids.days.d3,
@@ -935,7 +954,7 @@ describe("guests and private items", () => {
 		expect((meta.rows[0] as { g: string }).g).toBe("true");
 	});
 
-	it("suggestions about a hidden attachment never reach link guests, who can't resolve them (CONTENT-01)", async () => {
+	it("suggestions about a hidden attachment never reach link guests, who can't resolve any (CONTENT-01)", async () => {
 		const t = await freshTrip();
 		const att = randomUUID();
 		await getDb().execute(sql`
@@ -961,7 +980,7 @@ describe("guests and private items", () => {
 			expect(seen).not.toContain("ZK4P7Q");
 			expect(seen).not.toContain("NH 9");
 		}
-		// The guest editor can't accept or reject it, and leaves no trace.
+		// A guest on an edit link can't accept or reject it (guests only view), and leaves no trace.
 		for (const decision of ["accept", "reject"] as const)
 			expect(
 				await codeOf(
@@ -970,27 +989,17 @@ describe("guests and private items", () => {
 						decision,
 					}),
 				),
-			).toBe("NOT_FOUND");
-		const batch = await call<Record<string, { ok: boolean }>>(
-			resolveProposals,
-			U.guestEditor,
-			{ ids, decision: "accept" },
-		);
-		expect(Object.values(batch).every((r) => !r.ok)).toBe(true);
+			).toBe("FORBIDDEN");
+		expect(
+			await codeOf(
+				call(resolveProposals, U.guestEditor, { ids, decision: "accept" }),
+			),
+		).toBe("FORBIDDEN");
 		for (const id of ids) {
 			const row = await rowOf(id);
 			expect(row.status).toBe("open");
 			expect(row.lastError).toBeNull();
 		}
-		// Hiding an everyone-visible attachment later hides its suggestions too.
-		await getDb().execute(
-			sql`update attachments set visibility = 'everyone' where id = ${att}`,
-		);
-		expect(
-			(await proposalsOf(U.guestEditor, t.tripId)).filter((p) =>
-				ids.includes(p.id),
-			),
-		).toHaveLength(2);
 	});
 });
 
@@ -1047,7 +1056,7 @@ describe("job wiring (money, climate)", () => {
 		).toBe(true);
 	});
 
-	it("a link guest can't change the home currency; nobody sets an unsupported one (SEC-R1-02)", async () => {
+	it("a link guest can't change the home currency or any setting; nobody sets an unsupported one (SEC-R1-02)", async () => {
 		const t = await freshTrip();
 		const currency = async () =>
 			(
@@ -1066,13 +1075,16 @@ describe("job wiring (money, climate)", () => {
 				}),
 			),
 		).toBe("FORBIDDEN");
-		// Other settings (with the unchanged currency along) still save.
+		// Guests only view: other settings are refused too; a member's save with the unchanged currency along goes through.
+		const keep = { currency: before, defaultDayStart: "08:30" };
 		expect(
 			await codeOf(
-				call(updateTrip, U.guestEditor, {
-					tripId: t.tripId,
-					settings: { currency: before, defaultDayStart: "08:30" },
-				}),
+				call(updateTrip, U.guestEditor, { tripId: t.tripId, settings: keep }),
+			),
+		).toBe("FORBIDDEN");
+		expect(
+			await codeOf(
+				call(updateTrip, U.editor, { tripId: t.tripId, settings: keep }),
 			),
 		).toBe("ok");
 		expect(

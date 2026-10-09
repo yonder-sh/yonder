@@ -84,6 +84,7 @@ export const HOME_TESTID = {
 	avatarZoom: "home-avatar-zoom",
 	avatarSave: "home-avatar-save",
 	// Guest nudge / claim
+	joinTrip: "guest-join-trip",
 	guestRename: "home-guest-rename",
 	claimPrompt: "home-claim-prompt",
 	claimButton: "home-claim-button",

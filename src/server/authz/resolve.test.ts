@@ -48,11 +48,11 @@ describe("resolveAccess (SPEC §11.3)", () => {
 		});
 	});
 
-	it("a member's role is the membership's alone (SHARE-04); a guest's the max grant", () => {
+	it("a member's role is the membership's alone (SHARE-04); a guest only views, whatever the grant", () => {
 		const a = resolveAccess(TRIP, [member("viewer", 1), grant("editor", 4)]);
 		expect(a).toMatchObject({ role: "viewer", isGuest: false, color: 1 });
 		const b = resolveAccess(TRIP, [grant("viewer"), grant("editor")]);
-		expect(b).toMatchObject({ role: "editor", isGuest: true });
+		expect(b).toMatchObject({ role: "viewer", isGuest: true });
 		const c = resolveAccess(TRIP, [grant("editor"), member("owner")]);
 		expect(c?.role).toBe("owner");
 	});

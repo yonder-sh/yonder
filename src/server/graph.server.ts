@@ -355,6 +355,7 @@ export async function loadTripGraph(
 			memberId: access.memberId,
 			role: access.role,
 			isGuest: access.isGuest,
+			...(access.linkRole ? { linkRole: access.linkRole } : {}),
 			name: me?.name ?? access.user.name,
 			color: access.color,
 			image: me ? (me.image ?? null) : (access.user.image ?? null),

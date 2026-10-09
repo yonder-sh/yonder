@@ -210,7 +210,8 @@ function NameStep({ onDone }: { onDone: () => void }) {
 		save.mutate(n);
 	};
 	const next = `${location.pathname}${location.searchStr ?? ""}`;
-	const rater = graph.me.role === "rater";
+	// A guest on a "Can rate" link: signing in lets them rate.
+	const rater = (graph.me.linkRole ?? graph.me.role) === "rater";
 	return (
 		<form
 			onSubmit={submit}

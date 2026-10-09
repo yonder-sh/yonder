@@ -308,8 +308,10 @@ describe('the "Can rate" link (PLACES §1c)', () => {
 		expect((await openTripLink(slug, anon.id))?.role).toBe("rater");
 		expect(await memberRow(anon.id)).toBeNull();
 		const access = await loadTripAccess(c.tripId, anon.id);
+		// View only while signed out; the link's role waits for them.
 		expect(access).toMatchObject({
-			role: "rater",
+			role: "viewer",
+			linkRole: "rater",
 			isGuest: true,
 			memberId: null,
 		});

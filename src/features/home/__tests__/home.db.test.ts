@@ -370,7 +370,11 @@ describe("members (SHARE)", () => {
 		const c = await freshTrip();
 		const gina = await newUser({ first: "Gina", last: "Guest" });
 		await joinTestLink(getDb(), c, gina.id, "editor");
-		expect((await loadTripAccess(c.tripId, gina.id))?.role).toBe("editor");
+		expect(await loadTripAccess(c.tripId, gina.id)).toMatchObject({
+			role: "viewer",
+			linkRole: "editor",
+			isGuest: true,
+		});
 		const { memberId } = await call<{ memberId: string }>(
 			promoteGuest,
 			U.owner,
@@ -436,7 +440,7 @@ describe("members (SHARE)", () => {
 		}
 	});
 
-	it("FB-13: one link per trip, at the trip's address; its role Select changes every link guest's role", async () => {
+	it("FB-13: one link per trip, at the trip's address; its role Select sets what joining gives, its guests only view", async () => {
 		const c = await freshTrip();
 		type Dto = {
 			url: string;
@@ -470,11 +474,14 @@ describe("members (SHARE)", () => {
 		expect(dto.link).toMatchObject({ role: "viewer", enabled: true });
 		expect(dto.guests.find((g) => g.userId === gina.id)?.role).toBe("viewer");
 		await call(setShareLink, U.owner, { tripId: c.tripId, role: "editor" });
-		expect((await loadTripAccess(c.tripId, gina.id))?.role).toBe("editor");
+		expect(await loadTripAccess(c.tripId, gina.id)).toMatchObject({
+			role: "viewer",
+			linkRole: "editor",
+		});
 		dto = await call<Dto>(getSharing, U.owner, { tripId: c.tripId });
 		expect(dto.link).toMatchObject({ role: "editor", enabled: true });
 		expect(dto.url).toBe(url);
-		expect(dto.guests.find((g) => g.userId === gina.id)?.role).toBe("editor");
+		expect(dto.guests.find((g) => g.userId === gina.id)?.role).toBe("viewer");
 		const live = await q<{ n: number }>(sql`
 			select count(*)::int as n from share_links where trip_id = ${c.tripId} and revoked_at is null`);
 		expect(live[0]?.n).toBe(1);
@@ -490,7 +497,7 @@ describe("members (SHARE)", () => {
 });
 
 describe("opening a trip through its address (the link)", () => {
-	it("a non-member gets the link's role while it is on; off, unknown and over the per-IP limit all answer NOT_FOUND", async () => {
+	it("a non-member views while the link is on (its role waits for joining); off, unknown and over the per-IP limit all answer NOT_FOUND", async () => {
 		const c = await freshTrip();
 		const nina = await newUser({ first: "Nina", last: "Newcomer" });
 		// Off: nothing to open, and nothing says the trip exists.
@@ -506,7 +513,7 @@ describe("opening a trip through its address (the link)", () => {
 				call(openTripByLink, nina, { slug: "no-such-trip-k7m2qxw9" }),
 			),
 		).toBe("NOT_FOUND");
-		// On as "Can suggest": she gets that role through a grant, never a membership.
+		// On as "Can suggest": a grant, never a membership; she views until she joins.
 		await call(setShareLink, U.owner, {
 			tripId: c.tripId,
 			enabled: true,
@@ -521,7 +528,8 @@ describe("opening a trip through its address (the link)", () => {
 			role: "suggester",
 		});
 		expect(await loadTripAccess(c.tripId, nina.id)).toMatchObject({
-			role: "suggester",
+			role: "viewer",
+			linkRole: "suggester",
 			isGuest: true,
 			memberId: null,
 		});

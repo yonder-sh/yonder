@@ -16,13 +16,16 @@ export interface AccessRow {
 	memberId: string | null;
 	color: number | string | null;
 	slug: string;
+	/** A grant's link role (what joining gives); a grant's `role` is always "viewer". */
+	linkRole?: string | null;
 }
 
 /**
  * Folds access rows into a TripAccess (SPEC §11.3):
  * - no rows → null (the caller answers NOT_FOUND, so non-members can't probe);
  * - a member's role is their membership's alone: a leftover link grant
- *   never lifts it (SHARE-04); a guest's is the strongest live grant;
+ *   never lifts it (SHARE-04); a guest only views (`linkRole`: the
+ *   strongest live link, what joining gives);
  * - memberId and colour come from the member row when there is one;
  * - `isGuest` = no active membership.
  * Rows with an unknown role are ignored (defensive; the enums forbid them).
@@ -36,9 +39,19 @@ export function resolveAccess(
 	);
 	const member = valid.find((r) => r.via === "member") ?? null;
 	const grant = valid.find((r) => r.via === "grant") ?? null;
-	const role = member ? member.role : maxRole(valid.map((r) => r.role));
+	// A guest only views, whatever a grant row says (the query already gives "viewer").
+	const role: TripRole | null = member ? member.role : grant ? "viewer" : null;
 	if (!role) return null;
 	const source = member ?? grant;
+	const linkRole = member
+		? null
+		: maxRole(
+				valid.flatMap((r) =>
+					r.via === "grant" && r.linkRole && isTripRole(r.linkRole)
+						? [r.linkRole]
+						: [],
+				),
+			);
 	const color = Number(source?.color ?? 0);
 	return {
 		tripId,
@@ -46,6 +59,7 @@ export function resolveAccess(
 		role,
 		memberId: member?.memberId ?? null,
 		isGuest: member === null,
+		...(linkRole ? { linkRole } : {}),
 		color: Number.isInteger(color) && color >= 0 && color <= 7 ? color : 0,
 	};
 }

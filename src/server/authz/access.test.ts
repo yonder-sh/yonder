@@ -154,15 +154,15 @@ describe("requireTripRole", () => {
 		});
 	});
 
-	it("resolves a link guest as a guest editor", async () => {
+	it("resolves a link guest as a viewer, whatever the link allows", async () => {
 		signedIn(guest);
 		rows(grant("editor"));
-		await expect(requireTripRole(TRIP, "editor")).resolves.toMatchObject({
-			role: "editor",
+		await expect(requireTripRole(TRIP, "viewer")).resolves.toMatchObject({
+			role: "viewer",
 			isGuest: true,
 			memberId: null,
 		});
-		expect(await failure(requireTripRole(TRIP, "owner"))).toMatchObject({
+		expect(await failure(requireTripRole(TRIP, "editor"))).toMatchObject({
 			status: 403,
 		});
 	});
@@ -188,11 +188,11 @@ describe("requireTripRole", () => {
 });
 
 describe("requireTripCapability", () => {
-	it("guest editors can edit but never manage sharing (QA LINK-03)", async () => {
+	it("a guest on an edit link can't edit or manage sharing (QA LINK-03)", async () => {
 		signedIn(guest);
 		rows(grant("editor"));
-		await expect(requireTripCapability(TRIP, "edit")).resolves.toMatchObject({
-			isGuest: true,
+		expect(await failure(requireTripCapability(TRIP, "edit"))).toMatchObject({
+			status: 403,
 		});
 		expect(
 			await failure(requireTripCapability(TRIP, "manageShareLinks")),

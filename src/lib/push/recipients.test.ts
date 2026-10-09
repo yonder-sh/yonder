@@ -150,7 +150,7 @@ describe("audiences", () => {
 		expect(planAudience([], members)).toHaveLength(3);
 	});
 
-	it("suggestions: owners, editors and link editors; never the author", () => {
+	it("suggestions: owners and editors, never the author or a link guest", () => {
 		const people = [
 			{ userId: "u-owner", access: { role: "owner" as const, isGuest: false } },
 			{
@@ -171,9 +171,6 @@ describe("audiences", () => {
 				access: { role: "suggester" as const, isGuest: true },
 			},
 		];
-		expect(reviewAudience(people, "u-editor")).toEqual([
-			"u-owner",
-			"u-guested",
-		]);
+		expect(reviewAudience(people, "u-editor")).toEqual(["u-owner"]);
 	});
 });
