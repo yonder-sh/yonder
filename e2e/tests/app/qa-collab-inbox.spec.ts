@@ -190,11 +190,12 @@ test("DIG-08/09: a mention, a suggestion to review and a rejected suggestion rea
 	await panel.getByTestId(SH.inboxRow).filter({ hasText: `cover charge ${tag}` }).click();
 	await expect.poll(() => unread(d.page), { timeout: 10_000 }).toBe(u1 - 1);
 	await d.page.screenshot({ path: shot("dig08-dennis-after-open") });
+	// This trip's feed, like the bell (Dennis's other trips have their own items).
 	const feed2 = await call<{ items: { key: string; read?: boolean; readAt?: string | null; text?: string }[]; unread: number }>(
 		d.page,
 		"/src/functions/inbox.functions.ts",
 		"listInbox",
-		{},
+		{ tripId: g.trip.id },
 	);
 	expect(feed2.unread).toBe(u1 - 1);
 

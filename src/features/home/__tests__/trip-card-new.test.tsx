@@ -1,6 +1,7 @@
 /**
  * A trip someone added me to says so on its dashboard card until I first
- * open it (its welcome): "New · Nova invited you", or "New" after a link join.
+ * open it (its welcome): "New · Maya invited you", or "New" when the owner
+ * invited me (the card says "by Nova") or I joined by link.
  */
 import { render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
@@ -51,9 +52,16 @@ const card = (t: MyTrip) =>
 
 describe("TripCard 'New' tag", () => {
 	it("names the inviter until I open the trip", () => {
+		card({ ...trip, unopened: { invitedBy: "Maya" } });
+		expect(screen.getByTestId(HOME_TESTID.tripCardNew)).toHaveTextContent(
+			"New · Maya invited you",
+		);
+	});
+
+	it("doesn't name the owner twice ('by Nova Trip' is already there)", () => {
 		card({ ...trip, unopened: { invitedBy: "Nova" } });
 		expect(screen.getByTestId(HOME_TESTID.tripCardNew)).toHaveTextContent(
-			"New · Nova invited you",
+			/^New$/,
 		);
 	});
 

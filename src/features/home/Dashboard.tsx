@@ -155,9 +155,14 @@ function TripChips({ trip }: { trip: MyTrip }) {
 	);
 }
 
-/** "New · Nova invited you" until I first open someone else's trip (its welcome). */
+/**
+ * "New · Nova invited you" until I first open someone else's trip (its
+ * welcome); just "New" when the card already says "by Nova".
+ */
 function NewTag({ trip, className }: { trip: MyTrip; className?: string }) {
 	if (!trip.unopened) return null;
+	const by = trip.unopened.invitedBy;
+	const owner = trip.ownerName?.split(/\s+/)[0];
 	return (
 		<Chip
 			tone="accent"
@@ -165,9 +170,7 @@ function NewTag({ trip, className }: { trip: MyTrip; className?: string }) {
 			data-testid={HOME_TESTID.tripCardNew}
 			className={className}
 		>
-			{trip.unopened.invitedBy
-				? `New · ${trip.unopened.invitedBy} invited you`
-				: "New"}
+			{by && by !== owner ? `New · ${by} invited you` : "New"}
 		</Chip>
 	);
 }

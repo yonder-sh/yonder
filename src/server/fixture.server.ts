@@ -152,6 +152,8 @@ export async function writeTripGraph(
 	const owner = g.members.find((m) => m.role === "owner");
 	if (!owner) throw new Error("fixture has no owner member");
 	let maxColor = 0;
+	// An established trip: everyone joined before the inbox's 30-day "joined" window.
+	const joinedLongAgo = new Date(Date.now() - 60 * 86_400_000);
 	for (const m of g.members) {
 		const userId =
 			m.id === owner.id ? opts.ownerUserId : opts.memberUsers?.[m.id];
@@ -165,7 +167,7 @@ export async function writeTripGraph(
 				m.id === owner.id ? "owner" : m.role === "owner" ? "editor" : m.role,
 			displayName: userId ? null : m.name,
 			color: m.color % 8,
-			joinedAt: userId ? new Date() : null,
+			joinedAt: userId ? joinedLongAgo : null,
 		});
 	}
 	const extraMemberIds: string[] = [];
@@ -179,7 +181,7 @@ export async function writeTripGraph(
 			status: "active",
 			role: e.role,
 			color: (maxColor + 1 + i) % 8,
-			joinedAt: new Date(),
+			joinedAt: joinedLongAgo,
 		});
 	}
 
