@@ -40,6 +40,8 @@ export type MyTrip = {
 	ownerName?: string | null;
 	/** Day count of the trip (inclusive), when dated. */
 	dayCount?: number | null;
+	/** Someone else's trip I'm a member of and haven't opened yet (welcome not seen): "New · Nova invited you". */
+	unopened?: { invitedBy: string | null } | null;
 };
 
 export type MyDeadline = {

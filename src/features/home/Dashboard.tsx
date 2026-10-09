@@ -155,6 +155,23 @@ function TripChips({ trip }: { trip: MyTrip }) {
 	);
 }
 
+/** "New · Nova invited you" until I first open someone else's trip (its welcome). */
+function NewTag({ trip, className }: { trip: MyTrip; className?: string }) {
+	if (!trip.unopened) return null;
+	return (
+		<Chip
+			tone="accent"
+			size="sm"
+			data-testid={HOME_TESTID.tripCardNew}
+			className={className}
+		>
+			{trip.unopened.invitedBy
+				? `New · ${trip.unopened.invitedBy} invited you`
+				: "New"}
+		</Chip>
+	);
+}
+
 function Cover({
 	trip,
 	hero,
@@ -235,8 +252,8 @@ function Hero({
 						</span>
 					) : null}
 				</span>
-				{trip.viaLink || trip.role !== "owner" ? (
-					<span className="flex items-center gap-2 text-meta text-muted-foreground">
+				{trip.viaLink || trip.role !== "owner" || trip.unopened ? (
+					<span className="flex flex-wrap items-center gap-2 text-meta text-muted-foreground">
 						<Chip
 							tone="outline"
 							size="sm"
@@ -245,6 +262,7 @@ function Hero({
 							{roleLabel(trip.role)}
 						</Chip>
 						{trip.ownerName ? `by ${trip.ownerName}` : null}
+						<NewTag trip={trip} />
 					</span>
 				) : null}
 				{when ? (
@@ -274,7 +292,8 @@ function Hero({
 	);
 }
 
-function TripCard({
+/** Exported for tests. */
+export function TripCard({
 	trip,
 	shared,
 	offline,
@@ -320,6 +339,7 @@ function TripCard({
 					{datesText(trip)}
 					{shared && trip.ownerName ? ` · by ${trip.ownerName}` : null}
 				</span>
+				<NewTag trip={trip} className="justify-self-start" />
 				<TripChips trip={trip} />
 				<div className="flex items-center justify-between pt-1">
 					<span className="flex items-center gap-2">

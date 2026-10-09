@@ -18,6 +18,7 @@ import type {
 	DUE_KIND_VALUES,
 	EXPENSE_CATEGORY_VALUES,
 	ListKind,
+	TripRole,
 } from "./enums";
 
 export const INBOX_KIND_VALUES = [
@@ -33,6 +34,8 @@ export const INBOX_KIND_VALUES = [
 	"balance_changed",
 	/** ADDENDUM §7.1: a trip-default budget changed while my custom value stays. */
 	"budget_notice",
+	/** I was added to (or joined) someone else's trip in the last 30 days and haven't opened it yet. */
+	"joined",
 ] as const;
 export const InboxKind = z.enum(INBOX_KIND_VALUES);
 export type InboxKind = z.infer<typeof InboxKind>;
@@ -56,6 +59,7 @@ export const inboxKey = {
 	/** `defaultMinor` = the trip default's new amount. */
 	budget: (budgetLineId: string, defaultMinor: number) =>
 		`budget:${budgetLineId}:${defaultMinor}`,
+	joined: (memberId: string) => `joined:${memberId}`,
 } as const;
 
 /** Where a click goes: the trip slug plus workspace search (resolved client-side). */
@@ -128,6 +132,13 @@ export type InboxItem = InboxBase &
 				defaultMinor: number;
 				mineMinor: number;
 				currency: string;
+		  }
+		| {
+				kind: "joined";
+				memberId: string;
+				role: TripRole;
+				/** The inviter's first name; null when I came in through the trip link. */
+				invitedBy: string | null;
 		  }
 	);
 

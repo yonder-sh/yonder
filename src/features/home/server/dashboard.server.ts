@@ -72,7 +72,13 @@ export async function loadMyTrips(userId: string): Promise<MyTrip[]> {
 		       case when b.role in ('owner', 'editor') and not b.via_link then
 		         (select count(*)::int from proposals p
 		           where p.trip_id = t.id and p.status = 'open' and p.author_user_id is distinct from ${userId})
-		       else 0 end as "openProposals"
+		       else 0 end as "openProposals",
+		       (b.member_id is not null and t.created_by is distinct from ${userId}
+		         and not exists (select 1 from trip_seen s where s.trip_id = t.id and s.user_id = ${userId}
+		                          and s.welcome_seen_at is not null)) as unopened,
+		       (select coalesce(nullif(trim(iu.first_name), ''), split_part(trim(iu.name), ' ', 1))
+		          from trip_members m join "user" iu on iu.id = m.invited_by
+		         where m.id = b.member_id and m.invited_by <> ${userId}) as "invitedBy"
 		  from best b join trips t on t.id = b.trip_id and t.deleted_at is null
 		 order by t.start_date nulls last, t.name`);
 	const rows = res.rows as Record<string, unknown>[];
@@ -119,6 +125,9 @@ export async function loadMyTrips(userId: string): Promise<MyTrip[]> {
 			openProposals: Number(r.openProposals ?? 0),
 			overdue: overdue.get(String(r.id)) ?? 0,
 			ownerName: (r.ownerName as string | null) ?? null,
+			unopened: r.unopened
+				? { invitedBy: (r.invitedBy as string | null) || null }
+				: null,
 			dayCount:
 				start && end
 					? Math.round(

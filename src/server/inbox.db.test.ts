@@ -570,3 +570,74 @@ describe("rating-comment mentions (ADDENDUM §10)", () => {
 		expect(rows).toHaveLength(0);
 	});
 });
+
+describe("joined", () => {
+	it("tells people added to someone else's trip, until they open it; never its creator", async () => {
+		const t = await freshTrip();
+		const nova = await newUser("Nova", "Lee");
+		const kai = await newUser("Kai", "Ito");
+		const novaMember = randomUUID();
+		const kaiMember = randomUUID();
+		await getDb()
+			.insert(tripMembers)
+			.values([
+				{
+					id: novaMember,
+					tripId: t.tripId,
+					userId: nova.id,
+					status: "active",
+					role: "editor",
+					color: 4,
+					invitedBy: U.maya.id,
+					joinedAt: new Date(),
+				},
+				{
+					id: kaiMember,
+					tripId: t.tripId,
+					userId: kai.id,
+					status: "active",
+					role: "rater",
+					color: 5,
+					joinedByLink: true,
+					joinedAt: new Date(),
+				},
+			]);
+		const [trip] = await q<{ name: string; slug: string }>(
+			sql`select name, slug from trips where id = ${t.tripId}`,
+		);
+		let rows = ofKind(await inbox(nova), "joined");
+		expect(rows).toHaveLength(1);
+		expect(rows[0]).toMatchObject({
+			key: `joined:${novaMember}`,
+			title: `Maya added you to ${trip?.name}`,
+			invitedBy: "Maya",
+			role: "editor",
+			read: false,
+			actor: { name: "Maya Chen", memberId: t.maya },
+			link: { tripSlug: trip?.slug },
+		});
+		expect(ofKind(await inbox(nova, t.tripId), "joined")).toHaveLength(1);
+		expect(ofKind(await inbox(kai, t.tripId), "joined")[0]).toMatchObject({
+			title: `You joined ${trip?.name}`,
+			invitedBy: null,
+			actor: null,
+		});
+		// The creator (the fixture's owner row joined just now) gets none.
+		expect(ofKind(await inbox(U.dennis, t.tripId), "joined")).toHaveLength(0);
+
+		// Closing the welcome reads it.
+		await getDb().execute(sql`
+			insert into trip_seen (trip_id, user_id, welcome_seen_at)
+			values (${t.tripId}, ${nova.id}, now())`);
+		rows = ofKind(await inbox(nova), "joined");
+		expect(rows[0]?.read).toBe(true);
+		// So does marking it read.
+		await call(markInboxRead, kai, { keys: [`joined:${kaiMember}`] });
+		expect(ofKind(await inbox(kai), "joined")[0]?.read).toBe(true);
+
+		// Older than 30 days: gone.
+		await getDb().execute(sql`
+			update trip_members set joined_at = now() - interval '31 days' where id = ${kaiMember}`);
+		expect(ofKind(await inbox(kai), "joined")).toHaveLength(0);
+	});
+});

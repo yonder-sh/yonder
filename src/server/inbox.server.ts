@@ -19,7 +19,9 @@
  *   and someone else edited an expense since (`expense.*` activity, the
  *   latest one names the cause); the key carries that activity's version;
  * - `budget_notice`: my own budget line was set against a trip default that
- *   has changed since (`default_seen_minor`).
+ *   has changed since (`default_seen_minor`);
+ * - `joined`: I joined someone else's trip in the last 30 days (by invite or
+ *   the link); read once I closed its welcome (`trip_seen.welcome_seen_at`).
  */
 import { sql } from "drizzle-orm";
 import { db } from "@/db/db.server";
@@ -34,7 +36,12 @@ import { dueState, effectiveDue } from "@/lib/engine/due";
 import { indexGraph } from "@/lib/engine/graph-index";
 import { formatMoney } from "@/lib/engine/money";
 import { computeSchedule } from "@/lib/engine/schedule";
-import type { DueKind, ExpenseCategory, ListKind } from "@/lib/schemas/enums";
+import type {
+	DueKind,
+	ExpenseCategory,
+	ListKind,
+	TripRole,
+} from "@/lib/schemas/enums";
 import {
 	INBOX_MAX,
 	type InboxDto,
@@ -182,6 +189,7 @@ export async function loadInbox(
 		...(await dueItems(userId, opts.tripId)),
 		...(await balanceItems(userId, opts.tripId)),
 		...(await budgetItems(userId, opts.tripId)),
+		...(await joinedItems(userId, opts.tripId)),
 	);
 
 	items.sort((a, b) => (a.at < b.at ? 1 : a.at > b.at ? -1 : 0));
@@ -576,6 +584,65 @@ async function budgetItems(
 				tab: "money",
 				...(r.nodeId ? { sel: `n.${r.nodeId}` } : {}),
 			},
+		} satisfies InboxItem;
+	});
+}
+
+/** "Maya added you to Japan with friends" / "You joined Japan with friends". */
+async function joinedItems(
+	userId: string,
+	tripId: string | undefined,
+): Promise<InboxItem[]> {
+	const res = await db.execute(sql`
+		select m.id::text as "memberId", m.trip_id::text as "tripId", t.slug as "tripSlug", t.name as "tripName",
+		       m.role::text as role, m.joined_at as at,
+		       iu.name as "inviterName", iu.first_name as "inviterFirst",
+		       (select im.id::text from trip_members im where im.trip_id = m.trip_id and im.user_id = m.invited_by limit 1) as "inviterMemberId",
+		       (s.welcome_seen_at is not null or exists (select 1 from inbox_reads r where r.user_id = ${userId}
+		                and r.item_key = 'joined:' || m.id::text)) as read
+		  from trip_members m
+		  join trips t on t.id = m.trip_id and t.deleted_at is null
+		  left join trip_seen s on s.trip_id = m.trip_id and s.user_id = ${userId}
+		  left join "user" iu on iu.id = m.invited_by and m.invited_by <> ${userId}
+		 where m.user_id = ${userId} and m.status = 'active'
+		   and t.created_by is distinct from ${userId}
+		   and m.joined_at > now() - interval '30 days'
+		   ${oneTrip(sql`m.trip_id`, tripId)}`);
+	return (
+		res.rows as {
+			memberId: string;
+			tripId: string;
+			tripSlug: string;
+			tripName: string;
+			role: TripRole;
+			at: string | Date;
+			inviterName: string | null;
+			inviterFirst: string | null;
+			inviterMemberId: string | null;
+			read: boolean;
+		}[]
+	).map((r) => {
+		const by = r.inviterName
+			? r.inviterFirst?.trim() || firstWord(r.inviterName)
+			: null;
+		return {
+			kind: "joined",
+			key: inboxKey.joined(r.memberId),
+			memberId: r.memberId,
+			role: r.role,
+			invitedBy: by,
+			tripId: r.tripId,
+			tripName: r.tripName,
+			at: iso(r.at),
+			read: Boolean(r.read),
+			actor: r.inviterName
+				? { name: r.inviterName, memberId: r.inviterMemberId }
+				: null,
+			title: (by
+				? `${by} added you to ${r.tripName}`
+				: `You joined ${r.tripName}`
+			).slice(0, 300),
+			link: { tripSlug: r.tripSlug },
 		} satisfies InboxItem;
 	});
 }

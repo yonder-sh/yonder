@@ -1,13 +1,13 @@
 /**
  * ADDENDUM §10 "one inbox": THE bell (TopBar and the mobile pill row). One
  * list and one read state for mentions, suggestions to review, suggestion
- * results, due/opening to-dos, balance-changed-since-settlement and budget
- * notices (EXTENSIONS §9). Data: `inboxQuery(tripId)` → `listInbox` (F);
+ * results, due/opening to-dos, balance-changed-since-settlement, budget
+ * notices (EXTENSIONS §9) and trips I was just added to. Data: `inboxQuery(tripId)` → `listInbox` (F);
  * `markInboxRead({ keys } | { all, tripId })`.
  *
  * - The bell carries at most ONE apricot dot (unread exists); rows mark
  *   unread with weight and a small neutral dot, never more glow (DESIGN §1.2).
- * - Rows are grouped by kind (Suggestions, Mentions, To-dos, Money), newest
+ * - Rows are grouped by kind (New trips, Suggestions, Mentions, To-dos, Money), newest
  *   first; opening a row marks it read (everywhere: the dashboard too) and
  *   deep-links (`InboxItem.link`, re-validated); review rows open the drawer.
  * - A popover (360 × max 480) on desktop, a Drawer on phones (DESIGN §8.6).
@@ -20,6 +20,7 @@ import {
 	Bell,
 	CalendarClock,
 	GitPullRequestArrow,
+	UserPlus,
 	Wallet,
 } from "lucide-react";
 import { type ReactNode, useId, useState } from "react";
@@ -41,6 +42,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { OpenSuggestions } from "@/features/suggest/ReviewDrawer";
 import { openReview } from "@/features/suggest/review-store";
 import { markInboxRead } from "@/functions/inbox.functions";
+import { roleLabel } from "@/lib/auth/roles";
 import type { GraphIndex } from "@/lib/engine/graph-index";
 import { humanError } from "@/lib/errors";
 import { meKeys } from "@/lib/query/keys";
@@ -283,6 +285,7 @@ const KIND_ICON: Record<InboxItem["kind"], ReactNode> = {
 	due: <CalendarClock className="size-3.5" />,
 	balance_changed: <Wallet className="size-3.5" />,
 	budget_notice: <Wallet className="size-3.5" />,
+	joined: <UserPlus className="size-3.5" />,
 };
 
 const DUE_LABEL = {
@@ -312,6 +315,11 @@ function secondary(i: InboxItem): ReactNode {
 			return null;
 		case "review":
 			return null;
+		case "joined":
+			// "You can edit" (the role label, lower-cased).
+			return i.role === "owner"
+				? "You're an owner"
+				: `You ${roleLabel(i.role).toLowerCase()}`;
 	}
 }
 

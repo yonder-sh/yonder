@@ -22,9 +22,15 @@ import {
 	type WorkspaceSearch,
 } from "@/lib/workspace/search";
 
-export type InboxGroupKey = "mentions" | "suggestions" | "todos" | "money";
+export type InboxGroupKey =
+	| "trips"
+	| "mentions"
+	| "suggestions"
+	| "todos"
+	| "money";
 
 export const INBOX_GROUP_LABEL: Record<InboxGroupKey, string> = {
+	trips: "New trips",
 	mentions: "Mentions",
 	suggestions: "Suggestions",
 	todos: "To-dos",
@@ -38,9 +44,11 @@ const GROUP_OF: Record<InboxItem["kind"], InboxGroupKey> = {
 	due: "todos",
 	balance_changed: "money",
 	budget_notice: "money",
+	joined: "trips",
 };
 
 const GROUP_ORDER: InboxGroupKey[] = [
+	"trips",
 	"suggestions",
 	"mentions",
 	"todos",

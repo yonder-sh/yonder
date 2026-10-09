@@ -24,6 +24,8 @@ export const HOME_TESTID = {
 	/** FB-05: "Rate places" in a trip card's ⋯ menu. */
 	tripCardRate: "home-trip-card-rate",
 	tripCardChip: "home-trip-card-chip",
+	/** "New · Nova invited you" on a trip I haven't opened yet. */
+	tripCardNew: "home-trip-card-new",
 	offlineChip: "home-offline-chip",
 	sharedWaiting: "home-shared-waiting",
 	newTripDates: "home-new-trip-dates",
