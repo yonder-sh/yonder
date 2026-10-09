@@ -74,6 +74,9 @@ export async function loadMyTrips(userId: string): Promise<MyTrip[]> {
 		           where p.trip_id = t.id and p.status = 'open' and p.author_user_id is distinct from ${userId})
 		       else 0 end as "openProposals",
 		       (b.member_id is not null and t.created_by is distinct from ${userId}
+		         -- Joined in the last 30 days, like the inbox's "joined" item.
+		         and exists (select 1 from trip_members jm where jm.id = b.member_id
+		                      and jm.joined_at > now() - interval '30 days')
 		         and not exists (select 1 from trip_seen s where s.trip_id = t.id and s.user_id = ${userId}
 		                          and s.welcome_seen_at is not null)) as unopened,
 		       (select coalesce(nullif(trim(iu.first_name), ''), split_part(trim(iu.name), ' ', 1))
