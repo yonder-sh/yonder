@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import type { MediaDto } from "@/features/media/media.functions";
 import { CoverPlaceholder } from "@/features/places/tab/PlacesBoard";
 import { useShell } from "@/features/shell/shell-store";
+import { can, canRateOwn } from "@/lib/auth/roles";
 import { mediaUrl } from "@/lib/media-url";
 import { usePeers } from "@/lib/realtime/presence";
 import { cn } from "@/lib/utils";
@@ -120,16 +121,60 @@ const NEXT_TITLE: Record<StandingKey, (s: Standing) => string> = {
 	stays: () => "Book where you stay",
 };
 
-/** D01's "Next for you": the first open step with its action, and what comes after it. */
+/**
+ * D01's "Next for you": the first open step with its action, and what comes
+ * after it. The trip's steps are the planners' (owner, editors); everyone
+ * else only gets their own ratings, then "all caught up" (walkthrough, 2026-10-09).
+ */
 export function NextForYou({ standing }: { standing: Standing }) {
+	const { access, nav } = useWorkspace();
+	if (can(access, "edit")) return <TripSteps standing={standing} />;
+	if (!canRateOwn(access)) return null;
+	if (standing.myLeft) return <TripSteps standing={standing} only="rating" />;
+	return (
+		<section
+			data-testid={OVERVIEW_TESTID.next}
+			data-key="done"
+			data-cursor-anchor="sec:ov.next"
+			aria-label="Next for you"
+			className="flex flex-wrap items-center gap-x-5 gap-y-2 rounded-2xl border bg-card px-5 py-4"
+		>
+			<div className="flex min-w-60 flex-1 flex-col gap-1">
+				<h2 className="font-display text-xl leading-7 font-semibold">
+					You're all caught up
+				</h2>
+				<p className="text-sm text-muted-foreground">
+					Your ratings are in. The plan shapes up from here.
+				</p>
+			</div>
+			<Button variant="outline" onClick={() => nav.setTab("plan")}>
+				See the plan
+				<ArrowRight />
+			</Button>
+		</section>
+	);
+}
+
+function TripSteps({
+	standing,
+	only,
+}: {
+	standing: Standing;
+	/** Just this step (a rater's own ratings): no "After that", no "Not now". */
+	only?: StandingKey;
+}) {
 	const { open, action } = useStandingNav(standing);
 	const [later, setLater] = useState<ReadonlySet<StandingKey>>(new Set());
-	const todo = standing.lines.filter((l) => !l.done);
+	const todo = standing.lines.filter(
+		(l) => !l.done && (!only || l.key === only),
+	);
 	const line = todo.find((l) => !later.has(l.key)) ?? null;
 	if (!line) return null;
 	const act = action(line.key) ?? { label: "Open", run: open[line.key] };
 	const after = todo.filter((l) => l.key !== line.key).slice(0, 3);
-	const detail = line.detail.charAt(0).toUpperCase() + line.detail.slice(1);
+	const detail = only
+		? "Your ratings decide what makes the shortlist."
+		: line.detail.charAt(0).toUpperCase() + line.detail.slice(1);
 	return (
 		<section
 			data-testid={OVERVIEW_TESTID.next}

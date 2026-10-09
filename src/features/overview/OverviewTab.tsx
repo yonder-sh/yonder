@@ -27,6 +27,7 @@ import { ClimateCard } from "@/features/insights/ClimateCard";
 import { cityRowNodes } from "@/features/places/lib/days";
 import { useCovers } from "@/features/places/tab/PlacesBoard";
 import { StillToPlan } from "@/features/shell/StillToPlan";
+import { can, canRateOwn } from "@/lib/auth/roles";
 import type { LngLat } from "@/lib/engine/geo";
 import { mediaUrl } from "@/lib/media-url";
 import { cn } from "@/lib/utils";
@@ -81,7 +82,7 @@ function useWidth(): [RefObject<HTMLDivElement | null>, number] {
 
 export function OverviewTab({ phone = false }: { phone?: boolean }) {
 	const ws = useWorkspace();
-	const { ix, graph } = ws;
+	const { ix, graph, access } = ws;
 	const data = useOverview();
 	const covers = useCovers();
 	const [ref, width] = useWidth();
@@ -202,7 +203,7 @@ export function OverviewTab({ phone = false }: { phone?: boolean }) {
 					</div>
 					<div className="flex min-w-0 flex-col gap-6">
 						<Deadlines />
-						<WholeTrip />
+						{can(access, "editNotes") ? <WholeTrip /> : null}
 						<div className="rounded-2xl border bg-card p-4">
 							<StillToPlan followPath="overview.still" />
 						</div>
@@ -354,7 +355,7 @@ function Header({
 	lastDate: string | null;
 	covers: ReturnType<typeof useCovers>;
 }) {
-	const { graph, ix, schedule, nav, underway } = useWorkspace();
+	const { graph, ix, schedule, nav, underway, access } = useWorkspace();
 	const guard = useEditGuard();
 	const openAddPlace = useUi((s) => s.openAddPlace);
 	const askSplit = useUi((s) => s.askSplit);
@@ -427,7 +428,12 @@ function Header({
 		const hasCity = cityRowNodes(ix).length > 0;
 		const raters = standing.people.length;
 		const leftToRate = standing.people.reduce((n, p) => n + p.left, 0);
-		const step = firstStep({ places: standing.places, hasCity, leftToRate });
+		// The trip's steps are the planners'; others only rate their own (walkthrough, 2026-10-09).
+		const planner = can(access, "edit");
+		const step = planner
+			? firstStep({ places: standing.places, hasCity, leftToRate })
+			: "rate";
+		const mineOnly = !planner && canRateOwn(access) && !!standing.myLeft;
 		const copy = {
 			want: {
 				title: "What do you want to see?",
@@ -442,6 +448,11 @@ function Header({
 						: `${standing.places} ${standing.places === 1 ? "place" : "places"} saved, ${leftToRate} ${leftToRate === 1 ? "rating" : "ratings"} to go. The nights in each city follow from the shortlist.`,
 				go: standing.myLeft ? `Rate (${standing.myLeft})` : "Invite",
 			},
+			mine: {
+				title: "Rate the places",
+				text: `${standing.places} ${standing.places === 1 ? "place" : "places"} saved. Your ratings decide what makes the shortlist.`,
+				go: `Rate (${standing.myLeft})`,
+			},
 			nights: {
 				title: "How long in each city?",
 				text: noDays
@@ -449,7 +460,8 @@ function Header({
 					: "Set the nights in each city in Cities & nights: the route draws itself here, night by night.",
 				go: "Set the nights",
 			},
-		}[step];
+		}[mineOnly ? "mine" : step];
+		const showCard = planner || mineOnly;
 		return (
 			<div
 				data-testid={OVERVIEW_TESTID.header}
@@ -461,57 +473,61 @@ function Header({
 					<Title size={size}>{name}</Title>
 					{dates ? sub : null}
 				</div>
-				<div
-					data-testid={OVERVIEW_TESTID.empty}
-					data-step={step}
-					className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-white/[.04] p-4"
-				>
-					<p className="font-display text-lg font-semibold text-white">
-						{copy.title}
-					</p>
-					<p className="text-sm text-white/65">{copy.text}</p>
-					<div className="flex flex-wrap gap-2">
-						<Button
-							data-testid={OVERVIEW_TESTID.planRoute}
-							onClick={() => {
-								if (step === "rate") {
-									if (standing.myLeft)
-										nav.openPlaces({ scopeId: null, patch: { pv: "rate" } });
-									else setShareOpen(true);
-									return;
+				{showCard ? (
+					<div
+						data-testid={OVERVIEW_TESTID.empty}
+						data-step={step}
+						className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-white/[.04] p-4"
+					>
+						<p className="font-display text-lg font-semibold text-white">
+							{copy.title}
+						</p>
+						<p className="text-sm text-white/65">{copy.text}</p>
+						<div className="flex flex-wrap gap-2">
+							<Button
+								data-testid={OVERVIEW_TESTID.planRoute}
+								onClick={() => {
+									if (step === "rate") {
+										if (standing.myLeft)
+											nav.openPlaces({ scopeId: null, patch: { pv: "rate" } });
+										else setShareOpen(true);
+										return;
+									}
+									nav.setTab("plan");
+									if (step === "nights") askSplit(true);
+									else openAddPlace({ mode: "search", want: true });
+								}}
+								disabled={step !== "rate" && guard.disabled}
+								title={
+									step !== "rate" ? (guard.reason ?? undefined) : undefined
 								}
-								nav.setTab("plan");
-								if (step === "nights") askSplit(true);
-								else openAddPlace({ mode: "search", want: true });
-							}}
-							disabled={step !== "rate" && guard.disabled}
-							title={step !== "rate" ? (guard.reason ?? undefined) : undefined}
-							className={PRIMARY}
-						>
-							{copy.go}
-						</Button>
-						{step === "rate" && standing.myLeft ? (
-							<Button
-								variant="outline"
-								onClick={() => setShareOpen(true)}
-								className={MUTED}
+								className={PRIMARY}
 							>
-								Invite
+								{copy.go}
 							</Button>
-						) : null}
-						{noDays ? (
-							<Button
-								variant="outline"
-								onClick={() => setSettingsOpen(true)}
-								disabled={guard.disabled}
-								title={guard.reason ?? undefined}
-								className={MUTED}
-							>
-								Set dates
-							</Button>
-						) : null}
+							{planner && step === "rate" && standing.myLeft ? (
+								<Button
+									variant="outline"
+									onClick={() => setShareOpen(true)}
+									className={MUTED}
+								>
+									Invite
+								</Button>
+							) : null}
+							{noDays && planner ? (
+								<Button
+									variant="outline"
+									onClick={() => setSettingsOpen(true)}
+									disabled={guard.disabled}
+									title={guard.reason ?? undefined}
+									className={MUTED}
+								>
+									Set dates
+								</Button>
+							) : null}
+						</div>
 					</div>
-				</div>
+				) : null}
 				{!noDays && wide ? <Stats data={data} cols={3} after={false} /> : null}
 				{/* The card above already offers adding: the checklist once there are places. */}
 				{standing.places || !noDays ? (

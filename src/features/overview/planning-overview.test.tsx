@@ -1,14 +1,18 @@
 /** One Yonder D01: planning on a wide screen, the Overview is a working page. */
 import { fireEvent, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import type { TripRole } from "@/lib/auth/roles";
+import { demoGraph } from "@/lib/fixtures/demo";
 import { renderWithWorkspace } from "@/test/render-workspace";
+import type { Standing } from "./lib/standing";
 import { OverviewTab } from "./OverviewTab";
+import { NextForYou } from "./PlanningOverview";
 import { OVERVIEW_TESTID as O } from "./testids";
 import { STANDING_TESTID as S } from "./testids-standing";
 
 afterEach(() => vi.restoreAllMocks());
 
-function renderWide() {
+function renderWide(role?: TripRole) {
 	// Wide: the page measures itself at 1400px.
 	vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockReturnValue({
 		width: 1400,
@@ -21,7 +25,10 @@ function renderWide() {
 		y: 0,
 		toJSON: () => ({}),
 	});
+	const graph = structuredClone(demoGraph);
+	if (role) graph.me = { ...graph.me, role };
 	return renderWithWorkspace(<OverviewTab />, {
+		graph,
 		search: { tab: "overview", asOf: "2027-09-30" },
 	});
 }
@@ -45,6 +52,33 @@ describe("the planning Overview (D01)", () => {
 		const next = screen.getByTestId(O.next);
 		expect(next).toHaveTextContent("Next for you");
 		expect(screen.getByTestId(S.card)).toBeInTheDocument();
+	});
+
+	// Walkthrough (2026-10-09): the trip's steps are the planners'.
+	it("a rater's next step is only their own ratings", () => {
+		renderWide("rater");
+		const next = screen.getByTestId(O.next);
+		expect(next).toHaveAttribute("data-key", "rating");
+		expect(next).toHaveTextContent("Rate the 8 places you haven't yet");
+		expect(next).not.toHaveTextContent("After that");
+		expect(screen.queryByRole("button", { name: "Not now" })).toBeNull();
+		expect(screen.queryByTestId(O.wholeTrip)).toBeNull();
+	});
+
+	it("a rater with nothing left is all caught up", () => {
+		const graph = structuredClone(demoGraph);
+		graph.me = { ...graph.me, role: "rater" };
+		const standing = { lines: [], myLeft: 0 } as unknown as Standing;
+		renderWithWorkspace(<NextForYou standing={standing} />, { graph });
+		expect(screen.getByTestId(O.next)).toHaveTextContent(
+			"You're all caught up",
+		);
+	});
+
+	it("someone who only views gets no to-dos", () => {
+		renderWide("viewer");
+		expect(screen.queryByTestId(O.next)).toBeNull();
+		expect(screen.queryByTestId(O.wholeTrip)).toBeNull();
 	});
 
 	it("Not now moves on to the step after", () => {
