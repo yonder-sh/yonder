@@ -172,7 +172,7 @@ test("EXTENSIONS §2.1: Maya suggests, Dennis sees her suggestions, Kai doesn't"
 	await k.ctx.close();
 });
 
-test("EXTENSIONS §2.1: the suggester link makes a guest a suggester", async ({ browser }, info) => {
+test("EXTENSIONS §2.1: the suggester link lets a guest view; joining would make them a suggester (linkRole)", async ({ browser }, info) => {
 	test.skip(info.project.name !== "chromium", "desktop only");
 	const ctx = await browser.newContext();
 	const page = await ctx.newPage();
@@ -180,8 +180,8 @@ test("EXTENSIONS §2.1: the suggester link makes a guest a suggester", async ({ 
 	await expect(page).toHaveURL(/\/t\/asia-2027/, { timeout: 20_000 });
 	await expectLive(page);
 	await expect
-		.poll(() => page.evaluate(() => (window as unknown as { __yonder?: Y }).__yonder?.graph.me.role ?? null))
-		.toBe("suggester");
+		.poll(() => page.evaluate(() => (window as unknown as { __yonder?: Y }).__yonder?.graph.me ?? null))
+		.toMatchObject({ role: "viewer", isGuest: true, linkRole: "suggester" });
 	await ctx.close();
 });
 

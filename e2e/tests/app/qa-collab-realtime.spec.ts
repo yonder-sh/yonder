@@ -1,7 +1,8 @@
 /**
  * I2 verifier "collab" (round 1): realtime notes, carets and presence on the
  * QA seed's Asia 2027 (qa/SCENARIOS RT-01, RT-03, RT-04, RT-06, RT-08, RT-10,
- * RT-11), with Dennis, Audrey, Kai (viewer) and Guest-E (editor link).
+ * RT-11), with Dennis, Audrey, Kai (viewer), Eve (joined through the edit
+ * link) and Guest-E (a link guest, who only views).
  *
  * Needs the QA seed and `$QA_AUTH_DIR/<handle>.json` storageStates.
  */
@@ -12,7 +13,7 @@ import { NOTES_TESTID as NT } from "../../../src/features/notes/testids";
 import { PLAN_TESTID as P } from "../../../src/features/plan/testids";
 import { TESTID } from "../../../src/lib/testids";
 import { shotPath } from "./_helpers/env";
-import { openLink } from "./_helpers/link";
+import { joinTrip, openLink } from "./_helpers/link";
 import { collectConsole, expectLive, notesView } from "./_helpers/page";
 
 const AUTH = process.env.QA_AUTH_DIR ?? path.resolve("e2e/.auth");
@@ -21,16 +22,18 @@ const shot = (n: string) =>
 	process.env.QA_SHOTS_DIR ? path.join(process.env.QA_SHOTS_DIR, `${n}.png`) : shotPath(`qa-collab/${n}.png`);
 const GG = "/t/asia-2027/japan/tokyo/shinjuku/golden-gai";
 
-async function open(browser: Browser, handle: string | null, url: string) {
+async function open(browser: Browser, handle: string | null, url: string, join = false) {
 	const ctx = await browser.newContext({
 		...(handle ? { storageState: auth(handle) } : {}),
 		viewport: { width: 1440, height: 900 },
 	});
 	const page = await ctx.newPage();
-	// Guest-E: the trip's address while its link gives "Can edit".
-	if (!handle) await openLink(page, "asia-2027", "editor");
+	// Guest-E (or `join`: an account): the trip's address while its link gives "Can edit".
+	if (!handle || join) await openLink(page, "asia-2027", "editor");
 	await page.goto(url);
 	await expectLive(page);
+	// Link guests only view; joining makes them an editor member.
+	if (join) await joinTrip(page);
 	return { ctx, page };
 }
 
@@ -65,45 +68,49 @@ test("RT-01/03/08/10: three editors type at once and converge; carets are labell
 	const tag = randomBytes(2).toString("hex");
 	const d = await open(browser, "dennis", `${GG}?tab=notes`);
 	const a = await open(browser, "audrey", `${GG}?tab=notes`);
+	const e = await open(browser, "eve", `${GG}?tab=notes`, true);
 	const g = await open(browser, null, `${GG}?tab=notes`);
-	const k = await open(browser, "kai", `${GG}?tab=notes`);
 	const logs = collectConsole(d.page);
 
 	// RT-08: Dennis's header shows who else is here, the link guest as "Guest".
 	const avatars = d.page.getByTestId(TESTID.presenceAvatar);
+	// (Kai comes in after: the header shows three faces, then "+1".)
 	await expect.poll(() => avatars.count(), { timeout: 10_000 }).toBeGreaterThanOrEqual(3);
 	const labels = await avatars.evaluateAll((els) =>
 		els.map((e) => `${e.getAttribute("aria-label") ?? ""} ${e.getAttribute("title") ?? ""} ${e.textContent ?? ""}`),
 	);
 	expect(labels.join(" | ")).toMatch(/Audrey/);
 	expect(labels.join(" | ")).toMatch(/Guest/);
-	expect(labels.join(" | ")).toMatch(/Kai/);
+	expect(labels.join(" | ")).toMatch(/Eve/);
 	await d.page.screenshot({ path: shot("rt08-presence") });
 	await avatars.filter({ hasText: /A/ }).first().hover().catch(() => undefined);
 	await d.page.waitForTimeout(600);
 	await d.page.screenshot({ path: shot("rt08-presence-hover"), clip: { x: 700, y: 0, width: 740, height: 200 } });
 
-	// Kai is read-only and says why.
+	// Kai (a viewer) and the link guest are read-only.
+	const k = await open(browser, "kai", `${GG}?tab=notes`);
 	await expect(topEditor(k.page)).toHaveAttribute("data-editable", "false");
+	await expect(topEditor(g.page)).toHaveAttribute("data-editable", "false");
 
-	// RT-01/RT-10: Dennis at the start, Audrey and the guest at the end, all at once (~10 chars/s).
+	// RT-01/RT-10: Dennis at the start, Audrey and Eve at the end, all at once (~10 chars/s).
 	const sD = `Cover charge ¥500–¥1,000 per bar ${tag}. `;
 	const sA = `Cash only at most bars ${tag}.`;
-	const sG = `Guest line ${tag}.`;
+	const sG = `Eve line ${tag}.`;
 	await caretAtStart(d.page);
 	await caretAtEnd(a.page);
 	await a.page.keyboard.press("Enter");
-	await caretAtEnd(g.page);
-	await g.page.keyboard.press("Enter");
+	await caretAtEnd(e.page);
+	await e.page.keyboard.press("Enter");
 	await Promise.all([
 		d.page.keyboard.type(sD, { delay: 90 }),
 		a.page.keyboard.type(sA, { delay: 100 }),
-		g.page.keyboard.type(sG, { delay: 110 }),
+		e.page.keyboard.type(sG, { delay: 110 }),
 	]);
 	await expect.poll(async () => (await text(d.page)).includes(sA.trim()) && (await text(d.page)).includes(sG), {
 		timeout: 5_000,
 	}).toBe(true);
-	await expect.poll(async () => [await text(a.page), await text(g.page), await text(k.page)], { timeout: 5_000 }).toEqual([
+	await expect.poll(async () => [await text(a.page), await text(e.page), await text(g.page), await text(k.page)], { timeout: 5_000 }).toEqual([
+		await text(d.page),
 		await text(d.page),
 		await text(d.page),
 		await text(d.page),
@@ -113,10 +120,10 @@ test("RT-01/03/08/10: three editors type at once and converge; carets are labell
 	expect(final).toContain(sA);
 	expect(final).toContain(sG);
 
-	// RT-03: carets with names; the guest's reads "Guest".
+	// RT-03: carets with names.
 	const carets = d.page.locator(".collaboration-carets__label");
 	await expect(carets.filter({ hasText: "Audrey" })).toBeVisible({ timeout: 5_000 });
-	await expect(carets.filter({ hasText: /Guest/ })).toBeVisible({ timeout: 5_000 });
+	await expect(carets.filter({ hasText: /Eve/ })).toBeVisible({ timeout: 5_000 });
 	await d.page.screenshot({ path: shot("rt03-carets") });
 
 	// RT-11: Dennis undoes his own typing only.
@@ -146,6 +153,7 @@ test("RT-01/03/08/10: three editors type at once and converge; carets are labell
 		timeout: 30_000,
 	});
 	expect(logs.messages).toEqual([]);
+	await e.ctx.close();
 	await g.ctx.close();
 	await k.ctx.close();
 	await d.ctx.close();

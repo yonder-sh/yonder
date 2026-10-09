@@ -6,7 +6,8 @@
  * - A11Y-02: Share and Trip settings opened from the keyboard take focus,
  *   Tab stays inside, one Esc closes them and focus goes back to the opener.
  * - COLLAB-R2-06: a link guest who signs in to keep the trip is their account
- *   at once (`graph.me`, the guest line), without a reload.
+ *   at once (`graph.me`), without a reload, and a member at the link's role
+ *   (guests only view; signing in joins them, owner 2026-10-09).
  */
 import { randomBytes } from "node:crypto";
 import { expect, type Page, test } from "@playwright/test";
@@ -25,7 +26,7 @@ const hex = () => randomBytes(4).toString("hex");
 /** `browser.newContext` takes the file's `storageState` unless told otherwise. */
 const signedOut = { storageState: { cookies: [], origins: [] } };
 
-type Me = { userId: string | null; isGuest: boolean; name: string };
+type Me = { userId: string | null; isGuest: boolean; name: string; role: string };
 const me = (page: Page) =>
 	page.evaluate(
 		() =>
@@ -153,12 +154,11 @@ test("COLLAB-R2-06: a link guest who signs in to keep the trip is their account 
 	test.skip(info.project.name !== "chromium", "one browser is enough");
 	const c = await cloneFixtureTrip(request);
 	const email = `keep-${hex()}@example.com`;
-	// Kip already holds the edit link as himself (as Eve did in the QA run),
-	// so signing in changes nothing on the trip that would refetch it.
+	// Kip already holds the view link as himself (as Eve did in the QA run).
 	const acct = await browser.newContext(signedOut);
 	await loginViaApi(acct.request, email, { first: "Kip", last: "Keeper" });
 	const kip = await acct.newPage();
-	await openLink(kip, c.slug, "editor");
+	await openLink(kip, c.slug, "viewer");
 	await expect(kip).toHaveURL(new RegExp(`/t/${c.slug}`), { timeout: 20_000 });
 	await acct.close();
 
@@ -167,12 +167,12 @@ test("COLLAB-R2-06: a link guest who signs in to keep the trip is their account 
 		viewport: { width: 1440, height: 900 },
 	});
 	const page = await ctx.newPage();
-	await openLink(page, c.slug, "editor");
+	await openLink(page, c.slug, "viewer");
 	await expect(page).toHaveURL(new RegExp(`/t/${c.slug}`), {
 		timeout: 20_000,
 	});
 	// A later visit (a full load, as in the QA run): the graph comes from the
-	// cache at once, and nothing on the trip changes when Kip signs in.
+	// cache at once.
 	await page.goto(`/t/${c.slug}?tab=plan`);
 	await expectLive(page);
 	await page.waitForFunction(
@@ -197,10 +197,12 @@ test("COLLAB-R2-06: a link guest who signs in to keep the trip is their account 
 		timeout: 30_000,
 	});
 	await expect(page.getByTestId(TESTID.workspace)).toBeVisible();
-	// No reload, and from the first paint: the workspace is Kip's (still a
-	// link guest, now signed in), never the guest's cached graph.
-	expect(await nudge.innerText()).toMatch(/a guest here as\s+Kip Keeper/);
+	// No reload: the workspace is Kip's, and signing in made him a member at
+	// the link's role (Can view), so the guest line is gone.
 	await expect.poll(async () => (await me(page))?.name).toBe("Kip Keeper");
 	expect((await me(page))?.userId).not.toBe(guest?.userId);
+	await expect.poll(async () => (await me(page))?.isGuest).toBe(false);
+	await expect.poll(async () => (await me(page))?.role).toBe("viewer");
+	await expect(nudge).toHaveCount(0);
 	await ctx.close();
 });

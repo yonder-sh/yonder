@@ -98,7 +98,7 @@ export const SMOKE: SmokeEntry[] = [
 	{ spec: "media-gallery.spec.ts" },
 	{
 		spec: "media-people.spec.ts",
-		grep: "sees adds and deletes live|a guest editor can upload|TikTok, Reels",
+		grep: "sees adds and deletes live|a link guest can.t upload|TikTok, Reels",
 	},
 	{ spec: "media-rules.spec.ts", grep: "refuses bad files|drop to attach" },
 	{ spec: "media-quota.spec.ts" },
@@ -109,7 +109,7 @@ export const SMOKE: SmokeEntry[] = [
 	},
 	{
 		spec: "trip-link.spec.ts",
-		grep: "a member opens the trip's address|signed out: the link's role|Copy link copies",
+		grep: "a member opens the trip's address|signed out: a guest who views|Copy link copies",
 	},
 	{ spec: "foundation-share.spec.ts" },
 	{ spec: "share-card.spec.ts" },

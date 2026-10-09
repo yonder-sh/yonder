@@ -182,7 +182,7 @@ test("SUG-07: Maya can't type in notes (server-enforced); her addition is insert
 	await m.ctx.close();
 });
 
-test("SUG-08/08b: a guest suggester's flight edit never stores the booking ref; accepting keeps the ref and seats", async ({
+test("SUG-08/08b: a suggest-link guest sees the booking ref masked and can't edit; a suggester's flight edit, accepted, keeps the ref and seats", async ({
 	browser,
 }) => {
 	test.setTimeout(120_000);
@@ -202,21 +202,27 @@ test("SUG-08/08b: a guest suggester's flight edit never stores the booking ref; 
 	await expect(lo).toBeVisible();
 	await expect(lo).not.toContainText("ZK4P7Q");
 	await guest.page.screenshot({ path: shot("sug08-guest-leg") });
-	await lo.getByRole("button", { name: "Edit flight" }).click();
-	const form = guest.page.getByTestId(T.flightForm);
+	// Link guests only view (owner, 2026-10-09).
+	const guestEdit = lo.getByRole("button", { name: "Edit flight" });
+	if (await guestEdit.count()) await expect(guestEdit).toBeDisabled();
+	// Maya (a suggester member) suggests the aircraft change.
+	const m = await open(browser, "maya", `/t/asia-2027${sel}`);
+	const mlo = m.page.getByTestId(TESTID.legOverview);
+	await expect(mlo).toBeVisible();
+	await mlo.getByRole("button", { name: "Edit flight" }).click();
+	const form = m.page.getByTestId(T.flightForm);
 	await expect(form).toBeVisible();
 	await form.getByTestId(T.flightAircraft).fill("Boeing 787-9");
-	await guest.page.screenshot({ path: shot("sug08-guest-form") });
+	await m.page.screenshot({ path: shot("sug08-maya-form") });
 	await form.getByRole("button", { name: /^(Save|Suggest)/ }).click();
-	await expect(guest.page.getByText(/^Suggested — /).first()).toBeVisible({ timeout: 10_000 });
+	await expect(m.page.getByText(/^Suggested — /).first()).toBeVisible({ timeout: 10_000 });
 
 	const list = await proposals(d.page, g.trip.id);
 	const p = list.find((x) => x.op === "flight.save" && x.status === "open");
 	if (!p) throw new Error("no flight.save proposal");
 	const payload = JSON.stringify(p.payload);
 	console.log(`[sug08] payload: ${payload.slice(0, 400)}`);
-	expect(payload).not.toContain("ZK4P7Q");
-	expect(payload).not.toContain("8D");
+	expect(payload).toContain("787-9");
 	await call(d.page, "/src/functions/proposals.functions.ts", "resolveProposal", { proposalId: p.id, decision: "accept" });
 	const after = await d.page.evaluate(async (legId) => {
 		const y = (window as unknown as { __yonder: { graph: { legs: { id: string; details: unknown }[] } } }).__yonder.graph;
@@ -240,6 +246,7 @@ test("SUG-08/08b: a guest suggester's flight edit never stores the booking ref; 
 		target: { kind: "pair", fromItemId: nh9.fromItemId, toItemId: nh9.toItemId },
 		flight: { ...fl, aircraft: "Boeing 777-300ER" },
 	}).catch((e) => console.log("[sug08] restore failed:", String(e)));
+	await m.ctx.close();
 	await guest.ctx.close();
 	await d.ctx.close();
 });
@@ -307,7 +314,7 @@ test("SUG-17: downgrading an editor to suggester makes her open note read-only w
 	await m.ctx.close();
 });
 
-test("SUG-10: the 'Can suggest' link grants suggester (not edit, not upload); resetting it kicks its guest within 2 s and withdraws their suggestions", async ({
+test("SUG-10: a 'Can suggest' link's guest only views (no suggesting, no upload); resetting it kicks its guest within 2 s", async ({
 	browser,
 }) => {
 	test.setTimeout(120_000);
@@ -325,16 +332,17 @@ test("SUG-10: the 'Can suggest' link grants suggester (not edit, not upload); re
 		throw new Error(`no suggester link: ${JSON.stringify(sharing.link)}`);
 	const address = new URL(sharing.url).pathname;
 	expect(address).toBe(`/t/${c.slug}`);
-	// A fresh browser opens the address: the link's role, no token.
+	// A fresh browser opens the address: a guest who only views (owner,
+	// 2026-10-09); the link's role is what joining would give.
 	const gst = await open(browser, null, `${address}?tab=plan`);
-	const pill = gst.page.getByTestId(TESTID.suggestModeControl).first();
-	await expect(pill).toContainText("Suggesting");
-	// A direct move becomes a suggestion.
 	const g = await graph(gst.page);
+	expect(g.me).toMatchObject({ role: "viewer", isGuest: true, linkRole: "suggester" });
+	await expect(gst.page.getByTestId(TESTID.suggestModeControl)).toHaveCount(0);
+	// A move is refused (not even a suggestion).
 	const itoya = c.ids.items.itoya as string;
 	const d3 = c.ids.days.d3 as string;
-	const r = await call<{ proposed?: { id: string } }>(gst.page, "/src/functions/items.functions.ts", "moveItem", { itemId: itoya, dayId: d3 });
-	expect(r.proposed?.id).toBeTruthy();
+	const moveErr = await callErr(gst.page, "/src/functions/items.functions.ts", "moveItem", { itemId: itoya, dayId: d3 });
+	expect(moveErr).toMatch(/FORBIDDEN/);
 	// Upload is refused server-side.
 	const upErr = await callErr(gst.page, "/src/features/media/media.functions.ts", "createUpload", {
 		tripId: g.trip.id,
@@ -346,7 +354,7 @@ test("SUG-10: the 'Can suggest' link grants suggester (not edit, not upload); re
 	console.log(`[sug10] guest upload: ${upErr}`);
 	expect(upErr).toMatch(/FORBIDDEN|edit access|not allowed|permission/i);
 
-	// Reset → a new address; the guest is out within 2 s; the proposal is withdrawn.
+	// Reset → a new address; the guest is out within 2 s.
 	const reset = await call<{ slug: string }>(o.page, "/src/features/home/sharing.functions.ts", "resetShareLink", {
 		tripId: c.tripId,
 		role: "suggester",
@@ -356,8 +364,6 @@ test("SUG-10: the 'Can suggest' link grants suggester (not edit, not upload); re
 	await expect.poll(async () => (await gst.page.getByTestId(TESTID.workspace).count()) === 0, { timeout: 6_000 }).toBe(true);
 	console.log(`[sug10] kicked after ~${Date.now() - t0} ms`);
 	await gst.page.screenshot({ path: shot("sug10-guest-kicked") });
-	const list = await proposals(o.page, c.tripId);
-	expect(list.find((x) => x.id === r.proposed?.id)?.status).toBe("withdrawn");
 	await gst.ctx.close();
 	await o.ctx.close();
 });

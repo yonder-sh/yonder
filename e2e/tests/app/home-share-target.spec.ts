@@ -151,7 +151,7 @@ test("a suggester's shared video becomes a suggestion where they filed it (SHR-0
 	await ctx.close();
 });
 
-test("a signed-in guest is asked 'Are you Audrey?'; the owner's 'Add to trip' makes her Audrey", async ({
+test("a signed-in guest named Audrey gets Join the trip, no claim; the owner's 'Add to trip' makes her Audrey", async ({
 	browser,
 	page,
 	request,
@@ -170,12 +170,11 @@ test("a signed-in guest is asked 'Are you Audrey?'; the owner's 'Add to trip' ma
 		timeout: 20_000,
 	});
 	await expectLive(guest);
-	// A link never makes her a member by itself (QA A-10): she asks the owner.
+	// A link never makes her a member by itself (QA A-10): she can join, but
+	// only the owner can make her Audrey.
 	const nudge = guest.getByTestId(TESTID.guestNudge);
-	await expect(nudge.getByTestId(HOME_TESTID.claimPrompt)).toContainText(
-		"Are you Audrey? Ask the owner to add you",
-	);
-	await expect(nudge.getByTestId(HOME_TESTID.claimButton)).toHaveCount(0);
+	await expect(nudge.getByTestId(HOME_TESTID.joinTrip)).toBeVisible();
+	await expect(nudge.getByTestId(HOME_TESTID.claimPrompt)).toHaveCount(0);
 	await guest.screenshot({
 		path: shotPath("home/guest-claim-desktop.png"),
 		animations: "disabled",

@@ -533,7 +533,7 @@ test("SUG security: who may do what with suggestions (suggester, viewer, guest s
 	}
 });
 
-test("SUG security: a guest suggester's listProposals never shows an editor's booking ref, seats or cost (and the overview doesn't either)", async ({
+test("SUG security: a link guest (suggest link) gets no proposals, so never an editor's booking ref, seats or cost (nor in the overview)", async ({
 	browser,
 }) => {
 	test.setTimeout(150_000);
@@ -558,22 +558,17 @@ test("SUG security: a guest suggester's listProposals never shows an editor's bo
 		// The member view carries the new ref (they may see booking details)…
 		const mine = (await proposals(d.page, g.trip.id)).find((p) => p.id === pid);
 		expect(JSON.stringify(mine)).toContain("SECRT9");
-		// …the guest suggester's doesn't: no ref (old or new), no seats, no cost.
+		// …a link guest only views (owner, 2026-10-09): no proposals at all.
 		const gl = await call<unknown>(guest.page, "/src/functions/proposals.functions.ts", "listProposals", { tripId: g.trip.id });
-		const gp = (Array.isArray(gl) ? gl : (gl as { proposals: Prop[] }).proposals).find((p: Prop) => p.id === pid);
-		const js = JSON.stringify(gp ?? {});
+		const js = JSON.stringify(gl);
 		console.log(`[sec-guest] ${js.slice(0, 600)}`);
-		expect(gp, "the guest suggester lists it").toBeTruthy();
-		expect(js).not.toContain("SECRT9");
-		expect(js).not.toContain("ZK4P7Q");
-		expect(js).not.toMatch(/"8D"|"8G"/);
-		// And its overview in the guest's browser.
+		expect(gl).toEqual([]);
+		// And its address in the guest's browser shows nothing of it.
 		await guest.page.goto(`/t/asia-2027?sel=p.${pid}`);
 		await expectLive(guest.page);
-		const ov = guest.page.getByTestId(TESTID.proposalOverview);
-		await expect(ov).toBeVisible({ timeout: 10_000 });
-		const txt = await ov.innerText();
-		console.log(`[sec-guest] overview: ${txt.replace(/\s+/g, " ").slice(0, 400)}`);
+		await guest.page.waitForTimeout(1_500);
+		await expect(guest.page.getByTestId(TESTID.proposalOverview)).toContainText("This suggestion is gone.");
+		const txt = await guest.page.locator("body").innerText();
 		expect(txt).not.toContain("SECRT9");
 		expect(txt).not.toContain("ZK4P7Q");
 		await snap(guest.page, "r2-sec-guest-flight-proposal");
@@ -1167,7 +1162,8 @@ test("DIG-07: Eve (who already has a digest row as a signed-in link guest) opens
 	anon.page.on("response", (r) => {
 		if (r.status() >= 500) errors.push(`${r.status()} ${r.url()}`);
 	});
-	await anon.page.getByText("Sign in to keep this trip").click();
+	// An edit link: signing in joins her as an editor (guests only view).
+	await anon.page.getByTestId(TESTID.guestNudge).getByRole("link", { name: "Sign in to edit and rate places" }).click();
 	await anon.page.getByTestId("login-email").fill("eve@asia2027.test");
 	await anon.page.getByTestId("login-submit").click();
 	const otp = anon.page.getByTestId("otp-input");
@@ -1188,6 +1184,7 @@ test("DIG-07: Eve (who already has a digest row as a signed-in link guest) opens
 	);
 	console.log(`[dig07] eve digest: seen ${dg.seenVersion} / ${dg.currentVersion}, ${dg.rows.length} rows`);
 	expect(dg.seenVersion).toBeGreaterThanOrEqual(d0.seenVersion);
+	expect(gm.me).toMatchObject({ isGuest: false, role: "editor" });
 	expect(errors).toEqual([]);
 	await a.ctx.close();
 	await anon.ctx.close();

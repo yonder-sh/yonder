@@ -3,11 +3,12 @@
  * MED-04, MED-07, MED-11, ROLL-10; EXTENSIONS E7 for media): a second member
  * sees adds and deletes live and Undo brings a photo back; a viewer member can
  * hide things from guests but can't upload or delete; a suggester's delete is
- * a suggestion (a struck-through ghost), not a delete; a guest editor can
- * upload; TikTok, Reels and the three YouTube forms become embeds that open
+ * a suggestion (a struck-through ghost), not a delete; a link guest can't
+ * upload until they join; TikTok, Reels and the three YouTube forms become embeds that open
  * in the lightbox (arrows, Esc, a plain link under each embed). Each test
  * clones its own demo trip (SPEC §18.5).
  */
+import { randomBytes } from "node:crypto";
 import { type Browser, expect, type Page, test } from "@playwright/test";
 import { MEDIA_TESTID } from "../../../src/features/media/testids";
 import { TESTID } from "../../../src/lib/testids";
@@ -15,7 +16,8 @@ import { shotPath, storageStateOf } from "./_helpers/env";
 import { cloneFixtureTrip } from "./_helpers/fixture";
 import { clearToasts } from "./media-helpers";
 import { collectConsole, expectLive } from "./_helpers/page";
-import { openLink } from "./_helpers/link";
+import { joinTrip, openLink } from "./_helpers/link";
+import { loginViaApi } from "./_helpers/auth";
 
 test.use({ storageState: storageStateOf("dev") });
 
@@ -151,7 +153,7 @@ test("a viewer hides from guests but can't upload or delete; a suggester's delet
 	await maya.ctx.close();
 });
 
-test("a guest editor can upload; a guest viewer can't (MED-11)", async ({ page, browser }, info) => {
+test("a link guest can't upload, even on an edit link; once they join they can (MED-11)", async ({ page, browser }, info) => {
 	test.skip(info.project.name !== "chromium", "one run is enough");
 	test.setTimeout(90_000);
 	const c = await cloneFixtureTrip(page.request);
@@ -159,30 +161,36 @@ test("a guest editor can upload; a guest viewer can't (MED-11)", async ({ page, 
 		await page.goto("/dashboard");
 		return jpegFromPage(page, 20);
 	})();
-	for (const role of ["editor", "viewer"] as const) {
-		const ctx = await browser.newContext({ storageState: { cookies: [], origins: [] } });
-		const guest = await ctx.newPage();
-		await openLink(guest, c.slug, role);
-		await expect(guest).toHaveURL(new RegExp(`/t/${c.slug}`), { timeout: 20_000 });
-		await openMedia(guest, c.slug);
-		const add = guest.getByTestId(MEDIA_TESTID.addButton).first();
-		if (role === "viewer") {
-			await expect(add).toBeDisabled();
-			// The editor-guest's photo is there for the viewer-guest.
-			await expect(tiles(guest, "photo")).toHaveCount(1);
-		} else {
-			await expect(add).toBeEnabled();
-			await guest.getByTestId(MEDIA_TESTID.fileInput).setInputFiles({
-				name: "golden-gai-alley.jpg",
-				mimeType: "image/jpeg",
-				buffer: photo,
-			});
-			await expect(tiles(guest, "photo")).toHaveAttribute("data-status", "ready", { timeout: 30_000 });
-			// Guests never get the lock (it's a members' control).
-			await expect(guest.getByTestId(MEDIA_TESTID.visibility)).toHaveCount(0);
-		}
-		await ctx.close();
-	}
+	// Guests only view, whatever the link's role (owner, 2026-10-09).
+	const anonCtx = await browser.newContext({ storageState: { cookies: [], origins: [] } });
+	const anon = await anonCtx.newPage();
+	await openLink(anon, c.slug, "editor");
+	await expect(anon).toHaveURL(new RegExp(`/t/${c.slug}`), { timeout: 20_000 });
+	await openMedia(anon, c.slug);
+	await expect(anon.getByTestId(MEDIA_TESTID.addButton).first()).toBeDisabled();
+	await expect(tiles(anon, "photo")).toHaveCount(0);
+
+	// A signed-in guest joins (an editor member) and uploads.
+	const ctx = await browser.newContext({ storageState: { cookies: [], origins: [] } });
+	await loginViaApi(ctx.request, `med11-${randomBytes(3).toString("hex")}@example.com`, { first: "Mei", last: "Joiner" });
+	const joiner = await ctx.newPage();
+	await openLink(joiner, c.slug, "editor");
+	await openMedia(joiner, c.slug);
+	await expect(joiner.getByTestId(MEDIA_TESTID.addButton).first()).toBeDisabled();
+	await joinTrip(joiner);
+	const add = joiner.getByTestId(MEDIA_TESTID.addButton).first();
+	await expect(add).toBeEnabled({ timeout: 15_000 });
+	await joiner.getByTestId(MEDIA_TESTID.fileInput).setInputFiles({
+		name: "golden-gai-alley.jpg",
+		mimeType: "image/jpeg",
+		buffer: photo,
+	});
+	await expect(tiles(joiner, "photo")).toHaveAttribute("data-status", "ready", { timeout: 30_000 });
+
+	// The member's photo is there for the guest.
+	await expect(tiles(anon, "photo")).toHaveCount(1, { timeout: 15_000 });
+	await ctx.close();
+	await anonCtx.close();
 });
 
 test("TikTok, Reels and every YouTube form become embeds; the lightbox steps through them (MED-04, ROLL-10)", async ({

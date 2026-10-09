@@ -156,7 +156,7 @@ test("TAG-01/02 tag members on timeline items; avatars live; filter; guests neve
 	await a.ctx.close();
 });
 
-test("TAG-03 who can tag: Kai and Guest-V can't; Guest-E can (members only)", async ({ browser }) => {
+test("TAG-03 who can tag: Kai, Guest-V and Guest-E can't (link guests only view)", async ({ browser }) => {
 	const d = await ctxFor(browser, "dennis");
 	await d.page.goto("/t/asia-2027?tab=plan&lens=place");
 	await expectLive(d.page);
@@ -199,7 +199,7 @@ test("TAG-03 who can tag: Kai and Guest-V can't; Guest-E can (members only)", as
 			{ itemId: golden.id, ids: golden.assigneeIds },
 		);
 		console.log(`TAG-03 ${who} server`, r);
-		if (who !== "guest-e") expect(r).not.toBe("ACCEPTED");
+		expect(r).not.toBe("ACCEPTED");
 		await c.ctx.close();
 	}
 });

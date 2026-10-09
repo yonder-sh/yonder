@@ -157,8 +157,17 @@ const graphRole = (p: Page) =>
 				}
 			).__yonder?.graph?.me.role ?? null,
 	);
+const graphMe = (p: Page) =>
+	p.evaluate(
+		() =>
+			(
+				window as unknown as {
+					__yonder?: { graph?: { me: { role: string; isGuest: boolean; linkRole?: string } } };
+				}
+			).__yonder?.graph?.me ?? null,
+	);
 
-test("FB-13: one link per trip; its role changes everyone who joined with it, and off removes them", async ({
+test("FB-13: one link per trip; guests only view, its role is what joining gives, and off removes guests", async ({
 	browser,
 }, info) => {
 	test.skip(info.project.name !== "chromium", "one browser is enough");
@@ -212,17 +221,50 @@ test("FB-13: one link per trip; its role changes everyone who joined with it, an
 		dialog.getByTestId(HOME_TESTID.guestRow).first(),
 	).toContainText("Can view");
 
-	// Same link, new role: the guest can edit without a new link or a reload.
+	await expect(
+		dialog.getByTestId(HOME_TESTID.guestRow).first(),
+	).toContainText("opened the link");
+
+	// Same link, new role: it's what joining gives; the guest still only views.
 	await row.getByTestId(HOME_TESTID.linkRole).click();
 	await page.getByRole("option", { name: "Can edit" }).click();
 	await expect(row).toHaveAttribute("data-role", "editor");
+	await expect(row).toContainText("They see the plan, and change it once they sign in.");
+	await expect(page.getByText("Anyone who joins through the link can edit")).toBeVisible();
 	await expect(row.getByTestId(TESTID.shareLinkUrl)).toHaveValue(url);
-	await expect.poll(() => graphRole(guest), { timeout: 15_000 }).toBe("editor");
+	await guest.reload();
+	await expectLive(guest);
+	await expect
+		.poll(() => graphMe(guest), { timeout: 15_000 })
+		.toMatchObject({ role: "viewer", isGuest: true, linkRole: "editor" });
+	await expect(guest.getByTestId(TESTID.guestNudge)).toContainText("Sign in to edit and rate places");
 	await expect(
 		dialog.getByTestId(HOME_TESTID.guestRow).first(),
-	).toContainText("Can edit");
+	).toContainText("Can view");
 
-	// Off removes them at once (revocation still kicks guests).
+	// A signed-in guest who joins becomes an editor member.
+	const joinCtx = await browser.newContext({
+		baseURL: APP_URL,
+		storageState: { cookies: [], origins: [] },
+	});
+	await loginViaApi(
+		joinCtx.request,
+		`join-${randomBytes(3).toString("hex")}@example.test`,
+		{ first: "Jo", last: "Joiner" },
+	);
+	const joiner = await joinCtx.newPage();
+	await joiner.goto(url);
+	await expectLive(joiner);
+	await expect.poll(() => graphMe(joiner)).toMatchObject({ role: "viewer", isGuest: true });
+	await joiner.getByTestId(HOME_TESTID.joinTrip).click();
+	await expect
+		.poll(() => graphMe(joiner), { timeout: 15_000 })
+		.toMatchObject({ role: "editor", isGuest: false });
+	await expect(
+		dialog.getByTestId(HOME_TESTID.memberRow).filter({ hasText: "Jo Joiner" }),
+	).toContainText("Can edit", { timeout: 15_000 });
+
+	// Off removes guests at once (revocation kicks them); members stay.
 	await row.getByTestId(TESTID.shareLinkSwitch).click();
 	await expect(row).toHaveAttribute("data-enabled", "false");
 	await expect(row).toContainText("Only the people above can open the trip.");
@@ -234,7 +276,11 @@ test("FB-13: one link per trip; its role changes everyone who joined with it, an
 		path: shotPath("home/share-link-off-desktop.png"),
 		animations: "disabled",
 	});
+	await joiner.reload();
+	await expectLive(joiner);
+	await expect.poll(() => graphRole(joiner)).toBe("editor");
 	expect(log.messages).toEqual([]);
+	await joinCtx.close();
 	await guestCtx.close();
 	await ctx.close();
 });

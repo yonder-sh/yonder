@@ -9,7 +9,7 @@ import { loginViaApi } from "./_helpers/auth";
 import { APP_URL } from "./_helpers/env";
 import { cloneFixtureTrip } from "./_helpers/fixture";
 import { hydrated, notesView } from "./_helpers/page";
-import { openLink } from "./_helpers/link";
+import { joinTrip, openLink } from "./_helpers/link";
 
 test.beforeEach(({}, info) => {
 	test.skip(info.project.name === "mobile", "qa-home specs run on the desktop project");
@@ -28,7 +28,7 @@ type Graph = {
 	items: { id: string; title: string | null; dayId: string | null; nodeId: string | null; position: string }[];
 	nodes: { id: string; name: string }[];
 	legs: { id: string; details: unknown }[];
-	me: { role: string; memberId: string | null; isGuest: boolean; name?: string; color?: number };
+	me: { role: string; memberId: string | null; isGuest: boolean; linkRole?: string; name?: string; color?: number };
 	members: { id: string; name: string; role: string; status?: string; email?: string }[];
 };
 
@@ -108,20 +108,42 @@ test("LINK-01: viewer link renders read-only with no sign-in prompt", async ({ b
 	await g.ctx.close();
 });
 
-test("LINK-02/10: editor link — guest edits reach the owner live, attributed to Guest; stable guest identity", async ({ browser }) => {
+test("LINK-02/10: editor link — a guest's edits are refused; once joined, edits reach the owner live, attributed; stable guest identity", async ({ browser }) => {
 	const o = await userPage(browser, `qa-home-l2o-${uniq()}@asia2027.test`, "Dennis", "Owner");
 	const c = await cloneFixtureTrip(o.page.request);
 	await o.page.goto(`/t/${c.slug}?tab=plan`);
 	await expect(o.page.getByTestId("workspace")).toBeVisible({ timeout: 30_000 });
 	const og = await graphOf(o.page);
+	const d1 = og.days[0]!.id;
+	const d1Items = og.items.filter((i) => i.dayId === d1).sort((a, b) => (a.position < b.position ? -1 : 1));
+	// A link guest only views (owner, 2026-10-09), whatever the link's role.
 	const ge = await guest(browser, c.slug, "editor");
 	const gg = await graphOf(ge.page);
-	expect(gg.me.role).toBe("editor");
-	expect(gg.me.isGuest).toBe(true);
+	expect(gg.me).toMatchObject({ role: "viewer", isGuest: true, linkRole: "editor" });
 	console.log("LINK-10 guest me:", gg.me);
-	// add a todo on the trip root
+	const gTodo = await callFn(ge.page, "/src/features/lists/lists.functions.ts", "createListItem", {
+		tripId: c.tripId,
+		target: { kind: "trip" },
+		list: "todo",
+		text: "Guest todo",
+	});
+	expect(gTodo.ok).toBe(false);
+	expect(gTodo.status).toBe(403);
+	const gMove = await callFn(ge.page, "/src/functions/items.functions.ts", "moveItem", { itemId: d1Items[1]!.id, dayId: d1, beforeItemId: d1Items[0]!.id });
+	expect(gMove.ok).toBe(false);
+	await ge.page.goto(`/t/${c.slug}?sel=root&itab=notes`);
+	await expect(notesView(ge.page)).toBeVisible({ timeout: 15_000 });
+	await ge.page.waitForTimeout(1000);
+	expect(await notesView(ge.page).locator('[contenteditable="true"]').count()).toBe(0);
+
+	// A signed-in guest joins: an editor member, whose edits reach the owner live.
+	const j = await userPage(browser, `qa-home-l2j-${uniq()}@asia2027.test`, "Jamie", "Joiner");
+	await openLink(j.page, c.slug, "editor");
+	await expect(j.page.getByTestId("workspace")).toBeVisible({ timeout: 30_000 });
+	await joinTrip(j.page);
+	expect((await graphOf(j.page)).me).toMatchObject({ role: "editor", isGuest: false });
 	const t0 = Date.now();
-	const todo = await callFn(ge.page, "/src/features/lists/lists.functions.ts", "createListItem", {
+	const todo = await callFn(j.page, "/src/features/lists/lists.functions.ts", "createListItem", {
 		tripId: c.tripId,
 		target: { kind: "trip" },
 		list: "todo",
@@ -129,10 +151,8 @@ test("LINK-02/10: editor link — guest edits reach the owner live, attributed t
 	});
 	expect(todo.ok, JSON.stringify(todo)).toBe(true);
 	// move the second item of day 1 before the first
-	const d1 = og.days[0]!.id;
-	const d1Items = og.items.filter((i) => i.dayId === d1).sort((a, b) => (a.position < b.position ? -1 : 1));
-	const mv = await callFn(ge.page, "/src/functions/items.functions.ts", "moveItem", { itemId: d1Items[1]!.id, dayId: d1, beforeItemId: d1Items[0]!.id });
-	console.log("LINK-02 guest move:", JSON.stringify(mv).slice(0, 200));
+	const mv = await callFn(j.page, "/src/functions/items.functions.ts", "moveItem", { itemId: d1Items[1]!.id, dayId: d1, beforeItemId: d1Items[0]!.id });
+	console.log("LINK-02 joiner move:", JSON.stringify(mv).slice(0, 200));
 	await expect
 		.poll(
 			async () => {
@@ -148,17 +168,17 @@ test("LINK-02/10: editor link — guest edits reach the owner live, attributed t
 	const act = await callFn(o.page, "/src/functions/graph.functions.ts", "listActivity", { tripId: c.tripId });
 	const rows = JSON.stringify(act.value).slice(0, 1500);
 	console.log("LINK-02 activity:", rows);
-	expect.soft(rows).toMatch(/Guest/);
-	// notes: guest types in the trip notes (the trip's details, Notes)
-	await ge.page.goto(`/t/${c.slug}?sel=root&itab=notes`);
-	const ed = notesView(ge.page).locator('[contenteditable="true"]').first();
+	expect.soft(rows).toMatch(/Jamie/);
+	// notes: the joiner types in the trip notes (the trip's details, Notes)
+	await j.page.goto(`/t/${c.slug}?sel=root&itab=notes`);
+	const ed = notesView(j.page).locator('[contenteditable="true"]').first();
 	await expect(ed).toBeVisible({ timeout: 15_000 });
 	await ed.click();
-	await ge.page.keyboard.type(" Guest wrote this line.");
+	await j.page.keyboard.type(" Jamie wrote this line.");
 	await o.page.goto(`/t/${c.slug}?sel=root&itab=notes`);
-	await expect(notesView(o.page)).toContainText("Guest wrote this line.", { timeout: 5000 });
-	await shot(o.page, "02-owner-sees-guest-note");
-	// LINK-10: reload keeps the same identity
+	await expect(notesView(o.page)).toContainText("Jamie wrote this line.", { timeout: 5000 });
+	await shot(o.page, "02-owner-sees-joiner-note");
+	// LINK-10: reload keeps the same guest identity
 	const before = (await graphOf(ge.page)).me;
 	await ge.page.reload();
 	await expect(ge.page.getByTestId("workspace")).toBeVisible({ timeout: 30_000 });
@@ -170,11 +190,12 @@ test("LINK-02/10: editor link — guest edits reach the owner live, attributed t
 	console.log("LINK-10 guests:", before, other);
 	expect.soft(other.color, "second guest gets a different colour").not.toBe(before.color);
 	await ge2.ctx.close();
+	await j.ctx.close();
 	await ge.ctx.close();
 	await o.ctx.close();
 });
 
-test("LINK-03: what a link editor can't do (Asia 2027 editor link)", async ({ browser }) => {
+test("LINK-03: what a link guest can't do (Asia 2027 editor link)", async ({ browser }) => {
 	const bodies: string[] = [];
 	const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
 	const page = await ctx.newPage();
@@ -184,8 +205,7 @@ test("LINK-03: what a link editor can't do (Asia 2027 editor link)", async ({ br
 	await openLink(page, "asia-2027", "editor");
 	await expect(page.getByTestId("workspace")).toBeVisible({ timeout: 30_000 });
 	const g = await graphOf(page);
-	expect(g.me.role).toBe("editor");
-	expect(g.me.isGuest).toBe(true);
+	expect(g.me).toMatchObject({ role: "viewer", isGuest: true, linkRole: "editor" });
 	await page.goto("/t/asia-2027?days=2027-10-02");
 	await expect(page.getByTestId("workspace")).toBeVisible({ timeout: 30_000 });
 	await page.waitForTimeout(2500);
@@ -373,17 +393,17 @@ test("LINK-07/08/09: link scope, signed-in non-member, address shape", async ({ 
 	await ge.ctx.close();
 });
 
-test("Suggester link: guest suggester proposes, can't apply edits or upload", async ({ browser }) => {
+test("Suggester link: a guest only views: can't suggest, apply edits or upload", async ({ browser }) => {
 	const gs = await guest(browser, "asia-2027", "suggester");
 	const g = await graphOf(gs.page);
 	console.log("SUG-LINK me:", g.me);
-	expect(g.me.role).toBe("suggester");
-	expect(g.me.isGuest).toBe(true);
+	expect(g.me).toMatchObject({ role: "viewer", isGuest: true, linkRole: "suggester" });
 	await gs.page.waitForTimeout(1500);
 	await shot(gs.page, "sug-guest");
 	const r = await callFn(gs.page, "/src/functions/items.functions.ts", "createItem", { tripId: g.trip.id, dayId: g.days[3]!.id, title: "Guest suggestion" });
 	console.log("SUG-LINK createItem:", JSON.stringify(r).slice(0, 300));
-	expect(r.ok && !r.value?.proposed, "guest suggester's edit must not apply directly").toBe(false);
+	expect(r.ok, "a link guest neither edits nor suggests").toBe(false);
+	expect(r.status).toBe(403);
 	const up = await callFn(gs.page, "/src/features/media/media.functions.ts", "createUpload", {
 		tripId: g.trip.id,
 		target: { kind: "trip" },
@@ -395,7 +415,7 @@ test("Suggester link: guest suggester proposes, can't apply edits or upload", as
 	expect(up.ok).toBe(false);
 	const settings = await callFn(gs.page, "/src/functions/trips.functions.ts", "updateTrip", { tripId: g.trip.id, name: "Hijacked" });
 	console.log("SUG-LINK updateTrip:", JSON.stringify(settings).slice(0, 200));
-	expect(settings.ok && !settings.value?.proposed, "guest suggester can't rename directly").toBe(false);
+	expect(settings.ok, "a link guest can't rename, not even as a suggestion").toBe(false);
 	// money is never visible to guests
 	const txt = await gs.page.getByTestId("workspace").innerText();
 	expect.soft(txt).not.toMatch(/\bMoney\b/);

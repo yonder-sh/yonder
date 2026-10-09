@@ -60,3 +60,43 @@ export async function settled(page: Page, timeout = 45_000): Promise<void> {
 		{ timeout },
 	);
 }
+
+type Me = { role: string; isGuest: boolean; linkRole?: string; userId?: string | null; name?: string };
+
+/** `graph.me` of the open workspace (null before it loads). */
+export function graphMe(page: Page): Promise<Me | null> {
+	return page.evaluate(
+		() => (window as unknown as { __yonder?: { graph?: { me: Me } } }).__yonder?.graph?.me ?? null,
+	);
+}
+
+/**
+ * Link guests only view (owner, 2026-10-09): a signed-in guest taps "Join the
+ * trip" and becomes a member at the link's role.
+ */
+export async function joinTrip(page: Page): Promise<void> {
+	const { expect } = await import("@playwright/test");
+	await page.getByTestId("guest-nudge").getByTestId("guest-join-trip").click();
+	await expect.poll(async () => (await graphMe(page))?.isGuest, { timeout: 15_000 }).toBe(false);
+}
+
+/**
+ * An anonymous link guest signs in from the guest line as `email` (an account
+ * that exists already, so no name step): that joins them at the link's role.
+ * Resolves back on the trip as a member.
+ */
+export async function signInFromNudge(page: Page, email: string): Promise<void> {
+	const { expect } = await import("@playwright/test");
+	const { logOffset, readOtp } = await import("./otp");
+	const back = new URL(page.url()).pathname;
+	await page.getByTestId("guest-nudge").getByRole("link", { name: /^Sign in/ }).click();
+	await page.getByTestId("login-email").fill(email);
+	const since = logOffset();
+	await page.getByTestId("login-submit").click();
+	const otp = page.getByTestId("otp-input");
+	await expect(otp).toBeVisible({ timeout: 15_000 });
+	await otp.click();
+	await page.keyboard.type(await readOtp(email, { since }));
+	await expect(page).toHaveURL(new RegExp(back.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")), { timeout: 30_000 });
+	await expect.poll(async () => (await graphMe(page))?.isGuest, { timeout: 20_000 }).toBe(false);
+}

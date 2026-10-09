@@ -82,7 +82,7 @@ test.beforeAll(async ({ browser }) => {
 	await d.ctx.close();
 });
 
-test("MED-01/10/07/11 a photo on Chureito: direct PUT, live, presigned, upright, GPS stripped; delete; guests", async ({ browser }) => {
+test("MED-01/10/07/11 a photo on Chureito: direct PUT, live, presigned, upright, GPS stripped; delete; guests only view", async ({ browser }) => {
 	test.setTimeout(180_000);
 	const url = `${scopePath(g, "Chureito Pagoda")}?tab=media`;
 	console.log("URL", url);
@@ -161,7 +161,8 @@ test("MED-01/10/07/11 a photo on Chureito: direct PUT, live, presigned, upright,
 	writeFileSync(path.join(SHOTS, "med10-thumb.webp"), await th.body());
 	await fresh.close();
 
-	// MED-11: Guest-V sees the thumbnail, no upload/delete controls; Guest-E can upload.
+	// MED-11: Guest-V sees the thumbnail, no upload/delete controls; Guest-E
+	// (edit link) only views too (owner, 2026-10-09: only members change things).
 	const gv = await guest(browser, "viewer");
 	await gv.page.goto(url);
 	await expectLive(gv.page);
@@ -187,8 +188,12 @@ test("MED-01/10/07/11 a photo on Chureito: direct PUT, live, presigned, upright,
 		await k.page.keyboard.press("Escape");
 	}
 	await shot(k.page, "16-med07-kai");
-	// Replayed presign from Kai and Guest-V: refused.
-	for (const [who, p] of [["kai", k.page], ["guest-v", gv.page]] as const) {
+	const ge = await guest(browser, "editor");
+	await ge.page.goto(url);
+	await expectLive(ge.page);
+	await expect(ge.page.getByTestId(MT.addButton).first()).toBeDisabled();
+	// Replayed presign from Kai, Guest-V and Guest-E: refused.
+	for (const [who, p] of [["kai", k.page], ["guest-v", gv.page], ["guest-e", ge.page]] as const) {
 		const r = await p.evaluate(async (nodeId) => {
 			const m = await import("/src/features/media/media.functions.ts");
 			const y = (window as unknown as { __yonder: { graph: { trip: { id: string } } } }).__yonder;
@@ -202,18 +207,6 @@ test("MED-01/10/07/11 a photo on Chureito: direct PUT, live, presigned, upright,
 		console.log(`MED-07 ${who} createUpload:`, r);
 		expect(r).not.toBe("ACCEPTED");
 	}
-	const ge = await guest(browser, "editor");
-	await ge.page.goto(url);
-	await expectLive(ge.page);
-	const photosBefore = (await listMedia(d.page)).filter((m) => m.kind === "photo").length;
-	await ge.page.getByTestId(MT.fileInput).first().setInputFiles({
-		name: "golden-gai-alley.png",
-		mimeType: "image/png",
-		buffer: readFileSync(path.join(FIX, "golden-gai-alley.png")),
-	});
-	await expect.poll(async () => (await listMedia(d.page)).filter((m) => m.kind === "photo").length, { timeout: 20_000 }).toBeGreaterThan(photosBefore);
-	console.log("MED-11 guest-e uploaded OK");
-
 	// MED-07: Audrey deletes the photo; Dennis sees it go.
 	await a.page.reload();
 	await expectLive(a.page);

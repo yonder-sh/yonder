@@ -219,17 +219,16 @@ test("R2 placeholder claim: member prompt, guest hint, role never escalates", as
 	const og3 = await graphOf(o.page);
 	console.log("R2 CLAIM owner members after:", og3.members.map((m: any) => `${m.name}:${m.role}:${m.status ?? ""}`));
 	void og2;
-	// 2) a signed-in guest named Audrey on the EDIT link sees only a hint (clone 2: Audrey is still a placeholder)
+	// 2) a signed-in guest named Audrey on the EDIT link gets no claim prompt, only
+	// "Join the trip" (guests only view; owner, 2026-10-09), and the server refuses a claim
 	const c2 = await cloneFixtureTrip(o.page.request);
 	const g = await userPage(browser, `qa-home-r2cg-${uniq()}@asia2027.test`, "Audrey", "Guest");
 	await openLink(g.page, c2.slug, "editor");
 	await expect(g.page.getByTestId("workspace")).toBeVisible({ timeout: 30_000 });
-	const hint = g.page.getByTestId("home-claim-prompt");
-	await expect(hint).toBeVisible({ timeout: 15_000 });
-	const hintText = (await hint.innerText()).replace(/\n/g, " | ");
-	console.log("R2 CLAIM guest hint:", hintText, "| claim button:", await g.page.getByTestId("home-claim-button").count());
-	await shot(g.page, "claim-guest-hint");
-	expect.soft(await g.page.getByTestId("home-claim-button").count()).toBe(0);
+	const nudge = g.page.getByTestId("guest-nudge");
+	await expect(nudge.getByTestId("guest-join-trip")).toBeVisible({ timeout: 15_000 });
+	await shot(g.page, "claim-guest-join");
+	expect(await g.page.getByTestId("home-claim-prompt").count()).toBe(0);
 	const gc = await callFn(g.page, SHARING, "claimPlaceholder", { tripId: c2.tripId, memberId: c2.members.audrey });
 	console.log("R2 CLAIM edit-link guest server:", JSON.stringify(gc));
 	expect.soft(gc.ok).toBe(false);

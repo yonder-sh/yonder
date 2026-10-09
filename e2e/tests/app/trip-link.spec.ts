@@ -2,10 +2,12 @@
  * The trip's address is its share link (owner decision 2026-09-25, like
  * Google Drive): `/t/<readable>-<tail>` is the one URL for everyone.
  * Members open it as members; while "Anyone with the link" is on, anyone
- * else gets its role (a signed-out visitor as an anonymous guest); while it
- * is off they get the "no access" page, the same as for an address that
- * doesn't exist. "Reset link" gives the trip a new tail: the old address is
- * dead and its link guests lose access at once. Trip settings edit only the
+ * else may look as a guest (a signed-out visitor as an anonymous guest;
+ * guests only view, the link's role is what joining gives); while it is off
+ * they get the "no access" page, the same as for an address that doesn't
+ * exist. Resetting the link (`resetShareLink`; no button in the dialog any
+ * more) gives the trip a new tail: the old address is dead and its link
+ * guests lose access at once. Trip settings edit only the
  * readable part. "Copy link" copies the address. Each test clones its own
  * demo trip (owner dev@example.com, Maya an editor).
  */
@@ -27,7 +29,7 @@ const TAIL = "[23456789abcdefghjkmnpqrstuvwxyz]{8}";
 /** Expected on purpose: the no-access answers and the revoked guest's refused calls. */
 const EXPECTED = [/status of 40[134]/];
 
-type Me = { role: string; isGuest: boolean; memberId: string | null };
+type Me = { role: string; isGuest: boolean; memberId: string | null; linkRole?: string };
 const meOf = (page: Page) =>
 	page.evaluate(
 		() => (window as unknown as { __yonder?: { graph?: { me: Me; trip: { slug: string } } } }).__yonder?.graph ?? null,
@@ -68,7 +70,7 @@ test("a member opens the trip's address as a member, link on or off", async ({ p
 	await maya.close();
 });
 
-test("signed out: the link's role while it's on, the not-found page while it's off", async ({ page, request, browser }) => {
+test("signed out: a guest who views while the link's on, the not-found page while it's off", async ({ page, request, browser }) => {
 	const c = await cloneFixtureTrip(request);
 	const log = collectConsole(page);
 	await page.goto(`/t/${c.slug}?tab=plan`);
@@ -98,18 +100,21 @@ test("signed out: the link's role while it's on, the not-found page while it's o
 	// Turning it on keeps the address (it already has its tail).
 	await expect(row.getByTestId(TESTID.shareLinkUrl)).toHaveValue(new RegExp(`/t/${c.slug}$`));
 
-	// The same address, signed out: an anonymous guest with that role, on the Overview.
+	// The same address, signed out: an anonymous guest who only views (the
+	// link's role is what signing in gives), on the Overview.
 	const guest = await signedOut(browser);
 	const glog = collectConsole(guest.page, EXPECTED);
 	await guest.page.goto(`/t/${c.slug}`);
 	await expectLive(guest.page);
 	expect(new URL(guest.page.url()).pathname).toBe(`/t/${c.slug}`);
-	expect((await meOf(guest.page))?.me).toMatchObject({ role: "editor", isGuest: true, memberId: null });
+	expect((await meOf(guest.page))?.me).toMatchObject({ role: "viewer", isGuest: true, linkRole: "editor", memberId: null });
+	await expect(guest.page.getByTestId(TESTID.guestNudge)).toContainText("Sign in to edit and rate places");
 	await expect(
 		guest.page.getByTestId(TESTID.centerTabs).locator('[role=tab][aria-selected="true"]'),
 	).toHaveAttribute("data-tab", "overview");
 	// The owner sees them as a guest who joined with the link.
 	await expect(dialog.getByTestId(HOME_TESTID.guestRow)).toHaveCount(1, { timeout: 15_000 });
+	await expect(dialog.getByTestId(HOME_TESTID.guestRow)).toContainText("Can view · opened the link");
 
 	// Off again: the guest's page says so at once, and a new visitor gets "no access".
 	await row.getByTestId(TESTID.shareLinkSwitch).click();
@@ -129,7 +134,7 @@ test("signed out: the link's role while it's on, the not-found page while it's o
 	await guest.ctx.close();
 });
 
-test("Reset link gives a new tail: the old address is dead and its guests lose access live", async ({ page, request, browser }) => {
+test("resetting the link gives a new tail: the old address is dead and its guests lose access live", async ({ page, request, browser }) => {
 	const c = await cloneFixtureTrip(request);
 	await page.goto(`/t/${c.slug}?tab=plan`);
 	await expectLive(page);
@@ -143,11 +148,18 @@ test("Reset link gives a new tail: the old address is dead and its guests lose a
 	await expectLive(guest.page);
 	expect((await meOf(guest.page))?.me).toMatchObject({ role: "viewer", isGuest: true });
 
-	await row.getByTestId(TESTID.shareLinkReset).click();
-	await dialog.getByTestId(HOME_TESTID.resetConfirm).click();
-	const input = row.getByTestId(TESTID.shareLinkUrl);
-	await expect(input).not.toHaveValue(new RegExp(`/t/${c.slug}$`), { timeout: 10_000 });
-	const next = new URL(await input.inputValue()).pathname.replace(/^\/t\//, "");
+	// The dialog has no Reset any more: the server function does it.
+	const tripId = (await page.evaluate(
+		() => (window as unknown as { __yonder: { graph: { trip: { id: string } } } }).__yonder.graph.trip.id,
+	)) as string;
+	// From another tab of the owner's, so this one follows live.
+	const other = await page.context().newPage();
+	await other.goto("/dashboard");
+	const next = await other.evaluate(async (id) => {
+		const m = await import(/* @vite-ignore */ "/src/features/home/sharing.functions.ts");
+		return ((await m.resetShareLink({ data: { tripId: id } })) as { slug: string }).slug;
+	}, tripId);
+	await other.close();
 	// The readable part stays; only the tail is new.
 	expect(next).toMatch(new RegExp(`^demo-${TAIL}$`));
 	expect(next).not.toBe(c.slug);
@@ -158,7 +170,7 @@ test("Reset link gives a new tail: the old address is dead and its guests lose a
 	console.log(`[trip-link] guest out after ${Date.now() - t0} ms`);
 	await expect(guest.page.getByText("This link is no longer active.")).toBeVisible();
 	await guest.ctx.close();
-	// The owner's own tab follows the new address.
+	// The owner's open tab follows the new address.
 	await expect(page).toHaveURL(new RegExp(`/t/${next}(\\?|$)`), { timeout: 15_000 });
 
 	// The old address opens nothing; the new one works (the link stays on).

@@ -181,7 +181,7 @@ test("LIST-04 Kitchen knives: bought + ¥25,000, Audrey sees it", async ({ brows
 });
 
 test("LIST-05 For picker offers members only, never a guest", async ({ browser }) => {
-	// Guest-E joins through the edit link first.
+	// Guest-E opens the edit link first (a guest: they only view).
 	const gctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
 	const guest = await gctx.newPage();
 	await openLink(guest, "asia-2027", "editor");
@@ -204,18 +204,19 @@ test("LIST-05 For picker offers members only, never a guest", async ({ browser }
 	const opts = await a.page.locator("[role=option],[cmdk-item]").allInnerTexts();
 	console.log("FOR options", JSON.stringify(opts));
 	expect(opts.join("|")).not.toMatch(/Guest/i);
-	// Guest's own view of the picker (a link editor may assign members only).
+	// The guest only views (owner, 2026-10-09): no For… picker of their own.
 	await guest.goto("/t/asia-2027/japan/tokyo/asakusa/kappabashi-street?tab=lists&list=shopping");
 	await expectLive(guest);
 	const gr = row(guest.getByTestId(TESTID.listsTab), "Chopsticks");
+	await expect(gr).toBeVisible();
 	await gr.hover();
-	await gr.getByTestId(L.rowMenu).click();
-	await guest.getByRole("menuitem", { name: /For…/ }).click();
-	await guest.waitForTimeout(500);
-	const gopts = await guest.locator("[role=option],[cmdk-item]").allInnerTexts();
-	console.log("GUEST FOR options", JSON.stringify(gopts));
-	await shot(guest, "12-list05-guest-for-picker");
-	await guest.keyboard.press("Escape");
+	const menu = gr.getByTestId(L.rowMenu);
+	if (await menu.count()) {
+		await menu.click();
+		await expect(guest.getByRole("menuitem", { name: /For…/ })).toHaveCount(0);
+		await guest.keyboard.press("Escape");
+	}
+	await shot(guest, "12-list05-guest-no-for");
 	await gctx.close();
 	await a.ctx.close();
 });

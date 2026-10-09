@@ -31,7 +31,8 @@ import { shotPath, storageStateOf } from "./_helpers/env";
 import { cloneFixtureTrip } from "./_helpers/fixture";
 import { logOffset, readOtpFromLog } from "./_helpers/otp";
 import { collectConsole, detailsSection, expectLive, expectNoHorizontalOverflow, goWhere, hydrated, notesView } from "./_helpers/page";
-import { openLink } from "./_helpers/link";
+import { graphMe, joinTrip, openLink, signInFromNudge } from "./_helpers/link";
+import { call, code, MOD } from "./qa-security-helpers";
 
 const MAP_NOISE = [/GL Driver Message|WebGL|layers\[[^\]]+\]\.filter/];
 
@@ -684,7 +685,7 @@ test("J4 two browsers: note with carets, reorder glows, mention rings the bell, 
 // Journey 5: the edit link to an incognito guest. The guest edits, can't see
 // booking refs; resetting the link kicks them.
 // ---------------------------------------------------------------------------
-test("J5 edit link: an incognito guest edits, never sees the booking ref, and a reset kicks them", async ({ browser }, info) => {
+test("J5 edit link: an incognito guest only views and never sees the booking ref; signing in makes them an editor; a reset kicks a guest", async ({ browser }, info) => {
 	test.skip(info.project.name !== "chromium", "desktop journey");
 	test.setTimeout(180_000);
 	const ownerCtx = await browser.newContext({ storageState: storageStateOf("dev"), viewport: { width: 1440, height: 900 } });
@@ -710,7 +711,7 @@ test("J5 edit link: an incognito guest edits, never sees the booking ref, and a 
 	expect(new URL(link).pathname).toBe(`/t/${c.slug}`);
 	await owner.keyboard.press("Escape");
 
-	// An incognito guest opens it and lands in the trip as a guest editor.
+	// An incognito guest opens it: a guest who only views (owner, 2026-10-09).
 	const guestCtx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
 	const guest = await guestCtx.newPage();
 	const bodies: string[] = [];
@@ -721,24 +722,12 @@ test("J5 edit link: an incognito guest edits, never sees the booking ref, and a 
 	await guest.goto(link);
 	await expect(guest).toHaveURL(new RegExp(`/t/${c.slug}`), { timeout: 20_000 });
 	await expectLive(guest);
+	await expect.poll(() => graphMe(guest)).toMatchObject({ role: "viewer", isGuest: true, linkRole: "editor" });
+	await expect(guest.getByTestId(TESTID.guestNudge)).toContainText("Sign in to edit and rate places");
 	await shot(guest, "j5-01-guest-in");
-
-	// The guest edits: Hands Shibuya becomes 1h30; the owner sees it.
-	await guest.goto(`/t/${c.slug}/japan/tokyo?lens=place`);
-	await expectLive(guest);
-	const hands = guest.locator(`[data-testid="${TESTID.timelineItem}"][data-item-id="${I.hands}"]`).first();
-	await hands.getByTestId(PLAN_TESTID.itemDuration).getByRole("button").click();
-	await guest.locator('[data-slot="popover-content"]').getByRole("button", { name: "1h30", exact: true }).click();
-	await owner.goto(`/t/${c.slug}/japan/tokyo?lens=place`);
-	await expectLive(owner);
-	await expect
-		.poll(() =>
-			owner.evaluate(
-				(id) => (window as unknown as { __yonder: { graph: { items: { id: string; durationMin: number }[] } } }).__yonder.graph.items.find((i) => i.id === id)?.durationMin,
-				I.hands,
-			),
-		)
-		.toBe(90);
+	// The server refuses a guest's edit.
+	const refused = await call(guest, MOD.items, "updateItem", { itemId: I.hands, patch: { durationMin: 90 } });
+	expect(code(refused)).toBe("FORBIDDEN");
 
 	// The guest opens the flight: the ref is masked and never sent.
 	await guest.goto(`/t/${c.slug}?sel=l.${I.kix}.${I.icn}`);
@@ -750,16 +739,44 @@ test("J5 edit link: an incognito guest edits, never sees the booking ref, and a 
 	expect(bodies.join("\n")).not.toMatch(/QX7P2M/i);
 	await shot(guest, "j5-02-guest-masked");
 
-	// The owner resets the link: a new address, and the guest is cut off at once.
-	await owner.getByTestId(TESTID.shareButton).click();
-	await row.getByTestId(TESTID.shareLinkReset).click();
-	await row.getByRole("button", { name: "Reset" }).last().click();
-	await expect(row.getByTestId(TESTID.shareLinkUrl)).not.toHaveValue(link, { timeout: 10_000 });
+	// A second guest signs in from the guest line: an editor member, whose edit
+	// (Hands Shibuya becomes 1h30) the owner sees.
+	const email = `j5-${tag()}@example.com`;
+	const pre = await browser.newContext({ storageState: { cookies: [], origins: [] } });
+	await loginViaApi(pre.request, email, { first: "Jun", last: "Five" });
+	await pre.close();
+	const joinCtx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+	const joiner = await joinCtx.newPage();
+	await joiner.goto(`/t/${c.slug}/japan/tokyo?lens=place`);
+	await expectLive(joiner);
+	await signInFromNudge(joiner, email);
+	await expect.poll(() => graphMe(joiner)).toMatchObject({ role: "editor", isGuest: false });
+	await expectLive(joiner);
+	const hands = joiner.locator(`[data-testid="${TESTID.timelineItem}"][data-item-id="${I.hands}"]`).first();
+	await hands.getByTestId(PLAN_TESTID.itemDuration).getByRole("button").click();
+	await joiner.locator('[data-slot="popover-content"]').getByRole("button", { name: "1h30", exact: true }).click();
+	await owner.goto(`/t/${c.slug}/japan/tokyo?lens=place`);
+	await expectLive(owner);
+	await expect
+		.poll(() =>
+			owner.evaluate(
+				(id) => (window as unknown as { __yonder: { graph: { items: { id: string; durationMin: number }[] } } }).__yonder.graph.items.find((i) => i.id === id)?.durationMin,
+				I.hands,
+			),
+		)
+		.toBe(90);
+
+	// The owner resets the link (the API; the dialog has no Reset any more): a
+	// new address, and the guest is cut off at once; the member stays.
+	const reset = await call(owner, MOD.sharing, "resetShareLink", { tripId: c.tripId });
+	expect(code(reset)).toBe("OK");
 	await expect(guest.getByTestId(TESTID.workspace)).toHaveCount(0, { timeout: 15_000 });
 	await expect(guest.getByText("This link is no longer active.")).toBeVisible();
 	await shot(guest, "j5-03-guest-kicked");
+	await expect(joiner.getByTestId(TESTID.workspace)).toBeVisible();
 	expect(logs.messages).toEqual([]);
 	expect(guestLogs.messages).toEqual([]);
+	await joinCtx.close();
 	await guestCtx.close();
 	await ownerCtx.close();
 });
@@ -1024,24 +1041,35 @@ test("X1 suggester role: member and link suggesters; ghosts; accept and reject",
 	await expect.poll(() => itemDuration(owner, I.sensoji), { timeout: 15_000 }).toBe(90);
 	await expect(maya.getByText("Dev accepted your suggestion")).toBeVisible({ timeout: 15_000 });
 
-	// The trip link as "Can suggest": an incognito guest suggests too.
+	// The trip link as "Can suggest": an incognito guest only views; a
+	// signed-in one joins as a suggester and suggests too.
 	await owner.getByTestId(TESTID.shareButton).click();
 	const row = await tripLink(owner, "Can suggest");
 	const link = await row.getByTestId(TESTID.shareLinkUrl).inputValue();
 	await owner.keyboard.press("Escape");
-	const guestCtx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+	const anonCtx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+	const anon = await anonCtx.newPage();
+	await anon.goto(link);
+	await expect(anon).toHaveURL(new RegExp(`/t/${c.slug}`), { timeout: 20_000 });
+	await expectLive(anon);
+	await expect.poll(() => graphMe(anon)).toMatchObject({ role: "viewer", isGuest: true, linkRole: "suggester" });
+	await expect(anon.getByTestId(TESTID.guestNudge)).toContainText("Sign in to suggest changes and rate places");
+	await anonCtx.close();
+	const guestCtx = await userContext(browser, `x1-${tag()}@example.com`, { first: "Sol", last: "Linker" });
 	const guest = await guestCtx.newPage();
 	await guest.goto(link);
 	await expect(guest).toHaveURL(new RegExp(`/t/${c.slug}`), { timeout: 20_000 });
 	await guest.goto(url);
 	await expectLive(guest);
+	await joinTrip(guest);
+	await expect.poll(() => graphMe(guest)).toMatchObject({ role: "suggester", isGuest: false });
 	await expect(guest.getByTestId(TESTID.suggestModeControl).first()).toHaveAttribute("data-mode", "suggest");
 	await guest.getByTestId(S.firstHint).getByRole("button", { name: "Got it" }).click().catch(() => {});
 	await setDuration(guest, I.knives, "2h");
 	await expect(guest.getByText(/^Suggested — /).first()).toBeVisible();
 	await shot(guest, "x1-03-guest-suggested");
 
-	// The owner rejects the guest's suggestion with a note in the drawer.
+	// The owner rejects the joiner's suggestion with a note in the drawer.
 	await owner.getByRole("button", { name: "Review 1 suggestion" }).click({ timeout: 15_000 });
 	const drawer = owner.getByTestId(TESTID.reviewDrawer);
 	const r = drawer.getByTestId(S.row).first();
