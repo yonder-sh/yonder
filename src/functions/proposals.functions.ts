@@ -36,15 +36,19 @@ const OWN_CLOSED_DAYS = 30;
 /**
  * Open proposals, the 50 most recently closed, and the caller's own closed
  * ones from the last 30 days (≤ 50), each with its open dependants. Viewers
- * and guest viewers get `[]`; guests get payloads through `def.redact`, and
- * never a proposal about a hidden attachment or a receipt (`proposalVisibleSql`).
+ * and link guests get `[]`; members never get a proposal about someone else's
+ * private item or receipt (`proposalVisibleSql`).
  */
 export const listProposals = createServerFn({ method: "GET" })
 	.middleware([withUser])
 	.validator(TripIdInput)
 	.handler(async ({ data, context }): Promise<ProposalDto[]> => {
 		const access = await requireTripRole(data.tripId, "viewer", context.user);
-		if (!can(access, "propose") && !can(access, "reviewProposals")) return [];
+		if (
+			mustRedact(access) ||
+			(!can(access, "propose") && !can(access, "reviewProposals"))
+		)
+			return [];
 		const me = context.user.id;
 		const res = await db.execute(sql`
 			with recent as (
@@ -75,8 +79,7 @@ export const listProposals = createServerFn({ method: "GET" })
 		const defs = new Map<ProposalOp, AnyDef | null>();
 		for (const op of new Set(rows.map((r) => r.op)))
 			defs.set(op, REGISTRY[op] ? await loadDef(op) : null);
-		const redact = mustRedact(access);
-		return rows.map((r) => proposalDto(r, defs.get(r.op) ?? null, redact));
+		return rows.map((r) => proposalDto(r, defs.get(r.op) ?? null));
 	});
 
 export type ResolveResult =

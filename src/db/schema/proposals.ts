@@ -63,7 +63,7 @@ export const proposals = pgTable(
 		authorMemberId: uuid(),
 		authorName: text().notNull(),
 		authorColor: smallint().notNull(),
-		/** The payload was redacted at creation (guest author). */
+		/** The author was a link guest (history: guests only view now). */
 		authorIsGuest: boolean().notNull(),
 		reviewedBy: text().references(() => user.id, { onDelete: "set null" }),
 		reviewedAt: timestamp({ withTimezone: true }),

@@ -15,20 +15,6 @@ export function defaultQuotaBytes(env = getEnv()): number {
 	return Math.round(env.STORAGE_QUOTA_DEFAULT_GB * GB);
 }
 
-/** The account whose quota an upload by `uploader` to `tripId` uses (a guest's → the trip owner), or null. */
-export async function billedUserFor(
-	exec: SqlExec,
-	tripId: string,
-	uploader: { id: string; isAnonymous?: boolean | null },
-): Promise<string | null> {
-	if (!uploader.isAnonymous) return uploader.id;
-	const res = await exec.execute(sql`
-		select user_id from trip_members
-		 where trip_id = ${tripId} and role = 'owner' and user_id is not null
-		 limit 1`);
-	return (res.rows[0] as { user_id: string } | undefined)?.user_id ?? null;
-}
-
 /** The account's quota in bytes (its override, else the default). */
 export async function quotaBytes(
 	exec: SqlExec,
@@ -59,23 +45,13 @@ export async function usedBytes(
 		and not exists (select 1 from nodes n where n.id = a.node_id and n.deleted_at is not null)
 		and not exists (select 1 from items i where i.id = a.item_id and i.deleted_at is not null)`;
 	const key = sql`coalesce(a.storage_key, 'trips/' || a.trip_id || '/' || a.id || '/')`;
-	// Two indexed branches (an OR would scan every attachment): the account's
-	// own uploads, and link guests' uploads to trips it owns.
 	const res = await exec.execute(sql`
 		select coalesce(sum(size), 0)::bigint as used from (
 			select distinct on (k) size from (
 				select ${key} as k, a.size_bytes as size
 				  from attachments a
-				  join "user" u on u.id = a.created_by and not coalesce(u.is_anonymous, false)
 				  join trips t on t.id = a.trip_id and t.deleted_at is null
 				 where a.created_by = ${userId} and ${live}
-				union all
-				select ${key} as k, a.size_bytes as size
-				  from trip_members m
-				  join trips t on t.id = m.trip_id and t.deleted_at is null
-				  join attachments a on a.trip_id = m.trip_id
-				  join "user" u on u.id = a.created_by and u.is_anonymous
-				 where m.user_id = ${userId} and m.role = 'owner' and ${live}
 			) x
 			order by k, size desc
 		) y`);
@@ -94,18 +70,14 @@ export async function storageUsage(
 
 /**
  * "This upload needs 1.2 GB but you have 300 MB left (4.7 GB of 5 GB used).
- * Delete some uploads or ask the trip owner." A guest's upload names the
- * trip owner's space instead.
+ * Delete some uploads or ask the trip owner."
  */
 export function quotaMessage(p: {
 	needed: number;
 	used: number;
 	quota: number;
-	own: boolean;
 }): string {
 	const left = formatBytes(Math.max(0, p.quota - p.used));
 	const usage = `${formatBytes(p.used)} of ${formatBytes(p.quota)} used`;
-	return p.own
-		? `This upload needs ${formatBytes(p.needed)} but you have ${left} left (${usage}). Delete some uploads or ask the trip owner.`
-		: `This upload needs ${formatBytes(p.needed)} but the trip owner has ${left} left (${usage}). Ask the trip owner to free up space.`;
+	return `This upload needs ${formatBytes(p.needed)} but you have ${left} left (${usage}). Delete some uploads or ask the trip owner.`;
 }

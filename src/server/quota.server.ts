@@ -3,8 +3,7 @@
  * uploader pays).
  *
  * - A file counts against the account that uploaded it (`attachments.created_by`),
- *   in every trip, whoever owns the trip. An anonymous link guest's upload
- *   counts against the trip's OWNER.
+ *   in every trip, whoever owns the trip. Only members upload.
  * - Only the original upload counts (`size_bytes` of photos, videos and PDFs):
  *   thumbnails, posters, page renders, link previews and avatars don't.
  * - Unique storage objects per account: a duplicated trip's rows re-reference
@@ -24,7 +23,6 @@ import type { SqlExec } from "@/server/graph.server";
 import { quotaBytes, quotaMessage, usedBytes } from "./quota-usage.server";
 
 export {
-	billedUserFor,
 	defaultQuotaBytes,
 	quotaBytes,
 	quotaMessage,
@@ -51,14 +49,11 @@ export async function lockQuota(tx: SqlExec, userId: string): Promise<void> {
  */
 export async function assertQuota(
 	tx: SqlExec,
-	p: { billedUserId: string; own: boolean; size: number; exclude?: string },
+	p: { billedUserId: string; size: number; exclude?: string },
 ): Promise<void> {
 	// One after the other: a transaction is one client (no overlapping queries).
 	const used = await usedBytes(tx, p.billedUserId, { exclude: p.exclude });
 	const quota = await quotaBytes(tx, p.billedUserId);
 	if (used + p.size > quota)
-		fail(
-			"STORAGE_QUOTA",
-			quotaMessage({ needed: p.size, used, quota, own: p.own }),
-		);
+		fail("STORAGE_QUOTA", quotaMessage({ needed: p.size, used, quota }));
 }

@@ -212,8 +212,7 @@ export type FlightDetails = z.infer<typeof FlightDetails>;
 /**
  * What a link guest reads instead of a flight's booking ref (QA COLLAB-R3-06):
  * it IS booked (the what-if lists it under "Needs rebooking"), but the ref
- * itself stays hidden, like seats ("••"). Read path only: every guest write
- * strips it again (`redactLegDetails`), so it can never be stored.
+ * itself stays hidden, like seats ("••"). Read path only: guests never write.
  */
 export const REDACTED_BOOKING_REF = "••••••";
 export const isRedactedRef = (ref: string | null | undefined): boolean =>

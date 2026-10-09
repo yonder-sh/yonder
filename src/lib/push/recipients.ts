@@ -5,8 +5,7 @@
  * - only people with a push subscription;
  * - the per-type switches and the per-trip mute;
  * - visibility: private to-dos notify only their author; link guests only
- *   hear about suggestions (they can't be mentioned, assigned or travel);
- *   money never goes out at all.
+ *   view, so they hear nothing; money never goes out at all.
  *
  * The audience helpers pick the candidates per trigger, from the trip graph's
  * members; `selectRecipients` applies the shared filters.

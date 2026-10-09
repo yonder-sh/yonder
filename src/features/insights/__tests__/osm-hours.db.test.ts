@@ -342,7 +342,6 @@ describe("node cores queue hours.osm", () => {
 			access: { tripId } as never,
 			user: owner,
 			actor: { userId: owner.id, name: owner.name, color: 1 },
-			inputRedacted: false,
 			dryRun: false,
 		} as never;
 		const { nodeId } = await withTripTx(tripId, (tx, out: TxOutbox) =>

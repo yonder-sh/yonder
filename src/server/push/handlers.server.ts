@@ -10,8 +10,8 @@
  * Every step is a no-op while push is off (`pushEnabled`). Recipient rules
  * (`src/lib/push/recipients.ts`): never the actor, only people with a
  * device, the per-type switches and per-trip mute, and what each person may
- * see (link guests only hear about suggestions; private to-dos only reach
- * their author). Inbox-backed kinds (mentions, suggestions to review, your
+ * see (link guests only view, so they hear nothing; private to-dos only
+ * reach their author). Inbox-backed kinds (mentions, suggestions to review, your
  * suggestions' results) are read from the in-app inbox itself at flush
  * time, so anything already read there is never pushed.
  */
@@ -377,12 +377,10 @@ async function reviewItems(c: FlushCtx): Promise<PushItem[]> {
 		at: string | Date;
 	}[];
 	if (!rows.length) return [];
-	if (!c.access.isGuest) {
-		const feed = await loadInbox(c.userId, { tripId: c.trip.id });
-		const review = feed.items.find((i) => i.kind === "review");
-		// Read in the bell since: nothing new to push.
-		if (!review || review.read) return [];
-	}
+	const feed = await loadInbox(c.userId, { tripId: c.trip.id });
+	const review = feed.items.find((i) => i.kind === "review");
+	// Read in the bell since: nothing new to push.
+	if (!review || review.read) return [];
 	const out: PushItem[] = [];
 	for (const r of rows) {
 		if (!(await proposalVisibleTo(db, r.id, c.access, c.userId))) continue;
@@ -402,7 +400,7 @@ async function reviewItems(c: FlushCtx): Promise<PushItem[]> {
 
 /** My suggestions accepted or rejected, not read in my inbox yet. */
 async function resultItems(c: FlushCtx): Promise<PushItem[]> {
-	if (!c.access) return [];
+	if (!c.access || c.access.isGuest) return [];
 	const ids = c.items.flatMap((i) =>
 		typeof i.meta?.proposalId === "string" ? [i.meta.proposalId] : [],
 	);
@@ -414,7 +412,7 @@ async function resultItems(c: FlushCtx): Promise<PushItem[]> {
 		 where p.id = any(${sql.param(ids)}::uuid[]) and p.trip_id = ${c.trip.id}
 		   and p.author_user_id = ${c.userId} and p.status in ('accepted', 'rejected')
 		   and p.reviewed_by is distinct from ${c.userId}`);
-	let rows = res.rows as {
+	const rows = res.rows as {
 		id: string;
 		status: "accepted" | "rejected";
 		summary: string;
@@ -422,27 +420,26 @@ async function resultItems(c: FlushCtx): Promise<PushItem[]> {
 		at: string | Date;
 		reviewerName: string | null;
 	}[];
-	if (!c.access.isGuest) {
-		const feed = await loadInbox(c.userId, { tripId: c.trip.id });
-		const unread = new Set(
-			feed.items.flatMap((i) =>
-				i.kind === "proposal_result" && !i.read ? [i.proposalId] : [],
-			),
-		);
-		rows = rows.filter((r) => unread.has(r.id));
-	}
-	return rows.map((r) => {
-		const who = firstWord(r.reviewerName) ?? "Someone";
-		return {
-			key: `result.${r.id}`,
-			at: new Date(r.at).getTime(),
-			actor: who,
-			headline: `${who} ${r.status} your suggestion`,
-			body: r.status === "rejected" && r.note ? `“${r.note}”` : r.summary,
-			url: tripUrl(c.trip.slug, { sel: `p.${r.id}` }),
-			meta: { decision: r.status, label: r.summary },
-		};
-	});
+	const feed = await loadInbox(c.userId, { tripId: c.trip.id });
+	const unread = new Set(
+		feed.items.flatMap((i) =>
+			i.kind === "proposal_result" && !i.read ? [i.proposalId] : [],
+		),
+	);
+	return rows
+		.filter((r) => unread.has(r.id))
+		.map((r) => {
+			const who = firstWord(r.reviewerName) ?? "Someone";
+			return {
+				key: `result.${r.id}`,
+				at: new Date(r.at).getTime(),
+				actor: who,
+				headline: `${who} ${r.status} your suggestion`,
+				body: r.status === "rejected" && r.note ? `“${r.note}”` : r.summary,
+				url: tripUrl(c.trip.slug, { sel: `p.${r.id}` }),
+				meta: { decision: r.status, label: r.summary },
+			};
+		});
 }
 
 /** Assignments that still hold (an undo within the window says nothing). */

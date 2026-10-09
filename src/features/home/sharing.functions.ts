@@ -485,8 +485,8 @@ export const removeMember = createServerFn({ method: "POST" })
  * The trip link's switch and role (FB-13, like Google Drive). `enabled: true`
  * creates the link if there is none (with `role`, else "Can view") and gives
  * a tail-less (seeded) address its random tail; `role` alone changes it for
- * everyone who came in through it (their open sockets re-check; "Can view"
- * withdraws their open suggestions). OFF revokes: its guests' grants are
+ * everyone who came in through it (what joining makes them; guests only
+ * view). OFF revokes: its guests' grants are
  * deleted and their sockets closed at once; turning it on again restores
  * nobody (they open the address again). `note` is the welcome's one line for
  * people who join through it.

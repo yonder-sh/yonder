@@ -14,7 +14,6 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
-import { mustRedact } from "@/lib/auth/roles";
 import { tripKeys } from "@/lib/query/keys";
 import { useFormPresence } from "@/lib/realtime/form-presence";
 import type { FlightDetails } from "@/lib/schemas/legs";
@@ -30,7 +29,7 @@ export function AddFlightDialog() {
 	const req = useUi((s) => s.addFlight);
 	const close = useUi((s) => s.openAddFlight);
 	const ws = useWorkspace();
-	const { graph, ix, access, nav } = ws;
+	const { graph, ix, nav } = ws;
 	const tripId = graph.trip.id;
 	const keys = [
 		tripKeys.graph(tripId),
@@ -68,7 +67,6 @@ export function AddFlightDialog() {
 	);
 	// FB-18/19: a pair's flight defaults to its stops' days and airports.
 	const pairDefaults = useFlightDefaults(target);
-	const redacted = mustRedact({ role: access.role, isGuest: access.isGuest });
 	// FB-24: others see "Dennis is editing NH 744" / "Dennis is adding a flight…".
 	useFormPresence(
 		open
@@ -104,7 +102,6 @@ export function AddFlightDialog() {
 						}
 						key={`${pairDefaults?.fromIata ?? ""}:${pairDefaults?.toIata ?? ""}`}
 						defaults={pairDefaults ?? { depDate: day?.date }}
-						redacted={redacted}
 						members={graph.members}
 						stickyActions
 						submitting={create.isPending || save.isPending}

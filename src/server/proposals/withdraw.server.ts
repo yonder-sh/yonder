@@ -2,9 +2,9 @@
  * Closing proposals without applying them (EXTENSIONS §3.5):
  *
  * - `withdrawAuthorProposals`: access loss withdraws the author's open
- *   proposals — `removeMember`/`leaveTrip` (via `retireMember`),
- *   `removeGuest`, `resetShareLink`, a link turned off, and a downgrade to
- *   viewer (`changeMemberRole`) call it in their transaction.
+ *   proposals — `removeMember`/`leaveTrip` (via `retireMember`) and a
+ *   downgrade to viewer (`changeMemberRole`) call it in their transaction.
+ *   Link guests only view, so they never author one.
  * - `closeDependants`: reject, withdraw and access loss close EVERY open
  *   dependant (a proposal whose `requires` names a closed one, transitively),
  *   whatever its author, with a readable `review_note`.

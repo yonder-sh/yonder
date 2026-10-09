@@ -16,7 +16,6 @@ import { LegTarget } from "@/lib/schemas/targets";
 import { logActivity } from "@/server/activity.server";
 import { fail } from "@/server/authz/session.server";
 import { evacuateLegs } from "@/server/days.server";
-import { redactLegDetails } from "@/server/graph.server";
 import { ensureLegRow, indexTx, writeLeg } from "@/server/legs.server";
 import type { TxOutbox } from "@/server/live/outbox.server";
 import { tripMemberIds } from "@/server/perms.server";
@@ -57,23 +56,6 @@ export const SetLegAssigneesInput = z
 
 type In<S extends z.ZodType> = z.output<S>;
 
-/**
- * Guest strip for `leg.set` (EXTENSIONS §3.4 step 2): booking refs, costs,
- * points, fees and real seats never enter a guest's payload. The core then
- * merges with `inputRedacted`, so the stored values are kept.
- */
-export function redactSetLeg(input: In<typeof SetLegInput>) {
-	return input.patch.details
-		? {
-				...input,
-				patch: {
-					...input.patch,
-					details: redactLegDetails(input.patch.details),
-				},
-			}
-		: input;
-}
-
 /** `ensureLeg` ({ direct: 'propose' }): a `mode: null` row if there isn't one. Keys: graph. */
 export async function ensureLegCore(
 	tx: Tx,
@@ -91,7 +73,7 @@ export async function ensureLegCore(
 	return { legId: row.id };
 }
 
-/** `leg.set`: details checked against the mode; timed instants (§9.2); guest merge (§11.3). Keys: graph. */
+/** `leg.set`: details checked against the mode; timed instants (§9.2). Keys: graph. */
 export async function setLegCore(
 	tx: Tx,
 	out: TxOutbox,
@@ -107,8 +89,6 @@ export async function setLegCore(
 		data.patch,
 		{
 			userId: ctx.user.id,
-			// EXTENSIONS §3.4: merges key on the redacted input, not on the caller.
-			isGuest: ctx.inputRedacted,
 			expectedUpdatedAt: data.expectedUpdatedAt,
 		},
 	);

@@ -1,15 +1,12 @@
 /**
  * `ProposalDto` from a proposal row (EXTENSIONS §3.5): the row minus the
  * server-only `base`, plus `fields` (the def's) and `before` (those fields'
- * values when it was proposed). Under `mustRedact` the payload goes through
- * the def's `redact` and `before.details` through `redactLegDetails`, so a
- * guest never sees a booking ref, cost, points, fees or a real seat.
+ * values when it was proposed). Link guests never get any (`listProposals`).
  */
 import { type SQL, sql } from "drizzle-orm";
 import { mustRedact, type TripAccess } from "@/lib/auth/roles";
-import type { LegDetails } from "@/lib/schemas/legs";
 import type { Json, ProposalDto } from "@/lib/schemas/proposals";
-import { redactLegDetails, type SqlExec } from "@/server/graph.server";
+import type { SqlExec } from "@/server/graph.server";
 import { type AnyDef, fieldsOf, type ProposalRow } from "./propose.server";
 
 /**
@@ -59,25 +56,10 @@ export async function proposalVisibleTo(
 	return res.rows.length > 0;
 }
 
-/** A leg-details value with booking fields stripped (guests). */
-function redactDetails(v: Json): Json {
-	if (!v || typeof v !== "object" || Array.isArray(v) || !("kind" in v))
-		return v;
-	try {
-		return redactLegDetails(v as unknown as LegDetails) as unknown as Json;
-	} catch {
-		return null;
-	}
-}
-
-const partOf = (v: Json, key: string): Json =>
-	v && typeof v === "object" && !Array.isArray(v) ? (v[key] ?? null) : null;
-
-/** The DTO for one row (`before` from the server-only base; guests redacted). */
+/** The DTO for one row (`before` from the server-only base). */
 export function proposalDto(
 	r: ProposalRow & { dependants: string[] },
 	def: AnyDef | null,
-	redact: boolean,
 ): ProposalDto {
 	const fields = def ? fieldsOf(def, r.payload) : [];
 	const ref = r.base.refs.find(
@@ -89,38 +71,11 @@ export function proposalDto(
 	if (ref)
 		for (const f of fields)
 			if (f in ref.fields) before[f] = ref.fields[f] as Json;
-	let payload = r.payload;
-	if (redact) {
-		if (def?.redact) {
-			const parsed = def.input.safeParse(payload);
-			payload = JSON.parse(
-				JSON.stringify(def.redact(parsed.success ? parsed.data : payload)),
-			) as Record<string, Json>;
-		}
-		if ("details" in before) before.details = redactDetails(before.details);
-		// Snapshots of one part of a leg's details (`details.flight`).
-		if ("details.flight" in before)
-			before["details.flight"] = partOf(
-				redactDetails({
-					kind: "flight",
-					flight: before["details.flight"],
-				}),
-				"flight",
-			);
-		if ("details.booking" in before)
-			before["details.booking"] = partOf(
-				redactDetails({
-					kind: "transit",
-					booking: before["details.booking"],
-				}),
-				"booking",
-			);
-	}
 	return {
 		id: r.id,
 		tripId: r.tripId,
 		op: r.op,
-		payload,
+		payload: r.payload,
 		entityKind: r.entityKind,
 		entityId: r.entityId,
 		createdIds: r.createdIds,

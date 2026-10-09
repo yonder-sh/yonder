@@ -1,9 +1,4 @@
-/**
- * The upload queue's last step (ADDENDUM §9): a link guest's PDF on a flight
- * starts hidden from guests — the guest included — so it never joins their
- * gallery and the toast says where it went; a member's upload joins the
- * cache as before.
- */
+/** The upload queue: a finished upload joins the cache; multipart uploads. */
 import { QueryClient } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { tripKeys } from "@/lib/query/keys";
@@ -38,7 +33,6 @@ const toasts = vi.hoisted(() => {
 vi.mock("sonner", () => ({ toast: toasts }));
 
 import {
-	addedMessage,
 	cancelUpload,
 	PART_CONCURRENCY,
 	retryDelay,
@@ -123,7 +117,7 @@ function dto(visibility: "everyone" | "members"): MediaDto {
 		url: null,
 		provider: null,
 		embedId: null,
-		title: "Guest boarding pass.pdf",
+		title: "Boarding pass.pdf",
 		siteName: null,
 		caption: null,
 		position: "a0",
@@ -147,14 +141,14 @@ function dto(visibility: "everyone" | "members"): MediaDto {
 	};
 }
 
-async function upload(guest: boolean, visibility: "everyone" | "members") {
+async function upload(visibility: "everyone" | "members") {
 	const qc = new QueryClient();
 	qc.setQueryData(tripKeys.media(TRIP), []);
 	const blob = new Blob(["%PDF-1.4"], { type: "application/pdf" });
 	prep.prepareFile.mockResolvedValue({
 		blob,
 		type: "application/pdf",
-		name: "Guest boarding pass.pdf",
+		name: "Boarding pass.pdf",
 		kind: "pdf",
 		previewUrl: null,
 	});
@@ -162,7 +156,7 @@ async function upload(guest: boolean, visibility: "everyone" | "members") {
 	fns.completeUpload.mockResolvedValue(dto(visibility));
 	startUploads(
 		[
-			new File([blob], "Guest boarding pass.pdf", {
+			new File([blob], "Boarding pass.pdf", {
 				type: "application/pdf",
 			}),
 		],
@@ -171,7 +165,6 @@ async function upload(guest: boolean, visibility: "everyone" | "members") {
 			target: FLIGHT,
 			queryClient: qc,
 			label: "JFK Terminal 7 → HND Terminal 3",
-			guest,
 		},
 	);
 	await vi.waitFor(() => expect(toasts.success).toHaveBeenCalled());
@@ -192,42 +185,9 @@ afterEach(() => {
 	vi.clearAllMocks();
 });
 
-describe("addedMessage (ADDENDUM §9)", () => {
-	const pdf = (visibility: "everyone" | "members") => ({
-		kind: "pdf" as const,
-		visibility,
-	});
-	it("says a guest's hidden upload went to trip members", () => {
-		expect(addedMessage([pdf("members")], "NH 9", true)).toBe(
-			"1 PDF added to NH 9 — hidden from guests; only trip members can see it",
-		);
-		expect(addedMessage([pdf("members"), pdf("everyone")], "NH 9", true)).toBe(
-			"2 PDFs added to NH 9 — 1 PDF hidden from guests; only trip members can see it",
-		);
-	});
-	it("stays plain for members and for uploads guests can see", () => {
-		expect(addedMessage([pdf("members")], "NH 9", false)).toBe(
-			"1 PDF added to NH 9",
-		);
-		expect(addedMessage([pdf("everyone")], "NH 9", true)).toBe(
-			"1 PDF added to NH 9",
-		);
-	});
-});
-
-describe("startUploads: who sees the finished upload", () => {
-	it("a guest's e-ticket on a flight: no tile, and the toast says why", async () => {
-		const qc = await upload(true, "members");
-		expect(toasts.success).toHaveBeenCalledWith(
-			"1 PDF added to JFK Terminal 7 → HND Terminal 3 — hidden from guests; only trip members can see it",
-			expect.objectContaining({ id: "t1", duration: 10_000 }),
-		);
-		expect(qc.getQueryData(tripKeys.media(TRIP))).toEqual([]);
-		expect(useUploads.getState().items).toEqual([]);
-	});
-
+describe("startUploads: the finished upload", () => {
 	it("a member's e-ticket joins their gallery (with the lock chip)", async () => {
-		const qc = await upload(false, "members");
+		const qc = await upload("members");
 		expect(toasts.success).toHaveBeenCalledWith(
 			"1 PDF added to JFK Terminal 7 → HND Terminal 3",
 			{ id: "t1" },
@@ -239,15 +199,6 @@ describe("startUploads: who sees the finished upload", () => {
 			]),
 		).toEqual([[ID, "members"]]);
 		expect(useUploads.getState().items).toEqual([]);
-	});
-
-	it("a guest's general PDF stays in their gallery", async () => {
-		const qc = await upload(true, "everyone");
-		expect(toasts.success).toHaveBeenCalledWith(
-			"1 PDF added to JFK Terminal 7 → HND Terminal 3",
-			{ id: "t1" },
-		);
-		expect(qc.getQueryData(tripKeys.media(TRIP))).toHaveLength(1);
 	});
 });
 

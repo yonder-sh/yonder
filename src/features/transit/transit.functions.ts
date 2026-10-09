@@ -131,7 +131,7 @@ export const estimateWalk = createServerFn({ method: "POST" })
 									? { kind: "walk", geometry: walk.geometry }
 									: { kind: "none" },
 							},
-							{ userId: context.user.id, isGuest: false },
+							{ userId: context.user.id },
 						),
 					mutationMeta(access, context.user),
 				);
@@ -250,7 +250,7 @@ export const chooseTransitOption = createServerFn({ method: "POST" })
 				const before = await findLeg(tx, tripId, data.target);
 				const option = legRoutes(before).find((r) => r.id === data.optionId);
 				if (!before || !option) return fail("NOT_FOUND", "route option");
-				const meta = { userId: context.user.id, isGuest: access.isGuest };
+				const meta = { userId: context.user.id };
 				if (isWalkOnly(option)) {
 					const w = walk ?? {
 						minutes: option.durationMin,
@@ -382,7 +382,7 @@ export const lockTransitTimes = createServerFn({ method: "POST" })
 							},
 						},
 					},
-					{ userId: context.user.id, isGuest: access.isGuest },
+					{ userId: context.user.id },
 				);
 				return { leg: await toGraphLeg(tx, row, mustRedact(access)) };
 			},

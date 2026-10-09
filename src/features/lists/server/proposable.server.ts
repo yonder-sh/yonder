@@ -26,7 +26,6 @@ import type { Tx } from "@/db/db.server";
 import { listItems } from "@/db/schema";
 import { HHmm, HttpUrl, IsoDate, Tz } from "@/lib/schemas/common";
 import { DUE_KIND_VALUES, LIST_KIND_VALUES } from "@/lib/schemas/enums";
-import { isRedactedRef } from "@/lib/schemas/legs";
 import { DueRule } from "@/lib/schemas/lists";
 import { CurrencyCode } from "@/lib/schemas/money";
 import {
@@ -230,8 +229,6 @@ export async function createListItemCore(
 	const tripId = ctx.access.tripId;
 	if (data.tripId !== tripId) return fail("NOT_FOUND");
 	if (data.id) await assertFreshIds(tx, "list_items", [data.id]);
-	if (data.isPrivate && ctx.access.isGuest)
-		return fail("VALIDATION", "link guests can't keep private items");
 	if (data.isPrivate && data.fromPrivateId)
 		return fail("VALIDATION", "a shared copy can't be private");
 	// Proposing (the dry run): one open suggestion per private to-do.
@@ -351,8 +348,6 @@ export async function updateListItemCore(
 		// Only the author decides whether their item is private.
 		if (row.createdBy !== ctx.user.id)
 			return fail("FORBIDDEN", "only its author can change who sees it");
-		if (p.isPrivate && ctx.access.isGuest)
-			return fail("VALIDATION", "link guests can't keep private items");
 	}
 	if (p.dueDayId) await assertDay(tx, tripId, p.dueDayId);
 	await assertRuleItem(tx, tripId, p.dueRule);
@@ -369,9 +364,7 @@ export async function updateListItemCore(
 	if (p.priceCurrency !== undefined && p.priceAmount !== null)
 		set.priceCurrency = p.priceCurrency;
 	if (p.isPrivate !== undefined) set.isPrivate = p.isPrivate;
-	// A link guest reads the code hidden: sending that back changes nothing.
-	if (p.bookingRef !== undefined && !isRedactedRef(p.bookingRef))
-		set.bookingRef = p.bookingRef;
+	if (p.bookingRef !== undefined) set.bookingRef = p.bookingRef;
 	// A relative rule replaces the absolute fields, and an absolute date turns
 	// the rule off (EXTENSIONS §7).
 	if (p.dueRule) {

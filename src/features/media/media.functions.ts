@@ -50,7 +50,7 @@ import {
 	requireDirect,
 	requireEditOnly,
 } from "@/server/proposals/proposable.server";
-import { assertQuota, billedUserFor, lockQuota } from "@/server/quota.server";
+import { assertQuota, lockQuota } from "@/server/quota.server";
 import { mediaPrefix } from "@/server/s3.server";
 import { mutationMeta, withTripTx } from "@/server/tx.server";
 import {
@@ -217,17 +217,10 @@ export const createUpload = createServerFn({ method: "POST" })
 				`That file is too large (max ${formatBytes(max)}).`,
 			);
 		await rateLimitPer(`upload:${context.user.id}`, 120, 60);
-		// ADDENDUM §12: the uploader's quota (a link guest's: the trip owner's),
-		// before any storage call; again below under the account's lock.
-		const billed = await billedUserFor(db, data.tripId, context.user);
-		const quota = billed
-			? {
-					billedUserId: billed,
-					own: billed === context.user.id,
-					size: data.size,
-				}
-			: null;
-		if (quota) await assertQuota(db, quota);
+		// ADDENDUM §12: the uploader's quota, before any storage call; again
+		// below under the account's lock.
+		const quota = { billedUserId: context.user.id, size: data.size };
+		await assertQuota(db, quota);
 		const id = uuidv7();
 		const multipart = data.size > MULTIPART_PART_BYTES;
 		// Started before the row exists, so the row carries its id; a failed
@@ -242,10 +235,8 @@ export const createUpload = createServerFn({ method: "POST" })
 			await withTripTx(
 				data.tripId,
 				async (tx) => {
-					if (quota) {
-						await lockQuota(tx, quota.billedUserId);
-						await assertQuota(tx, quota);
-					}
+					await lockQuota(tx, quota.billedUserId);
+					await assertQuota(tx, quota);
 					const used = await tx.execute(sql`
 					select coalesce(sum(size_bytes), 0)::bigint as n from attachments
 					 where trip_id = ${data.tripId} and deleted_at is null`);
@@ -552,40 +543,37 @@ export const completeUpload = createServerFn({ method: "POST" })
 
 		// ADDENDUM §12: the quota again, before anything is kept (the size is
 		// the declared one, bound to the signatures). Over it, the upload goes.
-		const billed = await billedUserFor(db, tripId, context.user);
-		if (billed)
-			try {
-				await assertQuota(db, {
-					billedUserId: billed,
-					own: billed === context.user.id,
-					size: pending.sizeBytes ?? 0,
-					exclude: pending.id,
-				});
-			} catch (e) {
-				if (mp) await abortMultipart(upload, mp.uploadId).catch(() => {});
-				await deleteObject(upload).catch(() => {});
-				await withTripTx(
-					tripId,
-					async (tx, out) => {
-						await tx
-							.update(attachments)
-							.set({
-								status: "failed",
-								deletedAt: new Date(),
-								updatedAt: new Date(),
-							})
-							.where(
-								and(
-									eq(attachments.tripId, tripId),
-									eq(attachments.id, pending.id),
-								),
-							);
-						out.emit({ keys: ["media", "counts"] });
-					},
-					mutationMeta(access, context.user),
-				);
-				throw e;
-			}
+		try {
+			await assertQuota(db, {
+				billedUserId: context.user.id,
+				size: pending.sizeBytes ?? 0,
+				exclude: pending.id,
+			});
+		} catch (e) {
+			if (mp) await abortMultipart(upload, mp.uploadId).catch(() => {});
+			await deleteObject(upload).catch(() => {});
+			await withTripTx(
+				tripId,
+				async (tx, out) => {
+					await tx
+						.update(attachments)
+						.set({
+							status: "failed",
+							deletedAt: new Date(),
+							updatedAt: new Date(),
+						})
+						.where(
+							and(
+								eq(attachments.tripId, tripId),
+								eq(attachments.id, pending.id),
+							),
+						);
+					out.emit({ keys: ["media", "counts"] });
+				},
+				mutationMeta(access, context.user),
+			);
+			throw e;
+		}
 
 		// A multipart upload is finished here, from storage's own part list:
 		// every part present with exactly its signed size (a retry after it
@@ -765,7 +753,7 @@ export const refreshLinkMeta = createServerFn({ method: "POST" })
 			tripId,
 			context.user,
 		);
-		await rateLimit(`links:${context.user.id}`, access.isGuest ? 10 : 30);
+		await rateLimit(`links:${context.user.id}`, 30);
 		return withTripTx(
 			tripId,
 			async (tx, out) => {

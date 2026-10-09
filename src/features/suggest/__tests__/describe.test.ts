@@ -1,7 +1,7 @@
 /**
  * describeProposal and the pure helpers behind the suggestion UI, on the demo
  * fixture and its `scenario.proposals` (a create, a move, a delete, a
- * trip.shift, a guest flight.save and two stacked moves of one item).
+ * trip.shift, Kenji's flight.save and two stacked moves of one item).
  */
 import { describe, expect, it } from "vitest";
 import { indexGraph } from "@/lib/engine/graph-index";
@@ -216,10 +216,10 @@ describe("proposal-view helpers", () => {
 
 	it("batches by author × 10-minute runs, oldest first", () => {
 		const bs = batches(P);
-		// Maya 1–4 and 6 (1 min apart), the guest at 5, Audrey at 7.
+		// Maya 1–4 and 6 (1 min apart), Kenji at 5, Audrey at 7.
 		expect(bs.map((b) => [b.author.name, b.proposals.length])).toEqual([
 			["Maya", 5],
-			["Guest Wren", 1],
+			["Kenji", 1],
 			["Audrey", 1],
 		]);
 		const later = with_(byOp("item.delete"), {

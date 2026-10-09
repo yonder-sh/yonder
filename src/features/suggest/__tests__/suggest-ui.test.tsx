@@ -162,7 +162,7 @@ describe("ReviewDrawer", () => {
 		const groups = within(drawer).getAllByTestId(SUGGEST_TESTID.group);
 		expect(groups.map((g) => g.getAttribute("aria-label"))).toEqual([
 			"Maya's suggestions",
-			"Guest Wren's suggestions",
+			"Kenji's suggestions",
 			"Audrey's suggestions",
 		]);
 		const row = within(drawer)

@@ -16,9 +16,6 @@
  *   failure keeps a tile with Retry (a retry starts over with a fresh row).
  * - While the worker makes the variants, tiles show the local preview
  *   (`localPreview(id)`).
- * - A link guest's upload that starts hidden from guests (ADDENDUM §9: a PDF
- *   on a flight, stay or reserved transit) never reaches their own gallery,
- *   so it never joins their cache and the batch toast says where it went.
  */
 import type { QueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -57,8 +54,6 @@ export type UploadItem = {
 	/** A refused file (wrong type, too big, HEIC that won't convert) can't be retried. */
 	retryable: boolean;
 	attachmentId: string | null;
-	/** `UploadContext.guest`, kept so a retry says the same thing. */
-	guest: boolean;
 	/** `UploadContext.confirmation`, kept for a retry. */
 	confirmation?: boolean;
 };
@@ -319,11 +314,6 @@ export type UploadContext = {
 	queryClient: QueryClient;
 	/** "Shibuya Sky" for toasts. */
 	label: string;
-	/**
-	 * `mustRedact(me)`: this viewer never sees `members` rows (a link guest,
-	 * ADDENDUM §9) — their own upload included, so the toast says so.
-	 */
-	guest?: boolean;
 	/** A booking's confirmation (U001): members only, never a cover. */
 	confirmation?: boolean;
 	videoMaxBytes?: number;
@@ -408,12 +398,6 @@ async function runOne(key: string, ctx: UploadContext): Promise<MediaDto> {
 			...(prepared.takenAt ? { takenAt: prepared.takenAt } : {}),
 		},
 	});
-	// ADDENDUM §9: hidden from guests, the uploading guest included — no tile
-	// (the next refetch would drop it anyway); the batch toast says why.
-	if (hiddenFrom(ctx.guest, dto)) {
-		removeItem(key);
-		return dto;
-	}
 	if (prepared.previewUrl)
 		useUploads.setState((s) => ({
 			previews: { ...s.previews, [dto.id]: prepared.previewUrl as string },
@@ -509,31 +493,12 @@ function noun(n: number, kinds: Set<string>): string {
 	return n === 1 ? `1 ${one}` : `${n} ${many}`;
 }
 
-/** Whether this finished upload is one the uploader can't see (ADDENDUM §9). */
-function hiddenFrom(
-	guest: boolean | undefined,
-	dto: Pick<MediaDto, "visibility">,
-): boolean {
-	return !!guest && dto.visibility !== "everyone";
-}
-
-/**
- * The batch's success line: "2 photos added to Shibuya Sky". A link guest's
- * upload that starts hidden from guests (an e-ticket on a flight) is gone
- * from their gallery at once, so the line says where it went.
- */
+/** The batch's success line: "2 photos added to Shibuya Sky". */
 export function addedMessage(
-	done: Pick<MediaDto, "kind" | "visibility">[],
+	done: Pick<MediaDto, "kind">[],
 	label: string,
-	guest?: boolean,
 ): string {
-	const line = `${noun(done.length, new Set(done.map((d) => d.kind)))} added to ${label}`;
-	const hidden = done.filter((d) => hiddenFrom(guest, d));
-	if (!hidden.length) return line;
-	const them = hidden.length === 1 ? "it" : "them";
-	return hidden.length === done.length
-		? `${line} — hidden from guests; only trip members can see ${them}`
-		: `${line} — ${noun(hidden.length, new Set(hidden.map((d) => d.kind)))} hidden from guests; only trip members can see ${them}`;
+	return `${noun(done.length, new Set(done.map((d) => d.kind)))} added to ${label}`;
 }
 
 /**
@@ -576,7 +541,6 @@ export function startUploads(
 					error: null,
 					retryable: true,
 					attachmentId: null,
-					guest: !!ctx.guest,
 					...(ctx.confirmation ? { confirmation: true } : {}),
 				},
 			],
@@ -587,14 +551,7 @@ export function startUploads(
 		`Uploading ${noun(keys.length, kinds)} to ${ctx.label}…`,
 	);
 	void runBatch(keys, ctx).then(({ done, failed, refused }) => {
-		if (done.length)
-			toast.success(addedMessage(done, ctx.label, ctx.guest), {
-				id,
-				// Long enough to read where a hidden upload went.
-				...(done.some((d) => hiddenFrom(ctx.guest, d))
-					? { duration: 10_000 }
-					: {}),
-			});
+		if (done.length) toast.success(addedMessage(done, ctx.label), { id });
 		else toast.dismiss(id);
 		for (const [i, why] of refused.entries())
 			toast.error(why, { id: `${id}-refused-${i}` });
@@ -630,7 +587,6 @@ export function retryUpload(
 	if (!item || !file) return;
 	removeItem(key);
 	startUploads([file], {
-		guest: item.guest,
 		confirmation: item.confirmation,
 		...ctx,
 		tripId: item.tripId,
