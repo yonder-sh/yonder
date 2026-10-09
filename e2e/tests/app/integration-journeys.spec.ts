@@ -1339,13 +1339,14 @@ test("X5 Rate feed: two members rate with comments; the Places table, its drawer
 		await p.goto(`/t/${c.slug}/rate?n=${N.sensoji}`);
 		await expect(p).toHaveURL(/tab=places/, { timeout: 20_000 });
 		await expect(p).toHaveURL(/pv=rate/);
-		const card = p.locator(`[data-testid=${PT.feedCard}][data-active]`);
-		await expect(card).toHaveAttribute("data-place", N.sensoji, { timeout: 20_000 });
+		const active = p.locator(`[data-testid=${PT.feedCard}][data-active]`);
+		await expect(active).toHaveAttribute("data-place", N.sensoji, { timeout: 20_000 });
+		const card = p.locator(`[data-testid=${PT.feedCard}][data-place="${N.sensoji}"]`);
 		await p.keyboard.press(key);
 		await expect(card).toHaveAttribute("data-rated", /.+/);
-		// No auto-advance: the feed stays on the card just rated.
-		await expect(card).toHaveAttribute("data-place", N.sensoji);
+		// Add a comment, before the feed moves on: touching the card keeps it there.
 		await card.getByRole("button", { name: "Add a comment" }).click();
+		await expect(active).toHaveAttribute("data-place", N.sensoji);
 		const field = card.getByTestId(P.ratingComment).getByTestId(TESTID.mentionInput);
 		await field.fill(comment);
 		await field.press("Enter");

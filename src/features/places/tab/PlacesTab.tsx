@@ -65,8 +65,11 @@ function FlowEmpty() {
 	const where = scope?.name ?? graph.trip.name;
 	const steps = [
 		["Rate", " them together, Must to Nah."],
-		["Review", " the group's scores. The favourites make the shortlist."],
-		["Schedule", ": put the shortlist on the days you're in each city."],
+		[
+			"Decide",
+			": the favourites make the shortlist; talk through the split ones.",
+		],
+		["Plan", ": put the shortlist on the days you're in each city."],
 	] as const;
 	return (
 		<div

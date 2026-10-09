@@ -257,12 +257,11 @@ test.describe("PLAN-R3-03: comments with mentions", () => {
 		const c = await cloneFixtureTrip(page.request);
 		const N = c.ids.nodes;
 		await page.goto(`/t/${c.slug}/rate?n=${N.sensoji}`);
-		const card = activeCard(page);
-		await expect(card).toHaveAttribute("data-place", N.sensoji as string, { timeout: 30_000 });
-		// Rate (the feed stays on the card), then open the comment.
+		await expect(activeCard(page)).toHaveAttribute("data-place", N.sensoji as string, { timeout: 30_000 });
+		const card = page.locator(`[data-testid=${PT.feedCard}][data-place="${N.sensoji}"]`);
+		// Rate, then open the comment (touching the card keeps the feed there).
 		await page.keyboard.press("1");
 		await expect(card).toHaveAttribute("data-rated", "must");
-		await expect(card).toHaveAttribute("data-place", N.sensoji as string);
 		await card.getByRole("button", { name: "Add a comment" }).click();
 		const editor = page.getByTestId(P.ratingComment);
 		const field = editor.getByTestId(TESTID.mentionInput);

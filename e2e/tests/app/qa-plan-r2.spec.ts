@@ -266,9 +266,7 @@ test.describe("on a copy of Asia 2027", () => {
 		const rated = (await card.getAttribute("data-place")) as string;
 		await page.keyboard.press("4");
 		await expect(card).toHaveAttribute("data-rated", "sure_why_not");
-		// Rating doesn't move the feed; scroll on, then back up: the card just rated, with its pick.
-		await expect(card).toHaveAttribute("data-place", rated);
-		await page.keyboard.press("ArrowDown");
+		// A first rating moves the feed on; back up: the card just rated, with its pick.
 		await expect(card).not.toHaveAttribute("data-place", rated);
 		await page.keyboard.press("ArrowUp");
 		await expect(card).toHaveAttribute("data-place", rated);

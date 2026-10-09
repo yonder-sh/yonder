@@ -7,9 +7,10 @@
  * 1–6 and ↑/↓. Sideways swipes (and, with a mouse, clicks on its sides)
  * change a place's photo.
  *
- * - Nothing says next or skip, and a rating doesn't move the feed: scrolling
- *   past a place without rating it skips it; skipped places come back at the
- *   end ("You skipped 3").
+ * - Nothing says next or skip: a first rating moves on to the next place
+ *   (after a beat, longer when others' ratings show; touching anything else
+ *   on the card, like Add a comment, stays), changing one doesn't; scrolling past a place without rating it
+ *   skips it; skipped places come back at the end ("You skipped 3").
  * - Others' ratings stay hidden until you rate, then show right on the card:
  *   their avatars pop onto the buttons they picked and a "Match with Dennis ·
  *   score +6" / "Split" tag appears. "Peek" shows them before you rate.
@@ -1159,7 +1160,10 @@ function EndCard({
 	const friends = friendsStats(data, me).sort((a, b) => b.matches - a.matches);
 	const best = friends.find((f) => f.agree.length);
 	const where = scope?.name ?? graph.trip.name;
-	// Someone's keen, someone isn't: the Review step's "Talk about it" (decided ones don't wait).
+	// Mine, as the group list counts it (so "all 2 places" and "2/2" agree).
+	const mine = data.progress.find((p) => p.member.id === me);
+	const total = rated ? (mine?.total ?? rated) : 0;
+	// Someone's keen, someone isn't: Decide's middle column (decided ones don't wait).
 	const split = data.counts.talk;
 	return (
 		<Slate testid={PLACES_TAB_TESTID.feedEnd} cardKey={cardKey}>
@@ -1171,8 +1175,8 @@ function EndCard({
 					You're all caught up
 				</h2>
 				<p className="text-body text-muted-foreground">
-					{rated
-						? `You've rated all ${rated} ${rated === 1 ? "place" : "places"} here in ${where}.`
+					{total
+						? `You've rated all ${total} ${total === 1 ? "place" : "places"} in ${where}.`
 						: `Nothing left to rate in ${where}.`}{" "}
 					New ones show up here as people add them. Scroll up to see or change
 					anything you rated this session.
@@ -1259,32 +1263,28 @@ function EndCard({
 						))}
 				</div>
 			) : null}
-			{/* The flow's next step: Review, the group's scores highest first. */}
+			{/* The flow's next step: Decide, the shortlist and what the group disagrees on. */}
 			<Button
 				size="lg"
 				className="h-12 rounded-xl"
 				data-testid={PLACES_TAB_TESTID.feedReview}
 				onClick={() =>
 					nav.setPlaces({
-						pv: lastReviewView.current,
+						pv: "decide",
 						pst: undefined,
 						talk: undefined,
 						ps: undefined,
 					})
 				}
 			>
-				Next: review the ratings
+				Next: decide
 			</Button>
 			{split ? (
 				<button
 					type="button"
 					data-testid={PLACES_TAB_TESTID.feedTalk}
 					onClick={() =>
-						nav.setPlaces({
-							pv: lastReviewView.current,
-							pst: undefined,
-							talk: 1,
-						})
+						nav.setPlaces({ pv: "decide", pst: undefined, talk: undefined })
 					}
 					className="inline-flex cursor-pointer items-center justify-center gap-1 text-body text-sky-300 hover:underline"
 				>
@@ -1299,6 +1299,10 @@ function EndCard({
 // ---------------------------------------------------------------------------
 // The feed
 // ---------------------------------------------------------------------------
+
+/** How long a rated card stays before the feed moves on; longer to see the others' picks. */
+const ADVANCE_MS = 900;
+const ADVANCE_REVEAL_MS = 1600;
 
 type FeedState = {
 	key: string;
@@ -1523,12 +1527,68 @@ export default function RateFeed({ data }: { data: PlacesData }) {
 		ids,
 	);
 	const peeked = useMemo(() => new Set(peekedKeys), [peekedKeys]);
+	// A first rating moves on: after a beat, or long enough to see the others'.
+	const advance = useRef(0);
+	const itemsRef = useRef(items);
+	itemsRef.current = items;
+	const currentRef = useRef(currentItem?.key);
+	currentRef.current = currentItem?.key;
+	const advanceKey = useRef<string | null>(null);
+	const stopAdvance = useCallback(() => {
+		window.clearTimeout(advance.current);
+		advance.current = 0;
+		advanceKey.current = null;
+	}, []);
+	useEffect(() => stopAdvance, [stopAdvance]);
+	// Anything else on the rated card (Add a comment, Peek, a photo) stays on it.
+	useEffect(() => {
+		const el = root.current;
+		if (!el) return;
+		const onFocus = (e: FocusEvent) => {
+			if (e.target instanceof HTMLElement && ownsKeys(e.target)) stopAdvance();
+		};
+		const onDown = (e: PointerEvent) => {
+			const t = e.target instanceof Element ? e.target : null;
+			if (!advanceKey.current || !t || t.closest("[data-priority]")) return;
+			const card = t.closest<HTMLElement>("[data-key]");
+			if (card?.dataset.key === advanceKey.current) stopAdvance();
+		};
+		el.addEventListener("focusin", onFocus);
+		el.addEventListener("pointerdown", onDown);
+		return () => {
+			el.removeEventListener("focusin", onFocus);
+			el.removeEventListener("pointerdown", onDown);
+		};
+	}, [stopAdvance]);
 	const rate = useCallback(
 		(id: string, key: string, p: Priority | null) => {
+			const node = data.byId.get(id)?.node;
+			// A first rating, or a quick change while it's still moving on.
+			const first =
+				(!!me && !node?.priorities[me]) || advanceKey.current === key;
 			if (!act.rate(id, p)) return;
-			if (p) setState((st) => ({ ...st, s: recordRating(st.s, id, key) }));
+			stopAdvance();
+			if (!p) return;
+			setState((st) => ({ ...st, s: recordRating(st.s, id, key) }));
+			if (!first) return;
+			advanceKey.current = key;
+			const others = data.memberIds.some(
+				(m) => m !== me && node?.priorities[m],
+			);
+			advance.current = window.setTimeout(
+				() => {
+					advance.current = 0;
+					advanceKey.current = null;
+					// Only from the card you rated: you may have scrolled on already.
+					if (currentRef.current !== key) return;
+					const list = itemsRef.current;
+					const next = list[list.findIndex((it) => it.key === key) + 1];
+					if (next) scrollToKey(next.key);
+				},
+				others ? ADVANCE_REVEAL_MS : ADVANCE_MS,
+			);
 		},
-		[act],
+		[act, data.byId, data.memberIds, me, scrollToKey, stopAdvance],
 	);
 
 	// Keys: 1–6 rate the card in view, 0 clears, ↑ / ↓ (or K / J) move, P peeks.
@@ -1565,7 +1625,6 @@ export default function RateFeed({ data }: { data: PlacesData }) {
 	}, [currentItem, rate, step, setPeeked]);
 
 	const left = leftCount(session, isSettled);
-	const run = currentPlace ? live.runs.get(currentPlace.id) : undefined;
 	const ratedHere = session.pile.filter(isRated).length;
 
 	const feed = (
@@ -1577,13 +1636,13 @@ export default function RateFeed({ data }: { data: PlacesData }) {
 				phone && "fixed inset-0 z-[60]",
 			)}
 		>
-			{/* Wide (D07): on the page, in the theme. Narrow: over the media, light on its dark. */}
+			{/* Wide (D07): on the page, in the theme. Narrow: a dark bar over the media, readable over a light map too. */}
 			<div
 				className={cn(
 					"pointer-events-none absolute inset-x-0 top-0 z-10 flex items-center gap-2.5 px-4 pt-[max(12px,env(safe-area-inset-top))]",
 					wide
 						? "bg-background pb-3"
-						: "dark bg-gradient-to-b from-black/75 to-transparent pb-6 text-white",
+						: "dark bg-black/70 pb-2.5 text-white backdrop-blur-md",
 				)}
 			>
 				<span className="font-display text-lg font-semibold">Rate</span>
@@ -1592,7 +1651,7 @@ export default function RateFeed({ data }: { data: PlacesData }) {
 					data-testid={PLACES_TAB_TESTID.feedRun}
 				>
 					{currentPlace
-						? `Now in ${currentPlace.city?.name ?? "—"}${run && run.len > 1 ? ` · ${run.pos + 1} of ${run.len}` : ""}`
+						? (currentPlace.city?.name ?? "")
 						: currentItem?.kind === "end"
 							? "All caught up"
 							: ""}

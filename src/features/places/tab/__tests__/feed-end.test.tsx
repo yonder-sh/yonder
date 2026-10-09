@@ -1,7 +1,7 @@
 /**
- * The end of the Rate feed leads to Review: "Next: review the ratings" (the
- * scores, highest first) and, when the group disagrees on some places, a
- * link to them (Review's "Talk about it").
+ * The end of the Rate feed leads to Decide: "Next: decide" (the shortlist,
+ * the split ones, not going) and, when the group disagrees on some places,
+ * a link there too.
  */
 import { fireEvent, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
@@ -29,7 +29,7 @@ const graph: TripGraph = {
 };
 
 describe("the end of the Rate feed", () => {
-	it("goes on to Review, and to the places the group disagrees on", async () => {
+	it("goes on to Decide, and to the places the group disagrees on", async () => {
 		const { ws } = renderWithWorkspace(<PlacesTab phone />, {
 			graph,
 			search: { tab: "places", pv: "rate" },
@@ -39,12 +39,12 @@ describe("the end of the Rate feed", () => {
 			{},
 			{ timeout: 5000 },
 		);
-		expect(review).toHaveTextContent("Next: review the ratings");
+		expect(review).toHaveTextContent("Next: decide");
 		const talk = screen.getByTestId(T.feedTalk);
 		expect(talk).toHaveTextContent("1 place the group disagrees on");
 
 		fireEvent.click(talk);
-		expect(ws().search).toMatchObject({ pv: "table", talk: 1 });
+		expect(ws().search).toMatchObject({ pv: "decide" });
 	});
 
 	it("a split place marked decided isn't one to talk through", async () => {
@@ -61,7 +61,7 @@ describe("the end of the Rate feed", () => {
 		expect(screen.queryByTestId(T.feedTalk)).toBeNull();
 	});
 
-	it("the review button opens Review unfiltered", async () => {
+	it("the next button opens Decide unfiltered", async () => {
 		const { ws } = renderWithWorkspace(<PlacesTab phone />, {
 			graph,
 			search: { tab: "places", pv: "rate" },
@@ -69,7 +69,7 @@ describe("the end of the Rate feed", () => {
 		fireEvent.click(
 			await screen.findByTestId(T.feedReview, {}, { timeout: 5000 }),
 		);
-		expect(ws().search.pv).toBe("table");
+		expect(ws().search.pv).toBe("decide");
 		expect(ws().search.talk).toBeUndefined();
 	});
 });
