@@ -187,7 +187,7 @@ export async function landingViewer(
 /**
  * A signed-out visitor at `/t/<slug>` whose trip is open to anyone with the
  * link (the address is the link, like Google Drive): they become an
- * anonymous guest with the link's role, as today's share links did. Null when
+ * anonymous guest who only views (the link's role is what joining gives). Null when
  * the trip isn't open to them (unknown, off, over the rate limit: one
  * answer), or the guest session can't be made. A link turned off in between
  * leaves no orphan guest behind.

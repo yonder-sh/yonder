@@ -10,7 +10,6 @@
  *   `out.job(...)` / `out.emit(...)`: discarded on rollback and by a dry run.
  * - The actor for activity comes from `ctx.actor`; `createdBy` and the
  *   outbox's actor from `ctx.user`.
- * - Guest merges key on `ctx.inputRedacted`, never on `access.isGuest`.
  */
 import type { z } from "zod";
 import type { Tx } from "@/db/db.server";
@@ -25,8 +24,6 @@ export type CoreCtx = {
 	user: AuthUser;
 	/** Who the activity row names ("Maya (accepted by Dennis)" on accept). */
 	actor: { userId: string | null; name: string };
-	/** The input went through `def.redact` (a guest author). */
-	inputRedacted: boolean;
 	/** A proposal's validation run: rolled back, side effects discarded. */
 	dryRun: boolean;
 };
@@ -51,8 +48,6 @@ export type ProposableDef<I extends z.ZodObject, R> = {
 	 * FORBIDDEN, never proposals.
 	 */
 	directCap?: Capability;
-	/** Guest strip (booking refs, costs, seats), built on `redactLegDetails`. */
-	redact?: (input: z.output<I>) => z.output<I>;
 	/** Edits to your own proposed create. */
 	amend?: { merge: (createPayload: Json, input: z.output<I>) => Json };
 	/** `note.append`: only ever a proposal. */

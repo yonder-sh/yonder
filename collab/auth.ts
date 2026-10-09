@@ -24,7 +24,7 @@ import { type AccessRow, resolveAccess } from "@/server/authz/resolve";
  * 4. Private notes (`…/u/<userId>`, ADDENDUM §7.2): only that user, and only as
  *    a member (never a guest), may open one; for its owner it is writable.
  * 5. Writes: shared notes are writable only with `editNotes` (EXTENSIONS §3.1:
- *    suggesters and viewers are read-only, members and guests alike). The
+ *    suggesters, viewers and every link guest are read-only). The
  *    decision is re-checked on open connections (`app.ts` beforeHandleMessage).
  */
 

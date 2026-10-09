@@ -102,7 +102,7 @@ export async function applyOptions(
 				distanceM: null,
 				details: { ...current, route: pick, chosenId: pick.id },
 			},
-			{ userId: meta.userId, isGuest: false },
+			{ userId: meta.userId },
 		);
 		row = r;
 	} else {
@@ -112,7 +112,7 @@ export async function applyOptions(
 			tripId,
 			target,
 			{},
-			{ userId: meta.userId, isGuest: false },
+			{ userId: meta.userId },
 		);
 		row = r;
 	}

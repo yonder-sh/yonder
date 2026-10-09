@@ -52,7 +52,7 @@ import { straightLineM, walkChain, walkFarPastEstimate } from "./walk.server";
 import { dropContradictedWalks } from "./walk-only.server";
 
 /** A job write: no user, never a guest, no live event (the worker sends one). */
-const JOB = { userId: null, isGuest: false, emit: false } as const;
+const JOB = { userId: null, emit: false } as const;
 
 /** INCR the trip's provider-call counter for today; false once over the cap. */
 async function takeQuota(tripId: string): Promise<boolean> {

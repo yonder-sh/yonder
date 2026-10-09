@@ -349,7 +349,6 @@ export function FlightSection({ ed }: { ed: LegEditor }) {
 						key={`${leg?.updatedAt ?? "new"}:${fromIata ?? ""}:${toIata ?? ""}`}
 						initial={flight ? [flight] : undefined}
 						defaults={defaults}
-						redacted={redacted}
 						members={ws.graph.members}
 						submitting={ed.flight.isPending}
 						onSubmit={([f]) => f && save(f)}

@@ -19,7 +19,6 @@ import {
 } from "react";
 import { toast } from "sonner";
 import { useEditGuard } from "@/components/common/edit-guard";
-import { mustRedact } from "@/lib/auth/roles";
 import { humanError } from "@/lib/errors";
 import type { BundleTarget } from "@/lib/schemas/targets";
 import { useWorkspaceOptional } from "@/lib/workspace/model-context";
@@ -114,7 +113,6 @@ export function useAttachDrop(
 					target,
 					queryClient: qc,
 					label,
-					guest: mustRedact(ws.graph.me),
 					...(opts?.confirmation
 						? { confirmation: true }
 						: {

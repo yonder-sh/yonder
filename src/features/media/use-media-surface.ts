@@ -7,7 +7,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import { useEditGuard } from "@/components/common/edit-guard";
-import { mustRedact } from "@/lib/auth/roles";
 import { humanError } from "@/lib/errors";
 import type { BundleTarget } from "@/lib/schemas/targets";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
@@ -22,7 +21,6 @@ export function useMediaSurface(target: BundleTarget) {
 	const qc = useQueryClient();
 	const tripId = ws.graph.trip.id;
 	const label = targetName(ws.ix, target);
-	const guest = mustRedact(ws.graph.me);
 	const upload = useEditGuard("edit-only", UPLOAD_EDIT_ONLY_REASON);
 	const link = useEditGuard();
 	const key = JSON.stringify(target);
@@ -42,7 +40,6 @@ export function useMediaSurface(target: BundleTarget) {
 				target: stable,
 				queryClient: qc,
 				label,
-				guest,
 				suggestNear: (gps) => {
 					const n = nearestPlace(ws.ix, gps);
 					return n && !(stable.kind === "node" && stable.nodeId === n.id)
@@ -51,7 +48,7 @@ export function useMediaSurface(target: BundleTarget) {
 				},
 			});
 		},
-		[uploadBlocked, uploadReason, tripId, stable, qc, label, guest, ws.ix],
+		[uploadBlocked, uploadReason, tripId, stable, qc, label, ws.ix],
 	);
 
 	const addUrl = useCallback(

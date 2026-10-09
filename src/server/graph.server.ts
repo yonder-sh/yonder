@@ -78,7 +78,7 @@ export function guestLegDetails(details: LegDetails): LegDetails {
 	return out;
 }
 
-/** SPEC §6.6 guest redaction: refs, costs, points, fees → undefined; seats → '••'. Write paths use it (a guest's payload never carries a ref). */
+/** SPEC §6.6 guest redaction: refs, costs, points, fees → undefined; seats → '••'. */
 export function redactLegDetails(details: LegDetails): LegDetails {
 	switch (details.kind) {
 		case "flight": {

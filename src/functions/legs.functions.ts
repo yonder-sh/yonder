@@ -53,7 +53,6 @@ export const ensureLeg = createServerFn({ method: "POST" })
 					access,
 					user: context.user,
 					actor: actorOf(context.user),
-					inputRedacted: false,
 					dryRun: false,
 				}),
 			mutationMeta(access, context.user),

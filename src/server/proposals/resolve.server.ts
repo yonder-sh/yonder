@@ -5,9 +5,8 @@
  * wrap these.
  *
  * Accept, per proposal: the reviewer needs the op's capability; the payload
- * re-parses with the op's STRICT schema; its trip must be the proposal's; a
- * guest author's payload is redacted again (`inputRedacted`). Then the base:
- * a missing/deleted row is `gone` (never forceable), a changed field is
+ * re-parses with the op's STRICT schema; its trip must be the proposal's.
+ * Then the base: a missing/deleted row is `gone` (never forceable), a changed field is
  * `changed` (unless `force`, which also drops dead anchors). The core runs as
  * the reviewer with the author as actor ("Maya (accepted by Dennis)"); its
  * AppError becomes `invalid`. On any conflict the transaction rolls back and
@@ -15,7 +14,7 @@
  */
 import { sql } from "drizzle-orm";
 import { db, type Tx } from "@/db/db.server";
-import { can, mustRedact, type TripAccess } from "@/lib/auth/roles";
+import { can, type TripAccess } from "@/lib/auth/roles";
 import type {
 	Json,
 	ProposalConflict,
@@ -182,9 +181,7 @@ async function acceptOne(
 			reason: "invalid",
 			message: "This suggestion no longer fits the plan.",
 		});
-	let input = parsed.data as Record<string, unknown>;
-	const inputRedacted = p.authorIsGuest && !!def.redact;
-	if (inputRedacted) input = def.redact?.(input) ?? input;
+	const input = parsed.data as Record<string, unknown>;
 	let tripId: string | null = null;
 	try {
 		tripId = await def.tripIdOf(input, tx);
@@ -204,14 +201,9 @@ async function acceptOne(
 			access: a.access,
 			user: a.user,
 			actor: authorActor(p, a.user),
-			inputRedacted,
 			dryRun: false,
 		});
 	} catch (e) {
-		// A guest reviewer who can't see the row (a hidden attachment): their
-		// failed attempt says nothing about the proposal, so no `last_error`.
-		if (e instanceof AppError && e.code === "NOT_FOUND" && mustRedact(a.access))
-			throw e;
 		if (e instanceof AppError)
 			throw new AcceptConflict(p.id, {
 				reason: "invalid",
@@ -270,7 +262,7 @@ export async function resolveProposalById(
 	const found = await loadProposalAnywhere(input.proposalId);
 	if (!found) return fail("NOT_FOUND");
 	const access = await requireReviewer(found.tripId);
-	// A proposal the caller can't see (a guest and a hidden attachment) doesn't
+	// A proposal the caller can't see (someone else's private item) doesn't
 	// exist for them: no accept, no reject, and no `last_error` left behind.
 	if (!(await proposalVisibleTo(db, found.id, access, user.id)))
 		return fail("NOT_FOUND");

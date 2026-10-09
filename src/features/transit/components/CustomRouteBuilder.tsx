@@ -11,7 +11,6 @@
  *   "Be at the platform N min before" and "Then N min to the next stop"
  *   (defaulting to the steps before and after the ride).
  * - Booking (collapsible): ref, train number, class, car, seats per member.
- *   Link guests see ref and seats masked and can't change them.
  */
 
 import { ChevronDown, Plus, X } from "lucide-react";
@@ -60,7 +59,7 @@ import { mergeRide, stationLabel } from "../lib/custom-route";
 import { TRANSIT_TESTID } from "../testids";
 import { railRide, searchRail } from "../transit.functions";
 import type { LegEditor } from "../use-leg-editor";
-import { AddPersonRow, Masked } from "./bits";
+import { AddPersonRow } from "./bits";
 import { SuggestInput } from "./SuggestInput";
 
 type StepMode = SegmentMode | "taxi";
@@ -173,7 +172,7 @@ export function CustomRouteBuilder({
 	editing: TransitRoute | null;
 	onDone: () => void;
 }) {
-	const { ends, details, sched, redacted } = ed;
+	const { ends, details, sched } = ed;
 	const guard = useEditGuard();
 	const members = assignableMembers(ed.ws.graph.members);
 	const fromTz = ends.from?.tz ?? ed.ws.ix.defaultTz;
@@ -414,15 +413,12 @@ export function CustomRouteBuilder({
 
 	const bookingValue = (): TransitBooking | null => {
 		const out: TransitBooking = {
-			// Link guests send the masked seats back: the server keeps the real ones (§11.3).
-			seats: redacted
-				? (booking?.seats ?? [])
-				: members
-						.filter((m) => seats[m.id]?.trim())
-						.map((m) => ({
-							memberId: m.id,
-							seat: (seats[m.id] ?? "").trim().slice(0, 20),
-						})),
+			seats: members
+				.filter((m) => seats[m.id]?.trim())
+				.map((m) => ({
+					memberId: m.id,
+					seat: (seats[m.id] ?? "").trim().slice(0, 20),
+				})),
 		};
 		if (ref.trim()) out.ref = ref.trim().toUpperCase().slice(0, 40);
 		if (train.trim()) out.trainNumber = train.trim().slice(0, 40);
@@ -885,19 +881,15 @@ export function CustomRouteBuilder({
 				</CollapsibleTrigger>
 				<CollapsibleContent className="grid gap-2 pt-2">
 					<Field label="Ref">
-						{redacted ? (
-							<Masked />
-						) : (
-							<Input
-								data-testid={TRANSIT_TESTID.bookingRef}
-								value={ref}
-								maxLength={40}
-								disabled={disabled}
-								onChange={(e) => setRef(e.target.value.toUpperCase())}
-								className="uppercase tnum placeholder:normal-case"
-								placeholder="Optional"
-							/>
-						)}
+						<Input
+							data-testid={TRANSIT_TESTID.bookingRef}
+							value={ref}
+							maxLength={40}
+							disabled={disabled}
+							onChange={(e) => setRef(e.target.value.toUpperCase())}
+							className="uppercase tnum placeholder:normal-case"
+							placeholder="Optional"
+						/>
 					</Field>
 					<Field label="Train no.">
 						<Input
@@ -939,29 +931,25 @@ export function CustomRouteBuilder({
 								<div key={m.id} className="flex items-center gap-2">
 									<MemberAvatar user={m} size={20} />
 									<span className="w-24 truncate text-sm">{m.name}</span>
-									{redacted ? (
-										<Masked />
-									) : (
-										<Input
-											data-testid={TRANSIT_TESTID.bookingSeat}
-											data-member={m.id}
-											aria-label={`Seat for ${m.name}`}
-											value={seats[m.id] ?? ""}
-											maxLength={20}
-											disabled={disabled}
-											onChange={(e) =>
-												setSeats((x) => ({
-													...x,
-													[m.id]: e.target.value.toUpperCase(),
-												}))
-											}
-											className="w-24 uppercase tnum placeholder:normal-case"
-											placeholder="Seat"
-										/>
-									)}
+									<Input
+										data-testid={TRANSIT_TESTID.bookingSeat}
+										data-member={m.id}
+										aria-label={`Seat for ${m.name}`}
+										value={seats[m.id] ?? ""}
+										maxLength={20}
+										disabled={disabled}
+										onChange={(e) =>
+											setSeats((x) => ({
+												...x,
+												[m.id]: e.target.value.toUpperCase(),
+											}))
+										}
+										className="w-24 uppercase tnum placeholder:normal-case"
+										placeholder="Seat"
+									/>
 								</div>
 							))}
-							{redacted ? null : <AddPersonRow disabled={disabled} />}
+							<AddPersonRow disabled={disabled} />
 						</div>
 					) : null}
 				</CollapsibleContent>

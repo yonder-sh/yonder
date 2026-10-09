@@ -35,7 +35,7 @@ export function linkTileId(p: ProposalDto): string {
 	return p.entityId ?? p.id;
 }
 
-/** An `attachment.link` proposal as a (client-only) tile; null when a guest can't read its payload. */
+/** An `attachment.link` proposal as a (client-only) tile; null for a malformed payload. */
 function linkTile(p: ProposalDto, ghost: boolean): MediaDto | null {
 	const target = BundleTarget.safeParse(p.payload.target);
 	const url = typeof p.payload.url === "string" ? p.payload.url : null;

@@ -3,9 +3,7 @@
  * Connection" in the Add flight dialog), each with airline and airport
  * comboboxes (lazy tables), local departure/arrival in each airport's zone
  * with the "6h35 flight" helper, terminal and gate, seats per member, cabin,
- * booking ref, baggage, aircraft, cost, points and fees.
- * Link guests see ref, seats, cost, points and fees as "••" and can't edit
- * them (the server keeps the stored values). Inline validation: "Required",
+ * booking ref, baggage, aircraft, cost, points and fees. Inline validation: "Required",
  * "Unknown airport", "Arrival is before departure". FB-18: only the airports
  * and the departure date are required; without times the helper shows the
  * great-circle estimate.
@@ -67,7 +65,7 @@ import {
 	validateFlight,
 } from "../lib/flight";
 import { TRANSIT_TESTID } from "../testids";
-import { AddPersonRow, Masked } from "./bits";
+import { AddPersonRow } from "./bits";
 import { CAPS_INPUT, SuggestInput } from "./SuggestInput";
 
 const CABINS: { value: Cabin; label: string }[] = [
@@ -108,8 +106,6 @@ type Seg = {
 	pointsAmount: string;
 	feesAmount: string;
 	feesCurrency: string;
-	/** Masked values from a redacted graph, sent back as they are. */
-	redactedSeats?: FlightDetails["seats"];
 };
 
 let n = 0;
@@ -154,7 +150,6 @@ function segOf(f: FlightDetails | null, d: Partial<Seg> = {}): Seg {
 		pointsAmount: f?.points ? String(f.points.amount) : "",
 		feesAmount: f?.fees ? String(f.fees.amount) : "",
 		feesCurrency: f?.fees?.currency ?? f?.cost?.currency ?? "USD",
-		redactedSeats: f?.seats,
 		...d,
 	};
 }
@@ -205,8 +200,6 @@ export type FlightFormProps = {
 	};
 	/** "+ Connection" (the Add flight dialog). */
 	multi?: boolean;
-	/** Link guests: booking values masked and read-only. */
-	redacted?: boolean;
 	submitting?: boolean;
 	submitLabel?: string;
 	/** A stale save (someone else saved first). */
@@ -226,7 +219,6 @@ export function FlightForm({
 	initial,
 	defaults,
 	multi,
-	redacted,
 	submitting,
 	submitLabel = "Save flight",
 	conflict,
@@ -305,14 +297,12 @@ export function FlightForm({
 			...(s.arrDate ? { arrDate: s.arrDate } : {}),
 			...(depLocal ? { depLocal } : {}),
 			...(depLocal && arrLocal ? { arrLocal } : {}),
-			seats: redacted
-				? (s.redactedSeats ?? [])
-				: members
-						.filter((m) => s.seats[m.id]?.trim())
-						.map((m) => ({
-							memberId: m.id,
-							seat: (s.seats[m.id] ?? "").trim().toUpperCase().slice(0, 20),
-						})),
+			seats: members
+				.filter((m) => s.seats[m.id]?.trim())
+				.map((m) => ({
+					memberId: m.id,
+					seat: (s.seats[m.id] ?? "").trim().toUpperCase().slice(0, 20),
+				})),
 		};
 		if (airlineName || s.airlineIata)
 			f.airline = {
@@ -329,25 +319,23 @@ export function FlightForm({
 		if (depFold) f.depFold = depFold;
 		if (arrFold) f.arrFold = arrFold;
 		if (s.cabin) f.cabin = s.cabin;
-		if (!redacted) {
-			const ref = (multi ? sharedRef : s.ref).trim().toUpperCase();
-			if (ref) f.bookingRef = ref.slice(0, 40);
-			if (cost !== null)
-				f.cost = {
-					amount: cost,
-					currency: s.costCurrency.toUpperCase().slice(0, 3),
-				};
-			if (points !== null && s.pointsProgram.trim())
-				f.points = {
-					amount: points,
-					program: s.pointsProgram.trim().slice(0, 80),
-				};
-			if (fees !== null)
-				f.fees = {
-					amount: fees,
-					currency: s.feesCurrency.toUpperCase().slice(0, 3),
-				};
-		}
+		const ref = (multi ? sharedRef : s.ref).trim().toUpperCase();
+		if (ref) f.bookingRef = ref.slice(0, 40);
+		if (cost !== null)
+			f.cost = {
+				amount: cost,
+				currency: s.costCurrency.toUpperCase().slice(0, 3),
+			};
+		if (points !== null && s.pointsProgram.trim())
+			f.points = {
+				amount: points,
+				program: s.pointsProgram.trim().slice(0, 80),
+			};
+		if (fees !== null)
+			f.fees = {
+				amount: fees,
+				currency: s.feesCurrency.toUpperCase().slice(0, 3),
+			};
 		if (s.baggage.trim()) f.baggage = s.baggage.trim().slice(0, 200);
 		if (s.aircraft.trim()) f.aircraft = s.aircraft.trim().slice(0, 100);
 		return f;
@@ -383,9 +371,7 @@ export function FlightForm({
 		if (out.length !== segs.length) return;
 		onSubmit(
 			out,
-			multi && !redacted && sharedRef.trim()
-				? sharedRef.trim().toUpperCase()
-				: undefined,
+			multi && sharedRef.trim() ? sharedRef.trim().toUpperCase() : undefined,
 		);
 	};
 
@@ -654,55 +640,47 @@ export function FlightForm({
 												<span className="min-w-0 flex-1 truncate text-sm">
 													{m.name}
 												</span>
-												{redacted ? (
-													<Masked />
-												) : (
-													<Input
-														data-testid={TRANSIT_TESTID.flightSeat}
-														data-member={m.id}
-														aria-label={`Seat for ${m.name}`}
-														{...CAPS_INPUT}
-														value={s.seats[m.id] ?? ""}
-														maxLength={20}
-														placeholder="Seat"
-														disabled={disabled}
-														onChange={(e) =>
-															up(s.key, {
-																seats: {
-																	...s.seats,
-																	[m.id]: e.target.value.toUpperCase(),
-																},
-															})
-														}
-														className="w-20 font-mono uppercase tnum placeholder:font-sans placeholder:normal-case"
-													/>
-												)}
+												<Input
+													data-testid={TRANSIT_TESTID.flightSeat}
+													data-member={m.id}
+													aria-label={`Seat for ${m.name}`}
+													{...CAPS_INPUT}
+													value={s.seats[m.id] ?? ""}
+													maxLength={20}
+													placeholder="Seat"
+													disabled={disabled}
+													onChange={(e) =>
+														up(s.key, {
+															seats: {
+																...s.seats,
+																[m.id]: e.target.value.toUpperCase(),
+															},
+														})
+													}
+													className="w-20 font-mono uppercase tnum placeholder:font-sans placeholder:normal-case"
+												/>
 											</div>
 										))}
-										{redacted ? null : <AddPersonRow disabled={disabled} />}
+										<AddPersonRow disabled={disabled} />
 									</div>
 								</Row>
 							) : null}
 							<div className="grid grid-cols-2 gap-3">
 								{multi ? null : (
 									<Row label="Booking ref">
-										{redacted ? (
-											<Masked />
-										) : (
-											<Input
-												data-testid={TRANSIT_TESTID.flightRef}
-												aria-label="Booking ref"
-												{...CAPS_INPUT}
-												value={s.ref}
-												maxLength={40}
-												placeholder="Optional"
-												disabled={disabled}
-												onChange={(e) =>
-													up(s.key, { ref: e.target.value.toUpperCase() })
-												}
-												className="font-mono uppercase tnum placeholder:font-sans placeholder:normal-case"
-											/>
-										)}
+										<Input
+											data-testid={TRANSIT_TESTID.flightRef}
+											aria-label="Booking ref"
+											{...CAPS_INPUT}
+											value={s.ref}
+											maxLength={40}
+											placeholder="Optional"
+											disabled={disabled}
+											onChange={(e) =>
+												up(s.key, { ref: e.target.value.toUpperCase() })
+											}
+											className="font-mono uppercase tnum placeholder:font-sans placeholder:normal-case"
+										/>
 									</Row>
 								)}
 								<Row label="Baggage">
@@ -719,88 +697,74 @@ export function FlightForm({
 							</div>
 							<div className="grid gap-3 @lg:grid-cols-3">
 								<Row label="Price">
-									{redacted ? (
-										<Masked />
-									) : (
-										<div className="flex gap-1">
-											<Input
-												data-testid={TRANSIT_TESTID.flightCostCurrency}
-												aria-label="Price currency"
-												{...CAPS_INPUT}
-												value={s.costCurrency}
-												maxLength={3}
-												disabled={disabled}
-												onChange={(e) =>
-													up(s.key, {
-														costCurrency: e.target.value.toUpperCase(),
-													})
-												}
-												className="w-16 shrink-0 font-mono uppercase"
-											/>
-											<Input
-												data-testid={TRANSIT_TESTID.flightCostAmount}
-												aria-label="Price amount"
-												placeholder="Amount"
-												inputMode="decimal"
-												value={s.costAmount}
-												disabled={disabled}
-												onChange={(e) =>
-													up(s.key, { costAmount: e.target.value })
-												}
-												className="min-w-0 font-mono tnum placeholder:font-sans"
-											/>
-										</div>
-									)}
-								</Row>
-								<Row label="Points">
-									{redacted ? (
-										<Masked />
-									) : (
-										<div className="flex gap-1">
-											<Input
-												data-testid={TRANSIT_TESTID.flightPointsProgram}
-												aria-label="Points program"
-												placeholder="Program"
-												value={s.pointsProgram}
-												maxLength={80}
-												disabled={disabled}
-												onChange={(e) =>
-													up(s.key, { pointsProgram: e.target.value })
-												}
-												className="min-w-0 flex-1"
-											/>
-											<Input
-												data-testid={TRANSIT_TESTID.flightPointsAmount}
-												aria-label="Points"
-												placeholder="Points"
-												inputMode="numeric"
-												value={s.pointsAmount}
-												disabled={disabled}
-												onChange={(e) =>
-													up(s.key, { pointsAmount: e.target.value })
-												}
-												className="w-20 shrink-0 font-mono tnum placeholder:font-sans"
-											/>
-										</div>
-									)}
-								</Row>
-								<Row label="Fees">
-									{redacted ? (
-										<Masked />
-									) : (
+									<div className="flex gap-1">
 										<Input
-											data-testid={TRANSIT_TESTID.flightFeesAmount}
-											aria-label={`Fees (${s.feesCurrency})`}
-											inputMode="decimal"
-											value={s.feesAmount}
-											placeholder={`Taxes and fees (${s.feesCurrency || "USD"})`}
+											data-testid={TRANSIT_TESTID.flightCostCurrency}
+											aria-label="Price currency"
+											{...CAPS_INPUT}
+											value={s.costCurrency}
+											maxLength={3}
 											disabled={disabled}
 											onChange={(e) =>
-												up(s.key, { feesAmount: e.target.value })
+												up(s.key, {
+													costCurrency: e.target.value.toUpperCase(),
+												})
 											}
-											className="font-mono tnum placeholder:font-sans"
+											className="w-16 shrink-0 font-mono uppercase"
 										/>
-									)}
+										<Input
+											data-testid={TRANSIT_TESTID.flightCostAmount}
+											aria-label="Price amount"
+											placeholder="Amount"
+											inputMode="decimal"
+											value={s.costAmount}
+											disabled={disabled}
+											onChange={(e) =>
+												up(s.key, { costAmount: e.target.value })
+											}
+											className="min-w-0 font-mono tnum placeholder:font-sans"
+										/>
+									</div>
+								</Row>
+								<Row label="Points">
+									<div className="flex gap-1">
+										<Input
+											data-testid={TRANSIT_TESTID.flightPointsProgram}
+											aria-label="Points program"
+											placeholder="Program"
+											value={s.pointsProgram}
+											maxLength={80}
+											disabled={disabled}
+											onChange={(e) =>
+												up(s.key, { pointsProgram: e.target.value })
+											}
+											className="min-w-0 flex-1"
+										/>
+										<Input
+											data-testid={TRANSIT_TESTID.flightPointsAmount}
+											aria-label="Points"
+											placeholder="Points"
+											inputMode="numeric"
+											value={s.pointsAmount}
+											disabled={disabled}
+											onChange={(e) =>
+												up(s.key, { pointsAmount: e.target.value })
+											}
+											className="w-20 shrink-0 font-mono tnum placeholder:font-sans"
+										/>
+									</div>
+								</Row>
+								<Row label="Fees">
+									<Input
+										data-testid={TRANSIT_TESTID.flightFeesAmount}
+										aria-label={`Fees (${s.feesCurrency})`}
+										inputMode="decimal"
+										value={s.feesAmount}
+										placeholder={`Taxes and fees (${s.feesCurrency || "USD"})`}
+										disabled={disabled}
+										onChange={(e) => up(s.key, { feesAmount: e.target.value })}
+										className="font-mono tnum placeholder:font-sans"
+									/>
 								</Row>
 							</div>
 						</fieldset>
@@ -834,21 +798,17 @@ export function FlightForm({
 						<Plus className="size-4" /> Connection
 					</Button>
 					<Row label="Booking ref">
-						{redacted ? (
-							<Masked />
-						) : (
-							<Input
-								data-testid={TRANSIT_TESTID.flightRef}
-								aria-label="Booking ref"
-								{...CAPS_INPUT}
-								value={sharedRef}
-								maxLength={40}
-								placeholder="Optional"
-								disabled={disabled}
-								onChange={(e) => setSharedRef(e.target.value.toUpperCase())}
-								className="w-40 font-mono uppercase tnum placeholder:font-sans placeholder:normal-case"
-							/>
-						)}
+						<Input
+							data-testid={TRANSIT_TESTID.flightRef}
+							aria-label="Booking ref"
+							{...CAPS_INPUT}
+							value={sharedRef}
+							maxLength={40}
+							placeholder="Optional"
+							disabled={disabled}
+							onChange={(e) => setSharedRef(e.target.value.toUpperCase())}
+							className="w-40 font-mono uppercase tnum placeholder:font-sans placeholder:normal-case"
+						/>
 					</Row>
 				</div>
 			) : null}

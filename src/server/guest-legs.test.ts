@@ -1,15 +1,14 @@
 /**
  * QA COLLAB-R3-06: a link guest's graph hides a flight's booking ref but
  * keeps the fact that it is booked, so the date what-if lists the flight
- * under "Needs rebooking" (without a ref), never "no booking ref". Guest
- * WRITES still carry no ref at all.
+ * under "Needs rebooking" (without a ref), never "no booking ref".
  */
 import "@/lib/engine/__fixtures__/host-tz";
 import { describe, expect, it } from "vitest";
 import { flightDetails, scenario } from "@/lib/engine/__fixtures__/demo";
 import { dateChangeImpact } from "@/lib/engine/date-impact";
 import { type LegDetails, REDACTED_BOOKING_REF } from "@/lib/schemas/legs";
-import { guestLegDetails, redactLegDetails } from "./graph.server";
+import { guestLegDetails } from "./graph.server";
 
 function tripWithBookedFlight() {
 	return scenario({
@@ -51,7 +50,7 @@ function tripWithBookedFlight() {
 }
 
 describe("guest leg details", () => {
-	it("read path: booked, ref hidden; write path: no ref at all", () => {
+	it("booked, ref hidden", () => {
 		const s = tripWithBookedFlight();
 		const leg = s.graph.legs.find((l) => l.id === s.L.flight);
 		const d = leg?.details as LegDetails;
@@ -61,8 +60,6 @@ describe("guest leg details", () => {
 		expect(read.kind === "flight" && read.flight.bookingRef).toBe(
 			REDACTED_BOOKING_REF,
 		);
-		const write = redactLegDetails(d);
-		expect(write.kind === "flight" && write.flight.bookingRef).toBeUndefined();
 		// An unbooked flight stays unbooked for guests.
 		const unbooked = guestLegDetails({
 			...d,

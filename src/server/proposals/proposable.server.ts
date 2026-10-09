@@ -191,7 +191,6 @@ export const proposable = {
 						access,
 						user,
 						actor: actorOf(user),
-						inputRedacted: access.isGuest && !!def.redact,
 						dryRun: false,
 					});
 				},

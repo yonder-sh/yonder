@@ -5,7 +5,7 @@
  * `directIf` that didn't hold, or an edit of the caller's own ghost):
  *
  * 2. **Payload:** the input minus `proposal`, `expectedVersion` and
- *    `expectedUpdatedAt`; a guest's goes through `def.redact`.
+ *    `expectedUpdatedAt`.
  * 3. **Ids:** `id ??= uuidv7()` / `ids ??= […]` pinned into the payload.
  * 4. **Amend:** the author's open proposal with the same op on the same
  *    entity, or an edit of one of their own `createdIds`, changes that
@@ -396,7 +396,6 @@ export async function dryRun(
 		chain: readonly ProposalRow[];
 		def: AnyDef;
 		payload: Record<string, Json>;
-		inputRedacted: boolean;
 		entity: { kind: EntityKind; id: string | null };
 		fields: readonly string[];
 	},
@@ -417,18 +416,17 @@ export async function dryRun(
 			for (const c of a.chain) {
 				const cdef = await loadDef(c.op);
 				const parsed = cdef.input.safeParse(c.payload);
-				await cdef.core(sp, scratch, parsed.success ? parsed.data : c.payload, {
-					...ctx,
-					inputRedacted: c.authorIsGuest && !!cdef.redact,
-				});
+				await cdef.core(
+					sp,
+					scratch,
+					parsed.success ? parsed.data : c.payload,
+					ctx,
+				);
 			}
 			const before = new Set(
 				(await activityRows(sp, a.tripId, out.version)).map((r) => r.id),
 			);
-			await a.def.core(sp, scratch, a.payload, {
-				...ctx,
-				inputRedacted: a.inputRedacted,
-			});
+			await a.def.core(sp, scratch, a.payload, ctx);
 			const rows = (await activityRows(sp, a.tripId, out.version)).filter(
 				(r) => !before.has(r.id),
 			);
@@ -533,14 +531,8 @@ export async function proposeChange(
 	a: ProposeArgs,
 ): Promise<Proposed> {
 	const { op, def, access, user, tripId } = a;
-	const inputRedacted = access.isGuest && !!def.redact;
-	// 2. Payload (guest strip) and 3. ids.
-	let stripped = stripPayload(a.input);
-	if (inputRedacted)
-		stripped = JSON.parse(
-			JSON.stringify(def.redact?.(stripped) ?? stripped),
-		) as Record<string, Json>;
-	const pinned = pinIds(op, def, stripped);
+	// 2. Payload and 3. ids.
+	const pinned = pinIds(op, def, stripPayload(a.input));
 	let payload = pinned.payload;
 	const createdIds = pinned.createdIds;
 	if (JSON.stringify(payload).length > MAX_PAYLOAD_CHARS)
@@ -592,7 +584,6 @@ export async function proposeChange(
 					chain,
 					def: createDef,
 					payload: mergedPayload,
-					inputRedacted: ownCreate.authorIsGuest && !!createDef.redact,
 					entity: createEntity,
 					fields: [],
 				});
@@ -643,7 +634,6 @@ export async function proposeChange(
 				chain,
 				def,
 				payload,
-				inputRedacted,
 				entity,
 				fields: prevFields,
 			});
@@ -743,7 +733,6 @@ export async function proposeChange(
 		chain,
 		def,
 		payload,
-		inputRedacted,
 		entity,
 		fields,
 	});

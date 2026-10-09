@@ -1,10 +1,7 @@
 /**
  * WP-Transit's proposable defs (EXTENSIONS §3.3, §1.4). F wrote the inputs and
  * the typed defs in F-ext0; WP-Transit replaces each `core` body (DB-only:
- * provider calls happen before the gate, or through `out.job`). The redact
- * helpers strip booking refs, costs, points, fees and real seats from a
- * guest's input; cores merge with `ctx.inputRedacted`
- * (`mergeGuestDetails`), never with `access.isGuest`.
+ * provider calls happen before the gate, or through `out.job`).
  */
 import { z } from "zod";
 import type { Tx } from "@/db/db.server";
@@ -22,7 +19,6 @@ import { LegTarget } from "@/lib/schemas/targets";
 import { logActivity } from "@/server/activity.server";
 import { fail } from "@/server/authz/session.server";
 import { assertFreshIds } from "@/server/cores/ids.server";
-import { redactLegDetails } from "@/server/graph.server";
 import {
 	findLeg,
 	indexTx,
@@ -104,8 +100,6 @@ const result = async (
 
 const writeMeta = (ctx: CoreCtx, expectedUpdatedAt?: string) => ({
 	userId: ctx.user.id,
-	// EXTENSIONS §3.4: merges key on the redacted input, not on the caller.
-	isGuest: ctx.inputRedacted,
 	expectedUpdatedAt,
 });
 
@@ -152,31 +146,6 @@ function manualRoute(route: TransitRoute): TransitRoute {
 	delete out.range;
 	delete out.dataBuild;
 	return out;
-}
-
-/** Guest strip for `transit.details`: the ref and real seats. */
-function redactBooking(
-	input: z.output<typeof SaveTransitDetailsInput>,
-): z.output<typeof SaveTransitDetailsInput> {
-	if (!input.booking) return input;
-	const redacted = redactLegDetails({
-		kind: "transit",
-		booking: input.booking,
-	});
-	return {
-		...input,
-		booking: redacted.kind === "transit" ? (redacted.booking ?? null) : null,
-	};
-}
-
-/** Guest strip for `flight.save`: ref, cost, points, fees, real seats. */
-function redactFlight(
-	input: z.output<typeof SaveFlightInput>,
-): z.output<typeof SaveFlightInput> {
-	const redacted = redactLegDetails({ kind: "flight", flight: input.flight });
-	return redacted.kind === "flight"
-		? { ...input, flight: redacted.flight }
-		: input;
 }
 
 export const defs = {
@@ -358,7 +327,6 @@ export const defs = {
 			(["fixed", "booking"] as const)
 				.filter((k) => i[k] !== undefined)
 				.map((k) => `details.${k}`),
-		redact: redactBooking,
 		core: async (tx, out, data, ctx): Promise<LegResult> => {
 			const tripId = ctx.access.tripId;
 			const before = await findLeg(tx, tripId, data.target);
@@ -420,7 +388,6 @@ export const defs = {
 		tripIdOf: (i, exec) => legTargetTrip(exec, i.target),
 		entityOf: () => ({ kind: "leg", id: null }),
 		fields: () => ["details.flight"],
-		redact: redactFlight,
 		core: async (tx, out, data, ctx): Promise<LegResult> => {
 			const tripId = ctx.access.tripId;
 			if (data.target.kind !== "pair")
@@ -507,16 +474,6 @@ export const defs = {
 		tripIdOf: async (i) => i.tripId,
 		entityOf: (i) => ({ kind: "leg", id: i.ids?.[2] ?? null }),
 		fields: () => [],
-		redact: (i) => {
-			const { bookingRef: _ref, ...rest } = i;
-			return {
-				...rest,
-				segments: i.segments.map((f) => {
-					const r = redactLegDetails({ kind: "flight", flight: f });
-					return r.kind === "flight" ? r.flight : f;
-				}),
-			};
-		},
 		core: async (
 			tx,
 			out,

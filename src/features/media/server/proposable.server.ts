@@ -116,8 +116,7 @@ export const defs = {
 		fields: () => [],
 		core: async (tx, out, data, ctx): Promise<MediaDto> => {
 			const tripId = ctx.access.tripId;
-			if (!ctx.dryRun)
-				await rateLimit(`links:${ctx.user.id}`, ctx.access.isGuest ? 10 : 30);
+			if (!ctx.dryRun) await rateLimit(`links:${ctx.user.id}`, 30);
 			if (data.id) await assertFreshIds(tx, "attachments", [data.id]);
 			await assertAttachmentTarget(tx, tripId, data.target, ctx.user.id);
 			const c = classifyUrl(data.url);

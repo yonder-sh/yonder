@@ -4,7 +4,7 @@
  * Day 7"). Uses current names when the entity is live, else the summary
  * (turned into the same imperative voice: "moved X" → "Move X").
  *
- * Payloads are the op's input as JSON, redacted for guests; every read is
+ * Payloads are the op's input as JSON; every read is
  * shape-checked and anything unexpected falls back to the server summary.
  */
 import { PRIORITIES } from "@/lib/domain/taxonomy";

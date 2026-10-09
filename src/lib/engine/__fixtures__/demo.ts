@@ -409,12 +409,13 @@ export const demoGraph: TripGraph = demo.graph;
 
 // ---------------------------------------------------------------------------
 // F-ext0 fixtures (EXTENSIONS §1.2 step 6): every WP renders ghosts and money
-// in /dev/fixture. Proposals by Maya (a suggester, colour 2) and a guest.
+// in /dev/fixture. Proposals by Maya (a suggester, colour 2), Kenji and Audrey.
 // ---------------------------------------------------------------------------
 
 type Author = ProposalDto["author"];
 const MAYA: Author = { userId: "user-maya", memberId: uuid(0x53), name: "Maya", color: 2, isGuest: false };
-const GUEST: Author = { userId: "user-guest-wren", memberId: null, name: "Guest Wren", color: 3, isGuest: true };
+const KENJI: Author = { userId: "user-kenji", memberId: uuid(0x54), name: "Kenji", color: 3, isGuest: false };
+const AUDREY: Author = { ...MAYA, userId: "user-audrey", memberId: DEMO_MEMBERS.audrey, name: "Audrey", color: 1 };
 
 function proposal(
 	n: number,
@@ -450,7 +451,7 @@ function proposal(
 
 const newIdea = uuid(0x5100);
 
-/** A create, a move, a delete, a trip.shift, a guest flight.save and two stacked moves of one item. */
+/** A create, a move, a delete, a trip.shift, a flight.save and two stacked moves of one item. */
 export const demoProposals: ProposalDto[] = [
 	proposal(1, {
 		op: "node.create",
@@ -494,7 +495,7 @@ export const demoProposals: ProposalDto[] = [
 			fields: ["details.flight"],
 			payload: {},
 		},
-		GUEST,
+		KENJI,
 	),
 	proposal(6, {
 		op: "item.move",
@@ -514,7 +515,7 @@ export const demoProposals: ProposalDto[] = [
 			fields: ["dayId", "position"],
 			payload: { itemId: demo.I.knives ?? "", dayId: demo.D.d1 ?? null },
 		},
-		{ ...MAYA, userId: "user-audrey", memberId: DEMO_MEMBERS.audrey, name: "Audrey", color: 1 },
+		AUDREY,
 	),
 ];
 

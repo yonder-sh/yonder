@@ -35,7 +35,6 @@ import {
 	DeleteLegInput,
 	deleteLegCore,
 	RelinkLegInput,
-	redactSetLeg,
 	relinkLegCore,
 	SetLegAssigneesInput,
 	SetLegInput,
@@ -266,7 +265,6 @@ export const defs = {
 		tripIdOf: (i, exec) => legTargetTrip(exec, i.target),
 		entityOf: () => ({ kind: "leg", id: null }),
 		fields: (i) => Object.keys(i.patch),
-		redact: redactSetLeg,
 		core: setLegCore,
 	}),
 	"leg.relink": defineProposable({

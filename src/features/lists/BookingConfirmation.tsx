@@ -22,7 +22,6 @@ import { sameTarget, useTripMedia } from "@/features/media/queries";
 import { startUploads, useUploads } from "@/features/media/upload/uploader";
 import { useAttachDrop } from "@/features/media/use-attach-drop";
 import { useMediaActions } from "@/features/media/use-media-actions";
-import { mustRedact } from "@/lib/auth/roles";
 import type { BundleTarget } from "@/lib/schemas/targets";
 import { cn } from "@/lib/utils";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
@@ -115,7 +114,6 @@ export function BookingConfirmation({
 									target,
 									queryClient: qc,
 									label,
-									guest: mustRedact(ws.graph.me),
 									confirmation: true,
 								});
 							e.target.value = "";

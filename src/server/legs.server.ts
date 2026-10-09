@@ -5,7 +5,7 @@
  * - `reconcileLegs` — after a change to the located sequence: the flight-block
  *   guard, re-keying significant legs, detached legs, autofill for new pairs.
  * - `writeLeg` / `ensureLegRow` — the one way a leg row is created or changed
- *   (details checked against the mode, timed instants, guest merge).
+ *   (details checked against the mode, timed instants).
  * - `shiftTimedLegs` — re-dates flights and fixed transit when days move.
  *
  * Everything runs inside the caller's `withTripTx` transaction.
@@ -24,12 +24,7 @@ import { indexGraph, pairKey } from "@/lib/engine/graph-index";
 import { addDays, localDateTimeToEpoch } from "@/lib/engine/time";
 import type { GraphLeg, TripGraph } from "@/lib/engine/types";
 import type { LegMode, LegSource } from "@/lib/schemas/enums";
-import {
-	type FlightDetails,
-	type LegDetails,
-	readLegDetails,
-	type Seat,
-} from "@/lib/schemas/legs";
+import { type LegDetails, readLegDetails } from "@/lib/schemas/legs";
 import type { LegTarget } from "@/lib/schemas/targets";
 import { fail } from "./authz/session.server";
 import { loadGraphForServer } from "./graph.server";
@@ -208,7 +203,7 @@ export async function syncAutoFlights(
 	ix: GraphIndex,
 ): Promise<boolean> {
 	let wrote = false;
-	const meta = { userId: null, isGuest: false } as const;
+	const meta = { userId: null } as const;
 	const airports = new Map<string, AirportRecord | null>();
 	for (const p of ix.pairs) {
 		const row = ix.legByPair.get(p.key) ?? null;
@@ -389,64 +384,8 @@ export function timedInstants(details: LegDetails): {
 	return { depAt: null, arrAt: null };
 }
 
-/** Keeps a seat's stored value when the guest's copy was redacted. */
-function mergeSeats(stored: Seat[], incoming: Seat[]): Seat[] {
-	return incoming.map((s, i) => {
-		const same =
-			(s.memberId && stored.find((t) => t.memberId === s.memberId)) ||
-			stored[i];
-		return same ? { ...s, seat: same.seat } : s;
-	});
-}
-
-/**
- * §11.3: a guest editor saving a (redacted) form keeps the stored booking
- * refs, seats, costs, points and fees whatever the input says.
- */
-export function mergeGuestDetails(
-	stored: LegDetails,
-	incoming: LegDetails,
-): LegDetails {
-	if (incoming.kind === "flight") {
-		const old: Partial<FlightDetails> =
-			stored.kind === "flight" ? stored.flight : {};
-		const {
-			bookingRef: _b,
-			cost: _c,
-			points: _p,
-			fees: _f,
-			...rest
-		} = incoming.flight;
-		return {
-			kind: "flight",
-			flight: {
-				...rest,
-				...(old.bookingRef !== undefined ? { bookingRef: old.bookingRef } : {}),
-				...(old.cost !== undefined ? { cost: old.cost } : {}),
-				...(old.points !== undefined ? { points: old.points } : {}),
-				...(old.fees !== undefined ? { fees: old.fees } : {}),
-				seats: mergeSeats(old.seats ?? [], incoming.flight.seats),
-			},
-		};
-	}
-	if (incoming.kind === "transit" && incoming.booking) {
-		const oldBooking = stored.kind === "transit" ? stored.booking : undefined;
-		const { ref: _r, ...rest } = incoming.booking;
-		return {
-			...incoming,
-			booking: {
-				...rest,
-				...(oldBooking?.ref !== undefined ? { ref: oldBooking.ref } : {}),
-				seats: mergeSeats(oldBooking?.seats ?? [], incoming.booking.seats),
-			},
-		};
-	}
-	return incoming;
-}
-
 export type WriteLegMeta = {
 	userId: string | null;
-	isGuest: boolean;
 	/** The row's `updatedAt` when the form was opened; a stale one + `details` → CONFLICT (§10.8). */
 	expectedUpdatedAt?: string;
 	/**
@@ -504,8 +443,6 @@ export async function writeLeg(
 	// A mode change without new details drops details of the old kind.
 	if (!patch.details && details.kind !== "none" && details.kind !== mode)
 		details = { kind: "none" };
-	if (patch.details && meta.isGuest)
-		details = mergeGuestDetails(stored, details);
 	assertDetailsFit(mode, details, row.kind);
 	if (patch.details) await assertSeatMembers(tx, tripId, details);
 	const { depAt, arrAt } = timedInstants(details);

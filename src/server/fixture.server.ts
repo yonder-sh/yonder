@@ -463,11 +463,10 @@ async function writeDemoExtras(
  * Tests only (`POST /api/test/link`, db tests): makes the trip's live link of
  * `role` the one its address opens (switched on, no expiry, the newest),
  * creating it if needed, WITHOUT retiring the trip's other live rows or
- * giving the address a tail. So a test lets a viewer guest in, then an
- * editor guest, and each keeps the role they came in with, as the old
- * per-role fixture links did. The app itself keeps one live link per trip
- * (`setShareLink` and `resetShareLink` retire the others), and a role change
- * there applies to every guest. `role: null` switches every live row off
+ * giving the address a tail. Guests only view whatever the role; it sets
+ * their link role (what joining makes them). The app itself keeps one live
+ * link per trip (`setShareLink` and `resetShareLink` retire the others).
+ * `role: null` switches every live row off
  * and removes their guests, like turning the link off.
  */
 export async function pinTestLink(
