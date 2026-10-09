@@ -25,7 +25,7 @@ test.use({ storageState: storageStateOf("dev") });
 async function openShare(page: Page, mobile: boolean) {
 	if (mobile) {
 		await page.locator('button[aria-label="More"]').click();
-		await page.getByRole("menuitem", { name: "Share" }).click();
+		await page.getByRole("menuitem", { name: "Invite" }).click();
 	} else await page.getByTestId(TESTID.shareButton).click();
 	await expect(page.getByTestId(TESTID.shareDialog)).toBeVisible();
 	await expect(

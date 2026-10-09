@@ -20,13 +20,13 @@ test("share settings as a guest editor and a viewer", async ({ browser }) => {
 		out[`${who}:getSharing`] = s.ok ? s.r : s.err;
 		await page.goto("/t/asia-2027?tab=plan");
 		await page.waitForTimeout(3000);
-		const share = page.getByRole("button", { name: /^Share$/ }).first();
+		const share = page.getByRole("button", { name: /^Invite$/ }).first();
 		if (await share.isVisible().catch(() => false)) {
 			await share.click();
 			await page.waitForTimeout(1500);
 			out[`${who}:dialog`] = (await page.getByRole("dialog").first().innerText().catch(() => "(no dialog)")).slice(0, 800);
 			await page.screenshot({ path: path.join(DIR, `share-${who}.png`) });
-		} else out[`${who}:dialog`] = "(no Share button)";
+		} else out[`${who}:dialog`] = "(no Invite button)";
 		await ctx.close();
 	}
 	writeFileSync(path.join(DIR, "guestshare.json"), JSON.stringify(out, null, 1));

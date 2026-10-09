@@ -16,7 +16,7 @@ test.use({ storageState: storageStateOf("dev") });
 
 async function openShare(page: Page) {
 	await page.locator('button[aria-label="More"]').click();
-	await page.getByRole("menuitem", { name: "Share" }).click();
+	await page.getByRole("menuitem", { name: "Invite" }).click();
 	const dialog = page.getByTestId(TESTID.shareDialog);
 	await expect(dialog).toBeVisible();
 	await expect(page.getByTestId(HOME_TESTID.memberRow).first()).toBeVisible();

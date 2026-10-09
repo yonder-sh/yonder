@@ -78,6 +78,7 @@ import { FollowBar } from "./FollowBar";
 import { useFollowPause } from "./follow-pause";
 import { InboxBell } from "./InboxBell";
 import { InspectorBody } from "./InspectorBody";
+import { InviteButton } from "./InviteButton";
 import { MapRegion } from "./MapRegion";
 import { PresenceAvatars } from "./PresenceAvatars";
 import { RateMenuItem } from "./rate-entry";
@@ -169,6 +170,7 @@ function MobileHeader() {
 				</Button>
 				<SuggestModeControl />
 				<InboxBell className="size-11 rounded-full" />
+				<InviteButton phone />
 				<ConnectionPill compact />
 				{mode === "live" ? (
 					// FB-17a: "Audrey is following you" on the presence cluster.
@@ -188,7 +190,7 @@ function MobileHeader() {
 					</DropdownMenuTrigger>
 					<DropdownMenuContent align="end">
 						<DropdownMenuItem onSelect={() => setShareOpen(true)}>
-							Share
+							Invite
 						</DropdownMenuItem>
 						<DropdownMenuItem onSelect={() => setSettingsOpen(true)}>
 							Trip settings

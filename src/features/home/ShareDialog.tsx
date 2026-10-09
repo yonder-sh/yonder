@@ -1142,7 +1142,7 @@ export function ShareDialog() {
 				{/* Room for the close button beside a long name that wraps. */}
 				<DialogHeader className="px-5 sm:px-0">
 					<DialogTitle className="break-words">
-						Share “{graph.trip.name}”
+						Invite to “{graph.trip.name}”
 					</DialogTitle>
 					<DialogDescription>
 						{owner

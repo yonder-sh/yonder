@@ -267,7 +267,7 @@ test("R2 phone: dashboard, share dialog, settings, login (390x844)", async ({ br
 	console.log("R2 PHONE share buttons visible:", await share.filter({ visible: true }).count(), "trip-menu visible:", await page.getByTestId("trip-menu").filter({ visible: true }).count());
 	{
 		await page.getByRole("button", { name: "More", exact: true }).click();
-		await page.getByRole("menuitem", { name: /^Share$/ }).click();
+		await page.getByRole("menuitem", { name: /^Invite$/ }).click();
 		await expect(page.getByTestId("share-dialog")).toBeVisible();
 		await page.waitForTimeout(800);
 		console.log("R2 PHONE share overflow:", await over());

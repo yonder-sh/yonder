@@ -15,7 +15,6 @@ import {
 	Keyboard,
 	Search,
 	Settings,
-	Share2,
 	SlidersHorizontal,
 	SquareArrowLeft,
 } from "lucide-react";
@@ -46,6 +45,7 @@ import { CenterTabBar } from "./CenterPanel";
 import { ConnectionPill } from "./ConnectionPill";
 import { FollowersBadge, SpotlightMenuItem } from "./cursors/presence-ui";
 import { InboxBell } from "./InboxBell";
+import { InviteButton, InviteMenuItem } from "./InviteButton";
 import { PresenceAvatars } from "./PresenceAvatars";
 import { RateButton, RateMenuItem } from "./rate-entry";
 import { useShell } from "./shell-store";
@@ -55,7 +55,6 @@ import { DayRangeChip, WherePicker } from "./WherePicker";
 
 /** The trip-title ▾ menu (DESIGN §4.1 + EXTENSIONS §1.4 "Try other dates…"). */
 export function TripMenuItems() {
-	const setShareOpen = useUi((s) => s.setShareOpen);
 	const setSettingsOpen = useUi((s) => s.setSettingsOpen);
 	const openShiftTrip = useUi((s) => s.openShiftTrip);
 	const setViewSettingsOpen = useShell((s) => s.setViewSettingsOpen);
@@ -66,9 +65,7 @@ export function TripMenuItems() {
 			<DropdownMenuItem onSelect={() => setSettingsOpen(true)}>
 				<Settings /> Trip settings
 			</DropdownMenuItem>
-			<DropdownMenuItem onSelect={() => setShareOpen(true)}>
-				<Share2 /> Share
-			</DropdownMenuItem>
+			<InviteMenuItem />
 			{graph.trip.startDate ? (
 				<DropdownMenuItem
 					onSelect={() => openShiftTrip(true)}
@@ -116,7 +113,6 @@ export function TopBar({
 	tabs?: boolean;
 }) {
 	const { graph, mode } = useWorkspace();
-	const setShareOpen = useUi((s) => s.setShareOpen);
 	const openAddPlace = useUi((s) => s.openAddPlace);
 	const tablet = bp === "md" || bp === "lg";
 	return (
@@ -178,15 +174,7 @@ export function TopBar({
 				<SuggestModeControl compact={bp === "md"} />
 				{/* FB-05: the Rate screen, one click from anywhere in the workspace. */}
 				<RateButton compact={bp === "md"} />
-				<Button
-					variant="outline"
-					size="sm"
-					onClick={() => setShareOpen(true)}
-					data-testid={TESTID.shareButton}
-				>
-					<Share2 />{" "}
-					<span className={bp === "md" ? "sr-only" : undefined}>Share</span>
-				</Button>
+				<InviteButton compact={bp === "md"} />
 				<Button
 					variant="ghost"
 					size="sm"
