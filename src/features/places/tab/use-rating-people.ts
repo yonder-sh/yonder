@@ -56,10 +56,10 @@ export function remindable(
 	);
 }
 
-/** You may remind people: you rate on this trip, and it's live. */
+/** You may remind people: an owner or editor (owner, 2026-10-09), and it's live. */
 export function useCanRemind(): boolean {
 	const { access, mode } = useWorkspace();
-	return mode === "live" && canRateOwn(access);
+	return mode === "live" && can(access, "edit") && canRateOwn(access);
 }
 
 export function useRemind() {

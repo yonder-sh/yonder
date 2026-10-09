@@ -225,10 +225,10 @@ describe("remindToRate", () => {
 			{ kind: "remind", memberId: mayaMember, places: expect.any(Number) },
 		]);
 		expect(jobs[0]?.actor?.userId).toBe(owner.id);
-		// Again, by anyone: refused for 12 hours.
+		// Again: refused for 12 hours.
 		expect(
 			await codeOf(
-				call(remindToRate, rae, { tripId: c.tripId, memberId: mayaMember }),
+				call(remindToRate, owner, { tripId: c.tripId, memberId: mayaMember }),
 			),
 		).toBe("CONFLICT");
 		const seen = await call<RateReminders>(getRateReminders, rae, {
@@ -246,12 +246,17 @@ describe("remindToRate", () => {
 			(await call<RateReminders>(getRateReminders, maya, { tripId: c.tripId }))
 				.mine,
 		).toBeNull();
-		// 13 hours later it works again.
+		// 13 hours later it works again, for owners and editors only (owner, 2026-10-09).
 		await db().execute(sql`
 			update rate_reminders set created_at = now() - interval '13 hours' where member_id = ${mayaMember}`);
 		expect(
 			await codeOf(
 				call(remindToRate, rae, { tripId: c.tripId, memberId: mayaMember }),
+			),
+		).toBe("FORBIDDEN");
+		expect(
+			await codeOf(
+				call(remindToRate, owner, { tripId: c.tripId, memberId: mayaMember }),
 			),
 		).toBe("ok");
 		await pushJobs();

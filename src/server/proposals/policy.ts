@@ -170,8 +170,8 @@ export const MUTATION_POLICY = {
 	// ---- the people who rate (Places) ----
 	/** Leave out, or count again, one person's ratings: like the shortlist level. */
 	setRatingsCounted: { direct: "tripSettings" },
-	/** "Remind": members who rate (checked again inside: own member row). */
-	remindToRate: { direct: "rate" },
+	/** "Remind": owners and editors, chasing ratings is the planners' (owner, 2026-10-09). */
+	remindToRate: { direct: "edit" },
 	/** Closing your own reminder line. */
 	dismissRateReminder: { direct: "read" },
 

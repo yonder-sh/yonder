@@ -3,7 +3,7 @@
  * - `setRatingsCounted`: leave one person's ratings out of every group score
  *   (someone who might not come, a placeholder's guesses), or count them
  *   again. Ratings are never deleted. Owners and editors; notifies nobody.
- * - `remindToRate`: a push to a member with places left to rate ("Dennis
+ * - `remindToRate` (owners and editors): a push to a member with places left to rate ("Dennis
  *   reminded you to rate 12 places in Summer in Japan"), at most once per
  *   member and trip every 12 hours. The row is also their line in the trip
  *   until they close it (`dismissRateReminder`), for anyone without push.
