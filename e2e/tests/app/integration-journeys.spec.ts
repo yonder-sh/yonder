@@ -229,7 +229,7 @@ test("J1 sign up, new trip, Where to first? → Japan › Tokyo › Shibuya Sky,
 // ---------------------------------------------------------------------------
 // Journey 1b, places first (owner, 2026-10-07): a new trip → "What do you want
 // to see?" → Shibuya Sky (filed Japan › Tokyo) → "Get everyone's ratings" →
-// "Suggest it now" → Tokyo's nights → on the days.
+// "Suggest nights now" → Tokyo's nights → on the days.
 // ---------------------------------------------------------------------------
 test("J1b places first: what you want to see, ratings, then the nights", async ({ browser }, info) => {
 	test.skip(info.project.name !== "chromium", "desktop journey");

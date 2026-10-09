@@ -51,6 +51,7 @@ import { useWorkspace } from "@/lib/workspace/use-workspace";
 import {
 	type ApplyPlan,
 	applyPlan,
+	basisText,
 	type DaySplit,
 	dayCityIds,
 	dayRange,
@@ -596,7 +597,7 @@ function RateFirst({
 						onClick={onSuggest}
 						className="cursor-pointer font-medium text-foreground underline underline-offset-2"
 					>
-						Suggest it now
+						Suggest nights now
 					</button>
 				</p>
 			) : null}
@@ -706,7 +707,7 @@ function SplitSuggestion({
 			if (await apply.applyWithDates(draft.start, used + 1, entries)) done();
 		}
 	};
-	const shortlisted = info.cities.some((c) => c.shortlisted > 0);
+	const basis = basisText(info.cities);
 	// Each city's dates: the trip's, or (no dates yet) from the day you arrive.
 	const start = draft.start ?? null;
 	const dates = useMemo(
@@ -741,12 +742,12 @@ function SplitSuggestion({
 					) : null}
 				</div>
 				<p className="max-w-prose text-sm text-muted-foreground">
-					{shortlisted
+					{basis
 						? canEdit
 							? live && dated
-								? "Based on your shortlist. Change the nights or the order, or put it on the days as it is."
-								: "Based on your shortlist. Change the nights, reorder the stops, then put them on the days."
-							: "Based on your shortlist."
+								? `${basis} Change the nights or the order, or put it on the days as it is.`
+								: `${basis} Change the nights, reorder the stops, then put them on the days.`
+							: basis
 						: "Where you'll sleep, in the order you travel. Every day of a stay is a day to plan, the days you travel too."}
 				</p>
 			</header>

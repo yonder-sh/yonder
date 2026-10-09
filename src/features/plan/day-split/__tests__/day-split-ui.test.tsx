@@ -90,9 +90,11 @@ const D = DEMO_MEMBERS.dennis;
 
 /**
  * From Sat 2 Oct 2027. Tokyo: four 12-hour places Dennis rated Must (4
- * days), two in Shibuya; Kyoto: one (1 day); Osaka: one nobody rated.
+ * days), two in Shibuya; Kyoto: one (1 day); Osaka: one rated Meh (with
+ * `osakaRated: false` nobody rated it yet, so it counts: 1 day). The
+ * demo's own places are Meh too; Audrey hasn't rated the Musts.
  */
-function trip(days: DaySpec[]) {
+function trip(days: DaySpec[], { osakaRated = true } = {}) {
 	const place = (key: string, parent: string, at: [number, number]) => ({
 		key,
 		parent,
@@ -117,9 +119,13 @@ function trip(days: DaySpec[]) {
 	const must = new Set(["t1", "t2", "t3", "t4", "k1"]);
 	const nodes: GraphNode[] = s.graph.nodes.map((n) => {
 		const key = Object.keys(s.N).find((k) => s.N[k] === n.id) ?? "";
-		return must.has(key)
-			? { ...n, priorities: { [D]: "must" as Priority } }
-			: n;
+		if (must.has(key)) return { ...n, priorities: { [D]: "must" as Priority } };
+		if (n.type !== "place" || (key === "o1" && !osakaRated)) return n;
+		// Everyone else: Meh from everyone, below the shortlist.
+		const meh = Object.fromEntries(
+			s.graph.members.map((m) => [m.id, "meh" as Priority]),
+		);
+		return { ...n, priorities: meh };
 	});
 	return { s, graph: { ...s.graph, nodes } as TripGraph };
 }
@@ -138,7 +144,7 @@ const shape = () =>
 	]);
 
 /** The Plan; `cached`: saves land on the trip, as in the app. */
-/** The Plan; past "Get everyone's ratings" ("Suggest it now") unless `rateFirst`. */
+/** The Plan; past "Get everyone's ratings" ("Suggest nights now") unless `rateFirst`. */
 const plan = (graph: TripGraph, cached = false, rateFirst = false) => {
 	const id = graph.trip.id;
 	if (!rateFirst) {
@@ -207,7 +213,7 @@ describe("how long in each city (no day has a city yet)", () => {
 			"How long in each city?",
 		);
 		expect(split).toHaveTextContent(
-			"Based on your shortlist. Change the nights or the order, or put it on the days as it is.",
+			"Based on 5 places, 5 not rated yet. Change the nights or the order, or put it on the days as it is.",
 		);
 		// Ten days are nine nights: the last day is the day you leave.
 		expect(split).toHaveTextContent("9 nights, Sat 2 – Mon 11 Oct");
@@ -223,14 +229,13 @@ describe("how long in each city (no day has a city yet)", () => {
 		// Each stay from the day you arrive to the day you leave.
 		expect(rowOf(s.N.tokyo)).toHaveTextContent("Sat 2 – Fri 8 Oct");
 		expect(rowOf(s.N.kyoto)).toHaveTextContent("Fri 8 – Mon 11 Oct");
-		// The demo's seven Tokyo places are unrated; Audrey rated nothing.
+		// Audrey hasn't rated the Musts; Osaka's place didn't make it.
 		expect(rowOf(s.N.tokyo)).toHaveTextContent(
-			"4 shortlisted · 11 not rated yet",
+			"4 shortlisted · 4 not rated yet",
 		);
-		expect(rowOf(s.N.osaka)).toHaveTextContent("1 not rated yet");
 		expect(rowOf(s.N.osaka)).not.toHaveTextContent("0 shortlisted");
 		expect(screen.getByTestId(T.splitRate)).toHaveTextContent(
-			"You have 9 places to rate and Audrey 14. These days will change as you rate.",
+			"Audrey has 5 places to rate. These days will change as they rate.",
 		);
 		expect(screen.getByTestId(T.splitUnused)).toHaveTextContent(
 			"No free nights left. Take one from another city first.",
@@ -238,8 +243,22 @@ describe("how long in each city (no day has a city yet)", () => {
 		expect(screen.queryByTestId(T.splitOver)).toBeNull();
 	});
 
+	it("a place nobody rated yet counts until it is: Osaka gets nights, and the line says so", () => {
+		const { s, graph } = trip(empty(10), { osakaRated: false });
+		plan(graph);
+		const split = screen.getByTestId(T.split);
+		expect(split).toHaveTextContent(
+			"Based on 6 places, 6 not rated yet. Change the nights or the order, or put it on the days as it is.",
+		);
+		expect(rowOf(s.N.osaka)).toHaveAttribute("data-days", "2");
+		expect(rowOf(s.N.osaka)).toHaveTextContent("1 not rated yet");
+		expect(screen.getByTestId(T.splitRate)).toHaveTextContent(
+			"You have 1 place to rate and Audrey 6.",
+		);
+	});
+
 	it("a city opens to its places by area, with their time; one area gets no heading", () => {
-		const { s, graph } = trip(empty(10));
+		const { s, graph } = trip(empty(10), { osakaRated: false });
 		const { ws } = plan(graph);
 		const tokyo = rowOf(s.N.tokyo);
 		expect(within(tokyo).queryByTestId(T.splitPlaces)).toBeNull();
@@ -256,7 +275,9 @@ describe("how long in each city (no day has a city yet)", () => {
 				.getAllByTestId(T.splitPlace)
 				.map((b) => b.textContent?.slice(0, 2)),
 		).toEqual(["T1", "T2"]);
-		expect(places).toHaveTextContent(/Not rated yet:/);
+		expect(places).toHaveTextContent(
+			"7 other places didn't make the shortlist.",
+		);
 		fireEvent.click(within(places).getAllByTestId(T.splitPlace)[0] as Element);
 		expect(ws().sel?.kind).toBe("node");
 		// Kyoto: one place right under the city, no area heading.
@@ -268,11 +289,13 @@ describe("how long in each city (no day has a city yet)", () => {
 		fireEvent.click(within(rowOf(s.N.osaka)).getByTestId(T.splitExpand));
 		expect(
 			within(rowOf(s.N.osaka)).getByTestId(T.splitPlaces),
-		).toHaveTextContent(/Nothing shortlisted here yet\..*Not rated yet: O1/);
+		).toHaveTextContent(
+			/Nothing shortlisted here yet\..*Not rated yet, counted for now: O1/,
+		);
 	});
 
 	it("Rate opens the Places tab's Rate step, for the whole trip", () => {
-		const { graph } = trip(empty(10));
+		const { graph } = trip(empty(10), { osakaRated: false });
 		const { navigations } = plan(graph);
 		fireEvent.click(
 			within(screen.getByTestId(T.splitRate)).getByRole("button", {
@@ -327,7 +350,7 @@ describe("how long in each city (no day has a city yet)", () => {
 		const { s, graph } = trip(empty(4));
 		plan(graph);
 		expect(screen.getByTestId(T.splitOver)).toHaveTextContent(
-			"Your shortlist needs about 5 nights, and the trip has 3. Remove a city or some places.",
+			"Your places need about 5 nights, and the trip has 3. Remove a city or some places.",
 		);
 		expect(rowOf(s.N.tokyo)).toHaveAttribute("data-days", "2");
 		expect(rowOf(s.N.kyoto)).toHaveAttribute("data-days", "1");
@@ -406,7 +429,7 @@ describe("how long in each city (no day has a city yet)", () => {
 		const { s, graph } = trip(empty(10));
 		plan(asRole(graph, "suggester"), true);
 		expect(screen.getByTestId(T.split)).toHaveTextContent(
-			"Based on your shortlist. Change the nights, reorder the stops, then put them on the days.",
+			"Based on 5 places, 5 not rated yet. Change the nights, reorder the stops, then put them on the days.",
 		);
 		fireEvent.click(within(rowOf(s.N.tokyo)).getByTestId(T.splitMinus));
 		fireEvent.click(within(rowOf(s.N.osaka)).getByTestId(T.splitPlus));
@@ -426,7 +449,9 @@ describe("how long in each city (no day has a city yet)", () => {
 		plan(asRole(graph, "viewer"));
 		expect(rows()).toHaveLength(3);
 		expect(
-			within(screen.getByTestId(T.split)).getByText("Based on your shortlist."),
+			within(screen.getByTestId(T.split)).getByText(
+				"Based on 5 places, 5 not rated yet.",
+			),
 		).toBeInTheDocument();
 		for (const id of [T.splitPlus, T.splitMinus, T.splitUse, T.handle, T.menu])
 			expect(screen.queryByTestId(id)).toBeNull();
@@ -874,7 +899,7 @@ describe("the route from nothing (Where to first?)", () => {
 	});
 
 	it("places saved, ratings coming: Get everyone's ratings first, then the nights when asked", () => {
-		const { graph } = trip(empty(10));
+		const { graph } = trip(empty(10), { osakaRated: false });
 		plan(graph, false, true);
 		const card = screen.getByTestId(T.rateFirst);
 		expect(card).toHaveTextContent("Get everyone's ratings");

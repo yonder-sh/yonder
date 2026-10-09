@@ -153,7 +153,9 @@ function CityPlaces({
 			)}
 			{toRate.length ? (
 				<p className="text-xs text-muted-foreground">
-					<span className="font-medium text-foreground">Not rated yet:</span>{" "}
+					<span className="font-medium text-foreground">
+						Not rated yet, counted for now:
+					</span>{" "}
 					{toRate.map((r, i) => (
 						<span key={r.id}>
 							{i ? ", " : ""}

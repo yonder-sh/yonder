@@ -1,8 +1,8 @@
 /**
  * How long in each city (the top of the Plan while no trip day has a city):
  * how many of the trip's nights each city gets (a trip of N days has N − 1:
- * the last day is the day you leave), from the time its shortlist needs, the
- * spare nights shared out, in the order with the least travel from where you
+ * the last day is the day you leave), from the time its shortlist needs (and
+ * the places not rated by everyone yet, until they are), the spare nights shared out, in the order with the least travel from where you
  * land to where you fly home. Cities without places yet take part with none
  * suggested. The stops read in travel order under their country (and region)
  * headings, and can be reordered. Afterwards: the nights each city holds now
@@ -46,7 +46,9 @@ export type SplitCity = {
 	notRated: number;
 	/** The shortlist's time needed. */
 	minutes: number;
-	/** Whole days that time takes: at least 1 with anything shortlisted, else 0. */
+	/** The time of the places not rated by everyone yet, counted until they are. */
+	toRateMinutes: number;
+	/** Whole days the shortlist and the places to rate take: at least 1 with any, else 0. */
 	need: number;
 	/** What's there: the shortlist (best first), the places not rated by everyone yet, and the rest's count. */
 	shortlistIds: string[];
@@ -117,6 +119,7 @@ export function splitCities(
 				shortlisted: 0,
 				notRated: 0,
 				minutes: 0,
+				toRateMinutes: 0,
 				need: 0,
 				shortlistIds: [],
 				toRateIds: [],
@@ -134,8 +137,11 @@ export function splitCities(
 			c.shortlisted += 1;
 			c.minutes += defaultItemDuration(row.node);
 			short.set(c.id, [...(short.get(c.id) ?? []), row]);
-		} else if (unrated) c.toRateIds.push(row.id);
-		else c.belowShortlist += 1;
+		} else if (unrated) {
+			// Saved means "we want to go": counted until the ratings say otherwise.
+			c.toRateIds.push(row.id);
+			c.toRateMinutes += defaultItemDuration(row.node);
+		} else c.belowShortlist += 1;
 		if (unrated) c.notRated += 1;
 	}
 	for (const city of opts.cities ?? [])
@@ -147,6 +153,7 @@ export function splitCities(
 				shortlisted: 0,
 				notRated: 0,
 				minutes: 0,
+				toRateMinutes: 0,
 				need: 0,
 				shortlistIds: [],
 				toRateIds: [],
@@ -155,7 +162,8 @@ export function splitCities(
 			});
 	const out = [...by.values()];
 	for (const c of out) {
-		c.need = c.shortlisted ? daysNeeded(c.minutes, opts.capacityMin) : 0;
+		const time = c.minutes + c.toRateMinutes;
+		c.need = time ? daysNeeded(time, opts.capacityMin) : 0;
 		const best = (short.get(c.id) ?? []).sort(compareByScore);
 		c.shortlistIds = best.map((r) => r.id);
 		const areas = new Map<string, SplitArea>();
@@ -400,7 +408,7 @@ export function suggestSplit(
 			base.map((c) => c.need),
 			tripDays,
 		),
-		base.map((c) => c.minutes),
+		base.map((c) => c.minutes + c.toRateMinutes),
 		tripDays,
 	);
 	const rows: SplitRow[] = base.map((c, i) => ({ ...c, days: fitted[i] ?? 0 }));
@@ -860,9 +868,22 @@ export function leftToRateText(left: readonly LeftToRate[]): string | null {
 	return `${head}${tail}. These days will change as ${first.you ? "you" : "they"} rate.`;
 }
 
-/** "Your shortlist needs about 16 nights, and the trip has 13. Remove a city or some places." */
+/**
+ * What the suggestion stands on: "Based on your shortlist.", or with places
+ * still to rate "Based on 14 places, 9 not rated yet." Null with none.
+ */
+export function basisText(cities: readonly SplitCity[]): string | null {
+	const listed = cities.reduce((s, c) => s + c.shortlisted, 0);
+	const counted = listed + cities.reduce((s, c) => s + c.toRateIds.length, 0);
+	// As the rows have it: shortlisted or not, some rater still to go.
+	const notRated = cities.reduce((s, c) => s + c.notRated, 0);
+	if (!notRated) return listed ? "Based on your shortlist." : null;
+	return `Based on ${plural(counted, "place")}, ${notRated} not rated yet.`;
+}
+
+/** "Your places need about 16 nights, and the trip has 13. Remove a city or some places." */
 export function overText(need: number, nights: number): string {
-	return `Your shortlist needs about ${plural(need, "night")}, and the trip has ${nights}. Remove a city or some places.`;
+	return `Your places need about ${plural(need, "night")}, and the trip has ${nights}. Remove a city or some places.`;
 }
 
 /** "4 days not planned yet". */

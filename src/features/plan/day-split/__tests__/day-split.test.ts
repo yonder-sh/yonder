@@ -20,6 +20,7 @@ import { DEMO_MEMBERS } from "@/lib/fixtures/demo";
 import {
 	applyPlan,
 	arrivalCity,
+	basisText,
 	type DaySplit,
 	dayCityIds,
 	daysNeeded,
@@ -65,10 +66,15 @@ const empty = (n: number) => Array.from({ length: n }, () => day());
 /**
  * Tokyo (four 12-hour places shortlisted: 4 days; in Shibuya, Harajuku,
  * Kappabashi inside Asakusa, and right under Tokyo), Kyoto (three: 3 days),
- * Hiroshima (one hour: 1 day), Osaka (three places nobody rated), and a
- * Nara day trip; the demo's own places are unrated ideas.
+ * Hiroshima (one hour: 1 day), Osaka (three 12-hour places rated Meh,
+ * below the shortlist; with `osakaRated: false` nobody rated them yet, so
+ * they count: 3 days), and a Nara day trip; the demo's own places are Meh.
  */
-function world(days: DaySpec[], legs: LegSpec[] = []) {
+function world(
+	days: DaySpec[],
+	legs: LegSpec[] = [],
+	{ osakaRated = true } = {},
+) {
 	const place = (
 		key: string,
 		parent: string,
@@ -137,9 +143,14 @@ function world(days: DaySpec[], legs: LegSpec[] = []) {
 		rate[k] = { [D]: "must", [A]: "want" };
 	rate.h1 = { [D]: "must", [A]: "must" };
 	rate.todaiji = { [D]: "nah", [A]: "nah" };
+	const unrated = new Set(osakaRated ? [] : ["o1", "o2", "o3"]);
 	const nodes: GraphNode[] = s.graph.nodes.map((n) => {
 		const key = Object.keys(s.N).find((k) => s.N[k] === n.id) ?? "";
-		return rate[key] ? { ...n, priorities: rate[key] } : n;
+		if (rate[key]) return { ...n, priorities: rate[key] };
+		// The rest: Meh, below the shortlist.
+		return n.type === "place" && !unrated.has(key)
+			? { ...n, priorities: { [D]: "meh", [A]: "meh" } }
+			: n;
 	});
 	const graph: TripGraph = { ...s.graph, nodes };
 	const ix = indexGraph(graph);
@@ -183,16 +194,36 @@ describe("what each city's shortlist needs", () => {
 			notRated: 0,
 		});
 		// Nothing shortlisted: listed, needing no days.
-		expect(by.Osaka).toMatchObject({ shortlisted: 0, need: 0, notRated: 3 });
-		// The demo's seven Tokyo places and Kiyomizu-dera are unrated.
-		expect(by.Tokyo?.notRated).toBe(7);
-		expect(by.Kyoto?.notRated).toBe(1);
+		expect(by.Osaka).toMatchObject({
+			shortlisted: 0,
+			need: 0,
+			notRated: 0,
+			belowShortlist: 3,
+		});
 		// Everyone said Nah to Tōdai-ji: Nara has nothing that isn't dropped.
 		expect(by.Nara).toBeUndefined();
 	});
 
+	it("places nobody rated yet count until they are: saved means you want to go", () => {
+		const { ix, cities } = world(empty(14), [], { osakaRated: false });
+		const by = Object.fromEntries(cities.map((c) => [c.name, c]));
+		expect(by.Osaka).toMatchObject({
+			shortlisted: 0,
+			notRated: 3,
+			minutes: 0,
+			toRateMinutes: 2160,
+			need: 3,
+		});
+		const split = suggestSplit(ix, cities, 14);
+		expect(split.need).toBe(11);
+		expect(split.rows.find((r) => r.name === "Osaka")?.days).toBeGreaterThan(0);
+		expect(basisText(cities)).toBe("Based on 11 places, 3 not rated yet.");
+		expect(basisText(world(empty(14)).cities)).toBe("Based on your shortlist.");
+		expect(basisText([])).toBeNull();
+	});
+
 	it("what's in each city: the shortlist, what's left to rate, and the rest's count", () => {
-		const { cities, rows } = world(empty(14));
+		const { cities, rows } = world(empty(14), [], { osakaRated: false });
 		const by = Object.fromEntries(cities.map((c) => [c.name, c]));
 		const names = (ids: readonly string[] = []) =>
 			ids.map((id) => rows.find((r) => r.id === id)?.node.name);
@@ -202,7 +233,6 @@ describe("what each city's shortlist needs", () => {
 			"t3",
 			"t4",
 		]);
-		expect(by.Tokyo?.toRateIds).toHaveLength(7);
 		expect(names(by.Osaka?.toRateIds).sort()).toEqual(["o1", "o2", "o3"]);
 		expect(by.Osaka?.shortlistIds).toEqual([]);
 		for (const c of cities)
@@ -315,7 +345,7 @@ describe("the suggestion", () => {
 		]);
 		expect(split.unused).toBe(0);
 		expect(overText(split.need, split.tripDays)).toBe(
-			"Your shortlist needs about 8 nights, and the trip has 7. Remove a city or some places.",
+			"Your places need about 8 nights, and the trip has 7. Remove a city or some places.",
 		);
 	});
 
@@ -875,7 +905,7 @@ describe("applying a split", () => {
 
 describe("who still has places to rate", () => {
 	it("you first, then the others with their own counts", () => {
-		const { rows, members } = world(empty(3));
+		const { rows, members } = world(empty(3), [], { osakaRated: false });
 		const left = leftToRate(rows, members, A);
 		expect(left.map((x) => [x.name, x.you])).toEqual([
 			["Audrey", true],
