@@ -1,6 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { redeemInviteLink } from "@/features/home/sharing.functions";
@@ -25,8 +25,12 @@ function JoinRoute() {
 		onSuccess: ({ slug }) =>
 			navigate({ to: "/t/$trip", params: { trip: slug }, replace: true }),
 	});
+	// Once per link (a dev double effect would count the link opened twice).
+	const sent = useRef<string | null>(null);
 	// biome-ignore lint/correctness/useExhaustiveDependencies: once per link
 	useEffect(() => {
+		if (sent.current === token) return;
+		sent.current = token;
 		join.mutate();
 	}, [token]);
 	return (
