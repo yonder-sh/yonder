@@ -8,13 +8,17 @@
  *   them and every attachment hanging there), unless something live still
  *   points into the subtree;
  * - trips soft-deleted more than 30 days ago (the whole `trips/<id>/` prefix);
+ * - Saved: links deleted more than 30 days ago (their previews, photos and
+ *   videos), and saved photo uploads still `pending` after 24 h;
  * - anonymous users with no grants and no session updated in 30 days.
  *
  * Objects can be shared: a duplicated trip's attachments re-reference the
  * source's objects (ADDENDUM §9; same `storage_key`, `image_key`,
  * `favicon_key`). A prefix is only deleted when no other attachment row —
  * live, soft-deleted or in another trip — still points into it; the last row
- * to go takes it with it.
+ * to go takes it with it. A photo added from Saved shares the saved file's
+ * prefix (`saved/<userId>/<fileId>/`): kept while a saved file or an
+ * attachment still points there.
  *
  * BullMQ removes its own finished jobs (`removeOnComplete`/`removeOnFail`).
  */
@@ -25,12 +29,14 @@ import { hardDeleteTrip } from "@/server/trip-delete.server";
 import {
 	deletePrefix,
 	isAttachmentPrefix,
+	isSavedFilePrefix,
 	listSubPrefixes,
 	prefixOfKey,
 } from "./storage.server";
 
 export type PurgeReport = {
 	attachments: number;
+	saved: number;
 	nodes: number;
 	trips: number;
 	anonymousUsers: number;
@@ -61,7 +67,8 @@ type KeyRow = Row & {
 /** Every attachment prefix a row owns or shares. */
 function prefixesOf(a: KeyRow): string[] {
 	const out = new Set<string>([mediaPrefix(a.trip_id, a.id)]);
-	if (isAttachmentPrefix(a.storage_key)) out.add(a.storage_key);
+	if (isAttachmentPrefix(a.storage_key) || isSavedFilePrefix(a.storage_key))
+		out.add(a.storage_key);
 	for (const k of [a.image_key, a.favicon_key]) {
 		const p = prefixOfKey(k);
 		if (p) out.add(p);
@@ -87,6 +94,7 @@ export async function purge(
 	const drop = o.deletePrefix ?? deletePrefix;
 	const report: PurgeReport = {
 		attachments: 0,
+		saved: 0,
 		nodes: 0,
 		trips: 0,
 		anonymousUsers: 0,
@@ -105,7 +113,11 @@ export async function purge(
 			const used = await db.execute(sql`
 				select 1 from attachments a
 				 where ${pointsInto(p)} and a.id <> all(${ids}::uuid[]) limit 1`);
-			if (used.rows.length) {
+			const saved = isSavedFilePrefix(p)
+				? await db.execute(sql`
+						select 1 from saved_files where storage_key = ${p} limit 1`)
+				: { rows: [] };
+			if (used.rows.length || saved.rows.length) {
 				log(`kept ${p} (still referenced)`);
 				continue;
 			}
@@ -127,6 +139,37 @@ export async function purge(
 		report.attachments += 1;
 	}
 	log(`attachments: ${report.attachments}`);
+
+	// 1b. Saved: links deleted long ago, and photo uploads never finished.
+	const savedGone = (
+		await db.execute(sql`
+			select id::text as id, user_id as "userId" from saved_links
+			 where deleted_at is not null and deleted_at < now() - make_interval(days => ${days})
+			 limit 5000`)
+	).rows as { id: string; userId: string }[];
+	const filesGone = (
+		await db.execute(sql`
+			select f.id::text as id, f.storage_key as key, f.saved_id::text as "savedId" from saved_files f
+			 where f.saved_id = any(${sql.param(savedGone.map((g) => g.id))}::uuid[])
+			    or (f.status = 'pending' and f.created_at < now() - make_interval(hours => ${hours}))
+			 limit 20000`)
+	).rows as { id: string; key: string; savedId: string }[];
+	if (!o.dryRun) {
+		for (const f of filesGone) {
+			const used = await db.execute(sql`
+				select 1 from attachments a where a.storage_key = ${f.key} limit 1`);
+			if (used.rows.length) log(`kept ${f.key} (in a trip)`);
+			else if (isSavedFilePrefix(f.key)) report.objects += await drop(f.key);
+			await db.execute(sql`delete from saved_files where id = ${f.id}`);
+		}
+		for (const g of savedGone) {
+			// The link's re-hosted preview and favicon.
+			report.objects += await drop(`saved/${g.userId}/${g.id}/`);
+			await db.execute(sql`delete from saved_links where id = ${g.id}`);
+		}
+	}
+	report.saved = savedGone.length;
+	log(`saved: ${report.saved}`);
 
 	// 2. Nodes deleted long ago (the top of each deleted subtree), when nothing
 	// live remains inside it.

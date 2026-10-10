@@ -28,15 +28,20 @@ export async function quotaBytes(
 }
 
 /**
- * Bytes stored for `userId` (see the file comment). `exclude` leaves out one
- * attachment (the upload being completed, which is re-added by the caller).
+ * Bytes stored for `userId` (see the file comment): their uploads in trips
+ * and their photos and videos in Saved (`saved_files`, the saved link not
+ * deleted; one added to a trip shares its `storage_key`, so it counts once).
+ * `exclude` leaves out one attachment (the upload being completed, which is
+ * re-added by the caller); `excludeSavedFile` one saved file (an upload
+ * started again).
  */
 export async function usedBytes(
 	exec: SqlExec,
 	userId: string,
-	opts: { exclude?: string } = {},
+	opts: { exclude?: string; excludeSavedFile?: string } = {},
 ): Promise<number> {
 	const exclude = opts.exclude ?? null;
+	const excludeSaved = opts.excludeSavedFile ?? null;
 	// What counts, whoever uploaded it (see the file comment).
 	const live = sql`a.deleted_at is null
 		and a.size_bytes is not null
@@ -52,6 +57,12 @@ export async function usedBytes(
 				  from attachments a
 				  join trips t on t.id = a.trip_id and t.deleted_at is null
 				 where a.created_by = ${userId} and ${live}
+				union all
+				select f.storage_key, f.size_bytes
+				  from saved_files f
+				  join saved_links s on s.id = f.saved_id and s.deleted_at is null
+				 where f.user_id = ${userId} and f.deleted_at is null and f.status <> 'failed'
+				   and (${excludeSaved}::uuid is null or f.id <> ${excludeSaved}::uuid)
 			) x
 			order by k, size desc
 		) y`);

@@ -46,7 +46,13 @@ export const MUTATION_POLICY = {
 	/** Saved: the caller's own saved links (adding one to a trip is checked by the trip's own functions). */
 	saveSharedLink: "account",
 	markSavedAdded: "account",
-	deleteSavedLink: "account",
+	deleteSavedLinks: "account",
+	restoreSavedLinks: "account",
+	startSavedUpload: "account",
+	signSavedUploadParts: "account",
+	completeSavedUpload: "account",
+	/** Saved photos onto a trip's place: the attachments re-reference them. */
+	attachSavedFiles: "edit-only",
 
 	// ---- trips (F) ----
 	updateTrip: { direct: "tripSettings" },

@@ -58,6 +58,7 @@ import {
 	migrateDatabase,
 } from "@/db/migrate.server";
 import { tripMembers, user } from "@/db/schema";
+import { purge } from "@/features/media/server/purge.server";
 import type { SafeFetcher } from "@/features/media/server/safe-fetch.server";
 import { headObject } from "@/features/media/server/storage.server";
 import type { AuthUser } from "@/server/auth.server";
@@ -65,6 +66,7 @@ import { errorCode } from "@/server/authz/errors";
 import { cloneDemoTrip, type FixtureClone } from "@/server/fixture.server";
 import { closeQueues } from "@/server/live/jobs.server";
 import { closeRedis, redis, redisPrefix } from "@/server/live/redis.server";
+import { usedBytes } from "@/server/quota.server";
 import { ensureBucket } from "@/server/s3.server";
 import {
 	checkKey,
@@ -74,14 +76,20 @@ import {
 	shareInput,
 } from "@/server/shortcut.server";
 import {
-	deleteSavedLink,
+	attachSavedFiles,
+	completeSavedUpload,
+	deleteSavedLinks,
 	listSavedLinks,
 	markSavedAdded,
+	restoreSavedLinks,
 	saveSharedLink,
+	signSavedUploadParts,
+	startSavedUpload,
 } from "../saved.functions";
+import { savedFileVariants } from "../server/files.server";
 import { savedPreview } from "../server/preview.server";
 import { savedPrefix } from "../server/saved.server";
-import { serveSaved } from "../server/serve.server";
+import { serveSaved, serveSavedFile } from "../server/serve.server";
 import type { SavedLink } from "../types";
 
 vi.setConfig({ testTimeout: 30_000, hookTimeout: 60_000 });
@@ -225,7 +233,7 @@ describe("the list", () => {
 			tripId: trip.tripId,
 			nodeId: trip.ids.nodes.tokyo,
 		});
-		await call(deleteSavedLink, u, { id: first.id });
+		await call(deleteSavedLinks, u, { ids: [first.id] });
 		expect((await list(u)).map((l) => l.id)).toEqual([third.id]);
 		const rows = (
 			await getDb().execute(sql`
@@ -263,9 +271,9 @@ describe("the list", () => {
 				}),
 			),
 		).toBe("NOT_FOUND");
-		expect(await codeOf(call(deleteSavedLink, U.other, { id: mine.id }))).toBe(
-			"NOT_FOUND",
-		);
+		expect(await call(deleteSavedLinks, U.other, { ids: [mine.id] })).toEqual({
+			ids: [],
+		});
 		expect((await list(U.other)).some((l) => l.id === mine.id)).toBe(false);
 		expect((await list(U.me)).some((l) => l.id === mine.id)).toBe(true);
 	});
@@ -350,8 +358,13 @@ describe("previews", () => {
 		expect(mine.headers.get("content-type")).toBe("image/webp");
 		expect((await get(U.other)).status).toBe(404);
 		expect((await get(null)).status).toBe(404);
-		// Deleting takes the picture too.
-		await call(deleteSavedLink, U.me, { id });
+		// Deleted, it's gone from the grid and its picture too; the purge takes the objects.
+		await call(deleteSavedLinks, U.me, { ids: [id] });
+		expect((await get(U.me)).status).toBe(404);
+		await getDb().execute(
+			sql`update saved_links set deleted_at = now() - interval '31 days' where id = ${id}`,
+		);
+		await purge(getDb());
 		expect(
 			await headObject(`${savedPrefix(U.me.id, id)}image.webp`),
 		).toBeNull();
@@ -393,6 +406,248 @@ describe("previews", () => {
 		expect(
 			(await list(U.viewer)).find((x) => x.id === v.id)?.nearTrips,
 		).toEqual([]);
+	});
+});
+
+describe("one waiting row per link", () => {
+	it("saving a link already in Saved answers that row, until it's deleted or added", async () => {
+		const u = await newUser("Dee");
+		const a = await save(u, {
+			url: "https://www.instagram.com/reel/C0DEDUPE1/?igsh=abc",
+		});
+		// The same post, shared again (other tracking, from the Shortcut).
+		const b = await save(u, {
+			url: "https://www.instagram.com/reel/C0DEDUPE1/?igsh=xyz",
+			text: "again",
+		});
+		const code = await newPairingCode(getDb(), u.id);
+		const r = await pair(getDb(), code, "Dee's iPhone");
+		if (!r.ok) throw new Error("pair failed");
+		const check = await checkKey(r.key);
+		if (!check.ok) throw new Error("key should work");
+		const c = await saveShare(
+			getDb(),
+			check.device,
+			shareInput("https://www.instagram.com/reel/C0DEDUPE1/"),
+		);
+		expect([b.id, c.id]).toEqual([a.id, a.id]);
+		expect((await list(u)).map((l) => l.id)).toEqual([a.id]);
+		// Deleted: a new one; Undo of the old one is then refused.
+		await call(deleteSavedLinks, u, { ids: [a.id] });
+		const d = await save(u, {
+			url: "https://www.instagram.com/reel/C0DEDUPE1/",
+		});
+		expect(d.id).not.toBe(a.id);
+		expect(await codeOf(call(restoreSavedLinks, u, { ids: [a.id] }))).toBe(
+			"CONFLICT",
+		);
+	});
+
+	it("Undo restores deleted ones, only mine", async () => {
+		const u = await newUser("Uma");
+		const a = await save(u, { url: "https://undo.example/a" });
+		const b = await save(u, { url: "https://undo.example/b" });
+		expect(await call(deleteSavedLinks, u, { ids: [a.id, b.id] })).toEqual({
+			ids: [a.id, b.id],
+		});
+		expect(await list(u)).toEqual([]);
+		expect(
+			await call(restoreSavedLinks, U.other, { ids: [a.id, b.id] }),
+		).toEqual({ ids: [] });
+		await call(restoreSavedLinks, u, { ids: [a.id, b.id] });
+		expect((await list(u)).map((l) => l.id).sort()).toEqual(
+			[a.id, b.id].sort(),
+		);
+	});
+});
+
+const jpeg = (w = 64, h = 48) =>
+	sharp({ create: { width: w, height: h, channels: 3, background: "#c84" } })
+		.jpeg()
+		.toBuffer();
+
+/** A shared photo up to Saved as the share page does it: start, PUT, complete. */
+async function upPhoto(
+	u: AuthUser,
+	clientId: string,
+	position: number,
+	body: Buffer,
+) {
+	const s = await call<{
+		savedId: string;
+		fileId: string;
+		done: boolean;
+		url?: string;
+	}>(startSavedUpload, u, {
+		clientId,
+		position,
+		type: "image/jpeg",
+		size: body.length,
+	});
+	if (s.done) return s;
+	const put = await fetch(s.url as string, {
+		method: "PUT",
+		body: new Uint8Array(body),
+		headers: { "content-type": "image/jpeg" },
+	});
+	expect(put.status).toBe(200);
+	const done = await call<{ savedId: string; done: boolean }>(
+		completeSavedUpload,
+		u,
+		{ id: s.fileId },
+	);
+	return { ...s, ...done };
+}
+
+describe("photos and videos", () => {
+	it("a share of two photos is one item once both are up, with thumbnails, counting against my quota", async () => {
+		const u = await newUser("Pia");
+		const [one, two] = [await jpeg(), await jpeg(80, 60)];
+		const first = await upPhoto(u, "share-photos-1", 0, one);
+		expect(first.done).toBe(true);
+		// Only the first is up so far: a second file started, not finished.
+		const started = await call<{ fileId: string; done: boolean }>(
+			startSavedUpload,
+			u,
+			{
+				clientId: "share-photos-1",
+				position: 1,
+				type: "image/jpeg",
+				size: two.length,
+			},
+		);
+		expect(started.done).toBe(false);
+		expect(await list(u)).toEqual([]);
+		// The page closed; next time it starts again, and finishes.
+		const second = await upPhoto(u, "share-photos-1", 1, two);
+		expect(second.done).toBe(true);
+		expect(second.savedId).toBe(first.savedId);
+		expect((await upPhoto(u, "share-photos-1", 0, one)).done).toBe(true);
+		for (const f of [first.fileId, second.fileId])
+			await savedFileVariants({ userId: u.id, fileId: f });
+		const [item] = await list(u);
+		expect(item?.id).toBe(first.savedId);
+		expect(item?.files.map((f) => [f.kind, f.status, f.hasThumb])).toEqual([
+			["photo", "ready", true],
+			["photo", "ready", true],
+		]);
+		expect(await usedBytes(getDb(), u.id)).toBe(one.length + two.length);
+		// Someone else can't touch them.
+		expect(
+			await codeOf(call(completeSavedUpload, U.other, { id: first.fileId })),
+		).toBe("NOT_FOUND");
+		expect(
+			await codeOf(
+				call(signSavedUploadParts, U.other, { id: first.fileId, parts: [1] }),
+			),
+		).toBe("NOT_FOUND");
+		const thumb = await serveSavedFile(
+			new Request("http://localhost/x", { headers: { "x-test-user": u.id } }),
+			first.fileId,
+			"thumb",
+		);
+		expect(thumb.status).toBe(200);
+		expect(
+			(
+				await serveSavedFile(
+					new Request("http://localhost/x", {
+						headers: { "x-test-user": U.other.id },
+					}),
+					first.fileId,
+					"thumb",
+				)
+			).status,
+		).toBe(404);
+	});
+
+	it("over the quota: refused with the quota message", async () => {
+		const u = await newUser("Qin");
+		await getDb().execute(
+			sql`update "user" set storage_quota_bytes = 100 where id = ${u.id}`,
+		);
+		expect(
+			await codeOf(
+				call(startSavedUpload, u, {
+					clientId: "share-big",
+					position: 0,
+					type: "image/jpeg",
+					size: 5000,
+				}),
+			),
+		).toBe("STORAGE_QUOTA");
+	});
+
+	it("added to a trip, the photos are re-referenced and count once; deleting frees only what no trip uses", async () => {
+		const u = await newUser("Ari");
+		const c = await cloneDemoTrip(getDb(), u.id);
+		// The demo trip's own uploads are mine too.
+		const base = await usedBytes(getDb(), u.id);
+		const kept = await jpeg(120, 90);
+		const dropped = await jpeg(50, 50);
+		const a = await upPhoto(u, "share-kept", 0, kept);
+		const b = await upPhoto(u, "share-dropped", 0, dropped);
+		await savedFileVariants({ userId: u.id, fileId: a.fileId });
+		expect(await usedBytes(getDb(), u.id)).toBe(
+			base + kept.length + dropped.length,
+		);
+		// A viewer of the trip can't put them there; the owner can.
+		await getDb().insert(tripMembers).values({
+			tripId: c.tripId,
+			userId: U.viewer.id,
+			status: "active",
+			role: "viewer",
+			color: 4,
+		});
+		expect(
+			await codeOf(
+				call(attachSavedFiles, U.viewer, {
+					savedId: a.savedId,
+					tripId: c.tripId,
+					nodeId: c.ids.nodes.tokyo,
+				}),
+			),
+		).not.toBe("ok");
+		expect(
+			await call(attachSavedFiles, u, {
+				savedId: a.savedId,
+				tripId: c.tripId,
+				nodeId: c.ids.nodes.tokyo,
+			}),
+		).toEqual({ count: 1 });
+		const att = (
+			await getDb().execute(sql`
+				select storage_key as key, status, kind from attachments
+				 where trip_id = ${c.tripId} and starts_with(storage_key, 'saved/')`)
+		).rows;
+		expect(att).toEqual([
+			{ key: `saved/${u.id}/${a.fileId}/`, status: "ready", kind: "photo" },
+		]);
+		await call(markSavedAdded, u, {
+			id: a.savedId,
+			tripId: c.tripId,
+			nodeId: c.ids.nodes.tokyo,
+		});
+		// Counted once, in Saved and in the trip.
+		expect(await usedBytes(getDb(), u.id)).toBe(
+			base + kept.length + dropped.length,
+		);
+		// Deleting the other frees its space at once; Undo takes it back.
+		await call(deleteSavedLinks, u, { ids: [b.savedId] });
+		expect(await usedBytes(getDb(), u.id)).toBe(base + kept.length);
+		await call(restoreSavedLinks, u, { ids: [b.savedId] });
+		expect(await usedBytes(getDb(), u.id)).toBe(
+			base + kept.length + dropped.length,
+		);
+		// The purge takes a deleted one's objects, but not ones a trip uses.
+		await getDb().execute(sql`
+			update saved_links set deleted_at = now() - interval '31 days'
+			 where id in (${a.savedId}, ${b.savedId})`);
+		await purge(getDb());
+		expect(await headObject(`saved/${u.id}/${b.fileId}/original`)).toBeNull();
+		expect(
+			await headObject(`saved/${u.id}/${a.fileId}/original`),
+		).not.toBeNull();
+		expect(await usedBytes(getDb(), u.id)).toBe(base + kept.length);
 	});
 });
 

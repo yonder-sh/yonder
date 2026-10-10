@@ -7,7 +7,8 @@
  * - Only the original upload counts (`size_bytes` of photos, videos and PDFs):
  *   thumbnails, posters, page renders, link previews and avatars don't.
  * - Unique storage objects per account: a duplicated trip's rows re-reference
- *   the source's objects (same `storage_key`) and count once.
+ *   the source's objects (same `storage_key`) and count once; so does a photo
+ *   added to a trip from Saved (`saved_files`, which count too).
  * - Deleting frees the space at once: soft-deleted attachments, and
  *   attachments on a deleted trip, node or item, don't count. Pending uploads
  *   (under way, or abandoned until the purge) do, so parallel uploads can't
@@ -49,10 +50,18 @@ export async function lockQuota(tx: SqlExec, userId: string): Promise<void> {
  */
 export async function assertQuota(
 	tx: SqlExec,
-	p: { billedUserId: string; size: number; exclude?: string },
+	p: {
+		billedUserId: string;
+		size: number;
+		exclude?: string;
+		excludeSavedFile?: string;
+	},
 ): Promise<void> {
 	// One after the other: a transaction is one client (no overlapping queries).
-	const used = await usedBytes(tx, p.billedUserId, { exclude: p.exclude });
+	const used = await usedBytes(tx, p.billedUserId, {
+		exclude: p.exclude,
+		excludeSavedFile: p.excludeSavedFile,
+	});
 	const quota = await quotaBytes(tx, p.billedUserId);
 	if (used + p.size > quota)
 		fail("STORAGE_QUOTA", quotaMessage({ needed: p.size, used, quota }));

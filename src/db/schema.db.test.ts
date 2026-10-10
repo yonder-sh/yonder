@@ -106,8 +106,8 @@ describe("migrations", () => {
 		// 22 foundation tables + 14 F-ext0 tables (EXTENSIONS §2.1, ADDENDUM §6–§7)
 		// + inbox_reads (ADDENDUM §10, 0005) + the 3 push tables (0015)
 		// + rate_reminders (0017) + apikey (0022) + invite_links (0024)
-		// + saved_links (0025, in place of 0022's shortcut_shares).
-		expect(rows[0]?.n).toBe(44);
+		// + saved_links (0025, in place of 0022's shortcut_shares) + saved_files (0027).
+		expect(rows[0]?.n).toBe(45);
 		const { rows: cons } = await pool.query<{
 			conname: string;
 			condeferrable: boolean;

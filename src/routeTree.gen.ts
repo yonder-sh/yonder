@@ -35,6 +35,7 @@ import { Route as TTripSplatRouteImport } from './routes/t/$trip/$'
 import { Route as TTripRateRouteImport } from './routes/t/$trip_.rate'
 import { Route as TTripShareCardDotpngRouteImport } from './routes/t/$trip_.share-card[.]png'
 import { Route as ApiPlacesPhotoSplatRouteImport } from './routes/api/places/photo/$'
+import { Route as ApiSavedFileIdVariantRouteImport } from './routes/api/saved-file/$id/$variant'
 import { Route as ApiSavedIdVariantRouteImport } from './routes/api/saved/$id/$variant'
 
 const IndexRoute = IndexRouteImport.update({
@@ -166,6 +167,11 @@ const ApiPlacesPhotoSplatRoute = ApiPlacesPhotoSplatRouteImport.update({
   path: '/api/places/photo/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiSavedFileIdVariantRoute = ApiSavedFileIdVariantRouteImport.update({
+  id: '/api/saved-file/$id/$variant',
+  path: '/api/saved-file/$id/$variant',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiSavedIdVariantRoute = ApiSavedIdVariantRouteImport.update({
   id: '/api/saved/$id/$variant',
   path: '/api/saved/$id/$variant',
@@ -198,6 +204,7 @@ export interface FileRoutesByFullPath {
   '/dev/fixture/': typeof DevFixtureIndexRoute
   '/t/$trip/': typeof TTripIndexRoute
   '/api/places/photo/$': typeof ApiPlacesPhotoSplatRoute
+  '/api/saved-file/$id/$variant': typeof ApiSavedFileIdVariantRoute
   '/api/saved/$id/$variant': typeof ApiSavedIdVariantRoute
 }
 export interface FileRoutesByTo {
@@ -224,6 +231,7 @@ export interface FileRoutesByTo {
   '/dev/fixture': typeof DevFixtureIndexRoute
   '/t/$trip': typeof TTripIndexRoute
   '/api/places/photo/$': typeof ApiPlacesPhotoSplatRoute
+  '/api/saved-file/$id/$variant': typeof ApiSavedFileIdVariantRoute
   '/api/saved/$id/$variant': typeof ApiSavedIdVariantRoute
 }
 export interface FileRoutesById {
@@ -254,6 +262,7 @@ export interface FileRoutesById {
   '/dev/fixture/': typeof DevFixtureIndexRoute
   '/t/$trip/': typeof TTripIndexRoute
   '/api/places/photo/$': typeof ApiPlacesPhotoSplatRoute
+  '/api/saved-file/$id/$variant': typeof ApiSavedFileIdVariantRoute
   '/api/saved/$id/$variant': typeof ApiSavedIdVariantRoute
 }
 export interface FileRouteTypes {
@@ -284,6 +293,7 @@ export interface FileRouteTypes {
     | '/dev/fixture/'
     | '/t/$trip/'
     | '/api/places/photo/$'
+    | '/api/saved-file/$id/$variant'
     | '/api/saved/$id/$variant'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -310,6 +320,7 @@ export interface FileRouteTypes {
     | '/dev/fixture'
     | '/t/$trip'
     | '/api/places/photo/$'
+    | '/api/saved-file/$id/$variant'
     | '/api/saved/$id/$variant'
   id:
     | '__root__'
@@ -339,6 +350,7 @@ export interface FileRouteTypes {
     | '/dev/fixture/'
     | '/t/$trip/'
     | '/api/places/photo/$'
+    | '/api/saved-file/$id/$variant'
     | '/api/saved/$id/$variant'
   fileRoutesById: FileRoutesById
 }
@@ -361,6 +373,7 @@ export interface RootRouteChildren {
   TTripRateRoute: typeof TTripRateRoute
   TTripShareCardDotpngRoute: typeof TTripShareCardDotpngRoute
   ApiPlacesPhotoSplatRoute: typeof ApiPlacesPhotoSplatRoute
+  ApiSavedFileIdVariantRoute: typeof ApiSavedFileIdVariantRoute
   ApiSavedIdVariantRoute: typeof ApiSavedIdVariantRoute
 }
 
@@ -548,6 +561,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPlacesPhotoSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/saved-file/$id/$variant': {
+      id: '/api/saved-file/$id/$variant'
+      path: '/api/saved-file/$id/$variant'
+      fullPath: '/api/saved-file/$id/$variant'
+      preLoaderRoute: typeof ApiSavedFileIdVariantRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/saved/$id/$variant': {
       id: '/api/saved/$id/$variant'
       path: '/api/saved/$id/$variant'
@@ -620,6 +640,7 @@ const rootRouteChildren: RootRouteChildren = {
   TTripRateRoute: TTripRateRoute,
   TTripShareCardDotpngRoute: TTripShareCardDotpngRoute,
   ApiPlacesPhotoSplatRoute: ApiPlacesPhotoSplatRoute,
+  ApiSavedFileIdVariantRoute: ApiSavedFileIdVariantRoute,
   ApiSavedIdVariantRoute: ApiSavedIdVariantRoute,
 }
 export const routeTree = rootRouteImport

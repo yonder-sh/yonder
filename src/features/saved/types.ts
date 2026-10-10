@@ -3,6 +3,22 @@ import type { SavedPlace } from "@/db/schema/saved";
 
 export type { SavedPlace };
 
+/** A photo or video shared into Saved (`/api/saved-file/<id>/…`). */
+export type SavedFile = {
+	id: string;
+	kind: "photo" | "video";
+	mime: string;
+	status: "pending" | "processing" | "ready" | "failed";
+	width: number | null;
+	height: number | null;
+	durationSec: number | null;
+	thumbhash: string | null;
+	/** `thumb` (and a photo's `display`) exist. */
+	hasThumb: boolean;
+	/** A video's `poster` exists. */
+	hasPoster: boolean;
+};
+
 export type SavedLink = {
 	id: string;
 	url: string | null;
@@ -28,5 +44,7 @@ export type SavedLink = {
 	place: SavedPlace | null;
 	/** A Maps place: the trips I can add to with a city, area or place close by, nearest first. */
 	nearTrips: string[];
+	/** Photos and videos shared (one share, one item): its slides. */
+	files: SavedFile[];
 	createdAt: number;
 };

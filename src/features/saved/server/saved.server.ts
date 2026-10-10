@@ -1,17 +1,21 @@
 /**
- * Saved links on the server (`saved_links`): save, list, mark added, delete.
- * Saving is instant; the preview comes from the `saved.preview` job
- * (`./preview.server.ts`). Every read and write is the caller's own rows.
+ * Saved on the server (`saved_links`, `saved_files`): save, list, mark
+ * added, delete and undo. Saving is instant; the preview comes from the
+ * `saved.preview` job (`./preview.server.ts`); photos and videos upload
+ * through `./files.server.ts`. A link already waiting in Saved is never saved
+ * twice (`link_key`, its canonical link): saving it again answers that row.
+ * Delete is a soft delete (Undo puts it back; the space is free at once, the
+ * objects go in the purge). Every read and write is the caller's own rows.
  */
 import { sql } from "drizzle-orm";
 import { v7 as uuidv7 } from "uuid";
 import type { DbOrTx } from "@/db/db.server";
 import type { SavedPlace } from "@/db/schema/saved";
-import { classifyUrl } from "@/features/media/embeds";
-import { deleteObject } from "@/features/media/server/storage.server";
+import { canonicalLink, classifyUrl } from "@/features/media/embeds";
 import { AppError } from "@/server/errors";
 import { enqueue } from "@/server/live/jobs.server";
-import type { SavedLink } from "../types";
+import { assertQuota, lockQuota } from "@/server/quota.server";
+import type { SavedFile, SavedLink } from "../types";
 
 type Exec = Pick<DbOrTx, "execute">;
 
@@ -47,19 +51,70 @@ export type SaveInput = {
 	clientId?: string | null;
 };
 
-/** Saves a link (or words) for `userId`; its preview follows. */
+/** The link a saved row is known by: `canonicalLink` (an Instagram post without its tracking), else the URL. */
+export function linkKeyOf(url: string): string {
+	const c = classifyUrl(url);
+	return c.kind === "embed"
+		? (canonicalLink(
+				c.provider,
+				c.embedId,
+				url,
+				c.provider === "instagram" ? c.igType : null,
+			) ?? url)
+		: url;
+}
+
+/** The caller's row for a device id, or the waiting row for the same link. */
+async function existing(
+	db: Exec,
+	userId: string,
+	input: SaveInput,
+): Promise<string | null> {
+	const key = input.url ? linkKeyOf(input.url) : null;
+	const had = await db.execute(sql`
+		select id::text as id from saved_links
+		 where user_id = ${userId}
+		   and ((${input.clientId ?? null}::text is not null and client_id = ${input.clientId ?? null})
+		     or (${key}::text is not null and link_key = ${key} and deleted_at is null and added_at is null))
+		 order by (client_id is not distinct from ${input.clientId ?? null}) desc
+		 limit 1`);
+	return (had.rows[0] as { id: string } | undefined)?.id ?? null;
+}
+
+/** Saves a link (or words) for `userId`; its preview follows. A link already waiting answers its row. */
 export async function saveLink(
 	db: Exec,
 	userId: string,
 	input: SaveInput,
+	retried = false,
 ): Promise<{ id: string; created: boolean }> {
-	if (input.clientId) {
-		const had = await db.execute(sql`
-			select id::text as id from saved_links
-			 where user_id = ${userId} and client_id = ${input.clientId}`);
-		const id = (had.rows[0] as { id: string } | undefined)?.id;
-		if (id) return { id, created: false };
+	const had = await existing(db, userId, input);
+	if (had) return { id: had, created: false };
+	await assertRoom(db, userId);
+	const c = input.url ? classifyUrl(input.url) : null;
+	const embed = c?.kind === "embed" ? c : null;
+	const id = uuidv7();
+	// Any unique key taken meanwhile (the same device id, the same link): that row.
+	const res = await db.execute(sql`
+		insert into saved_links (id, user_id, client_id, url, link_key, text, title, provider, embed_id, ig_type, preview_status)
+		values (${id}, ${userId}, ${input.clientId ?? null}, ${input.url},
+		        ${input.url ? linkKeyOf(input.url) : null},
+		        ${input.text?.slice(0, SAVED.textMax) ?? null}, ${input.title?.slice(0, SAVED.titleMax) ?? null},
+		        ${embed?.provider ?? null}, ${embed?.embedId ?? null},
+		        ${embed?.provider === "instagram" ? embed.igType : null},
+		        ${input.url ? "pending" : "ready"})
+		on conflict do nothing
+		returning id::text as id`);
+	if (!res.rows.length) {
+		if (retried) throw new AppError("CONFLICT", "That's already in Saved.");
+		return saveLink(db, userId, input, true);
 	}
+	if (input.url) await enqueuePreview(userId, id);
+	return { id, created: true };
+}
+
+/** Refuses a new saved item past `SAVED.max` waiting ones. */
+export async function assertRoom(db: Exec, userId: string): Promise<void> {
 	const live = await db.execute(sql`
 		select count(*)::int as n from saved_links
 		 where user_id = ${userId} and deleted_at is null and added_at is null`);
@@ -68,21 +123,6 @@ export async function saveLink(
 			"CONFLICT",
 			"Saved is full. Add some to a trip or delete a few first.",
 		);
-	const c = input.url ? classifyUrl(input.url) : null;
-	const embed = c?.kind === "embed" ? c : null;
-	const id = uuidv7();
-	const res = await db.execute(sql`
-		insert into saved_links (id, user_id, client_id, url, text, title, provider, embed_id, ig_type, preview_status)
-		values (${id}, ${userId}, ${input.clientId ?? null}, ${input.url},
-		        ${input.text?.slice(0, SAVED.textMax) ?? null}, ${input.title?.slice(0, SAVED.titleMax) ?? null},
-		        ${embed?.provider ?? null}, ${embed?.embedId ?? null},
-		        ${embed?.provider === "instagram" ? embed.igType : null},
-		        ${input.url ? "pending" : "ready"})
-		on conflict (user_id, client_id) do nothing
-		returning id::text as id`);
-	if (!res.rows.length) return saveLink(db, userId, input);
-	if (input.url) await enqueuePreview(userId, id);
-	return { id, created: true };
 }
 
 type Row = {
@@ -108,7 +148,7 @@ type Row = {
 	updatedAt: Date | string;
 };
 
-function dto(r: Row, nearTrips: string[]): SavedLink {
+function dto(r: Row, nearTrips: string[], files: SavedFile[]): SavedLink {
 	const v = new Date(r.updatedAt).getTime().toString(36);
 	return {
 		id: r.id,
@@ -130,6 +170,7 @@ function dto(r: Row, nearTrips: string[]): SavedLink {
 		favicon: r.faviconKey ? `/api/saved/${r.id}/favicon?v=${v}` : null,
 		place: r.place,
 		nearTrips,
+		files,
 		createdAt: new Date(r.createdAt).getTime(),
 	};
 }
@@ -168,7 +209,51 @@ export async function listSaved(
 		for (const r of stale) await enqueuePreview(userId, r.id);
 	}
 	const near = rows.some((r) => r.place) ? await nearTrips(db, userId) : null;
-	return rows.map((r) => dto(r, near?.get(r.id) ?? []));
+	const files = rows.length
+		? await filesOf(
+				db,
+				userId,
+				rows.map((r) => r.id),
+			)
+		: new Map<string, SavedFile[]>();
+	// A share of photos shows once every file is up (the device finishes it).
+	return rows
+		.filter((r) => {
+			const f = files.get(r.id);
+			return f
+				? f.length > 0 && f.every((x) => x.status !== "pending")
+				: !!(r.url || r.text);
+		})
+		.map((r) => dto(r, near?.get(r.id) ?? [], files.get(r.id) ?? []));
+}
+
+/** The saved photos and videos of these rows, in order (failed ones left out). */
+async function filesOf(
+	db: Exec,
+	userId: string,
+	ids: string[],
+): Promise<Map<string, SavedFile[]>> {
+	const res = await db.execute(sql`
+		select id::text as id, saved_id::text as "savedId", kind, mime, status, width, height,
+		       duration_sec as "durationSec", thumbhash, (meta->>'thumb')::boolean as thumb,
+		       (meta->>'poster')::boolean as poster
+		  from saved_files
+		 where user_id = ${userId} and deleted_at is null and status <> 'failed'
+		   and saved_id = any(${sql.param(ids)}::uuid[])
+		 order by saved_id, position`);
+	const out = new Map<string, SavedFile[]>();
+	for (const r of res.rows as (SavedFile & {
+		savedId: string;
+		thumb: boolean | null;
+		poster: boolean | null;
+	})[]) {
+		const { savedId, thumb, poster, ...f } = r;
+		out.set(savedId, [
+			...(out.get(savedId) ?? []),
+			{ ...f, hasThumb: !!thumb, hasPoster: !!poster },
+		]);
+	}
+	return out;
 }
 
 /**
@@ -216,32 +301,67 @@ export async function markAdded(
 	return res.rows.length > 0;
 }
 
-/** Deletes one of the caller's saved links and its pictures. */
+/**
+ * Deletes some of the caller's saved links (a soft delete: Undo restores
+ * them; their photos stop counting at once, the purge removes the objects
+ * later). Answers the ids it deleted (anything not the caller's is skipped).
+ */
 export async function deleteSaved(
 	db: Exec,
 	userId: string,
-	id: string,
-): Promise<boolean> {
+	ids: readonly string[],
+): Promise<string[]> {
+	if (!ids.length) return [];
 	const res = await db.execute(sql`
-		with old as (
-			select id, image_key, favicon_key from saved_links
-			 where id = ${id} and user_id = ${userId} and deleted_at is null
-			 for update)
-		update saved_links s
-		   set deleted_at = now(), updated_at = now(), image_key = null, favicon_key = null
-		  from old where s.id = old.id
-		returning old.image_key as "imageKey", old.favicon_key as "faviconKey"`);
-	const row = res.rows[0] as
-		| { imageKey: string | null; faviconKey: string | null }
-		| undefined;
-	if (!row) return false;
-	// Best effort: the row is gone from the app either way.
-	for (const k of [row.imageKey, row.faviconKey])
-		if (k?.startsWith(savedPrefix(userId, id)))
-			await deleteObject(k).catch((e) =>
-				console.error("[saved] delete failed:", (e as Error).message),
-			);
-	return true;
+		update saved_links set deleted_at = now(), updated_at = now()
+		 where id = any(${sql.param([...ids])}::uuid[]) and user_id = ${userId}
+		   and deleted_at is null and added_at is null
+		returning id::text as id`);
+	return (res.rows as { id: string }[]).map((r) => r.id);
+}
+
+/**
+ * Undo: deleted saved links back where they were, all or none. Refused when
+ * their photos no longer fit the quota, or a link was saved again meanwhile.
+ */
+export async function restoreSaved(
+	db: DbOrTx,
+	userId: string,
+	ids: readonly string[],
+): Promise<string[]> {
+	if (!ids.length) return [];
+	return db.transaction(async (tx) => {
+		const list = sql.param([...ids]);
+		const rows = (
+			await tx.execute(sql`
+				select id::text as id, link_key as "linkKey" from saved_links
+				 where id = any(${list}::uuid[]) and user_id = ${userId} and deleted_at is not null
+				 for update`)
+		).rows as { id: string; linkKey: string | null }[];
+		if (!rows.length) return [];
+		const keys = rows.flatMap((r) => (r.linkKey ? [r.linkKey] : []));
+		if (keys.length) {
+			const twin = await tx.execute(sql`
+				select 1 from saved_links
+				 where user_id = ${userId} and link_key = any(${sql.param(keys)}::text[])
+				   and deleted_at is null and added_at is null`);
+			if (twin.rows.length)
+				throw new AppError("CONFLICT", "That link is in Saved again already.");
+		}
+		const found = sql.param(rows.map((r) => r.id));
+		const size = await tx.execute(sql`
+			select coalesce(sum(size_bytes), 0)::bigint as n from saved_files
+			 where saved_id = any(${found}::uuid[]) and deleted_at is null and status <> 'failed'`);
+		const n = Number((size.rows[0] as { n: string | number }).n);
+		if (n) {
+			await lockQuota(tx, userId);
+			await assertQuota(tx, { billedUserId: userId, size: n });
+		}
+		await tx.execute(sql`
+			update saved_links set deleted_at = null, updated_at = now()
+			 where id = any(${found}::uuid[])`);
+		return rows.map((r) => r.id);
+	});
 }
 
 /** A picture key of the caller's live saved link (`image` | `favicon`), or null. */

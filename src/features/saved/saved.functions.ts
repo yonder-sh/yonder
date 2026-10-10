@@ -6,21 +6,33 @@
  *   (the device's `clientId` makes a retried upload save once).
  * - `markSavedAdded`: it went into a trip (the trip's own functions did the
  *   adding and checked the role); it leaves the grid.
- * - `deleteSavedLink`: gone, pictures too.
+ * - `deleteSavedLinks` / `restoreSavedLinks`: delete some, and Undo.
+ * - `startSavedUpload`, `signSavedUploadParts`, `completeSavedUpload`: shared
+ *   photos and videos into Saved (`./server/files.server.ts`).
+ * - `attachSavedFiles`: a saved share's photos onto a place (edit access).
  */
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { db } from "@/db/db.server";
+import { IMAGE_TYPES, VIDEO_TYPES } from "@/features/media/media-kinds";
 import { roleAtLeast } from "@/lib/auth/roles";
-import { withAccount } from "@/server/authz/middleware";
+import { withAccount, withNamedUser } from "@/server/authz/middleware";
 import { fail } from "@/server/authz/session.server";
 import { loadTripAccess } from "@/server/authz/trip-access.server";
 import { rateLimitPer } from "@/server/cache.server";
 import { shareInput } from "@/server/shortcut.server";
 import {
+	attachSaved,
+	completeSavedFile,
+	type StartedFile,
+	signSavedFileParts,
+	startSavedFile,
+} from "./server/files.server";
+import {
 	deleteSaved,
 	listSaved,
 	markAdded,
+	restoreSaved,
 	SAVED,
 	saveLink,
 } from "./server/saved.server";
@@ -91,11 +103,100 @@ export const markSavedAdded = createServerFn({ method: "POST" })
 		return { ok: true };
 	});
 
-export const deleteSavedLink = createServerFn({ method: "POST" })
+const Ids = z
+	.object({ ids: z.array(z.uuid()).min(1).max(SAVED.list) })
+	.strict();
+
+export const deleteSavedLinks = createServerFn({ method: "POST" })
 	.middleware([withAccount])
-	.validator(z.object({ id: z.uuid() }).strict())
-	.handler(async ({ data, context }): Promise<{ ok: true }> => {
-		if (!(await deleteSaved(db, context.user.id, data.id)))
-			return fail("NOT_FOUND");
-		return { ok: true };
+	.validator(Ids)
+	.handler(
+		async ({ data, context }): Promise<{ ids: string[] }> => ({
+			ids: await deleteSaved(db, context.user.id, data.ids),
+		}),
+	);
+
+export const restoreSavedLinks = createServerFn({ method: "POST" })
+	.middleware([withAccount])
+	.validator(Ids)
+	.handler(
+		async ({ data, context }): Promise<{ ids: string[] }> => ({
+			ids: await restoreSaved(db, context.user.id, data.ids),
+		}),
+	);
+
+const ClientId = z.string().regex(/^[A-Za-z0-9_-]{1,64}$/);
+
+export const startSavedUpload = createServerFn({ method: "POST" })
+	.middleware([withAccount])
+	.validator(
+		z
+			.object({
+				clientId: ClientId,
+				text: z.string().max(SAVED.textMax).nullish(),
+				title: z.string().max(SAVED.titleMax).nullish(),
+				position: z.number().int().min(0).max(9),
+				type: z.enum([...IMAGE_TYPES, ...VIDEO_TYPES]),
+				size: z.number().int().positive(),
+			})
+			.strict(),
+	)
+	.handler(async ({ data, context }): Promise<StartedFile> => {
+		await rateLimitPer(`upload:${context.user.id}`, 120, 60);
+		return startSavedFile(context.user.id, {
+			...data,
+			text: data.text ?? null,
+			title: data.title ?? null,
+		});
 	});
+
+export const signSavedUploadParts = createServerFn({ method: "POST" })
+	.middleware([withAccount])
+	.validator(
+		z
+			.object({
+				id: z.uuid(),
+				parts: z.array(z.number().int().min(1).max(10_000)).min(1).max(32),
+			})
+			.strict(),
+	)
+	.handler(
+		async ({
+			data,
+			context,
+		}): Promise<{ urls: { part: number; url: string }[] }> => {
+			await rateLimitPer(`upload-parts:${context.user.id}`, 600, 60);
+			return {
+				urls: await signSavedFileParts(context.user.id, data.id, data.parts),
+			};
+		},
+	);
+
+export const completeSavedUpload = createServerFn({ method: "POST" })
+	.middleware([withAccount])
+	.validator(
+		z
+			.object({
+				id: z.uuid(),
+				width: z.number().int().positive().max(100_000).optional(),
+				height: z.number().int().positive().max(100_000).optional(),
+				durationSec: z.number().nonnegative().max(86_400).optional(),
+			})
+			.strict(),
+	)
+	.handler(
+		async ({ data, context }): Promise<{ savedId: string; done: boolean }> =>
+			completeSavedFile(context.user.id, { ...data, fileId: data.id }),
+	);
+
+export const attachSavedFiles = createServerFn({ method: "POST" })
+	.middleware([withNamedUser])
+	.validator(
+		z
+			.object({ savedId: z.uuid(), tripId: z.uuid(), nodeId: z.uuid() })
+			.strict(),
+	)
+	.handler(
+		async ({ data, context }): Promise<{ count: number }> =>
+			attachSaved(context.user, data),
+	);

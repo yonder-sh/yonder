@@ -59,6 +59,14 @@ export function isAttachmentPrefix(p: string | null | undefined): p is string {
 	return !!p && PREFIX_RE.test(p);
 }
 
+const SAVED_FILE_RE =
+	/^saved\/[A-Za-z0-9_-]{1,64}\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/$/i;
+
+/** True for a saved photo's or video's prefix `saved/<userId>/<uuid>/` (an attachment added from Saved points there). */
+export function isSavedFilePrefix(p: string | null | undefined): p is string {
+	return !!p && SAVED_FILE_RE.test(p);
+}
+
 /** Where the browser PUTs an upload before `completeUpload` copies it to its served key. */
 export type UploadSlot = "original.upload" | "poster.upload";
 
@@ -81,10 +89,11 @@ type KeyedRow = { tripId: string; id: string; storageKey: string | null };
 
 /**
  * Where a row's uploaded objects live: its `storage_key` (a duplicated trip's
- * copy shares the source's), else its own `trips/<trip>/<id>/`.
+ * copy shares the source's; one added from Saved shares the saved file's),
+ * else its own `trips/<trip>/<id>/`.
  */
 export function rowPrefix(row: KeyedRow): string {
-	return isAttachmentPrefix(row.storageKey)
+	return isAttachmentPrefix(row.storageKey) || isSavedFilePrefix(row.storageKey)
 		? row.storageKey
 		: mediaPrefix(row.tripId, row.id);
 }
@@ -428,7 +437,10 @@ export async function listSubPrefixes(prefix: string): Promise<string[]> {
 
 /** Deletes every object under `prefix`; returns how many were deleted. */
 export async function deletePrefix(prefix: string): Promise<number> {
-	if (!prefix.startsWith("trips/") || !prefix.endsWith("/"))
+	if (
+		!(prefix.startsWith("trips/") || prefix.startsWith("saved/")) ||
+		!prefix.endsWith("/")
+	)
 		throw new Error(`refusing to delete prefix ${prefix}`);
 	let deleted = 0;
 	let token: string | undefined;

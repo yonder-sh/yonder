@@ -9,6 +9,7 @@ import {
 	mediaVariants,
 } from "@/features/media/server/jobs.server";
 import { fxDaily, fxRehome } from "@/features/money/server/fx.server";
+import { savedFileVariants } from "@/features/saved/server/files.server";
 import { savedPreview } from "@/features/saved/server/preview.server";
 import { autofillLeg } from "@/features/transit/server/autofill.server";
 import type { TripKey } from "@/lib/query/keys";
@@ -157,6 +158,10 @@ export const jobHandlers: JobHandlers = {
 	saved: {
 		"saved.preview": async (data) => {
 			await savedPreview(data);
+			return {};
+		},
+		"saved.file": async (data) => {
+			await savedFileVariants(data);
 			return {};
 		},
 		"test.ping": ping,

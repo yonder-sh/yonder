@@ -31,6 +31,7 @@ import { key, redis, redisForBull } from "./redis.server";
  *   push      `push.events`, `push.flush`, `push.sync`, `push.remind`, `push.sweep`:
  *             Web Push notifications (`src/lib/push/jobs.ts`, `src/server/push`)
  *   saved     `saved.preview`   a saved link's preview, re-hosted under the user (Saved)
+ *             `saved.file`      a saved photo's thumbnails, a saved video's poster (Saved)
  *   hours     `hours.osm`       OSM opening hours of a trip's new or re-linked places (WP-Insights)
  *             `hours.osmRefresh` the next places whose OSM hours are 30+ days old, all trips
  *                               (hourly, by `scheduleRecurringJobs`)
@@ -77,6 +78,11 @@ export const SavedPreviewJob = z.object({
 	userId: z.string().min(1).max(64),
 	savedId: z.string().refine(isUuid, "savedId must be a UUID"),
 });
+/** `saved.file`: one of a user's saved photos or videos. */
+export const SavedFileJob = z.object({
+	userId: z.string().min(1).max(64),
+	fileId: z.string().refine(isUuid, "fileId must be a UUID"),
+});
 /** `hours.osmRefresh`: no payload (all trips). */
 export const OsmHoursRefreshJob = z.object({});
 export const PingJob = z.object({
@@ -115,7 +121,11 @@ export const JOB_SCHEMAS = {
 		"hours.osmRefresh": OsmHoursRefreshJob,
 		"test.ping": PingJob,
 	},
-	saved: { "saved.preview": SavedPreviewJob, "test.ping": PingJob },
+	saved: {
+		"saved.preview": SavedPreviewJob,
+		"saved.file": SavedFileJob,
+		"test.ping": PingJob,
+	},
 } as const satisfies Record<JobKind | SilentQueue, Record<string, z.ZodType>>;
 
 /** Queues without progress events (no toasts; jobs may have no trip). */
