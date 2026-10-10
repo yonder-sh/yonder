@@ -3,38 +3,64 @@ import {
 	autoParent,
 	classifyShare,
 	cleanShareName,
+	defaultTrip,
 	firstUrl,
 	namedIn,
 	parentLabel,
 	parseMapsUrl,
 	readResolution,
-	sharedToSaveLabel,
 } from "../share-classify";
 
-describe("the dashboard's shares kept on this device", () => {
-	const link = (url: string) => ({ url, text: null, files: [] });
-	it("says what they are and what to do: links to save", () => {
-		expect(sharedToSaveLabel([link("https://maps.app.goo.gl/abc")])).toBe(
-			"1 shared link to save",
-		);
+describe("the trip a shared place goes to by default", () => {
+	const trip = (id: string, routePoints: [number, number][] = []) => ({
+		id,
+		routePoints,
+	});
+	const japan = trip("japan", [
+		[139.69, 35.69],
+		[135.77, 35.01],
+	]);
+	const kansai = trip("kansai", [[135.5, 34.69]]);
+	const vietnam = trip("vietnam", [[108.33, 15.88]]);
+	const kyoto = { lat: 35.0037, lng: 135.7788 };
+
+	it("a trip that has the place, when the server knows some", () => {
 		expect(
-			sharedToSaveLabel([
-				link("https://www.tiktok.com/@a/video/1"),
-				{ url: null, text: "look https://example.com/ramen", files: [] },
-			]),
-		).toBe("2 shared links to save");
+			defaultTrip([japan, vietnam], {
+				near: ["vietnam"],
+				at: kyoto,
+				last: "japan",
+			})?.id,
+		).toBe("vietnam");
 	});
 
-	it("photos or plain text among them: items", () => {
+	it("the last one used, when it has the place too", () => {
 		expect(
-			sharedToSaveLabel([
-				link("https://example.com"),
-				{ url: null, text: null, files: [{}] },
-			]),
-		).toBe("2 shared items to save");
-		expect(sharedToSaveLabel([{ url: null, text: "ramen", files: [] }])).toBe(
-			"1 shared item to save",
-		);
+			defaultTrip([japan, kansai, vietnam], {
+				near: ["japan", "kansai"],
+				last: "kansai",
+			})?.id,
+		).toBe("kansai");
+	});
+
+	it("else the nearest trip whose route passes close by", () => {
+		expect(
+			defaultTrip([vietnam, kansai, japan], { at: kyoto, last: "vietnam" })?.id,
+		).toBe("japan");
+		expect(
+			defaultTrip([vietnam, kansai, japan], { at: kyoto, last: "kansai" })?.id,
+		).toBe("kansai");
+	});
+
+	it("far from every trip, or no place: the last one used, else the first", () => {
+		expect(
+			defaultTrip([japan, vietnam], {
+				at: { lat: 48.85, lng: 2.35 },
+				last: "vietnam",
+			})?.id,
+		).toBe("vietnam");
+		expect(defaultTrip([japan, vietnam], { last: "gone" })?.id).toBe("japan");
+		expect(defaultTrip([], { at: kyoto })).toBeNull();
 	});
 });
 

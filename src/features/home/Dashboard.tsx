@@ -11,7 +11,7 @@
  */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { ArrowRight, Check, Inbox, Plus } from "lucide-react";
+import { ArrowRight, Bookmark, Check, Plus } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { FlagEmoji } from "@/components/common/glyphs";
@@ -37,7 +37,9 @@ import {
 	readSavedTrips,
 	removeTripOffline,
 } from "@/features/offline/saved-trips";
-import { listShared } from "@/features/offline/share-store";
+import { savedQuery } from "@/features/saved/queries";
+import { SAVED_TESTID } from "@/features/saved/testids";
+import { useSharedOnDevice } from "@/features/saved/use-shared-on-device";
 import { InboxBell } from "@/features/shell/InboxBell";
 import { roleLabel } from "@/lib/auth/roles";
 import type { Viewer } from "@/lib/auth/viewer";
@@ -57,13 +59,11 @@ import { heroWhen, isRunning } from "./hero-when";
 import { NewTripDialog } from "./NewTripDialog";
 import { ProfileDialog } from "./ProfileDialog";
 import { myDeadlinesQuery, myTripsQuery } from "./queries";
-import { sharedToSaveLabel } from "./share-classify";
 import { leaveTrip } from "./sharing.functions";
 import { TripSketch } from "./TripSketch";
 import { HOME_TESTID } from "./testids";
 import { rememberZone } from "./today";
 import type { MyTrip } from "./types";
-import { SHARED_CHANGED } from "./use-shortcut-pickup";
 
 function greeting(): string {
 	const h = new Date().getHours();
@@ -517,31 +517,40 @@ function Deadlines() {
 	);
 }
 
-/** E8: "2 shared links to save" (entries kept on this device while offline). */
-function SharedWaiting() {
-	const [label, setLabel] = useState<string | null>(null);
-	const [firstId, setFirstId] = useState<string | null>(null);
-	useEffect(() => {
-		const read = () =>
-			void listShared().then((l) => {
-				setLabel(l.length ? sharedToSaveLabel(l) : null);
-				setFirstId(l[0]?.id ?? null);
-			});
-		read();
-		window.addEventListener(SHARED_CHANGED, read);
-		return () => window.removeEventListener(SHARED_CHANGED, read);
-	}, []);
-	if (!label || !firstId) return null;
+/** Saved: links shared into Yonder waiting for a trip (and shares still on this device). */
+function SavedEntry() {
+	const saved = useQuery(savedQuery());
+	const local = useSharedOnDevice();
+	const n = (saved.data?.length ?? 0) + local.length;
+	if (!n) return null;
+	const thumbs = (saved.data ?? []).filter((l) => l.image).slice(0, 3);
 	return (
 		<Link
-			to="/share"
-			search={{ id: firstId } as never}
-			data-testid={HOME_TESTID.sharedWaiting}
-			className="flex h-11 items-center gap-3 rounded-xl border bg-card px-4 text-sm transition-colors hover:border-foreground/20"
+			to="/saved"
+			data-testid={SAVED_TESTID.entry}
+			className="flex h-14 items-center gap-3 rounded-xl border bg-card px-4 text-sm transition-colors hover:border-foreground/20"
 		>
-			<Inbox className="size-4 text-muted-foreground" />
-			<span className="flex-1">{label}</span>
-			<ArrowRight className="size-4 text-muted-foreground" />
+			<Bookmark className="size-4 shrink-0 text-muted-foreground" />
+			<span className="min-w-0 flex-1 truncate">
+				<span className="font-medium">Saved</span>
+				<span className="text-muted-foreground">
+					{" "}
+					· {n} {n === 1 ? "link" : "links"} to add to a trip
+				</span>
+			</span>
+			{thumbs.length ? (
+				<span className="flex shrink-0 -space-x-2">
+					{thumbs.map((l) => (
+						<img
+							key={l.id}
+							src={l.image ?? ""}
+							alt=""
+							className="h-9 w-[22px] rounded-[5px] object-cover ring-2 ring-card"
+						/>
+					))}
+				</span>
+			) : null}
+			<ArrowRight className="size-4 shrink-0 text-muted-foreground" />
 		</Link>
 	);
 }
@@ -698,7 +707,7 @@ export function Dashboard({
 					</div>
 				) : all.length === 0 ? (
 					<>
-						<SharedWaiting />
+						<SavedEntry />
 						<EmptyState
 							line="Your next trip starts here."
 							action={
@@ -723,7 +732,7 @@ export function Dashboard({
 								menu={menuFor(next)}
 							/>
 						) : null}
-						<SharedWaiting />
+						<SavedEntry />
 						<Deadlines />
 						{mine.length ? (
 							<section>

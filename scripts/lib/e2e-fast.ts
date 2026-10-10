@@ -84,7 +84,7 @@ export const MAP_CACHE_DIR = path.join(
 );
 const STUB = `http://127.0.0.1:${SERVICES_STUB_PORT}`;
 /** The stub's routes this harness expects (services-stub.mjs STUB_VERSION). */
-const STUB_VERSION = 2;
+const STUB_VERSION = 3;
 /** The Node preload that refuses connections off this machine (NODE_OPTIONS). */
 export const NO_EGRESS_PRELOAD = path.join(
 	REPO_ROOT,

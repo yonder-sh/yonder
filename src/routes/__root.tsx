@@ -16,6 +16,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { useShortcutPickup } from "@/features/home/use-shortcut-pickup";
 import { useHomeLifecycle } from "@/features/offline/app-lifecycle";
 import { usePushBridge } from "@/features/push/use-push";
+import { useSharedUpload } from "@/features/saved/use-shared-upload";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { onSignOut } from "@/lib/auth/sign-out";
 import { BRAND } from "@/lib/brand";
@@ -86,8 +87,10 @@ function RootDocument({ children }: { children: ReactNode }) {
 	useHomeLifecycle();
 	// Web Push: a notification click navigates this window; sign-out drops the device.
 	usePushBridge();
-	// The iPhone Shortcut: links it sent open the save screen when the app comes up.
+	// The iPhone Shortcut: a link it just saved opens in the Saved feed when the app comes up.
 	useShortcutPickup();
+	// Shares kept on this device go up to Saved when online.
+	useSharedUpload();
 	// The CJK @font-face rules, after first paint (QA VIS2-10 / PERF-05).
 	useEffect(() => {
 		void loadCjkFonts();

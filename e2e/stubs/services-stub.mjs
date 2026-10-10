@@ -36,7 +36,7 @@ import { createMapProxy } from "./map-proxy.mjs";
 import { loadPhoton } from "./photon-stub.mjs";
 
 /** Bumped when the routes change: e2e:fast replaces an older stub still running. */
-export const STUB_VERSION = 2;
+export const STUB_VERSION = 3;
 const ROOT = new URL("../../", import.meta.url);
 const DAY_MS = 86_400_000;
 

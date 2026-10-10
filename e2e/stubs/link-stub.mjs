@@ -7,7 +7,8 @@
 //     other id is a 400, like the real ones for the specs' fake ids;
 //   - TikTok vm./vt. and maps.app.goo.gl short links: `tiktokShort` /
 //     `mapsShort` redirects;
-//   - Instagram posts: the login wall (the card stays branded);
+//   - Instagram posts: the login wall (the card stays branded), unless
+//     `pages` has the post;
 //   - Google Maps pages: "Google Maps" with a static-map picture;
 //   - web pages: `pages` (the real title, description, site and picture),
 //     else a page titled after the URL for a known host (`hosts`, and every
@@ -166,6 +167,8 @@ export function createLinks({ fixture, root }) {
 		}
 		if (/image\//.test(accept) || /\.(png|jpe?g|gif|webp|ico|avif)$/i.test(u.pathname) || u.pathname.includes("/staticmap"))
 			return hit(/favicon|\.ico$/i.test(u.pathname) ? png(host, 32, 32) : png(u.href));
+		const known = pages.get(u.href.replace(/#.*$/, ""));
+		if (known) return hit(html(page({ ...known, url: u.href })));
 		if (host === "www.instagram.com" || host === "instagram.com")
 			return hit(html(page({ title: "Instagram", description: "Create an account or log in to Instagram.", siteName: "Instagram", url: u.href })));
 		if (/(^|\.)tiktok\.com$/.test(host))
@@ -175,8 +178,6 @@ export function createLinks({ fixture, root }) {
 			const image = at ? `https://maps.google.com/maps/api/staticmap?center=${at[1]}%2C${at[2]}&zoom=17&size=256x256` : undefined;
 			return hit(html(page({ title: "Google Maps", description: "Find local businesses, view maps and get driving directions in Google Maps.", siteName: "Google Maps", image, url: u.href })));
 		}
-		const known = pages.get(u.href.replace(/#.*$/, ""));
-		if (known) return hit(html(page({ ...known, url: u.href })));
 		if (/\.pdf$/i.test(u.pathname))
 			return { hit: hosts.has(host), key, res: { status: 200, headers: { "content-type": "application/pdf" }, body: "%PDF-1.4\n%%EOF\n" } };
 		const generic = html(page({ title: titleOf(u), siteName: host.replace(/^www\./, ""), image: `${u.origin}/og-image.png`, url: u.href }));

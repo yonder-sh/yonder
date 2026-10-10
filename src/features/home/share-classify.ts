@@ -40,19 +40,6 @@ export function classifyShare(entry: {
 	return "text";
 }
 
-/** The dashboard's line for shares kept on this device: "2 shared links to save". */
-export function sharedToSaveLabel(
-	entries: readonly Parameters<typeof classifyShare>[0][],
-): string {
-	const n = entries.length;
-	const links = entries.every((e) => {
-		const k = classifyShare(e);
-		return k === "maps" || k === "social" || k === "web";
-	});
-	const noun = links ? "link" : "item";
-	return `${n} shared ${noun}${n === 1 ? "" : "s"} to save`;
-}
-
 const URL_RE = /https?:\/\/[^\s<>"']+/i;
 
 export function firstUrl(text: string | null | undefined): string | null {
@@ -344,4 +331,40 @@ export function parentLabel(
 	const tail = names.slice(-2);
 	for (const c of plan.create) tail.push(`${c.name} (new)`);
 	return tail.length ? tail.join(" › ") : rootName;
+}
+
+/**
+ * The trip a shared link goes to by default: for a place, a trip that has it
+ * (`near`: the server's picks, nearest first: a city, area or place close
+ * by), else one whose route passes within 80 km; the last one used wins
+ * among those. Else the last one used, else the first.
+ */
+export function defaultTrip<
+	T extends { id: string; routePoints: readonly [number, number][] },
+>(
+	trips: readonly T[],
+	opts: {
+		near?: readonly string[];
+		at?: { lat: number; lng: number } | null;
+		last?: string | null;
+	},
+): T | null {
+	const last = trips.find((t) => t.id === opts.last) ?? null;
+	const near = (opts.near ?? []).flatMap(
+		(id) => trips.find((t) => t.id === id) ?? [],
+	);
+	if (!near.length && opts.at) {
+		const at = opts.at;
+		const by = new Map<T, number>();
+		for (const t of trips)
+			for (const [lng, lat] of t.routePoints) {
+				const m = metres(at, { lat, lng });
+				if (m < 80_000 && m < (by.get(t) ?? Number.POSITIVE_INFINITY))
+					by.set(t, m);
+			}
+		near.push(...[...by].sort((a, b) => a[1] - b[1]).map(([t]) => t));
+	}
+	if (near.length)
+		return last && near.includes(last) ? last : (near[0] ?? null);
+	return last ?? trips[0] ?? null;
 }

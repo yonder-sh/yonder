@@ -1,0 +1,21 @@
+/** Saved's `data-testid`s (import-free). */
+export const SAVED_TESTID = {
+	page: "saved-page",
+	grid: "saved-grid",
+	tile: "saved-tile",
+	tileBadge: "saved-tile-badge",
+	tileLine: "saved-tile-line",
+	empty: "saved-empty",
+	waiting: "saved-waiting",
+	feed: "saved-feed",
+	card: "saved-card",
+	stage: "saved-stage",
+	bar: "saved-bar",
+	info: "saved-info",
+	delete: "saved-delete",
+	later: "saved-later",
+	close: "saved-close",
+	end: "saved-end",
+	endBack: "saved-end-back",
+	entry: "saved-entry",
+} as const;

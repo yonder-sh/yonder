@@ -1,22 +1,21 @@
 /**
  * The iPhone Shortcut's hand-off (src/server/shortcut.server.ts): the Shortcut
- * sends the shared link to the server, then opens the home-screen app, which
- * iOS starts on its start page. Whenever the app comes to the front, links the
- * Shortcut sent move into this device's share inbox; one sent in the last 2
- * minutes opens the save screen at once. Older ones wait on the dashboard
- * ("2 shared links to save"). The first look after pairing says "connected".
+ * saves the shared link into Saved, then opens the home-screen app, which iOS
+ * starts on its start page. Whenever the app comes to the front, a link saved
+ * in the last 2 minutes opens in the Saved feed at once (one tap to save it
+ * to a trip, or Later). Older ones wait in Saved. The first look after
+ * pairing says "connected".
  */
 import { useRouter } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { toast } from "sonner";
-import { putShared } from "@/features/offline/share-store";
 import { useHasAccount } from "@/features/push/use-push";
 import { takeShortcutShares } from "@/functions/shortcut.functions";
+import { meKeys } from "@/lib/query/keys";
 import { thisDevice } from "./SaveFromAppsDialog";
 
 const FLAG = "yonder:shortcut";
-const FRESH_MS = 2 * 60_000;
-/** The dashboard's "N shared links to save" re-reads on this event. */
+/** Shares kept on this device changed (Saved and the dashboard re-read them). */
 export const SHARED_CHANGED = "yonder:shared-changed";
 
 /** This browser set up the Shortcut (Connect in Save from other apps). */
@@ -52,34 +51,24 @@ export function useShortcutPickup(): void {
 				return;
 			busy = true;
 			try {
-				const { shares, connected } = await takeShortcutShares();
+				const { fresh, connected } = await takeShortcutShares();
 				if (connected) {
 					markShortcutDevice();
 					toast.success(`${connected} is connected`, {
 						description: "Share from any app and pick Save to Yonder.",
 					});
 				}
-				let fresh: string | null = null;
-				for (const s of shares) {
-					const id = `shortcut-${s.id}`;
-					await putShared({
-						id,
-						createdAt: s.createdAt,
-						title: null,
-						text: s.text,
-						url: s.url,
-						files: [],
+				if (fresh) {
+					void router.options.context.queryClient.invalidateQueries({
+						queryKey: meKeys.saved,
 					});
-					if (Date.now() - s.createdAt < FRESH_MS) fresh = id;
-				}
-				if (shares.length) window.dispatchEvent(new Event(SHARED_CHANGED));
-				if (fresh)
 					void router.navigate({
-						to: "/share",
-						search: { id: fresh } as never,
+						to: "/saved",
+						search: { open: fresh, from: "share" },
 					});
+				}
 			} catch {
-				// Offline or signed out: the links stay on the server for next time.
+				// Offline or signed out: the link waits in Saved.
 			} finally {
 				busy = false;
 			}

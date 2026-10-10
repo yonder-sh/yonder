@@ -148,6 +148,12 @@
 			"description": "Everything you need to know about visiting Jiufen & Shifen: best time to go, the stunning Jiufen Old Street, how to get there and why you should stay at least one night.",
 			"siteName": "Walk My World",
 			"image": "http://static1.squarespace.com/static/596b2969d2b85786e6892853/596dd526725e25fb5efd7397/5bf2b77f70a6ad8a5c93142b/1787152981839/6D2A8994-2.jpg?format=1500w"
+		},
+		"https://www.instagram.com/reel/C0SAVEDE2E/": {
+			"title": "Kyoto Eats on Instagram: \"Tamago sando at Kissa Mado\"",
+			"description": "kyoto.eats on May 2, 2026: \"Tamago sando at Kissa Mado\"",
+			"siteName": "Instagram",
+			"image": "https://scontent.cdninstagram.com/v/saved-e2e.jpg"
 		}
 	},
 	"youtube": {
@@ -156,7 +162,12 @@
 			"author_name": "Rick Astley"
 		}
 	},
-	"tiktok": {},
+	"tiktok": {
+		"7311111111111111111": {
+			"title": "Matcha parfait at Tsujiri, worth the queue",
+			"author_name": "kyoto.eats"
+		}
+	},
 	"tiktokShort": {},
 	"mapsShort": {},
 	"hosts": [

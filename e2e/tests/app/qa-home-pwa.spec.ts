@@ -402,8 +402,9 @@ test("Share target: Maps duplicate check, TikTok save, offline keep, sign-out cl
 	await swControls(page);
 	// SHR-07: Itoya is in Asia 2027 (seed coords 35.6739,139.7676)
 	await postShare(page, { title: "Itoya", url: "https://www.google.com/maps/place/Itoya/@35.6739,139.7676,17z" });
-	await expect(page).toHaveURL(/\/share\?id=/, { timeout: 15_000 });
-	const inbox = page.getByTestId("share-inbox");
+	// Online, a share goes into Saved and opens in its feed at the link.
+	await expect(page).toHaveURL(/\/saved\?open=/, { timeout: 20_000 });
+	const inbox = page.locator('[data-testid="saved-card"][data-active]');
 	await expect(inbox).toBeVisible({ timeout: 15_000 });
 	await page.waitForTimeout(4000);
 	await shot(page, "share-01-itoya");
@@ -411,15 +412,15 @@ test("Share target: Maps duplicate check, TikTok save, offline keep, sign-out cl
 	// SHR-02: TikTok → new idea named without hashtags
 	await page.goto("/dashboard");
 	await postShare(page, { title: "Best ramen in Shinjuku!! #ramen #tokyo @foodie 🍜", text: "Check it https://www.tiktok.com/@foodie/video/7309876543210987654", url: "" });
-	await expect(page).toHaveURL(/\/share\?id=/, { timeout: 15_000 });
+	await expect(page).toHaveURL(/\/saved\?open=/, { timeout: 20_000 });
 	await expect(inbox).toBeVisible({ timeout: 15_000 });
 	await page.waitForTimeout(2500);
-	const name = await page.getByTestId("home-share-name").inputValue().catch(() => "");
+	const name = await inbox.getByTestId("home-share-name").inputValue().catch(() => "");
 	console.log("SHR-02 name:", JSON.stringify(name), "| inbox:", (await inbox.innerText()).replace(/\n/g, " | ").slice(0, 300));
 	expect.soft(name).not.toMatch(/#|@|🍜|http/);
 	await shot(page, "share-02-tiktok");
-	await page.getByTestId("home-share-save").click();
-	await expect(inbox).toContainText(/Saved/, { timeout: 15_000 });
+	await inbox.getByTestId("home-share-save").click();
+	await expect(page.locator('[data-testid="saved-card"][data-done="saved"]')).toHaveCount(1, { timeout: 15_000 });
 	await shot(page, "share-02-tiktok-saved");
 	// offline: from a page loaded online
 	await page.goto("/dashboard");
@@ -438,7 +439,7 @@ test("Share target: Maps duplicate check, TikTok save, offline keep, sign-out cl
 	await page.goto("/dashboard");
 	await expect(page.getByTestId("dashboard")).toBeVisible();
 	await page.waitForTimeout(2500);
-	const waiting = await page.getByTestId("home-shared-waiting").innerText().catch(() => "");
+	const waiting = await page.getByTestId("saved-entry").innerText().catch(() => "");
 	console.log("SHR dashboard waiting:", waiting);
 	await shot(page, "share-04-dashboard-waiting");
 	// SHR-06: sign-out clears it
@@ -463,7 +464,7 @@ test("Share target: Maps duplicate check, TikTok save, offline keep, sign-out cl
 		await page.waitForTimeout(4000);
 		console.log("SHR-04 after login:", page.url(), (await page.locator("body").innerText()).slice(0, 200).replace(/\n/g, " | "));
 		await shot(page, "share-06-after-login");
-		expect.soft(page.url()).toMatch(/\/share\?id=/);
+		expect.soft(page.url()).toMatch(/\/share\?id=|\/saved\?open=/);
 	}
 	await ctx.close();
 });

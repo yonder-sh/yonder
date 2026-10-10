@@ -2,11 +2,13 @@
  * E8 Share to Yonder (EXTENSIONS §10, QA SHR-01/07) and the guest line
  * (SPEC §11.2 flow 7; ADDENDUM §10 "Are you Audrey?"). The share-target POST
  * itself needs the service worker (production build); here the page is fed
- * through "Paste a link", the iOS path, which saves the same way.
+ * through "Paste a link", the iOS path, which saves the same way: into
+ * Saved, opened in its feed at the link, one tap from a trip.
  */
 import { randomBytes } from "node:crypto";
-import { expect, test } from "@playwright/test";
+import { expect, type Page, test } from "@playwright/test";
 import { HOME_TESTID } from "../../../src/features/home/testids";
+import { SAVED_TESTID } from "../../../src/features/saved/testids";
 import { TESTID } from "../../../src/lib/testids";
 import { loginViaApi } from "./_helpers/auth";
 import { APP_URL, shotPath, storageStateOf } from "./_helpers/env";
@@ -15,6 +17,13 @@ import { expectLive, expectNoHorizontalOverflow, hydrated } from "./_helpers/pag
 import { openLink } from "./_helpers/link";
 
 test.use({ storageState: storageStateOf("dev") });
+
+/** The Saved feed's card of the link just shared (a share opens the feed at it). */
+async function sharedCard(page: Page) {
+	await expect(page).toHaveURL(/\/saved\?open=.+&from=share/, { timeout: 20_000 });
+	const id = new URL(page.url()).searchParams.get("open");
+	return page.locator(`[data-testid="${SAVED_TESTID.card}"][data-saved="${id}"]`);
+}
 
 test("a pasted Maps link becomes an idea filed under its city, with one tap", async ({
 	page,
@@ -37,23 +46,23 @@ test("a pasted Maps link becomes an idea filed under its city, with one tap", as
 		`https://www.google.com/maps/place/${encodeURIComponent(name)}/@35.0037,135.7788,17z`,
 	);
 	await page.getByRole("button", { name: "Use" }).click();
-	await expect(page.getByTestId(HOME_TESTID.shareName)).toHaveValue(name);
-	await expect(page.getByTestId(HOME_TESTID.shareSave)).toBeEnabled();
+	const card = await sharedCard(page);
+	if (mobile) await card.getByTestId(SAVED_TESTID.bar).click();
+	await expect(card.getByTestId(HOME_TESTID.shareName)).toHaveValue(name);
+	await expect(card.getByTestId(HOME_TESTID.shareSave)).toBeEnabled();
 	// No provider knows the name: the pin is filed by its spot's address,
 	// Photon's reverse geocode (Kyoto › Higashiyama Ward › Rinka-cho), under
 	// Kyoto in a new neighbourhood. ("in Kyoto" alone is only the guess shown
 	// while that answer is on its way.)
-	await expect(page.getByTestId(TESTID.shareInbox)).toContainText(
-		"in Rinka-cho (new)",
-	);
+	await expect(card).toContainText("in Rinka-cho (new)");
 	await expectNoHorizontalOverflow(page);
 	await page.screenshot({
 		path: shotPath(`home/share-inbox-${mobile ? "mobile" : "desktop"}.png`),
 		animations: "disabled",
 	});
 	if (mobile) return;
-	await page.getByTestId(HOME_TESTID.shareSave).click();
-	await expect(page.getByTestId(TESTID.shareInbox)).toContainText(
+	await card.getByTestId(HOME_TESTID.shareSave).click();
+	await expect(card.getByTestId(HOME_TESTID.shareSaved)).toContainText(
 		"Saved to Rinka-cho ideas",
 		{ timeout: 15_000 },
 	);
@@ -62,7 +71,7 @@ test("a pasted Maps link becomes an idea filed under its city, with one tap", as
 		animations: "disabled",
 	});
 	// The idea is in the trip, located, under Kyoto's new Rinka-cho.
-	await page.getByRole("link", { name: "Open in trip" }).click();
+	await card.getByRole("link", { name: "Open in trip" }).click();
 	await expect(page.getByTestId(TESTID.workspace)).toBeVisible();
 	const nodes = await page.evaluate(
 		() =>
@@ -107,30 +116,27 @@ test("a suggester's shared video becomes a suggestion where they filed it (SHR-0
 	);
 	await page.getByRole("button", { name: "Use" }).click();
 	const name = `Matcha parfait ${tag} at Tsujiri`;
-	await expect(page.getByTestId(HOME_TESTID.shareName)).toHaveValue(name);
-	await expect(page.getByTestId(TESTID.shareInbox)).toContainText(
-		"Social video",
-	);
-	await expect(page.getByTestId(TESTID.shareInbox)).toContainText(
-		"an editor reviews it first",
-	);
+	const card = await sharedCard(page);
+	await expect(card.getByTestId(HOME_TESTID.shareName)).toHaveValue(name);
+	await expect(card).toContainText("TikTok");
+	await expect(card).toContainText("an editor reviews it first");
 	// No coordinates: it would go to the top level; file it under Harajuku.
-	await page.getByTestId(HOME_TESTID.shareParent).click();
+	await card.getByTestId(HOME_TESTID.shareParent).click();
 	await page.getByPlaceholder("Search the trip…").fill("Haraj");
 	await page.getByRole("option", { name: "Harajuku" }).click();
-	await expect(page.getByTestId(HOME_TESTID.shareParent)).toHaveAccessibleName(
+	await expect(card.getByTestId(HOME_TESTID.shareParent)).toHaveAccessibleName(
 		/Tokyo › Harajuku/,
 	);
 	await page.screenshot({
 		path: shotPath("home/share-inbox-suggest-desktop.png"),
 		animations: "disabled",
 	});
-	await page.getByTestId(HOME_TESTID.shareSave).click();
-	const saved = page.getByTestId(HOME_TESTID.shareSaved);
+	await card.getByTestId(HOME_TESTID.shareSave).click();
+	const saved = card.getByTestId(HOME_TESTID.shareSaved);
 	await expect(saved).toContainText("Suggested to", { timeout: 15_000 });
 	// (The link then chains onto the proposed place through its id; before
 	// WP-Media's `attachment.link` core lands, the card says it couldn't.)
-	await page.getByRole("link", { name: "Open in trip" }).click();
+	await saved.getByRole("link", { name: "Open in trip" }).click();
 	await expect(page.getByTestId(TESTID.workspace)).toBeVisible();
 	// Her own suggestion shows as a ghost under Harajuku.
 	await expect
@@ -217,7 +223,7 @@ test("a signed-in guest named Audrey gets Join the trip, no claim; the owner's '
 	await ctx.close();
 });
 
-test("the iOS Shortcut's address opens the saver on the shared link, no paste", async ({ page, request }, info) => {
+test("the iOS Shortcut's address opens the shared link in the Saved feed, no paste", async ({ page, request }, info) => {
 	test.skip(info.project.name !== "chromium", "one browser is enough");
 	const c = await cloneFixtureTrip(request);
 	await page.goto("/share");
@@ -225,9 +231,14 @@ test("the iOS Shortcut's address opens the saver on the shared link, no paste", 
 	const tag = randomBytes(2).toString("hex");
 	const url = "https://www.tiktok.com/@kyoto.eats/video/7302";
 	await page.goto(`/share?${new URLSearchParams({ url, text: `Hojicha ${tag} at Kagizen ${url}` })}`);
-	await expect(page.getByTestId(HOME_TESTID.shareName)).toHaveValue(`Hojicha ${tag} at Kagizen`);
-	await expect(page.getByTestId(TESTID.shareInbox)).toContainText("Social video");
-	await expect(page.getByTestId(HOME_TESTID.shareSave)).toBeEnabled();
+	const card = await sharedCard(page);
+	await expect(card.getByTestId(HOME_TESTID.shareName)).toHaveValue(`Hojicha ${tag} at Kagizen`);
+	await expect(card).toContainText("TikTok");
+	await expect(card.getByTestId(HOME_TESTID.shareSave)).toBeEnabled();
+	// Later keeps it in Saved.
+	await card.getByTestId(SAVED_TESTID.later).click();
+	await expect(page).toHaveURL(/\/saved$/);
+	await expect(page.locator(`[data-testid="${SAVED_TESTID.tile}"][aria-label*="Hojicha ${tag}"]`)).toBeVisible();
 });
 
 test("⌘K: a pasted reel goes onto the open place in one step", async ({ page, request }, info) => {
