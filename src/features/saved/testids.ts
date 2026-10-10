@@ -18,4 +18,10 @@ export const SAVED_TESTID = {
 	end: "saved-end",
 	endBack: "saved-end-back",
 	entry: "saved-entry",
+	slides: "saved-slides",
+	slide: "saved-slide",
+	select: "saved-select",
+	selectCancel: "saved-select-cancel",
+	selectCount: "saved-select-count",
+	deleteSelected: "saved-delete-selected",
 } as const;

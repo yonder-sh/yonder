@@ -186,6 +186,7 @@ async function putParts(
 	mp: { partSize: number; parts: number },
 	onProgress: (f: number) => void,
 	active: () => boolean = () => isActive(key),
+	sign: Signer = (data) => signUploadParts({ data }),
 ): Promise<void> {
 	const sent = new Array<number>(mp.parts).fill(0);
 	const report = () =>
@@ -207,7 +208,7 @@ async function putParts(
 		for (let p = part + 1; p <= mp.parts && batch.length < SIGN_BATCH; p++)
 			if (!urls.has(p) && !signing.has(p)) batch.push(p);
 		const at = Date.now();
-		const req = signUploadParts({ data: { id, parts: batch } }).then((r) => {
+		const req = sign({ id, parts: batch }).then((r) => {
 			for (const u of r.urls) urls.set(u.part, { url: u.url, at });
 		});
 		for (const p of batch) signing.set(p, req);
@@ -264,6 +265,43 @@ async function putParts(
 		| PromiseRejectedResult
 		| undefined;
 	if (cancelled) throw cancelled.reason;
+}
+
+type Signer = (data: {
+	id: string;
+	parts: number[];
+}) => Promise<{ urls: { part: number; url: string }[] }>;
+
+/**
+ * One blob to storage for an upload already started elsewhere (Saved's
+ * shared photos): its presigned PUT, or its parts signed by `sign`, with
+ * progress (0–1).
+ */
+export async function putBlob(p: {
+	id: string;
+	blob: Blob;
+	type: string;
+	url?: string;
+	multipart?: { partSize: number; parts: number };
+	sign: Signer;
+	onProgress: (f: number) => void;
+}): Promise<void> {
+	const key = `x${++seq}`;
+	try {
+		if (p.multipart)
+			await putParts(
+				key,
+				p.id,
+				p.blob,
+				p.multipart,
+				p.onProgress,
+				() => true,
+				p.sign,
+			);
+		else if (p.url) await put(key, p.url, p.blob, p.type, p.onProgress);
+	} finally {
+		xhrs.delete(key);
+	}
 }
 
 /**

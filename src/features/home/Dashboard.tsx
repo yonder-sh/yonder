@@ -38,6 +38,7 @@ import {
 	removeTripOffline,
 } from "@/features/offline/saved-trips";
 import { savedQuery } from "@/features/saved/queries";
+import { tileImage } from "@/features/saved/SavedTile";
 import { SAVED_TESTID } from "@/features/saved/testids";
 import { useSharedOnDevice } from "@/features/saved/use-shared-on-device";
 import { InboxBell } from "@/features/shell/InboxBell";
@@ -523,7 +524,12 @@ function SavedEntry() {
 	const local = useSharedOnDevice();
 	const n = (saved.data?.length ?? 0) + local.length;
 	if (!n) return null;
-	const thumbs = (saved.data ?? []).filter((l) => l.image).slice(0, 3);
+	const thumbs = (saved.data ?? [])
+		.flatMap((l) => {
+			const t = tileImage(l);
+			return t ? [{ id: l.id, src: t.src }] : [];
+		})
+		.slice(0, 3);
 	return (
 		<Link
 			to="/saved"
@@ -533,17 +539,14 @@ function SavedEntry() {
 			<Bookmark className="size-4 shrink-0 text-muted-foreground" />
 			<span className="min-w-0 flex-1 truncate">
 				<span className="font-medium">Saved</span>
-				<span className="text-muted-foreground">
-					{" "}
-					· {n} {n === 1 ? "link" : "links"} to add to a trip
-				</span>
+				<span className="text-muted-foreground"> · {n} to add to a trip</span>
 			</span>
 			{thumbs.length ? (
 				<span className="flex shrink-0 -space-x-2">
 					{thumbs.map((l) => (
 						<img
 							key={l.id}
-							src={l.image ?? ""}
+							src={l.src}
 							alt=""
 							className="h-9 w-[22px] rounded-[5px] object-cover ring-2 ring-card"
 						/>

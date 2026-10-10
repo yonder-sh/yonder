@@ -106,10 +106,10 @@ export const HOME_TESTID = {
 	shareTrip: "home-share-trip",
 	shareName: "home-share-name",
 	sharePaste: "home-share-paste",
-	shareDone: "home-share-done",
 	shareSaved: "home-share-saved",
 	shareParent: "home-share-parent",
 	shareDuplicate: "home-share-duplicate",
 	shareTodo: "home-share-todo",
 	shareSaving: "home-share-saving",
+	shareUploading: "home-share-uploading",
 } as const;

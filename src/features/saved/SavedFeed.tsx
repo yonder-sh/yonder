@@ -7,7 +7,9 @@
  *
  * - Save files it into a trip (the share page's controls, `Saver`) and moves
  *   on to the next after a beat, with "Saved to Kyoto ideas · Japan 2027";
- *   Delete removes it from Saved; scrolling past keeps it.
+ *   Delete removes it from Saved (with Undo); scrolling past keeps it.
+ * - Shared photos and videos are one item: their slides swipe sideways (as
+ *   a place's photos do in Rate); a video plays when it's on screen.
  * - Saved and deleted ones stay in this session's feed (scroll back up to see
  *   them); the grid drops them.
  * - The end: "That's everything you saved", back to the grid.
@@ -25,25 +27,28 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import { toast } from "sonner";
+import { ThumbhashImage } from "@/components/common/thumbhash-image";
 import { Button } from "@/components/ui/button";
 import { type SaveResult, Saver } from "@/features/home/Saver";
 import { canonicalLink } from "@/features/media/embeds";
 import {
 	EmbedPlayer,
+	Fitted,
 	FittedImg,
 	useCardInView,
+	useCoarsePointer,
 } from "@/features/media/feed-player";
 import { embedOf } from "@/features/places/rate/PlaceMedia";
 import { MiniMap } from "@/features/places/ui/mini-map";
 import { useBreakpoint } from "@/features/shell/use-breakpoint";
-import { humanError } from "@/lib/errors";
 import { meKeys } from "@/lib/query/keys";
 import { cn } from "@/lib/utils";
 import { feedPile, savedKind, sourceLabel, tileLine, toEntry } from "./lib";
-import { SavedPlaceholder, SourceMark } from "./SavedTile";
-import { deleteSavedLink, markSavedAdded } from "./saved.functions";
+import { SavedPlaceholder, SourceMark, savedFileUrl } from "./SavedTile";
+import { attachSavedFiles, markSavedAdded } from "./saved.functions";
 import { SAVED_TESTID } from "./testids";
-import type { SavedLink } from "./types";
+import type { SavedFile, SavedLink } from "./types";
+import { useDeleteSaved } from "./use-delete-saved";
 
 /** How long a saved card stays before the feed moves on. */
 const ADVANCE_MS = 1100;
@@ -96,6 +101,15 @@ function SavedMedia({
 	const line = tileLine(link);
 	let body: React.ReactNode = null;
 	if (!near) body = null;
+	else if (link.files.length)
+		return (
+			<SavedSlides
+				files={link.files}
+				title={line}
+				active={active}
+				className={className}
+			/>
+		);
 	else if (embed && (active || ahead))
 		body = <EmbedPlayer embed={embed} title={line} play={active} />;
 	else if (link.image) body = <FittedImg src={link.image} alt={line} />;
@@ -116,6 +130,169 @@ function SavedMedia({
 	return (
 		<div className={cn("relative overflow-hidden bg-black", className)}>
 			{body}
+		</div>
+	);
+}
+
+/** A saved photo or video, fitted; a video plays (muted, looping) while it's the one in view. */
+function FileSlide({
+	f,
+	play,
+	title,
+}: {
+	f: SavedFile;
+	play: boolean;
+	title: string;
+}) {
+	if (f.kind === "video")
+		return play ? (
+			<Fitted
+				backdrop={
+					f.hasPoster ? <img src={savedFileUrl(f, "poster")} alt="" /> : null
+				}
+			>
+				<video
+					autoPlay
+					muted
+					loop
+					playsInline
+					preload="metadata"
+					{...(f.hasPoster ? { poster: savedFileUrl(f, "poster") } : {})}
+					src={savedFileUrl(f, "original")}
+					className="size-full object-contain"
+				/>
+			</Fitted>
+		) : f.hasPoster ? (
+			<FittedImg src={savedFileUrl(f, "poster")} alt="" />
+		) : (
+			<div className="size-full bg-black" />
+		);
+	const src = savedFileUrl(f, f.hasThumb ? "display" : "original");
+	return (
+		<Fitted
+			backdrop={
+				<img src={savedFileUrl(f, f.hasThumb ? "thumb" : "original")} alt="" />
+			}
+		>
+			<ThumbhashImage
+				hash={f.thumbhash}
+				src={src}
+				alt={title}
+				className="size-full [&_img]:object-contain"
+			/>
+		</Fitted>
+	);
+}
+
+/**
+ * A share's photos and videos side by side in a track that scrolls sideways
+ * (a native swipe), with dots, like a place's photos in Rate's feed; with a
+ * mouse, clicks on the sides and ← / → step through them.
+ */
+function SavedSlides({
+	files,
+	title,
+	active,
+	className,
+}: {
+	files: readonly SavedFile[];
+	title: string;
+	active: boolean;
+	className?: string;
+}) {
+	const n = files.length;
+	const [at, setAt] = useState(0);
+	const track = useRef<HTMLDivElement>(null);
+	const reduce = useReducedMotion();
+	const coarse = useCoarsePointer();
+	const go = useCallback((d: 1 | -1) => setAt((i) => (i + d + n) % n), [n]);
+	useEffect(() => {
+		if (!active || n < 2) return;
+		const onKey = (e: KeyboardEvent) => {
+			if (e.metaKey || e.ctrlKey || e.altKey || ownsKeys(e.target)) return;
+			if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+			e.preventDefault();
+			go(e.key === "ArrowRight" ? 1 : -1);
+		};
+		window.addEventListener("keydown", onKey, true);
+		return () => window.removeEventListener("keydown", onKey, true);
+	}, [active, n, go]);
+	// The track shows the current slide (keys, clicks)…
+	useEffect(() => {
+		const el = track.current;
+		if (!el?.clientWidth) return;
+		const x = at * el.clientWidth;
+		if (Math.abs(el.scrollLeft - x) > 1)
+			el.scrollTo({ left: x, behavior: reduce ? "auto" : "smooth" });
+	}, [at, reduce]);
+	// …and where a swipe settles is the current slide.
+	const settle = useRef(0);
+	const onScroll = () => {
+		window.clearTimeout(settle.current);
+		settle.current = window.setTimeout(() => {
+			const el = track.current;
+			if (!el?.clientWidth) return;
+			const j = Math.round(el.scrollLeft / el.clientWidth);
+			if (j !== at && j >= 0 && j < n) setAt(j);
+		}, 90);
+	};
+	useEffect(() => () => window.clearTimeout(settle.current), []);
+	return (
+		<div
+			data-testid={SAVED_TESTID.slides}
+			data-slide={at}
+			className={cn("relative overflow-hidden bg-black", className)}
+		>
+			<div
+				ref={track}
+				onScroll={onScroll}
+				className="flex size-full snap-x snap-mandatory overflow-x-auto overflow-y-hidden overscroll-x-contain [scrollbar-width:none]"
+			>
+				{files.map((f, j) => (
+					<div
+						key={f.id}
+						data-testid={SAVED_TESTID.slide}
+						className="relative size-full shrink-0 snap-center snap-always"
+					>
+						{Math.abs(j - at) <= 1 ? (
+							<FileSlide f={f} play={active && j === at} title={title} />
+						) : null}
+					</div>
+				))}
+			</div>
+			{n > 1 && !coarse ? (
+				<>
+					<button
+						type="button"
+						aria-label="Previous photo"
+						onClick={() => go(-1)}
+						className="absolute inset-y-0 left-0 z-[1] w-1/4 cursor-pointer outline-none"
+					/>
+					<button
+						type="button"
+						aria-label="Next photo"
+						onClick={() => go(1)}
+						className="absolute inset-y-0 right-0 z-[1] w-1/4 cursor-pointer outline-none"
+					/>
+				</>
+			) : null}
+			{n > 1 ? (
+				<div
+					role="img"
+					aria-label={`Photo ${at + 1} of ${n}`}
+					className="pointer-events-none absolute inset-x-0 bottom-3 z-[3] flex justify-center gap-1.5"
+				>
+					{files.map((f, j) => (
+						<span
+							key={f.id}
+							className={cn(
+								"size-1.5 rounded-full shadow-[0_0_3px_rgb(0_0_0/.5)] transition-colors",
+								j === at ? "bg-white" : "bg-white/45",
+							)}
+						/>
+					))}
+				</div>
+			) : null}
 		</div>
 	);
 }
@@ -231,7 +408,17 @@ function SavedCard({
 				entry={toEntry(link)}
 				place={link.place}
 				nearTrips={link.nearTrips}
-				variant="feed"
+				media={
+					link.files.length
+						? {
+								count: link.files.length,
+								attach: (tripId, nodeId) =>
+									attachSavedFiles({
+										data: { savedId: link.id, tripId, nodeId },
+									}),
+							}
+						: undefined
+				}
 				actions={actions}
 				onSaved={onSaved}
 			/>
@@ -485,16 +672,17 @@ export function SavedFeed({
 			.finally(() => qc.invalidateQueries({ queryKey: meKeys.saved }));
 		moveOn(id);
 	};
+	const deleteSaved = useDeleteSaved();
 	const onDelete = async (id: string) => {
-		try {
-			await deleteSavedLink({ data: { id } });
-		} catch (e) {
-			toast.error(humanError(e));
-			return;
-		}
+		const ok = await deleteSaved([id], {
+			onUndone: () =>
+				setDone((d) => {
+					const { [id]: _gone, ...rest } = d;
+					return rest;
+				}),
+		});
+		if (!ok) return;
 		setDone((d) => ({ ...d, [id]: { kind: "deleted" } }));
-		toast("Deleted from Saved", { duration: 2000, position: "top-center" });
-		void qc.invalidateQueries({ queryKey: meKeys.saved });
 		moveOn(id);
 	};
 

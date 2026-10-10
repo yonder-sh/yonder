@@ -19,13 +19,9 @@ import {
 	Check,
 	ChevronRight,
 	ChevronsUpDown,
-	Film,
 	FolderTree,
-	Globe,
-	Image as ImageIcon,
 	Lightbulb,
 	MapPin,
-	StickyNote,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { EmptyState } from "@/components/common/empty-state";
@@ -56,7 +52,6 @@ import {
 import { Spinner } from "@/components/ui/spinner";
 import { createListItem } from "@/features/lists/lists.functions";
 import { addLink } from "@/features/media/media.functions";
-import { uploadOne } from "@/features/media/upload/uploader";
 import { deleteShared, type SharedEntry } from "@/features/offline/share-store";
 import * as placesFunctions from "@/features/places/places.functions";
 import { createNode, createNodePath } from "@/functions/nodes.functions";
@@ -83,20 +78,11 @@ import {
 	parentLabel,
 	parseMapsUrl,
 	readResolution,
-	type ShareKind,
 } from "./share-classify";
 import { HOME_TESTID } from "./testids";
 import type { MyTrip } from "./types";
 
 export const LAST_TRIP = "yonder:share-last-trip";
-
-export const KIND: Record<ShareKind, { label: string; icon: typeof Globe }> = {
-	maps: { label: "Maps place", icon: MapPin },
-	social: { label: "Social video", icon: Film },
-	web: { label: "Web page", icon: Globe },
-	media: { label: "Photos and videos", icon: ImageIcon },
-	text: { label: "Text", icon: StickyNote },
-};
 
 /** Trips I can add to: members who edit or suggest, and edit/suggest links (never view or rate). */
 export function writable(t: MyTrip): boolean {
@@ -121,22 +107,6 @@ function sharedLinkResolver(): Resolver | null {
 }
 
 const CATEGORIES = new Set<string>(PLACE_CATEGORY_VALUES);
-
-async function uploadFiles(
-	tripId: string,
-	nodeId: string,
-	files: SharedEntry["files"],
-): Promise<void> {
-	// One PUT, or 16 MB parts for a bigger file (a shared video).
-	for (const f of files)
-		await uploadOne({
-			tripId,
-			target: { kind: "node", nodeId },
-			blob: f.blob,
-			type: f.type as never,
-			name: f.name,
-		});
-}
 
 /** The "in Kyoto · Change" chip: any country, region, city or area, or the top level. */
 function ParentPicker({
@@ -264,7 +234,7 @@ export function Saver({
 	entry,
 	place = null,
 	nearTrips = NONE,
-	variant = "page",
+	media,
 	actions,
 	onSaved,
 }: {
@@ -273,7 +243,11 @@ export function Saver({
 	place?: { name: string; lat: number; lng: number } | null;
 	/** The trips that have that place (Saved's picks), for the default. */
 	nearTrips?: readonly string[];
-	variant?: "page" | "feed";
+	/** Photos and videos (Saved's): how many, and how they go onto the place (edit access). */
+	media?: {
+		count: number;
+		attach: (tripId: string, nodeId: string) => Promise<unknown>;
+	};
 	/** Feed: more buttons at Save's side (Delete, Later). */
 	actions?: React.ReactNode;
 	onSaved?: (r: SaveResult) => void;
@@ -281,7 +255,7 @@ export function Saver({
 	const trips = useQuery(myTripsQuery());
 	const qc = useQueryClient();
 	const options = (trips.data ?? []).filter(writable);
-	const kind = classifyShare(entry);
+	const kind = media ? "media" : classifyShare(entry);
 	const url = entry.url ?? firstUrl(entry.text);
 	const hint = useMemo(
 		() => (kind === "maps" && url ? parseMapsUrl(url) : null),
@@ -390,7 +364,6 @@ export function Saver({
 	const canUpload = trip
 		? trip.role === "owner" || trip.role === "editor"
 		: false;
-	const K = KIND[kind];
 
 	const save = async (mode: "default" | "todo" | "new" = "default") => {
 		if (!trip) return;
@@ -473,9 +446,9 @@ export function Saver({
 				} catch {
 					partial = "The link couldn't be attached — add it from the place.";
 				}
-			if (!asTodo && nodeId && entry.files.length && canUpload)
+			if (!asTodo && nodeId && media && canUpload)
 				try {
-					await uploadFiles(trip.id, nodeId, entry.files);
+					await media.attach(trip.id, nodeId);
 				} catch (e) {
 					partial = humanError(e);
 				}
@@ -516,7 +489,7 @@ export function Saver({
 		}
 	};
 
-	if (state.kind === "done" && variant === "feed")
+	if (state.kind === "done")
 		return (
 			<div
 				data-testid={HOME_TESTID.shareSaved}
@@ -545,42 +518,6 @@ export function Saver({
 			</div>
 		);
 
-	if (state.kind === "done")
-		return (
-			<div
-				data-testid={HOME_TESTID.shareSaved}
-				className="grid justify-items-center gap-4 rounded-2xl border bg-card px-6 py-10 text-center"
-			>
-				<span className="flex size-10 items-center justify-center rounded-full bg-accent text-accent-foreground">
-					<Check className="size-5" />
-				</span>
-				<p className="font-display text-lg font-medium">{state.text}</p>
-				{state.note ? (
-					<p className="-mt-2 text-meta text-muted-foreground">{state.note}</p>
-				) : null}
-				<div className="flex gap-2">
-					<Button asChild variant="outline">
-						<Link
-							to="/t/$trip"
-							params={{ trip: state.slug }}
-							search={(state.sel ? { sel: state.sel } : {}) as never}
-						>
-							Open in trip
-						</Link>
-					</Button>
-					<Button
-						data-testid={HOME_TESTID.shareDone}
-						onClick={() => {
-							window.close();
-							setTimeout(() => window.location.assign("/dashboard"), 150);
-						}}
-					>
-						Done
-					</Button>
-				</div>
-			</div>
-		);
-
 	if (!trips.isPending && !options.length)
 		return (
 			<EmptyState
@@ -594,56 +531,14 @@ export function Saver({
 		);
 
 	const busy = state.kind === "saving";
-	const resolving = resolved.isFetching && !found;
 	return (
 		<form
-			className={cn(
-				"grid gap-5",
-				variant === "page" && "rounded-2xl border bg-card p-5 sm:p-6",
-			)}
+			className="grid gap-5"
 			onSubmit={(e) => {
 				e.preventDefault();
 				void save();
 			}}
 		>
-			{variant === "feed" ? null : (
-				<div className="flex items-start gap-3">
-					<span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
-						<K.icon className="size-4" />
-					</span>
-					<div className="grid min-w-0 gap-0.5">
-						<span className="eyebrow">{K.label}</span>
-						<span className="truncate text-sm">
-							{preview?.name ??
-								hint?.name ??
-								(url
-									? hostOf(url)
-									: entry.files.length
-										? `${entry.files.length} ${entry.files.length === 1 ? "file" : "files"}`
-										: (entry.text ?? "").slice(0, 120))}
-						</span>
-						{preview?.address ? (
-							<span className="truncate text-xs text-muted-foreground">
-								{preview.address}
-							</span>
-						) : url ? (
-							<span className="truncate tnum text-2xs text-muted-foreground">
-								{url}
-							</span>
-						) : null}
-					</div>
-					{resolving ? (
-						<Spinner className="ml-auto size-4 shrink-0 text-muted-foreground" />
-					) : null}
-				</div>
-			)}
-			{entry.files.length ? (
-				<div className="flex gap-2 overflow-x-auto">
-					{entry.files.slice(0, 6).map((f) => (
-						<FileThumb key={`${f.name}-${f.size}`} file={f} />
-					))}
-				</div>
-			) : null}
 			<div className="grid gap-2">
 				<Label htmlFor={`share-trip-${entry.id}`}>Trip</Label>
 				<Select value={tripId ?? ""} onValueChange={setTripId}>
@@ -717,7 +612,6 @@ export function Saver({
 					<Label htmlFor={`share-name-${entry.id}`}>Name</Label>
 					<Input
 						id={`share-name-${entry.id}`}
-						autoFocus={variant === "page"}
 						value={name}
 						maxLength={60}
 						onChange={(e) => {
@@ -755,7 +649,7 @@ export function Saver({
 					</Select>
 				</div>
 			)}
-			{entry.files.length && !canUpload ? (
+			{media && !canUpload ? (
 				<p className="text-meta text-muted-foreground">
 					Photos need edit access. Ask the owner, or share a link instead.
 				</p>
@@ -806,7 +700,7 @@ export function Saver({
 						offline ||
 						busy ||
 						(where.kind === "existing" && !where.nodeId) ||
-						(entry.files.length > 0 && !canUpload)
+						(!!media && !canUpload)
 					}
 				>
 					{busy ? <Spinner /> : null}
@@ -815,14 +709,6 @@ export function Saver({
 			</div>
 		</form>
 	);
-}
-
-export function hostOf(url: string): string {
-	try {
-		return new URL(url).hostname.replace(/^www\./, "");
-	} catch {
-		return url.slice(0, 80);
-	}
 }
 
 function WhereButton({
@@ -856,24 +742,5 @@ function WhereButton({
 			</span>
 			<span className="truncate text-xs text-muted-foreground">{hint}</span>
 		</button>
-	);
-}
-
-function FileThumb({ file }: { file: SharedEntry["files"][number] }) {
-	const [src, setSrc] = useState<string | null>(null);
-	useEffect(() => {
-		if (!file.type.startsWith("image/")) return;
-		const u = URL.createObjectURL(file.blob);
-		setSrc(u);
-		return () => URL.revokeObjectURL(u);
-	}, [file]);
-	return (
-		<span className="flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-lg border bg-muted">
-			{src ? (
-				<img src={src} alt="" className="size-full object-cover" />
-			) : (
-				<Film className="size-5 text-muted-foreground" />
-			)}
-		</span>
 	);
 }

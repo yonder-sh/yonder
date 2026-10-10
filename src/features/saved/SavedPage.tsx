@@ -2,13 +2,14 @@
  * `/saved`: everything shared into Yonder and not in a trip yet, newest
  * first, three to a row like Instagram's and TikTok's saved grids. A tile
  * opens the feed there (`?open=<id>`); a share opens it straight on the link
- * (`&from=share`, with Later). Shares still on this device (offline, or
- * photos from another app) show above the grid.
+ * (`&from=share`, with Later). Select ticks tiles to delete several at once
+ * (one call, Undo in the toast). Shares still waiting on this device
+ * (offline, an upload that stopped) are counted above the grid.
  */
 import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, ArrowRight, CloudOff } from "lucide-react";
-import { useEffect, useState } from "react";
+import { ArrowLeft, CloudOff, Trash2 } from "lucide-react";
+import { type ReactNode, useEffect, useState } from "react";
 import { YonderMark } from "@/components/common/yonder-mark";
 import { Button } from "@/components/ui/button";
 import { SaveFromAppsDialog } from "@/features/home/SaveFromAppsDialog";
@@ -16,41 +17,140 @@ import { savedPolling, savedQuery } from "./queries";
 import { SavedFeed } from "./SavedFeed";
 import { SavedTile } from "./SavedTile";
 import { SAVED_TESTID } from "./testids";
+import type { SavedLink } from "./types";
+import { useDeleteSaved } from "./use-delete-saved";
 import { useSharedOnDevice } from "./use-shared-on-device";
 
 function OnThisDevice() {
-	const list = useSharedOnDevice();
-	const files = list.filter((e) => e.files.length);
-	const links = list.length - files.length;
-	if (!list.length) return null;
+	const n = useSharedOnDevice().length;
+	if (!n) return null;
 	return (
-		<div
+		<p
 			data-testid={SAVED_TESTID.waiting}
-			className="grid gap-2 px-4 pb-4 sm:px-0"
+			className="flex items-center gap-2 px-4 pb-4 text-meta text-muted-foreground sm:px-0"
 		>
-			{links ? (
-				<p className="flex items-center gap-2 text-meta text-muted-foreground">
-					<CloudOff className="size-4 shrink-0" />
-					{links === 1
-						? "1 link on this device goes to Saved when you're back online."
-						: `${links} links on this device go to Saved when you're back online.`}
-				</p>
-			) : null}
-			{files[0] ? (
-				<Link
-					to="/share"
-					search={{ id: files[0].id } as never}
-					className="flex h-11 items-center gap-3 rounded-xl border bg-card px-4 text-sm transition-colors hover:border-foreground/20"
-				>
-					<span className="flex-1">
-						{files.length === 1
-							? "1 photo share to save"
-							: `${files.length} photo shares to save`}
+			<CloudOff className="size-4 shrink-0" />
+			{n === 1
+				? "1 share on this device goes to Saved when you're back online."
+				: `${n} shares on this device go to Saved when you're back online.`}
+		</p>
+	);
+}
+
+/**
+ * The grid: three to a row, newest first; Select ticks tiles and Delete N
+ * deletes them in one call (Undo in the toast).
+ */
+export function SavedGrid({
+	links,
+	pending,
+	onOpen,
+	empty,
+}: {
+	links: readonly SavedLink[];
+	pending: boolean;
+	onOpen: (id: string) => void;
+	empty: ReactNode;
+}) {
+	// Select: tick tiles, then Delete N.
+	const [selecting, setSelecting] = useState(false);
+	const [picked, setPicked] = useState<ReadonlySet<string>>(new Set());
+	const live = new Set(links.map((l) => l.id));
+	const chosen = [...picked].filter((id) => live.has(id));
+	const stopSelecting = () => {
+		setSelecting(false);
+		setPicked(new Set());
+	};
+	const deleteSaved = useDeleteSaved();
+	const deleteChosen = async () => {
+		if (await deleteSaved(chosen)) stopSelecting();
+	};
+	return (
+		<>
+			<div className="flex items-baseline justify-between gap-4 px-4 pt-2 pb-4 sm:px-0">
+				<h1 className="font-display text-2xl leading-7 font-semibold tracking-[-0.01em]">
+					{selecting ? (
+						<span data-testid={SAVED_TESTID.selectCount}>
+							{chosen.length} selected
+						</span>
+					) : (
+						"Saved"
+					)}
+				</h1>
+				{selecting ? (
+					<Button
+						variant="ghost"
+						size="sm"
+						data-testid={SAVED_TESTID.selectCancel}
+						onClick={stopSelecting}
+					>
+						Cancel
+					</Button>
+				) : links.length ? (
+					<span className="flex items-center gap-3">
+						<span className="text-meta text-muted-foreground tnum">
+							{links.length === 1 ? "1 item" : `${links.length} items`}
+						</span>
+						<Button
+							variant="outline"
+							size="sm"
+							data-testid={SAVED_TESTID.select}
+							onClick={() => setSelecting(true)}
+						>
+							Select
+						</Button>
 					</span>
-					<ArrowRight className="size-4 text-muted-foreground" />
-				</Link>
+				) : null}
+			</div>
+			<OnThisDevice />
+			{pending ? (
+				<div className="grid grid-cols-3 gap-0.5 sm:gap-1">
+					{[0, 1, 2].map((i) => (
+						<div key={i} className="aspect-[9/16] animate-pulse bg-muted" />
+					))}
+				</div>
+			) : links.length ? (
+				<div
+					data-testid={SAVED_TESTID.grid}
+					className="grid grid-cols-3 gap-0.5 sm:gap-1"
+				>
+					{links.map((l) => (
+						<SavedTile
+							key={l.id}
+							link={l}
+							selecting={selecting}
+							selected={picked.has(l.id)}
+							onOpen={() =>
+								selecting
+									? setPicked((p) => {
+											const next = new Set(p);
+											if (!next.delete(l.id)) next.add(l.id);
+											return next;
+										})
+									: onOpen(l.id)
+							}
+						/>
+					))}
+				</div>
+			) : (
+				empty
+			)}
+			{selecting ? (
+				<div className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/95 px-4 pt-3 pb-[max(12px,env(safe-area-inset-bottom))] backdrop-blur">
+					<div className="mx-auto flex max-w-[720px] items-center justify-end">
+						<Button
+							variant="destructive"
+							data-testid={SAVED_TESTID.deleteSelected}
+							disabled={!chosen.length}
+							onClick={() => void deleteChosen()}
+						>
+							<Trash2 />
+							{chosen.length ? `Delete ${chosen.length}` : "Delete"}
+						</Button>
+					</div>
+				</div>
 			) : null}
-		</div>
+		</>
 	);
 }
 
@@ -90,60 +190,33 @@ export function SavedPage({ open, from }: { open?: string; from?: "share" }) {
 				data-testid={SAVED_TESTID.page}
 				className="mx-auto max-w-[720px] pb-16 sm:px-4"
 			>
-				<div className="flex items-baseline justify-between gap-4 px-4 pt-2 pb-4 sm:px-0">
-					<h1 className="font-display text-2xl leading-7 font-semibold tracking-[-0.01em]">
-						Saved
-					</h1>
-					{links.length ? (
-						<span className="text-meta text-muted-foreground tnum">
-							{links.length === 1 ? "1 link" : `${links.length} links`}
-						</span>
-					) : null}
-				</div>
-				<OnThisDevice />
-				{saved.isPending ? (
-					<div className="grid grid-cols-3 gap-0.5 sm:gap-1">
-						{[0, 1, 2].map((i) => (
-							<div key={i} className="aspect-[9/16] animate-pulse bg-muted" />
-						))}
-					</div>
-				) : links.length ? (
-					<div
-						data-testid={SAVED_TESTID.grid}
-						className="grid grid-cols-3 gap-0.5 sm:gap-1"
-					>
-						{links.map((l) => (
-							<SavedTile
-								key={l.id}
-								link={l}
-								onOpen={() =>
-									void navigate({ to: "/saved", search: { open: l.id } })
-								}
-							/>
-						))}
-					</div>
-				) : (
-					<div
-						data-testid={SAVED_TESTID.empty}
-						className="mx-4 grid justify-items-center gap-4 rounded-2xl border bg-card px-6 py-12 text-center sm:mx-0"
-					>
-						<p className="font-display text-lg leading-6 font-medium">
-							Nothing saved yet
-						</p>
-						<p className="max-w-sm text-sm text-muted-foreground text-balance">
-							Share a reel, a TikTok, a Maps place or any link to Yonder. It
-							waits here until you add it to a trip.
-						</p>
-						<div className="flex flex-wrap justify-center gap-2">
-							<Button onClick={() => setHowOpen(true)}>
-								Save from other apps
-							</Button>
-							<Button asChild variant="outline">
-								<Link to="/share">Paste a link</Link>
-							</Button>
+				<SavedGrid
+					links={links}
+					pending={saved.isPending}
+					onOpen={(id) => void navigate({ to: "/saved", search: { open: id } })}
+					empty={
+						<div
+							data-testid={SAVED_TESTID.empty}
+							className="mx-4 grid justify-items-center gap-4 rounded-2xl border bg-card px-6 py-12 text-center sm:mx-0"
+						>
+							<p className="font-display text-lg leading-6 font-medium">
+								Nothing saved yet
+							</p>
+							<p className="max-w-sm text-sm text-muted-foreground text-balance">
+								Share a reel, a TikTok, a Maps place or any link to Yonder. It
+								waits here until you add it to a trip.
+							</p>
+							<div className="flex flex-wrap justify-center gap-2">
+								<Button onClick={() => setHowOpen(true)}>
+									Save from other apps
+								</Button>
+								<Button asChild variant="outline">
+									<Link to="/share">Paste a link</Link>
+								</Button>
+							</div>
 						</div>
-					</div>
-				)}
+					}
+				/>
 			</main>
 			{feedReady && saved.data ? (
 				<SavedFeed

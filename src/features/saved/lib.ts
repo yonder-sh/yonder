@@ -9,16 +9,38 @@ import { displayHost, providerLabel } from "@/features/media/embeds";
 import type { SharedEntry } from "@/features/offline/share-store";
 import type { SavedLink } from "./types";
 
-export type SavedKind = Exclude<ShareKind, "media">;
+export type SavedKind = ShareKind;
 
-export function savedKind(l: Pick<SavedLink, "url" | "text">): SavedKind {
-	return classifyShare({ url: l.url, text: l.text, files: [] }) as SavedKind;
+type Files = { files?: readonly { kind: string }[] };
+
+export function savedKind(
+	l: Pick<SavedLink, "url" | "text"> & Files,
+): SavedKind {
+	return l.files?.length
+		? "media"
+		: classifyShare({ url: l.url, text: l.text, files: [] });
 }
 
-/** The tile's badge: "TikTok", "Instagram", "YouTube", "Maps", else the site. */
+/** "3 photos", "a video", "2 photos and a video". */
+export function filesLabel(files: readonly { kind: string }[]): string {
+	const videos = files.filter((f) => f.kind === "video").length;
+	const photos = files.length - videos;
+	const part = (n: number, one: string) =>
+		n === 1 ? `1 ${one}` : `${n} ${one}s`;
+	return [
+		photos ? part(photos, "photo") : null,
+		videos ? part(videos, "video") : null,
+	]
+		.filter(Boolean)
+		.join(" and ");
+}
+
+/** The tile's badge: "Photos", "Video", "TikTok", "Instagram", "YouTube", "Maps", else the site. */
 export function sourceLabel(
-	l: Pick<SavedLink, "url" | "text" | "provider" | "siteName">,
+	l: Pick<SavedLink, "url" | "text" | "provider" | "siteName"> & Files,
 ): string {
+	if (l.files?.length)
+		return l.files.every((f) => f.kind === "video") ? "Video" : "Photos";
 	if (l.provider) return providerLabel(l.provider);
 	if (l.url) {
 		try {
@@ -36,8 +58,11 @@ export function tileLine(
 	l: Pick<
 		SavedLink,
 		"url" | "text" | "title" | "previewTitle" | "description" | "place"
-	>,
+	> &
+		Files,
 ): string {
+	if (l.files?.length)
+		return cleanShareName(l.title, l.text) || filesLabel(l.files);
 	return (
 		l.place?.name ||
 		cleanShareName(l.title, l.text) ||

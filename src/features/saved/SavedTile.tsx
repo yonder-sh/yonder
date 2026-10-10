@@ -1,16 +1,40 @@
 /**
  * One Saved tile, like Instagram's and TikTok's saved grids: a tall (9:16)
- * picture (the re-hosted preview, else a calm card by kind), the source in a
- * small badge, one line under a soft shade.
+ * picture (the re-hosted preview or the first photo's thumb, else a calm
+ * card by kind), the source in a small badge, one line under a soft shade.
+ * Selecting (the grid's Select), a tap ticks it instead of opening it.
  */
-import { MapPin, StickyNote } from "lucide-react";
+import {
+	Check,
+	Image as ImageIcon,
+	MapPin,
+	Play,
+	StickyNote,
+} from "lucide-react";
 import { ThumbhashImage } from "@/components/common/thumbhash-image";
 import { Spinner } from "@/components/ui/spinner";
 import { ProviderMark } from "@/features/media/components/provider-glyph";
 import { cn } from "@/lib/utils";
 import { savedKind, sourceLabel, tileLine } from "./lib";
 import { SAVED_TESTID } from "./testids";
-import type { SavedLink } from "./types";
+import type { SavedFile, SavedLink } from "./types";
+
+/** A saved photo's or video's picture (`/api/saved-file/<id>/…`). */
+export function savedFileUrl(
+	f: Pick<SavedFile, "id">,
+	variant: "thumb" | "display" | "poster" | "original",
+): string {
+	return `/api/saved-file/${f.id}/${variant}`;
+}
+
+/** The tile's picture: the link's preview, else its first photo's or video's thumb. */
+export function tileImage(
+	link: SavedLink,
+): { src: string; hash: string | null } | null {
+	if (link.image) return { src: link.image, hash: link.thumbhash };
+	const f = link.files.find((x) => x.hasThumb);
+	return f ? { src: savedFileUrl(f, "thumb"), hash: f.thumbhash } : null;
+}
 
 /** The source's mark: the provider's, a pin for Maps, the site's favicon, else a globe. */
 export function SourceMark({
@@ -21,6 +45,12 @@ export function SourceMark({
 	className?: string;
 }) {
 	const kind = savedKind(link);
+	if (kind === "media")
+		return link.files.every((f) => f.kind === "video") ? (
+			<Play className={cn("size-3.5", className)} aria-hidden />
+		) : (
+			<ImageIcon className={cn("size-3.5", className)} aria-hidden />
+		);
 	if (kind === "maps")
 		return <MapPin className={cn("size-3.5", className)} aria-hidden />;
 	if (kind === "text")
@@ -67,26 +97,35 @@ export function SavedPlaceholder({
 export function SavedTile({
 	link,
 	onOpen,
+	selecting = false,
+	selected = false,
 }: {
 	link: SavedLink;
+	/** Opens it, or (selecting) ticks it. */
 	onOpen: () => void;
+	selecting?: boolean;
+	selected?: boolean;
 }) {
 	const line = tileLine(link);
 	const source = sourceLabel(link);
+	const image = tileImage(link);
+	const video = link.files[0]?.kind === "video";
 	return (
 		<button
 			type="button"
 			data-testid={SAVED_TESTID.tile}
 			data-saved={link.id}
 			data-status={link.status}
+			data-selected={selecting ? selected : undefined}
 			onClick={onOpen}
 			aria-label={`${source}: ${line}`}
+			{...(selecting ? { "aria-pressed": selected } : {})}
 			className="group relative aspect-[9/16] w-full cursor-pointer overflow-hidden bg-muted text-left outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
 		>
-			{link.image ? (
+			{image ? (
 				<ThumbhashImage
-					hash={link.thumbhash}
-					src={link.image}
+					hash={image.hash}
+					src={image.src}
 					alt=""
 					className="absolute inset-0 size-full [&_img]:size-full [&_img]:object-cover"
 				/>
@@ -100,8 +139,33 @@ export function SavedTile({
 				<SourceMark link={link} className="size-3 shrink-0" />
 				<span className="truncate">{source}</span>
 			</span>
-			{link.status === "pending" ? (
+			{video ? (
+				<span className="pointer-events-none absolute inset-0 grid place-items-center">
+					<span className="grid size-9 place-items-center rounded-full bg-black/55 text-white backdrop-blur-sm">
+						<Play
+							className="size-4 translate-x-px"
+							fill="currentColor"
+							strokeWidth={0}
+						/>
+					</span>
+				</span>
+			) : null}
+			{selecting ? (
+				<span
+					aria-hidden
+					className={cn(
+						"absolute top-1.5 right-1.5 grid size-6 place-items-center rounded-full border-2 border-white shadow",
+						selected ? "bg-primary text-primary-foreground" : "bg-black/30",
+					)}
+				>
+					{selected ? <Check className="size-3.5" strokeWidth={3} /> : null}
+				</span>
+			) : link.status === "pending" ||
+				link.files.some((f) => f.status === "processing") ? (
 				<Spinner className="absolute top-2 right-2 size-3.5 text-white drop-shadow" />
+			) : null}
+			{selecting && selected ? (
+				<span aria-hidden className="absolute inset-0 bg-white/25" />
 			) : null}
 			<span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 via-black/35 to-transparent px-2 pt-8 pb-2">
 				<span
