@@ -8,6 +8,7 @@
  * Isomorphic between the page and the service worker (no DOM-only APIs).
  */
 import { createStore, del, entries, get, set } from "idb-keyval";
+import { isHeic } from "@/features/media/media-kinds";
 
 export const SHARE_DB = "yonder-share";
 export const SHARE_STORE = "inbox";
@@ -26,6 +27,9 @@ export const SHARE_FILE_TYPES = [
 	"image/webp",
 	"image/gif",
 	"image/avif",
+	// Converted to JPEG on the device before it goes up (`prepareFile`).
+	"image/heic",
+	"image/heif",
 	"video/mp4",
 	"video/quicktime",
 	"video/webm",
@@ -79,6 +83,8 @@ export function sanitizeShared(
 		}
 	}
 	const files = (input.files ?? [])
+		// A HEIC without its type (some share sheets): known by its name.
+		.map((f) => (!f.type && isHeic(f) ? { ...f, type: "image/heic" } : f))
 		.filter(
 			(f) =>
 				(SHARE_FILE_TYPES as readonly string[]).includes(f.type) &&

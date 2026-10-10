@@ -406,7 +406,7 @@ function SavedCard({
 		) : controls ? (
 			<Saver
 				entry={toEntry(link)}
-				place={link.place}
+				place={link.place ?? link.photoSpot}
 				nearTrips={link.nearTrips}
 				media={
 					link.files.length

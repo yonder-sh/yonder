@@ -239,8 +239,8 @@ export function Saver({
 	onSaved,
 }: {
 	entry: SharedEntry;
-	/** Where it is, when Saved's preview knows (a Maps place). */
-	place?: { name: string; lat: number; lng: number } | null;
+	/** Where it is, when Saved knows (a Maps place, a located photo): the trip and area default. */
+	place?: { name?: string | null; lat: number; lng: number } | null;
 	/** The trips that have that place (Saved's picks), for the default. */
 	nearTrips?: readonly string[];
 	/** Photos and videos (Saved's): how many, and how they go onto the place (edit access). */
@@ -303,7 +303,7 @@ export function Saver({
 	const found = resolved.data ?? null;
 	const preview = found?.preview ?? null;
 	const [name, setName] = useState(
-		() => hint?.name ?? place?.name ?? cleanShareName(entry.title, entry.text),
+		() => hint?.name || place?.name || cleanShareName(entry.title, entry.text),
 	);
 	const [nameTouched, setNameTouched] = useState(false);
 	useEffect(() => {

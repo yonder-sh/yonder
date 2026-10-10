@@ -148,6 +148,14 @@ type Row = {
 	updatedAt: Date | string;
 };
 
+/** The first located photo's spot. */
+function spotOf(
+	files: readonly (SavedFile & { lat?: number | null; lng?: number | null })[],
+): { lat: number; lng: number } | null {
+	const f = files.find((x) => x.lat != null && x.lng != null);
+	return f ? { lat: f.lat as number, lng: f.lng as number } : null;
+}
+
 function dto(r: Row, nearTrips: string[], files: SavedFile[]): SavedLink {
 	const v = new Date(r.updatedAt).getTime().toString(36);
 	return {
@@ -171,6 +179,7 @@ function dto(r: Row, nearTrips: string[], files: SavedFile[]): SavedLink {
 		place: r.place,
 		nearTrips,
 		files,
+		photoSpot: spotOf(files),
 		createdAt: new Date(r.createdAt).getTime(),
 	};
 }
@@ -208,7 +217,7 @@ export async function listSaved(
 				)})`);
 		for (const r of stale) await enqueuePreview(userId, r.id);
 	}
-	const near = rows.some((r) => r.place) ? await nearTrips(db, userId) : null;
+	const near = await nearTrips(db, userId);
 	const files = rows.length
 		? await filesOf(
 				db,
@@ -235,7 +244,7 @@ async function filesOf(
 ): Promise<Map<string, SavedFile[]>> {
 	const res = await db.execute(sql`
 		select id::text as id, saved_id::text as "savedId", kind, mime, status, width, height,
-		       duration_sec as "durationSec", thumbhash, (meta->>'thumb')::boolean as thumb,
+		       duration_sec as "durationSec", lat, lng, thumbhash, (meta->>'thumb')::boolean as thumb,
 		       (meta->>'poster')::boolean as poster
 		  from saved_files
 		 where user_id = ${userId} and deleted_at is null and status <> 'failed'
@@ -257,8 +266,9 @@ async function filesOf(
 }
 
 /**
- * For each saved Maps place, the trips I can add to (owner, editor,
- * suggester) with a city, area or place within about 50 km, nearest first.
+ * For each saved Maps place (or share of located photos), the trips I can
+ * add to (owner, editor, suggester) with a city, area or place within about
+ * 50 km, nearest first.
  */
 async function nearTrips(
 	db: Exec,
@@ -266,9 +276,15 @@ async function nearTrips(
 ): Promise<Map<string, string[]>> {
 	const res = await db.execute(sql`
 		with s as (
-			select id, (place->>'lat')::float8 as lat, (place->>'lng')::float8 as lng
-			  from saved_links
-			 where user_id = ${userId} and place is not null and deleted_at is null and added_at is null)
+			select l.id, coalesce((l.place->>'lat')::float8, f.lat) as lat,
+			       coalesce((l.place->>'lng')::float8, f.lng) as lng
+			  from saved_links l
+			  left join lateral (
+			    select lat, lng from saved_files
+			     where saved_id = l.id and deleted_at is null and lat is not null and lng is not null
+			     order by position limit 1) f on true
+			 where l.user_id = ${userId} and l.deleted_at is null and l.added_at is null
+			   and (l.place is not null or f.lat is not null))
 		select s.id::text as id, n.trip_id::text as "tripId",
 		       min(power(n.lat - s.lat, 2) + power((n.lng - s.lng) * cos(radians(s.lat)), 2)) as d
 		  from s

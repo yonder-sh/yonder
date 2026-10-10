@@ -560,6 +560,48 @@ describe("photos and videos", () => {
 		).toBe(404);
 	});
 
+	it("a photo's location is the share's spot: the trip that has the place is the default", async () => {
+		const tokyo = (
+			await getDb().execute(
+				sql`select lat, lng from nodes where id = ${trip.ids.nodes.tokyo}`,
+			)
+		).rows[0] as { lat: number; lng: number };
+		const body = await jpeg();
+		const s = await call<{ savedId: string; fileId: string; url: string }>(
+			startSavedUpload,
+			U.me,
+			{
+				clientId: "share-located",
+				position: 0,
+				type: "image/jpeg",
+				size: body.length,
+			},
+		);
+		await fetch(s.url, {
+			method: "PUT",
+			body: new Uint8Array(body),
+			headers: { "content-type": "image/jpeg" },
+		});
+		await call(completeSavedUpload, U.me, {
+			id: s.fileId,
+			takenAt: "2026-04-02T09:30:00.000Z",
+			gps: { lat: tokyo.lat + 0.01, lng: tokyo.lng },
+		});
+		const item = (await list(U.me)).find((l) => l.id === s.savedId);
+		expect(item?.photoSpot).toEqual({ lat: tokyo.lat + 0.01, lng: tokyo.lng });
+		expect(item?.place).toBeNull();
+		expect(item?.nearTrips).toContain(trip.tripId);
+		// Out of range: refused.
+		expect(
+			await codeOf(
+				call(completeSavedUpload, U.me, {
+					id: s.fileId,
+					gps: { lat: 95, lng: 0 },
+				}),
+			),
+		).not.toBe("ok");
+	});
+
 	it("over the quota: refused with the quota message", async () => {
 		const u = await newUser("Qin");
 		await getDb().execute(

@@ -121,6 +121,10 @@ export const savedFiles = pgTable(
 		width: integer(),
 		height: integer(),
 		durationSec: doublePrecision(),
+		/** Where and when it was taken (its EXIF, read on the device): the feed's trip and area default. */
+		lat: doublePrecision(),
+		lng: doublePrecision(),
+		takenAt: timestamp({ withTimezone: true }),
 		thumbhash: text(),
 		/** The multipart upload under way (`uploadId`, `partSize`, `parts`); `thumb` once made. */
 		meta: jsonb().$type<Record<string, unknown>>().notNull().default({}),

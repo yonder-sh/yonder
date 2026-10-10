@@ -181,6 +181,14 @@ export const completeSavedUpload = createServerFn({ method: "POST" })
 				width: z.number().int().positive().max(100_000).optional(),
 				height: z.number().int().positive().max(100_000).optional(),
 				durationSec: z.number().nonnegative().max(86_400).optional(),
+				takenAt: z.iso.datetime({ offset: true }).optional(),
+				gps: z
+					.object({
+						lat: z.number().min(-90).max(90),
+						lng: z.number().min(-180).max(180),
+					})
+					.strict()
+					.optional(),
 			})
 			.strict(),
 	)

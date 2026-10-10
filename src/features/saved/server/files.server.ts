@@ -245,6 +245,8 @@ export async function completeSavedFile(
 		width?: number;
 		height?: number;
 		durationSec?: number;
+		takenAt?: string;
+		gps?: { lat: number; lng: number };
 	},
 ): Promise<{ savedId: string; done: boolean }> {
 	const f = await ownFile(userId, p.fileId);
@@ -287,7 +289,8 @@ export async function completeSavedFile(
 		await db.execute(sql`
 			update saved_files
 			   set status = 'processing', width = ${p.width ?? null}, height = ${p.height ?? null},
-			       duration_sec = ${p.durationSec ?? null}, meta = '{}'::jsonb, updated_at = now()
+			       duration_sec = ${p.durationSec ?? null}, lat = ${p.gps?.lat ?? null}, lng = ${p.gps?.lng ?? null},
+			       taken_at = ${p.takenAt ?? null}, meta = '{}'::jsonb, updated_at = now()
 			 where id = ${f.id} and status = 'pending'`);
 		await enqueue(
 			"saved",

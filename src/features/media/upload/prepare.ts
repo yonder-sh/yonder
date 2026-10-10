@@ -182,7 +182,8 @@ export async function prepareFile(
 		previewUrl: kind === "pdf" ? null : URL.createObjectURL(file),
 	};
 	if (kind === "photo") {
-		const [size, tags] = await Promise.all([imageSize(file), exif(file)]);
+		// The tags from the file as taken (a HEIC's JPEG may have lost them).
+		const [size, tags] = await Promise.all([imageSize(file), exif(input)]);
 		return { ...base, ...(size ?? {}), ...tags };
 	}
 	if (kind === "video" && base.previewUrl) {

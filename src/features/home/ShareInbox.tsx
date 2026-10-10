@@ -16,6 +16,7 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, ClipboardPaste, Film } from "lucide-react";
 import { type FormEvent, useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import { EmptyState } from "@/components/common/empty-state";
 import { YonderMark } from "@/components/common/yonder-mark";
 import { Button } from "@/components/ui/button";
@@ -29,6 +30,7 @@ import {
 import { saveSharedLink } from "@/features/saved/saved.functions";
 import {
 	type ShareProgress,
+	ShareRefused,
 	uploadingLabel,
 	uploadShare,
 } from "@/features/saved/upload-shared";
@@ -187,6 +189,7 @@ function UploadToSaved({ entry }: { entry: SharedEntry }) {
 	const [progress, setProgress] = useState<ShareProgress | null>(null);
 	const [error, setError] = useState<string | null>(null);
 	const [attempt, setAttempt] = useState(0);
+	const [refused, setRefused] = useState(false);
 	// biome-ignore lint/correctness/useExhaustiveDependencies: `attempt` is Retry
 	useEffect(() => {
 		let alive = true;
@@ -198,9 +201,16 @@ function UploadToSaved({ entry }: { entry: SharedEntry }) {
 			return;
 		}
 		void uploadShare(entry, (p) => alive && setProgress(p))
-			.then(async (savedId) => {
+			.then(async ({ savedId, refused }) => {
 				await deleteShared(entry.id).catch(() => {});
 				window.dispatchEvent(new Event(SHARED_CHANGED));
+				if (refused.length)
+					toast.warning(
+						refused.length === 1
+							? "One file couldn't be saved"
+							: `${refused.length} files couldn't be saved`,
+						{ description: refused.join(" ") },
+					);
 				if (alive)
 					await navigate({
 						to: "/saved",
@@ -208,7 +218,17 @@ function UploadToSaved({ entry }: { entry: SharedEntry }) {
 						replace: true,
 					});
 			})
-			.catch((e) => alive && setError(humanError(e)));
+			.catch(async (e) => {
+				// Nothing it could ever take: off the device, saying why.
+				if (e instanceof ShareRefused) {
+					await deleteShared(entry.id).catch(() => {});
+					window.dispatchEvent(new Event(SHARED_CHANGED));
+					if (alive) {
+						setRefused(true);
+						setError(`${e.message} Nothing was saved.`);
+					}
+				} else if (alive) setError(humanError(e));
+			});
 		return () => {
 			alive = false;
 		};
@@ -226,11 +246,20 @@ function UploadToSaved({ entry }: { entry: SharedEntry }) {
 			</div>
 			{error ? (
 				<>
-					<p className="text-sm" role="alert">
+					<p
+						className="text-sm"
+						role="alert"
+						data-testid={HOME_TESTID.shareRefused}
+						data-refused={refused || undefined}
+					>
 						{error}
 					</p>
 					<div className="flex gap-2">
-						<Button onClick={() => setAttempt((n) => n + 1)}>Try again</Button>
+						{refused ? null : (
+							<Button onClick={() => setAttempt((n) => n + 1)}>
+								Try again
+							</Button>
+						)}
 						<Button asChild variant="outline">
 							<Link to="/saved">Saved</Link>
 						</Button>

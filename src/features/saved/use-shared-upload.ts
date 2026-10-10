@@ -15,7 +15,7 @@ import { useHasAccount } from "@/features/push/use-push";
 import { errorCode, humanError } from "@/lib/errors";
 import { meKeys } from "@/lib/query/keys";
 import { saveSharedLink } from "./saved.functions";
-import { uploadingLabel, uploadShare } from "./upload-shared";
+import { ShareRefused, uploadingLabel, uploadShare } from "./upload-shared";
 
 /** Mounted once (the root layout). */
 export function useSharedUpload(): void {
@@ -41,7 +41,7 @@ export function useSharedUpload(): void {
 						const label = uploadingLabel(e.files);
 						const t = toast.loading(label);
 						try {
-							const id = await uploadShare(e, (p) =>
+							const { savedId, refused } = await uploadShare(e, (p) =>
 								toast.loading(label, {
 									id: t,
 									description: `${Math.round(p.fraction * 100)}%`,
@@ -51,27 +51,34 @@ export function useSharedUpload(): void {
 							sent++;
 							toast.success("Your photos are in Saved", {
 								id: t,
-								description: undefined,
+								description: refused.length
+									? `Left out: ${refused.join(" ")}`
+									: undefined,
 								action: {
 									label: "Open",
 									onClick: () =>
 										void router.navigate({
 											to: "/saved",
-											search: { open: id },
+											search: { open: savedId },
 										}),
 								},
 							});
 						} catch (err) {
-							// A file it can never take: drop it; anything else waits.
-							if (errorCode(err) === "VALIDATION") await deleteShared(e.id);
-							toast.error(
-								errorCode(err) === "VALIDATION"
-									? "One of the shared files couldn't be saved."
-									: errorCode(err) === "STORAGE_QUOTA"
+							// Nothing it could ever take: off the device, saying why; anything else waits.
+							if (err instanceof ShareRefused) {
+								await deleteShared(e.id);
+								sent++;
+								toast.error("A share couldn't be saved", {
+									id: t,
+									description: err.message,
+								});
+							} else
+								toast.error(
+									errorCode(err) === "STORAGE_QUOTA"
 										? humanError(err)
 										: "The upload stopped. Yonder carries on next time.",
-								{ id: t, description: undefined },
-							);
+									{ id: t, description: undefined },
+								);
 						}
 						continue;
 					}

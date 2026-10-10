@@ -46,5 +46,7 @@ export type SavedLink = {
 	nearTrips: string[];
 	/** Photos and videos shared (one share, one item): its slides. */
 	files: SavedFile[];
+	/** Where its first located photo was taken (the trip and area default, like a Maps place). */
+	photoSpot: { lat: number; lng: number } | null;
 	createdAt: number;
 };
