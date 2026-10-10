@@ -108,6 +108,8 @@ export const HOME_TESTID = {
 	sharePaste: "home-share-paste",
 	shareSaved: "home-share-saved",
 	shareParent: "home-share-parent",
+	sharePlace: "home-share-place",
+	sharePicker: "home-share-picker",
 	shareDuplicate: "home-share-duplicate",
 	shareTodo: "home-share-todo",
 	shareSaving: "home-share-saving",

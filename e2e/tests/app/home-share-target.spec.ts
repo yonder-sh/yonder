@@ -54,7 +54,7 @@ test("a pasted Maps link becomes an idea filed under its city, with one tap", as
 	// Photon's reverse geocode (Kyoto › Higashiyama Ward › Rinka-cho), under
 	// Kyoto in a new neighbourhood. ("in Kyoto" alone is only the guess shown
 	// while that answer is on its way.)
-	await expect(card).toContainText("in Rinka-cho (new)");
+	await expect(card).toContainText("Kyoto › Rinka-cho (new)");
 	await expectNoHorizontalOverflow(page);
 	await page.screenshot({
 		path: shotPath(`home/share-inbox-${mobile ? "mobile" : "desktop"}.png`),
@@ -117,13 +117,16 @@ test("a suggester's shared video becomes a suggestion where they filed it (SHR-0
 	await page.getByRole("button", { name: "Use" }).click();
 	const name = `Matcha parfait ${tag} at Tsujiri`;
 	const card = await sharedCard(page);
-	await expect(card.getByTestId(HOME_TESTID.shareName)).toHaveValue(name);
+	// A caption isn't a name: it's typed.
+	await expect(card.getByTestId(HOME_TESTID.shareName)).toHaveValue("");
+	await expect(card.getByTestId(HOME_TESTID.shareSave)).toBeDisabled();
+	await card.getByTestId(HOME_TESTID.shareName).fill(name);
 	await expect(card).toContainText("TikTok");
 	await expect(card).toContainText("an editor reviews it first");
 	// No coordinates: it would go to the top level; file it under Harajuku.
 	await card.getByTestId(HOME_TESTID.shareParent).click();
-	await page.getByPlaceholder("Search the trip…").fill("Haraj");
-	await page.getByRole("option", { name: "Harajuku" }).click();
+	await page.getByPlaceholder("Find a city or area").fill("Haraj");
+	await page.getByTestId(HOME_TESTID.sharePicker).getByRole("option", { name: /^Harajuku/ }).click();
 	await expect(card.getByTestId(HOME_TESTID.shareParent)).toHaveAccessibleName(
 		/Tokyo › Harajuku/,
 	);
@@ -232,9 +235,8 @@ test("the iOS Shortcut's address opens the shared link in the Saved feed, no pas
 	const url = "https://www.tiktok.com/@kyoto.eats/video/7302";
 	await page.goto(`/share?${new URLSearchParams({ url, text: `Hojicha ${tag} at Kagizen ${url}` })}`);
 	const card = await sharedCard(page);
-	await expect(card.getByTestId(HOME_TESTID.shareName)).toHaveValue(`Hojicha ${tag} at Kagizen`);
+	await expect(card.getByTestId(HOME_TESTID.shareName)).toHaveValue("");
 	await expect(card).toContainText("TikTok");
-	await expect(card.getByTestId(HOME_TESTID.shareSave)).toBeEnabled();
 	// Later keeps it in Saved.
 	await card.getByTestId(SAVED_TESTID.later).click();
 	await expect(page).toHaveURL(/\/saved$/);

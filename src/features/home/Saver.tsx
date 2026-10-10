@@ -15,33 +15,12 @@
  */
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import {
-	Check,
-	ChevronRight,
-	ChevronsUpDown,
-	FolderTree,
-	Lightbulb,
-	MapPin,
-} from "lucide-react";
+import { Check, Lightbulb, MapPin } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { EmptyState } from "@/components/common/empty-state";
-import { TypeGlyph } from "@/components/common/glyphs";
 import { Button } from "@/components/ui/button";
-import {
-	Command,
-	CommandEmpty,
-	CommandGroup,
-	CommandInput,
-	CommandItem,
-	CommandList,
-} from "@/components/ui/command";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-	Popover,
-	PopoverContent,
-	PopoverTrigger,
-} from "@/components/ui/popover";
 import {
 	Select,
 	SelectContent,
@@ -56,8 +35,6 @@ import { deleteShared, type SharedEntry } from "@/features/offline/share-store";
 import * as placesFunctions from "@/features/places/places.functions";
 import { createNode, createNodePath } from "@/functions/nodes.functions";
 import { roleAtLeast } from "@/lib/auth/roles";
-import { canNest } from "@/lib/engine/tree";
-import type { GraphNode } from "@/lib/engine/types";
 import { humanError } from "@/lib/errors";
 import { newId } from "@/lib/ids";
 import { meKeys, tripKeys } from "@/lib/query/keys";
@@ -66,10 +43,10 @@ import { PLACE_CATEGORY_VALUES } from "@/lib/schemas/enums";
 import { isProposed } from "@/lib/schemas/proposals";
 import { cn } from "@/lib/utils";
 import { myTripsQuery } from "./queries";
+import { AreaPicker, PlacePicker } from "./save-pickers";
 import {
 	autoParent,
 	classifyShare,
-	cleanShareName,
 	defaultTrip,
 	firstUrl,
 	metres,
@@ -107,108 +84,6 @@ function sharedLinkResolver(): Resolver | null {
 }
 
 const CATEGORIES = new Set<string>(PLACE_CATEGORY_VALUES);
-
-/** The "in Kyoto · Change" chip: any country, region, city or area, or the top level. */
-function ParentPicker({
-	nodes,
-	plan,
-	label,
-	onPick,
-}: {
-	nodes: readonly GraphNode[];
-	plan: ParentPlan;
-	label: string;
-	onPick: (plan: ParentPlan) => void;
-}) {
-	const [open, setOpen] = useState(false);
-	const options = useMemo(() => {
-		const byParent = new Map<string | null, GraphNode[]>();
-		for (const n of nodes)
-			if (canNest(n.type, "place") && n.type !== "place") {
-				const list = byParent.get(n.parentId) ?? [];
-				list.push(n);
-				byParent.set(n.parentId, list);
-			}
-		const out: { node: GraphNode; depth: number }[] = [];
-		const walk = (pid: string | null, depth: number) => {
-			for (const n of byParent.get(pid) ?? []) {
-				out.push({ node: n, depth });
-				walk(n.id, depth + 1);
-			}
-		};
-		walk(null, 0);
-		return out;
-	}, [nodes]);
-	return (
-		<Popover open={open} onOpenChange={setOpen}>
-			<PopoverTrigger asChild>
-				<button
-					type="button"
-					data-testid={HOME_TESTID.shareParent}
-					aria-label={`Filed in ${label}. Change`}
-					className="inline-flex max-w-full items-center gap-1.5 justify-self-start rounded-full border bg-background px-2.5 text-meta leading-7 transition-colors hover:border-foreground/20"
-				>
-					<FolderTree className="size-3.5 shrink-0 text-muted-foreground" />
-					<span className="flex min-w-0 items-center gap-1">
-						{label.split(" › ").map((part, i, all) => (
-							<span
-								// biome-ignore lint/suspicious/noArrayIndexKey: a fixed path
-								key={i}
-								className={cn(
-									"flex min-w-0 items-center gap-1",
-									i < all.length - 1 && "text-muted-foreground",
-								)}
-							>
-								{i ? <ChevronRight className="size-3 shrink-0" /> : null}
-								<span className="truncate">{part}</span>
-							</span>
-						))}
-					</span>
-					<ChevronsUpDown className="size-3.5 shrink-0 text-muted-foreground" />
-				</button>
-			</PopoverTrigger>
-			<PopoverContent className="w-72 p-0" align="start">
-				<Command>
-					<CommandInput placeholder="Search the trip…" />
-					<CommandList className="max-h-[50vh]">
-						<CommandEmpty>No matches.</CommandEmpty>
-						<CommandGroup>
-							<CommandItem
-								value="__top"
-								onSelect={() => {
-									onPick({ parentId: null, create: [] });
-									setOpen(false);
-								}}
-							>
-								<span className="flex-1">Top level</span>
-								{plan.parentId === null && !plan.create.length ? (
-									<Check className="size-4" />
-								) : null}
-							</CommandItem>
-							{options.map(({ node, depth }) => (
-								<CommandItem
-									key={node.id}
-									value={`${node.name} ${node.localName ?? ""} ${node.id}`}
-									onSelect={() => {
-										onPick({ parentId: node.id, create: [] });
-										setOpen(false);
-									}}
-									style={{ paddingLeft: 8 + depth * 12 }}
-								>
-									<TypeGlyph type={node.type} category={node.category} />
-									<span className="flex-1 truncate">{node.name}</span>
-									{plan.parentId === node.id && !plan.create.length ? (
-										<Check className="size-4" />
-									) : null}
-								</CommandItem>
-							))}
-						</CommandGroup>
-					</CommandList>
-				</Command>
-			</PopoverContent>
-		</Popover>
-	);
-}
 
 const NONE: readonly string[] = [];
 
@@ -302,9 +177,8 @@ export function Saver({
 	});
 	const found = resolved.data ?? null;
 	const preview = found?.preview ?? null;
-	const [name, setName] = useState(
-		() => hint?.name || place?.name || cleanShareName(entry.title, entry.text),
-	);
+	// Only a place's own name (a Maps link's); a caption is not a name.
+	const [name, setName] = useState(() => hint?.name || place?.name || "");
 	const [nameTouched, setNameTouched] = useState(false);
 	useEffect(() => {
 		if (preview?.name && !nameTouched) setName(preview.name.slice(0, 60));
@@ -351,8 +225,8 @@ export function Saver({
 	// A new trip resets a hand-picked parent (its nodes are another trip's).
 	// biome-ignore lint/correctness/useExhaustiveDependencies: reset on trip change only
 	useEffect(() => setPicked(null), [tripId]);
-	const plan: ParentPlan =
-		picked ?? autoParent(nodes, at, preview?.filing ?? null);
+	const suggestedPlan = autoParent(nodes, at, preview?.filing ?? null);
+	const plan: ParentPlan = picked ?? suggestedPlan;
 	const planLabel = parentLabel(nodes, plan, trip?.name ?? "the trip");
 	const unresolved =
 		kind === "maps" &&
@@ -385,7 +259,7 @@ export function Saver({
 						tripId: trip.id,
 						target: nodeId ? { kind: "node", nodeId } : { kind: "trip" },
 						list: "todo",
-						text: (name || entry.text || "Shared item").slice(0, 500),
+						text: (name.trim() || entry.text || "Shared item").slice(0, 500),
 						...(url ? { url } : {}),
 					},
 				});
@@ -591,62 +465,60 @@ export function Saver({
 						onClick={() => setWhere({ kind: "new" })}
 						icon={<Lightbulb className="size-4" />}
 						label="New idea"
-						hint={`in ${planLabel.split(" › ").at(-1)}`}
+						hint="a place to add"
 					/>
 					<WhereButton
 						active={where.kind === "existing"}
 						onClick={() =>
 							setWhere({
 								kind: "existing",
-								nodeId: duplicate?.id ?? places[0]?.id ?? "",
+								nodeId: duplicate?.id ?? "",
 							})
 						}
 						icon={<MapPin className="size-4" />}
 						label="Add to existing"
-						hint="a place in the trip"
+						hint="put it on a place"
 					/>
 				</div>
 			</fieldset>
 			{where.kind === "new" ? (
-				<div className="grid gap-2">
-					<Label htmlFor={`share-name-${entry.id}`}>Name</Label>
-					<Input
-						id={`share-name-${entry.id}`}
-						value={name}
-						maxLength={60}
-						onChange={(e) => {
-							setNameTouched(true);
-							setName(e.target.value);
-						}}
-						data-testid={HOME_TESTID.shareName}
-					/>
-					<ParentPicker
-						nodes={nodes}
-						plan={plan}
-						label={planLabel}
-						onPick={setPicked}
-					/>
+				<div className="grid gap-3">
+					<div className="grid gap-2">
+						<Label htmlFor={`share-name-${entry.id}`}>Name</Label>
+						<Input
+							id={`share-name-${entry.id}`}
+							value={name}
+							maxLength={60}
+							placeholder="What's the place called?"
+							onChange={(e) => {
+								setNameTouched(true);
+								setName(e.target.value);
+							}}
+							data-testid={HOME_TESTID.shareName}
+						/>
+					</div>
+					<div className="grid gap-2">
+						<span className="text-sm font-medium">In</span>
+						<AreaPicker
+							nodes={nodes}
+							plan={plan}
+							suggested={suggestedPlan}
+							label={planLabel}
+							tripName={trip?.name ?? "the trip"}
+							onPick={setPicked}
+						/>
+					</div>
 				</div>
 			) : (
 				<div className="grid gap-2">
-					<Label htmlFor={`share-place-${entry.id}`}>Place</Label>
-					<Select
+					<span className="text-sm font-medium">Place</span>
+					<PlacePicker
+						nodes={nodes}
 						value={where.nodeId}
-						onValueChange={(v) => setWhere({ kind: "existing", nodeId: v })}
-					>
-						<SelectTrigger id={`share-place-${entry.id}`} className="w-full">
-							<SelectValue placeholder="Choose a place" />
-						</SelectTrigger>
-						<SelectContent className="max-h-72">
-							{[...places]
-								.sort((a, b) => a.name.localeCompare(b.name))
-								.map((p) => (
-									<SelectItem key={p.id} value={p.id}>
-										{p.name}
-									</SelectItem>
-								))}
-						</SelectContent>
-					</Select>
+						at={at}
+						duplicateId={duplicateId}
+						onPick={(nodeId) => setWhere({ kind: "existing", nodeId })}
+					/>
 				</div>
 			)}
 			{media && !canUpload ? (
@@ -700,6 +572,7 @@ export function Saver({
 						offline ||
 						busy ||
 						(where.kind === "existing" && !where.nodeId) ||
+						(where.kind === "new" && !name.trim()) ||
 						(!!media && !canUpload)
 					}
 				>

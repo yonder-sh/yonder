@@ -1336,8 +1336,8 @@ test("X4 share target: a TikTok goes to Shibuya Sky's media", async ({ browser }
 	await expect(page).toHaveURL(/\/saved\?open=.+&from=share/, { timeout: 20_000 });
 	const card = page.locator(`[data-testid="saved-card"][data-saved="${new URL(page.url()).searchParams.get("open")}"]`);
 	await card.getByRole("button", { name: /Add to existing/ }).click();
-	await card.getByLabel("Place").click();
-	await page.getByRole("option", { name: "Shibuya Sky" }).click();
+	await card.getByTestId(HOME_TESTID.sharePlace).click();
+	await page.getByTestId(HOME_TESTID.sharePicker).getByRole("option", { name: "Shibuya Sky" }).first().click();
 	await shot(page, "x4-01-share-inbox");
 	await card.getByTestId(HOME_TESTID.shareSave).click();
 	await expect(card.getByTestId(HOME_TESTID.shareSaved)).toContainText(/Saved|Added/, { timeout: 15_000 });

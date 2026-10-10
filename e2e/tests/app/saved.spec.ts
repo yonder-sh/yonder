@@ -219,12 +219,51 @@ test("two photos shared from another app: uploaded with progress, one tile, slid
 	await page.screenshot({ path: shotPath("saved/photos-feed-1440.png"), animations: "disabled" });
 	// Onto Shibuya Sky: the same files, now in the trip.
 	await card.getByRole("button", { name: /Add to existing/ }).click();
-	await card.getByLabel("Place").click();
-	await page.getByRole("option", { name: "Shibuya Sky" }).click();
+	await card.getByTestId(HOME_TESTID.sharePlace).click();
+	await page.getByTestId(HOME_TESTID.sharePicker).getByRole("option", { name: "Shibuya Sky" }).first().click();
 	await card.getByTestId(HOME_TESTID.shareSave).click();
 	await expect(card.getByTestId(HOME_TESTID.shareSaved)).toContainText("Saved to Shibuya Sky", { timeout: 15_000 });
 	await expect.poll(photosOn, { timeout: 15_000 }).toBe(had + 2);
 	// Gone from the grid (it's in the trip now).
 	await page.getByTestId(S.close).click();
 	await expect(page.getByTestId(S.empty)).toBeVisible();
+});
+
+test("on a phone, the place to add to is a full-screen list grouped by area, with search", async ({
+	page,
+	request,
+}, info) => {
+	test.skip(info.project.name !== "chromium", "the size is set here: 390");
+	const c = await cloneFixtureTrip(request);
+	await page.setViewportSize({ width: 390, height: 844 });
+	await page.goto("/dashboard");
+	await page.evaluate((id) => localStorage.setItem("yonder:share-last-trip", id), c.tripId);
+	const url = `https://www.tiktok.com/@kyoto.eats/video/73${randomBytes(4).toString("hex").replace(/\D/g, "1")}`;
+	await page.goto(`/share?${new URLSearchParams({ url, text: `Best ramen in Tokyo 🍜 #ramen ${url}` })}`);
+	await expect(page).toHaveURL(/\/saved\?open=/, { timeout: 20_000 });
+	const card = activeCard(page);
+	await card.getByTestId(S.bar).click();
+	// A caption isn't a name.
+	await expect(card.getByTestId(HOME_TESTID.shareName)).toHaveValue("");
+	await card.getByRole("button", { name: /Add to existing/ }).click();
+	await card.getByTestId(HOME_TESTID.sharePlace).click();
+	const picker = page.getByTestId(HOME_TESTID.sharePicker);
+	await expect(picker).toBeVisible();
+	await expect(picker.locator("[cmdk-group-heading]", { hasText: "Japan › Tokyo › Shibuya" })).toBeVisible();
+	// The keyboard waits for search.
+	await expect(picker.getByRole("combobox")).not.toBeFocused();
+	await expectNoHorizontalOverflow(page);
+	await page.screenshot({ path: shotPath("saved/place-picker-390.png"), animations: "disabled" });
+	await picker.getByRole("combobox").fill("sky");
+	await expect(picker.getByRole("option")).toHaveCount(1);
+	await page.screenshot({ path: shotPath("saved/place-picker-search-390.png"), animations: "disabled" });
+	await picker.getByRole("option", { name: /Shibuya Sky/ }).click();
+	await expect(card.getByTestId(HOME_TESTID.sharePlace)).toHaveAccessibleName("Adding to Shibuya Sky. Change");
+	await expect(card.getByTestId(HOME_TESTID.shareSave)).toBeEnabled();
+	// New idea: the area list, the same way.
+	await card.getByRole("button", { name: /New idea/ }).click();
+	await expect(card.getByTestId(HOME_TESTID.shareSave)).toBeDisabled();
+	await card.getByTestId(HOME_TESTID.shareParent).click();
+	await expect(picker.getByRole("option", { name: /^Shibuya/ })).toBeVisible();
+	await page.screenshot({ path: shotPath("saved/area-picker-390.png"), animations: "disabled" });
 });
