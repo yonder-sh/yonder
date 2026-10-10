@@ -4,14 +4,15 @@ import { ShareInbox } from "@/features/home/ShareInbox";
 import { pageTitle } from "@/lib/brand";
 
 /**
- * `/share` — the Web Share Target landing page (EXTENSIONS §10, F route;
- * WP-Home owns `ShareInbox`). `?url=&text=&title=` hand a link over directly
- * (the iOS Shortcut, ⌘K). The service worker receives the share-target
- * POST, stores it in IndexedDB and redirects here with `?id=`. If the POST
- * ever reaches the server (no service worker yet), the handler answers 303
- * `/share?lost=1` ("Couldn't receive that — share again"); the body is never
- * read or stored. Signed-out users go through /login and come back with the
- * entry intact (it lives on the device).
+ * `/share` — where shares land (EXTENSIONS §10, F route; WP-Home owns
+ * `ShareInbox`). `?url=&text=&title=` hand a link over directly (the iOS
+ * Shortcut's old address, ⌘K). The service worker receives the share-target
+ * POST, stores it in IndexedDB and redirects here with `?id=`. A link goes
+ * into Saved and opens in its feed (`/saved?open=…&from=share`); photos stay
+ * here. If the POST ever reaches the server (no service worker yet), the
+ * handler answers 303 `/share?lost=1` ("Couldn't receive that — share
+ * again"); the body is never read or stored. Signed-out users go through
+ * /login and come back with the entry intact (it lives on the device).
  */
 const ShareSearch = z.object({
 	id: z
