@@ -324,7 +324,7 @@ async function posterOf(job: MediaJobInput, row: Row): Promise<JobResult> {
 // links.preview
 // ---------------------------------------------------------------------------
 
-async function fetchImage(
+export async function fetchImage(
 	fetcher: SafeFetcher,
 	url: string,
 	maxBytes: number,

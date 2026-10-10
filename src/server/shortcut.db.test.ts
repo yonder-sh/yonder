@@ -2,7 +2,8 @@
  * The iPhone Shortcut's keys and links against real Postgres and Redis: a
  * setup code works once and only to pair, a phone's key only saves, keys are
  * stored hashed, removing a phone or the account kills its key, the key
- * endpoints don't exist over HTTP, and the app takes each link once.
+ * endpoints don't exist over HTTP, and its links land in Saved (the app
+ * hears about the newest one once).
  */
 import { randomUUID } from "node:crypto";
 import { sql } from "drizzle-orm";
@@ -29,6 +30,7 @@ import {
 	migrateDatabase,
 } from "@/db/migrate.server";
 import { user } from "@/db/schema";
+import { listSaved } from "@/features/saved/server/saved.server";
 import { auth } from "@/server/auth.server";
 import { closeRedis, redis, redisPrefix } from "@/server/live/redis.server";
 import {
@@ -169,7 +171,7 @@ describe("pairing", () => {
 });
 
 describe("keys", () => {
-	it("a removed phone's key stops working and its links go", async () => {
+	it("a removed phone's key stops working; what it saved stays in Saved", async () => {
 		const u = await newUser();
 		const key = await connect(u);
 		const check = await checkKey(key);
@@ -183,7 +185,9 @@ describe("keys", () => {
 		);
 		expect(await removeDevice(getDb(), u, check.device.id)).toBe(true);
 		expect(await checkKey(key)).toEqual({ ok: false, reason: "key" });
-		expect((await takeShares(getDb(), u)).shares).toEqual([]);
+		expect((await listSaved(getDb(), u)).map((l) => l.url)).toEqual([
+			"https://example.com/a",
+		]);
 	});
 
 	it("deleting the account deletes its keys", async () => {
@@ -228,46 +232,33 @@ describe("keys", () => {
 });
 
 describe("links", () => {
-	it("the app takes each link once, oldest first, and hears about a new phone once", async () => {
+	it("land in Saved, newest first; the app hears about the newest and a new phone once", async () => {
 		const u = await newUser();
 		const key = await connect(u, "Maya's iPhone");
 		const check = await checkKey(key);
 		if (!check.ok) throw new Error("key should work");
 		await saveShare(getDb(), check.device, shareInput("https://a.example/1"));
-		await saveShare(
+		const { id } = await saveShare(
 			getDb(),
 			check.device,
 			shareInput("Matcha at Tsujiri https://b.example/2?x=1."),
 		);
-		const first = await takeShares(getDb(), u);
-		expect(first.connected).toBe("Maya's iPhone");
-		expect(first.shares.map((s) => [s.url, s.text])).toEqual([
-			["https://a.example/1", null],
-			["https://b.example/2?x=1", "Matcha at Tsujiri"],
+		expect(
+			(await listSaved(getDb(), u)).map((l) => [l.url, l.text, l.status]),
+		).toEqual([
+			["https://b.example/2?x=1", "Matcha at Tsujiri", "pending"],
+			["https://a.example/1", null, "pending"],
 		]);
 		expect(await takeShares(getDb(), u)).toEqual({
-			shares: [],
+			fresh: id,
+			connected: "Maya's iPhone",
+		});
+		expect(await takeShares(getDb(), u)).toEqual({
+			fresh: null,
 			connected: null,
 		});
-	});
-
-	it("keeps the newest 50 and drops links older than 7 days", async () => {
-		const u = await newUser();
-		const key = await connect(u);
-		const check = await checkKey(key);
-		if (!check.ok) throw new Error("key should work");
-		for (let i = 0; i < 52; i++)
-			await saveShare(getDb(), check.device, {
-				url: `https://e.example/${i}`,
-				text: null,
-			});
-		await getDb().execute(
-			sql`update shortcut_shares set created_at = now() - interval '8 days'
-			     where user_id = ${u} and url = 'https://e.example/51'`,
-		);
-		const { shares } = await takeShares(getDb(), u);
-		expect(shares).toHaveLength(49);
-		expect(shares[0]?.url).toBe("https://e.example/2");
+		// Taking never removes anything: they wait in Saved.
+		expect(await listSaved(getDb(), u)).toHaveLength(2);
 	});
 
 	it("reads only http(s) links", () => {

@@ -92,6 +92,8 @@ export const meKeys = {
 	inbox: ["me", "inbox"] as const,
 	/** `getStorageUsage` (ADDENDUM §12): the account's storage used and quota. */
 	storage: ["me", "storage"] as const,
+	/** `listSavedLinks` (Saved): shared links waiting for a trip. */
+	saved: ["me", "saved"] as const,
 } as const;
 
 /** `getPublicConfig`: runtime settings the browser needs (Turnstile site key). */

@@ -9,6 +9,7 @@ import {
 	mediaVariants,
 } from "@/features/media/server/jobs.server";
 import { fxDaily, fxRehome } from "@/features/money/server/fx.server";
+import { savedPreview } from "@/features/saved/server/preview.server";
 import { autofillLeg } from "@/features/transit/server/autofill.server";
 import type { TripKey } from "@/lib/query/keys";
 import {
@@ -76,7 +77,7 @@ const ping = async (
 /**
  * The handler table. The bodies belong to the feature packages (WP-Transit:
  * `autofillLeg`; WP-Media: `mediaVariants`, `mediaPoster`, `linkPreview`;
- * WP-Money: `fxDaily`, `fxRehome`; WP-Insights: `climateForCell`,
+ * WP-Money: `fxDaily`, `fxRehome`; Saved: `savedPreview`; WP-Insights: `climateForCell`,
  * `osmHoursForTrip`, `osmHoursRefresh`; Web Push:
  * `src/server/push/handlers.server.ts`); this file
  * only routes queue/job names to them, so a package never edits it.
@@ -148,6 +149,14 @@ export const jobHandlers: JobHandlers = {
 		"hours.osmRefresh": async (_data, ctx) => {
 			const r = await osmHoursRefresh({ log: ctx.log });
 			if (r.looked) ctx.log(osmSummary(r));
+			return {};
+		},
+		"test.ping": ping,
+	},
+	// A user's own rows: no trip to invalidate (the Saved grid polls).
+	saved: {
+		"saved.preview": async (data) => {
+			await savedPreview(data);
 			return {};
 		},
 		"test.ping": ping,

@@ -8,6 +8,7 @@ import { and, eq, isNull } from "drizzle-orm";
 import { db } from "@/db/db.server";
 import { nodes } from "@/db/schema";
 import { fail } from "@/server/authz/session.server";
+import { cacheGet, cacheSet } from "@/server/cache.server";
 import { outboundFetch } from "@/server/outbound-stub.server";
 import { type FilingNode, suggestFiling } from "../lib/filing";
 import { parseMapsUrl } from "../lib/maps-url";
@@ -190,4 +191,19 @@ async function resolveParsed(
 			};
 	}
 	return { core: null, query: name };
+}
+
+type Resolved = Awaited<ReturnType<typeof resolveUrl>>;
+
+/** `resolveUrl`, cached 24 h per link (the share page and Saved's preview job ask alike). */
+export async function resolveUrlCached(
+	raw: string,
+	userId: string,
+): Promise<Resolved> {
+	const cacheKey = Buffer.from(raw).toString("base64url").slice(0, 180);
+	const hit = await cacheGet<Resolved>("sharedlink2", provider(), cacheKey);
+	if (hit) return hit;
+	const found = await resolveUrl(raw, userId);
+	await cacheSet(["sharedlink2", provider(), cacheKey], found, 24 * 60 * 60);
+	return found;
 }

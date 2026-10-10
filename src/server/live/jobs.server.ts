@@ -30,14 +30,15 @@ import { key, redis, redisForBull } from "./redis.server";
  *   climate   `climate.cell`    fetch one 0.25° cell's climate normals once (WP-Insights)
  *   push      `push.events`, `push.flush`, `push.sync`, `push.remind`, `push.sweep`:
  *             Web Push notifications (`src/lib/push/jobs.ts`, `src/server/push`)
+ *   saved     `saved.preview`   a saved link's preview, re-hosted under the user (Saved)
  *   hours     `hours.osm`       OSM opening hours of a trip's new or re-linked places (WP-Insights)
  *             `hours.osmRefresh` the next places whose OSM hours are 30+ days old, all trips
  *                               (hourly, by `scheduleRecurringJobs`)
  *   (any)     `test.ping`       a no-op sample job: smoke tests and ops checks
  *
  * Trip jobs carry `tripId`: the worker reports per-trip progress (`job` events)
- * and invalidates the trip's queries after it. `money`, `climate`, `hours` and
- * `push` are SILENT queues: no progress toasts (their jobs may have no trip),
+ * and invalidates the trip's queries after it. `money`, `climate`, `hours`,
+ * `saved` and `push` are SILENT queues: no progress toasts (their jobs may have no trip),
  * but a trip job's reported keys are still invalidated.
  */
 
@@ -71,6 +72,11 @@ export const ClimateCellJob = z.object({
 });
 /** `hours.osm`: the trip's places still missing OSM hours for their `osm_ref`. */
 export const OsmHoursJob = z.object({ tripId: TripId });
+/** `saved.preview`: one of a user's saved links (no trip). */
+export const SavedPreviewJob = z.object({
+	userId: z.string().min(1).max(64),
+	savedId: z.string().refine(isUuid, "savedId must be a UUID"),
+});
 /** `hours.osmRefresh`: no payload (all trips). */
 export const OsmHoursRefreshJob = z.object({});
 export const PingJob = z.object({
@@ -109,10 +115,17 @@ export const JOB_SCHEMAS = {
 		"hours.osmRefresh": OsmHoursRefreshJob,
 		"test.ping": PingJob,
 	},
+	saved: { "saved.preview": SavedPreviewJob, "test.ping": PingJob },
 } as const satisfies Record<JobKind | SilentQueue, Record<string, z.ZodType>>;
 
 /** Queues without progress events (no toasts; jobs may have no trip). */
-export const SILENT_QUEUES = ["money", "climate", "hours", "push"] as const;
+export const SILENT_QUEUES = [
+	"money",
+	"climate",
+	"hours",
+	"push",
+	"saved",
+] as const;
 export type SilentQueue = (typeof SILENT_QUEUES)[number];
 export function isSilentQueue(q: string): q is SilentQueue {
 	return (SILENT_QUEUES as readonly string[]).includes(q);
@@ -137,6 +150,7 @@ export const QUEUE_CONCURRENCY: Record<QueueName, number> = {
 	push: 4,
 	// Overpass is paced to 1 request/s anyway.
 	hours: 1,
+	saved: 4,
 };
 
 /** Default options of every job (SPEC §10.9). */

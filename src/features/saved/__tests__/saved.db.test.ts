@@ -1,0 +1,452 @@
+/**
+ * Saved against real Postgres, Redis and S3 (s3proxy): saving (the Shortcut
+ * and the app), the list (only mine, newest first, added and deleted ones
+ * out), add-to-trip, delete, the preview job (stubbed fetches, the picture
+ * re-hosted under the user, served to its owner only), and the move of the
+ * Shortcut's waiting links in migration 0025.
+ */
+import { randomUUID } from "node:crypto";
+import {
+	cpSync,
+	mkdtempSync,
+	readFileSync,
+	rmSync,
+	writeFileSync,
+} from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
+import { sql } from "drizzle-orm";
+import sharp from "sharp";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+
+const testEnv = vi.hoisted(() => {
+	const hex = Math.random().toString(16).slice(2, 10);
+	const base = process.env.DATABASE_URL_TEST ?? process.env.DATABASE_URL;
+	if (!base) throw new Error("DATABASE_URL(_TEST) must be set");
+	const scratch = new URL(base);
+	scratch.pathname = `/yonder_saved_${hex}`;
+	const old = new URL(base);
+	old.pathname = `/yonder_saved_mig_${hex}`;
+	process.env.DATABASE_URL = scratch.toString();
+	process.env.REDIS_PREFIX = `yonder-savedtest-${hex}`;
+	process.env.BETTER_AUTH_URL = "http://localhost:3000";
+	process.env.APP_URL = "http://localhost:3000";
+	process.env.BETTER_AUTH_SECRET ||= "test-secret-test-secret-test-secret-00";
+	return { scratchUrl: scratch.toString(), oldUrl: old.toString() };
+});
+
+/** `/api/saved/…` reads the session from the request: tests name the user. */
+const sessions = vi.hoisted(() => ({ byId: new Map<string, unknown>() }));
+
+vi.mock("@tanstack/react-start", () => import("@/test/start-mock"));
+vi.mock("@/server/authz/session.server", async (orig) => ({
+	...(await orig<typeof import("@/server/authz/session.server")>()),
+	loadSession: async (h: Headers) => {
+		const u = sessions.byId.get(h.get("x-test-user") ?? "");
+		return u ? { user: u, session: {} } : null;
+	},
+}));
+vi.mock(
+	"@tanstack/react-start/server",
+	() => import("@/test/start-server-mock"),
+);
+
+import { closeDb, getDb } from "@/db/db.server";
+import {
+	dropDatabase,
+	ensureDatabase,
+	migrateDatabase,
+} from "@/db/migrate.server";
+import { tripMembers, user } from "@/db/schema";
+import type { SafeFetcher } from "@/features/media/server/safe-fetch.server";
+import { headObject } from "@/features/media/server/storage.server";
+import type { AuthUser } from "@/server/auth.server";
+import { errorCode } from "@/server/authz/errors";
+import { cloneDemoTrip, type FixtureClone } from "@/server/fixture.server";
+import { closeQueues } from "@/server/live/jobs.server";
+import { closeRedis, redis, redisPrefix } from "@/server/live/redis.server";
+import { ensureBucket } from "@/server/s3.server";
+import {
+	checkKey,
+	newPairingCode,
+	pair,
+	saveShare,
+	shareInput,
+} from "@/server/shortcut.server";
+import {
+	deleteSavedLink,
+	listSavedLinks,
+	markSavedAdded,
+	saveSharedLink,
+} from "../saved.functions";
+import { savedPreview } from "../server/preview.server";
+import { savedPrefix } from "../server/saved.server";
+import { serveSaved } from "../server/serve.server";
+import type { SavedLink } from "../types";
+
+vi.setConfig({ testTimeout: 30_000, hookTimeout: 60_000 });
+
+type Fn = (opts: { data?: unknown; context?: unknown }) => Promise<unknown>;
+const call = <T = Record<string, unknown>>(
+	fn: unknown,
+	u: AuthUser,
+	data?: unknown,
+) => (fn as Fn)({ data, context: { user: u } }) as Promise<T>;
+
+async function codeOf(p: Promise<unknown>): Promise<string> {
+	try {
+		await p;
+		return "ok";
+	} catch (e) {
+		return errorCode(e) ?? `unexpected: ${(e as Error).message}`;
+	}
+}
+
+async function newUser(first: string): Promise<AuthUser> {
+	const id = randomUUID();
+	await getDb()
+		.insert(user)
+		.values({
+			id,
+			email: `u-${id}@example.test`,
+			emailVerified: true,
+			name: `${first} Test`,
+			firstName: first,
+			lastName: "Test",
+			isAnonymous: false,
+		});
+	const [row] = await getDb()
+		.select()
+		.from(user)
+		.where(sql`${user.id} = ${id}`);
+	sessions.byId.set(id, row);
+	return row as unknown as AuthUser;
+}
+
+const list = (u: AuthUser) => call<SavedLink[]>(listSavedLinks, u);
+const save = (u: AuthUser, data: Record<string, unknown>) =>
+	call<{ id: string }>(saveSharedLink, u, data);
+
+let trip: FixtureClone;
+const U = {} as Record<"me" | "other" | "viewer", AuthUser>;
+
+beforeAll(async () => {
+	await ensureDatabase(testEnv.scratchUrl);
+	await migrateDatabase(testEnv.scratchUrl);
+	await ensureBucket();
+	U.me = await newUser("Dennis");
+	U.other = await newUser("Maya");
+	U.viewer = await newUser("Vic");
+	trip = await cloneDemoTrip(getDb(), U.me.id);
+	await getDb().insert(tripMembers).values({
+		tripId: trip.tripId,
+		userId: U.viewer.id,
+		status: "active",
+		role: "viewer",
+		color: 5,
+	});
+});
+
+afterAll(async () => {
+	await closeQueues().catch(() => {});
+	const keys = await redis().keys(`${redisPrefix()}:*`);
+	if (keys.length) await redis().del(...keys);
+	await closeRedis();
+	await closeDb();
+	await dropDatabase(testEnv.scratchUrl);
+	await dropDatabase(testEnv.oldUrl).catch(() => {});
+});
+
+describe("saving", () => {
+	it("the app saves a link and the words around it; a retried upload saves once", async () => {
+		const u = await newUser("Sol");
+		const a = await save(u, {
+			url: "https://www.tiktok.com/@kyoto.eats/video/7300000000000000301",
+			text: "Matcha parfait at Tsujiri https://www.tiktok.com/@kyoto.eats/video/7300000000000000301",
+			clientId: "share-abc",
+		});
+		const again = await save(u, {
+			url: "https://www.tiktok.com/@kyoto.eats/video/7300000000000000301",
+			clientId: "share-abc",
+		});
+		expect(again.id).toBe(a.id);
+		const [l] = await list(u);
+		expect(l).toMatchObject({
+			id: a.id,
+			url: "https://www.tiktok.com/@kyoto.eats/video/7300000000000000301",
+			text: "Matcha parfait at Tsujiri",
+			provider: "tiktok",
+			embedId: "7300000000000000301",
+			status: "pending",
+			image: null,
+		});
+		expect(await codeOf(save(u, { text: "  " }))).toBe("VALIDATION");
+	});
+
+	it("the Shortcut saves into the phone owner's Saved", async () => {
+		const u = await newUser("Ivy");
+		const code = await newPairingCode(getDb(), u.id);
+		const r = await pair(getDb(), code, "Ivy's iPhone");
+		if (!r.ok) throw new Error("pair failed");
+		const check = await checkKey(r.key);
+		if (!check.ok) throw new Error("key should work");
+		await saveShare(
+			getDb(),
+			check.device,
+			shareInput("Ramen https://www.instagram.com/reel/C0SAVED01/?igsh=x"),
+		);
+		expect((await list(u)).map((l) => [l.provider, l.text])).toEqual([
+			["instagram", "Ramen"],
+		]);
+	});
+});
+
+describe("the list", () => {
+	it("only mine, newest first; added and deleted ones leave it", async () => {
+		const u = await newUser("Lee");
+		const first = await save(u, { url: "https://a.example/1" });
+		const second = await save(u, { url: "https://b.example/2" });
+		const third = await save(u, { text: "Onibus Coffee, Nakameguro" });
+		await save(U.other, { url: "https://c.example/3" });
+		expect((await list(u)).map((l) => l.id)).toEqual([
+			third.id,
+			second.id,
+			first.id,
+		]);
+		await getDb().insert(tripMembers).values({
+			tripId: trip.tripId,
+			userId: u.id,
+			status: "active",
+			role: "editor",
+			color: 7,
+		});
+		await call(markSavedAdded, u, {
+			id: second.id,
+			tripId: trip.tripId,
+			nodeId: trip.ids.nodes.tokyo,
+		});
+		await call(deleteSavedLink, u, { id: first.id });
+		expect((await list(u)).map((l) => l.id)).toEqual([third.id]);
+		const rows = (
+			await getDb().execute(sql`
+				select id::text as id, added_trip_id::text as "tripId", added_node_id::text as "nodeId",
+				       added_at is not null as added, deleted_at is not null as deleted
+				  from saved_links where user_id = ${u.id} order by created_at`)
+		).rows;
+		expect(rows).toEqual([
+			{ id: first.id, tripId: null, nodeId: null, added: false, deleted: true },
+			{
+				id: second.id,
+				tripId: trip.tripId,
+				nodeId: trip.ids.nodes.tokyo,
+				added: true,
+				deleted: false,
+			},
+			{
+				id: third.id,
+				tripId: null,
+				nodeId: null,
+				added: false,
+				deleted: false,
+			},
+		]);
+	});
+
+	it("someone else's link can't be added, deleted or seen", async () => {
+		const mine = await save(U.me, { url: "https://mine.example/x" });
+		expect(
+			await codeOf(
+				call(markSavedAdded, U.other, {
+					id: mine.id,
+					tripId: trip.tripId,
+					nodeId: null,
+				}),
+			),
+		).toBe("NOT_FOUND");
+		expect(await codeOf(call(deleteSavedLink, U.other, { id: mine.id }))).toBe(
+			"NOT_FOUND",
+		);
+		expect((await list(U.other)).some((l) => l.id === mine.id)).toBe(false);
+		expect((await list(U.me)).some((l) => l.id === mine.id)).toBe(true);
+	});
+
+	it("only a trip I can add to takes it (a viewer's trip doesn't)", async () => {
+		const l = await save(U.viewer, { url: "https://viewer.example/x" });
+		expect(
+			await codeOf(
+				call(markSavedAdded, U.viewer, {
+					id: l.id,
+					tripId: trip.tripId,
+					nodeId: null,
+				}),
+			),
+		).toBe("NOT_FOUND");
+		expect((await list(U.viewer)).map((x) => x.id)).toContain(l.id);
+	});
+});
+
+const png = (w: number, h: number) =>
+	sharp({
+		create: { width: w, height: h, channels: 3, background: "#2f7d5b" },
+	})
+		.png()
+		.toBuffer();
+
+describe("previews", () => {
+	it("re-hosts a TikTok's picture under the user, served to its owner only", async () => {
+		const poster = await png(90, 160);
+		const stub: SafeFetcher = async (url) => {
+			if (url.startsWith("https://www.tiktok.com/oembed"))
+				return {
+					status: 200,
+					headers: {},
+					finalUrl: url,
+					contentType: "application/json",
+					body: Buffer.from(
+						JSON.stringify({
+							title: "Golden Gai at night",
+							author_name: "nightowl",
+							thumbnail_url: "https://p16.tiktokcdn.com/stub.jpeg",
+						}),
+					),
+				};
+			if (url.includes("tiktokcdn"))
+				return {
+					status: 200,
+					headers: {},
+					finalUrl: url,
+					contentType: "image/png",
+					body: poster,
+				};
+			throw new Error(`unexpected fetch ${url}`);
+		};
+		const { id } = await save(U.me, {
+			url: "https://www.tiktok.com/@nightowl/video/7300000000000000009",
+		});
+		await savedPreview({ userId: U.me.id, savedId: id }, stub);
+		const l = (await list(U.me)).find((x) => x.id === id);
+		expect(l).toMatchObject({
+			status: "ready",
+			previewTitle: "Golden Gai at night",
+			author: "nightowl",
+			siteName: "TikTok",
+			imageW: 90,
+			imageH: 160,
+		});
+		expect(l?.image).toMatch(new RegExp(`^/api/saved/${id}/image\\?v=`));
+		expect(
+			await headObject(`${savedPrefix(U.me.id, id)}image.webp`),
+		).not.toBeNull();
+		const get = (who: AuthUser | null) =>
+			serveSaved(
+				new Request(`http://localhost/api/saved/${id}/image`, {
+					headers: who ? { "x-test-user": who.id } : {},
+				}),
+				id,
+				"image",
+			);
+		const mine = await get(U.me);
+		expect(mine.status).toBe(200);
+		expect(mine.headers.get("content-type")).toBe("image/webp");
+		expect((await get(U.other)).status).toBe(404);
+		expect((await get(null)).status).toBe(404);
+		// Deleting takes the picture too.
+		await call(deleteSavedLink, U.me, { id });
+		expect(
+			await headObject(`${savedPrefix(U.me.id, id)}image.webp`),
+		).toBeNull();
+	});
+
+	it("a Maps link gets its place, and the trip that has it", async () => {
+		const tokyo = (
+			await getDb().execute(
+				sql`select lat, lng from nodes where id = ${trip.ids.nodes.tokyo}`,
+			)
+		).rows[0] as { lat: number; lng: number };
+		const url = `https://www.google.com/maps/place/Kissa+Saved/@${tokyo.lat + 0.01},${tokyo.lng},17z`;
+		const { id } = await save(U.me, { url });
+		const noFetch: SafeFetcher = async (u) => {
+			throw new Error(`unexpected fetch ${u}`);
+		};
+		await savedPreview({ userId: U.me.id, savedId: id }, noFetch, async () => ({
+			core: null,
+			link: { lat: tokyo.lat + 0.01, lng: tokyo.lng, name: "Kissa Saved" },
+		}));
+		const l = (await list(U.me)).find((x) => x.id === id);
+		expect(l).toMatchObject({
+			status: "ready",
+			previewTitle: "Kissa Saved",
+			siteName: "Google Maps",
+			place: { name: "Kissa Saved", lng: tokyo.lng },
+			nearTrips: [trip.tripId],
+		});
+		// A viewer of that trip gets no pick (they can't add to it).
+		const v = await save(U.viewer, { url });
+		await savedPreview(
+			{ userId: U.viewer.id, savedId: v.id },
+			noFetch,
+			async () => ({
+				core: null,
+				link: { lat: tokyo.lat + 0.01, lng: tokyo.lng },
+			}),
+		);
+		expect(
+			(await list(U.viewer)).find((x) => x.id === v.id)?.nearTrips,
+		).toEqual([]);
+	});
+});
+
+describe("migration 0025", () => {
+	it("moves the Shortcut's waiting links into Saved", async () => {
+		const src = path.resolve(__dirname, "../../../../drizzle");
+		const dir = mkdtempSync(path.join(tmpdir(), "yonder-mig-"));
+		try {
+			cpSync(src, dir, { recursive: true });
+			const journalPath = path.join(dir, "meta/_journal.json");
+			const journal = JSON.parse(readFileSync(journalPath, "utf8")) as {
+				entries: { idx: number }[];
+			};
+			journal.entries = journal.entries.filter((e) => e.idx <= 24);
+			writeFileSync(journalPath, JSON.stringify(journal));
+			await ensureDatabase(testEnv.oldUrl);
+			await migrateDatabase(testEnv.oldUrl, { migrationsFolder: dir });
+		} finally {
+			rmSync(dir, { recursive: true, force: true });
+		}
+		const { createDb } = await import("@/db/db.server");
+		const { db, pool } = createDb({ connectionString: testEnv.oldUrl, max: 1 });
+		try {
+			const uid = randomUUID();
+			const id = randomUUID();
+			await db.execute(sql`
+				insert into "user" (id, email, email_verified, name, first_name, last_name, is_anonymous, created_at, updated_at)
+				values (${uid}, ${`m-${uid}@example.test`}, true, 'Mo Test', 'Mo', 'Test', false, now(), now())`);
+			await db.execute(sql`
+				insert into shortcut_shares (id, user_id, url, text, created_at)
+				values (${id}, ${uid}, 'https://www.tiktok.com/@a/video/7305', 'Hojicha', now() - interval '3 days')`);
+			await migrateDatabase(testEnv.oldUrl);
+			const rows = (
+				await db.execute(sql`
+					select id::text as id, user_id as "userId", url, text, preview_status as status,
+					       created_at < now() - interval '2 days' as old
+					  from saved_links`)
+			).rows;
+			expect(rows).toEqual([
+				{
+					id,
+					userId: uid,
+					url: "https://www.tiktok.com/@a/video/7305",
+					text: "Hojicha",
+					status: "pending",
+					old: true,
+				},
+			]);
+			const gone = await db.execute(
+				sql`select to_regclass('public.shortcut_shares') as t`,
+			);
+			expect((gone.rows[0] as { t: string | null }).t).toBeNull();
+		} finally {
+			await pool.end();
+		}
+	});
+});

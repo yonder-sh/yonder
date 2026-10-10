@@ -5,7 +5,8 @@
  *   this server) and the caller's connected phones.
  * - `startShortcutPairing`: a one-time setup code for the clipboard (5 minutes).
  * - `removeShortcutDevice`: disconnects a phone (its key stops working).
- * - `takeShortcutShares`: the links the Shortcut sent, handed over once.
+ * - `takeShortcutShares`: the link the Shortcut just saved (to open) and a
+ *   newly connected phone's name, each once.
  */
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
@@ -20,11 +21,10 @@ import {
 	newPairingCode,
 	removeDevice,
 	type ShortcutDevice,
-	type TakenShare,
 	takeShares,
 } from "@/server/shortcut.server";
 
-export type { ShortcutDevice, TakenShare };
+export type { ShortcutDevice };
 
 export const getShortcutSetup = createServerFn({ method: "GET" })
 	.middleware([withAccount])
@@ -63,6 +63,6 @@ export const takeShortcutShares = createServerFn({ method: "POST" })
 	.handler(
 		async ({
 			context,
-		}): Promise<{ shares: TakenShare[]; connected: string | null }> =>
+		}): Promise<{ fresh: string | null; connected: string | null }> =>
 			takeShares(db, context.user.id),
 	);

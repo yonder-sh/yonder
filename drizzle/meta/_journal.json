@@ -176,6 +176,20 @@
       "when": 1791529666487,
       "tag": "0024_invite_links",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1791596880438,
+      "tag": "0025_saved_links",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1791596899136,
+      "tag": "0026_drop_shortcut_shares",
+      "breakpoints": true
     }
   ]
 }

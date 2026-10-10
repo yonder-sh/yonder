@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { db } from "@/db/db.server";
 import { authEnv } from "@/server/auth/env.server";
+import { errorCode } from "@/server/errors";
 import {
 	checkKey,
 	clientIp,
@@ -15,8 +16,8 @@ import { shortcutOverLimit } from "@/server/shortcut-limits.server";
 
 /**
  * `POST /api/shortcut/save` (every share): `X-Api-Key: ysk_…` and
- * `{ input }`, what was shared (a link, or text with a link in it). Stores it
- * for the key's owner; the app picks it up when it opens. Cookies are never
+ * `{ input }`, what was shared (a link, or text with a link in it). Saves it
+ * into the key's owner's Saved; the app opens it when it comes up. Cookies are never
  * read here, and no CORS headers are sent, so a web page can't call it.
  * Unknown keys: 30 per minute per IP. Saves: 60 an hour per phone (the key's
  * own limit).
@@ -54,7 +55,16 @@ export const Route = createFileRoute("/api/shortcut/save")({
 						message:
 							"There was nothing to save. Share a link to Save to Yonder.",
 					});
-				await saveShare(db, checked.device, share);
+				try {
+					await saveShare(db, checked.device, share);
+				} catch (e) {
+					if (errorCode(e) !== "CONFLICT") throw e;
+					return shortcutReply(409, {
+						ok: false,
+						message:
+							"Saved is full. In Yonder, add some to a trip or delete a few, then share again.",
+					});
+				}
 				return shortcutReply(200, { ok: true });
 			},
 		},

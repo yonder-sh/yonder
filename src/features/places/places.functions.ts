@@ -37,16 +37,14 @@ import {
 	type PlacePreview,
 	type PlaceProvider,
 	type PlaceSearchResult,
-	type PreviewCore,
 } from "./lib/providers";
 import {
 	crumbOf,
 	DETAILS_PER_MIN,
 	filingNodes,
 	previewFor,
-	resolveUrl,
+	resolveUrlCached,
 	SEARCH_PER_MIN,
-	type SharedLinkSpot,
 	withFiling,
 } from "./server/places.server";
 import {
@@ -351,18 +349,10 @@ export const resolveSharedLink = createServerFn({ method: "GET" })
 		await requireTripCapability(data.tripId, "searchPlaces", context.user);
 		await rateLimit(`places:share:${context.user.id}`, 20);
 		const all = await filingNodes(data.tripId);
-		const cacheKey = Buffer.from(data.url).toString("base64url").slice(0, 180);
-		type Cached = {
-			core: PreviewCore | null;
-			query?: string;
-			link?: SharedLinkSpot;
-		};
-		let hit = await cacheGet<Cached>("sharedlink2", provider(), cacheKey);
-		if (!hit) {
-			hit = await resolveUrl(data.url, context.user.id);
-			await cacheSet(["sharedlink2", provider(), cacheKey], hit, 24 * 60 * 60);
-		}
-		const { core, query, link } = hit;
+		const { core, query, link } = await resolveUrlCached(
+			data.url,
+			context.user.id,
+		);
 		if (!core) return { preview: null, ...(query ? { query } : {}) };
 		const preview = withFiling(core, all);
 		// The duplicate check always runs live (never cached). The link's own

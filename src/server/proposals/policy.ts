@@ -43,6 +43,10 @@ export const MUTATION_POLICY = {
 	startShortcutPairing: "account",
 	removeShortcutDevice: "account",
 	takeShortcutShares: "account",
+	/** Saved: the caller's own saved links (adding one to a trip is checked by the trip's own functions). */
+	saveSharedLink: "account",
+	markSavedAdded: "account",
+	deleteSavedLink: "account",
 
 	// ---- trips (F) ----
 	updateTrip: { direct: "tripSettings" },

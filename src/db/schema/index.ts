@@ -13,6 +13,6 @@ export * from "./nodes";
 export * from "./proposals";
 export * from "./push";
 export * from "./relations";
-export * from "./shortcut";
+export * from "./saved";
 export * from "./timeline";
 export * from "./trips";

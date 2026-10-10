@@ -1,8 +1,9 @@
 /**
  * The iPhone Shortcut "Save to Yonder" (owner, 2026-10-01). iOS can't hand a
  * link to a home-screen web app, so the Shortcut sends it here with its own
- * key, then opens the app (`webapp://<host>`), which picks it up
- * (`takeShares`) and opens the save screen.
+ * key into the account's Saved (`saved_links`), then opens the app
+ * (`webapp://<host>`), which asks (`takeShares`) and opens that link in the
+ * Saved feed.
  *
  * Both secrets are Better Auth API keys (`@better-auth/api-key`, configured in
  * auth/options.server.ts, `SHORTCUT_KEY` / `SHORTCUT_PAIR`): stored hashed,
@@ -13,16 +14,16 @@
  *   Shortcut once, which trades it (`pair`) for a phone key. One use, 5
  *   minutes, only "shortcut: pair".
  * - Phone key (`ysk_…`): kept by the Shortcut in iCloud Drive. Only
- *   "shortcut: save" (a link into its owner's `shortcut_shares`), 60 an hour.
+ *   "shortcut: save" (a link into its owner's Saved), 60 an hour.
  *   Removable in the app; deleting the account removes it.
  *
  * Limits: 10 phones per account (a phone connecting again under the same
- * name replaces its key), 50 pending links, links expire after 7 days.
+ * name replaces its key); Saved's own cap (`SAVED.max`).
  */
 import { sql } from "drizzle-orm";
-import { v7 as uuidv7 } from "uuid";
 import type { DbOrTx } from "@/db/db.server";
 import { firstUrl } from "@/features/home/share-classify";
+import { saveLink } from "@/features/saved/server/saved.server";
 import { SHORTCUT_KEY, SHORTCUT_PAIR } from "@/server/auth/shortcut-key";
 import { auth } from "@/server/auth.server";
 import { key, redis } from "@/server/live/redis.server";
@@ -31,14 +32,16 @@ type Exec = Pick<DbOrTx, "execute">;
 
 export const SHORTCUT = {
 	maxDevices: 10,
-	maxPending: 50,
-	shareTtlDays: 7,
+	/** A link saved this recently opens in the app when it comes up. */
+	freshSeconds: 120,
 	textMax: 2000,
 	labelMax: 60,
 } as const;
 
 /** "Shortcut connected" waits here (a day) for the app to say it. */
 const connectedKey = (userId: string) => key("shortcut-connected", userId);
+/** The link just saved, for the app to open (`SHORTCUT.freshSeconds`). */
+const freshKey = (userId: string) => key("shortcut-fresh", userId);
 
 /** A new one-time setup code for `userId`; older unused codes are dropped. */
 export async function newPairingCode(
@@ -162,62 +165,31 @@ export function shareInput(input: string): {
 	};
 }
 
-/** Stores a link for the device's owner (oldest dropped past the cap). */
+/** Saves a link into the device owner's Saved; the app opens it if it comes up soon. */
 export async function saveShare(
 	db: Exec,
 	device: { id: string; userId: string },
 	share: { url: string | null; text: string | null },
-): Promise<void> {
-	await db.execute(sql`
-		insert into shortcut_shares (id, user_id, device_id, url, text)
-		values (${uuidv7()}, ${device.userId}, ${device.id}, ${share.url}, ${share.text})`);
-	await db.execute(sql`
-		delete from shortcut_shares
-		 where user_id = ${device.userId}
-		   and (created_at < now() - make_interval(days => ${SHORTCUT.shareTtlDays})
-		        or id not in (select id from shortcut_shares where user_id = ${device.userId}
-		                       order by created_at desc limit ${SHORTCUT.maxPending}))`);
+): Promise<{ id: string }> {
+	const { id } = await saveLink(db, device.userId, share);
+	await redis().set(freshKey(device.userId), id, "EX", SHORTCUT.freshSeconds);
+	return { id };
 }
 
-export type TakenShare = {
-	id: string;
-	url: string | null;
-	text: string | null;
-	createdAt: number;
-};
-
 /**
- * Hands the account's pending links to the app and deletes them here, plus
- * the name of a phone connected since the app last looked ("Shortcut
- * connected"), once.
+ * What the app hears when it comes up, once each: the link the Shortcut just
+ * saved (to open in the Saved feed) and the name of a phone connected since
+ * it last looked ("Shortcut connected").
  */
 export async function takeShares(
-	db: Exec,
+	_db: Exec,
 	userId: string,
-): Promise<{ shares: TakenShare[]; connected: string | null }> {
-	const taken = await db.execute(sql`
-		delete from shortcut_shares
-		 where user_id = ${userId}
-		   and created_at >= now() - make_interval(days => ${SHORTCUT.shareTtlDays})
-		returning id::text as id, url, text, created_at as "createdAt"`);
-	await db.execute(sql`delete from shortcut_shares where user_id = ${userId}`);
-	const connected = await redis().getdel(connectedKey(userId));
-	const shares = (
-		taken.rows as {
-			id: string;
-			url: string | null;
-			text: string | null;
-			createdAt: Date | string;
-		}[]
-	)
-		.map((r) => ({
-			id: r.id,
-			url: r.url,
-			text: r.text,
-			createdAt: new Date(r.createdAt).getTime(),
-		}))
-		.sort((a, b) => a.createdAt - b.createdAt);
-	return { shares, connected };
+): Promise<{ fresh: string | null; connected: string | null }> {
+	const [fresh, connected] = await Promise.all([
+		redis().getdel(freshKey(userId)),
+		redis().getdel(connectedKey(userId)),
+	]);
+	return { fresh, connected };
 }
 
 export type ShortcutDevice = {
