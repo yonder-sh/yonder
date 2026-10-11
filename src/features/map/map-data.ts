@@ -22,7 +22,7 @@ import {
 	type GraphIndex,
 	pairKey as toPairKey,
 } from "@/lib/engine/graph-index";
-import { repAt } from "@/lib/engine/lens";
+import { LENS_ZOOM, repAt } from "@/lib/engine/lens";
 import type { MarkKey, ProposalMark } from "@/lib/engine/proposals";
 import type {
 	DayRange,
@@ -1076,6 +1076,27 @@ export function wantsGlobe(
 		pts ?? shown.map((p): LngLat => [p.lng, p.lat]).filter(isFitPoint),
 	);
 	return !!cap && cap.radius >= GLOBE_MIN_CAP && cap.radius <= GLOBE_MAX_CAP;
+}
+
+/**
+ * Where a selected place is and the zoom that shows it (a city at ~11): the
+ * node itself, or an item's place. The map flies in to it (owner call,
+ * 2026-10-11), not to the coarser pin that stands for it.
+ */
+export function selectionTarget(
+	ix: GraphIndex,
+	sel: Sel | null,
+): { center: LngLat; zoom: number } | null {
+	const id =
+		sel?.kind === "node"
+			? sel.id
+			: sel?.kind === "item"
+				? ix.item(sel.id)?.nodeId
+				: null;
+	const center = id ? ix.coordOf(id) : null;
+	const type = id ? ix.node(id)?.type : undefined;
+	if (!center || !type || !isFitPoint(center)) return null;
+	return { center, zoom: LENS_ZOOM[type] };
 }
 
 /** A Cities & nights badge on screen: its anchor (px) and how many nights each stop there has. */

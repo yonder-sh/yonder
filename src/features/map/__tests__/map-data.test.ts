@@ -51,6 +51,7 @@ import {
 	oneRepHint,
 	type PinView,
 	selectedFids,
+	selectionTarget,
 	viaItems,
 } from "../map-data";
 import { LINES } from "../palette";
@@ -748,6 +749,28 @@ describe("clusters (GRAN-09)", () => {
 		const offs = spiderOffsets(4);
 		expect(offs).toHaveLength(4);
 		for (const [x, y] of offs) expect(Math.round(Math.hypot(x, y))).toBe(40);
+	});
+});
+
+describe("selectionTarget (the map flies in)", () => {
+	const ix = indexGraph(demoGraph);
+
+	it("aims at the selected city at city zoom, not the country pin over it", () => {
+		expect(
+			selectionTarget(ix, { kind: "node", id: N.kyoto as string }),
+		).toEqual({
+			center: ix.coordOf(N.kyoto),
+			zoom: 11,
+		});
+	});
+
+	it("aims at an item's place, and at nothing for legs or an empty selection", () => {
+		const t = selectionTarget(ix, { kind: "item", id: I.hands as string });
+		expect(t?.center).toEqual(ix.coordOf(N.hands));
+		expect(t?.zoom).toBeGreaterThan(11);
+		expect(selectionTarget(ix, null)).toBeNull();
+		expect(selectionTarget(ix, { kind: "day", id: "d1" })).toBeNull();
+		expect(selectionTarget(ix, { kind: "node", id: "nope" })).toBeNull();
 	});
 });
 
