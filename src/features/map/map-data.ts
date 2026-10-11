@@ -1080,7 +1080,7 @@ export function wantsGlobe(
 
 /**
  * Where a selected place is and the zoom that shows it (a city at ~11): the
- * node itself, or an item's place. The globe flies in to it (owner call,
+ * node itself, or an item's place. The map flies in to it (owner call,
  * 2026-10-11), not to the coarser pin that stands for it.
  */
 export function selectionTarget(

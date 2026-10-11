@@ -1004,40 +1004,48 @@ export default function MapCanvas({
 
 	// A selected pin stays clear of the inspector / sheet (it re-checks when the
 	// inspector opens and changes the padding), but data edits never move the map.
-	// On the globe a new selection flies in to its place (owner call, 2026-10-11).
+	// A new selection flies in to its place when the map is further out (owner call, 2026-10-11).
 	const pinsRef = useRef(pins);
 	pinsRef.current = pins;
 	const target = useMemo(() => selectionTarget(ix, sel), [ix, sel]);
 	const targetRef = useRef(target);
 	targetRef.current = target;
 	const targetKey = target ? `${target.center.join(",")}@${target.zoom}` : null;
-	const flown = useRef<string | null>(null);
+	const flown = useRef<{ key: string | null; flew: boolean }>({
+		key: null,
+		flew: false,
+	});
 	useEffect(() => {
 		void fitPadding;
 		const map = mapRef.current?.getMap();
 		if (!map || !loaded || !selectedRep) {
-			flown.current = null;
+			flown.current = { key: null, flew: false };
 			return;
 		}
 		const show = () => {
 			const t = targetRef.current;
-			if (latest.current.globe && t && !isCameraFollowing()) {
+			if (t && !isCameraFollowing()) {
 				// Re-aimed while it flies (the inspector opening changes the padding).
-				if (flown.current !== targetKey || map.isMoving()) {
-					flown.current = targetKey;
-					userMoved.current = true;
-					const { W, H } = mapSize(map);
-					const pad = padIn(latest.current.fitPadding, W, H, 0.8);
-					map.easeTo({
-						center: t.center,
-						zoom: t.zoom,
-						bearing: 0,
-						padding: globeFit(pad, map.getPadding()).camera,
-						duration: reducedMotion() ? 0 : 800,
-					});
-					return;
-				}
-				return reveal([t.center]);
+				const f = flown.current;
+				const flyIn =
+					f.key !== targetKey
+						? map.getZoom() < t.zoom
+						: f.flew && map.isMoving();
+				flown.current = { key: targetKey, flew: flyIn };
+				if (!flyIn) return reveal([t.center]);
+				userMoved.current = true;
+				const { W, H } = mapSize(map);
+				const pad = padIn(latest.current.fitPadding, W, H, 0.8);
+				if (!latest.current.globe)
+					return fitInside([t.center], pad, t.zoom, 800);
+				map.easeTo({
+					center: t.center,
+					zoom: t.zoom,
+					bearing: 0,
+					padding: globeFit(pad, map.getPadding()).camera,
+					duration: reducedMotion() ? 0 : 800,
+				});
+				return;
 			}
 			const p = pinsRef.current.find((x) => x.repId === selectedRep);
 			if (p) reveal([[p.lng, p.lat]]);
@@ -1054,7 +1062,7 @@ export default function MapCanvas({
 			clearTimeout(timer);
 			map.off("resize", resized);
 		};
-	}, [selectedRep, targetKey, loaded, fitPadding, reveal]);
+	}, [selectedRep, targetKey, loaded, fitPadding, reveal, fitInside]);
 
 	// ---- clusters -----------------------------------------------------------
 	const clusterIndex = useMemo(

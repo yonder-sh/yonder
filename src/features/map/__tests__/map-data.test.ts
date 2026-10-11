@@ -752,7 +752,7 @@ describe("clusters (GRAN-09)", () => {
 	});
 });
 
-describe("selectionTarget (the globe flies in)", () => {
+describe("selectionTarget (the map flies in)", () => {
 	const ix = indexGraph(demoGraph);
 
 	it("aims at the selected city at city zoom, not the country pin over it", () => {
