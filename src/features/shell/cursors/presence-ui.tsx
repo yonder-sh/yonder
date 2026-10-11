@@ -3,8 +3,8 @@
  * - `useFollowAwareness`: publishes who I follow (for "Audrey is following you");
  * - `useSpotlight`: "Ask everyone to follow me" — while a peer presents,
  *   everyone else follows them (FollowBar: "Following Dennis · Stop");
- *   anyone can break away (Stop, for that spotlight); when the presenter
- *   ends it, their followers stop too;
+ *   anyone can break away (Stop ignores that presenter for a while); when
+ *   the presenter ends it, their followers stop too;
  * - `SpotlightMenuItem` / `SpotlightBar`: start it, and the presenter's own
  *   "Everyone is following you · End";
  * - `FollowersBadge`: an eye on my avatar with who follows me;
@@ -37,8 +37,10 @@ export function useFollowAwareness(): void {
 	}, [following, setFollowing]);
 }
 
-/** Spotlights I broke away from (per page; a new spotlight asks again). */
-const dismissed = new Set<string>();
+/** Presenters I broke away from → until when (ms) their spotlights are ignored. */
+const dismissed = new Map<string, number>();
+/** How long a Stop ignores that presenter's spotlights (a new id included). */
+export const SPOTLIGHT_DISMISS_MS = 10 * 60_000;
 
 export function useSpotlight(): void {
 	const { peers, self, setSpotlight } = usePresence();
@@ -72,7 +74,7 @@ export function useSpotlight(): void {
 	useEffect(() => {
 		const j = joined.current;
 		if (j && following !== j.userId) {
-			dismissed.add(j.id);
+			dismissed.set(j.userId, Date.now() + SPOTLIGHT_DISMISS_MS);
 			joined.current = null;
 		}
 	}, [following]);
@@ -97,8 +99,9 @@ export function useSpotlight(): void {
 
 export function SpotlightMenuItem() {
 	const { peers, self, setSpotlight } = usePresence();
-	const { mode } = useWorkspace();
-	if (mode !== "live") return null;
+	const { mode, access } = useWorkspace();
+	// Members only (any role); a link guest can't start one (A243).
+	if (mode !== "live" || access.isGuest) return null;
 	const on = !!self?.spotlight;
 	return (
 		<DropdownMenuItem

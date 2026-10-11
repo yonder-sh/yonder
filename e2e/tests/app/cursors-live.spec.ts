@@ -4,7 +4,8 @@
  *   fractions, although B's window is another size; over the map it lands on
  *   the same lng/lat;
  * - Follow scrolls B to keep A's anchored card in view;
- * - Spotlight ("Ask everyone to follow me"): B follows, can break away, A ends it;
+ * - Spotlight ("Ask everyone to follow me"): B follows, can break away (A's
+ *   next spotlight doesn't pull B back), A ends it;
  * - cursor chat (`/`) and emoji reactions (`E`) reach B;
  * - a PRIVATE to-do's anchor never reaches another member, even when a client
  *   sends it anyway (the server drops it);
@@ -361,12 +362,13 @@ test("Spotlight: everyone follows the presenter, B breaks away, A ends it", asyn
 	// A ends it.
 	await a.page.getByTestId(S.spotlightEnd).click();
 	await expect(a.page.getByTestId(S.spotlightBar)).toHaveCount(0);
-	// A new spotlight asks B again; ending it stops B.
+	// A new spotlight from A doesn't pull B back either (Stop ignores A for a while).
 	await a.page.getByTestId(TESTID.tripMenu).click();
 	await a.page.getByTestId(S.spotlightMenuItem).click();
-	await expect(b.page.getByTestId(S.followBar)).toContainText("Following Dev", { timeout: 8_000 });
+	await expect(a.page.getByTestId(S.spotlightBar)).toBeVisible();
+	await b.page.waitForTimeout(1_500);
+	await expect(b.page.getByTestId(S.followBar)).toHaveCount(0);
 	await a.page.getByTestId(S.spotlightEnd).click();
-	await expect(b.page.getByTestId(S.followBar)).toHaveCount(0, { timeout: 8_000 });
 	await a.ctx.close();
 	await b.ctx.close();
 });
