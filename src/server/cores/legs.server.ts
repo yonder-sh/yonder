@@ -121,11 +121,11 @@ export async function relinkLegCore(
 	if (!ix.item(data.fromItemId) || !ix.item(data.toItemId))
 		return fail("NOT_FOUND", "item");
 	if (!ix.isPair(data.fromItemId, data.toItemId))
-		return fail("CONFLICT", "those stops are not next to each other");
+		return fail("CONFLICT", "Those stops aren't next to each other.");
 	const there = ix.legByPair.get(pairKey(data.fromItemId, data.toItemId));
 	if (there && there.id !== leg.id) {
 		if (ix.isSignificant(there))
-			return fail("CONFLICT", "that stretch already has its own route");
+			return fail("CONFLICT", "That stretch already has its own route.");
 		await tx.delete(legs).where(sql`${legs.id} = ${there.id}`);
 	}
 	await tx.execute(sql`

@@ -283,8 +283,8 @@ async function insertNode(
 		})
 		.returning({ id: nodes.id, slug: nodes.slug });
 	if (!row) throw new Error("insertNode: insert returned no row");
-	// §7.4: the trip's default zone is the first country's.
-	if (input.type === "country" && tz && ix.trip.defaultTz === "UTC") {
+	// §7.4: the trip's default zone is the first country's (over the browser's, A035).
+	if (input.type === "country" && tz) {
 		const firstCountry = !ix.graph.nodes.some((n) => n.type === "country");
 		if (firstCountry)
 			await tx.execute(
@@ -645,20 +645,21 @@ export async function restoreNodeCore(
 	const root = rows.find((r) => r.id === data.nodeId);
 	if (!root) return fail("NOT_FOUND");
 	if (root.parentGone)
-		return fail("CONFLICT", "its parent was deleted — restore that first");
+		return fail("CONFLICT", "Its parent was deleted. Restore that first.");
 	// The root may clash with a sibling created since; re-slug with a suffix (§7.1).
 	const taken = await takenSlugs(tx, tripId, root.parentId, root.id);
 	const slug = taken.includes(root.slug)
 		? uniqueSlug(root.slug, taken)
 		: root.slug;
 	const ids = rows.map((r) => r.id);
-	await tx.execute(sql`
-		update nodes set deleted_at = null, updated_at = now()
-		 where trip_id = ${tripId} and id = any(${sql.param(ids)}::uuid[])`);
+	// Re-slug while still deleted: the sibling-slug index skips deleted rows (A032).
 	if (slug !== root.slug)
 		await tx.execute(
 			sql`update nodes set slug = ${slug} where id = ${root.id}`,
 		);
+	await tx.execute(sql`
+		update nodes set deleted_at = null, updated_at = now()
+		 where trip_id = ${tripId} and id = any(${sql.param(ids)}::uuid[])`);
 	const items = await tx.execute(sql`
 		update items set deleted_at = null, updated_at = now()
 		 where trip_id = ${tripId} and deleted_at = ${at}

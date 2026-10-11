@@ -257,7 +257,10 @@ async function writeStay(
 		if (node.type === "country")
 			return fail("VALIDATION", "a stay is a place or a town");
 		if (ix.isDropped(node.id))
-			return fail("CONFLICT", "restore the place first");
+			return fail(
+				"CONFLICT",
+				"Its place was deleted. Restore the place first.",
+			);
 	}
 	const dayIds = ix.days
 		.filter((d) => d.date >= from.date && d.date <= to.date)

@@ -117,7 +117,7 @@ function assertItemNode(
 ): void {
 	if (!ix.node(nodeId)) fail("NOT_FOUND", "place");
 	if (scheduled && ix.isDropped(nodeId))
-		fail("CONFLICT", "that place is dropped — restore it first");
+		fail("CONFLICT", "That place was dropped. Restore it first.");
 }
 
 async function noteMentions(
@@ -379,7 +379,7 @@ export async function restoreItemCore(
 	}[];
 	if (!rows.some((r) => r.id === data.itemId)) return fail("NOT_FOUND");
 	if (rows.some((r) => r.nodeGone))
-		return fail("CONFLICT", "its place was deleted — restore the place first");
+		return fail("CONFLICT", "Its place was deleted. Restore the place first.");
 	const ids = rows.map((r) => r.id);
 	await tx.execute(sql`
 		update items set deleted_at = null, updated_at = now()
