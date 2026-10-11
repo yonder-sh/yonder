@@ -180,6 +180,10 @@ describe("hierarchy (MONEY-18)", () => {
 			),
 		).toEqual(["kyoto", "tokyo"]);
 		expect(nearestBudgeted(tree, "kansai", new Set(["tokyo"]))).toEqual([]);
+		// A budget on a deleted place is nobody's child (A366).
+		expect(nearestBudgeted(tree, null, new Set(["korea", "gone"]))).toEqual([
+			"korea",
+		]);
 		expect(isWithin(tree, "shibuya", "japan")).toBe(true);
 		expect(isWithin(tree, "seoul", "japan")).toBe(false);
 		expect(isWithin(tree, null, "japan")).toBe(false);
