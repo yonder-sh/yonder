@@ -136,6 +136,9 @@ test("pins select and zoom in; edges select their leg (MAP-03, MAP-04, MAP-09)",
 	// Click the Tokyo → Mt. Fuji edge: one transition → its pair leg.
 	await page.keyboard.press("Escape");
 	await expect(page).not.toHaveURL(/sel=/);
+	// Picking Tokyo flew in to it; back to the whole lens for the edge.
+	await page.goto(`/t/${c.slug}/japan?lens=city`);
+	await mapReady(page, "city");
 	const p = await edgePoint(page, (x) => x.style === "transit");
 	await page.mouse.click(p.x, p.y);
 	await expect(page).toHaveURL(new RegExp(`sel=l\\.${I.itoya}\\.${I.dropBags}`));
