@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { authClient } from "@/lib/auth/auth-client";
-import { authErrorMessage } from "@/lib/auth/auth-errors";
+import { authErrorMessage, settled } from "@/lib/auth/auth-errors";
 import { AUTH_BRAND, LOGIN_PATH } from "@/lib/auth/constants";
 import { PersonName } from "@/lib/auth/names";
 import { postAuthDestination } from "@/lib/auth/redirect";
@@ -76,10 +76,12 @@ function WelcomePage() {
 		}
 		setBusy(true);
 		setFormError(null);
-		const { error } = await authClient.updateUser({
-			firstName: first.data,
-			lastName: last.data,
-		});
+		const { error } = await settled(
+			authClient.updateUser({
+				firstName: first.data,
+				lastName: last.data,
+			}),
+		);
 		if (error) {
 			setBusy(false);
 			setFormError(authErrorMessage(error));
