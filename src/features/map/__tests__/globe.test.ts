@@ -16,7 +16,12 @@ import {
 	perspectiveRadius,
 	sphericalCap,
 } from "../geo-utils";
-import { fitPointsFor, type PinView, wantsGlobe } from "../map-data";
+import {
+	fitPointsFor,
+	isFitPoint,
+	type PinView,
+	wantsGlobe,
+} from "../map-data";
 
 // Country pins roughly where the QA fixture and the real trip put them.
 const USA: Position = [-98.6, 39.8];
@@ -249,6 +254,19 @@ describe("wantsGlobe / fitPointsFor (FB-10)", () => {
 				pin("au", [149.1, -35.3]),
 			]),
 		).toBe(false);
+	});
+
+	it("stays flat for countries close together (Japan and Korea fit a map)", () => {
+		expect(wantsGlobe([pin("jp", JAPAN), pin("kr", KOREA)])).toBe(false);
+		expect(wantsGlobe([pin("jp", JAPAN), pin("vn", VIETNAM)])).toBe(true);
+	});
+
+	it("never frames a point without coordinates or at 0,0", () => {
+		expect(isFitPoint([0, 0])).toBe(false);
+		expect(isFitPoint([Number.NaN, 35])).toBe(false);
+		expect(isFitPoint([179.9, -16.5])).toBe(true);
+		const pins = [pin("jp", JAPAN), pin("xx", [0, 0])];
+		expect(fitPointsFor(pins)).toEqual([JAPAN]);
 	});
 
 	it("frames every country on the whole trip, only visited pins elsewhere", () => {
