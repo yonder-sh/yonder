@@ -4,8 +4,8 @@
  *
  * - Place lens: day sections with cards, legs, stays, flights, gaps, folds
  *   and ghosts. Area lens: the same, grouped under area blocks. City, region
- *   and country lenses: visit bands linked by their transitions, each opening
- *   to its days.
+ *   and country lenses: every day still, each run of days under its visit's
+ *   label, linked by their transitions. Empty days are one line.
  * - A header row with the person filter ("Everyone · Me · Maya ▾") and, with
  *   a day range, "Showing 5–7 Oct · Show all".
  * - How long in each city (`day-split/`): the whole panel above the days
@@ -19,7 +19,6 @@
 import "./plan.css";
 import { useDndContext } from "@dnd-kit/core";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronsDownUp, ChevronsUpDown } from "lucide-react";
 import {
 	type ReactNode,
 	useCallback,
@@ -50,7 +49,6 @@ import { TESTID } from "@/lib/testids";
 import { useUi } from "@/lib/workspace/ui-store";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { cardTone } from "./card-tone";
-import { DayRow } from "./DayRow";
 import { DaySection } from "./DaySection";
 import { PlanSplit, useSplitOpen } from "./day-split/DaySplit";
 import { DayStepper, WhoMenu } from "./PlanToolbar";
@@ -64,7 +62,6 @@ import {
 import { type PlanDropData, planDrop } from "./plan-drop";
 import {
 	buildPlanEntries,
-	isCoarse,
 	nothingFor,
 	type PlanContext,
 	type PlanEntry,
@@ -240,10 +237,8 @@ export function PlanTab() {
 function PlanTabBody() {
 	const ws = useWorkspace();
 	const { ix, graph, scope, days, nav, model, schedule, lens, who, mode } = ws;
-	// One Yonder: Days | Cities & nights (D02/D05); without a day in view the
-	// coarse lenses list the days as rows (D02), a day in view is its timeline.
+	// One Yonder: Days | Cities & nights (D02/D05).
 	const [nights, setNights] = useSplitOpen();
-	const dayRows = !days && isCoarse(lens);
 	const actions = usePlanActions();
 	const openAddPlace = useUi((s) => s.openAddPlace);
 	const dnd = useDnd();
@@ -312,9 +307,6 @@ function PlanTabBody() {
 	const [collapsedBlocks, setCollapsedBlocks] = useState<ReadonlySet<string>>(
 		new Set(),
 	);
-	const [collapsedBands, setCollapsedBands] = useState<ReadonlySet<string>>(
-		new Set(),
-	);
 	const [openFolds, setOpenFolds] = useState<ReadonlySet<string>>(new Set());
 	const [openStretch, setOpenStretch] = useState<ReadonlySet<string>>(
 		new Set(),
@@ -331,38 +323,29 @@ function PlanTabBody() {
 		}),
 		[collapsedBlocks, openStretch, compact, money, realIx],
 	);
-	const bandKeys = entries.filter((e) => e.kind === "band").map((e) => e.key);
-	const allCollapsed = isCoarse(lens)
-		? bandKeys.length > 0 && bandKeys.every((k) => collapsedBands.has(k))
-		: false;
-
 	// ---- FB-21a: folds travel with my view; a follower mirrors them -----------
-	const bandsKey = bandKeys.join(",");
+	// Visits are labels now, never folded: no band is ever collapsed.
 	const folds = useMemo(
 		() =>
 			encodePlanFolds({
 				openFolds,
-				collapsedBands,
+				collapsedBands: new Set(),
 				collapsedBlocks,
 				openStretch,
-				bands: bandsKey ? bandsKey.split(",") : [],
+				bands: [],
 			}),
-		[openFolds, collapsedBands, collapsedBlocks, openStretch, bandsKey],
+		[openFolds, collapsedBlocks, openStretch],
 	);
 	usePublishViewUi("plan", folds);
 	const followed = useFollowedUi("plan");
 	const followedJson = followed ? JSON.stringify(followed) : null;
 	useEffect(() => {
 		if (!followedJson) return;
-		const next = decodePlanFolds(
-			JSON.parse(followedJson),
-			bandsKey ? bandsKey.split(",") : [],
-		);
+		const next = decodePlanFolds(JSON.parse(followedJson), []);
 		setOpenFolds(next.openFolds);
-		setCollapsedBands(next.collapsedBands);
 		setCollapsedBlocks(next.collapsedBlocks);
 		setOpenStretch(next.openStretch);
-	}, [followedJson, bandsKey]);
+	}, [followedJson]);
 
 	// ---- drag and drop ---------------------------------------------------------
 	const drop = useCallback(
@@ -497,44 +480,27 @@ function PlanTabBody() {
 					</div>
 				);
 			case "band": {
-				const open = !collapsedBands.has(e.key);
 				const link = entries.find(
 					(x) => x.kind === "band-link" && x.transition.toVisit === e.visit.key,
 				);
 				const skip =
 					link?.kind === "band-link" ? link.transition.toItemId : null;
+				// Every day keeps its own header; the visit is a label over them.
 				return (
 					<div key={e.key}>
-						<BandCard
-							visit={e.visit}
-							open={open}
-							onToggle={() => toggle(setCollapsedBands, e.key)}
-						/>
-						{open && dayRows ? (
-							<div className="grid grid-cols-[minmax(0,1fr)] gap-1.5 px-4 pb-2">
-								{e.days.map((d) => (
-									<DayRow
-										key={`${e.key}:${d.dayId}`}
-										dayId={d.dayId}
-										only={d.only}
-										copy={d.copy}
-									/>
-								))}
-							</div>
-						) : open ? (
-							e.days.map((d) => (
-								<DaySection
-									key={`${e.key}:${d.dayId}`}
-									ctx={ctx}
-									dayId={d.dayId}
-									only={d.only}
-									skipLeadOf={skip}
-									keySuffix={`:${e.visit.key}`}
-									initialNear={initialNear(d.dayId)}
-									copy={d.copy}
-								/>
-							))
-						) : null}
+						<BandCard visit={e.visit} />
+						{e.days.map((d) => (
+							<DaySection
+								key={`${e.key}:${d.dayId}`}
+								ctx={ctx}
+								dayId={d.dayId}
+								only={d.only}
+								skipLeadOf={skip}
+								keySuffix={`:${e.visit.key}`}
+								initialNear={initialNear(d.dayId)}
+								copy={d.copy}
+							/>
+						))}
 					</div>
 				);
 			}
@@ -562,25 +528,6 @@ function PlanTabBody() {
 									{days ? <DayStepper /> : <PlanTitle entries={entries} />}
 									<span className="order-last ml-auto flex items-center gap-2">
 										{views}
-										{isCoarse(lens) && bandKeys.length > 1 ? (
-											<Button
-												variant="ghost"
-												size="xs"
-												className="text-muted-foreground max-sm:hidden"
-												onClick={() =>
-													setCollapsedBands(
-														allCollapsed ? new Set() : new Set(bandKeys),
-													)
-												}
-											>
-												{allCollapsed ? (
-													<ChevronsUpDown className="size-3.5" />
-												) : (
-													<ChevronsDownUp className="size-3.5" />
-												)}
-												{allCollapsed ? "Expand all" : "Collapse all"}
-											</Button>
-										) : null}
 										<WhoMenu />
 									</span>
 								</>
