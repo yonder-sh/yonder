@@ -24,6 +24,8 @@ import {
 	type PlaceProvider,
 	type PlaceSearchResult,
 	type PreviewCore,
+	photonNeedsNeighbourhood,
+	photonNeighbourhood,
 	photonPreview,
 	photonRef,
 	photonResult,
@@ -161,10 +163,56 @@ export async function photonSearch(
 	return results;
 }
 
+/**
+ * The neighbourhood around a point (a layered reverse geocode), for a place
+ * whose own locality was a shopping street or a mall. Best-effort like
+ * `photonReverseLocal`: undefined when Photon is slow or knows nothing.
+ */
+async function photonNeighbourhoodAt(
+	lat: number,
+	lng: number,
+): Promise<string | undefined> {
+	const key = hash("hood", lat.toFixed(4), lng.toFixed(4));
+	const cached = await cacheGet<{ name?: string }>("photon", "hood", key);
+	if (cached) return cached.name;
+	try {
+		await photonPace();
+		const body = await getJson<{ features?: PhotonFeature[] }>(
+			photonUrl("/reverse", {
+				lat: String(lat),
+				lon: String(lng),
+				lang: "en",
+				limit: "5",
+				layer: ["locality", "district"],
+			}),
+			{ headers: { "User-Agent": osmUserAgent(), Accept: "application/json" } },
+			LOCAL_TIMEOUT_MS,
+		);
+		const name = photonNeighbourhood(body.features ?? []);
+		await cacheSet(["photon", "hood", key], name ? { name } : {}, PHOTON_TTL);
+		return name;
+	} catch {
+		return undefined;
+	}
+}
+
+/** A Photon preview, its locality swapped for the neighbourhood when it was none. */
+async function photonPreviewFiled(
+	f: PhotonFeature,
+): Promise<PreviewCore | null> {
+	const preview = photonPreview(f);
+	if (!preview || !photonNeedsNeighbourhood(f.properties)) return preview;
+	const [lng, lat] = f.geometry.coordinates;
+	const hood = await photonNeighbourhoodAt(lat, lng);
+	return hood
+		? { ...preview, parts: { ...preview.parts, locality: hood } }
+		: preview;
+}
+
 /** A Photon result by its ref: from the search that returned it (cached an hour). */
 export async function photonLookup(ref: string): Promise<PreviewCore> {
 	const f = await cacheGet<PhotonFeature>("photon", "feature", ref);
-	const preview = f ? photonPreview(f) : null;
+	const preview = f ? await photonPreviewFiled(f) : null;
 	if (!preview) return fail("NOT_FOUND", "That result expired. Search again.");
 	return preview;
 }
@@ -192,7 +240,7 @@ export async function photonReverse(
 	);
 	const f = body.features?.[0];
 	if (f) await rememberFeatures([f]);
-	const preview = f ? photonPreview(f) : null;
+	const preview = f ? await photonPreviewFiled(f) : null;
 	await cacheSet(["photon", "rev", key], preview ?? { none: true }, PHOTON_TTL);
 	return preview;
 }
