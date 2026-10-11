@@ -1,13 +1,18 @@
 /**
- * The tile ⋯ menu (DESIGN §7.2): Edit caption, Move to…, Show first / Move
- * earlier / Move later (the order, as the Rate feed shows it), Set as cover,
- * Hide from guests, Download, Refresh preview, Delete (with Undo). Every edit
- * item goes through `useEditGuard` (disabled with the reason, never hidden).
+ * The tile ⋯ menu (DESIGN §7.2): Save (into my own Saved: members, never
+ * link guests), Edit caption, Move to…, Show first / Move earlier / Move
+ * later (the order, as the Rate feed shows it), Set as cover, Hide from
+ * guests, Download, Refresh preview, Delete (with Undo). Every edit item goes
+ * through `useEditGuard` (disabled with the reason, never hidden).
  */
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "@tanstack/react-router";
 import {
 	ArrowLeft,
 	ArrowRight,
 	ArrowUpToLine,
+	Bookmark,
+	BookmarkCheck,
 	Download,
 	FolderInput,
 	ImageUp,
@@ -39,9 +44,12 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Textarea } from "@/components/ui/textarea";
+import { savedQuery } from "@/features/saved/queries";
+import { saveTripMedia } from "@/features/saved/saved.functions";
 import { can } from "@/lib/auth/roles";
 import { humanError } from "@/lib/errors";
 import { mediaUrl } from "@/lib/media-url";
+import { meKeys } from "@/lib/query/keys";
 import type { AttachmentTarget } from "@/lib/schemas/targets";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { targetName } from "../labels";
@@ -55,6 +63,52 @@ import { EscapeOwner } from "./use-escape-owner";
 import { useVisibilityGuard } from "./visibility-button";
 
 type Actions = ReturnType<typeof useMediaActions>;
+
+/** What a member can keep in their own Saved: photos and videos (ready), links and embeds. */
+export function savable(item: MediaDto): boolean {
+	if (item.target.kind === "expense" || item.proposed) return false;
+	if (item.kind === "photo" || item.kind === "video")
+		return item.status === "ready";
+	return (item.kind === "link" || item.kind === "embed") && !!item.url;
+}
+
+/** Save into my Saved (filed under the trip's place for it), or Saved: open it there. */
+function SaveItem({ item, tripId }: { item: MediaDto; tripId: string }) {
+	const qc = useQueryClient();
+	const navigate = useNavigate();
+	const saved = useQuery(savedQuery());
+	const had = saved.data?.find(
+		(l) => l.fromAttachmentId === item.id || (!!item.url && l.url === item.url),
+	);
+	const open = (id: string) =>
+		void navigate({ to: "/saved", search: { open: id } });
+	if (had)
+		return (
+			<DropdownMenuItem
+				data-testid={MEDIA_TESTID.saved}
+				onSelect={() => open(had.id)}
+			>
+				<BookmarkCheck /> Saved
+			</DropdownMenuItem>
+		);
+	return (
+		<DropdownMenuItem
+			data-testid={MEDIA_TESTID.save}
+			onSelect={() =>
+				void saveTripMedia({ data: { tripId, attachmentId: item.id } })
+					.then((r) => {
+						void qc.invalidateQueries({ queryKey: meKeys.saved });
+						toast.success(r.created ? "Saved" : "Already in Saved", {
+							action: { label: "Open", onClick: () => open(r.id) },
+						});
+					})
+					.catch((e) => toast.error(humanError(e)))
+			}
+		>
+			<Bookmark /> Save
+		</DropdownMenuItem>
+	);
+}
 
 export function TileMenu({
 	item,
@@ -113,6 +167,12 @@ export function TileMenu({
 					</button>
 				</DropdownMenuTrigger>
 				<DropdownMenuContent align="end" className="w-52">
+					{!me.isGuest && me.memberId && savable(item) ? (
+						<>
+							<SaveItem item={item} tripId={ws.graph.trip.id} />
+							<DropdownMenuSeparator />
+						</>
+					) : null}
 					<DropdownMenuItem
 						disabled={edit.disabled}
 						title={reason(edit)}

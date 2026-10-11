@@ -19,6 +19,8 @@ export const MEDIA_TESTID = {
 	uploadCancel: "media-upload-cancel",
 	uploadRetry: "media-upload-retry",
 	tileMenu: "media-tile-menu",
+	save: "media-save",
+	saved: "media-saved",
 	visibility: "media-visibility",
 	hiddenChip: "media-hidden-chip",
 	captionInput: "media-caption-input",
