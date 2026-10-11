@@ -1,15 +1,20 @@
 /**
- * Saved (owner, 2026-10-09): the links someone shared into Yonder (the iPhone
- * Shortcut, the share sheet, a paste), kept on their account until they add
- * them to a trip or delete them (`src/features/saved`). No expiry; every
- * device sees them.
+ * Saved (owner, 2026-10-09; an inventory since 2026-10-11): the links,
+ * photos and videos someone shared into Yonder (the iPhone Shortcut, the
+ * share sheet, a paste) or saved from a trip's gallery, kept on their account
+ * until they delete them (`src/features/saved`). No expiry; every device
+ * sees them.
  *
  * - The preview (title, caption, author, picture) is fetched after saving by
  *   the `saved.preview` job; pictures are re-hosted under
  *   `saved/<userId>/<id>/` in the bucket and served by `/api/saved/<id>/…`.
- * - Added to a trip: `added_*` say where; it leaves the grid.
- * - `link_key`: the canonical link (`canonicalLink`); one waiting row per
- *   link and account, so a link shared again opens the one already there.
+ * - Where it is: a country (`country_code`), and maybe a city in it (`city`,
+ *   `city_key` its `normName`, one group per city); none is Unsorted.
+ * - Added to trips: `saved_link_trips` (one row per trip); it stays in Saved.
+ * - `link_key`: the canonical link (`canonicalLink`); one live row per link
+ *   and account, so a link shared again opens the one already there.
+ * - `from_attachment_id`: saved from a trip's gallery (never saved twice);
+ *   its photo re-references the attachment's objects.
  * - `saved_files`: photos and videos shared into Saved, stored under
  *   `saved/<userId>/<fileId>/` like an attachment's objects (`original`,
  *   `thumb.webp`, `display.webp`, `poster.jpg`). They count against their
@@ -25,6 +30,7 @@ import {
 	integer,
 	jsonb,
 	pgTable,
+	primaryKey,
 	text,
 	timestamp,
 	uniqueIndex,
@@ -41,6 +47,9 @@ export type SavedPlace = {
 	lat: number;
 	lng: number;
 	countryCode?: string;
+	/** The resolver found the real place (its city and country prefill Where). */
+	city?: string;
+	exact?: boolean;
 };
 
 export const savedLinks = pgTable(
@@ -74,9 +83,15 @@ export const savedLinks = pgTable(
 		thumbhash: text(),
 		faviconKey: text(),
 		place: jsonb().$type<SavedPlace>(),
-		addedTripId: uuid().references(() => trips.id, { onDelete: "set null" }),
-		addedNodeId: uuid(),
-		addedAt: timestamp({ withTimezone: true }),
+		/** Where it is (see the file comment). */
+		countryCode: text(),
+		city: text(),
+		cityKey: text(),
+		cityLat: doublePrecision(),
+		cityLng: doublePrecision(),
+		/** When its place was set: the Where chips go most recent first. */
+		placedAt: timestamp({ withTimezone: true }),
+		fromAttachmentId: uuid(),
 		deletedAt: deletedAt(),
 		createdAt: createdAt(),
 		updatedAt: updatedAt(),
@@ -84,9 +99,16 @@ export const savedLinks = pgTable(
 	(t) => [
 		index("saved_links_user_idx").on(t.userId, t.createdAt),
 		uniqueIndex("saved_links_client_uq").on(t.userId, t.clientId),
-		uniqueIndex("saved_links_waiting_link_uq")
+		uniqueIndex("saved_links_link_uq")
 			.on(t.userId, t.linkKey)
-			.where(sql`${t.deletedAt} is null and ${t.addedAt} is null`),
+			.where(sql`${t.deletedAt} is null`),
+		uniqueIndex("saved_links_from_attachment_uq")
+			.on(t.userId, t.fromAttachmentId)
+			.where(sql`${t.deletedAt} is null`),
+		check(
+			"saved_links_where_ck",
+			sql`(${t.countryCode} is null or ${t.countryCode} ~ '^[A-Z]{2}$') and (${t.city} is null or (${t.countryCode} is not null and ${t.cityKey} is not null and char_length(${t.city}) <= 120))`,
+		),
 		check(
 			"saved_links_size_ck",
 			sql`char_length(coalesce(${t.url}, '')) <= 2000 and char_length(coalesce(${t.text}, '')) <= 2000 and char_length(coalesce(${t.title}, '')) <= 300`,
@@ -95,6 +117,25 @@ export const savedLinks = pgTable(
 			"saved_links_status_ck",
 			sql`${t.previewStatus} in ('pending', 'ready', 'failed')`,
 		),
+	],
+);
+
+/** The trips a saved item went into (it stays in Saved): one row per trip, the latest place. */
+export const savedLinkTrips = pgTable(
+	"saved_link_trips",
+	{
+		savedId: uuid()
+			.notNull()
+			.references(() => savedLinks.id, { onDelete: "cascade" }),
+		tripId: uuid()
+			.notNull()
+			.references(() => trips.id, { onDelete: "cascade" }),
+		nodeId: uuid(),
+		addedAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+	},
+	(t) => [
+		primaryKey({ columns: [t.savedId, t.tripId] }),
+		index("saved_link_trips_trip_idx").on(t.tripId),
 	],
 );
 

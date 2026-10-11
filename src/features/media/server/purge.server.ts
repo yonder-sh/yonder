@@ -17,8 +17,9 @@
  * `favicon_key`). A prefix is only deleted when no other attachment row —
  * live, soft-deleted or in another trip — still points into it; the last row
  * to go takes it with it. A photo added from Saved shares the saved file's
- * prefix (`saved/<userId>/<fileId>/`): kept while a saved file or an
- * attachment still points there.
+ * prefix (`saved/<userId>/<fileId>/`), and a photo saved from a trip shares
+ * the attachment's: either is kept while a saved file or an attachment still
+ * points there.
  *
  * BullMQ removes its own finished jobs (`removeOnComplete`/`removeOnFail`).
  */
@@ -113,10 +114,8 @@ export async function purge(
 			const used = await db.execute(sql`
 				select 1 from attachments a
 				 where ${pointsInto(p)} and a.id <> all(${ids}::uuid[]) limit 1`);
-			const saved = isSavedFilePrefix(p)
-				? await db.execute(sql`
-						select 1 from saved_files where storage_key = ${p} limit 1`)
-				: { rows: [] };
+			const saved = await db.execute(sql`
+				select 1 from saved_files where storage_key = ${p} limit 1`);
 			if (used.rows.length || saved.rows.length) {
 				log(`kept ${p} (still referenced)`);
 				continue;
@@ -157,9 +156,14 @@ export async function purge(
 	if (!o.dryRun) {
 		for (const f of filesGone) {
 			const used = await db.execute(sql`
-				select 1 from attachments a where a.storage_key = ${f.key} limit 1`);
-			if (used.rows.length) log(`kept ${f.key} (in a trip)`);
-			else if (isSavedFilePrefix(f.key)) report.objects += await drop(f.key);
+				select 1 from attachments a
+				 where coalesce(a.storage_key, 'trips/' || a.trip_id || '/' || a.id || '/') = ${f.key}
+				union all
+				select 1 from saved_files o where o.storage_key = ${f.key} and o.id <> ${f.id}
+				 limit 1`);
+			if (used.rows.length) log(`kept ${f.key} (still referenced)`);
+			else if (isSavedFilePrefix(f.key) || isAttachmentPrefix(f.key))
+				report.objects += await drop(f.key);
 			await db.execute(sql`delete from saved_files where id = ${f.id}`);
 		}
 		for (const g of savedGone) {
@@ -271,9 +275,14 @@ export async function purgeTrip(
 			 where ${pointsInto(p)} and a.trip_id <> ${tripId} limit 1`);
 		if (!used.rows.length) objects += await drop(p);
 	}
-	// This trip's own objects, minus those other trips' copies still use.
-	const kept = new Set(
-		(
+	// This trip's own objects, minus those other trips' copies and Saved still use.
+	const savedHere = (
+		await db.execute(sql`
+			select distinct storage_key as key from saved_files
+			 where starts_with(storage_key, ${tripPrefix})`)
+	).rows as { key: string }[];
+	const kept = new Set([
+		...(
 			await keyRows(sql`
 				select ${KEY_COLS} from attachments a
 				 where a.trip_id <> ${tripId}
@@ -283,7 +292,8 @@ export async function purgeTrip(
 		)
 			.flatMap(prefixesOf)
 			.filter((p) => p.startsWith(tripPrefix)),
-	);
+		...savedHere.map((r) => r.key),
+	]);
 	if (!kept.size) objects += await drop(tripPrefix);
 	else {
 		for (const p of await list(tripPrefix))

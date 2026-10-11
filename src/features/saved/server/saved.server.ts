@@ -1,9 +1,10 @@
 /**
- * Saved on the server (`saved_links`, `saved_files`): save, list, mark
- * added, delete and undo. Saving is instant; the preview comes from the
- * `saved.preview` job (`./preview.server.ts`); photos and videos upload
- * through `./files.server.ts`. A link already waiting in Saved is never saved
- * twice (`link_key`, its canonical link): saving it again answers that row.
+ * Saved on the server (`saved_links`, `saved_files`, `saved_link_trips`):
+ * save, list, file under a place, mark added (it stays), delete and undo.
+ * Saving is instant; the preview comes from the `saved.preview` job
+ * (`./preview.server.ts`); photos and videos upload through
+ * `./files.server.ts`. A link already in Saved is never saved twice
+ * (`link_key`, its canonical link): saving it again answers that row.
  * Delete is a soft delete (Undo puts it back; the space is free at once, the
  * objects go in the purge). Every read and write is the caller's own rows.
  */
@@ -11,19 +12,20 @@ import { sql } from "drizzle-orm";
 import { v7 as uuidv7 } from "uuid";
 import type { DbOrTx } from "@/db/db.server";
 import type { SavedPlace } from "@/db/schema/saved";
+import { normName } from "@/features/home/share-classify";
 import { canonicalLink, classifyUrl } from "@/features/media/embeds";
 import { AppError } from "@/server/errors";
 import { enqueue } from "@/server/live/jobs.server";
 import { assertQuota, lockQuota } from "@/server/quota.server";
-import type { SavedFile, SavedLink } from "../types";
+import type { SavedFile, SavedLink, SavedTrip, SavedWhere } from "../types";
 
 type Exec = Pick<DbOrTx, "execute">;
 
 export const SAVED = {
-	/** Live saved links per account (add or delete some to save more). */
+	/** Live saved items per account (delete some to save more). */
 	max: 1000,
 	/** The grid shows at most this many. */
-	list: 500,
+	list: 1000,
 	textMax: 2000,
 	titleMax: 300,
 } as const;
@@ -64,7 +66,7 @@ export function linkKeyOf(url: string): string {
 		: url;
 }
 
-/** The caller's row for a device id, or the waiting row for the same link. */
+/** The caller's row for a device id, or the live row for the same link. */
 async function existing(
 	db: Exec,
 	userId: string,
@@ -75,13 +77,13 @@ async function existing(
 		select id::text as id from saved_links
 		 where user_id = ${userId}
 		   and ((${input.clientId ?? null}::text is not null and client_id = ${input.clientId ?? null})
-		     or (${key}::text is not null and link_key = ${key} and deleted_at is null and added_at is null))
+		     or (${key}::text is not null and link_key = ${key} and deleted_at is null))
 		 order by (client_id is not distinct from ${input.clientId ?? null}) desc
 		 limit 1`);
 	return (had.rows[0] as { id: string } | undefined)?.id ?? null;
 }
 
-/** Saves a link (or words) for `userId`; its preview follows. A link already waiting answers its row. */
+/** Saves a link (or words) for `userId`; its preview follows. A link already in Saved answers its row. */
 export async function saveLink(
 	db: Exec,
 	userId: string,
@@ -113,16 +115,13 @@ export async function saveLink(
 	return { id, created: true };
 }
 
-/** Refuses a new saved item past `SAVED.max` waiting ones. */
+/** Refuses a new saved item past `SAVED.max` live ones. */
 export async function assertRoom(db: Exec, userId: string): Promise<void> {
 	const live = await db.execute(sql`
 		select count(*)::int as n from saved_links
-		 where user_id = ${userId} and deleted_at is null and added_at is null`);
+		 where user_id = ${userId} and deleted_at is null`);
 	if ((live.rows[0] as { n: number }).n >= SAVED.max)
-		throw new AppError(
-			"CONFLICT",
-			"Saved is full. Add some to a trip or delete a few first.",
-		);
+		throw new AppError("CONFLICT", "Saved is full. Delete a few first.");
 }
 
 type Row = {
@@ -144,9 +143,28 @@ type Row = {
 	thumbhash: string | null;
 	faviconKey: string | null;
 	place: SavedPlace | null;
+	countryCode: string | null;
+	city: string | null;
+	cityKey: string | null;
+	cityLat: number | null;
+	cityLng: number | null;
+	placedAt: Date | string | null;
+	fromAttachmentId: string | null;
 	createdAt: Date | string;
 	updatedAt: Date | string;
 };
+
+function whereOf(r: Row): SavedWhere | null {
+	if (!r.countryCode) return null;
+	return {
+		countryCode: r.countryCode,
+		city: r.city,
+		cityKey: r.cityKey,
+		lat: r.cityLat,
+		lng: r.cityLng,
+		at: new Date(r.placedAt ?? r.createdAt).getTime(),
+	};
+}
 
 /** The first located photo's spot. */
 function spotOf(
@@ -156,7 +174,12 @@ function spotOf(
 	return f ? { lat: f.lat as number, lng: f.lng as number } : null;
 }
 
-function dto(r: Row, nearTrips: string[], files: SavedFile[]): SavedLink {
+function dto(
+	r: Row,
+	nearTrips: string[],
+	files: SavedFile[],
+	trips: SavedTrip[],
+): SavedLink {
 	const v = new Date(r.updatedAt).getTime().toString(36);
 	return {
 		id: r.id,
@@ -180,12 +203,15 @@ function dto(r: Row, nearTrips: string[], files: SavedFile[]): SavedLink {
 		nearTrips,
 		files,
 		photoSpot: spotOf(files),
+		where: whereOf(r),
+		trips,
+		fromAttachmentId: r.fromAttachmentId,
 		createdAt: new Date(r.createdAt).getTime(),
 	};
 }
 
 /**
- * The caller's saved links still waiting for a trip, newest first. A preview
+ * The caller's saved items, newest first (the grid groups them). A preview
  * that never came (Redis was down, links moved from the old Shortcut table)
  * is asked for again.
  */
@@ -197,9 +223,11 @@ export async function listSaved(
 		select id::text as id, url, text, title, provider, embed_id as "embedId", ig_type as "igType",
 		       preview_status as status, preview_title as "previewTitle", description, author,
 		       site_name as "siteName", image_key as "imageKey", image_w as "imageW", image_h as "imageH",
-		       thumbhash, favicon_key as "faviconKey", place, created_at as "createdAt", updated_at as "updatedAt"
+		       thumbhash, favicon_key as "faviconKey", place, country_code as "countryCode", city,
+		       city_key as "cityKey", city_lat as "cityLat", city_lng as "cityLng", placed_at as "placedAt",
+		       from_attachment_id::text as "fromAttachmentId", created_at as "createdAt", updated_at as "updatedAt"
 		  from saved_links
-		 where user_id = ${userId} and deleted_at is null and added_at is null
+		 where user_id = ${userId} and deleted_at is null
 		 order by created_at desc, id desc
 		 limit ${SAVED.list}`);
 	const rows = res.rows as Row[];
@@ -218,13 +246,13 @@ export async function listSaved(
 		for (const r of stale) await enqueuePreview(userId, r.id);
 	}
 	const near = await nearTrips(db, userId);
+	const ids = rows.map((r) => r.id);
 	const files = rows.length
-		? await filesOf(
-				db,
-				userId,
-				rows.map((r) => r.id),
-			)
+		? await filesOf(db, userId, ids)
 		: new Map<string, SavedFile[]>();
+	const trips = rows.length
+		? await tripsOf(db, userId, ids)
+		: new Map<string, SavedTrip[]>();
 	// A share of photos shows once every file is up (the device finishes it).
 	return rows
 		.filter((r) => {
@@ -233,7 +261,35 @@ export async function listSaved(
 				? f.length > 0 && f.every((x) => x.status !== "pending")
 				: !!(r.url || r.text);
 		})
-		.map((r) => dto(r, near?.get(r.id) ?? [], files.get(r.id) ?? []));
+		.map((r) =>
+			dto(
+				r,
+				near?.get(r.id) ?? [],
+				files.get(r.id) ?? [],
+				trips.get(r.id) ?? [],
+			),
+		);
+}
+
+/** The trips these rows went into (ones I'm still a member of), latest first. */
+async function tripsOf(
+	db: Exec,
+	userId: string,
+	ids: string[],
+): Promise<Map<string, SavedTrip[]>> {
+	const res = await db.execute(sql`
+		select l.saved_id::text as "savedId", t.id::text as id, t.name, t.slug
+		  from saved_link_trips l
+		  join trips t on t.id = l.trip_id and t.deleted_at is null
+		  join trip_members m on m.trip_id = t.id and m.user_id = ${userId} and m.status = 'active'
+		 where l.saved_id = any(${sql.param(ids)}::uuid[])
+		 order by l.saved_id, l.added_at desc`);
+	const out = new Map<string, SavedTrip[]>();
+	for (const { savedId, ...t } of res.rows as (SavedTrip & {
+		savedId: string;
+	})[])
+		out.set(savedId, [...(out.get(savedId) ?? []), t]);
+	return out;
 }
 
 /** The saved photos and videos of these rows, in order (failed ones left out). */
@@ -283,7 +339,7 @@ async function nearTrips(
 			    select lat, lng from saved_files
 			     where saved_id = l.id and deleted_at is null and lat is not null and lng is not null
 			     order by position limit 1) f on true
-			 where l.user_id = ${userId} and l.deleted_at is null and l.added_at is null
+			 where l.user_id = ${userId} and l.deleted_at is null
 			   and (l.place is not null or f.lat is not null))
 		select s.id::text as id, n.trip_id::text as "tripId",
 		       min(power(n.lat - s.lat, 2) + power((n.lng - s.lng) * cos(radians(s.lat)), 2)) as d
@@ -302,7 +358,7 @@ async function nearTrips(
 	return out;
 }
 
-/** Notes where the link went (it leaves the grid). False: not the caller's, or gone. */
+/** Notes the trip it went into (it stays in Saved; again: the latest place). False: not the caller's, or gone. */
 export async function markAdded(
 	db: Exec,
 	userId: string,
@@ -310,11 +366,46 @@ export async function markAdded(
 	to: { tripId: string; nodeId: string | null },
 ): Promise<boolean> {
 	const res = await db.execute(sql`
-		update saved_links
-		   set added_trip_id = ${to.tripId}, added_node_id = ${to.nodeId}, added_at = now(), updated_at = now()
+		insert into saved_link_trips (saved_id, trip_id, node_id)
+		select id, ${to.tripId}, ${to.nodeId} from saved_links
 		 where id = ${id} and user_id = ${userId} and deleted_at is null
-		returning id`);
+		on conflict (saved_id, trip_id) do update set node_id = excluded.node_id, added_at = now()
+		returning saved_id`);
+	if (res.rows.length)
+		await db.execute(
+			sql`update saved_links set updated_at = now() where id = ${id}`,
+		);
 	return res.rows.length > 0;
+}
+
+/** Where a saved item is: a country, and maybe a city in it (null: Unsorted). */
+export type WhereInput = {
+	countryCode: string;
+	city?: { name: string; lat: number | null; lng: number | null } | null;
+} | null;
+
+/** Files some of the caller's items under a place. Answers the ids it changed. */
+export async function setSavedWhere(
+	db: Exec,
+	userId: string,
+	ids: readonly string[],
+	where: WhereInput,
+): Promise<string[]> {
+	if (!ids.length) return [];
+	const cc = where?.countryCode.toUpperCase() ?? null;
+	if (cc !== null && !/^[A-Z]{2}$/.test(cc))
+		throw new AppError("VALIDATION", "That isn't a country.");
+	const name = where?.city?.name.trim().slice(0, 120) || null;
+	const key = name ? normName(name) || name.toLowerCase() : null;
+	const res = await db.execute(sql`
+		update saved_links
+		   set country_code = ${cc}, city = ${name}, city_key = ${key},
+		       city_lat = ${name ? (where?.city?.lat ?? null) : null},
+		       city_lng = ${name ? (where?.city?.lng ?? null) : null},
+		       placed_at = ${cc ? sql`now()` : sql`null`}, updated_at = now()
+		 where id = any(${sql.param([...ids])}::uuid[]) and user_id = ${userId} and deleted_at is null
+		returning id::text as id`);
+	return (res.rows as { id: string }[]).map((r) => r.id);
 }
 
 /**
@@ -331,7 +422,7 @@ export async function deleteSaved(
 	const res = await db.execute(sql`
 		update saved_links set deleted_at = now(), updated_at = now()
 		 where id = any(${sql.param([...ids])}::uuid[]) and user_id = ${userId}
-		   and deleted_at is null and added_at is null
+		   and deleted_at is null
 		returning id::text as id`);
 	return (res.rows as { id: string }[]).map((r) => r.id);
 }
@@ -350,17 +441,19 @@ export async function restoreSaved(
 		const list = sql.param([...ids]);
 		const rows = (
 			await tx.execute(sql`
-				select id::text as id, link_key as "linkKey" from saved_links
+				select id::text as id, link_key as "linkKey", from_attachment_id::text as "fromId" from saved_links
 				 where id = any(${list}::uuid[]) and user_id = ${userId} and deleted_at is not null
 				 for update`)
-		).rows as { id: string; linkKey: string | null }[];
+		).rows as { id: string; linkKey: string | null; fromId: string | null }[];
 		if (!rows.length) return [];
 		const keys = rows.flatMap((r) => (r.linkKey ? [r.linkKey] : []));
-		if (keys.length) {
+		const from = rows.flatMap((r) => (r.fromId ? [r.fromId] : []));
+		if (keys.length || from.length) {
 			const twin = await tx.execute(sql`
 				select 1 from saved_links
-				 where user_id = ${userId} and link_key = any(${sql.param(keys)}::text[])
-				   and deleted_at is null and added_at is null`);
+				 where user_id = ${userId} and deleted_at is null
+				   and (link_key = any(${sql.param(keys)}::text[])
+				     or from_attachment_id = any(${sql.param(from)}::uuid[]))`);
 			if (twin.rows.length)
 				throw new AppError("CONFLICT", "That link is in Saved again already.");
 		}

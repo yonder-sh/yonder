@@ -52,6 +52,9 @@ async function placeOf(
 				lng: core.lng,
 				...(core.address ? { address: core.address } : {}),
 				...(core.countryCode ? { countryCode: core.countryCode } : {}),
+				// A real place: its city and country prefill Where.
+				...(core.parts?.city ? { city: core.parts.city } : {}),
+				exact: true,
 			};
 		if (link)
 			return {

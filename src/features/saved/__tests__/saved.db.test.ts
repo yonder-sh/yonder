@@ -1,9 +1,10 @@
 /**
  * Saved against real Postgres, Redis and S3 (s3proxy): saving (the Shortcut
- * and the app), the list (only mine, newest first, added and deleted ones
- * out), add-to-trip, delete, the preview job (stubbed fetches, the picture
- * re-hosted under the user, served to its owner only), and the move of the
- * Shortcut's waiting links in migration 0025.
+ * and the app), the list (only mine, newest first, deleted ones out, added
+ * ones kept with their trips), add-to-trip (again, to more trips), filing
+ * under a place, delete, the preview job (stubbed fetches, the picture
+ * re-hosted under the user, served to its owner only), saving from a trip's
+ * gallery (quota, dedupe, the purge), and migrations 0025 and 0029.
  */
 import { randomUUID } from "node:crypto";
 import {
@@ -58,9 +59,9 @@ import {
 	migrateDatabase,
 } from "@/db/migrate.server";
 import { tripMembers, user } from "@/db/schema";
-import { purge } from "@/features/media/server/purge.server";
+import { purge, purgeTrip } from "@/features/media/server/purge.server";
 import type { SafeFetcher } from "@/features/media/server/safe-fetch.server";
-import { headObject } from "@/features/media/server/storage.server";
+import { headObject, putObject } from "@/features/media/server/storage.server";
 import type { AuthUser } from "@/server/auth.server";
 import { errorCode } from "@/server/authz/errors";
 import { cloneDemoTrip, type FixtureClone } from "@/server/fixture.server";
@@ -83,6 +84,8 @@ import {
 	markSavedAdded,
 	restoreSavedLinks,
 	saveSharedLink,
+	saveTripMedia,
+	setSavedPlace,
 	signSavedUploadParts,
 	startSavedUpload,
 } from "../saved.functions";
@@ -210,7 +213,7 @@ describe("saving", () => {
 });
 
 describe("the list", () => {
-	it("only mine, newest first; added and deleted ones leave it", async () => {
+	it("only mine, newest first; deleted ones leave it, added ones stay with their trip", async () => {
 		const u = await newUser("Lee");
 		const first = await save(u, { url: "https://a.example/1" });
 		const second = await save(u, { url: "https://b.example/2" });
@@ -234,30 +237,86 @@ describe("the list", () => {
 			nodeId: trip.ids.nodes.tokyo,
 		});
 		await call(deleteSavedLinks, u, { ids: [first.id] });
-		expect((await list(u)).map((l) => l.id)).toEqual([third.id]);
+		const now = await list(u);
+		expect(now.map((l) => l.id)).toEqual([third.id, second.id]);
+		expect(now.map((l) => l.trips.map((t) => t.id))).toEqual([
+			[],
+			[trip.tripId],
+		]);
+		expect(now[1]?.trips[0]?.name).toBeTruthy();
+		// Added again, to the same trip (the latest place) and to another.
+		const other = await cloneDemoTrip(getDb(), u.id);
+		await call(markSavedAdded, u, {
+			id: second.id,
+			tripId: trip.tripId,
+			nodeId: trip.ids.nodes.shibuyaSky,
+		});
+		await call(markSavedAdded, u, {
+			id: second.id,
+			tripId: other.tripId,
+			nodeId: null,
+		});
 		const rows = (
 			await getDb().execute(sql`
-				select id::text as id, added_trip_id::text as "tripId", added_node_id::text as "nodeId",
-				       added_at is not null as added, deleted_at is not null as deleted
-				  from saved_links where user_id = ${u.id} order by created_at`)
+				select trip_id::text as "tripId", node_id::text as "nodeId" from saved_link_trips
+				 where saved_id = ${second.id} order by added_at`)
 		).rows;
 		expect(rows).toEqual([
-			{ id: first.id, tripId: null, nodeId: null, added: false, deleted: true },
-			{
-				id: second.id,
-				tripId: trip.tripId,
-				nodeId: trip.ids.nodes.tokyo,
-				added: true,
-				deleted: false,
-			},
-			{
-				id: third.id,
-				tripId: null,
-				nodeId: null,
-				added: false,
-				deleted: false,
-			},
+			{ tripId: trip.tripId, nodeId: trip.ids.nodes.shibuyaSky },
+			{ tripId: other.tripId, nodeId: null },
 		]);
+		expect(
+			(await list(u)).find((l) => l.id === second.id)?.trips.map((t) => t.id),
+		).toEqual([other.tripId, trip.tripId]);
+		// Left the trip: it no longer says so.
+		await getDb().execute(sql`
+			delete from trip_members where trip_id = ${trip.tripId} and user_id = ${u.id}`);
+		expect(
+			(await list(u)).find((l) => l.id === second.id)?.trips.map((t) => t.id),
+		).toEqual([other.tripId]);
+	});
+
+	it("files items under a country and city, or Unsorted; only mine", async () => {
+		const u = await newUser("Kai");
+		const a = await save(u, { url: "https://where.example/a" });
+		const b = await save(u, { url: "https://where.example/b" });
+		expect((await list(u)).every((l) => l.where === null)).toBe(true);
+		await call(setSavedPlace, u, {
+			ids: [a.id],
+			where: {
+				countryCode: "jp",
+				city: { name: "Kyōto", lat: 35.01, lng: 135.77 },
+			},
+		});
+		await call(setSavedPlace, u, {
+			ids: [b.id],
+			where: { countryCode: "JP", city: null },
+		});
+		const l = await list(u);
+		expect(l.find((x) => x.id === a.id)?.where).toMatchObject({
+			countryCode: "JP",
+			city: "Kyōto",
+			cityKey: "kyoto",
+			lat: 35.01,
+		});
+		expect(l.find((x) => x.id === b.id)?.where).toMatchObject({
+			countryCode: "JP",
+			city: null,
+			cityKey: null,
+		});
+		expect(
+			await call(setSavedPlace, U.other, { ids: [a.id], where: null }),
+		).toEqual({ ids: [] });
+		await call(setSavedPlace, u, { ids: [a.id, b.id], where: null });
+		expect((await list(u)).every((x) => x.where === null)).toBe(true);
+		expect(
+			await codeOf(
+				call(setSavedPlace, u, {
+					ids: [a.id],
+					where: { countryCode: "J1", city: null },
+				}),
+			),
+		).not.toBe("ok");
 	});
 
 	it("someone else's link can't be added, deleted or seen", async () => {
@@ -409,8 +468,8 @@ describe("previews", () => {
 	});
 });
 
-describe("one waiting row per link", () => {
-	it("saving a link already in Saved answers that row, until it's deleted or added", async () => {
+describe("one live row per link", () => {
+	it("saving a link already in Saved answers that row, added to a trip or not, until it's deleted", async () => {
 		const u = await newUser("Dee");
 		const a = await save(u, {
 			url: "https://www.instagram.com/reel/C0DEDUPE1/?igsh=abc",
@@ -432,6 +491,22 @@ describe("one waiting row per link", () => {
 		);
 		expect([b.id, c.id]).toEqual([a.id, a.id]);
 		expect((await list(u)).map((l) => l.id)).toEqual([a.id]);
+		// In a trip, it's still the one.
+		await getDb().insert(tripMembers).values({
+			tripId: trip.tripId,
+			userId: u.id,
+			status: "active",
+			role: "editor",
+			color: 3,
+		});
+		await call(markSavedAdded, u, {
+			id: a.id,
+			tripId: trip.tripId,
+			nodeId: null,
+		});
+		expect(
+			(await save(u, { url: "https://www.instagram.com/reel/C0DEDUPE1/" })).id,
+		).toBe(a.id);
 		// Deleted: a new one; Undo of the old one is then refused.
 		await call(deleteSavedLinks, u, { ids: [a.id] });
 		const d = await save(u, {
@@ -693,6 +768,147 @@ describe("photos and videos", () => {
 	});
 });
 
+/** A ready photo in a trip's gallery, on `nodeId`, uploaded by `by` (its object stored). */
+async function tripPhoto(
+	tripId: string,
+	nodeId: string,
+	by: string,
+	body: Buffer,
+): Promise<string> {
+	const id = randomUUID();
+	const key = `trips/${tripId}/${id}/`;
+	await putObject(`${key}original`, body, "image/jpeg");
+	await getDb().execute(sql`
+		insert into attachments (id, trip_id, node_id, kind, status, storage_key, mime, size_bytes,
+		                         width, height, position, created_by, meta)
+		values (${id}, ${tripId}, ${nodeId}, 'photo', 'ready', ${key}, 'image/jpeg', ${body.length},
+		        64, 48, ${`zz${id.slice(0, 6)}`}, ${by}, '{"thumb": true}'::jsonb)`);
+	return id;
+}
+
+describe("saving from a trip", () => {
+	it("a member's save: filed under the trip's city and country, in that trip, once; counts against the saver", async () => {
+		const owner = await newUser("Oda");
+		const c = await cloneDemoTrip(getDb(), owner.id);
+		const v = await newUser("Vee");
+		await getDb().insert(tripMembers).values({
+			tripId: c.tripId,
+			userId: v.id,
+			status: "active",
+			role: "viewer",
+			color: 2,
+		});
+		const body = await jpeg(64, 48);
+		const att = await tripPhoto(
+			c.tripId,
+			c.ids.nodes.shibuyaSky as string,
+			owner.id,
+			body,
+		);
+		const before = await usedBytes(getDb(), v.id);
+		const first = await call<{ id: string; created: boolean }>(
+			saveTripMedia,
+			v,
+			{ tripId: c.tripId, attachmentId: att },
+		);
+		expect(first.created).toBe(true);
+		const again = await call<{ id: string; created: boolean }>(
+			saveTripMedia,
+			v,
+			{ tripId: c.tripId, attachmentId: att },
+		);
+		expect(again).toEqual({ id: first.id, created: false });
+		const [item] = await list(v);
+		expect(item).toMatchObject({
+			id: first.id,
+			fromAttachmentId: att,
+			where: { countryCode: "JP", city: "Tokyo", cityKey: "tokyo" },
+			trips: [{ id: c.tripId }],
+			files: [{ kind: "photo", status: "ready", hasThumb: true }],
+		});
+		// The same object, now the saver's too; the uploader's own save counts once.
+		expect(await usedBytes(getDb(), v.id)).toBe(before + body.length);
+		const ownerUsed = await usedBytes(getDb(), owner.id);
+		await call(saveTripMedia, owner, { tripId: c.tripId, attachmentId: att });
+		expect(await usedBytes(getDb(), owner.id)).toBe(ownerUsed);
+		const f = item?.files[0]?.id as string;
+		const served = await serveSavedFile(
+			new Request("http://localhost/x", { headers: { "x-test-user": v.id } }),
+			f,
+			"original",
+		);
+		expect(served.status).toBe(302);
+		// Not a member: no.
+		expect(
+			await codeOf(
+				call(saveTripMedia, U.other, { tripId: c.tripId, attachmentId: att }),
+			),
+		).toBe("NOT_FOUND");
+		// Over the saver's quota: refused, nothing saved.
+		const q = await newUser("Quo");
+		await getDb().insert(tripMembers).values({
+			tripId: c.tripId,
+			userId: q.id,
+			status: "active",
+			role: "viewer",
+			color: 6,
+		});
+		await getDb().execute(
+			sql`update "user" set storage_quota_bytes = 10 where id = ${q.id}`,
+		);
+		expect(
+			await codeOf(
+				call(saveTripMedia, q, { tripId: c.tripId, attachmentId: att }),
+			),
+		).toBe("STORAGE_QUOTA");
+		expect(await list(q)).toEqual([]);
+		// The trip deletes its photo, then the trip itself goes: the saved one keeps its object.
+		await getDb().execute(
+			sql`update attachments set deleted_at = now() - interval '31 days' where id = ${att}`,
+		);
+		await purge(getDb());
+		expect(
+			await headObject(`trips/${c.tripId}/${att}/original`),
+		).not.toBeNull();
+		await purgeTrip(getDb(), c.tripId);
+		expect(
+			await headObject(`trips/${c.tripId}/${att}/original`),
+		).not.toBeNull();
+		expect((await list(v))[0]?.trips).toEqual([]);
+		// Deleted from Saved by everyone who kept it: the purge takes it.
+		await call(deleteSavedLinks, v, { ids: [first.id] });
+		const ownerItem = (await list(owner)).find(
+			(l) => l.fromAttachmentId === att,
+		);
+		await call(deleteSavedLinks, owner, { ids: [ownerItem?.id as string] });
+		await getDb().execute(sql`
+			update saved_links set deleted_at = now() - interval '31 days' where from_attachment_id = ${att}`);
+		await purge(getDb());
+		expect(await headObject(`trips/${c.tripId}/${att}/original`)).toBeNull();
+	});
+
+	it("a link from a trip is the one already in Saved (and now in that trip)", async () => {
+		const u = await newUser("Lin");
+		const c = await cloneDemoTrip(getDb(), u.id);
+		const url = "https://www.tiktok.com/@a/video/7300000000000000777";
+		const had = await save(u, { url });
+		const id = randomUUID();
+		await getDb().execute(sql`
+			insert into attachments (id, trip_id, node_id, kind, status, url, provider, embed_id, position, created_by)
+			values (${id}, ${c.tripId}, ${c.ids.nodes.tokyo}, 'embed', 'ready', ${url}, 'tiktok',
+			        '7300000000000000777', 'zz1', ${u.id})`);
+		const r = await call<{ id: string; created: boolean }>(saveTripMedia, u, {
+			tripId: c.tripId,
+			attachmentId: id,
+		});
+		expect(r).toEqual({ id: had.id, created: false });
+		const [item] = await list(u);
+		expect(item?.trips.map((t) => t.id)).toEqual([c.tripId]);
+		// Its place stays the user's own (none here): only a new save is filed.
+		expect(item?.where).toBeNull();
+	});
+});
+
 describe("migration 0025", () => {
 	it("moves the Shortcut's waiting links into Saved", async () => {
 		const src = path.resolve(__dirname, "../../../../drizzle");
@@ -744,6 +960,63 @@ describe("migration 0025", () => {
 			expect((gone.rows[0] as { t: string | null }).t).toBeNull();
 		} finally {
 			await pool.end();
+		}
+	});
+});
+
+describe("migration 0029", () => {
+	it("keeps added links in Saved with their trip, one live row per link", async () => {
+		const url = testEnv.oldUrl.replace("_mig_", "_mig29_");
+		const src = path.resolve(__dirname, "../../../../drizzle");
+		const dir = mkdtempSync(path.join(tmpdir(), "yonder-mig-"));
+		try {
+			cpSync(src, dir, { recursive: true });
+			const journalPath = path.join(dir, "meta/_journal.json");
+			const journal = JSON.parse(readFileSync(journalPath, "utf8")) as {
+				entries: { idx: number }[];
+			};
+			journal.entries = journal.entries.filter((e) => e.idx <= 28);
+			writeFileSync(journalPath, JSON.stringify(journal));
+			await ensureDatabase(url);
+			await migrateDatabase(url, { migrationsFolder: dir });
+		} finally {
+			rmSync(dir, { recursive: true, force: true });
+		}
+		const { createDb } = await import("@/db/db.server");
+		const { db, pool } = createDb({ connectionString: url, max: 1 });
+		try {
+			const uid = randomUUID();
+			const tripId = randomUUID();
+			const [added, waiting, other] = [
+				randomUUID(),
+				randomUUID(),
+				randomUUID(),
+			];
+			await db.execute(sql`
+				insert into "user" (id, email, email_verified, name, first_name, last_name, is_anonymous, created_at, updated_at)
+				values (${uid}, ${`m-${uid}@example.test`}, true, 'Mo Test', 'Mo', 'Test', false, now(), now())`);
+			await db.execute(sql`
+				insert into trips (id, slug, name) values (${tripId}, ${`m-${tripId}`}, 'Japan 2027')`);
+			await db.execute(sql`
+				insert into saved_links (id, user_id, url, link_key, added_trip_id, added_at, created_at)
+				values (${added}, ${uid}, 'https://a.example/x', 'https://a.example/x', ${tripId}, now(), now() - interval '2 days'),
+				       (${waiting}, ${uid}, 'https://a.example/x', 'https://a.example/x', null, null, now()),
+				       (${other}, ${uid}, 'https://b.example/y', 'https://b.example/y', ${tripId}, now(), now() + interval '1 minute')`);
+			await migrateDatabase(url);
+			const rows = (
+				await db.execute(sql`
+					select s.id::text as id, s.deleted_at is not null as deleted,
+					       array(select trip_id::text from saved_link_trips l where l.saved_id = s.id) as trips
+					  from saved_links s order by s.created_at`)
+			).rows;
+			expect(rows).toEqual([
+				{ id: added, deleted: true, trips: [tripId] },
+				{ id: waiting, deleted: false, trips: [tripId] },
+				{ id: other, deleted: false, trips: [tripId] },
+			]);
+		} finally {
+			await pool.end();
+			await dropDatabase(url).catch(() => {});
 		}
 	});
 });

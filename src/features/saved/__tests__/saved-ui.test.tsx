@@ -127,6 +127,9 @@ const link = (id: string, over: Partial<SavedLink> = {}): SavedLink => ({
 	nearTrips: [],
 	files: [],
 	photoSpot: null,
+	where: null,
+	trips: [],
+	fromAttachmentId: null,
 	createdAt: Date.now(),
 	...over,
 });

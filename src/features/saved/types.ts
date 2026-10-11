@@ -19,6 +19,20 @@ export type SavedFile = {
 	hasPoster: boolean;
 };
 
+/** Where a saved item is: a country, maybe a city in it (`cityKey` groups spellings). */
+export type SavedWhere = {
+	countryCode: string;
+	city: string | null;
+	cityKey: string | null;
+	lat: number | null;
+	lng: number | null;
+	/** When it was filed there (ms): the Where chips go most recent first. */
+	at: number;
+};
+
+/** A trip a saved item went into. */
+export type SavedTrip = { id: string; name: string; slug: string };
+
 export type SavedLink = {
 	id: string;
 	url: string | null;
@@ -48,5 +62,11 @@ export type SavedLink = {
 	files: SavedFile[];
 	/** Where its first located photo was taken (the trip and area default, like a Maps place). */
 	photoSpot: { lat: number; lng: number } | null;
+	/** Where it is (null: Unsorted). */
+	where: SavedWhere | null;
+	/** The trips it went into, latest first (it stays in Saved). */
+	trips: SavedTrip[];
+	/** Saved from a trip's gallery: that attachment. */
+	fromAttachmentId: string | null;
 	createdAt: number;
 };

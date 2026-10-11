@@ -1,11 +1,14 @@
 /**
  * Saved in the app (`./server/saved.server.ts`), the caller's own rows only:
  *
- * - `listSavedLinks`: what's still waiting for a trip, newest first.
+ * - `listSavedLinks`: everything in Saved, newest first.
  * - `saveSharedLink`: a link from the share sheet, a paste or `/share?url=`
  *   (the device's `clientId` makes a retried upload save once).
  * - `markSavedAdded`: it went into a trip (the trip's own functions did the
- *   adding and checked the role); it leaves the grid.
+ *   adding and checked the role); it stays in Saved, marked so.
+ * - `setSavedPlace`: file some under a country (and city), or Unsorted.
+ * - `searchSavedPlaces`: cities for the Where picker (Photon).
+ * - `saveTripMedia`: a trip gallery's photo, video or link into my Saved.
  * - `deleteSavedLinks` / `restoreSavedLinks`: delete some, and Undo.
  * - `startSavedUpload`, `signSavedUploadParts`, `completeSavedUpload`: shared
  *   photos and videos into Saved (`./server/files.server.ts`).
@@ -15,11 +18,12 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { db } from "@/db/db.server";
 import { IMAGE_TYPES, VIDEO_TYPES } from "@/features/media/media-kinds";
+import { photonSearch } from "@/features/places/server/providers.server";
 import { roleAtLeast } from "@/lib/auth/roles";
 import { withAccount, withNamedUser } from "@/server/authz/middleware";
 import { fail } from "@/server/authz/session.server";
 import { loadTripAccess } from "@/server/authz/trip-access.server";
-import { rateLimitPer } from "@/server/cache.server";
+import { rateLimit, rateLimitPer } from "@/server/cache.server";
 import { shareInput } from "@/server/shortcut.server";
 import {
 	attachSaved,
@@ -28,6 +32,7 @@ import {
 	signSavedFileParts,
 	startSavedFile,
 } from "./server/files.server";
+import { saveFromTrip } from "./server/from-trip.server";
 import {
 	deleteSaved,
 	listSaved,
@@ -35,6 +40,7 @@ import {
 	restoreSaved,
 	SAVED,
 	saveLink,
+	setSavedWhere,
 } from "./server/saved.server";
 import type { SavedLink } from "./types";
 
@@ -123,6 +129,82 @@ export const restoreSavedLinks = createServerFn({ method: "POST" })
 		async ({ data, context }): Promise<{ ids: string[] }> => ({
 			ids: await restoreSaved(db, context.user.id, data.ids),
 		}),
+	);
+
+const Coord = z.number().min(-180).max(180).nullable();
+
+export const setSavedPlace = createServerFn({ method: "POST" })
+	.middleware([withAccount])
+	.validator(
+		z
+			.object({
+				ids: z.array(z.uuid()).min(1).max(SAVED.list),
+				where: z
+					.object({
+						countryCode: z.string().regex(/^[A-Za-z]{2}$/),
+						city: z
+							.object({
+								name: z.string().trim().min(1).max(120),
+								lat: Coord,
+								lng: Coord,
+							})
+							.strict()
+							.nullish(),
+					})
+					.strict()
+					.nullable(),
+			})
+			.strict(),
+	)
+	.handler(
+		async ({ data, context }): Promise<{ ids: string[] }> => ({
+			ids: await setSavedWhere(db, context.user.id, data.ids, data.where),
+		}),
+	);
+
+/** A city the Where picker found. */
+export type CityHit = {
+	name: string;
+	/** "Kyoto Prefecture, Japan". */
+	subtitle: string;
+	countryCode: string;
+	lat: number;
+	lng: number;
+};
+
+export const searchSavedPlaces = createServerFn({ method: "POST" })
+	.middleware([withAccount])
+	.validator(z.object({ q: z.string().trim().min(2).max(100) }).strict())
+	.handler(async ({ data, context }): Promise<CityHit[]> => {
+		await rateLimit(`places:search:${context.user.id}`, 90);
+		const found = await photonSearch(data.q, { level: "city" });
+		const seen = new Set<string>();
+		return found.flatMap((r) => {
+			if (!r.countryCode || r.lat === undefined || r.lng === undefined)
+				return [];
+			const k = `${r.countryCode}|${r.title.toLowerCase()}`;
+			if (seen.has(k)) return [];
+			seen.add(k);
+			return [
+				{
+					name: r.title,
+					subtitle: r.subtitle,
+					countryCode: r.countryCode,
+					lat: r.lat,
+					lng: r.lng,
+				},
+			];
+		});
+	});
+
+export const saveTripMedia = createServerFn({ method: "POST" })
+	.middleware([withAccount])
+	.validator(z.object({ tripId: z.uuid(), attachmentId: z.uuid() }).strict())
+	.handler(
+		async ({ data, context }): Promise<{ id: string; created: boolean }> => {
+			await rateLimitPer(`saved:${context.user.id}`, 120, 3600);
+			return saveFromTrip(context.user, data);
+		},
 	);
 
 const ClientId = z.string().regex(/^[A-Za-z0-9_-]{1,64}$/);
