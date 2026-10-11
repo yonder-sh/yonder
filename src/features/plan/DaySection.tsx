@@ -293,17 +293,27 @@ export function DaySection(props: DaySectionProps) {
 	const [near, setNear] = useState(initialNear || !win);
 	const ref = useRef<HTMLElement | null>(null);
 	const day = ix.day(dayId);
+	const dayMarks = useProposalMarks(`day:${dayId}`);
+	const originMarks = useProposalMarks(`from:day:${dayId}`);
+	const selected = selectedDayId(ws) === dayId;
+	// In a list of days, a day with nothing on it is one line (its header shows once selected).
+	const oneLine =
+		!selected &&
+		!(ws.days && ws.days.from === ws.days.to) &&
+		(ix.itemsByDay.get(dayId)?.length ?? 0) === 0 &&
+		dayMarks.length === 0 &&
+		originMarks.length === 0;
 	const { setNodeRef, isOver } = useDroppable({
 		id: `plan-day:${key}`,
 		data: {
 			panel: "plan",
 			dayId,
 			kbSkip: true,
+			// The pointer on the one line wins over the closer centres of its neighbours.
+			exact: oneLine,
 			label: day ? `Day ${ix.dayNumber(dayId)}` : "day",
 		},
 	});
-	const dayMarks = useProposalMarks(`day:${dayId}`);
-	const originMarks = useProposalMarks(`from:day:${dayId}`);
 	useEffect(() => {
 		const el = ref.current;
 		if (!win || !el) return;
@@ -325,14 +335,6 @@ export function DaySection(props: DaySectionProps) {
 		[setNodeRef],
 	);
 	if (!day) return null;
-	const selected = selectedDayId(ws) === dayId;
-	// In a list of days, a day with nothing on it is one line (its header shows once selected).
-	const oneLine =
-		!selected &&
-		!(ws.days && ws.days.from === ws.days.to) &&
-		(ix.itemsByDay.get(dayId)?.length ?? 0) === 0 &&
-		dayMarks.length === 0 &&
-		originMarks.length === 0;
 	const live = near || dragDay === dayId || selected;
 	const spacer =
 		live || oneLine

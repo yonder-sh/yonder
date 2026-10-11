@@ -17,7 +17,8 @@
  *   closest droppable elsewhere). Keyboard drags have no pointer: they stay in
  *   the active item's panel. Over a modal (Organize places) only its own
  *   droppables count, never the Plan behind it. Over the Plan's ideas dock
- *   (`data.dock`), the dock wins over the days under it.
+ *   (`data.dock`), the dock wins over the days under it; so does a small
+ *   target marked `data.exact` under the pointer (an empty day's line).
  * - Packages may also subscribe with dnd-kit's `useDndMonitor` (onDragOver /
  *   onDragMove: tree depth projection, cross-day previews) inside this context.
  * - Features register behaviour with `useDnd().onDrop(type, handler)`; drag
@@ -206,6 +207,12 @@ const collisions: CollisionDetection = (raw) => {
 	// Over no panel (e.g. the empty sidebar under the Outline): no target at all,
 	// never the closest droppable in another panel (that created Plan items).
 	if (!panel) return within;
+	// A small target (`data.exact`, an empty day's one line) wins while under the pointer.
+	const exact = within.find(
+		(c) =>
+			args.droppableContainers.find((d) => d.id === c.id)?.data.current?.exact,
+	);
+	if (exact) return [exact];
 	return closestCenter({
 		...args,
 		droppableContainers: args.droppableContainers.filter(
