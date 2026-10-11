@@ -15,6 +15,8 @@
  *   the live event a mutation publishes is skipped by the tab that made it
  *   (SPEC §10.5), and `x-yonder-mode: suggest` while the workspace is in
  *   suggest mode (EXTENSIONS §2.3; only the proposal gate reads it).
+ * - `withErrorStatus`: a thrown AppError (or a failed input validator, as
+ *   VALIDATION) answers with its HTTP status, not 200.
  */
 import {
 	createCsrfMiddleware,
@@ -26,6 +28,7 @@ import { getTabId, TAB_ID_HEADER } from "@/lib/realtime/tab-id";
 import { MODE_HEADER } from "@/lib/schemas/proposals";
 import { suggestModeHeader } from "@/lib/workspace/suggest-mode";
 import { authEnv } from "@/server/auth/env.server";
+import { withErrorStatus } from "@/server/authz/middleware";
 import { getEnv } from "@/server/env.server";
 import {
 	buildSecurityHeaders,
@@ -71,5 +74,5 @@ export const startInstance = createStart(() => ({
 		securityHeaders,
 		createCsrfMiddleware({ filter: (ctx) => ctx.handlerType === "serverFn" }),
 	],
-	functionMiddleware: [tabHeader],
+	functionMiddleware: [withErrorStatus, tabHeader],
 }));
