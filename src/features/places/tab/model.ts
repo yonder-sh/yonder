@@ -285,7 +285,9 @@ export function filterRows(
 		(r) =>
 			(!f.status || r.status === f.status) &&
 			// Not going is out of the Rate pile, so "unrated by" leaves it out too.
-			(!f.filter.unratedBy || f.status === "dropped" || r.status !== "dropped") &&
+			(!f.filter.unratedBy ||
+				f.status === "dropped" ||
+				r.status !== "dropped") &&
 			(!f.talk || toTalk(r)) &&
 			matchesFilter(r.node, f.filter, f.ctx) &&
 			matchesText(r, f.q ?? "", f.extra),
