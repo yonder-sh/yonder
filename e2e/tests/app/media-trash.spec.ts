@@ -60,7 +60,11 @@ test("a deleted photo waits in Trash: Restore brings it back, Delete forever tak
 
 	// Trash, from the account menu: the photo with 30 days left.
 	await page.goto("/dashboard");
-	await page.getByTestId(TESTID.accountMenu).click();
+	// The menu opens once the page has hydrated.
+	await expect(async () => {
+		await page.getByTestId(TESTID.accountMenu).click();
+		await expect(page.getByTestId(TRASH_TESTID.entry)).toBeVisible({ timeout: 1_000 });
+	}).toPass({ timeout: 15_000 });
 	await page.getByTestId(TRASH_TESTID.entry).click();
 	await expect(page).toHaveURL(/\/trash$/);
 	const tile = page.locator(`[data-trash="a:${id}"]`);
