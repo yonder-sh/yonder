@@ -1335,6 +1335,8 @@ test("X4 share target: a TikTok goes to Shibuya Sky's media", async ({ browser }
 	// It goes into Saved and opens there, in the feed, at the link.
 	await expect(page).toHaveURL(/\/saved\?open=.+&from=share/, { timeout: 20_000 });
 	const card = page.locator(`[data-testid="saved-card"][data-saved="${new URL(page.url()).searchParams.get("open")}"]`);
+	// "Where is this?" first: add it to the trip now instead.
+	await page.getByTestId("saved-where-add-now").click();
 	await card.getByRole("button", { name: /Add to existing/ }).click();
 	await card.getByTestId(HOME_TESTID.sharePlace).click();
 	await page.getByTestId(HOME_TESTID.sharePicker).getByRole("option", { name: "Shibuya Sky" }).first().click();
@@ -1919,6 +1921,7 @@ test("X4b share target POST through the service worker (production build)", asyn
 	await expect(page).toHaveURL(/\/saved\?open=.+&from=share/, { timeout: 20_000 });
 	const card = page.locator(`[data-testid="saved-card"][data-saved="${new URL(page.url()).searchParams.get("open")}"]`);
 	await expect(card).toContainText("TikTok");
+	await page.getByTestId("saved-where-add-now").click();
 	await shot(page, "x4b-01-share-post");
 	await card.getByTestId(HOME_TESTID.shareSave).click();
 	await expect(card.getByTestId(HOME_TESTID.shareSaved)).toContainText(/Saved/, { timeout: 15_000 });

@@ -18,10 +18,11 @@ import { openLink } from "./_helpers/link";
 
 test.use({ storageState: storageStateOf("dev") });
 
-/** The Saved feed's card of the link just shared (a share opens the feed at it). */
+/** The Saved feed's card of the link just shared (a share opens the feed at it, asking where it is: here, "Add to a trip now"). */
 async function sharedCard(page: Page) {
 	await expect(page).toHaveURL(/\/saved\?open=.+&from=share/, { timeout: 20_000 });
 	const id = new URL(page.url()).searchParams.get("open");
+	await page.getByTestId(SAVED_TESTID.whereAddNow).click();
 	return page.locator(`[data-testid="${SAVED_TESTID.card}"][data-saved="${id}"]`);
 }
 

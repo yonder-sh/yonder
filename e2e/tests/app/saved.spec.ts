@@ -1,11 +1,11 @@
 /**
- * Saved (owner, 2026-10-09): links shared into Yonder wait in a grid until
- * they go into a trip. Three links come in the way the iOS Shortcut and ⌘K
- * hand them over (`/share?url=`), each landing in the feed (Later keeps it);
- * the grid shows their re-hosted pictures (stubbed previews: a TikTok's
- * oEmbed thumbnail, an Instagram post's OpenGraph picture) and the Maps
- * place by name; the feed saves the place into the trip, deletes the reel
- * and leaves the TikTok.
+ * Saved (owner, 2026-10-09): links shared into Yonder are kept in a grid.
+ * Three links come in the way the iOS Shortcut and ⌘K hand them over
+ * (`/share?url=`), each landing in the feed asking where it is (Skip: it
+ * waits, Unsorted); the grid shows their re-hosted pictures (stubbed
+ * previews: a TikTok's oEmbed thumbnail, an Instagram post's OpenGraph
+ * picture) and the Maps place by name; the feed saves the place into the
+ * trip (it stays, filed under Kyoto), deletes the reel and leaves the TikTok.
  */
 import { randomBytes } from "node:crypto";
 import { expect, type Page, test } from "@playwright/test";
@@ -25,12 +25,12 @@ const MAPS = "https://www.google.com/maps/place/Kissa+Mado/@35.0037,135.7788,17z
 const activeCard = (page: Page) =>
 	page.locator(`[data-testid="${S.card}"][data-active]`);
 
-/** A link handed over like the Shortcut does: it opens in the feed; Later keeps it. */
+/** A link handed over like the Shortcut does: it opens in the feed, asking where it is; Skip keeps it. */
 async function share(page: Page, url: string, text?: string) {
 	await page.goto(`/share?${new URLSearchParams({ url, ...(text ? { text } : {}) })}`);
 	await expect(page).toHaveURL(/\/saved\?open=[0-9a-f-]{36}&from=share/, { timeout: 20_000 });
 	await expect(page.getByTestId(S.feed)).toBeVisible();
-	await activeCard(page).getByTestId(S.later).click();
+	await page.getByTestId(S.whereSkip).click();
 	await expect(page.getByTestId(S.feed)).toHaveCount(0);
 	await expect(page).toHaveURL(/\/saved$/);
 }
@@ -53,7 +53,7 @@ test("three shared links in the grid; the feed saves one to a trip, deletes one,
 	await page.goto(`/share?${new URLSearchParams({ url: TIKTOK, text: `Matcha parfait at Tsujiri ${TIKTOK}` })}`);
 	await expect(page).toHaveURL(/\/saved\?open=/, { timeout: 20_000 });
 	const again = new URL(page.url()).searchParams.get("open");
-	await activeCard(page).getByTestId(S.later).click();
+	await page.getByTestId(S.whereSkip).click();
 	await expect(page).toHaveURL(before.href);
 
 	// The grid: newest first, each with its source and one line; the pictures
@@ -111,27 +111,32 @@ test("three shared links in the grid; the feed saves one to a trip, deletes one,
 	await expect(page.getByTestId(S.end)).toContainText("That's everything you saved");
 	await page.getByTestId(S.endBack).click();
 	await expect(page.getByTestId(S.feed)).toHaveCount(0);
-	await expect(tiles).toHaveCount(1);
-	await expect(tiles.nth(0).getByTestId(S.tileBadge)).toHaveText("TikTok");
+	// The place stays, in the trip and filed under its city; the TikTok waits, Unsorted.
+	await expect(tiles).toHaveCount(2);
+	const unsorted = page.locator(`[data-testid="${S.section}"][aria-label="Unsorted"]`).getByTestId(S.tile);
+	await expect(unsorted).toHaveCount(1);
+	await expect(unsorted.getByTestId(S.tileBadge)).toHaveText("TikTok");
+	const kept = page.locator(`[data-testid="${S.section}"][aria-label="Japan"]`).getByTestId(S.tile);
+	await expect(kept.getByTestId(S.tileTrips)).toContainText(/^In /);
 
-	// The dashboard's way in counts it.
+	// The dashboard's way in counts them.
 	await page.goto("/dashboard");
-	await expect(page.getByTestId(S.entry)).toContainText("1 to add to a trip");
+	await expect(page.getByTestId(S.entry)).toContainText("2 items");
 
-	// Select in the grid: delete it, Undo brings it back; delete it for good.
+	// Select in the grid: delete the TikTok, Undo brings it back; delete it for good.
 	await page.goto("/saved");
 	await page.getByTestId(S.select).click();
-	await tiles.nth(0).click();
+	await unsorted.click();
 	await expect(page.getByTestId(S.selectCount)).toHaveText("1 selected");
 	await page.screenshot({ path: shotPath("saved/select-1440.png"), animations: "disabled" });
 	await page.getByTestId(S.deleteSelected).click();
-	await expect(tiles).toHaveCount(0);
-	await page.getByRole("button", { name: "Undo" }).click();
 	await expect(tiles).toHaveCount(1);
+	await page.getByRole("button", { name: "Undo" }).click();
+	await expect(tiles).toHaveCount(2);
 	await page.getByTestId(S.select).click();
-	await tiles.nth(0).click();
+	await unsorted.click();
 	await page.getByTestId(S.deleteSelected).click();
-	await expect(page.getByTestId(S.empty)).toBeVisible();
+	await expect(tiles).toHaveCount(1);
 
 	// The place is in the trip.
 	await page.goto(`/t/${c.slug}`);
@@ -198,7 +203,7 @@ test("two photos shared from another app: uploaded with progress, one tile, slid
 	await page.screenshot({ path: shotPath("saved/uploading-1440.png"), animations: "disabled" });
 	// Up: the feed at it.
 	await expect(page).toHaveURL(/\/saved\?open=.+&from=share/, { timeout: 30_000 });
-	await activeCard(page).getByTestId(S.later).click();
+	await page.getByTestId(S.whereSkip).click();
 	const tile = page.getByTestId(S.tile);
 	await expect(tile).toHaveCount(1);
 	await expect(tile.getByTestId(S.tileBadge)).toHaveText("Photos");
@@ -224,9 +229,9 @@ test("two photos shared from another app: uploaded with progress, one tile, slid
 	await card.getByTestId(HOME_TESTID.shareSave).click();
 	await expect(card.getByTestId(HOME_TESTID.shareSaved)).toContainText("Saved to Shibuya Sky", { timeout: 15_000 });
 	await expect.poll(photosOn, { timeout: 15_000 }).toBe(had + 2);
-	// Gone from the grid (it's in the trip now).
+	// Still in Saved, marked as in the trip.
 	await page.getByTestId(S.close).click();
-	await expect(page.getByTestId(S.empty)).toBeVisible();
+	await expect(tile.getByTestId(S.tileTrips)).toContainText(/^In /);
 });
 
 test("on a phone, the place to add to is a full-screen list grouped by area, with search", async ({
@@ -242,6 +247,7 @@ test("on a phone, the place to add to is a full-screen list grouped by area, wit
 	await page.goto(`/share?${new URLSearchParams({ url, text: `Best ramen in Tokyo 🍜 #ramen ${url}` })}`);
 	await expect(page).toHaveURL(/\/saved\?open=/, { timeout: 20_000 });
 	const card = activeCard(page);
+	await page.getByTestId(S.whereAddNow).click();
 	await card.getByTestId(S.bar).click();
 	// A caption isn't a name.
 	await expect(card.getByTestId(HOME_TESTID.shareName)).toHaveValue("");
