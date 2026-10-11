@@ -151,11 +151,11 @@ test("J1 sign up, new trip, Where to first? → Japan › Tokyo › Shibuya Sky,
 	await expect(page.getByTestId(TESTID.workspace)).toBeVisible({ timeout: 20_000 });
 	await expectLive(page);
 
-	// A new trip asks what you want to see (places first); this group knows
-	// its route: "Set the cities and nights" opens "Where to first?".
+	// A new trip's Plan asks what you want to see (places first, no palette
+	// over it); this group knows its route: "Set the cities and nights" opens
+	// "Where to first?".
 	const dialog = page.getByTestId(TESTID.addPlaceDialog);
-	await expect(dialog).toContainText("What do you want to see?");
-	await page.keyboard.press("Escape");
+	await expect(page.getByTestId(SPLIT.routeStart)).toContainText("What do you want to see?");
 	await expect(dialog).toBeHidden();
 	await page.getByTestId(SPLIT.routeStartSearch).click();
 	await expect(dialog).toContainText("Where to first?");
@@ -250,6 +250,7 @@ test("J1b places first: what you want to see, ratings, then the nights", async (
 	await expectLive(page);
 
 	const dialog = page.getByTestId(TESTID.addPlaceDialog);
+	await page.getByTestId(SPLIT.wantSearch).click();
 	await expect(dialog).toContainText("What do you want to see?");
 	await page.getByTestId(P.paletteInput).fill("Shibuya Sky");
 	const result = page.getByTestId(P.paletteResult).filter({ hasText: /Shibuya Sky/i }).first();
