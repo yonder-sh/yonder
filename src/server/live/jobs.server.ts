@@ -56,6 +56,8 @@ export const LinkPreviewJob = z.object({
 	attachmentId: AttachmentId,
 	/** The URL to preview; the handler re-validates it through the SSRF-safe fetch. */
 	url: z.url({ protocol: /^https?$/ }).max(4096),
+	/** A person's Refresh: fetch again rather than reuse the cached answer. */
+	fresh: z.boolean().optional(),
 });
 /** `money.fxDaily`: all trips; `date` (YYYY-MM-DD) defaults to today. */
 export const FxDailyJob = z.object({

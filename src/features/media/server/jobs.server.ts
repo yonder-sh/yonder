@@ -352,12 +352,12 @@ export async function fetchImage(
 }
 
 export async function linkPreview(
-	job: MediaJobInput & { url?: string },
+	job: MediaJobInput & { url?: string; fresh?: boolean },
 	fetcher: SafeFetcher = safeFetch,
 ): Promise<JobResult> {
 	const row = await liveRow(job.tripId, job.attachmentId);
 	if (!row?.url || (row.kind !== "link" && row.kind !== "embed")) return {};
-	const meta = await linkMeta(row.url, fetcher);
+	const meta = await linkMeta(row.url, fetcher, { fresh: job.fresh });
 	// Always under the row's own prefix: a duplicated trip's copy that is
 	// refreshed must not overwrite the source's shared preview.
 	const key = (v: StoredVariant) => objectKey(job.tripId, row.id, v);

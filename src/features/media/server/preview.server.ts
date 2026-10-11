@@ -269,14 +269,15 @@ export function urlCacheKey(url: string): string {
 export async function linkMeta(
 	url: string,
 	fetcher: SafeFetcher = safeFetch,
-	opts: { cache?: boolean } = {},
+	/** `cache: false` neither reads nor writes it; `fresh` only skips the read. */
+	opts: { cache?: boolean; fresh?: boolean } = {},
 ): Promise<LinkMeta> {
 	const c = classifyUrl(url);
 	// Instagram's own namespace: its entries from before it had pictures don't count.
 	const ns =
 		c.kind === "embed" && c.provider === "instagram" ? "link-ig" : "link";
 	const cacheKey = urlCacheKey(url);
-	if (opts.cache !== false) {
+	if (opts.cache !== false && !opts.fresh) {
 		const hit = await cacheGet<LinkMeta>(ns, cacheKey);
 		if (hit) return hit;
 	}

@@ -794,7 +794,7 @@ export const refreshLinkMeta = createServerFn({ method: "POST" })
 				out.job(
 					"links",
 					"links.preview",
-					{ tripId, attachmentId: row.id, url: row.url },
+					{ tripId, attachmentId: row.id, url: row.url, fresh: true },
 					{ dedupeId: `links:${row.id}` },
 				);
 				out.emit({ keys: ["media"] });
