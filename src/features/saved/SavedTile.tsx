@@ -1,7 +1,8 @@
 /**
  * One Saved tile, like Instagram's and TikTok's saved grids: a tall (9:16)
  * picture (the re-hosted preview or the first photo's thumb, else a calm
- * card by kind), the source in a small badge, one line under a soft shade.
+ * card by kind), the source in a small badge, one line under a soft shade
+ * ("In Japan 2027" above it once it went into a trip).
  * Selecting (the grid's Select), a tap ticks it instead of opening it.
  */
 import {
@@ -18,6 +19,7 @@ import { cn } from "@/lib/utils";
 import { savedKind, sourceLabel, tileLine } from "./lib";
 import { SAVED_TESTID } from "./testids";
 import type { SavedFile, SavedLink } from "./types";
+import { inTripsLabel } from "./where";
 
 /** A saved photo's or video's picture (`/api/saved-file/<id>/…`). */
 export function savedFileUrl(
@@ -110,6 +112,7 @@ export function SavedTile({
 	const source = sourceLabel(link);
 	const image = tileImage(link);
 	const video = link.files[0]?.kind === "video";
+	const inTrips = inTripsLabel(link.trips);
 	return (
 		<button
 			type="button"
@@ -118,7 +121,7 @@ export function SavedTile({
 			data-status={link.status}
 			data-selected={selecting ? selected : undefined}
 			onClick={onOpen}
-			aria-label={`${source}: ${line}`}
+			aria-label={`${source}: ${line}${inTrips ? ` (${inTrips})` : ""}`}
 			{...(selecting ? { "aria-pressed": selected } : {})}
 			className="group relative aspect-[9/16] w-full cursor-pointer overflow-hidden bg-muted text-left outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
 		>
@@ -168,6 +171,15 @@ export function SavedTile({
 				<span aria-hidden className="absolute inset-0 bg-white/25" />
 			) : null}
 			<span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 via-black/35 to-transparent px-2 pt-8 pb-2">
+				{inTrips ? (
+					<span
+						data-testid={SAVED_TESTID.tileTrips}
+						className="mb-1 flex max-w-full items-center gap-1 text-2xs font-medium text-white/85"
+					>
+						<Check className="size-3 shrink-0" strokeWidth={2.6} />
+						<span className="truncate">{inTrips}</span>
+					</span>
+				) : null}
 				<span
 					data-testid={SAVED_TESTID.tileLine}
 					className="line-clamp-2 text-xs leading-snug font-medium text-white"

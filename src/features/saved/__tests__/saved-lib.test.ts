@@ -83,7 +83,7 @@ describe("a saved tile", () => {
 
 describe("the feed's order", () => {
 	it("starts at the tile you opened, then the grid's order", () => {
-		expect(feedPile(["a", "b", "c", "d"], "c")).toEqual(["c", "a", "b", "d"]);
+		expect(feedPile(["a", "b", "c", "d"], "c")).toEqual(["c", "d", "a", "b"]);
 		expect(feedPile(["a", "b"], "gone")).toEqual(["a", "b"]);
 		expect(feedPile(["a", "b"], null)).toEqual(["a", "b"]);
 	});

@@ -73,14 +73,13 @@ export function tileLine(
 	);
 }
 
-/** The feed's order: the tile you opened first, then the rest as the grid has them. */
+/** The feed's order: the grid's, from the tile you opened (the ones before it come last). */
 export function feedPile(
 	ids: readonly string[],
 	open: string | null,
 ): string[] {
-	return open && ids.includes(open)
-		? [open, ...ids.filter((id) => id !== open)]
-		: [...ids];
+	const i = open ? ids.indexOf(open) : -1;
+	return i > 0 ? [...ids.slice(i), ...ids.slice(0, i)] : [...ids];
 }
 
 /** A saved link as the save controls read a share (its words name the idea). */

@@ -518,7 +518,7 @@ function Deadlines() {
 	);
 }
 
-/** Saved: links shared into Yonder waiting for a trip (and shares still on this device). */
+/** Saved: what's kept for trips (and shares still on this device). */
 function SavedEntry() {
 	const saved = useQuery(savedQuery());
 	const local = useSharedOnDevice();
@@ -539,7 +539,10 @@ function SavedEntry() {
 			<Bookmark className="size-4 shrink-0 text-muted-foreground" />
 			<span className="min-w-0 flex-1 truncate">
 				<span className="font-medium">Saved</span>
-				<span className="text-muted-foreground"> · {n} to add to a trip</span>
+				<span className="text-muted-foreground">
+					{" "}
+					· {n === 1 ? "1 item" : `${n} items`}
+				</span>
 			</span>
 			{thumbs.length ? (
 				<span className="flex shrink-0 -space-x-2">

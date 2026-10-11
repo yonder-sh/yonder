@@ -28,6 +28,13 @@ export type MyTrip = {
 	coverUrl: string | null;
 	/** City-level route points `[lng, lat]` in trip order, for the RouteSketch. */
 	routePoints: [number, number][];
+	/** Its cities with their country (Saved's Where chips before anything is filed). */
+	cities?: {
+		name: string;
+		countryCode: string;
+		lat: number | null;
+		lng: number | null;
+	}[];
 	unreadMentions: number;
 	updatedAt: string;
 	/** E6: activity by others since I last looked (capped at 100). */

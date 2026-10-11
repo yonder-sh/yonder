@@ -86,9 +86,10 @@ export async function loadMyTrips(userId: string): Promise<MyTrip[]> {
 		 order by t.start_date nulls last, t.name`);
 	const rows = res.rows as Record<string, unknown>[];
 	const ids = rows.map((r) => String(r.id));
-	const [points, deadlines] = await Promise.all([
+	const [points, deadlines, cities] = await Promise.all([
 		routePointsFor(ids),
 		loadDeadlineRows(userId, ids),
+		citiesFor(ids),
 	]);
 	const now = Date.now();
 	const overdue = new Map<string, number>();
@@ -122,6 +123,7 @@ export async function loadMyTrips(userId: string): Promise<MyTrip[]> {
 			countryCodes: countries,
 			coverUrl: r.coverId ? mediaUrl(String(r.coverId), "display") : null,
 			routePoints: points.get(String(r.id)) ?? [],
+			cities: cities.get(String(r.id)) ?? [],
 			unreadMentions: Number(r.unreadMentions ?? 0),
 			updatedAt: new Date(r.updatedAt as string | Date).toISOString(),
 			changesSince: Number(r.changesSince ?? 0),
@@ -141,6 +143,40 @@ export async function loadMyTrips(userId: string): Promise<MyTrip[]> {
 					: null,
 		};
 	});
+}
+
+type City = NonNullable<MyTrip["cities"]>[number];
+
+/** Each trip's cities in tree order, with the first country code up their chain. */
+export async function citiesFor(
+	tripIds: string[],
+): Promise<Map<string, City[]>> {
+	const out = new Map<string, City[]>();
+	if (!tripIds.length) return out;
+	const res = await db.execute(sql`
+		with recursive up as (
+			select n.trip_id, n.id as city_id, n.name, n.lat, n.lng, n.position, n.parent_id,
+			       n.country_code as cc, 0 as depth
+			  from nodes n
+			 where n.trip_id = any(${sql.param(tripIds)}::uuid[]) and n.type = 'city' and n.deleted_at is null
+			union all
+			select up.trip_id, up.city_id, up.name, up.lat, up.lng, up.position, p.parent_id,
+			       coalesce(up.cc, p.country_code), up.depth + 1
+			  from up join nodes p on p.id = up.parent_id and p.deleted_at is null
+			 where up.cc is null and up.depth < 12
+		)
+		select distinct on (trip_id, city_id) trip_id::text as "tripId", name, lat, lng, cc, position
+		  from up where cc ~ '^[A-Z]{2}$'
+		 order by trip_id, city_id, depth`);
+	const rows = (
+		res.rows as (City & { tripId: string; cc: string; position: string })[]
+	).sort((a, b) => (a.position < b.position ? -1 : 1));
+	for (const r of rows)
+		out.set(r.tripId, [
+			...(out.get(r.tripId) ?? []),
+			{ name: r.name, countryCode: r.cc, lat: r.lat, lng: r.lng },
+		]);
+	return out;
 }
 
 /** Max points per sketch: enough for a 35-day, 4-country trip. */
