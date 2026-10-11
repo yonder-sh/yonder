@@ -385,7 +385,16 @@ function Whereabouts({ link }: { link: SavedLink }) {
 }
 
 /** Where it's from and what it says: the source, the line, the caption or address. */
-function Details({ link, wide }: { link: SavedLink; wide: boolean }) {
+function Details({
+	link,
+	wide,
+	asking = false,
+}: {
+	link: SavedLink;
+	wide: boolean;
+	/** "Where is this?" is up: its place isn't shown twice. */
+	asking?: boolean;
+}) {
 	const kind = savedKind(link);
 	const line = tileLine(link);
 	const open = canonicalLink(
@@ -418,7 +427,7 @@ function Details({ link, wide }: { link: SavedLink; wide: boolean }) {
 			{more ? (
 				<p className="line-clamp-4 text-sm text-muted-foreground">{more}</p>
 			) : null}
-			<Whereabouts link={link} />
+			{asking ? null : <Whereabouts link={link} />}
 			{open ? (
 				<a
 					href={open}
@@ -571,7 +580,7 @@ function SavedCard({
 						className="h-full rounded-2xl"
 					/>
 					<div className="flex min-h-0 flex-col gap-5 overflow-y-auto p-1">
-						<Details link={link} wide />
+						<Details link={link} wide asking={asking} />
 						<div data-testid={SAVED_TESTID.info} className="mt-auto">
 							{ask ?? saver}
 						</div>
@@ -805,7 +814,7 @@ export function SavedFeed({
 	};
 	const onSkip = () => {
 		setAsking(null);
-		toast.success("Saved in Unsorted", {
+		toast.success("Kept in Saved", {
 			duration: 2500,
 			position: "top-center",
 		});

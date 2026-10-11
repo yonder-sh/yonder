@@ -259,7 +259,7 @@ export function WhereAsk({
 				selected={suggested}
 				onPick={onPick}
 				onSearching={onSearching}
-				className="min-h-0 overflow-y-auto"
+				className="min-h-0 flex-1 overflow-y-auto"
 			/>
 			<div className="flex items-center justify-between gap-2 pt-1">
 				<Button

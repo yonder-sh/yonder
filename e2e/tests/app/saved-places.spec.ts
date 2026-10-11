@@ -73,6 +73,7 @@ test("a share asks where it is; one tap files it; the grid groups by place; ones
 	await expectNoHorizontalOverflow(page);
 	await page.screenshot({ path: shotPath("saved/where-390.png"), animations: "disabled" });
 	await ask.getByTestId(S.whereSearch).fill("Seoul");
+	await expect(ask.getByTestId(S.whereResult).filter({ hasText: "Seoul" }).first()).toBeVisible();
 	await page.screenshot({ path: shotPath("saved/where-search-390.png"), animations: "disabled" });
 	await ask.getByTestId(S.whereResult).filter({ hasText: "Seoul" }).first().click();
 	await expect(page).toHaveURL(/\/saved$/);
