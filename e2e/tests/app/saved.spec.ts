@@ -204,7 +204,8 @@ test("two photos shared from another app: uploaded with progress, one tile, slid
 	// Up: the feed at it.
 	await expect(page).toHaveURL(/\/saved\?open=.+&from=share/, { timeout: 30_000 });
 	await page.getByTestId(S.whereSkip).click();
-	const tile = page.getByTestId(S.tile);
+	// (Saved keeps what earlier tests left: find this one.)
+	const tile = page.locator(`[data-testid="${S.tile}"][aria-label*="Sky deck at dusk"]`);
 	await expect(tile).toHaveCount(1);
 	await expect(tile.getByTestId(S.tileBadge)).toHaveText("Photos");
 	await expect(tile.getByTestId(S.tileLine)).toHaveText("Sky deck at dusk");
