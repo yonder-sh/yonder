@@ -466,6 +466,13 @@ describe("rows (status, when, time needed, filters)", () => {
 		expect(shortlist.map((r) => r.id)).toEqual([fushimi]);
 		const q = filterRows(rows, { ...f, status: null, q: "nijo" });
 		expect(q.map((r) => r.id)).toEqual([nijo]);
+		// "Unrated by" is the Rate pile: Not going stays out (FB-05's count).
+		const unrated = filterRows(rows, {
+			...f,
+			status: null,
+			filter: { ...EMPTY_FILTER, unratedBy: "me" },
+		});
+		expect(unrated.some((r) => r.status === "dropped")).toBe(false);
 	});
 	it("day numbers read as ranges", () => {
 		expect(formatDayNumbers([2, 3, 4, 5])).toBe("Days 2–5");
