@@ -49,7 +49,7 @@ export const SHELL_TESTID = {
 	shortcutsDialog: "shortcuts-dialog",
 	viewSettingsDialog: "view-settings-dialog",
 	viewSettingsButton: "view-settings-button",
-	tryOtherDates: "try-other-dates",
+	changeDates: "change-dates",
 	fabMenu: "fab-menu",
 	fabPlace: "fab-place",
 	fabExpense: "fab-expense",

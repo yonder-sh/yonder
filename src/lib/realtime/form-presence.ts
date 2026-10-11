@@ -185,7 +185,7 @@ const TITLE: Record<FormKind, { add: string; edit: string }> = {
 	budget: { add: "Add budget", edit: "Edit budget" },
 	list: { add: "Add to-do", edit: "Edit to-do" },
 	hours: { add: "Opening hours", edit: "Opening hours" },
-	shift: { add: "Try other dates", edit: "Try other dates" },
+	shift: { add: "Change dates", edit: "Change dates" },
 	transit: { add: "Add transit", edit: "Edit transit" },
 	settings: { add: "Trip settings", edit: "Trip settings" },
 };

@@ -8,11 +8,8 @@
  *   capacity per day, **Home currency** (the unit of all money math; the
  *   warning says expenses get re-converted), walking speed, autofill.
  *   Saved together through `updateTrip` (direct, `tripSettings`).
- * - Dates: a Calendar range, previewed with `previewTripDates` ("3 items on
- *   Fri 5 Nov move to Unscheduled. Nothing is deleted.") and applied with
- *   `setTripDates` (proposable: a suggester's change becomes a suggestion)
- *   with `expectedVersion` = the preview's version (what the user reviewed).
- *   "Try other dates…" opens WP-Insights' `ShiftTripDialog` (the what-if).
+ * - Dates: `TripDatesForm` (a range, previewed, then `setTripDates`).
+ *   "Move the trip…" opens Change dates (`ShiftTripDialog`).
  * - Public holidays (`HolidaysEditor`, WP-Insights): its unsaved rows live
  *   here, so Save writes them with the rest (NEW-V52-01: it used to close the
  *   dialog and drop a holiday that wasn't saved with "Save holidays").
@@ -34,13 +31,8 @@ import {
 	useState,
 } from "react";
 import { toast } from "sonner";
-import {
-	type DayNotesChoice,
-	DayNotesChoiceField,
-} from "@/components/common/day-notes-choice";
 import { EditGuard, useEditGuard } from "@/components/common/edit-guard";
 import { DurationInput, TimeInput } from "@/components/common/time";
-import { useTripMutation } from "@/components/common/use-trip-mutation";
 import { Eyebrow } from "@/components/kit";
 import {
 	AlertDialog,
@@ -79,15 +71,8 @@ import {
 } from "@/features/insights/HolidaysEditor";
 import { tripMoneyQuery } from "@/features/money/queries";
 import { removeTripOffline } from "@/features/offline/saved-trips";
-import {
-	deleteTrip,
-	previewTripDates,
-	setTripDates,
-	updateTrip,
-} from "@/functions/trips.functions";
+import { deleteTrip, updateTrip } from "@/functions/trips.functions";
 import { can } from "@/lib/auth/roles";
-import { errorCode } from "@/lib/errors";
-import { formatDayDate } from "@/lib/format";
 import { meKeys, tripKeys, tripSlugKey } from "@/lib/query/keys";
 import { useFormPresence } from "@/lib/realtime/form-presence";
 import { TESTID } from "@/lib/testids";
@@ -101,9 +86,9 @@ import { useUi } from "@/lib/workspace/ui-store";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { currencyName, HOME_CURRENCIES } from "./currencies";
 import { DuplicateTripDialog } from "./DuplicateTripDialog";
-import { DateRangeField } from "./date-fields";
 import { useDialogFocus } from "./dialog-focus";
 import { leaveTrip } from "./sharing.functions";
+import { TripDatesForm } from "./TripDatesForm";
 import { HOME_TESTID } from "./testids";
 
 /** Two settings forms hold the same values (shallow: every field is a primitive). */
@@ -148,167 +133,35 @@ function Heading({ children }: { children: ReactNode }) {
 	return <Eyebrow className="pt-2">{children}</Eyebrow>;
 }
 
-/** Dates: pick → preview what moves → apply (or suggest). */
+/** Dates: the range (what moves is previewed), and "Move the trip…" (every day together). */
 function DatesRow() {
-	const { graph, mode } = useWorkspace();
-	const trip = graph.trip;
-	const [from, setFrom] = useState<string | null>(trip.startDate);
-	const [to, setTo] = useState<string | null>(trip.endDate);
-	const [dayNotes, setDayNotes] = useState<DayNotesChoice>("keep");
+	const { graph } = useWorkspace();
 	const openShift = useUi((s) => s.openShiftTrip);
 	const { disabled, reason } = useEditGuard();
-	useEffect(() => {
-		setFrom(trip.startDate);
-		setTo(trip.endDate);
-	}, [trip.startDate, trip.endDate]);
-	const changed =
-		!!from && !!to && (from !== trip.startDate || to !== trip.endDate);
-	const preview = useQuery({
-		// With the graph's version: a change that refreshes the graph refreshes
-		// the preview too, so it never shows (or sends) an older review.
-		queryKey: ["trip-dates-preview", trip.id, from, to, trip.version],
-		queryFn: () =>
-			previewTripDates({
-				data: { tripId: trip.id, startDate: from ?? "", endDate: to ?? "" },
-			}),
-		enabled: changed && mode === "live",
-		staleTime: 10_000,
-	});
-	// QA NOTE-VERSION-CONFLICT: `expectedVersion` is the version the shown
-	// preview was computed at (what the user reviewed). The graph's version
-	// lags behind changes that don't refetch the graph (a to-do, an expense),
-	// which refused a date change nothing had touched.
-	const apply = useTripMutation(
-		(v: {
-			startDate: string;
-			endDate: string;
-			expectedVersion: number;
-			dayNotes?: DayNotesChoice;
-		}) => setTripDates({ data: { tripId: trip.id, ...v } }),
-		{
-			tripId: trip.id,
-			keys: [
-				tripKeys.graph(trip.id),
-				tripKeys.lists(trip.id),
-				tripKeys.counts(trip.id),
-				meKeys.trips,
-			],
-			onSuccess: () => toast.success("Dates changed"),
-		},
-	);
-	const p = preview.data;
-	const items = p?.affectedItems ?? [];
 	return (
-		<div className="grid gap-2">
-			<Row label="Dates" htmlFor="trip-settings-dates">
-				<div className="grid justify-items-start gap-1">
-					<DateRangeField
-						id="trip-settings-dates"
-						from={from}
-						to={to}
-						disabled={disabled}
-						testId={HOME_TESTID.settingsDates}
-						onChange={(a, b) => {
-							setFrom(a);
-							setTo(b);
-						}}
-					/>
-					<Button
-						type="button"
-						variant="ghost"
-						size="sm"
-						className="-ml-2 text-primary hover:text-primary"
-						disabled={disabled || !trip.startDate}
-						title={reason ?? undefined}
-						data-testid={HOME_TESTID.settingsTryDates}
-						onClick={() => openShift(true)}
-					>
-						<CalendarClock /> Try other dates…
-					</Button>
-				</div>
-			</Row>
-			{changed ? (
-				<div className="grid gap-2 rounded-lg bg-muted/60 p-3 text-meta sm:ml-[176px]">
-					{p?.blockedBy ? <p className="text-warning">{p.blockedBy}</p> : null}
-					{!p?.blockedBy && p?.notedDays?.length ? (
-						<DayNotesChoiceField
-							dates={p.notedDays ?? []}
-							value={dayNotes}
-							onChange={setDayNotes}
-						/>
-					) : null}
-					{p?.blockedBy ? null : items.length ? (
-						<p>
-							{items.length} {items.length === 1 ? "stop" : "stops"} on{" "}
-							{p?.removedDays
-								.slice(0, 3)
-								.map((d) => formatDayDate(d))
-								.join(", ")}
-							{(p?.removedDays.length ?? 0) > 3 ? "…" : ""} move to Ideas.
-							Nothing is deleted.
-							<span className="mt-1 block truncate text-muted-foreground">
-								{items
-									.slice(0, 4)
-									.map((i) => i.title)
-									.join(" · ")}
-								{items.length > 4 ? ` +${items.length - 4}` : ""}
-							</span>
-						</p>
-					) : (
-						<p className="text-muted-foreground">
-							{preview.isPending ? "Checking what moves…" : "No stops move."}
-						</p>
-					)}
-					<div className="flex gap-2">
+		<TripDatesForm
+			id="trip-settings-dates"
+			reviewClassName="sm:ml-[176px]"
+			field={(f) => (
+				<Row label="Dates" htmlFor="trip-settings-dates">
+					<div className="grid justify-items-start gap-1">
+						{f}
 						<Button
 							type="button"
-							size="sm"
-							data-testid={HOME_TESTID.datesConfirm}
-							disabled={
-								disabled ||
-								apply.isPending ||
-								preview.isPending ||
-								// A refetch (after a CONFLICT) is a new review: wait for it.
-								preview.isFetching ||
-								!!p?.blockedBy
-							}
-							onClick={() => {
-								if (!from || !to) return;
-								apply.mutate(
-									{
-										startDate: from,
-										endDate: to,
-										expectedVersion: p?.version ?? trip.version,
-										...(p?.notedDays?.length ? { dayNotes } : {}),
-									},
-									{
-										// "Review again": the next click sends the fresh preview's version.
-										onError: (e) => {
-											if (errorCode(e) === "CONFLICT") void preview.refetch();
-										},
-									},
-								);
-							}}
-						>
-							{mode === "live" && useUi.getState().suggesting
-								? "Suggest these dates"
-								: "Change dates"}
-						</Button>
-						<Button
-							type="button"
-							size="sm"
 							variant="ghost"
-							onClick={() => {
-								setFrom(trip.startDate);
-								setTo(trip.endDate);
-							}}
+							size="sm"
+							className="-ml-2 text-primary hover:text-primary"
+							disabled={disabled || !graph.trip.startDate}
+							title={reason ?? undefined}
+							data-testid={HOME_TESTID.settingsTryDates}
+							onClick={() => openShift(true)}
 						>
-							Keep the current dates
+							<CalendarClock /> Move the trip…
 						</Button>
 					</div>
-				</div>
-			) : null}
-		</div>
+				</Row>
+			)}
+		/>
 	);
 }
 

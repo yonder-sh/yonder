@@ -121,7 +121,7 @@ function HarnessBody({ nodeId, panel = "plan" }: HarnessOptions) {
 					className="h-8 gap-1.5 text-meta"
 				>
 					<CalendarRange className="size-4" strokeWidth={1.75} />
-					<span className="max-sm:hidden">Try other dates…</span>
+					<span className="max-sm:hidden">Change dates…</span>
 				</Button>
 			</header>
 			<nav className="flex gap-1 border-b px-3 py-1.5 md:hidden">

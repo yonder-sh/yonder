@@ -70,9 +70,9 @@ test("TRIP-03 (+ Duplicate of Asia 2027): shift by one day keeps pinned local ti
 	// The copy's money: none
 	const txt = await page.getByTestId("workspace").innerText();
 	await shot(page, "dup-copy");
-	// Shift +1 via Try other dates…
+	// Shift +1 via Change dates…
 	await (await hydrated(page.getByTestId("trip-menu").first())).click();
-	await page.getByRole("menuitem", { name: /try other dates/i }).click();
+	await page.getByRole("menuitem", { name: /change dates/i }).click();
 	const sd = page.getByTestId("shift-trip-dialog");
 	await expect(sd).toBeVisible();
 	await sd.getByTestId("shift-plus").click();

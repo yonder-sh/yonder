@@ -1,6 +1,6 @@
 /**
  * WP-Home trip settings and profile (DESIGN §8.5, §8.10; EXTENSIONS §1.4
- * "Home currency", "Try other dates…"; ADDENDUM §7.2 display currency incl.
+ * "Home currency", "Change dates…"; ADDENDUM §7.2 display currency incl.
  * "Local"; QA TRIP-02, AUTH-15). Each test clones its own demo trip.
  */
 import { expect, type Page, test } from "@playwright/test";

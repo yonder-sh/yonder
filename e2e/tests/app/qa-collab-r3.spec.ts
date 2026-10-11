@@ -261,7 +261,7 @@ test("ONE inbox: a booking window relative to Day 1's check-in (372 days before 
 		await d.page.reload();
 		await expectLive(d.page);
 		await d.page.getByTestId(TESTID.tripMenu).click();
-		await d.page.getByTestId("try-other-dates").click();
+		await d.page.getByTestId("change-dates").click();
 		await d.page.getByTestId(I.shiftPlus).click();
 		await d.page.getByTestId(I.shiftApply).click();
 		await expect(d.page.getByText(/Trip shifted \+1 day/)).toBeVisible({ timeout: 10_000 });
@@ -370,7 +370,7 @@ test("SHIFT deadlines: −1 lists a to-do due the day before its item under Dead
 		await d.page.reload();
 		await expectLive(d.page);
 		await d.page.getByTestId(TESTID.tripMenu).click();
-		await d.page.getByTestId("try-other-dates").click();
+		await d.page.getByTestId("change-dates").click();
 		const dlg = d.page.getByTestId(TESTID.shiftTripDialog);
 		await dlg.getByTestId(I.shiftMinus).click();
 		const dl = dlg.getByTestId(I.impactSection).filter({ hasText: /Deadlines/i });
@@ -680,10 +680,10 @@ test("DEFECT (WP-Shell): on a phone, a kept what-if draft shows the WhatIfChip (
 	await p.goto(`${TOKYO}?days=2027-10-03`);
 	await expectLive(p);
 	await p.getByRole("button", { name: "More" }).first().tap();
-	await p.getByText("Try other dates…").first().tap();
+	await p.getByText("Change dates…").first().tap();
 	const dlg = p.getByTestId(TESTID.shiftTripDialog);
 	await dlg.getByTestId(I.shiftPlus).tap();
-	await dlg.getByRole("button", { name: /Decide later/ }).tap();
+	await dlg.getByRole("button", { name: /Preview on the plan/ }).tap();
 	await expect(dlg).toBeHidden();
 	await snap(p, "r3-phone-whatif-no-chip");
 	const chip = p.getByTestId(TESTID.whatIfChip);
@@ -733,7 +733,7 @@ test("DEFECT (WP-Insights): a link guest's what-if keeps the booked NH 9 under N
 }) => {
 	const gst = await open(browser, null, TOKYO, { token: "viewer" });
 	await gst.page.getByTestId(TESTID.tripMenu).click();
-	await gst.page.getByTestId("try-other-dates").click();
+	await gst.page.getByTestId("change-dates").click();
 	const dlg = gst.page.getByTestId(TESTID.shiftTripDialog);
 	await dlg.getByTestId(I.shiftPlus).click();
 	const rebook = dlg.getByTestId(I.impactSection).filter({ hasText: /Needs rebooking/i });

@@ -180,7 +180,7 @@ test("SHIFT-01/05/02/06 on real data: +1 and +3 list rebookings, timed rows and 
 	const g0 = await graph(d.page);
 	const dlg = d.page.getByTestId(TESTID.shiftTripDialog);
 	await d.page.getByTestId(TESTID.tripMenu).click();
-	await d.page.getByTestId("try-other-dates").click();
+	await d.page.getByTestId("change-dates").click();
 	await expect(dlg).toBeVisible();
 	await d.page.getByTestId(I.shiftPlus).click();
 	await expect(dlg.getByTestId(I.shiftSummary)).toContainText("Day 1 becomes Sun 3 Oct");
@@ -229,7 +229,7 @@ test("SHIFT-01/05/02/06 on real data: +1 and +3 list rebookings, timed rows and 
 	await d.page.screenshot({ path: shot("shift02-applied") });
 	// Undo from here: shift back −3 (the toast is gone after navigation; use the dialog).
 	await d.page.getByTestId(TESTID.tripMenu).click();
-	await d.page.getByTestId("try-other-dates").click();
+	await d.page.getByTestId("change-dates").click();
 	for (let i = 0; i < 3; i++) await d.page.getByTestId(I.shiftMinus).click();
 	await d.page.getByTestId(I.shiftApply).click();
 	await expect.poll(async () => (await graph(d.page)).trip.startDate, { timeout: 10_000 }).toBe(g0.trip.startDate);
@@ -242,7 +242,7 @@ test("SHIFT-06b: apply, then the toast's Undo restores the dates", async ({ brow
 	const d = await open(browser, "dennis", TOKYO);
 	const g0 = await graph(d.page);
 	await d.page.getByTestId(TESTID.tripMenu).click();
-	await d.page.getByTestId("try-other-dates").click();
+	await d.page.getByTestId("change-dates").click();
 	await d.page.getByTestId(I.shiftPlus).click();
 	await d.page.getByTestId(I.shiftApply).click();
 	const toast = d.page.getByText(/Trip shifted \+1 day/);
@@ -261,7 +261,7 @@ test("SHIFT-03: someone else's edit while the dialog is open refuses the shift u
 	const a = await open(browser, "audrey", TOKYO);
 	const g0 = await graph(d.page);
 	await d.page.getByTestId(TESTID.tripMenu).click();
-	await d.page.getByTestId("try-other-dates").click();
+	await d.page.getByTestId("change-dates").click();
 	await d.page.getByTestId(I.shiftPlus).click();
 	await d.page.waitForTimeout(800);
 	// Audrey renames an item meanwhile.
@@ -293,7 +293,7 @@ test("SHIFT-04 + SUG-15: Maya suggests +1 day; the overview shows the impact; ac
 	const m = await open(browser, "maya", TOKYO);
 	const g0 = await graph(m.page);
 	await m.page.getByTestId(TESTID.tripMenu).click();
-	await m.page.getByTestId("try-other-dates").click();
+	await m.page.getByTestId("change-dates").click();
 	const dlg = m.page.getByTestId(TESTID.shiftTripDialog);
 	await expect(dlg).toBeVisible();
 	await m.page.getByTestId(I.shiftPlus).click();
