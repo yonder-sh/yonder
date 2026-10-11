@@ -274,7 +274,7 @@ type Selection =
 	| { kind: "link"; url: string };
 
 /** A save in a row: "Added Senso-ji", and what Show opens. */
-type Added = { name: string; nodeId: string; itemId?: string };
+type Added = { name: string; nodeId: string; itemId?: string; off?: string };
 
 /** D10 New place…: the pasted link, waiting for the place the search finds or makes. */
 type PendingLink = { url: string; parentId: string | null };
@@ -800,7 +800,12 @@ function Palette({
 			{
 				onSuccess: (r) => {
 					if (name && keepOpen && !isProposed(r))
-						return onAdded({ name, nodeId, itemId: id });
+						return onAdded({
+							name,
+							nodeId,
+							itemId: id,
+							off: offDayText(ix, pick.dayId, nodeId) ?? undefined,
+						});
 					onClose();
 					// Its "Suggested — …" toast has said so; there's nothing to show yet.
 					if (isProposed(r)) return;
@@ -1050,8 +1055,13 @@ function Palette({
 						)}
 					>
 						<Check className="size-3.5 shrink-0" strokeWidth={2} />
-						<span role="status" className="min-w-0 flex-1 truncate">
-							Added <span className="text-foreground">{added.name}</span>
+						<span role="status" className="min-w-0 flex-1">
+							<span className="block truncate">
+								Added <span className="text-foreground">{added.name}</span>
+							</span>
+							{added.off ? (
+								<span className="block text-warning">{added.off}</span>
+							) : null}
 						</span>
 						<Button
 							size="xs"
@@ -2148,10 +2158,6 @@ function PreviewBody({
 						{
 							onError: (e) => toast.error(humanError(e)),
 							onSuccess: (s) => {
-								if (onAdded && !isProposed(s))
-									return onAdded({ name: title, nodeId: leafId, itemId });
-								onDone();
-								if (isProposed(s)) return;
 								// Filed under a city that isn't this day's: say so.
 								const off = offDayText(
 									ix,
@@ -2159,6 +2165,15 @@ function PreviewBody({
 									filing.existing.at(-1),
 									title,
 								);
+								if (onAdded && !isProposed(s))
+									return onAdded({
+										name: title,
+										nodeId: leafId,
+										itemId,
+										off: off ?? undefined,
+									});
+								onDone();
+								if (isProposed(s)) return;
 								toast(`${title} · ${target.label}`, {
 									...(off ? { description: off } : {}),
 									action: {
@@ -2187,11 +2202,16 @@ function PreviewBody({
 				onError: (e) => toast.error(humanError(e)),
 				onSuccess: (r) => {
 					onPlace?.(n.id);
+					const off = offDayText(ix, target.dayId, n.id);
 					if (onAdded && !isProposed(r))
-						return onAdded({ name: n.name, nodeId: n.id, itemId });
+						return onAdded({
+							name: n.name,
+							nodeId: n.id,
+							itemId,
+							off: off ?? undefined,
+						});
 					onDone();
 					if (isProposed(r)) return;
-					const off = offDayText(ix, target.dayId, n.id);
 					toast(`${n.name} · ${target.label}`, {
 						...(off ? { description: off } : {}),
 						action: {
