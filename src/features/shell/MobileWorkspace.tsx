@@ -54,6 +54,7 @@ import {
 	SuggestModeControl,
 	SuggestModeMenuItem,
 } from "@/features/suggest/SuggestModeControl";
+import { TRASH_TESTID } from "@/features/trash/testids";
 import { WelcomeMenuItem } from "@/features/welcome/WelcomeDialog";
 import { mustRedact } from "@/lib/auth/roles";
 import { signOut } from "@/lib/auth/sign-out";
@@ -231,6 +232,11 @@ function MobileHeader() {
 								data-testid={PUSH_TESTID.accountItem}
 							>
 								Notifications
+							</DropdownMenuItem>
+						) : null}
+						{account ? (
+							<DropdownMenuItem asChild data-testid={TRASH_TESTID.entry}>
+								<Link to="/trash">Trash</Link>
 							</DropdownMenuItem>
 						) : null}
 						{anonymous ? null : (

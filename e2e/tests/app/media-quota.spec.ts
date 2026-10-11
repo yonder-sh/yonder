@@ -51,7 +51,7 @@ test("an upload over the quota is refused before any bytes go up; the profile sh
 	await expect(
 		page.getByText(
 			new RegExp(
-				`^This upload needs 300 KB but you have \\d+ (B|KB) left \\(${used} of 105 KB used\\)\\. Delete some uploads or ask the trip owner\\.$`,
+				`^This upload needs 300 KB but you have \\d+ (B|KB) left \\(${used} of 105 KB used\\)\\. Delete some uploads and empty Trash, or ask the trip owner\\.$`,
 			),
 		),
 	).toBeVisible();

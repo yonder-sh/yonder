@@ -328,7 +328,7 @@ describe("storage quota (ADDENDUM §12)", () => {
 			previewUrl: null,
 		});
 		const why =
-			"This upload needs 20.0 MB but you have 300 MB left (4.7 GB of 5 GB used). Delete some uploads or ask the trip owner.";
+			"This upload needs 20.0 MB but you have 300 MB left (4.7 GB of 5 GB used). Delete some uploads and empty Trash, or ask the trip owner.";
 		fns.createUpload.mockRejectedValue(new Error(`STORAGE_QUOTA: ${why}`));
 		startUploads([new File([blob], "big.pdf", { type: "application/pdf" })], {
 			tripId: TRIP,

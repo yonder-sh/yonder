@@ -752,9 +752,11 @@ describe("photos and videos", () => {
 		expect(await usedBytes(getDb(), u.id)).toBe(
 			base + kept.length + dropped.length,
 		);
-		// Deleting the other frees its space at once; Undo takes it back.
+		// Deleting the other puts it in Trash (it still counts); Undo takes it back.
 		await call(deleteSavedLinks, u, { ids: [b.savedId] });
-		expect(await usedBytes(getDb(), u.id)).toBe(base + kept.length);
+		expect(await usedBytes(getDb(), u.id)).toBe(
+			base + kept.length + dropped.length,
+		);
 		await call(restoreSavedLinks, u, { ids: [b.savedId] });
 		expect(await usedBytes(getDb(), u.id)).toBe(
 			base + kept.length + dropped.length,

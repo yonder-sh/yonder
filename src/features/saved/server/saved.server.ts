@@ -16,7 +16,6 @@ import { normName } from "@/features/home/share-classify";
 import { canonicalLink, classifyUrl } from "@/features/media/embeds";
 import { AppError } from "@/server/errors";
 import { enqueue } from "@/server/live/jobs.server";
-import { assertQuota, lockQuota } from "@/server/quota.server";
 import type { SavedFile, SavedLink, SavedTrip, SavedWhere } from "../types";
 
 type Exec = Pick<DbOrTx, "execute">;
@@ -411,9 +410,9 @@ export async function setSavedWhere(
 }
 
 /**
- * Deletes some of the caller's saved links (a soft delete: Undo restores
- * them; their photos stop counting at once, the purge removes the objects
- * later). Answers the ids it deleted (anything not the caller's is skipped).
+ * Deletes some of the caller's saved links (a soft delete: Undo or Trash
+ * restores them; their photos go to Trash and count until the purge or
+ * Delete forever removes the objects). Answers the ids it deleted (anything not the caller's is skipped).
  */
 export async function deleteSaved(
 	db: Exec,
@@ -430,8 +429,8 @@ export async function deleteSaved(
 }
 
 /**
- * Undo: deleted saved links back where they were, all or none. Refused when
- * their photos no longer fit the quota, or a link was saved again meanwhile.
+ * Undo (and Trash's Restore): deleted saved links back where they were, all
+ * or none. Refused when a link was saved again meanwhile.
  */
 export async function restoreSaved(
 	db: DbOrTx,
@@ -459,15 +458,8 @@ export async function restoreSaved(
 			if (twin.rows.length)
 				throw new AppError("CONFLICT", "That link is in Saved again already.");
 		}
+		// Trash still counted its photos: nothing to re-check.
 		const found = sql.param(rows.map((r) => r.id));
-		const size = await tx.execute(sql`
-			select coalesce(sum(size_bytes), 0)::bigint as n from saved_files
-			 where saved_id = any(${found}::uuid[]) and deleted_at is null and status <> 'failed'`);
-		const n = Number((size.rows[0] as { n: string | number }).n);
-		if (n) {
-			await lockQuota(tx, userId);
-			await assertQuota(tx, { billedUserId: userId, size: n });
-		}
 		await tx.execute(sql`
 			update saved_links set deleted_at = null, updated_at = now()
 			 where id = any(${found}::uuid[])`);

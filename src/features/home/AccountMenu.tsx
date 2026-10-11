@@ -1,12 +1,12 @@
 /**
  * The account menu (SPEC §12.5 `AccountMenu()`, DESIGN §10.5): the 28px
  * avatar at the far right — Profile, Notifications (Web Push settings),
- * theme, Install app, Sign out. Link
+ * Trash, theme, Install app, Sign out. Link
  * guests get "Sign in to keep this trip" (and "Change your name") instead of
  * Profile.
  */
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useLocation } from "@tanstack/react-router";
+import { Link, useLocation } from "@tanstack/react-router";
 import {
 	Bell,
 	LogIn,
@@ -15,6 +15,7 @@ import {
 	Moon,
 	Share,
 	Sun,
+	Trash2,
 	UserRound,
 } from "lucide-react";
 import { useState } from "react";
@@ -33,6 +34,7 @@ import {
 import { InstallButton } from "@/features/offline/InstallButton";
 import { NotificationsDialog } from "@/features/push/NotificationsDialog";
 import { PUSH_TESTID } from "@/features/push/testids";
+import { TRASH_TESTID } from "@/features/trash/testids";
 import { signOut } from "@/lib/auth/sign-out";
 import type { Viewer } from "@/lib/auth/viewer";
 import { sessionQuery } from "@/lib/query/trip-queries";
@@ -117,6 +119,13 @@ export function AccountMenu({
 						data-testid={HOME_TESTID.saveFromApps}
 					>
 						<Share /> Save from other apps
+					</DropdownMenuItem>
+				)}
+				{guest ? null : (
+					<DropdownMenuItem asChild data-testid={TRASH_TESTID.entry}>
+						<Link to="/trash">
+							<Trash2 /> Trash
+						</Link>
 					</DropdownMenuItem>
 				)}
 				<InstallButton />

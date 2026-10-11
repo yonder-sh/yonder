@@ -50,13 +50,7 @@ import {
 	requireDirect,
 	requireEditOnly,
 } from "@/server/proposals/proposable.server";
-import {
-	assertQuota,
-	lockQuota,
-	quotaBytes,
-	quotaMessage,
-	usedBytes,
-} from "@/server/quota.server";
+import { assertQuota, lockQuota } from "@/server/quota.server";
 import { mediaPrefix } from "@/server/s3.server";
 import { mutationMeta, withTripTx } from "@/server/tx.server";
 import {
@@ -844,20 +838,8 @@ export const deleteAttachment = createServerFn({ method: "POST" })
 	.handler(proposable.run("attachment.delete"));
 
 /** Undo of a delete (edit-only). Receipts need manageExpenses. */
-/** After an Undo: refuses (rolling it back) when the file no longer fits. */
-async function assertRestoreFits(
-	tx: Tx,
-	billedUserId: string,
-	tripId: string,
-	size: number | null,
-): Promise<void> {
-	const used = await usedBytes(tx, billedUserId);
-	const quota = await quotaBytes(tx, billedUserId);
-	if (used > quota)
-		fail(
-			"STORAGE_QUOTA",
-			quotaMessage({ needed: size ?? 0, used: used - (size ?? 0), quota }),
-		);
+/** After an Undo: refuses (rolling it back) when the trip is out of space (Trash still counted it for its uploader). */
+async function assertRestoreFits(tx: Tx, tripId: string): Promise<void> {
 	const trip = await tx.execute(sql`
 		select coalesce(sum(size_bytes), 0)::bigint as n from attachments
 		 where trip_id = ${tripId} and deleted_at is null`);
@@ -897,16 +879,13 @@ export const restoreAttachment = createServerFn({ method: "POST" })
 				// A cancelled upload or a failed check never comes back.
 				if (row.status === "pending" || row.status === "failed")
 					return fail("NOT_FOUND");
-				// Deleting freed the space: the file counts again (its uploader's quota).
-				const billed = row.sizeBytes ? row.createdBy : null;
-				if (billed) await lockQuota(tx, billed);
 				await tx
 					.update(attachments)
 					.set({ deletedAt: null, updatedAt: new Date() })
 					.where(
 						and(eq(attachments.tripId, tripId), eq(attachments.id, row.id)),
 					);
-				if (billed) await assertRestoreFits(tx, billed, tripId, row.sizeBytes);
+				if (row.sizeBytes) await assertRestoreFits(tx, tripId);
 				out.emit({ keys: ["media", "counts"] });
 				return { ok: true as const };
 			},

@@ -94,6 +94,8 @@ export const meKeys = {
 	storage: ["me", "storage"] as const,
 	/** `listSavedLinks` (Saved): shared links waiting for a trip. */
 	saved: ["me", "saved"] as const,
+	/** `listTrashItems` (Trash): deleted uploads, kept 30 days. */
+	trash: ["me", "trash"] as const,
 } as const;
 
 /** `getPublicConfig`: runtime settings the browser needs (Turnstile site key). */
