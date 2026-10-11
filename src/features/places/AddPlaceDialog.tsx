@@ -81,6 +81,7 @@ import {
 	PLACE_GROUPS,
 	type PlaceGroup,
 } from "@/lib/domain/taxonomy";
+import { offDayText } from "@/lib/engine/day-place";
 import { canNest } from "@/lib/engine/tree";
 import type { GraphLeg, GraphNode } from "@/lib/engine/types";
 import { humanError } from "@/lib/errors";
@@ -2070,7 +2071,16 @@ function PreviewBody({
 							onSuccess: (s) => {
 								onDone();
 								if (isProposed(s)) return;
-								toast(`${name.trim() || preview.name} · ${target.label}`, {
+								const title = name.trim() || preview.name;
+								// Filed under a city that isn't this day's: say so.
+								const off = offDayText(
+									ix,
+									target.dayId,
+									filing.existing.at(-1),
+									title,
+								);
+								toast(`${title} · ${target.label}`, {
+									...(off ? { description: off } : {}),
 									action: {
 										label: "Show",
 										onClick: () => nav.select({ kind: "item", id: itemId }),
@@ -2099,7 +2109,9 @@ function PreviewBody({
 					onPlace?.(n.id);
 					onDone();
 					if (isProposed(r)) return;
+					const off = offDayText(ix, target.dayId, n.id);
 					toast(`${n.name} · ${target.label}`, {
+						...(off ? { description: off } : {}),
 						action: {
 							label: "Show",
 							onClick: () => nav.select({ kind: "item", id: itemId }),

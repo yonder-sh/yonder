@@ -225,3 +225,52 @@ export function nightsByPlace(
 		if (id && ix.isWithin(id, scopeId)) on.set(id, (on.get(id) ?? 0) + 1);
 	return [...on].map(([placeId, nights]) => ({ placeId, nights }));
 }
+
+const GETTING_THERE = new Set(["airport", "station", "port"]);
+
+/**
+ * A place put on a day spent somewhere else (Kinkaku-ji on a Tokyo day): its
+ * place and the day's. Only days with a night (or the night before) say where
+ * they are; airports and stations go anywhere; a place inside the day's city
+ * (or around it) is never off.
+ */
+export function offDayPlace(
+	ix: GraphIndex,
+	dayId: string | null | undefined,
+	nodeId: string | null | undefined,
+): { placeId: string; dayPlaceId: string } | null {
+	const node = nodeId ? ix.node(nodeId) : undefined;
+	if (!node || (node.category && GETTING_THERE.has(node.category))) return null;
+	const i = ix.days.findIndex((d) => d.id === dayId);
+	if (i < 0) return null;
+	const night = nightPlace(ix, dayId ?? undefined);
+	const before = i > 0 ? nightPlace(ix, ix.days[i - 1]?.id) : null;
+	const here = [night, before].filter((p): p is string => !!p);
+	const at = placeOf(ix, node.id);
+	if (!here[0] || !at) return null;
+	const near = (a: string, b: string) =>
+		ix.path(a).some((n) => n.id === b) || ix.path(b).some((n) => n.id === a);
+	if (here.some((h) => near(at, h))) return null;
+	return { placeId: at, dayPlaceId: here[0] };
+}
+
+/**
+ * "Kinkaku-ji is in Kyoto — this day is in Tokyo", or null when it's where
+ * the day is. `name`: a new place not in `ix` yet, filed under `nodeId`.
+ */
+export function offDayText(
+	ix: GraphIndex,
+	dayId: string | null | undefined,
+	nodeId: string | null | undefined,
+	name?: string,
+): string | null {
+	const off = offDayPlace(ix, dayId, nodeId);
+	if (!off || !nodeId) return null;
+	const place = ix.node(off.placeId)?.name;
+	const day = ix.node(off.dayPlaceId)?.name;
+	if (!place || !day) return null;
+	const own = name ?? (off.placeId === nodeId ? null : ix.node(nodeId)?.name);
+	return own
+		? `${own} is in ${place} — this day is in ${day}`
+		: `${place} — this day is in ${day}`;
+}

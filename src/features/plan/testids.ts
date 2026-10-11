@@ -40,6 +40,8 @@ export const PLAN_TESTID = {
 	itemBooked: "plan-item-booked",
 	itemWallet: "plan-item-wallet",
 	itemNote: "plan-item-note",
+	/** "· in Kyoto": a stop away from its day's city. */
+	itemOffDay: "plan-item-off-day",
 	addBetween: "plan-add-between",
 	legAccept: "plan-leg-accept",
 	legFix: "plan-leg-fix",
