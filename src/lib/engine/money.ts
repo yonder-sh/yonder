@@ -778,6 +778,16 @@ export function remainderAtHome(
 	return sign < 0 ? -v : v;
 }
 
+/** a × num ÷ den, rounded half away from zero (exact via BigInt). */
+function scaleMinor(a: number, num: number, den: number): number {
+	if (num === den) return a;
+	const n = BigInt(Math.abs(a)) * BigInt(Math.abs(num));
+	const d = BigInt(Math.abs(den));
+	const q = n / d;
+	const v = Number((n % d) * 2n >= d ? q + 1n : q);
+	return Math.sign(a) * Math.sign(num) * Math.sign(den) < 0 ? -v : v;
+}
+
 export type ExpenseFacts = {
 	status: ExpenseStatusValue;
 	/**
@@ -820,6 +830,15 @@ export function expenseFacts(
 				: 0
 			: exp.homeAmountMinor;
 	let remainingHome = 0;
+	// A paid cost's plan follows the rates it was paid at (A365), so FX drift
+	// since then never reads as over/under plan.
+	const paidIn = status === "paid" ? paidInCurrency(exp) : null;
+	if (
+		paidIn &&
+		exp.amountMinor !== null &&
+		exp.payments.every((p) => p.homeAmountMinor !== null)
+	)
+		plannedHome = scaleMinor(actualHome, exp.amountMinor, paidIn);
 	if (status !== "paid" && plannedHome !== null) {
 		// MONEY-16 / ADDENDUM §7.3: payments convert at their paid date, the
 		// unpaid remainder at the latest rate, so a deposit paid when the rate
@@ -1178,7 +1197,12 @@ export function scopeSummary(
 			cat.actual += o.actual;
 			cat.count += 1;
 		}
-		if (f.status === "paid" && e.amountMinor !== null && f.plannedHome !== null)
+		if (
+			f.status === "paid" &&
+			e.amountMinor !== null &&
+			f.plannedHome !== null &&
+			!e.payments.some((p) => p.homeAmountMinor === null)
+		)
 			s.deltaHome += f.actualHome - f.plannedHome;
 		for (const [m, v] of Object.entries(f.plannedShare)) person(m).planned += v;
 		for (const [m, v] of Object.entries(f.actualShare)) person(m).actual += v;

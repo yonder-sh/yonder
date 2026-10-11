@@ -930,3 +930,53 @@ describe("QA round 3 (WP-Money fix round)", () => {
 		).toEqual({ planned: 500, actual: 500, paid: 1500, net: 1000 });
 	});
 });
+
+describe("A365: a paid cost's plan uses the rates it was paid at", () => {
+	it("paid exactly → planned = actual, no drift in the delta", () => {
+		// Today's rate says 2000; it was paid when ¥3000 was 2100.
+		const e = exp({ payments: [pay(3000, D, { homeAmountMinor: 2100 })] });
+		const f = expenseFacts(e, { memberOrder: ORDER });
+		expect(f.plannedHome).toBe(2100);
+		expect(f.actualHome).toBe(2100);
+		expect(scopeSummary([e], { memberOrder: ORDER }).deltaHome).toBe(0);
+	});
+
+	it("overpaid → the plan scales at the paid rate (half away from zero)", () => {
+		const e = exp({
+			payments: [
+				pay(2000, D, { homeAmountMinor: 1401 }),
+				pay(1300, A, { homeAmountMinor: 910 }),
+			],
+		});
+		// 2311 × 3000 / 3300 = 2100.909… → 2101
+		expect(expenseFacts(e).plannedHome).toBe(2101);
+		expect(scopeSummary([e]).deltaHome).toBe(2311 - 2101);
+	});
+
+	it("a refund (negative) rounds away from zero too", () => {
+		const e = exp({
+			amountMinor: -3000,
+			homeAmountMinor: -2000,
+			payments: [pay(-3300, D, { homeAmountMinor: -2311 })],
+		});
+		expect(expenseFacts(e).plannedHome).toBe(-2101);
+	});
+
+	it("a payment in another currency keeps today's planned total", () => {
+		const e = exp({
+			payments: [pay(2100, D, { currency: "USD", homeAmountMinor: 2100 })],
+		});
+		expect(expenseFacts(e).plannedHome).toBe(2000);
+	});
+
+	it("a payment waiting for a rate stays out of the delta", () => {
+		const e = exp({
+			payments: [
+				pay(1500, D, { homeAmountMinor: 1050 }),
+				pay(1500, A, { homeAmountMinor: null }),
+			],
+		});
+		expect(expenseFacts(e).plannedHome).toBe(2000);
+		expect(scopeSummary([e]).deltaHome).toBe(0);
+	});
+});
