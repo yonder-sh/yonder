@@ -2,7 +2,7 @@
  * FEEDBACK-4 (FB-21…FB-25), in real browsers on one cloned trip: A (Dev,
  * 1440×900) leads; B (Maya, 1120×720) follows from the presence card; a
  * phone (Pixel 7) and a link guest join through Spotlight.
- * - FB-21a plan folds (a stretch fold, "N days elsewhere", Collapse all);
+ * - FB-21a plan folds (a stretch fold, "N days elsewhere");
  * - FB-21b the inspector tab (`itab` in the URL);
  * - FB-21c the media viewer: open / next / close, and an uploaded video's
  *   play / pause / seek;
@@ -162,17 +162,6 @@ test("FB-21a/b/d: folds, the inspector tab and view switches follow", async ({ b
 		await elsewhere(a.page).click();
 		await expect(elsewhere(b.page)).toHaveAttribute("aria-expanded", "false", { timeout: 8_000 });
 	}
-
-	// Collapse all (country bands) at the country lens.
-	await a.page.goto(`/t/${trip.slug}?lens=country`);
-	await expectLive(a.page);
-	await expect(b.page).toHaveURL(new RegExp(`/t/${trip.slug}\\?lens=country`), { timeout: 10_000 });
-	await a.page.getByRole("button", { name: "Collapse all" }).click();
-	await expect(b.page.getByRole("button", { name: "Expand all" })).toBeVisible({ timeout: 8_000 });
-	await expect(b.page.getByTestId(PLAN_TESTID.daySection)).toHaveCount(0);
-	await b.page.screenshot({ path: shotPath("follow-r4/b-collapse-all.png") });
-	await a.page.getByRole("button", { name: "Expand all" }).click();
-	await expect(b.page.getByRole("button", { name: "Collapse all" })).toBeVisible({ timeout: 8_000 });
 
 	// FB-21b: the details are one scroll now; a link's section (`itab`) scrolls into view.
 	const sky = trip.ids.items.sky as string;

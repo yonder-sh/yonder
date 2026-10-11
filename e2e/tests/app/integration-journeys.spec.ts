@@ -216,9 +216,9 @@ test("J1 sign up, new trip, Where to first? → Japan › Tokyo › Shibuya Sky,
 	for (let n = sky; n; n = y?.graph.nodes.find((x) => x.id === n?.parentId)) path.unshift(n.name);
 	expect(path[0]).toBe("Japan");
 	expect(path).toContain("Tokyo");
-	// The trip's Plan lists its days (One Yonder D02): Day 1's row names it.
+	// The trip's Plan shows every day with its stops: Day 1 has it.
 	await page.getByTestId(TESTID.centerTabs).locator('[data-tab="plan"]').click();
-	await expect(page.getByTestId(PLAN_TESTID.dayRow).filter({ hasText: /Shibuya Sky/i }).first()).toBeVisible();
+	await expect(page.getByTestId(PLAN_TESTID.daySection).filter({ hasText: /Shibuya Sky/i }).first()).toBeVisible();
 	await shot(page, "j1-04-scheduled");
 
 	// Back on the dashboard, the trip is listed.
@@ -387,13 +387,16 @@ test("J2 Asia 2027: zoom Japan → Tokyo → Shibuya, lens keys and Esc, Days 5�
 	await page.locator("body").press("Escape");
 	await expect(page).toHaveURL(/\/t\/asia-2027\/japan(\?|$)/);
 
-	// Days 5–6: Day 5's row opens it (One Yonder D02), shift-click › adds Day 6.
+	// Days 5–6: Day 5's date selects it, its filter shows only it, shift-click › adds Day 6.
 	const days = (await yon(page))?.graph.days ?? [];
 	const d5 = days[4]?.date as string;
 	const d6 = days[5]?.date as string;
-	const row5 = page.getByRole("button", { name: /, Day 5: open the day/ }).first();
-	await row5.scrollIntoViewIfNeeded();
-	await row5.click();
+	const sec5 = page.locator(`[data-testid="${PLAN_TESTID.daySection}"][data-day-id="${days[4]?.id}"]`).first();
+	await sec5.scrollIntoViewIfNeeded();
+	await sec5.getByRole("button", { name: /, Day 5\b/ }).first().click();
+	const head5 = sec5.getByTestId(PLAN_TESTID.dayHeader);
+	await head5.hover();
+	await head5.getByTestId(PLAN_TESTID.dayFilter).click();
 	await expect(page).toHaveURL(new RegExp(`days=${d5}(&|$)`));
 	// Shift-click the stepper's › adds Day 6.
 	await page.getByTestId(PLAN_TESTID.rangeBar).getByRole("button", { name: "Next day" }).click({ modifiers: ["Shift"] });

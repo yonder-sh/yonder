@@ -41,6 +41,7 @@ export function AddMenu({
 	beforeItemId,
 	className,
 	label = "Add here",
+	ariaLabel,
 	variant = "dot",
 }: {
 	dayId: string;
@@ -48,6 +49,8 @@ export function AddMenu({
 	beforeItemId?: string;
 	className?: string;
 	label?: string;
+	/** The row's accessible name when its text is shorter ("Add"). */
+	ariaLabel?: string;
 	/** `dot`: the 20px round "+" on the rail; `row`: an "Add to this day" row. */
 	variant?: "dot" | "row";
 }) {
@@ -99,6 +102,7 @@ export function AddMenu({
 							<Button
 								variant="ghost"
 								size="sm"
+								aria-label={ariaLabel}
 								data-testid={PLAN_TESTID.addBetween}
 								className={cn(
 									"h-8 justify-start gap-2 px-2 text-xs font-normal text-muted-foreground",

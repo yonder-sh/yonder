@@ -308,7 +308,7 @@ test.describe("desktop", () => {
 		await expect(page.getByTestId("add-place-dialog")).toContainText("What do you want to see?");
 		await page.keyboard.press("Escape");
 		await expect(page.getByTestId("add-place-dialog")).toBeHidden();
-		await expect(page.getByTestId("center-panel")).toContainText("A free day.");
+		await expect(page.getByTestId("center-panel")).toContainText("Nothing planned");
 		const base = page.url().split("?")[0];
 		await page.goto(`${base}?tab=overview`);
 		await expect(page.getByTestId("overview-empty")).toContainText("What do you want to see?");

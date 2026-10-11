@@ -463,53 +463,32 @@ export function BlockHeader({
 }
 
 /**
- * A visit band (city, region and country lenses; One Yonder D02): a light
- * heading, "Japan  3–14 Oct · 11 nights · 45 stops · Planned 4 days ·
- * scheduled 3", over its days. The chevron folds them; the name selects it.
+ * A visit's label (city, region and country lenses): a thin divider over its
+ * run of days, "Kyoto · 3 nights · 18–21 Oct · 5 stops". The days below
+ * always show; the name selects the place, a double click zooms in.
  */
-export function BandCard({
-	visit,
-	open,
-	onToggle,
-}: {
-	visit: Visit;
-	open: boolean;
-	onToggle: () => void;
-}) {
+export function BandCard({ visit }: { visit: Visit }) {
 	const { ix, nav } = useWorkspace();
 	const rep = ix.node(visit.repId);
 	const s = bandSummary(ix, visit);
 	const parts = [
-		s.from ? formatDateRange(s.from, s.to) : null,
 		s.nights > 0 ? `${s.nights} ${s.nights === 1 ? "night" : "nights"}` : null,
-		`${s.stops} ${s.stops === 1 ? "stop" : "stops"}`,
+		s.from ? formatDateRange(s.from, s.to) : null,
+		s.stops > 0 ? `${s.stops} ${s.stops === 1 ? "stop" : "stops"}` : null,
 	].filter(Boolean);
 	return (
 		<div
 			data-testid={PLAN_TESTID.band}
 			data-cursor-anchor={`sec:band.${anchorKey(visit.key)}`}
-			className="flex min-w-0 items-center gap-1.5 px-3 pt-4 pb-1.5"
+			className="flex min-w-0 items-center gap-3 px-4 pt-5 pb-1"
 		>
-			<button
-				type="button"
-				aria-expanded={open}
-				aria-label={open ? `Collapse ${rep?.name}` : `Expand ${rep?.name}`}
-				onClick={onToggle}
-				className="flex size-6 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
-			>
-				{open ? (
-					<ChevronDown className="size-4" strokeWidth={1.5} />
-				) : (
-					<ChevronRight className="size-4" strokeWidth={1.5} />
-				)}
-			</button>
 			<button
 				type="button"
 				onClick={() => rep && nav.select({ kind: "node", id: rep.id })}
 				onDoubleClick={() => rep && nav.zoomIn(rep.id)}
-				className="flex min-w-0 flex-1 items-baseline gap-2 text-left"
+				className="flex min-w-0 shrink items-baseline gap-1.5 rounded-sm text-left text-meta outline-none focus-visible:ring-2 focus-visible:ring-ring"
 			>
-				<span className="shrink-0 font-semibold">
+				<span className="shrink-0 font-semibold text-primary hover:underline">
 					{rep?.name ?? "Elsewhere"}
 				</span>
 				{visit.occurrence > 1 ? (
@@ -517,10 +496,13 @@ export function BandCard({
 						visit {visit.occurrence}
 					</Chip>
 				) : null}
-				<span className="min-w-0 truncate text-meta text-muted-foreground">
-					{parts.join(" · ")}
-				</span>
+				{parts.length ? (
+					<span className="min-w-0 truncate text-muted-foreground tnum">
+						· {parts.join(" · ")}
+					</span>
+				) : null}
 			</button>
+			<span aria-hidden className="h-px min-w-6 flex-1 bg-border" />
 		</div>
 	);
 }

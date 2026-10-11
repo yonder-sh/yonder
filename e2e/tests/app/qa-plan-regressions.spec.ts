@@ -94,13 +94,12 @@ test("TZ-05: SP3 overnight train, then the bus and breakfast in Sa Pa", async ({
 
 test("DEFECT TL-01 (WP-Plan): the default country lens lists the days in date order", async ({ page }) => {
 	await openTrip(page, `/t/${TRIP}?tab=plan`);
-	// The trip's days as rows (One Yonder D02): "Thu 14 Oct, Day 13: open the day".
-	const labels = await page
-		.getByTestId("plan-day-row")
-		.locator("button")
-		.evaluateAll((els) =>
-			els.map((e) => (e.getAttribute("aria-label") ?? "").split(",")[0] ?? "").filter(Boolean),
-		);
+	// Every day, by its date button ("Thu 14 Oct, Day 13"): a header, or an empty day's line.
+	const labels = await page.getByTestId("plan-day").evaluateAll((els) =>
+		els
+			.map((e) => (e.querySelector('[aria-label*=", Day "]')?.getAttribute("aria-label") ?? "").split(",")[0] ?? "")
+			.filter(Boolean),
+	);
 	const keys = labels.map(dayKey).filter((k) => !Number.isNaN(k));
 	expect(keys.length).toBeGreaterThanOrEqual(35);
 	const outOfOrder = keys.flatMap((k, i) => (i > 0 && k < (keys[i - 1] as number) ? [labels[i]] : []));
