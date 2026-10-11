@@ -81,6 +81,7 @@ import type { SafeFetcher } from "../server/safe-fetch.server";
 import { serveMedia } from "../server/serve.server";
 import {
 	checkParts,
+	deleteObject,
 	deletePrefix,
 	headObject,
 	objectKey,
@@ -281,6 +282,29 @@ describe("uploads (SPEC §15.2, MED-01/06/07, SEC-05)", () => {
 			tripId: c.tripId,
 		});
 		expect(guest.some((m) => m.id === dto.id)).toBe(true);
+	});
+
+	it("a storage error is retried; only the last attempt marks the photo failed", async () => {
+		const c = await freshTrip();
+		const dto = await upload(
+			U.owner,
+			c.tripId,
+			{ kind: "trip" },
+			await jpeg(),
+			"image/jpeg",
+			"gone.jpg",
+		);
+		// The original can't be read (a storage outage looks the same).
+		await deleteObject(objectKey(c.tripId, dto.id, "original"));
+		const job = { tripId: c.tripId, attachmentId: dto.id };
+		await expect(mediaVariants(job, { retry: true })).rejects.toThrow();
+		const status = async () =>
+			(
+				await call<MediaDto[]>(listTripMedia, U.owner, { tripId: c.tripId })
+			).find((m) => m.id === dto.id)?.status;
+		expect(await status()).toBe("processing");
+		await mediaVariants(job, { retry: false });
+		expect(await status()).toBe("failed");
 	});
 
 	it("a booking's confirmation is members only and marked as one (U001)", async () => {
