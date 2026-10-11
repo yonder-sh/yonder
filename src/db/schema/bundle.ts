@@ -181,10 +181,8 @@ export const attachments = pgTable(
 		index("attachments_trip_live_idx")
 			.on(t.tripId)
 			.where(sql`${t.deletedAt} is null`),
-		// ADDENDUM §12: storage used per uploader (the quota check at every upload).
-		index("attachments_created_by_live_idx")
-			.on(t.createdBy)
-			.where(sql`${t.deletedAt} is null`),
+		// ADDENDUM §12: storage used per uploader, Trash included (the quota check, the Trash list).
+		index("attachments_created_by_idx").on(t.createdBy),
 		check(
 			"attachments_url_ck",
 			sql`${t.url} is null or ${t.url} ~* ${HTTP_URL_PATTERN}`,

@@ -29,8 +29,11 @@ export async function quotaBytes(
 
 /**
  * Bytes stored for `userId` (see the file comment): their uploads in trips
- * and their photos and videos in Saved (`saved_files`, the saved link not
- * deleted; one added to a trip shares its `storage_key`, so it counts once).
+ * and their photos and videos in Saved (`saved_files`; one added to a trip
+ * shares its `storage_key`, so it counts once). Trash counts until it is
+ * deleted for good (`features/trash`): deleted files, files on a deleted
+ * stop, place, expense or trip, and deleted Saved items. Only a cancelled or
+ * failed upload that was dropped stops counting at once.
  * `exclude` leaves out one attachment (the upload being completed, which is
  * re-added by the caller); `excludeSavedFile` one saved file (an upload
  * started again).
@@ -42,25 +45,20 @@ export async function usedBytes(
 ): Promise<number> {
 	const exclude = opts.exclude ?? null;
 	const excludeSaved = opts.excludeSavedFile ?? null;
-	// What counts, whoever uploaded it (see the file comment).
-	const live = sql`a.deleted_at is null
-		and a.size_bytes is not null
-		and a.kind in ${COUNTED_KINDS}
-		and (${exclude}::uuid is null or a.id <> ${exclude}::uuid)
-		and not exists (select 1 from nodes n where n.id = a.node_id and n.deleted_at is not null)
-		and not exists (select 1 from items i where i.id = a.item_id and i.deleted_at is not null)`;
 	const key = sql`coalesce(a.storage_key, 'trips/' || a.trip_id || '/' || a.id || '/')`;
 	const res = await exec.execute(sql`
 		select coalesce(sum(size), 0)::bigint as used from (
 			select distinct on (k) size from (
 				select ${key} as k, a.size_bytes as size
 				  from attachments a
-				  join trips t on t.id = a.trip_id and t.deleted_at is null
-				 where a.created_by = ${userId} and ${live}
+				 where a.created_by = ${userId}
+				   and a.size_bytes is not null
+				   and a.kind in ${COUNTED_KINDS}
+				   and not (a.deleted_at is not null and a.status in ('pending', 'failed'))
+				   and (${exclude}::uuid is null or a.id <> ${exclude}::uuid)
 				union all
 				select f.storage_key, f.size_bytes
 				  from saved_files f
-				  join saved_links s on s.id = f.saved_id and s.deleted_at is null
 				 where f.user_id = ${userId} and f.deleted_at is null and f.status <> 'failed'
 				   and (${excludeSaved}::uuid is null or f.id <> ${excludeSaved}::uuid)
 			) x
@@ -81,7 +79,7 @@ export async function storageUsage(
 
 /**
  * "This upload needs 1.2 GB but you have 300 MB left (4.7 GB of 5 GB used).
- * Delete some uploads or ask the trip owner."
+ * Delete some uploads and empty Trash, or ask the trip owner."
  */
 export function quotaMessage(p: {
 	needed: number;
@@ -90,5 +88,5 @@ export function quotaMessage(p: {
 }): string {
 	const left = formatBytes(Math.max(0, p.quota - p.used));
 	const usage = `${formatBytes(p.used)} of ${formatBytes(p.quota)} used`;
-	return `This upload needs ${formatBytes(p.needed)} but you have ${left} left (${usage}). Delete some uploads or ask the trip owner.`;
+	return `This upload needs ${formatBytes(p.needed)} but you have ${left} left (${usage}). Delete some uploads and empty Trash, or ask the trip owner.`;
 }

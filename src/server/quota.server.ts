@@ -9,10 +9,11 @@
  * - Unique storage objects per account: a duplicated trip's rows re-reference
  *   the source's objects (same `storage_key`) and count once; so does a photo
  *   added to a trip from Saved (`saved_files`, which count too).
- * - Deleting frees the space at once: soft-deleted attachments, and
- *   attachments on a deleted trip, node or item, don't count. Pending uploads
- *   (under way, or abandoned until the purge) do, so parallel uploads can't
- *   overshoot together.
+ * - Trash counts (owner, 2026-10-11): a deleted file, or one on a deleted
+ *   trip, place, stop or expense, and a deleted Saved item count until they
+ *   are deleted for good (Delete forever, Empty trash, the 30-day purge).
+ *   Pending uploads (under way, or abandoned until the purge) count, so
+ *   parallel uploads can't overshoot together; a cancelled one doesn't.
  * - The quota is `user.storage_quota_bytes`, else STORAGE_QUOTA_DEFAULT_GB.
  *
  * Checked when an upload starts (`createUpload`, with the declared size, under

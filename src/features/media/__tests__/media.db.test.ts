@@ -869,15 +869,15 @@ describe("storage quota (ADDENDUM §12: the uploader pays)", () => {
 			name: "p.jpg",
 		});
 		expect(await usedBytes(getDb(), owner.id)).toBe(photo.length + 1000);
-		// Cancel, delete and a deleted trip free the space at once.
+		// A cancel frees the space at once; a delete or a deleted trip puts
+		// the file in Trash, which still counts.
 		await call(abortUpload, owner, { id: pending.id });
 		expect(await usedBytes(getDb(), owner.id)).toBe(photo.length);
 		await call(deleteAttachment, editor, { id: g.id });
-		expect(await usedBytes(getDb(), editor.id)).toBe(photo.length);
 		await getDb().execute(
 			sql`update trips set deleted_at = now() where id = ${b.tripId}`,
 		);
-		expect(await usedBytes(getDb(), editor.id)).toBe(0);
+		expect(await usedBytes(getDb(), editor.id)).toBe(pdf.length + photo.length);
 	});
 
 	it("a duplicated trip's re-referenced objects count once", async () => {
@@ -937,7 +937,7 @@ describe("storage quota (ADDENDUM §12: the uploader pays)", () => {
 		const err = await call(createUpload, owner, input).catch((e: unknown) => e);
 		expect(errorCode(err)).toBe("STORAGE_QUOTA");
 		expect((err as Error).message).toMatch(
-			/^STORAGE_QUOTA: This upload needs 20\.0 MB but you have \d+ KB left \(\d+ (B|KB) of 1\.0 MB used\)\. Delete some uploads or ask the trip owner\.$/,
+			/^STORAGE_QUOTA: This upload needs 20\.0 MB but you have \d+ KB left \(\d+ (B|KB) of 1\.0 MB used\)\. Delete some uploads and empty Trash, or ask the trip owner\.$/,
 		);
 		// A link guest never gets as far as the quota: guests only view.
 		expect(await codeOf(call(createUpload, U.guestEditor, input))).toBe(
@@ -984,7 +984,7 @@ describe("storage quota (ADDENDUM §12: the uploader pays)", () => {
 		expect(await usedBytes(getDb(), owner.id)).toBe(0);
 	});
 
-	it("Undo of a delete counts the file again: over the quota, it stays deleted", async () => {
+	it("Undo of a delete: Trash still counted the file, so it comes back even over the quota", async () => {
 		const owner = await newUser({ first: "Uma", last: "Undo" });
 		sessions.byId.set(owner.id, owner);
 		const a = await cloneDemoTrip(getDb(), owner.id);
@@ -999,17 +999,13 @@ describe("storage quota (ADDENDUM §12: the uploader pays)", () => {
 			"undo.jpg",
 		);
 		await call(deleteAttachment, owner, { id: p.id });
-		expect(await usedBytes(getDb(), owner.id)).toBe(0);
+		expect(await usedBytes(getDb(), owner.id)).toBe(photo.length);
 		await setQuota(owner, 100);
-		expect(await codeOf(call(restoreAttachment, owner, { id: p.id }))).toBe(
-			"STORAGE_QUOTA",
-		);
-		expect(await usedBytes(getDb(), owner.id)).toBe(0);
-		await setQuota(owner, null);
 		expect(await codeOf(call(restoreAttachment, owner, { id: p.id }))).toBe(
 			"ok",
 		);
 		expect(await usedBytes(getDb(), owner.id)).toBe(photo.length);
+		await setQuota(owner, null);
 	});
 });
 
