@@ -50,6 +50,8 @@ export const RATES = {
 	menu: { burst: 30, perS: 12 },
 	/** `look`: the client sends at most every LOOK_SEND_MS while scrolling. */
 	look: { burst: 16, perS: 6 },
+	/** A new `spotlight` (everyone follows): two, then one every 30 s. */
+	spotlight: { burst: 2, perS: 1 / 30 },
 } as const satisfies Record<string, { burst: number; perS: number }>;
 export type RateField = keyof typeof RATES;
 

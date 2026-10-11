@@ -290,6 +290,22 @@ describe("the cursor sanitizer (FB-17)", () => {
 		expect(bad.spotlight).toBeUndefined();
 	});
 
+	it("rate-limits new spotlights: two, then one every 30 s", async () => {
+		const g = guard();
+		const key = {};
+		let prev: Record<string, unknown> | undefined;
+		const ids: unknown[] = [];
+		for (const id of ["aaaaaa1", "aaaaaa2", "aaaaaa3"]) {
+			const out = await run(g, { spotlight: { id } }, { key, prev });
+			ids.push((out.spotlight as { id: string } | undefined)?.id);
+			prev = out;
+		}
+		expect(ids).toEqual(["aaaaaa1", "aaaaaa2", "aaaaaa2"]);
+		// The same spotlight resent (the whole state each time) costs nothing.
+		const same = await run(g, { spotlight: { id: "aaaaaa2" } }, { key, prev });
+		expect(same.spotlight).toEqual({ id: "aaaaaa2" });
+	});
+
 	it("never keeps channel cursor fields on note documents", async () => {
 		const g = guard();
 		const out = await run(

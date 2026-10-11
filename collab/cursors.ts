@@ -300,7 +300,16 @@ export class CursorGuard {
 		}
 		if ("spotlight" in state) {
 			const s = AwarenessSpotlight.safeParse(state.spotlight);
-			if (s.success) clean.spotlight = s.data;
+			// A new spotlight makes everyone follow: rate-limited, else the old one stays.
+			const before = prev?.spotlight as { id?: string } | null | undefined;
+			if (
+				s.success &&
+				s.data &&
+				s.data.id !== before?.id &&
+				!this.takeField(key, "spotlight")
+			) {
+				if (before !== undefined) clean.spotlight = before;
+			} else if (s.success) clean.spotlight = s.data;
 		}
 		// `view.ui` keys that name something private (or members-only outside `money.*`).
 		if (clean.view && typeof clean.view === "object") {
