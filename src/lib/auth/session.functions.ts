@@ -1,5 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
+import { getCookie } from "@tanstack/react-start/server";
 import { withSession } from "@/server/authz/middleware";
+import { PENDING_SIGN_OUT_COOKIE } from "./constants";
 import { toViewer, type Viewer } from "./viewer";
 
 /**
@@ -11,5 +13,8 @@ export const getSessionFn = createServerFn({ method: "GET" })
 	.middleware([withSession])
 	.handler(
 		async ({ context }): Promise<Viewer | null> =>
-			context.user ? toViewer(context.user) : null,
+			// A sign-out this device hasn't got through yet counts as done (A147).
+			context.user && !getCookie(PENDING_SIGN_OUT_COOKIE)
+				? toViewer(context.user)
+				: null,
 	);

@@ -1,5 +1,10 @@
 import { authClient } from "./auth-client";
-import { AUTH_BRAND, LOGIN_PATH } from "./constants";
+import {
+	AUTH_BRAND,
+	LOGIN_PATH,
+	PENDING_SIGN_OUT_COOKIE,
+	PENDING_SIGN_OUT_KEY,
+} from "./constants";
 
 /**
  * Sign-out for shared devices (SPEC §11.2 flow 8, SECURITY §11). The server
@@ -95,6 +100,72 @@ export async function wipeClientData(): Promise<void> {
 	await Promise.allSettled(tasks);
 }
 
+/** `authClient.signOut()`: true when the server confirmed it. */
+async function serverSignOut(): Promise<boolean> {
+	try {
+		const res = await authClient.signOut();
+		return !res?.error;
+	} catch {
+		return false;
+	}
+}
+
+const COOKIE_AGE_S = 60 * 60 * 24 * 400;
+
+function markPendingSignOut(): void {
+	if (typeof window === "undefined") return;
+	try {
+		window.localStorage.setItem(PENDING_SIGN_OUT_KEY, "1");
+	} catch {
+		// storage disabled: the cookie still carries it
+	}
+	const secure = window.location.protocol === "https:" ? "; Secure" : "";
+	// biome-ignore lint/suspicious/noDocumentCookie: a plain flag the server reads
+	document.cookie = `${PENDING_SIGN_OUT_COOKIE}=1; Path=/; Max-Age=${COOKIE_AGE_S}; SameSite=Lax${secure}`;
+}
+
+function clearPendingSignOut(): void {
+	try {
+		window.localStorage.removeItem(PENDING_SIGN_OUT_KEY);
+	} catch {
+		// storage disabled
+	}
+	// biome-ignore lint/suspicious/noDocumentCookie: a plain flag the server reads
+	document.cookie = `${PENDING_SIGN_OUT_COOKIE}=; Path=/; Max-Age=0; SameSite=Lax`;
+}
+
+/** Whether a sign-out on this device still waits for the server. */
+export function pendingSignOut(): boolean {
+	if (typeof window === "undefined") return false;
+	try {
+		if (window.localStorage.getItem(PENDING_SIGN_OUT_KEY)) return true;
+	} catch {
+		// storage disabled: the cookie decides
+	}
+	return document.cookie
+		.split(/;\s*/)
+		.some((c) => c.startsWith(`${PENDING_SIGN_OUT_COOKIE}=1`));
+}
+
+let settling: Promise<boolean> | null = null;
+
+/**
+ * Retries a pending sign-out (A147); the flag clears only when the server
+ * confirms. True while it is still pending: treat the viewer as signed out.
+ */
+export function settlePendingSignOut(): Promise<boolean> {
+	if (!pendingSignOut()) return Promise.resolve(false);
+	settling ??= serverSignOut()
+		.then((ok) => {
+			if (ok) clearPendingSignOut();
+			return !ok;
+		})
+		.finally(() => {
+			settling = null;
+		});
+	return settling;
+}
+
 export interface SignOutOptions {
 	/** The app's QueryClient: cleared so no trip data survives in memory. */
 	queryClient?: { clear(): void };
@@ -121,11 +192,9 @@ export async function signOut(opts: SignOutOptions = {}): Promise<void> {
 		navigate,
 	} = opts;
 	await runCleanups();
-	try {
-		await authClient.signOut();
-	} catch {
-		// offline: the server session expires on its own; local data still goes
-	}
+	// Not confirmed (offline, or an error answer): the HttpOnly cookie still
+	// works, so the next start signs out before showing anyone's data (A147).
+	if (!(await serverSignOut())) markPendingSignOut();
 	queryClient?.clear();
 	await wipeClientData();
 	if (reload || !navigate) {

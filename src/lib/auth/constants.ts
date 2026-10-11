@@ -18,3 +18,8 @@ export const LOGIN_PATH = "/login";
 /** The signed-in home: your trips. `/` is the public landing page. */
 export const DASHBOARD_PATH = "/dashboard";
 export const WELCOME_PATH = "/welcome";
+
+/** A sign-out the server never confirmed (A147): localStorage key, retried at the next start. */
+export const PENDING_SIGN_OUT_KEY = "yonder:pending-sign-out";
+/** Its cookie twin, so server-rendered pages treat the session as gone too. */
+export const PENDING_SIGN_OUT_COOKIE = "yonder-pending-sign-out";

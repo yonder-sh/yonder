@@ -18,7 +18,7 @@ import { useHomeLifecycle } from "@/features/offline/app-lifecycle";
 import { usePushBridge } from "@/features/push/use-push";
 import { useSharedUpload } from "@/features/saved/use-shared-upload";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { onSignOut } from "@/lib/auth/sign-out";
+import { onSignOut, settlePendingSignOut } from "@/lib/auth/sign-out";
 import { BRAND } from "@/lib/brand";
 import { loadCjkFonts } from "@/lib/fonts";
 import { clearPersisted } from "@/lib/query/persister";
@@ -81,6 +81,10 @@ function useSignOutTeardown() {
 
 function RootDocument({ children }: { children: ReactNode }) {
 	useSignOutTeardown();
+	// A server-rendered page already reads the session as gone (A147): sign out for real.
+	useEffect(() => {
+		void settlePendingSignOut();
+	}, []);
 	// DESIGN §8.8: bottom-right; bottom-centre on `sm` (< 768, above the sheet peek).
 	const toastPosition = useIsMobile() ? "bottom-center" : "bottom-right";
 	// WP-Home's mount point: service-worker registration + its sign-out purge.

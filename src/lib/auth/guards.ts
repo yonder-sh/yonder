@@ -7,7 +7,7 @@ import { DASHBOARD_PATH, LOGIN_PATH, WELCOME_PATH } from "./constants";
 import { saveGrant } from "./grants";
 import { getSessionFn } from "./session.functions";
 import { openTripByLink, tripLinkOpen } from "./share.functions";
-import { purgePreviousUserData } from "./sign-out";
+import { purgePreviousUserData, settlePendingSignOut } from "./sign-out";
 import type { Viewer } from "./viewer";
 
 /**
@@ -128,6 +128,8 @@ async function adoptViewer(qc: QueryClient, viewer: Viewer): Promise<void> {
 /** `getSessionFn()`, saved for offline use, with the offline fallback. */
 async function loadViewer(opts: GuardOptions): Promise<Viewer | null> {
 	const qc = opts.queryClient;
+	// A sign-out the server never confirmed goes first (A147).
+	if (await settlePendingSignOut()) return null;
 	try {
 		const viewer = await getSessionFn();
 		if (qc && typeof window !== "undefined") {
@@ -174,6 +176,7 @@ export async function landingViewer(
 ): Promise<{ signedIn: boolean }> {
 	let viewer: Viewer | null;
 	try {
+		if (await settlePendingSignOut()) return { signedIn: false };
 		viewer = await getSessionFn();
 	} catch {
 		return { signedIn: false };
