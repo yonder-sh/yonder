@@ -1,9 +1,9 @@
 /**
- * E6 digest, simplified by ADDENDUM §10: ONE 32px line at the top of the Plan
- * tab (and the mobile sheet) — "12 changes since you last looked" — linking
- * to the activity view; **Got it** (`markTripSeen(snapshot.currentVersion)`)
- * is the only dismissal. Review counts and suggestion results are inbox
- * items now, not banner lines.
+ * E6 digest, simplified by ADDENDUM §10: ONE 32px line (44px under a
+ * finger) at the top of the Plan tab (and the mobile sheet) — "12 changes
+ * since you last looked" — linking to the activity view; **Got it**
+ * (`markTripSeen(snapshot.currentVersion)`) is the only dismissal. Review
+ * counts and suggestion results are inbox items now, not banner lines.
  *
  * Snapshot rules (EXTENSIONS §9): `getDigest` is prefetched with the trip
  * bootstrap (the `/t/$trip` loader) and read once (`staleTime: Infinity`, not in
@@ -75,13 +75,13 @@ export function DigestBanner() {
 		<div
 			data-testid={SHELL_TESTID.digestBanner}
 			role="status"
-			className="flex h-8 shrink-0 items-center gap-2 border-b bg-muted/50 px-4 text-meta"
+			className="flex h-8 shrink-0 items-center gap-2 border-b bg-muted/50 px-4 text-meta pointer-coarse:h-[calc(2.75rem+1px)]"
 		>
 			<History className="size-3.5 shrink-0 text-muted-foreground" />
 			<button
 				type="button"
 				onClick={() => setActivityOpen(true)}
-				className="min-w-0 truncate text-left text-foreground underline-offset-2 hover:underline"
+				className="min-w-0 truncate text-left text-foreground underline-offset-2 hover:underline pointer-coarse:self-stretch"
 			>
 				<span className="tnum">{n > 99 ? "99+" : n}</span>{" "}
 				{n === 1 ? "change" : "changes"} since you last looked
@@ -90,7 +90,7 @@ export function DigestBanner() {
 				type="button"
 				onClick={gotIt}
 				data-testid={SHELL_TESTID.digestGotIt}
-				className="ml-auto shrink-0 rounded-md px-2 py-0.5 text-xs font-medium text-primary hover:bg-accent"
+				className="ml-auto shrink-0 rounded-md px-2 py-0.5 text-xs font-medium text-primary hover:bg-accent pointer-coarse:-mr-2 pointer-coarse:min-w-11 pointer-coarse:self-stretch pointer-coarse:px-3"
 			>
 				Got it
 			</button>

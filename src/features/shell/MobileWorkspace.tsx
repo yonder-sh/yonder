@@ -248,7 +248,7 @@ function MobileHeader() {
 				</DropdownMenu>
 			</div>
 			{/* FB-17b: "Following Dennis · Stop" (and the presenter's own bar). */}
-			<div className="overflow-hidden empty:hidden [&>*]:h-9">
+			<div className="overflow-hidden empty:hidden [&>*]:h-9 pointer-coarse:[&>*]:h-11">
 				<FollowBar />
 				<SpotlightBar />
 			</div>

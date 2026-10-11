@@ -413,6 +413,7 @@ export class CursorOverlay {
 		edge.dataset.testid = "remote-cursor-edge";
 		edge.dataset.userId = p.userId;
 		edge.dataset.state = "off";
+		// Inside the aria-hidden layer: a mouse shortcut, never a tab stop (A247).
 		edge.tabIndex = -1;
 		const edgeIcon = svg(CHEVRON_PATH, false);
 		const edgeLabel = document.createElement("span");
@@ -474,7 +475,6 @@ export class CursorOverlay {
 		if (r.edgeState === state) return;
 		r.edgeState = state;
 		r.edge.dataset.state = state;
-		r.edge.tabIndex = state === "on" ? 0 : -1;
 	}
 
 	private jumpTo(userId: string): void {

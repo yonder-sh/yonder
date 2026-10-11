@@ -149,43 +149,66 @@ export function NotificationsDialog({
 					</DialogDescription>
 				</DialogHeader>
 				<div className="grid gap-5">
-					<div className="flex items-start justify-between gap-4">
-						<div className="grid gap-1">
-							<Label htmlFor={deviceId}>This device</Label>
-							<p
+					<Label
+						htmlFor={deviceId}
+						className="items-start justify-between gap-4 font-normal pointer-coarse:min-h-11"
+					>
+						<span className="grid gap-1">
+							<span id={`${deviceId}-label`} className="font-medium">
+								This device
+							</span>
+							<span
+								id={`${deviceId}-hint`}
 								className="text-xs text-muted-foreground"
 								data-testid={PUSH_TESTID.deviceNote}
 							>
 								{note.text}
-							</p>
-						</div>
+							</span>
+						</span>
 						<Switch
 							id={deviceId}
+							aria-labelledby={`${deviceId}-label`}
+							aria-describedby={`${deviceId}-hint`}
 							checked={deviceOn}
 							disabled={note.blocked || deviceBusy || !data}
 							onCheckedChange={(v) => void toggleDevice(v)}
 							data-testid={PUSH_TESTID.device}
 						/>
-					</div>
+					</Label>
 					<Separator />
 					<ul className="grid gap-4" aria-label="Notification types">
 						{PUSH_TYPES.map((t) => {
 							const info = PUSH_TYPE_INFO[t];
 							const id = `${deviceId}-${t}`;
 							return (
-								<li key={t} className="flex items-start justify-between gap-4">
-									<div className="grid gap-0.5">
-										<Label htmlFor={id}>{info.label}</Label>
-										<p className="text-xs text-muted-foreground">{info.hint}</p>
-									</div>
-									<Switch
-										id={id}
-										checked={!!data && !data.offTypes.includes(t)}
-										disabled={!data}
-										onCheckedChange={(on) => setType.mutate({ type: t, on })}
-										data-testid={PUSH_TESTID.type}
-										data-type={t}
-									/>
+								<li key={t}>
+									{/* The whole row toggles (MOB-07); the switch is named by its title. */}
+									<Label
+										htmlFor={id}
+										className="items-start justify-between gap-4 font-normal pointer-coarse:min-h-11"
+									>
+										<span className="grid gap-0.5">
+											<span id={`${id}-label`} className="font-medium">
+												{info.label}
+											</span>
+											<span
+												id={`${id}-hint`}
+												className="text-xs text-muted-foreground"
+											>
+												{info.hint}
+											</span>
+										</span>
+										<Switch
+											id={id}
+											aria-labelledby={`${id}-label`}
+											aria-describedby={`${id}-hint`}
+											checked={!!data && !data.offTypes.includes(t)}
+											disabled={!data}
+											onCheckedChange={(on) => setType.mutate({ type: t, on })}
+											data-testid={PUSH_TESTID.type}
+											data-type={t}
+										/>
+									</Label>
 								</li>
 							);
 						})}
@@ -208,7 +231,7 @@ export function NotificationsDialog({
 												<span className="truncate">{t.name}</span>
 											</span>
 											<Button
-												size="xs"
+												size="xs-touch"
 												variant="ghost"
 												onClick={() => unmute.mutate(t.id)}
 											>

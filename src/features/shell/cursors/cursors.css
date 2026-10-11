@@ -98,14 +98,16 @@
 .yc-edge[data-state="off"] {
 	pointer-events: none;
 }
+/* Under a finger it only points: a 22px pill must not catch taps on a list's edge (A187). */
+@media (pointer: coarse) {
+	.yc-edge {
+		pointer-events: none;
+	}
+}
 .yc-edge svg {
 	width: 14px;
 	height: 14px;
 	flex: none;
-}
-.yc-edge:focus-visible {
-	outline: 2px solid var(--ring);
-	outline-offset: 2px;
 }
 
 /* A tap on a phone (touch never hovers): a ripple where they tapped. */

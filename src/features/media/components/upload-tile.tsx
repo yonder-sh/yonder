@@ -109,7 +109,7 @@ export function UploadTile({
 						<span className="flex gap-1">
 							{item.retryable ? (
 								<Button
-									size="xs"
+									size="xs-touch"
 									variant="outline"
 									onClick={onRetry}
 									data-testid={MEDIA_TESTID.uploadRetry}
@@ -117,7 +117,7 @@ export function UploadTile({
 									<RotateCcw /> Retry
 								</Button>
 							) : null}
-							<Button size="xs" variant="ghost" onClick={onDismiss}>
+							<Button size="xs-touch" variant="ghost" onClick={onDismiss}>
 								Dismiss
 							</Button>
 						</span>
@@ -142,7 +142,7 @@ export function UploadTile({
 						onClick={onCancel}
 						aria-label={`Cancel ${item.name}`}
 						data-testid={MEDIA_TESTID.uploadCancel}
-						className="absolute top-2 right-2 grid size-7 place-items-center rounded-full bg-black/55 text-white hover:bg-black/75 focus-visible:ring-2 focus-visible:ring-ring"
+						className="absolute top-2 right-2 grid size-7 touch-hit place-items-center rounded-full bg-black/55 text-white hover:bg-black/75 focus-visible:ring-2 focus-visible:ring-ring"
 					>
 						<X className="size-3.5" />
 					</button>

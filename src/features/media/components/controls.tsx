@@ -73,7 +73,7 @@ export function FilterChips({
 						data-filter={f ?? "all"}
 						onClick={() => onChange(f)}
 						className={cn(
-							"h-[22px] rounded-full px-2.5 text-xs font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring",
+							"relative h-[22px] touch-hit rounded-full px-2.5 text-xs font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring",
 							active
 								? "bg-foreground text-background"
 								: "bg-muted text-muted-foreground hover:text-foreground",
@@ -168,7 +168,8 @@ export function AddMediaButton({
 				<DropdownMenuTrigger asChild>
 					<Button
 						variant="outline"
-						size={compact ? "xs" : "sm"}
+						size={compact ? "xs-touch" : "sm"}
+						className={compact ? undefined : "relative touch-hit"}
 						disabled={disabled}
 						title={disabled ? (link.reason ?? undefined) : undefined}
 						data-testid={MEDIA_TESTID.addButton}

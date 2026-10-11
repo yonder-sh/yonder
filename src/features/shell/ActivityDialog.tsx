@@ -117,7 +117,7 @@ function ActivityBody({ onPick }: { onPick(): void }) {
 									/>
 									{g.actorName}
 								</p>
-								<ul className="mt-1 grid gap-0.5 pl-4">
+								<ul className="mt-1 grid gap-0.5 pl-4 pointer-coarse:gap-0">
 									{lineKeys(g.lines).map(([key, l]) => {
 										const refs = refsOfLine(l.refs);
 										const sel = selForRefs(ix, refs);
@@ -128,7 +128,7 @@ function ActivityBody({ onPick }: { onPick(): void }) {
 													disabled={!sel}
 													onClick={() => pick(refs)}
 													className={cn(
-														"text-left text-meta text-muted-foreground",
+														"text-left text-meta text-muted-foreground pointer-coarse:min-h-11 pointer-coarse:w-full pointer-coarse:py-2",
 														sel &&
 															"hover:text-foreground hover:underline underline-offset-2",
 													)}
@@ -158,7 +158,7 @@ function ActivityBody({ onPick }: { onPick(): void }) {
 						))}
 					</div>
 				) : recent.data?.length ? (
-					<ul className="grid gap-1.5">
+					<ul className="grid gap-1.5 pointer-coarse:gap-0">
 						{recent.data.map((a) => {
 							const sel = selForRefs(ix, a);
 							return (
@@ -173,7 +173,7 @@ function ActivityBody({ onPick }: { onPick(): void }) {
 										disabled={!sel}
 										onClick={() => pick(a)}
 										className={cn(
-											"min-w-0 flex-1 text-left",
+											"min-w-0 flex-1 text-left pointer-coarse:min-h-11 pointer-coarse:py-2",
 											sel && "hover:underline underline-offset-2",
 										)}
 									>

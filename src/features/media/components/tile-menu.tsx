@@ -161,7 +161,7 @@ export function TileMenu({
 						data-testid={MEDIA_TESTID.tileMenu}
 						aria-label="More actions"
 						onClick={(e) => e.stopPropagation()}
-						className="grid size-7 place-items-center rounded-full bg-black/55 text-white backdrop-blur-sm outline-none hover:bg-black/75 focus-visible:ring-2 focus-visible:ring-ring"
+						className="relative grid size-7 touch-hit place-items-center rounded-full bg-black/55 text-white backdrop-blur-sm outline-none hover:bg-black/75 focus-visible:ring-2 focus-visible:ring-ring"
 					>
 						<MoreHorizontal className="size-4" />
 					</button>
