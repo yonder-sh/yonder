@@ -23,6 +23,7 @@ import {
 import { fail } from "@/server/authz/session.server";
 import { rateLimit } from "@/server/cache.server";
 import { assertFreshIds } from "@/server/cores/ids.server";
+import type { TxOutbox } from "@/server/live/outbox.server";
 import { positionFor } from "@/server/position.server";
 import { rowTrip } from "@/server/proposals/trip-of.server";
 import { type CoreCtx, defineProposable } from "@/server/proposals/types";
@@ -108,6 +109,73 @@ function cleanCaption(v: string | null | undefined): string | null {
 	return s ? s : null;
 }
 
+/** `attachment.link`'s writes (no rate limit: a batch counts itself once). */
+export async function insertLink(
+	tx: Tx,
+	out: TxOutbox,
+	data: z.output<typeof AddLinkInput>,
+	ctx: CoreCtx,
+): Promise<MediaDto> {
+	const tripId = ctx.access.tripId;
+	if (data.id) await assertFreshIds(tx, "attachments", [data.id]);
+	await assertAttachmentTarget(tx, tripId, data.target, ctx.user.id);
+	const c = classifyUrl(data.url);
+	const id = data.id ?? uuidv7();
+	const position = await positionFor(tx, {
+		table: "attachments",
+		tripId,
+		target: data.target,
+	});
+	const url =
+		c.kind === "embed" && c.provider === "instagram"
+			? (canonicalLink("instagram", c.embedId, data.url, c.igType) ?? data.url)
+			: data.url;
+	const [row] = await tx
+		.insert(attachments)
+		.values({
+			id,
+			tripId,
+			...attachmentTargetColumns(data.target),
+			kind: c.kind,
+			status: "processing",
+			visibility: "everyone",
+			url,
+			provider: c.provider,
+			embedId: c.kind === "embed" ? c.embedId : null,
+			author:
+				c.kind === "embed" && c.provider === "instagram" ? c.author : null,
+			storageKey: mediaPrefix(tripId, id),
+			caption: cleanCaption(data.caption),
+			meta: {
+				fetch: "unfetched",
+				...(c.kind === "embed" ? { aspect: c.aspect } : {}),
+				...(c.kind === "embed" && c.provider === "instagram"
+					? { igType: c.igType }
+					: {}),
+			},
+			position,
+			createdBy: ctx.user.id,
+		})
+		.returning();
+	if (!row) return fail("CONFLICT");
+	await logMediaAdd(tx, out, {
+		tripId,
+		actor: ctx.actor,
+		target: data.target,
+		kind: c.kind,
+		visibility: "everyone",
+		dryRun: ctx.dryRun,
+	});
+	out.job(
+		"links",
+		"links.preview",
+		{ tripId, attachmentId: id, url },
+		{ dedupeId: `links:${id}` },
+	);
+	out.emit({ keys: ["media", "counts"] });
+	return toDto(row, ctx.user.id);
+}
+
 export const defs = {
 	"attachment.link": defineProposable({
 		input: AddLinkInput,
@@ -115,66 +183,8 @@ export const defs = {
 		entityOf: (i) => ({ kind: "att", id: i.id ?? null }),
 		fields: () => [],
 		core: async (tx, out, data, ctx): Promise<MediaDto> => {
-			const tripId = ctx.access.tripId;
 			if (!ctx.dryRun) await rateLimit(`links:${ctx.user.id}`, 30);
-			if (data.id) await assertFreshIds(tx, "attachments", [data.id]);
-			await assertAttachmentTarget(tx, tripId, data.target, ctx.user.id);
-			const c = classifyUrl(data.url);
-			const id = data.id ?? uuidv7();
-			const position = await positionFor(tx, {
-				table: "attachments",
-				tripId,
-				target: data.target,
-			});
-			const url =
-				c.kind === "embed" && c.provider === "instagram"
-					? (canonicalLink("instagram", c.embedId, data.url, c.igType) ??
-						data.url)
-					: data.url;
-			const [row] = await tx
-				.insert(attachments)
-				.values({
-					id,
-					tripId,
-					...attachmentTargetColumns(data.target),
-					kind: c.kind,
-					status: "processing",
-					visibility: "everyone",
-					url,
-					provider: c.provider,
-					embedId: c.kind === "embed" ? c.embedId : null,
-					author:
-						c.kind === "embed" && c.provider === "instagram" ? c.author : null,
-					storageKey: mediaPrefix(tripId, id),
-					caption: cleanCaption(data.caption),
-					meta: {
-						fetch: "unfetched",
-						...(c.kind === "embed" ? { aspect: c.aspect } : {}),
-						...(c.kind === "embed" && c.provider === "instagram"
-							? { igType: c.igType }
-							: {}),
-					},
-					position,
-					createdBy: ctx.user.id,
-				})
-				.returning();
-			if (!row) return fail("CONFLICT");
-			await logMediaAdd(tx, out, {
-				tripId,
-				actor: ctx.actor,
-				target: data.target,
-				kind: c.kind,
-				visibility: "everyone",
-				dryRun: ctx.dryRun,
-			});
-			out.job(
-				"links",
-				"links.preview",
-				{ tripId, attachmentId: id, url },
-				{ dedupeId: `links:${id}` },
-			);
-			out.emit({ keys: ["media", "counts"] });
-			return toDto(row, ctx.user.id);
+			return insertLink(tx, out, data, ctx);
 		},
 	}),
 	"attachment.update": defineProposable({

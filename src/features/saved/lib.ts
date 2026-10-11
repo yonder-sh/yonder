@@ -93,3 +93,25 @@ export function toEntry(l: SavedLink): SharedEntry {
 		files: [],
 	};
 }
+
+/**
+ * A saved item's name as an idea added in bulk (nothing asked): a Maps
+ * place's own name, a web page's title, else "Instagram idea" (never a
+ * caption or the words shared with it).
+ */
+export function ideaName(
+	l: Pick<
+		SavedLink,
+		"url" | "text" | "provider" | "siteName" | "previewTitle" | "place"
+	> &
+		Files,
+): string {
+	const name = l.place?.name?.trim();
+	if (name) return name.slice(0, 200);
+	const label = sourceLabel(l);
+	if (l.files?.length) return label === "Video" ? "Video idea" : "Photo idea";
+	if (!l.url) return "Note";
+	const page = !l.provider && label !== "Maps" && l.previewTitle?.trim();
+	if (page) return page.slice(0, 120);
+	return `${label} idea`.slice(0, 200);
+}

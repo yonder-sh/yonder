@@ -41,4 +41,13 @@ export const SAVED_TESTID = {
 	whereRow: "saved-where-row",
 	whereChange: "saved-where-change",
 	inTrips: "saved-in-trips",
+	addSelected: "saved-add-selected",
+	groupMenu: "saved-group-menu",
+	groupAdd: "saved-group-add",
+	groupPlan: "saved-group-plan",
+	addDialog: "saved-add-dialog",
+	addTrip: "saved-add-trip",
+	planTrip: "saved-plan-trip",
+	planName: "saved-plan-name",
+	planCreate: "saved-plan-create",
 } as const;
