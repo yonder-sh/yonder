@@ -52,13 +52,17 @@ vi.mock("../saved.functions", () => ({
 	attachSavedFiles: async () => ({ count: 0 }),
 	listSavedLinks: async () => [],
 	searchSavedPlaces: async () => [],
-	addSavedToTrip: async (o: { data: { ids: string[] } }) => {
+	addSavedToTrip: async (o: { data: { tripId: string; ids: string[] } }) => {
 		calls.bulk.push(o.data);
 		return {
 			added: o.data.ids.map((id) => ({ savedId: id, nodeId: `n-${id}` })),
 			already: 0,
 			made: [],
 			cities: [],
+			proposals:
+				o.data.tripId === "trip-suggest"
+					? o.data.ids.map((id) => `p-${id}`)
+					: [],
 		};
 	},
 	undoSavedToTrip: async (o: { data: unknown }) => {
@@ -94,6 +98,13 @@ vi.mock("@/features/home/queries", () => ({
 				name: "Audrey's trip",
 				role: "suggester",
 				viaLink: false,
+				countryCodes: [],
+			},
+			{
+				id: "trip-guest",
+				name: "Shared with me",
+				role: "editor",
+				viaLink: true,
 				countryCodes: [],
 			},
 		],
@@ -338,14 +349,15 @@ describe("Add to trip", () => {
 		fireEvent.click(screen.getByTestId(T.addSelected));
 		const dialog = await screen.findByTestId(T.addDialog);
 		expect(dialog).toHaveTextContent("Add 2 items to a trip");
-		// Viewers and suggesters can't add many.
+		// Suggesters suggest them; viewers and link guests can't.
 		const trips = await within(dialog).findAllByTestId(T.addTrip);
-		expect(trips.map((t) => t.textContent)).toEqual(["Japan 2027"]);
+		expect(trips.map((t) => t.textContent)).toEqual([
+			"Japan 2027",
+			"Audrey's tripAs suggestions",
+		]);
 		fireEvent.click(trips[0] as HTMLElement);
 		await waitFor(() =>
-			expect(calls.bulk).toEqual([
-				{ tripId: "trip-jp", ids: ["a", "c"], places: false },
-			]),
+			expect(calls.bulk).toEqual([{ tripId: "trip-jp", ids: ["a", "c"] }]),
 		);
 		await waitFor(() =>
 			expect(calls.toasts).toContain("Added 2 items to Japan 2027"),
@@ -361,6 +373,40 @@ describe("Add to trip", () => {
 						{ savedId: "c", nodeId: "n-c" },
 					],
 					made: [],
+					proposals: [],
+				},
+			]),
+		);
+	});
+
+	it("a suggester's go in as suggestions; Undo withdraws them", async () => {
+		render(
+			<QueryClientProvider client={new QueryClient()}>
+				<SavedGrid
+					links={[link("a"), link("b")]}
+					pending={false}
+					onOpen={() => {}}
+					empty={null}
+				/>
+			</QueryClientProvider>,
+		);
+		fireEvent.click(screen.getByTestId(T.select));
+		fireEvent.click(screen.getAllByTestId(T.tile)[1] as HTMLElement);
+		fireEvent.click(screen.getByTestId(T.addSelected));
+		const dialog = await screen.findByTestId(T.addDialog);
+		const trips = await within(dialog).findAllByTestId(T.addTrip);
+		fireEvent.click(trips[1] as HTMLElement);
+		await waitFor(() =>
+			expect(calls.toasts).toContain("Suggested 1 item to Audrey's trip"),
+		);
+		calls.undo?.();
+		await waitFor(() =>
+			expect(calls.undone).toEqual([
+				{
+					tripId: "trip-suggest",
+					added: [{ savedId: "b", nodeId: "n-b" }],
+					made: [],
+					proposals: ["p-b"],
 				},
 			]),
 		);

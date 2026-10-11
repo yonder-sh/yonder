@@ -1,9 +1,9 @@
 /**
  * Many saved items into a trip (Select's "Add to trip", a group's menu):
- * pick a trip you can edit, and each goes in as an idea under its city
- * (Undo in the toast); or "Plan a new trip": a name (from the cities) and
- * dates, then the trip's Plan with those cities on its route.
- * Ones already in that trip stay as they are.
+ * pick a trip you can edit or suggest to, and each goes in as an idea under
+ * its city, or as a suggestion (Undo in the toast); or "Plan a new trip": a
+ * name (from the cities) and dates, then the trip's Plan with those cities on
+ * its route. Ones already in that trip stay as they are.
  */
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
@@ -42,9 +42,10 @@ import { tripNameFor } from "./where";
 /** Per call (the server's `BULK_MAX`). */
 const CHUNK = 50;
 
-/** Trips I can add many to: owners and editors (suggesters add one at a time). */
+/** Trips I can add many to: owners and editors, and suggesters (as suggestions). */
 export const canAddMany = (t: Pick<MyTrip, "role" | "viaLink">) =>
-	!t.viaLink && (t.role === "owner" || t.role === "editor");
+	!t.viaLink &&
+	(t.role === "owner" || t.role === "editor" || t.role === "suggester");
 
 const items = (n: number) => (n === 1 ? "1 item" : `${n} items`);
 
@@ -54,17 +55,23 @@ export function useAddToTrip() {
 	return async (
 		tripId: string,
 		ids: readonly string[],
-		places = false,
 	): Promise<AddedToTrip> => {
-		const all: AddedToTrip = { added: [], already: 0, made: [], cities: [] };
+		const all: AddedToTrip = {
+			added: [],
+			already: 0,
+			made: [],
+			cities: [],
+			proposals: [],
+		};
 		try {
 			for (let i = 0; i < ids.length; i += CHUNK) {
 				const r = await addSavedToTrip({
-					data: { tripId, ids: ids.slice(i, i + CHUNK), places },
+					data: { tripId, ids: ids.slice(i, i + CHUNK) },
 				});
 				all.added.push(...r.added);
 				all.already += r.already;
 				all.made.push(...r.made);
+				all.proposals.push(...r.proposals);
 				for (const c of r.cities)
 					if (!all.cities.includes(c)) all.cities.push(c);
 			}
@@ -138,8 +145,9 @@ export function AddToTripDialog({
 				toast(`Already in ${t.name}`, { position: "top-center" });
 				return;
 			}
+			const did = r.proposals.length ? "Suggested" : "Added";
 			toast.success(
-				`Added ${items(n)} to ${t.name}${r.already ? ` (${r.already} in it already)` : ""}`,
+				`${did} ${items(n)} to ${t.name}${r.already ? ` (${r.already} in it already)` : ""}`,
 				{
 					duration: 6000,
 					position: "top-center",
@@ -147,7 +155,12 @@ export function AddToTripDialog({
 						label: "Undo",
 						onClick: () =>
 							void undoSavedToTrip({
-								data: { tripId: t.id, added: r.added, made: r.made },
+								data: {
+									tripId: t.id,
+									added: r.added,
+									made: r.made,
+									proposals: r.proposals,
+								},
 							})
 								.then(() =>
 									Promise.all([
@@ -180,7 +193,7 @@ export function AddToTripDialog({
 					defaultTz: Intl.DateTimeFormat().resolvedOptions().timeZone,
 				},
 			});
-			const r = await add(trip.tripId, ids, true);
+			const r = await add(trip.tripId, ids);
 			// The trip opens on its route: these cities, in this order.
 			if (r.cities.length) startRoute(trip.tripId, r.cities);
 			onOpenChange(false);
@@ -299,11 +312,13 @@ export function AddToTripDialog({
 													<span className="block truncate text-sm font-medium">
 														{t.name}
 													</span>
-													{n ? (
+													{n || t.role === "suggester" ? (
 														<span className="block text-xs text-muted-foreground">
 															{n === links.length
 																? "All in it already"
-																: `${n} in it already`}
+																: n
+																	? `${n} in it already`
+																	: "As suggestions"}
 														</span>
 													) : null}
 												</span>
@@ -315,7 +330,7 @@ export function AddToTripDialog({
 							</ul>
 						) : (
 							<p className="text-sm text-muted-foreground">
-								No trip you can edit yet.
+								No trip you can add to yet.
 							</p>
 						)}
 						{error ? (
