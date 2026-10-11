@@ -34,7 +34,15 @@ async function typeCode(page: Page, code: string) {
 
 /** Calls a server function from the page (same cookies), returning status + value/error. */
 async function callFn(page: Page, mod: string, fn: string, data: unknown) {
-	const resP = page.waitForResponse((r) => r.url().includes("/_serverFn/"), { timeout: 15_000 }).catch(() => null);
+	// This function's own response: the page's other server calls answer meanwhile.
+	const url = await page.evaluate(
+		async ({ mod, fn }) => String((await import(/* @vite-ignore */ mod))[fn].url),
+		{ mod, fn },
+	);
+	const path = new URL(url, APP_URL).pathname;
+	const resP = page
+		.waitForResponse((r) => new URL(r.url()).pathname === path, { timeout: 15_000 })
+		.catch(() => null);
 	const out = await page.evaluate(
 		async ({ mod, fn, data }) => {
 			try {
