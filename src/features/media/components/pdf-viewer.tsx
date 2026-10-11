@@ -186,7 +186,7 @@ export function PdfViewer({
 						title={
 							offline ? "Offline — downloads need a connection" : undefined
 						}
-						className="text-white/90 hover:bg-white/15 hover:text-white"
+						className="relative touch-hit text-white/90 hover:bg-white/15 hover:text-white"
 						data-testid={MEDIA_TESTID.pdfDownload}
 					>
 						{offline ? (
@@ -211,7 +211,7 @@ export function PdfViewer({
 								onClose();
 								onDelete();
 							}}
-							className="text-white/90 hover:bg-white/15 hover:text-white"
+							className="relative touch-hit text-white/90 hover:bg-white/15 hover:text-white"
 						>
 							<Trash2 />
 						</Button>
@@ -221,7 +221,7 @@ export function PdfViewer({
 						variant="ghost"
 						onClick={onClose}
 						aria-label="Close"
-						className="text-white/90 hover:bg-white/15 hover:text-white"
+						className="relative touch-hit text-white/90 hover:bg-white/15 hover:text-white"
 					>
 						<X />
 					</Button>
@@ -298,7 +298,7 @@ export function PdfViewer({
 								data-testid={MEDIA_TESTID.pdfZoomOut}
 								disabled={zi <= 0}
 								onClick={() => setZoom(ZOOMS[zi - 1] ?? zoom)}
-								className="text-white/90 hover:bg-white/15 hover:text-white"
+								className="relative touch-hit text-white/90 hover:bg-white/15 hover:text-white"
 							>
 								<Minus />
 							</Button>
@@ -306,7 +306,7 @@ export function PdfViewer({
 								type="button"
 								onClick={() => setZoom(1)}
 								className={cn(
-									"h-7 min-w-14 rounded-md px-2 text-xs text-white/80 tnum hover:bg-white/10",
+									"relative h-7 min-w-14 touch-hit rounded-md px-2 text-xs text-white/80 tnum hover:bg-white/10",
 								)}
 								title="Fit width"
 							>
@@ -319,7 +319,7 @@ export function PdfViewer({
 								data-testid={MEDIA_TESTID.pdfZoomIn}
 								disabled={zi >= ZOOMS.length - 1}
 								onClick={() => setZoom(ZOOMS[zi + 1] ?? zoom)}
-								className="text-white/90 hover:bg-white/15 hover:text-white"
+								className="relative touch-hit text-white/90 hover:bg-white/15 hover:text-white"
 							>
 								<Plus />
 							</Button>

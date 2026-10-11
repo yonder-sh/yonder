@@ -103,7 +103,7 @@ export function ReceiptStrip({
 						}}
 					/>
 					<Button
-						size="xs"
+						size="xs-touch"
 						variant="outline"
 						disabled={!!reason || ws.mode !== "live"}
 						title={reason}

@@ -231,6 +231,21 @@
 	color: var(--muted-foreground);
 }
 
+/* MOB-07: under a finger, an invisible hit area of at least 44×44 (the element must be positioned). */
+@utility touch-hit {
+	@media (pointer: coarse) {
+		&::before {
+			content: "";
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			width: max(100%, 2.75rem);
+			height: max(100%, 2.75rem);
+			translate: -50% -50%;
+		}
+	}
+}
+
 /* A 1px rule in the border colour. */
 @utility hairline {
 	border-color: var(--border);

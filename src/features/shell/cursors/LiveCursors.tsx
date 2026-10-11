@@ -420,8 +420,11 @@ function ReactionPalette({
 	onClose(): void;
 }) {
 	const ref = useRef<HTMLDivElement>(null);
-	const w = REACTIONS.length * 40 + 12;
-	const pos = near(at.x - 14 - w / 2, at.y - 18 - 56, w, 48);
+	// 36px buttons with a mouse, 44px under a finger; it wraps to fit a phone.
+	const btn = window.matchMedia?.("(pointer: coarse)")?.matches ? 44 : 38;
+	const w = Math.min(REACTIONS.length * btn + 10, window.innerWidth - 16);
+	const h = Math.ceil((REACTIONS.length * btn) / (w - 10)) * btn + 10;
+	const pos = near(at.x - 14 - w / 2, at.y - 26 - h, w, h);
 	useEffect(() => {
 		const outside = (e: PointerEvent) => {
 			if (!ref.current?.contains(e.target as Node)) onClose();
@@ -460,8 +463,8 @@ function ReactionPalette({
 			aria-label="React"
 			data-testid={SHELL_TESTID.reactionPalette}
 			data-cursor-ignore=""
-			className="fixed z-[46] flex items-center gap-0.5 rounded-full border bg-popover p-1 shadow-float animate-in fade-in-0 zoom-in-95 duration-150 motion-reduce:animate-none"
-			style={{ left: pos.left, top: pos.top }}
+			className="fixed z-[46] flex flex-wrap items-center justify-center gap-0.5 rounded-3xl border bg-popover p-1 shadow-float animate-in fade-in-0 zoom-in-95 duration-150 motion-reduce:animate-none pointer-coarse:gap-0"
+			style={{ left: pos.left, top: pos.top, maxWidth: w }}
 		>
 			{REACTIONS.map((r, i) => (
 				<button
@@ -469,7 +472,7 @@ function ReactionPalette({
 					type="button"
 					aria-label={`React ${r} (${i + 1})`}
 					onClick={() => onPick(r)}
-					className="flex size-9 items-center justify-center rounded-full text-xl leading-none transition-transform hover:scale-110 hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none motion-reduce:transition-none"
+					className="flex size-9 items-center justify-center rounded-full text-xl pointer-coarse:size-11 leading-none transition-transform hover:scale-110 hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none motion-reduce:transition-none"
 				>
 					{r}
 				</button>

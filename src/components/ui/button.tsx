@@ -24,6 +24,9 @@ const buttonVariants = cva(
 				// where the pointer is a finger (phones, iPads).
 				default: "h-(--control) px-3 has-[>svg]:px-2.5",
 				xs: "h-6 gap-1 rounded-md px-2 text-xs has-[>svg]:px-1.5 [&_svg:not([class*='size-'])]:size-3",
+				// `xs` with a mouse, `sm` and a 44px hit area under a finger (MOB-07).
+				"xs-touch":
+					"relative touch-hit h-6 gap-1 rounded-md px-2 text-xs has-[>svg]:px-1.5 [&_svg:not([class*='size-'])]:size-3 pointer-coarse:h-(--control-sm) pointer-coarse:gap-1.5 pointer-coarse:px-2.5 pointer-coarse:text-meta pointer-coarse:has-[>svg]:px-2 pointer-coarse:[&_svg:not([class*='size-'])]:size-4",
 				sm: "h-(--control-sm) gap-1.5 rounded-md px-2.5 text-meta has-[>svg]:px-2",
 				lg: "h-(--control-lg) rounded-lg px-4 has-[>svg]:px-3",
 				xl: "h-11 rounded-xl px-5 text-body has-[>svg]:px-4",

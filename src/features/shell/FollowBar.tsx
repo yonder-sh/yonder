@@ -54,7 +54,7 @@ export function FollowBar() {
 						<button
 							type="button"
 							data-testid={SHELL_TESTID.followResume}
-							className="shrink-0 font-medium text-primary underline-offset-2 hover:underline"
+							className="shrink-0 font-medium text-primary underline-offset-2 hover:underline pointer-coarse:min-w-11 pointer-coarse:self-stretch"
 							onClick={resume}
 						>
 							Resume
@@ -66,7 +66,7 @@ export function FollowBar() {
 				</span>
 				<button
 					type="button"
-					className="shrink-0 font-medium text-primary underline-offset-2 hover:underline"
+					className="shrink-0 font-medium text-primary underline-offset-2 hover:underline pointer-coarse:min-w-11 pointer-coarse:self-stretch"
 					onClick={() => setFollowing(null)}
 				>
 					Stop

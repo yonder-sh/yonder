@@ -98,7 +98,7 @@ export function PushPromptCard() {
 				type="button"
 				aria-label="Close"
 				onClick={close}
-				className="absolute top-2.5 right-2.5 rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
+				className="absolute top-2.5 right-2.5 touch-hit rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
 			>
 				<X className="size-4" />
 			</button>
@@ -136,6 +136,7 @@ export function PushPromptCard() {
 				{show === "ios" ? (
 					<Button
 						size="sm"
+						className="relative touch-hit"
 						variant="outline"
 						onClick={close}
 						data-testid={PUSH_TESTID.cardDismiss}
@@ -146,6 +147,7 @@ export function PushPromptCard() {
 					<>
 						<Button
 							size="sm"
+							className="relative touch-hit"
 							variant="ghost"
 							onClick={close}
 							data-testid={PUSH_TESTID.cardDismiss}
@@ -154,6 +156,7 @@ export function PushPromptCard() {
 						</Button>
 						<Button
 							size="sm"
+							className="relative touch-hit"
 							onClick={() => void turnOn()}
 							disabled={busy}
 							data-testid={PUSH_TESTID.cardEnable}

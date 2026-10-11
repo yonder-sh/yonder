@@ -153,7 +153,7 @@ export function SpotlightBar({ className }: { className?: string }) {
 			<button
 				type="button"
 				data-testid={SHELL_TESTID.spotlightEnd}
-				className="font-medium text-primary underline-offset-2 hover:underline"
+				className="font-medium text-primary underline-offset-2 hover:underline pointer-coarse:min-w-11 pointer-coarse:self-stretch"
 				onClick={() => setSpotlight(null)}
 			>
 				End
@@ -238,7 +238,7 @@ export function ElsewhereChips({
 			className={cn(
 				strip
 					? "flex min-w-0 items-center gap-1.5 overflow-hidden"
-					: "pointer-events-none flex flex-col items-start gap-1",
+					: "pointer-events-none flex flex-col items-start gap-1 pointer-coarse:gap-5",
 				className,
 			)}
 		>
@@ -262,7 +262,8 @@ export function ElsewhereChips({
 							onClick={() => go && void router.navigate({ href: go })}
 							title={go ? `Go to ${first}` : undefined}
 							className={cn(
-								"pointer-events-auto inline-flex h-6 max-w-64 items-center gap-1.5 rounded-full pr-2.5 pl-2 text-xs hover:bg-accent disabled:cursor-default",
+								"pointer-events-auto relative inline-flex h-6 max-w-64 items-center gap-1.5 rounded-full pr-2.5 pl-2 text-xs hover:bg-accent disabled:cursor-default",
+								!strip && "touch-hit",
 								strip
 									? "bg-muted/60"
 									: "border bg-card/95 shadow-float backdrop-blur-sm",
