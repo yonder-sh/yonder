@@ -90,7 +90,7 @@ describe("the feed's order", () => {
 });
 
 describe("an idea added in bulk", () => {
-	it("is named by its place or page, never its caption", () => {
+	it('is named by its place or page, else "New place", never its caption', () => {
 		expect(
 			ideaName({
 				...base,
@@ -105,7 +105,7 @@ describe("an idea added in bulk", () => {
 				provider: "instagram",
 				previewTitle: "Best ramen ever!!",
 			}),
-		).toBe("Instagram idea");
+		).toBe("New place");
 		expect(
 			ideaName({
 				...base,
@@ -113,12 +113,25 @@ describe("an idea added in bulk", () => {
 				previewTitle: "Fushimi Inari Shrine",
 			}),
 		).toBe("Fushimi Inari Shrine");
-		expect(ideaName({ ...base, url: "https://maps.app.goo.gl/x" })).toBe(
-			"Maps idea",
-		);
+		expect(
+			ideaName({
+				...base,
+				url: "https://maps.app.goo.gl/x",
+				previewTitle: "Google Maps",
+			}),
+		).toBe("New place");
+		expect(
+			ideaName({
+				...base,
+				url: "https://www.tiktok.com/@x/video/1",
+				provider: "tiktok",
+				text: "omg this ramen",
+			}),
+		).toBe("New place");
 		expect(ideaName({ ...base, text: "Onsen?" })).toBe("Note");
-		expect(ideaName({ ...base, files: [{ kind: "video" }] })).toBe(
-			"Video idea",
-		);
+		expect(ideaName({ ...base, files: [{ kind: "video" }] })).toBe("New place");
+		expect(
+			ideaName({ ...base, text: "Sunset here", files: [{ kind: "photo" }] }),
+		).toBe("New place");
 	});
 });

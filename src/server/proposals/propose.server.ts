@@ -522,6 +522,8 @@ export type ProposeArgs = {
 	access: TripAccess;
 	user: AuthUser;
 	tripId: string;
+	/** Saved's many-at-once add: one ask, so the hourly cap is left out (the open cap holds). */
+	bulk?: boolean;
 };
 
 /** Steps 2–6 inside the gate's `withTripTx`. */
@@ -720,7 +722,7 @@ export async function proposeChange(
 	).rows[0] as { open: number; recent: number };
 	if (
 		Number(limits.open) >= MAX_OPEN_PER_TRIP ||
-		Number(limits.recent) >= MAX_NEW_PER_AUTHOR_PER_HOUR
+		(!a.bulk && Number(limits.recent) >= MAX_NEW_PER_AUTHOR_PER_HOUR)
 	)
 		fail("RATE_LIMITED", LIMIT_MESSAGE);
 

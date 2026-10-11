@@ -13,8 +13,8 @@
  * - `startSavedUpload`, `signSavedUploadParts`, `completeSavedUpload`: shared
  *   photos and videos into Saved (`./server/files.server.ts`).
  * - `attachSavedFiles`: a saved share's photos onto a place (edit access).
- * - `addSavedToTrip` / `undoSavedToTrip`: many into a trip as ideas, and
- *   Undo (edit access; `./server/to-trip.server.ts`).
+ * - `addSavedToTrip` / `undoSavedToTrip`: many into a trip as ideas (a
+ *   suggester's as suggestions), and Undo (`./server/to-trip.server.ts`).
  */
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
@@ -312,7 +312,6 @@ export const addSavedToTrip = createServerFn({ method: "POST" })
 			.object({
 				tripId: z.uuid(),
 				ids: z.array(z.uuid()).min(1).max(BULK_MAX),
-				places: z.boolean().optional(),
 			})
 			.strict(),
 	)
@@ -331,6 +330,10 @@ export const undoSavedToTrip = createServerFn({ method: "POST" })
 					.array(z.object({ savedId: z.uuid(), nodeId: z.uuid() }).strict())
 					.max(SAVED.list),
 				made: z.array(z.uuid()).max(SAVED.list),
+				proposals: z
+					.array(z.uuid())
+					.max(SAVED.list * 3)
+					.optional(),
 			})
 			.strict(),
 	)

@@ -270,6 +270,17 @@ export async function listSaved(
 		);
 }
 
+/**
+ * Whether a `saved_link_trips` row (alias `t`) still counts: no idea named,
+ * its idea exists (live or deleted), or an open suggestion will make it (a
+ * rejected or withdrawn one's mark is dead).
+ */
+export const liveMark = (t: "l" | "t") =>
+	sql.raw(`(${t}.node_id is null
+		or exists (select 1 from nodes n where n.id = ${t}.node_id)
+		or exists (select 1 from proposals p where p.trip_id = ${t}.trip_id and p.status = 'open'
+		             and p.created_ids @> array[${t}.node_id]))`);
+
 /** The trips these rows went into (ones I'm still a member of), latest first. */
 async function tripsOf(
 	db: Exec,
@@ -281,7 +292,7 @@ async function tripsOf(
 		  from saved_link_trips l
 		  join trips t on t.id = l.trip_id and t.deleted_at is null
 		  join trip_members m on m.trip_id = t.id and m.user_id = ${userId} and m.status = 'active'
-		 where l.saved_id = any(${sql.param(ids)}::uuid[])
+		 where l.saved_id = any(${sql.param(ids)}::uuid[]) and ${liveMark("l")}
 		 order by l.saved_id, l.added_at desc`);
 	const out = new Map<string, SavedTrip[]>();
 	for (const { savedId, ...t } of res.rows as (SavedTrip & {

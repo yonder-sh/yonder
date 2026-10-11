@@ -62,9 +62,9 @@ export const MUTATION_POLICY = {
 	emptyTrashItems: "account",
 	/** Saved photos onto a trip's place: the attachments re-reference them. */
 	attachSavedFiles: "edit-only",
-	/** Many saved items into a trip as ideas, and its Undo. */
-	addSavedToTrip: "edit-only",
-	undoSavedToTrip: "edit-only",
+	/** Many saved items into a trip as ideas (a suggester's as suggestions), and its Undo. */
+	addSavedToTrip: { direct: "propose" },
+	undoSavedToTrip: { direct: "propose" },
 
 	// ---- trips (F) ----
 	updateTrip: { direct: "tripSettings" },
