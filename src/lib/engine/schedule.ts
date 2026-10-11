@@ -459,7 +459,10 @@ export function computeSchedule(ix: GraphIndex): ScheduleResult {
 						acc.travel += minutes;
 						countRow(ix, acc, row);
 					}
-					cursor = w.doneAt; // may be before the day's start time (a 05:00 landing): allowed
+					// May be before the day's start (a 05:00 landing), but a landing on an
+					// earlier date leaves the day as planned (A356).
+					if (!crossDay || localDateOf(w.doneAt, tzI) >= day.date)
+						cursor = w.doneAt;
 				} else if (untimedFlight(ix, row)) {
 					// FB-18: a flight without times, the great-circle estimate.
 					const f = untimedFlight(ix, row) as FlightDetails;
@@ -604,7 +607,12 @@ export function computeSchedule(ix: GraphIndex): ScheduleResult {
 				const w = timedWindow(ix, row, last);
 				acc.travel += diffMinutes(w.readyBy, w.doneAt);
 				countRow(ix, acc, row);
-				const departsToday = localDateOf(w.depMs, w.fromTz) === day.date;
+				// Tonight: on this date, or after midnight before the start time (A335).
+				const depDate = localDateOf(w.depMs, w.fromTz);
+				const departsToday =
+					depDate === day.date ||
+					(depDate === addDays(day.date, 1) &&
+						hhmm(w.depMs, w.fromTz) < startTime);
 				if (departsToday && cursor > w.readyBy) {
 					pendingLate.set(
 						pairKey(last.id, next.id),
