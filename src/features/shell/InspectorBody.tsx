@@ -337,8 +337,16 @@ function Body({
 				ref={scroller}
 				className="mt-3 min-h-0 flex-1 overflow-y-auto border-t px-4"
 			>
-				{/* D09: a level leads with what's said and saved about it; its facts follow. */}
-				{level ? null : (
+				{/* D09: a level leads with its dates and nights, then what's said and saved about it. */}
+				{level ? (
+					<div
+						data-testid={SHELL_TESTID.detailsSection}
+						data-section="facts"
+						className="py-4"
+					>
+						<NodeOverview nodeId={level.id} part="facts" />
+					</div>
+				) : (
 					<div
 						data-testid={SHELL_TESTID.detailsSection}
 						data-section="overview"
@@ -452,7 +460,7 @@ function Body({
 						data-section="overview"
 						className="py-4"
 					>
-						<Overview />
+						<NodeOverview nodeId={level.id} part="rest" />
 					</div>
 				) : null}
 			</div>

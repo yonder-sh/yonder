@@ -67,6 +67,7 @@ export const TESTID = {
 	addFlightDialog: "add-flight-dialog", // WP-Transit
 	addPlaceDialog: "add-place-dialog", // WP-Places
 	nodeOverview: "node-overview", // WP-Places
+	nodeFacts: "node-facts", // a level's dates and nights, atop its details
 	mediaTab: "media-tab", // WP-Media
 	mediaPanel: "media-panel", // WP-Media
 	coverStrip: "cover-strip", // WP-Media

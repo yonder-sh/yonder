@@ -91,7 +91,14 @@ import { PLACES_TESTID } from "./testids";
 import { MemberRatings } from "./ui/member-ratings";
 import { ZonePicker } from "./ui/zone-picker";
 
-export function NodeOverview({ nodeId }: { nodeId: string }) {
+export function NodeOverview({
+	nodeId,
+	part = "all",
+}: {
+	nodeId: string;
+	/** A level's details lead with its facts (dates, nights) and end with the rest. */
+	part?: LevelPart;
+}) {
 	const { ix } = useWorkspace();
 	const panel = usePlacePanel();
 	const node = ix.node(nodeId);
@@ -101,7 +108,7 @@ export function NodeOverview({ nodeId }: { nodeId: string }) {
 		);
 	return (
 		<div
-			data-testid={TESTID.nodeOverview}
+			data-testid={part === "facts" ? TESTID.nodeFacts : TESTID.nodeOverview}
 			data-type={node.type}
 			className="grid gap-5 text-sm"
 		>
@@ -109,13 +116,13 @@ export function NodeOverview({ nodeId }: { nodeId: string }) {
 				<PlaceOverview node={node} />
 			) : (
 				<>
-					{panel ? (
+					{panel && part !== "facts" ? (
 						<>
 							<PlaceRatings />
 							<PlaceFits />
 						</>
 					) : null}
-					<CoarseOverview node={node} />
+					<CoarseOverview node={node} part={part} />
 				</>
 			)}
 		</div>
@@ -661,7 +668,9 @@ function priceLabel(level: string): string {
 // Country / region / city / area
 // ---------------------------------------------------------------------------
 
-function CoarseOverview({ node }: { node: GraphNode }) {
+type LevelPart = "all" | "facts" | "rest";
+
+function CoarseOverview({ node, part }: { node: GraphNode; part: LevelPart }) {
 	const { ix, nav, counts, graph } = useWorkspace();
 	const visits = visitsOf(ix, node.id);
 	const children = ix.children(node.id);
@@ -675,7 +684,7 @@ function CoarseOverview({ node }: { node: GraphNode }) {
 	);
 	const rateable = rateableNodes(ix, node.id, { liveIds }).length;
 	const showTable = node.type === "country" || node.type === "region";
-	return (
+	const facts = part !== "rest" && (
 		<>
 			{node.description ? (
 				<MarkdownText md={node.description} className="text-meta" />
@@ -765,7 +774,12 @@ function CoarseOverview({ node }: { node: GraphNode }) {
 					</Row>
 				) : null}
 			</dl>
-
+		</>
+	);
+	if (part === "facts") return facts || null;
+	return (
+		<>
+			{facts}
 			{children.length ? (
 				<Section title="Inside" testId={PLACES_TESTID.children}>
 					<ul className="grid gap-0.5">

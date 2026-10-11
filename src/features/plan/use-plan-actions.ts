@@ -37,6 +37,7 @@ import {
 	updateItem,
 } from "@/functions/items.functions";
 import { deleteLeg, relinkLeg } from "@/functions/legs.functions";
+import { offDayText } from "@/lib/engine/day-place";
 import type { GraphIndex } from "@/lib/engine/graph-index";
 import { timedLegName } from "@/lib/engine/schedule";
 import type { GraphItem, TripGraph } from "@/lib/engine/types";
@@ -295,9 +296,12 @@ function usePlanActionsImpl() {
 						: Promise.resolve();
 				if (r.detachedLegIds.length) announceDetached(r.detachedLegIds, undo);
 				else if (!v.quiet && back && back.dayId !== v.dayId) {
-					const name = itemName(ix, ix.item(v.itemId));
+					const item = ix.item(v.itemId);
+					const name = itemName(ix, item);
 					const where = v.dayId ? `Day ${ix.dayNumber(v.dayId)}` : "Ideas";
-					undoToast(`${name} moved to ${where}`, () => void undo());
+					undoToast(`${name} moved to ${where}`, () => void undo(), {
+						description: v.dayId ? offDayText(ix, v.dayId, item?.nodeId) : null,
+					});
 				}
 			},
 		},
@@ -340,7 +344,21 @@ function usePlanActionsImpl() {
 			afterItemId?: string;
 			beforeItemId?: string;
 		}) => friendly(createItem({ data: { tripId, ...v } })),
-		{ ...common, keys: [graphKey] },
+		{
+			...common,
+			keys: [graphKey],
+			// A place dropped on another city's day: a heads-up, never a block.
+			onSuccess: (r, v) => {
+				const off = v.dayId ? offDayText(ix, v.dayId, v.nodeId) : null;
+				if (!off || !v.dayId) return;
+				const name = ix.node(v.nodeId ?? "")?.name ?? "Place";
+				undoToast(
+					`${name} added to Day ${ix.dayNumber(v.dayId)}`,
+					() => void friendly(deleteItem({ data: { itemId: r.itemId } })),
+					{ description: off },
+				);
+			},
+		},
 	);
 
 	const assign = useTripMutation(

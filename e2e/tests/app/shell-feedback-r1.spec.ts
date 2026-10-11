@@ -244,10 +244,10 @@ test.describe("phone 390", () => {
 		await page.getByRole("button", { name: "More" }).first().tap();
 		// FB-05 on a phone: the ⋯ menu leads to the Rate screen too.
 		await expect(page.getByRole("menuitem", { name: "Rate places in Tokyo" })).toBeVisible();
-		await page.getByText("Try other dates…").first().tap();
+		await page.getByText("Change dates…").first().tap();
 		const dlg = page.getByTestId(TESTID.shiftTripDialog);
 		await dlg.getByTestId("shift-plus").tap();
-		await dlg.getByRole("button", { name: /Decide later/ }).tap();
+		await dlg.getByRole("button", { name: /Preview on the plan/ }).tap();
 		await expect(dlg).toBeHidden();
 		const chip = page.getByTestId(TESTID.whatIfChip);
 		await expect(chip).toBeVisible({ timeout: 3_000 });

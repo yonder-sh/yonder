@@ -43,7 +43,7 @@ export const INSIGHTS_TESTID = {
 	holidayRow: "holiday-row",
 	holidayAdd: "holiday-add",
 	holidaySave: "holiday-save",
-	// E2 what-if
+	// E2 Change dates (and its preview)
 	shiftMinus: "shift-minus",
 	shiftPlus: "shift-plus",
 	shiftDelta: "shift-delta",
@@ -51,6 +51,8 @@ export const INSIGHTS_TESTID = {
 	shiftSummary: "shift-summary",
 	shiftApply: "shift-apply",
 	shiftDiscard: "shift-discard",
+	shiftKeep: "shift-keep",
+	datesTab: "change-dates-tab",
 	shiftConflict: "shift-conflict",
 	impactSection: "impact-section",
 	impactRow: "impact-row",

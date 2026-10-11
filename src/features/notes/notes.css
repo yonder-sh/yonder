@@ -189,6 +189,11 @@
 	color: var(--muted-foreground);
 }
 
+/* An empty note is one line until it's focused (walkthrough 9). */
+.yonder-note.ProseMirror:not(:focus):has(> p.is-editor-empty:only-child) {
+	min-height: 2rem;
+}
+
 /* One-line inputs: a long placeholder ends in "…" instead of wrapping. */
 .mention-input[data-singleline] p.is-editor-empty:first-child {
 	position: relative;

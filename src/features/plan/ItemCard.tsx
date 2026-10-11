@@ -74,6 +74,7 @@ import { useNotePreview } from "@/features/notes/use-note-preview";
 import { GhostActions } from "@/features/suggest/GhostActions";
 import { can } from "@/lib/auth/roles";
 import { PLACE_CATEGORIES } from "@/lib/domain/taxonomy";
+import { offDayPlace, offDayText } from "@/lib/engine/day-place";
 import { conflictFixes } from "@/lib/engine/suggest";
 import { hhmm } from "@/lib/engine/time";
 import type { Counts, GraphItem } from "@/lib/engine/types";
@@ -809,6 +810,7 @@ export function ItemCard({
 			: null;
 	const noteLine = item.note?.split("\n").find((l) => l.trim()) ?? null;
 	const whatIf = impact?.items.has(item.id) ?? false;
+	const offDay = item.dayId ? offDayPlace(ix, item.dayId, item.nodeId) : null;
 	const durationShown = resize.preview ?? item.durationMin;
 	const endShown =
 		s && resize.preview !== null
@@ -936,6 +938,15 @@ export function ItemCard({
 					</span>
 					{unlocated && !compact ? (
 						<span className="truncate">· no place</span>
+					) : null}
+					{offDay && item.dayId ? (
+						<span
+							data-testid={PLAN_TESTID.itemOffDay}
+							title={offDayText(ix, item.dayId, item.nodeId) ?? undefined}
+							className="truncate text-warning"
+						>
+							· in {ix.node(offDay.placeId)?.name}
+						</span>
 					) : null}
 				</div>
 				{!compact && (noteLine || (!item.note && nodeNote)) ? (

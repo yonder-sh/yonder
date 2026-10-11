@@ -53,7 +53,7 @@ import { SHELL_TESTID } from "./testids";
 import type { Breakpoint } from "./use-breakpoint";
 import { DayRangeChip, WherePicker } from "./WherePicker";
 
-/** The trip-title ▾ menu (DESIGN §4.1 + EXTENSIONS §1.4 "Try other dates…"). */
+/** The trip-title ▾ menu (DESIGN §4.1 + EXTENSIONS §1.4 "Change dates…"). */
 export function TripMenuItems() {
 	const setSettingsOpen = useUi((s) => s.setSettingsOpen);
 	const openShiftTrip = useUi((s) => s.openShiftTrip);
@@ -69,9 +69,9 @@ export function TripMenuItems() {
 			{graph.trip.startDate ? (
 				<DropdownMenuItem
 					onSelect={() => openShiftTrip(true)}
-					data-testid={SHELL_TESTID.tryOtherDates}
+					data-testid={SHELL_TESTID.changeDates}
 				>
-					<CalendarRange /> Try other dates…
+					<CalendarRange /> Change dates…
 				</DropdownMenuItem>
 			) : null}
 			{/* WP-Suggest M6: the way into suggest mode for an editor with nothing to review. */}

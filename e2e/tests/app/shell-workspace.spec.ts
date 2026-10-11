@@ -7,7 +7,7 @@
  *   survives a reload;
  * - the trip overview: "Still to plan" (nights, still to book, city moves,
  *   unrated per member) linking to filtered views, and upcoming deadlines;
- * - the global mounts (ShiftTripDialog via "Try other dates…", the `?`
+ * - the global mounts (ShiftTripDialog via "Change dates…", the `?`
  *   sheet, the Money tab) and the mobile FAB menu with Expense;
  * - on phones the header's buttons stay reachable by role, and View settings
  *   opens from the ⋯ menu;
@@ -198,13 +198,13 @@ test("the layout survives a reload; ? lists shortcuts; J steps through the plan"
 	await expect(page).toHaveURL(new RegExp(`sel=i\\.${c.ids.items.loft}`));
 });
 
-test("global mounts: Try other dates, the Money tab, the inspector's Money tab", async ({ page }, info) => {
+test("global mounts: Change dates, the Money tab, the inspector's Money tab", async ({ page }, info) => {
 	test.skip(info.project.name !== "chromium", "desktop layout");
 	const c = await cloneFixtureTrip(page.request);
 	await page.goto(`/t/${c.slug}?tab=plan`);
 	await expectLive(page);
 	await page.getByTestId(TESTID.tripMenu).click();
-	await page.getByTestId(SHELL_TESTID.tryOtherDates).click();
+	await page.getByTestId(SHELL_TESTID.changeDates).click();
 	await expect(page.getByTestId(TESTID.shiftTripDialog)).toBeVisible();
 	await page.keyboard.press("Escape");
 	await page.getByTestId(TESTID.centerTabs).getByRole("tab", { name: "Money" }).click();

@@ -20,6 +20,7 @@ import { slotOf } from "@/features/plan/use-plan-actions";
 import { deleteItem } from "@/functions/items.functions";
 import { can } from "@/lib/auth/roles";
 import type { LifecycleFields } from "@/lib/domain/places-lifecycle";
+import { offDayText } from "@/lib/engine/day-place";
 import { humanError } from "@/lib/errors";
 import { newId } from "@/lib/ids";
 import type { Priority } from "@/lib/schemas/enums";
@@ -268,12 +269,18 @@ function usePlaceActionsValue() {
 						? { beforeItemId: at.beforeItemId }
 						: {}),
 				};
+				// A place on another city's day: a heads-up, never a block.
+				const off = { description: offDayText(ix, dayId, row.id) };
 				const spare = ix.unscheduled.find((it) => it.nodeId === row.id);
 				if (spare) {
 					await moveItem.mutateAsync({ itemId: spare.id, dayId, ...where });
-					undoToast(`${row.name} · ${label}`, async () => {
-						await moveItem.mutateAsync({ itemId: spare.id, dayId: null });
-					});
+					undoToast(
+						`${row.name} · ${label}`,
+						async () => {
+							await moveItem.mutateAsync({ itemId: spare.id, dayId: null });
+						},
+						off,
+					);
 					return;
 				}
 				const id = newId();
@@ -283,9 +290,13 @@ function usePlaceActionsValue() {
 					nodeId: row.id,
 					...where,
 				});
-				undoToast(`${row.name} · ${label}`, async () => {
-					await deleteItem({ data: { itemId: id } });
-				});
+				undoToast(
+					`${row.name} · ${label}`,
+					async () => {
+						await deleteItem({ data: { itemId: id } });
+					},
+					off,
+				);
 			} catch (e) {
 				toast.error(humanError(e));
 			}

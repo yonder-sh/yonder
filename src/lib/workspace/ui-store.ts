@@ -76,7 +76,13 @@ export type AddExpenseRequest = {
 };
 
 /** E2: the date what-if draft (never persisted; survives navigation). */
-export type DateDraft = { deltaDays: number };
+export type DateDraft = {
+	deltaDays: number;
+	/** Day 1 when it was made: once the dates change, it's stale. */
+	from?: string | null;
+	/** Kept to look at on the plan: closing Change dates doesn't drop it. */
+	kept?: boolean;
+};
 
 /** A stop of the route while the days per city are being changed (the map numbers it). */
 export type SplitStop = {
@@ -154,7 +160,7 @@ export type UiState = {
 	/** E2 ShiftTripDialog (WP-Insights). */
 	shiftOpen: boolean;
 	openShiftTrip(v?: boolean): void;
-	/** E2 what-if draft; WhatIfChip shows while set. */
+	/** E2 date preview; WhatIfChip shows while set. */
 	dateDraft: DateDraft | null;
 	setDateDraft(d: DateDraft | null): void;
 	/** Clears per-trip state when leaving a trip. */

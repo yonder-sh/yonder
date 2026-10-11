@@ -73,8 +73,9 @@ test("Tokyo's overview lists its visits and children; Zoom in goes inside", asyn
 	await page.goto(`/t/${c.slug}/japan?sel=n.${c.ids.nodes.tokyo}`);
 	await expectLive(page);
 	const overview = page.getByTestId(TESTID.nodeOverview);
-	await expect(overview.getByTestId(P.visits)).toContainText("3–4 Oct");
-	await expect(overview.getByTestId(P.visits)).toContainText("7 stops");
+	const facts = page.getByTestId(TESTID.nodeFacts);
+	await expect(facts.getByTestId(P.visits)).toContainText("3–4 Oct");
+	await expect(facts.getByTestId(P.visits)).toContainText("7 stops");
 	for (const name of ["Shibuya", "Harajuku", "Asakusa", "Itoya Ginza"])
 		await expect(overview.getByTestId(P.children)).toContainText(name);
 	await page.screenshot({ path: shotPath("places/overview-city-1440.png"), animations: "disabled" });
@@ -109,7 +110,7 @@ test("on a phone the overview is a sheet: a place, then a city, without sideways
 
 	await page.goto(`/t/${c.slug}?sel=n.${c.ids.nodes.tokyo}`);
 	await expect(overview).toHaveAttribute("data-type", "city");
-	await expect(overview.getByTestId(P.cityNights)).toContainText("None yet");
+	await expect(page.getByTestId(TESTID.nodeFacts).getByTestId(P.cityNights)).toContainText("None yet");
 	await expect(overview.getByTestId(P.children)).toContainText("Asakusa");
 	await expectNoHorizontalOverflow(page);
 	await page.screenshot({ path: shotPath("places/overview-city-390.png"), animations: "disabled" });

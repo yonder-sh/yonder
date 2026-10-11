@@ -25,6 +25,7 @@ import {
 	setNodePriority,
 	updateNode,
 } from "@/functions/nodes.functions";
+import { offDayText } from "@/lib/engine/day-place";
 import { isSchedulable } from "@/lib/engine/tree";
 import type {
 	GraphNode,
@@ -370,14 +371,18 @@ export function useOutlineActions(announce?: Announce) {
 			onSuccess: (r, v) => {
 				const text = v.label ?? "Added to the plan";
 				announce?.(text);
-				undoToast(text, async () => {
-					try {
-						await deleteItem({ data: { itemId: r.itemId } });
-					} catch (e) {
-						toast.error(humanError(e));
-					}
-					await refresh();
-				});
+				undoToast(
+					text,
+					async () => {
+						try {
+							await deleteItem({ data: { itemId: r.itemId } });
+						} catch (e) {
+							toast.error(humanError(e));
+						}
+						await refresh();
+					},
+					{ description: offDayText(ix, v.dayId, v.nodeId) },
+				);
 			},
 		},
 	);
@@ -390,14 +395,18 @@ export function useOutlineActions(announce?: Announce) {
 			tripId,
 			onSuccess: (_r, v) => {
 				announce?.(v.label);
-				undoToast(v.label, async () => {
-					try {
-						await moveItem({ data: { itemId: v.itemId, dayId: null } });
-					} catch (e) {
-						toast.error(humanError(e));
-					}
-					await refresh();
-				});
+				undoToast(
+					v.label,
+					async () => {
+						try {
+							await moveItem({ data: { itemId: v.itemId, dayId: null } });
+						} catch (e) {
+							toast.error(humanError(e));
+						}
+						await refresh();
+					},
+					{ description: offDayText(ix, v.dayId, ix.item(v.itemId)?.nodeId) },
+				);
 			},
 		},
 	);

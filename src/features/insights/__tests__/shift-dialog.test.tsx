@@ -21,11 +21,13 @@ import { INSIGHTS_TESTID as T } from "../testids";
 const fns = vi.hoisted(() => ({
 	shiftTripDates: vi.fn(),
 	previewTripDates: vi.fn(),
+	setTripDates: vi.fn(),
 	updateItem: vi.fn(),
 }));
 vi.mock("@/functions/trips.functions", () => ({
 	shiftTripDates: fns.shiftTripDates,
 	previewTripDates: fns.previewTripDates,
+	setTripDates: fns.setTripDates,
 }));
 vi.mock("@/functions/items.functions", () => ({
 	updateItem: fns.updateItem,
@@ -95,7 +97,7 @@ describe("ShiftTripDialog expectedVersion", () => {
 		// It sent the version the user reviewed, not the live one.
 		expect(sentVersion(0)).toBe(10);
 		expect(screen.getByTestId(TESTID.shiftTripDialog)).toBeVisible();
-		expect(useUi.getState().dateDraft).toEqual({ deltaDays: 1 });
+		expect(useUi.getState().dateDraft?.deltaDays).toBe(1);
 
 		// The notice was the re-review: the next click applies against the new version.
 		fns.shiftTripDates.mockResolvedValueOnce({ version: 12 });
@@ -155,14 +157,54 @@ describe("ShiftTripDialog expectedVersion", () => {
 });
 
 describe("ShiftTripDialog's plain words", () => {
-	it("Decide later keeps the what-if; Don't shift drops it", () => {
+	it("Preview on the plan keeps the draft; Don't shift drops it", () => {
 		openDialog(graphAt(40));
-		expect(screen.queryByRole("button", { name: "Decide later" })).toBeNull();
+		expect(screen.getByRole("dialog")).toHaveAccessibleName("Change dates");
+		expect(
+			screen.queryByRole("button", { name: "Preview on the plan" }),
+		).toBeNull();
 		fireEvent.click(screen.getByTestId(T.shiftPlus));
-		fireEvent.click(screen.getByRole("button", { name: "Decide later" }));
-		expect(useUi.getState().dateDraft).toEqual({ deltaDays: 1 });
+		fireEvent.click(
+			screen.getByRole("button", { name: "Preview on the plan" }),
+		);
+		expect(useUi.getState().dateDraft).toEqual({
+			deltaDays: 1,
+			from: demoGraph.trip.startDate,
+			kept: true,
+		});
+		act(() => useUi.getState().openShiftTrip(true));
+		// Reviewing a kept draft and closing again keeps it.
+		fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
+		expect(useUi.getState().dateDraft?.deltaDays).toBe(1);
 		act(() => useUi.getState().openShiftTrip(true));
 		fireEvent.click(screen.getByRole("button", { name: "Don't shift" }));
 		expect(useUi.getState().dateDraft).toBeNull();
+	});
+
+	it("closing without keeping it leaves no preview behind", () => {
+		openDialog(graphAt(40));
+		fireEvent.click(screen.getByTestId(T.shiftPlus));
+		expect(useUi.getState().dateDraft?.deltaDays).toBe(1);
+		fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
+		expect(useUi.getState().shiftOpen).toBe(false);
+		expect(useUi.getState().dateDraft).toBeNull();
+	});
+
+	it("a kept preview goes once the trip's dates change", () => {
+		const { live } = openDialog(graphAt(40));
+		fireEvent.click(screen.getByTestId(T.shiftPlus));
+		fireEvent.click(
+			screen.getByRole("button", { name: "Preview on the plan" }),
+		);
+		expect(useUi.getState().dateDraft).not.toBeNull();
+		live(graphAt(41, (g) => (g.trip.startDate = "2027-11-01")));
+		expect(useUi.getState().dateDraft).toBeNull();
+	});
+
+	it("Start & end changes the range in place", () => {
+		openDialog(graphAt(40));
+		fireEvent.click(screen.getByRole("radio", { name: "Start & end" }));
+		expect(screen.getByTestId("home-settings-dates")).toBeInTheDocument();
+		expect(screen.queryByTestId(T.shiftPlus)).toBeNull();
 	});
 });

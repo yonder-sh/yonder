@@ -1283,9 +1283,9 @@ test("X3 opening hours warn on the card; the what-if shows the closure first; ap
 	await expect(itoya).toBeVisible();
 	await expect(itoya.getByTestId(TESTID.hoursChip)).toHaveCount(0); // open on Mondays
 
-	// Try other dates… +1 day: the closure shows before anything changes.
+	// Change dates… +1 day: the closure shows before anything changes.
 	await page.getByTestId(TESTID.tripMenu).click();
-	await page.getByTestId(SHELL_TESTID.tryOtherDates).click();
+	await page.getByTestId(SHELL_TESTID.changeDates).click();
 	const dialog = page.getByTestId(TESTID.shiftTripDialog);
 	await expect(dialog).toBeVisible();
 	await dialog.getByTestId(INS.shiftPlus).click();

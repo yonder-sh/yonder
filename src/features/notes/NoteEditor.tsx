@@ -108,7 +108,7 @@ export function NoteEditor(props: NoteEditorProps) {
 					{props.savedJson ? (
 						<StaticNote json={props.savedJson} className="min-h-24 py-1" />
 					) : (
-						<p className="min-h-24 py-1 text-body text-muted-foreground">
+						<p className="min-h-8 py-1 text-body text-muted-foreground">
 							{paused ? "Nothing saved here yet." : ""}
 						</p>
 					)}

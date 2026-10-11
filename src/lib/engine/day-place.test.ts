@@ -5,7 +5,7 @@
  */
 import { describe, expect, it } from "vitest";
 import { N, scenario } from "@/lib/fixtures/demo";
-import { dayWhere, dayWhereText, nightsByPlace } from "./day-place";
+import { dayWhere, dayWhereText, nightsByPlace, offDayText } from "./day-place";
 import { indexGraph } from "./graph-index";
 
 const texts = (days: Parameters<typeof scenario>[0]["days"]) => {
@@ -77,5 +77,40 @@ describe("nightsByPlace", () => {
 			);
 		expect(named(null)).toEqual(["Tokyo 2", "Kyoto 1"]);
 		expect(named(N.kyoto ?? null)).toEqual(["Kyoto 1"]);
+	});
+});
+
+describe("offDayText", () => {
+	const ix = indexGraph(
+		scenario({
+			days: [
+				{ night: "tokyo", items: [] },
+				{ night: "kyoto", items: [] },
+				{ items: [] },
+				{ items: [] },
+			],
+		}).graph,
+	);
+	const [d1, d2, d3] = ix.days.map((d) => d.id) as [string, string, string];
+	it("names a place on a day spent in another city", () => {
+		expect(offDayText(ix, d1, N.kiyomizu)).toBe(
+			"Kiyomizu-dera is in Kyoto — this day is in Tokyo",
+		);
+		expect(offDayText(ix, d1, N.kyoto)).toBe("Kyoto — this day is in Tokyo");
+	});
+	it("is quiet in the day's city, on a travel day's morning, for airports and the country", () => {
+		expect(offDayText(ix, d1, N.sensoji)).toBeNull();
+		expect(offDayText(ix, d2, N.sensoji)).toBeNull();
+		expect(offDayText(ix, d1, N.kix)).toBeNull();
+		expect(offDayText(ix, d1, N.japan)).toBeNull();
+	});
+	it("a day without a night says nothing, except the last day (where the last night was)", () => {
+		expect(offDayText(ix, d3, N.sensoji)).toBeNull();
+		const two = indexGraph(
+			scenario({ days: [{ night: "tokyo", items: [] }, { items: [] }] }).graph,
+		);
+		expect(offDayText(two, two.days[1]?.id, N.kiyomizu)).toBe(
+			"Kiyomizu-dera is in Kyoto — this day is in Tokyo",
+		);
 	});
 });

@@ -7,10 +7,15 @@ import { toast } from "sonner";
 export function undoToast(
 	label: string,
 	undo: () => void | Promise<void>,
-	opts: { secondary?: { label: string; onClick: () => void } } = {},
+	opts: {
+		secondary?: { label: string; onClick: () => void };
+		/** A second line, e.g. "Kinkaku-ji is in Kyoto — this day is in Tokyo". */
+		description?: string | null;
+	} = {},
 ): string | number {
 	return toast(label, {
 		duration: 8_000,
+		...(opts.description ? { description: opts.description } : {}),
 		action: { label: "Undo", onClick: () => void undo() },
 		...(opts.secondary
 			? {

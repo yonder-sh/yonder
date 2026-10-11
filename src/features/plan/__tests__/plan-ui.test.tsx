@@ -223,6 +223,27 @@ describe("PlanTab", () => {
 		expect(within(header).getAllByTestId(TESTID.conflictBadge)).toHaveLength(1);
 	});
 
+	it("a stop on a day spent in another city says where it is", () => {
+		const { graph } = scenario({
+			days: [
+				{
+					night: "tokyo",
+					items: [
+						{ k: "kiyo", node: "kiyomizu" },
+						{ k: "sky", node: "shibuyaSky" },
+					],
+				},
+				{ night: "tokyo", items: [] },
+			],
+		});
+		renderWithWorkspace(<PlanTab />, { graph, search: { lens: "place" } });
+		const off = screen.getAllByTestId(PLAN_TESTID.itemOffDay);
+		expect(off.map((e) => e.textContent)).toEqual(["· in Kyoto"]);
+		expect(off[0]?.getAttribute("title")).toBe(
+			"Kiyomizu-dera is in Kyoto — this day is in Tokyo",
+		);
+	});
+
 	it("viewers see the plan with edit affordances disabled", () => {
 		const g = structuredClone(demoGraph);
 		g.me = { ...g.me, role: "viewer" };

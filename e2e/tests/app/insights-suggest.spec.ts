@@ -26,7 +26,7 @@ test("a suggester's shift and hours become suggestions; settings stay edit-only"
 	const logs = collectConsole(maya);
 	await openHarness(maya, c, { nodeId: itoya });
 
-	// Try other dates → +1 → "Suggest shift": the dates stay, a suggestion is made.
+	// Change dates → +1 → "Suggest shift": the dates stay, a suggestion is made.
 	await maya.getByTestId("harness-try-dates").click();
 	const dialog = maya.getByTestId(TESTID.shiftTripDialog);
 	await dialog.getByTestId(T.shiftPlus).click();

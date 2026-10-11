@@ -131,7 +131,8 @@ function DayOverviewBody({ dayId }: { dayId: string }) {
 				<dd>
 					<Input
 						value={title.draft}
-						placeholder="Nakano + Shinjuku"
+						placeholder="Name this day"
+						aria-label="Day title"
 						maxLength={200}
 						disabled={guard.disabled}
 						title={guard.reason ?? undefined}

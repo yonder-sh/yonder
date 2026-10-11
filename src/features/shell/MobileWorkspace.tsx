@@ -198,7 +198,7 @@ function MobileHeader() {
 						</DropdownMenuItem>
 						{graph.trip.startDate ? (
 							<DropdownMenuItem onSelect={() => openShiftTrip(true)}>
-								Try other dates…
+								Change dates…
 							</DropdownMenuItem>
 						) : null}
 						<SuggestModeMenuItem />
