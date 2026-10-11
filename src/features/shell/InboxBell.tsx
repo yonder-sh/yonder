@@ -173,8 +173,9 @@ function InboxPanel({
 	const open = useOpenInboxLink();
 	const [now] = useState(() => Date.now());
 	const mark = useMutation({
-		mutationFn: (v: { keys: string[] } | { all: true; tripId?: string }) =>
-			markInboxRead({ data: v }),
+		mutationFn: (
+			v: { keys: string[]; tripId?: string } | { all: true; tripId?: string },
+		) => markInboxRead({ data: v }),
 		onMutate: (v) => markLocally(qc, "all" in v ? "all" : new Set(v.keys)),
 		onError: (e) => {
 			void qc.invalidateQueries({ queryKey: meKeys.inbox });
@@ -262,7 +263,8 @@ function InboxPanel({
 												item={i}
 												now={now}
 												onOpen={() => {
-													if (!i.read) mark.mutate({ keys: [i.key] });
+													if (!i.read)
+														mark.mutate({ keys: [i.key], tripId: i.tripId });
 													onDone();
 													open(i.link, i.kind);
 												}}

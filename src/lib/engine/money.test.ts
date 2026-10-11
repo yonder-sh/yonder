@@ -148,6 +148,12 @@ describe("currency helpers", () => {
 		expect(parseMoneyInput("-3.5", "USD")).toBe(-350);
 		expect(parseMoneyInput("1.2k", "USD")).toBe(120000);
 		expect(parseMoneyInput("52k", "JPY")).toBe(52000);
+		expect(parseMoneyInput("5k€", "EUR")).toBe(500000);
+		expect(parseMoneyInput("5k EUR", "EUR")).toBe(500000);
+		// A currency word with a k is not thousands (A378).
+		expect(parseMoneyInput("1200 kr", "SEK")).toBe(120000);
+		expect(parseMoneyInput("1200KRW", "KRW")).toBe(1200);
+		expect(parseMoneyInput("1200 krw", "KRW")).toBe(1200);
 		expect(parseMoneyInput("", "USD")).toBeNull();
 		expect(parseMoneyInput("abc", "USD")).toBeNull();
 		expect(parseMoneyInput("1.234", "USD")).toBeNull();

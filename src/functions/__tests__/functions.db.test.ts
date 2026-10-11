@@ -40,6 +40,7 @@ import {
 	migrateDatabase,
 } from "@/db/migrate.server";
 import { tripMembers, user } from "@/db/schema";
+import { humanError } from "@/lib/errors";
 import { demo } from "@/lib/fixtures/demo";
 import { mentionToken } from "@/lib/notes/mentions";
 import { markdownToYdoc } from "@/lib/notes/ydoc.server";
@@ -533,9 +534,13 @@ describe("days (§7.7): never lose items", () => {
 			| { flight?: { depLocal?: string } }
 			| undefined;
 		expect(details?.flight?.depLocal).toBe("2027-10-06T13:05");
-		// The flight's day can't be deleted.
-		expect(await codeOf(call(deleteDay, U.owner, { dayId: D.d5 }))).toBe(
-			"CONFLICT",
+		// The flight's day can't be deleted, and the person is told why (A033).
+		const refusal = await call(deleteDay, U.owner, { dayId: D.d5 }).catch(
+			(e: unknown) => e,
+		);
+		expect(errorCode(refusal)).toBe("CONFLICT");
+		expect(humanError(refusal)).toMatch(
+			/^Day \d+ holds (a flight|flight [A-Z0-9 ]+)\. Edit the flight first\.$/,
 		);
 	});
 
@@ -975,6 +980,50 @@ describe("nodes (§7.1, §7.4)", () => {
 		});
 		expect(acts[0]?.summary).toBe("restored Shibuya");
 		expect(acts[1]?.summary).toMatch(/^deleted Shibuya/);
+	});
+
+	it("the first country sets the zone of a trip made in a browser (A035)", async () => {
+		const t = await call<{ tripId: string }>(createTrip, U.owner, {
+			name: "Japan 2027",
+			defaultTz: "Europe/Berlin",
+		});
+		await call(createNode, U.owner, {
+			tripId: t.tripId,
+			parentId: null,
+			type: "country",
+			name: "Japan",
+			lat: 36.2,
+			lng: 138.25,
+		});
+		const row = (
+			await getDb().execute(
+				sql`select default_tz as tz from trips where id = ${t.tripId}`,
+			)
+		).rows[0] as { tz: string };
+		expect(row.tz).toBe("Asia/Tokyo");
+	});
+
+	it("restoreNode re-slugs when a new sibling took the slug (A032)", async () => {
+		const c = await freshTrip();
+		const N = c.ids.nodes;
+		const parentId = (await graphOf(c.tripId)).nodes.find(
+			(n) => n.id === N.shibuya,
+		)?.parentId as string;
+		const res = await call<{ deletedAt: string }>(deleteNode, U.owner, {
+			nodeId: N.shibuya,
+		});
+		const fresh = await call<{ slug: string }>(createNode, U.owner, {
+			tripId: c.tripId,
+			parentId,
+			type: "city",
+			name: "Shibuya",
+		});
+		expect(fresh.slug).toBe("shibuya");
+		const back = await call<{ slug: string }>(restoreNode, U.owner, {
+			nodeId: N.shibuya,
+			deletedAt: res.deletedAt,
+		});
+		expect(back.slug).toBe("shibuya-2");
 	});
 });
 

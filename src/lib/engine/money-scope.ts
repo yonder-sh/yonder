@@ -157,6 +157,9 @@ export function inMoneyView(
 		if (!within(target.nodeId)) return false;
 		for (const day of ix.days) {
 			if (!inDayRange(day.date, range)) continue;
+			// A place you only sleep at is in range too (A367, like daysTouching).
+			if (day.nightNodeId && ix.isWithin(day.nightNodeId, target.nodeId))
+				return true;
 			for (const it of ix.itemsByDay.get(day.id) ?? []) {
 				const n = itemNode(ix, it.id);
 				if (n && ix.isWithin(n, target.nodeId)) return true;

@@ -287,7 +287,7 @@ export async function ensureLegRow(
 		if (!index.item(target.fromItemId) || !index.item(target.toItemId))
 			return fail("NOT_FOUND");
 		if (!index.isPair(target.fromItemId, target.toItemId))
-			return fail("CONFLICT", "those stops are not next to each other");
+			return fail("CONFLICT", "Those stops aren't next to each other.");
 		values = {
 			tripId,
 			kind: "pair",

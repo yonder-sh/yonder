@@ -102,9 +102,10 @@ function disposition(
 export async function serveMedia(
 	request: Request,
 	id: string,
-	variant: string,
+	asked: string,
 ): Promise<Response> {
 	if (!UUID_RE.test(id)) return notFound();
+	let variant = asked;
 	const page = PAGE_RE.exec(variant);
 	const stored: StoredVariant | undefined = page
 		? (`page-${Number(page[1])}.webp` as StoredVariant)
@@ -122,6 +123,8 @@ export async function serveMedia(
 	if (!access) return notFound();
 	if (!(await canSeeRow(db, access, session.user.id, row))) return notFound();
 	if (page && row.kind !== "pdf") return notFound();
+	// A video's large image (a cover, today's photo) is its poster frame.
+	if (asked === "display" && row.kind === "video") variant = "poster";
 
 	const remote =
 		variant === "image" && prefixOfKey(row.imageKey)
@@ -129,7 +132,8 @@ export async function serveMedia(
 			: variant === "favicon" && prefixOfKey(row.faviconKey)
 				? row.faviconKey
 				: null;
-	const key = remote ?? rowKey(row, stored);
+	const key =
+		remote ?? rowKey(row, variant === "poster" ? "poster.jpg" : stored);
 	if (page || STREAMED[variant]) {
 		const obj = await streamObject(key);
 		if (!obj) return notFound();

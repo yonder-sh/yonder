@@ -77,8 +77,12 @@ export async function dayRemovalBlocker(
 	dayId: string,
 ): Promise<string | null> {
 	for (const block of ix.flightBlocks) {
-		if (block.some((id) => ix.item(id)?.dayId === dayId))
-			return `Day ${ix.dayNumber(dayId)} holds flight ${blockLabel(ix, block)}`;
+		if (block.some((id) => ix.item(id)?.dayId === dayId)) {
+			const label = blockLabel(ix, block);
+			const flight = label === "flight" ? "a flight" : `flight ${label}`;
+			// A sentence, so the person sees it (READABLE_DETAIL, A033).
+			return `Day ${ix.dayNumber(dayId)} holds ${flight}. Edit the flight first.`;
+		}
 	}
 	return null;
 }

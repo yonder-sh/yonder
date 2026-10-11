@@ -29,7 +29,18 @@ import { openReview, useReviewStore } from "./review-store";
 import { useBaseIndex } from "./use-base-index";
 
 /** What else an accepted op changes, besides `proposals` (EXTENSIONS §3.5 "the op's keys"). */
+/** Ops that move days: to-dos, files, notes and costs follow (the cores' keys). */
+const DAY_OPS: ReadonlySet<ProposalOp> = new Set([
+	"day.insert",
+	"day.move",
+	"day.delete",
+	"trip.dates",
+	"trip.shift",
+]);
+
 export function keysForOp(op: ProposalOp): TripKey[] {
+	if (DAY_OPS.has(op))
+		return ["graph", "lists", "media", "notes", "money", "counts", "activity"];
 	const family = op.split(".")[0];
 	switch (family) {
 		case "list":
@@ -65,9 +76,10 @@ export function useProposalActions() {
 	const setConflict = useReviewStore((s) => s.setConflict);
 	const setPending = useReviewStore((s) => s.setPending);
 
+	/** `ops`: the accepted changes; a reject or withdraw changes only the suggestions. */
 	const refresh = useCallback(
-		(ops: readonly ProposalOp[]) => {
-			const keys = new Set<TripKey>(["proposals"]);
+		(ops: readonly ProposalOp[], also: readonly TripKey[] = []) => {
+			const keys = new Set<TripKey>(["proposals", ...also]);
 			for (const op of ops) for (const k of keysForOp(op)) keys.add(k);
 			for (const k of keys)
 				void qc.invalidateQueries({ queryKey: tripKeys.byKey(tripId, k) });
@@ -137,7 +149,7 @@ export function useProposalActions() {
 		},
 		onSettled: (_r, _e, v) => {
 			setPending([v.p.id], null);
-			refresh([v.p.op]);
+			refresh([], ["activity"]);
 		},
 	});
 
@@ -153,7 +165,7 @@ export function useProposalActions() {
 		},
 		onSettled: (_r, _e, v) => {
 			setPending([v.p.id], null);
-			refresh([v.p.op]);
+			refresh([]);
 		},
 	});
 
@@ -198,7 +210,9 @@ export function useProposalActions() {
 				v.ps.map((p) => p.id),
 				null,
 			);
-			refresh(v.ps.map((p) => p.op));
+			refresh(v.decision === "accept" ? v.ps.map((p) => p.op) : [], [
+				"activity",
+			]);
 		},
 	});
 

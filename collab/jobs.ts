@@ -171,6 +171,7 @@ export function startJobWorkers(opts: JobWorkersOptions): JobWorkers {
 				const result = await handler(parsed.data, {
 					jobId: job.id ?? "",
 					attempt: job.attemptsMade + 1,
+					attempts: job.opts.attempts ?? 1,
 					signal,
 					log: (m) => log(`${queue}/${job.name} ${job.id}: ${m}`),
 				});

@@ -117,6 +117,19 @@ describe("views (MONEY-02)", () => {
 		).toBe(false);
 	});
 
+	it("counts a place you only sleep at in a day range (A367)", () => {
+		const g = {
+			...demo.graph,
+			items: demo.graph.items.filter((i) => i.id !== I.dropBags),
+		};
+		const gx = indexGraph(g);
+		const d3 = gx.day(DY.d3)?.date as string;
+		const ryokan: MoneyTarget = { kind: "node", nodeId: node("ryokan") };
+		expect(
+			inMoneyView(gx, ryokan, { scopeId: null, days: { from: d3, to: d3 } }),
+		).toBe(true);
+	});
+
 	it("matches inspector targets", () => {
 		expect(
 			onTarget(ix, kyotoItem, { kind: "day", dayId: DY.d4 as string }),

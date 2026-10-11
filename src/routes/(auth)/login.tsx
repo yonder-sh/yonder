@@ -12,6 +12,7 @@ import {
 	type AuthErrorLike,
 	authErrorMessage,
 	needsNewCode,
+	settled,
 } from "@/lib/auth/auth-errors";
 import { AUTH_BRAND, WELCOME_PATH } from "@/lib/auth/constants";
 import { hasFullName } from "@/lib/auth/names";
@@ -114,14 +115,16 @@ function LoginPage() {
 			return false;
 		}
 		let retryAfter: number | null = null;
-		const { error: err } = await authClient.emailOtp.sendVerificationOtp(
-			{ email: address, type: "sign-in" },
-			{
-				...(captcha ? { headers: { "x-captcha-response": captcha } } : {}),
-				onError: (ctx) => {
-					retryAfter = retryAfterFrom(ctx.response);
+		const { error: err } = await settled(
+			authClient.emailOtp.sendVerificationOtp(
+				{ email: address, type: "sign-in" },
+				{
+					...(captcha ? { headers: { "x-captcha-response": captcha } } : {}),
+					onError: (ctx) => {
+						retryAfter = retryAfterFrom(ctx.response);
+					},
 				},
-			},
+			),
 		);
 		// A token is good for one send: the next one needs a fresh token.
 		turnstile.reset();
@@ -154,13 +157,15 @@ function LoginPage() {
 		setBusy(true);
 		setError(null);
 		let retryAfter: number | null = null;
-		const { data, error: err } = await authClient.signIn.emailOtp(
-			{ email, otp },
-			{
-				onError: (ctx) => {
-					retryAfter = retryAfterFrom(ctx.response);
+		const { data, error: err } = await settled(
+			authClient.signIn.emailOtp(
+				{ email, otp },
+				{
+					onError: (ctx) => {
+						retryAfter = retryAfterFrom(ctx.response);
+					},
 				},
-			},
+			),
 		);
 		if (err || !data) {
 			setBusy(false);

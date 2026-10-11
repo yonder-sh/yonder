@@ -1,13 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { db } from "@/db/db.server";
-import { authEnv } from "@/server/auth/env.server";
-import {
-	clientIp,
-	pair,
-	shortcutReply,
-	smallJson,
-} from "@/server/shortcut.server";
+import { authEnv, clientIp } from "@/server/auth/env.server";
+import { pair, shortcutReply, smallJson } from "@/server/shortcut.server";
 import { shortcutOverLimit } from "@/server/shortcut-limits.server";
 
 /**

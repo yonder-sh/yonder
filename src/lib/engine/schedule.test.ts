@@ -1,6 +1,11 @@
 import "./__fixtures__/host-tz";
 import { describe, expect, it } from "vitest";
-import { flightDetails, scenario, uuid } from "./__fixtures__/demo";
+import {
+	flightDetails,
+	type ScenarioSpec,
+	scenario,
+	uuid,
+} from "./__fixtures__/demo";
 import { indexGraph } from "./graph-index";
 import { computeSchedule, formatFlightNumber, lateGap } from "./schedule";
 import { conflictFixes } from "./suggest";
@@ -245,7 +250,7 @@ describe("SPEC §9.4 schedule tests", () => {
 		);
 
 		// Late for the overnight flight: flagged at the end of the departure day.
-		const late = scenario({
+		const lateSpec: ScenarioSpec = {
 			...{ firstDate: "2027-10-02" },
 			nodes: [
 				{
@@ -293,7 +298,8 @@ describe("SPEC §9.4 schedule tests", () => {
 					arr: ["2027-10-03T04:15", "Asia/Bangkok"],
 				},
 			],
-		});
+		};
+		const late = scenario(lateSpec);
 		const rl = computeSchedule(indexGraph(late.graph));
 		expect(rl.legs[`${late.I.hnd}>${late.I.bkk}`]?.late).toEqual({
 			minutes: 50,
@@ -302,6 +308,52 @@ describe("SPEC §9.4 schedule tests", () => {
 		});
 		expect(rl.days[late.D.d1 as string]?.conflicts).toBe(1);
 		expect(rl.days[late.D.d2 as string]?.conflicts).toBe(0);
+
+		// A red-eye after midnight is still tonight's departure (A335).
+		const redEye = scenario({
+			...lateSpec,
+			legs: [
+				lateSpec.legs?.[0] as NonNullable<ScenarioSpec["legs"]>[number],
+				{
+					k: "flight",
+					from: "hnd",
+					to: "bkk",
+					mode: "flight",
+					dep: ["2027-10-03T00:10", TOKYO],
+					arr: ["2027-10-03T04:45", "Asia/Bangkok"],
+				},
+			],
+		});
+		const rr = computeSchedule(indexGraph(redEye.graph));
+		expect(rr.legs[`${redEye.I.hnd}>${redEye.I.bkk}`]?.late?.minutes).toBe(20);
+		expect(rr.days[redEye.D.d1 as string]?.conflicts).toBe(1);
+		expect(hhmm(rr.days[redEye.D.d1 as string]?.end as Date, TOKYO)).toBe(
+			"00:30",
+		);
+	});
+
+	it("a timed leg landing before its arrival stop's date leaves that day as planned (A356)", () => {
+		const s = scenario({
+			firstDate: "2027-10-07",
+			days: [
+				{ items: [{ k: "kix", node: "kix", min: 60 }] },
+				{ items: [{ k: "rest", title: "Rest", min: 60 }] },
+				{ items: [{ k: "icn", node: "icn", min: 30 }] },
+			],
+			legs: [
+				{
+					k: "flight",
+					from: "kix",
+					to: "icn",
+					mode: "flight",
+					dep: ["2027-10-07T13:05", TOKYO],
+					arr: ["2027-10-07T15:05", "Asia/Seoul"],
+				},
+			],
+		});
+		const r = computeSchedule(indexGraph(s.graph));
+		const start = r.items[s.I.icn as string]?.start as Date;
+		expect(localDateOf(start, "Asia/Seoul")).toBe("2027-10-09");
 	});
 
 	it("3. a Ho Chi Minh → Taipei day has tzChanged; Tokyo → Seoul (both +9) does not", () => {

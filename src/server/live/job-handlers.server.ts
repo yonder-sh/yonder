@@ -48,6 +48,8 @@ export type JobContext = {
 	jobId: string;
 	/** 1-based attempt number. */
 	attempt: number;
+	/** Attempts the job gets in all (the last one may give up for good). */
+	attempts: number;
 	signal?: AbortSignal;
 	log: (msg: string) => void;
 };
@@ -89,7 +91,8 @@ export const jobHandlers: JobHandlers = {
 		"test.ping": ping,
 	},
 	media: {
-		"media.variants": (data) => mediaVariants(data),
+		"media.variants": (data, ctx) =>
+			mediaVariants(data, { retry: ctx.attempt < ctx.attempts }),
 		"media.poster": (data) => mediaPoster(data),
 		"test.ping": ping,
 	},

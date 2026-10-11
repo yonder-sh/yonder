@@ -170,27 +170,40 @@ async function syncCopies(id: string): Promise<void> {
 // media.variants
 // ---------------------------------------------------------------------------
 
-export async function mediaVariants(job: MediaJobInput): Promise<JobResult> {
+/** `retry`: a storage error throws so the queue tries again (not on the last attempt). */
+export async function mediaVariants(
+	job: MediaJobInput,
+	opts: { retry?: boolean } = {},
+): Promise<JobResult> {
 	const row = await liveRow(job.tripId, job.attachmentId);
 	if (!row || row.status === "pending") return {};
 	try {
-		return await variantsOf(job, row);
+		return await variantsOf(job, row, opts.retry ?? false);
 	} finally {
 		await syncCopies(row.id);
 	}
 }
 
-async function variantsOf(job: MediaJobInput, row: Row): Promise<JobResult> {
+async function variantsOf(
+	job: MediaJobInput,
+	row: Row,
+	retry: boolean,
+): Promise<JobResult> {
 	const key = (v: StoredVariant) => rowKey(row, v);
 
 	if (row.kind === "photo") {
+		/** Storage (S3) errors pass and are retried; decoding never gets better. */
+		let decoding = false;
 		try {
 			const buf = await readObject(key("original"), IMAGE_MAX_BYTES);
+			decoding = true;
 			// CONTENT-06 / SECURITY §5: the served original loses its location
 			// (losslessly, same length); the variants never had metadata.
-			if (stripGps(buf, row.mime ?? ""))
-				await putObject(key("original"), buf, row.mime ?? "image/jpeg");
+			const stripped = stripGps(buf, row.mime ?? "");
 			const v = await photoVariants(buf);
+			decoding = false;
+			if (stripped)
+				await putObject(key("original"), buf, row.mime ?? "image/jpeg");
 			await putObject(key("thumb.webp"), v.thumb, "image/webp");
 			await putObject(key("display.webp"), v.display, "image/webp");
 			await writeResult(
@@ -205,7 +218,7 @@ async function variantsOf(job: MediaJobInput, row: Row): Promise<JobResult> {
 				{ thumb: true },
 			);
 		} catch (e) {
-			// An undecodable image never gets better with retries.
+			if (!decoding && retry) throw e;
 			console.error(`[media] variants ${row.id}:`, (e as Error).message);
 			await writeResult(job.tripId, row.id, { status: "failed" });
 		}
@@ -339,12 +352,12 @@ export async function fetchImage(
 }
 
 export async function linkPreview(
-	job: MediaJobInput & { url?: string },
+	job: MediaJobInput & { url?: string; fresh?: boolean },
 	fetcher: SafeFetcher = safeFetch,
 ): Promise<JobResult> {
 	const row = await liveRow(job.tripId, job.attachmentId);
 	if (!row?.url || (row.kind !== "link" && row.kind !== "embed")) return {};
-	const meta = await linkMeta(row.url, fetcher);
+	const meta = await linkMeta(row.url, fetcher, { fresh: job.fresh });
 	// Always under the row's own prefix: a duplicated trip's copy that is
 	// refreshed must not overwrite the source's shared preview.
 	const key = (v: StoredVariant) => objectKey(job.tripId, row.id, v);

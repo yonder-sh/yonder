@@ -342,7 +342,7 @@ export async function updateListItemCore(
 		data.expectedUpdatedAt &&
 		new Date(data.expectedUpdatedAt).getTime() !== row.updatedAt.getTime()
 	)
-		return fail("CONFLICT", "someone changed this to-do — reload it");
+		return fail("CONFLICT", "Someone changed this to-do. Reload it.");
 	const p = data.patch;
 	if (p.isPrivate !== undefined && p.isPrivate !== row.isPrivate) {
 		// Only the author decides whether their item is private.

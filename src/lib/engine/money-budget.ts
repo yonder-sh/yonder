@@ -107,6 +107,8 @@ export function nearestBudgeted(
 	for (const n of budgeted) {
 		if (n === scopeId || !isWithin(tree, n, scopeId)) continue;
 		let cur = tree.parentOf(n);
+		// A deleted place's budget belongs to no scope (A366).
+		if (cur === undefined) continue;
 		let blocked = false;
 		for (let hops = 0; cur && cur !== scopeId && hops < 64; hops++) {
 			if (budgeted.has(cur)) {

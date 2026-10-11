@@ -48,6 +48,9 @@ export const PaymentInput = z
 	.strict();
 export type PaymentInput = z.infer<typeof PaymentInput>;
 
+/** Everyone on a large trip can share a cost (the editor's default split is everyone). */
+export const MAX_SPLIT_PEOPLE = 200;
+
 export const SplitInput = z
 	.object({
 		mode: z.enum(SPLIT_MODE_VALUES),
@@ -59,7 +62,7 @@ export const SplitInput = z
 					.strict(),
 			)
 			.min(1)
-			.max(20),
+			.max(MAX_SPLIT_PEOPLE),
 	})
 	.strict();
 export type SplitInput = z.infer<typeof SplitInput>;
@@ -69,7 +72,7 @@ export const LineInput = z
 	.object({
 		label: z.string().trim().min(1).max(80),
 		amountMinor: MinorAmount,
-		memberIds: z.array(Id).min(1).max(20),
+		memberIds: z.array(Id).min(1).max(MAX_SPLIT_PEOPLE),
 	})
 	.strict();
 export type LineInput = z.infer<typeof LineInput>;

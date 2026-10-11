@@ -90,7 +90,7 @@ import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { ClaimConfirmDialog } from "./ClaimConfirm";
 import { matchingPlaceholder, nameMatchesPerson } from "./claim-match";
 import { useDialogFocus } from "./dialog-focus";
-import { formatLocalDay } from "./link-dates";
+import { formatLocalDay, linkExpired } from "./link-dates";
 import {
 	addPlaceholder,
 	createInviteLink,
@@ -898,6 +898,7 @@ function TripLink({ tripId, data }: { tripId: string; data: SharingDto }) {
 	const { disabled } = useEditGuard();
 	const link = data.link;
 	const on = !!link?.enabled;
+	const expired = on && linkExpired(link?.expiresAt);
 	const role: ShareRole = link?.role ?? "viewer";
 	return (
 		<Section title="Link">
@@ -922,9 +923,11 @@ function TripLink({ tripId, data }: { tripId: string; data: SharingDto }) {
 					<span className="grid min-w-0 flex-1">
 						<span className="text-sm font-medium">Anyone with the link</span>
 						<span className="text-xs text-muted-foreground">
-							{on
-								? LINK_BLURB[role]
-								: "Off. Only the people above can open the trip."}
+							{expired
+								? "Expired. Nobody new can open it until you extend it."
+								: on
+									? LINK_BLURB[role]
+									: "Off. Only the people above can open the trip."}
 						</span>
 					</span>
 					<Switch
@@ -986,7 +989,8 @@ function TripLink({ tripId, data }: { tripId: string; data: SharingDto }) {
 					{on && link?.expiresAt ? (
 						<span>
 							{link.createdAt ? "· " : null}
-							Works until {formatLocalDay(link.expiresAt)}
+							{expired ? "Expired" : "Works until"}{" "}
+							{formatLocalDay(link.expiresAt)}
 						</span>
 					) : null}
 					{on && link?.useCount ? (

@@ -59,7 +59,11 @@ export type SessionApi = {
 	};
 };
 
-/** A SessionLookup backed by Better Auth (`betterAuth(authOptions())`). */
+/**
+ * A SessionLookup backed by Better Auth (`betterAuth(authOptions())`). A
+ * DB/Redis hiccup throws, never null: a connect answers `unavailable` (the
+ * client retries) and the re-check keeps the socket, not "signed out".
+ */
 export function betterAuthSessionLookup(auth: SessionApi): SessionLookup {
 	return async (headers) => {
 		try {
@@ -69,12 +73,11 @@ export function betterAuthSessionLookup(auth: SessionApi): SessionLookup {
 			});
 			return session?.user ?? null;
 		} catch (e) {
-			// A DB/Redis hiccup must refuse the connection, not crash the hook chain.
 			console.error(
 				"[collab] session lookup failed:",
 				e instanceof Error ? e.message : e,
 			);
-			return null;
+			throw e;
 		}
 	};
 }

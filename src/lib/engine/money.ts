@@ -248,12 +248,11 @@ export function parseMoneyInput(
 		neg = true;
 		s = s.slice(1);
 	}
-	s = s.replace(/^[^\d.,]+/, "").replace(/[^\d.,kK]+$/, "");
-	let mult = 1;
-	if (/[kK]$/.test(s)) {
-		mult = 1000;
-		s = s.slice(0, -1);
-	}
+	s = s.replace(/^[^\d.,]+/, "");
+	// "5k", "5k€", "5kEUR" are thousands; "1200kr", "1200KRW" are a currency word.
+	const tail = /[^\d.,]*$/.exec(s)?.[0] ?? "";
+	const mult = /^[kK]([^A-Za-z]|[A-Z]{3}$|$)/.test(tail) ? 1000 : 1;
+	s = s.slice(0, s.length - tail.length);
 	if (!/^[\d.,]+$/.test(s)) return null;
 	const d = minorDigits(currency);
 	const lastComma = s.lastIndexOf(",");

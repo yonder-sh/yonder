@@ -56,6 +56,8 @@ export const LinkPreviewJob = z.object({
 	attachmentId: AttachmentId,
 	/** The URL to preview; the handler re-validates it through the SSRF-safe fetch. */
 	url: z.url({ protocol: /^https?$/ }).max(4096),
+	/** A person's Refresh: fetch again rather than reuse the cached answer. */
+	fresh: z.boolean().optional(),
 });
 /** `money.fxDaily`: all trips; `date` (YYYY-MM-DD) defaults to today. */
 export const FxDailyJob = z.object({
@@ -230,6 +232,9 @@ export type EnqueueOptions = {
 
 export type Enqueued = { id: string; added: boolean };
 
+/** How long a mutation waits for Redis to take a job (like publishing). */
+export const ENQUEUE_TIMEOUT_MS = 2_000;
+
 /**
  * Adds a job. Validates the payload, applies the SPEC defaults and increments the
  * trip's `total` progress counter when a job was really added (not deduplicated).
@@ -248,7 +253,15 @@ export async function enqueue<Q extends QueueName, N extends JobName<Q>>(
 	if (!schema) throw new Error(`unknown job ${queue}/${name}`);
 	const payload = schema.parse(data) as { tripId?: string };
 	const jobId = opts.jobId ?? uuidv7();
-	try {
+	let timer: ReturnType<typeof setTimeout> | undefined;
+	// Redis down: BullMQ's offline queue would wait forever, after the commit.
+	const timeout = new Promise<never>((_, reject) => {
+		timer = setTimeout(
+			() => reject(new Error(`timed out after ${ENQUEUE_TIMEOUT_MS} ms`)),
+			ENQUEUE_TIMEOUT_MS,
+		);
+	});
+	const add = async (): Promise<Enqueued> => {
 		const job = await getQueue(queue).add(name, payload, {
 			...DEFAULT_JOB_OPTIONS,
 			...(opts.attempts !== undefined ? { attempts: opts.attempts } : {}),
@@ -278,12 +291,17 @@ export async function enqueue<Q extends QueueName, N extends JobName<Q>>(
 				.exec();
 		}
 		return { id: job.id ?? jobId, added };
+	};
+	try {
+		return await Promise.race([add(), timeout]);
 	} catch (e) {
 		console.error(
 			`[jobs] enqueue ${queue}/${name} failed${payload.tripId ? ` for trip ${payload.tripId}` : ""}:`,
 			e instanceof Error ? e.message : e,
 		);
 		return null;
+	} finally {
+		clearTimeout(timer);
 	}
 }
 

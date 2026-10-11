@@ -163,3 +163,12 @@ export function authEnv(): AuthEnv {
 	cached ??= parseAuthEnv(process.env);
 	return cached;
 }
+
+/** The caller's IP, from the headers the deployment trusts (like Better Auth's limiter). */
+export function clientIp(request: Request, headers: string[]): string {
+	for (const h of headers) {
+		const v = request.headers.get(h)?.split(",")[0]?.trim();
+		if (v) return v;
+	}
+	return "unknown";
+}

@@ -1,6 +1,6 @@
 import { getIP } from "better-auth/api";
 import { describe, expect, it, vi } from "vitest";
-import { emailTransportProblem, parseAuthEnv } from "./env.server";
+import { clientIp, emailTransportProblem, parseAuthEnv } from "./env.server";
 
 const SECRET = "s".repeat(43);
 
@@ -181,6 +181,17 @@ describe("client IP (TRUST_CF_CONNECTING_IP)", () => {
 				// What a client sends plus what Cloudflare and the gateway append.
 				"x-forwarded-for": "1.2.3.4, 203.0.113.7, 172.68.1.1",
 			}),
+		).toBe("203.0.113.7");
+		// The app's own limits (trip opens, the Shortcut) read the same IP.
+		const headers = {
+			"cf-connecting-ip": "203.0.113.7",
+			"x-forwarded-for": "1.2.3.4, 203.0.113.7, 172.68.1.1",
+		};
+		expect(
+			clientIp(
+				new Request("https://yonder.sh/t/x", { headers }),
+				parseAuthEnv(cf).ipAddressHeaders,
+			),
 		).toBe("203.0.113.7");
 		// Without the header (a request that didn't come through Cloudflare).
 		expect(ipOf(cf, { "x-forwarded-for": "198.51.100.1" })).toBe(

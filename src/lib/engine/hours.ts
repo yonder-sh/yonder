@@ -298,7 +298,6 @@ export function hoursOnDate(
 			label: `Closed · ${holiday.name}`,
 			why: "holiday",
 		};
-	if (h.alwaysOpen) return { state: "always" };
 	const wd = weekdayOf(date);
 	for (const n of h.closedNth ?? [])
 		if (n.day === wd && nthMatches(date, n.nth))
@@ -313,6 +312,7 @@ export function hoursOnDate(
 			label: `Closed ${WEEKDAY_SHORT[wd]}`,
 			why: "closedDays",
 		};
+	if (h.alwaysOpen) return { state: "always" };
 	if (!h.periods.length) return { state: "unknown" };
 	const hol = holiday ? h.periods.filter((p) => p.day === 7) : [];
 	const list = hol.length ? hol : h.periods.filter((p) => p.day === wd);
@@ -385,9 +385,7 @@ export function checkVisit({
 								? p.lastEntry - 1440
 								: null,
 					}))
-			: prev.state === "always"
-				? [{ open: 0, close: 1440, lastEntry: null }]
-				: [];
+			: []; // An always-open day ends at midnight: it carries nothing (A354).
 
 	if (eh.confidence === "low") {
 		// Only explicit closures count at low confidence.

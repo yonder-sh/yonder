@@ -81,6 +81,7 @@ import type { SafeFetcher } from "../server/safe-fetch.server";
 import { serveMedia } from "../server/serve.server";
 import {
 	checkParts,
+	deleteObject,
 	deletePrefix,
 	headObject,
 	objectKey,
@@ -281,6 +282,29 @@ describe("uploads (SPEC §15.2, MED-01/06/07, SEC-05)", () => {
 			tripId: c.tripId,
 		});
 		expect(guest.some((m) => m.id === dto.id)).toBe(true);
+	});
+
+	it("a storage error is retried; only the last attempt marks the photo failed", async () => {
+		const c = await freshTrip();
+		const dto = await upload(
+			U.owner,
+			c.tripId,
+			{ kind: "trip" },
+			await jpeg(),
+			"image/jpeg",
+			"gone.jpg",
+		);
+		// The original can't be read (a storage outage looks the same).
+		await deleteObject(objectKey(c.tripId, dto.id, "original"));
+		const job = { tripId: c.tripId, attachmentId: dto.id };
+		await expect(mediaVariants(job, { retry: true })).rejects.toThrow();
+		const status = async () =>
+			(
+				await call<MediaDto[]>(listTripMedia, U.owner, { tripId: c.tripId })
+			).find((m) => m.id === dto.id)?.status;
+		expect(await status()).toBe("processing");
+		await mediaVariants(job, { retry: false });
+		expect(await status()).toBe("failed");
 	});
 
 	it("a booking's confirmation is members only and marked as one (U001)", async () => {
@@ -958,6 +982,34 @@ describe("storage quota (ADDENDUM §12: the uploader pays)", () => {
 		).toBeNull();
 		expect(await headObject(objectKey(a.tripId, id, "original"))).toBeNull();
 		expect(await usedBytes(getDb(), owner.id)).toBe(0);
+	});
+
+	it("Undo of a delete counts the file again: over the quota, it stays deleted", async () => {
+		const owner = await newUser({ first: "Uma", last: "Undo" });
+		sessions.byId.set(owner.id, owner);
+		const a = await cloneDemoTrip(getDb(), owner.id);
+		trips.push(a.tripId);
+		const photo = await jpeg();
+		const p = await upload(
+			owner,
+			a.tripId,
+			{ kind: "trip" },
+			photo,
+			"image/jpeg",
+			"undo.jpg",
+		);
+		await call(deleteAttachment, owner, { id: p.id });
+		expect(await usedBytes(getDb(), owner.id)).toBe(0);
+		await setQuota(owner, 100);
+		expect(await codeOf(call(restoreAttachment, owner, { id: p.id }))).toBe(
+			"STORAGE_QUOTA",
+		);
+		expect(await usedBytes(getDb(), owner.id)).toBe(0);
+		await setQuota(owner, null);
+		expect(await codeOf(call(restoreAttachment, owner, { id: p.id }))).toBe(
+			"ok",
+		);
+		expect(await usedBytes(getDb(), owner.id)).toBe(photo.length);
 	});
 });
 
@@ -1737,6 +1789,26 @@ describe("duplicated trips share objects (ADDENDUM §9, WP-Home request 6)", () 
 			id,
 			variant,
 		);
+
+	it("a video's display image is its poster (a video cover)", async () => {
+		const a = await freshTrip();
+		const src = await upload(
+			U.owner,
+			a.tripId,
+			{ kind: "trip" },
+			await jpeg(),
+			"image/jpeg",
+			"clip.jpg",
+		);
+		await getDb().execute(
+			sql`update attachments set kind = 'video', mime = 'video/mp4', status = 'ready' where id = ${src.id}`,
+		);
+		const res = await get(src.id, "display");
+		expect(res.status).toBe(302);
+		const loc = new URL(res.headers.get("location") ?? "");
+		expect(loc.pathname).toMatch(/\/poster\.jpg$/);
+		expect(loc.searchParams.get("response-content-type")).toBe("image/jpeg");
+	});
 
 	it("serves a copy from the source's objects; a processing copy follows its source", async () => {
 		const a = await freshTrip();

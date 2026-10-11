@@ -8,6 +8,20 @@ export interface AuthErrorLike {
 	status?: number | null;
 }
 
+/**
+ * A Better Auth client call that never throws: a dropped connection (fetch
+ * rejects) answers like any refusal, with the `network` kind (status 0).
+ */
+export async function settled<T extends { error: unknown }>(
+	call: Promise<T>,
+): Promise<T | { data: null; error: AuthErrorLike }> {
+	try {
+		return await call;
+	} catch {
+		return { data: null, error: { status: 0 } };
+	}
+}
+
 export type AuthErrorKind =
 	| "invalid-email"
 	| "invalid-code"

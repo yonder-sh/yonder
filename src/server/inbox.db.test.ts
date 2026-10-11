@@ -353,7 +353,21 @@ describe("money notices", () => {
 		);
 		// QA MONEY-21: Maya reads it; then a later cost between Dennis and Audrey
 		// only. It doesn't move Maya's balance: still the ramen, still read.
-		await call(markInboxRead, U.maya, { keys: [item?.key as string] });
+		// A key is checked against its own trip's feed when the trip is given;
+		// another trip's feed doesn't have it.
+		const other = await cloneDemoTrip(getDb(), U.maya.id);
+		expect(
+			await call<{ updated: number }>(markInboxRead, U.maya, {
+				keys: [item?.key as string],
+				tripId: other.tripId,
+			}),
+		).toEqual({ updated: 0 });
+		expect(
+			await call<{ updated: number }>(markInboxRead, U.maya, {
+				keys: [item?.key as string],
+				tripId: t.tripId,
+			}),
+		).toEqual({ updated: 1 });
 		const taxi = await expense({
 			title: "Taxi",
 			amount: 3_000,
