@@ -1738,6 +1738,26 @@ describe("duplicated trips share objects (ADDENDUM §9, WP-Home request 6)", () 
 			variant,
 		);
 
+	it("a video's display image is its poster (a video cover)", async () => {
+		const a = await freshTrip();
+		const src = await upload(
+			U.owner,
+			a.tripId,
+			{ kind: "trip" },
+			await jpeg(),
+			"image/jpeg",
+			"clip.jpg",
+		);
+		await getDb().execute(
+			sql`update attachments set kind = 'video', mime = 'video/mp4', status = 'ready' where id = ${src.id}`,
+		);
+		const res = await get(src.id, "display");
+		expect(res.status).toBe(302);
+		const loc = new URL(res.headers.get("location") ?? "");
+		expect(loc.pathname).toMatch(/\/poster\.jpg$/);
+		expect(loc.searchParams.get("response-content-type")).toBe("image/jpeg");
+	});
+
 	it("serves a copy from the source's objects; a processing copy follows its source", async () => {
 		const a = await freshTrip();
 		const b = await freshTrip();
