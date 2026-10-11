@@ -55,6 +55,11 @@ export const MUTATION_POLICY = {
 	searchSavedPlaces: "account",
 	/** A trip's photo or link into the caller's own Saved: any member who can see it (it checks). */
 	saveTripMedia: "account",
+	/** Trash: the caller's own deleted uploads (a restore into a trip checks edit access itself). */
+	restoreTrashItems: "account",
+	retrashItems: "account",
+	deleteTrashItems: "account",
+	emptyTrashItems: "account",
 	/** Saved photos onto a trip's place: the attachments re-reference them. */
 	attachSavedFiles: "edit-only",
 

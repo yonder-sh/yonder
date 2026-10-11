@@ -12,11 +12,12 @@
  *   ₩ in Korea…; WP-Money converts), or a fixed currency. Synced through
  *   `setUserPrefs`; it never changes anyone else's view or any stored amount.
  * - Storage (ADDENDUM §12): "1.2 GB of 5 GB used" with a thin bar, for the
- *   photos, videos and PDFs this account uploaded in every trip.
+ *   photos, videos and PDFs this account uploaded in every trip, Trash
+ *   included (a link to it).
  * - Link guests only rename themselves (`renameGuest`).
  */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useRouter } from "@tanstack/react-router";
+import { Link, useRouter } from "@tanstack/react-router";
 import { type FormEvent, useEffect, useId, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -283,6 +284,7 @@ export function ProfileDialog() {
 
 /** ADDENDUM §12: the account's storage, "1.2 GB of 5 GB used" and a thin bar. */
 function StorageMeter({ enabled }: { enabled: boolean }) {
+	const setProfileOpen = useUi((s) => s.setProfileOpen);
 	const usage = useQuery({
 		queryKey: meKeys.storage,
 		queryFn: () => getStorageUsage(),
@@ -308,7 +310,16 @@ function StorageMeter({ enabled }: { enabled: boolean }) {
 				}
 			/>
 			<p className="text-xs text-muted-foreground">
-				Photos, videos and PDFs you upload, in every trip.
+				Photos, videos and PDFs you upload, in every trip and Saved.{" "}
+				<Link
+					to="/trash"
+					data-testid={HOME_TESTID.profileTrash}
+					onClick={() => setProfileOpen(false)}
+					className="underline underline-offset-2 hover:text-foreground"
+				>
+					Trash
+				</Link>{" "}
+				counts too, until it's emptied.
 			</p>
 		</div>
 	);

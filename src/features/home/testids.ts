@@ -78,6 +78,7 @@ export const HOME_TESTID = {
 	profileSave: "home-profile-save",
 	/** ADDENDUM §12: "1.2 GB of 5 GB used". */
 	profileStorage: "home-profile-storage",
+	profileTrash: "home-profile-trash",
 	// Profile picture (FB-16)
 	avatarEdit: "home-avatar-edit",
 	avatarFile: "home-avatar-file",

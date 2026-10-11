@@ -16,6 +16,7 @@ import { Route as authWelcomeRouteImport } from './routes/(auth)/welcome'
 import { Route as AuthedDashboardRouteImport } from './routes/_authed/dashboard'
 import { Route as AuthedSavedRouteImport } from './routes/_authed/saved'
 import { Route as AuthedShareRouteImport } from './routes/_authed/share'
+import { Route as AuthedTrashRouteImport } from './routes/_authed/trash'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as DevFixtureRouteImport } from './routes/dev/fixture'
 import { Route as DevKitRouteImport } from './routes/dev/kit'
@@ -37,6 +38,7 @@ import { Route as TTripShareCardDotpngRouteImport } from './routes/t/$trip_.shar
 import { Route as ApiPlacesPhotoSplatRouteImport } from './routes/api/places/photo/$'
 import { Route as ApiSavedFileIdVariantRouteImport } from './routes/api/saved-file/$id/$variant'
 import { Route as ApiSavedIdVariantRouteImport } from './routes/api/saved/$id/$variant'
+import { Route as ApiTrashIdThumbRouteImport } from './routes/api/trash/$id/thumb'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -70,6 +72,11 @@ const AuthedSavedRoute = AuthedSavedRouteImport.update({
 const AuthedShareRoute = AuthedShareRouteImport.update({
   id: '/share',
   path: '/share',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedTrashRoute = AuthedTrashRouteImport.update({
+  id: '/trash',
+  path: '/trash',
   getParentRoute: () => AuthedRoute,
 } as any)
 const ApiHealthRoute = ApiHealthRouteImport.update({
@@ -177,6 +184,11 @@ const ApiSavedIdVariantRoute = ApiSavedIdVariantRouteImport.update({
   path: '/api/saved/$id/$variant',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiTrashIdThumbRoute = ApiTrashIdThumbRouteImport.update({
+  id: '/api/trash/$id/thumb',
+  path: '/api/trash/$id/thumb',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -185,6 +197,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthedDashboardRoute
   '/saved': typeof AuthedSavedRoute
   '/share': typeof AuthedShareRoute
+  '/trash': typeof AuthedTrashRoute
   '/api/health': typeof ApiHealthRoute
   '/dev/fixture': typeof DevFixtureRouteWithChildren
   '/dev/kit': typeof DevKitRoute
@@ -206,6 +219,7 @@ export interface FileRoutesByFullPath {
   '/api/places/photo/$': typeof ApiPlacesPhotoSplatRoute
   '/api/saved-file/$id/$variant': typeof ApiSavedFileIdVariantRoute
   '/api/saved/$id/$variant': typeof ApiSavedIdVariantRoute
+  '/api/trash/$id/thumb': typeof ApiTrashIdThumbRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -214,6 +228,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthedDashboardRoute
   '/saved': typeof AuthedSavedRoute
   '/share': typeof AuthedShareRoute
+  '/trash': typeof AuthedTrashRoute
   '/api/health': typeof ApiHealthRoute
   '/dev/kit': typeof DevKitRoute
   '/join/$token': typeof AuthedJoinTokenRoute
@@ -233,6 +248,7 @@ export interface FileRoutesByTo {
   '/api/places/photo/$': typeof ApiPlacesPhotoSplatRoute
   '/api/saved-file/$id/$variant': typeof ApiSavedFileIdVariantRoute
   '/api/saved/$id/$variant': typeof ApiSavedIdVariantRoute
+  '/api/trash/$id/thumb': typeof ApiTrashIdThumbRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -243,6 +259,7 @@ export interface FileRoutesById {
   '/_authed/dashboard': typeof AuthedDashboardRoute
   '/_authed/saved': typeof AuthedSavedRoute
   '/_authed/share': typeof AuthedShareRoute
+  '/_authed/trash': typeof AuthedTrashRoute
   '/api/health': typeof ApiHealthRoute
   '/dev/fixture': typeof DevFixtureRouteWithChildren
   '/dev/kit': typeof DevKitRoute
@@ -264,6 +281,7 @@ export interface FileRoutesById {
   '/api/places/photo/$': typeof ApiPlacesPhotoSplatRoute
   '/api/saved-file/$id/$variant': typeof ApiSavedFileIdVariantRoute
   '/api/saved/$id/$variant': typeof ApiSavedIdVariantRoute
+  '/api/trash/$id/thumb': typeof ApiTrashIdThumbRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -274,6 +292,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/saved'
     | '/share'
+    | '/trash'
     | '/api/health'
     | '/dev/fixture'
     | '/dev/kit'
@@ -295,6 +314,7 @@ export interface FileRouteTypes {
     | '/api/places/photo/$'
     | '/api/saved-file/$id/$variant'
     | '/api/saved/$id/$variant'
+    | '/api/trash/$id/thumb'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -303,6 +323,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/saved'
     | '/share'
+    | '/trash'
     | '/api/health'
     | '/dev/kit'
     | '/join/$token'
@@ -322,6 +343,7 @@ export interface FileRouteTypes {
     | '/api/places/photo/$'
     | '/api/saved-file/$id/$variant'
     | '/api/saved/$id/$variant'
+    | '/api/trash/$id/thumb'
   id:
     | '__root__'
     | '/'
@@ -331,6 +353,7 @@ export interface FileRouteTypes {
     | '/_authed/dashboard'
     | '/_authed/saved'
     | '/_authed/share'
+    | '/_authed/trash'
     | '/api/health'
     | '/dev/fixture'
     | '/dev/kit'
@@ -352,6 +375,7 @@ export interface FileRouteTypes {
     | '/api/places/photo/$'
     | '/api/saved-file/$id/$variant'
     | '/api/saved/$id/$variant'
+    | '/api/trash/$id/thumb'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -375,6 +399,7 @@ export interface RootRouteChildren {
   ApiPlacesPhotoSplatRoute: typeof ApiPlacesPhotoSplatRoute
   ApiSavedFileIdVariantRoute: typeof ApiSavedFileIdVariantRoute
   ApiSavedIdVariantRoute: typeof ApiSavedIdVariantRoute
+  ApiTrashIdThumbRoute: typeof ApiTrashIdThumbRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -426,6 +451,13 @@ declare module '@tanstack/react-router' {
       path: '/share'
       fullPath: '/share'
       preLoaderRoute: typeof AuthedShareRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/trash': {
+      id: '/_authed/trash'
+      path: '/trash'
+      fullPath: '/trash'
+      preLoaderRoute: typeof AuthedTrashRouteImport
       parentRoute: typeof AuthedRoute
     }
     '/api/health': {
@@ -575,6 +607,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiSavedIdVariantRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/trash/$id/thumb': {
+      id: '/api/trash/$id/thumb'
+      path: '/api/trash/$id/thumb'
+      fullPath: '/api/trash/$id/thumb'
+      preLoaderRoute: typeof ApiTrashIdThumbRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -582,6 +621,7 @@ interface AuthedRouteChildren {
   AuthedDashboardRoute: typeof AuthedDashboardRoute
   AuthedSavedRoute: typeof AuthedSavedRoute
   AuthedShareRoute: typeof AuthedShareRoute
+  AuthedTrashRoute: typeof AuthedTrashRoute
   AuthedJoinTokenRoute: typeof AuthedJoinTokenRoute
 }
 
@@ -589,6 +629,7 @@ const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedDashboardRoute: AuthedDashboardRoute,
   AuthedSavedRoute: AuthedSavedRoute,
   AuthedShareRoute: AuthedShareRoute,
+  AuthedTrashRoute: AuthedTrashRoute,
   AuthedJoinTokenRoute: AuthedJoinTokenRoute,
 }
 
@@ -642,17 +683,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPlacesPhotoSplatRoute: ApiPlacesPhotoSplatRoute,
   ApiSavedFileIdVariantRoute: ApiSavedFileIdVariantRoute,
   ApiSavedIdVariantRoute: ApiSavedIdVariantRoute,
+  ApiTrashIdThumbRoute: ApiTrashIdThumbRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

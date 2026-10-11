@@ -1,0 +1,20 @@
+/** Trash's `data-testid`s (import-free). */
+export const TRASH_TESTID = {
+	page: "trash-page",
+	grid: "trash-grid",
+	tile: "trash-tile",
+	daysLeft: "trash-days-left",
+	empty: "trash-empty",
+	note: "trash-note",
+	select: "trash-select",
+	selectCancel: "trash-select-cancel",
+	selectCount: "trash-select-count",
+	restoreSelected: "trash-restore-selected",
+	deleteSelected: "trash-delete-selected",
+	emptyTrash: "trash-empty-trash",
+	detail: "trash-detail",
+	restore: "trash-restore",
+	deleteForever: "trash-delete-forever",
+	confirm: "trash-confirm",
+	entry: "trash-entry",
+} as const;
