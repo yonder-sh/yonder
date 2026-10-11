@@ -59,8 +59,28 @@ export type PlacesState = {
 	order: FeedOrder;
 };
 
-/** The Review view last shown (the Review step reopens on it this session). */
-export const lastReviewView: { current: ReviewView } = { current: "table" };
+let lastShown: ReviewView | null = null;
+
+/**
+ * The Review view last shown (the Review step reopens on it this session);
+ * before any, the Board on a phone (the table is ~1000px wide), else the table.
+ */
+export const lastReviewView: { current: ReviewView } = {
+	get current() {
+		return lastShown ?? defaultReviewView();
+	},
+	set current(v) {
+		lastShown = v;
+	},
+};
+
+/** The Board on a phone-width screen, else the table. */
+export function defaultReviewView(): ReviewView {
+	const phone =
+		typeof window !== "undefined" &&
+		!!window.matchMedia?.("(max-width: 767px)").matches;
+	return phone ? "board" : "table";
+}
 
 export function usePlacesState(): PlacesState {
 	const { search } = useWorkspace();

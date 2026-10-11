@@ -466,7 +466,10 @@ function EditorBody({
 					/>
 				</div>
 			</div>
-			<div className="flex flex-wrap items-center gap-2 border-t bg-background px-5 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+			<div
+				data-bottom-bar=""
+				className="flex flex-wrap items-center gap-2 border-t bg-background px-5 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
+			>
 				{stored ? (
 					<Button
 						variant="ghost"

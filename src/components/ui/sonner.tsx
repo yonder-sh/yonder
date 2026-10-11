@@ -9,9 +9,12 @@ import {
 } from "lucide-react";
 import { Toaster as Sonner, type ToasterProps } from "sonner";
 import { useTheme } from "@/components/theme-provider";
+import { toastBottom, useBottomBars } from "@/lib/bottom-bars";
 
 const Toaster = ({ ...props }: ToasterProps) => {
 	const { resolvedTheme } = useTheme();
+	// Above the tab bar, a sheet's Save row and the keyboard, never over them.
+	useBottomBars();
 
 	return (
 		<Sonner
@@ -32,6 +35,8 @@ const Toaster = ({ ...props }: ToasterProps) => {
 					"--border-radius": "var(--radius)",
 				} as React.CSSProperties
 			}
+			offset={{ bottom: toastBottom(24) }}
+			mobileOffset={{ bottom: toastBottom(12) }}
 			{...props}
 		/>
 	);

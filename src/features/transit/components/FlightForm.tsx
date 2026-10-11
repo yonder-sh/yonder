@@ -841,6 +841,7 @@ export function FlightForm({
 				</div>
 			) : null}
 			<div
+				data-bottom-bar={stickyActions ? "" : undefined}
 				className={cn(
 					"flex justify-end gap-2",
 					stickyActions &&

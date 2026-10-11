@@ -91,7 +91,7 @@ export function PlacesDecide({ data }: { data: PlacesData }) {
 	return (
 		<div
 			data-testid={PLACES_TAB_TESTID.decide}
-			className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-4 pb-6 sm:px-6"
+			className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-4 pb-6 max-md:pb-24 sm:px-6"
 		>
 			<DecideStrip data={data} />
 			<div className="grid auto-rows-min grid-cols-1 items-start gap-4 lg:grid-cols-3">

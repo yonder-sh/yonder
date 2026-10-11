@@ -480,8 +480,8 @@ export function PlacesTable({
 			<div
 				className={cn(
 					"min-h-0 flex-1 overflow-auto [container-type:inline-size]",
-					// The last rows scroll clear of the selection bar.
-					chosen.length > 0 && "pb-20",
+					// The last rows scroll clear of the selection bar (and the phone's floats).
+					chosen.length > 0 ? "pb-20 max-md:pb-40" : "max-md:pb-24",
 				)}
 				data-testid={PLACES_TAB_TESTID.tableScroll}
 				data-scroll-y=""

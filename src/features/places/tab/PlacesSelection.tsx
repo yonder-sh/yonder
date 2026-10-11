@@ -29,6 +29,7 @@ export function PlacesSelectionBar({
 		"border-background/25 bg-transparent text-background hover:bg-background/15 hover:text-background";
 	return (
 		<div
+			data-bottom-bar=""
 			data-testid={PLACES_TAB_TESTID.selectionBar}
 			className="absolute inset-x-4 bottom-4 z-[3] flex flex-wrap items-center gap-2 rounded-xl bg-foreground px-4 py-2.5 text-background shadow-float sm:inset-x-6"
 		>

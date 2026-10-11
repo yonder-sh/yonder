@@ -11,9 +11,10 @@ import path from "node:path";
 import { expect, type Page, test } from "@playwright/test";
 import { PLACES_TAB_TESTID as T } from "../../../src/features/places/tab/testids";
 import { PLAN_TESTID } from "../../../src/features/plan/testids";
+import { TESTID } from "../../../src/lib/testids";
 import { REPO_ROOT, storageStateOf } from "./_helpers/env";
 import { cloneFixtureTrip, type FixtureClone } from "./_helpers/fixture";
-import { expectLive } from "./_helpers/page";
+import { expectLive, expectNoHorizontalOverflow } from "./_helpers/page";
 
 test.use({ storageState: storageStateOf("dev") });
 
@@ -207,4 +208,41 @@ test("phone: the ★ Rate pill floats above the tabs and opens the feed", async 
 	await expect(page.getByTestId(T.feed)).toHaveCount(0);
 	await expect(page.getByTestId(T.ratePill)).toBeVisible();
 	await page.screenshot({ path: shot("phone-places-add"), animations: "disabled" });
+});
+
+test("phone: Places opens on the Board; the floats and toasts stay clear of the bars", async ({ page, isMobile }) => {
+	test.skip(!isMobile, "phone layout");
+	await page.setViewportSize({ width: 390, height: 844 });
+	const c = await cloneFixtureTrip(page.request);
+	await page.goto(`/t/${c.slug}?tab=places`);
+	await expectLive(page);
+	// The table is ~1000px wide: a phone opens on the Board.
+	await expect(page).toHaveURL(/pv=board/);
+	await expect(page.getByTestId(T.board)).toBeVisible();
+	await expectNoHorizontalOverflow(page);
+	await page.waitForTimeout(400);
+	await page.screenshot({ path: shot("phone-places-board"), animations: "disabled" });
+
+	// Drop from the details: its Undo toast, once the sheet closes, sits above the tabs and the floats.
+	await page.getByTestId(T.card).first().click();
+	await page.getByTestId(T.dropButton).click();
+	const toast = page.locator("[data-sonner-toast]").filter({ hasText: /^Dropped/ });
+	await expect(toast).toBeVisible();
+	await page.screenshot({ path: shot("phone-toast-sheet"), animations: "disabled" });
+	await page.getByTestId(TESTID.inspectorClose).click();
+	await expect(page.getByTestId(TESTID.inspector)).toHaveCount(0);
+	const top = async (testid: string) => (await page.getByTestId(testid).boundingBox())?.y ?? 0;
+	const clear = Math.min(await top(TESTID.centerTabs), await top(TESTID.fab), await top(T.ratePill));
+	await expect
+		.poll(async () => {
+			const b = await toast.boundingBox();
+			return b ? b.y + b.height : Number.POSITIVE_INFINITY;
+		})
+		.toBeLessThanOrEqual(clear);
+	await page.waitForTimeout(400);
+	await page.screenshot({ path: shot("phone-toast"), animations: "disabled" });
+
+	// Chosen by hand, the table stays.
+	await page.goto(`/t/${c.slug}?tab=places&pv=table`);
+	await expect(page.getByTestId(T.table)).toBeVisible();
 });

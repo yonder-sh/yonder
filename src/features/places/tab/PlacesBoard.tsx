@@ -213,7 +213,7 @@ export function PlacesBoard({ data }: { data: PlacesData }) {
 	);
 	return (
 		<div
-			className="min-h-0 flex-1 overflow-y-auto px-4 pt-3 pb-8"
+			className="min-h-0 flex-1 overflow-y-auto px-4 pt-3 pb-8 max-md:pb-24"
 			data-testid={PLACES_TAB_TESTID.board}
 			// The phone's sheet never drags from the cards: a swipe here scrolls them.
 			data-vaul-no-drag=""

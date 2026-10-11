@@ -1,34 +1,31 @@
 /**
  * The phone's "★ Rate 12" pill (the flow, owner 2026-09-25: rating was very
- * hidden on phones). It floats just above the bottom sheet, on the left
- * (the map's controls and the (+) are on the right, the sheet's handle is
- * inside the sheet), and follows the sheet between its peek and half snaps;
- * with the sheet full height it sits at the foot of the screen. Shown
- * whenever you have places to rate here; hidden at 0, for people who can't
- * rate, and while the feed itself is open. A tap opens the full-screen feed.
- * Planning prompts step back while you travel: during the trip it shows only
- * on the Places tab.
+ * hidden on phones). It floats on the left (the (+) is on the right), just
+ * above the bars on the foot: the tab bar, the Plan's dock, a selection bar
+ * (`--page-bars-h`). Shown whenever you have places to rate here; hidden at
+ * 0, for people who can't rate, while the feed itself is open and while
+ * you type. A tap opens the full-screen feed. Planning prompts step back
+ * while you travel: during the trip it shows only on the Places tab.
  */
 
 import { Star } from "lucide-react";
 import type { CSSProperties, MouseEvent } from "react";
 import { useRateTarget } from "@/features/shell/rate-entry";
+import { floatBottom, useTyping } from "@/lib/bottom-bars";
 import { cn } from "@/lib/utils";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { PLACES_TAB_TESTID } from "./testids";
 import { useFlowTally } from "./use-flow";
 
-/** The pill's bottom edge: just above the phone's 56px tab bar and the Plan's ideas dock (One Yonder). */
-export const RATE_PILL_BOTTOM =
-	"calc(56px + var(--plan-dock-h, 0px) + env(safe-area-inset-bottom) + 12px)";
-
 export function RatePill() {
 	const { tab, search, underway } = useWorkspace();
 	const t = useRateTarget();
 	const left = useFlowTally(t.scopeId).toRate ?? 0;
+	const typing = useTyping();
 	const feedOpen = tab === "places" && search.pv === "rate";
-	if (!left || feedOpen || (underway && tab !== "places")) return null;
-	const style: CSSProperties = { bottom: RATE_PILL_BOTTOM };
+	if (!left || feedOpen || typing || (underway && tab !== "places"))
+		return null;
+	const style: CSSProperties = { bottom: floatBottom(12) };
 	return (
 		<a
 			href={t.href}
@@ -37,6 +34,7 @@ export function RatePill() {
 				e.preventDefault();
 				t.go();
 			}}
+			data-bottom-bar="float"
 			data-testid={PLACES_TAB_TESTID.ratePill}
 			data-count={left}
 			aria-label={`${t.label}: ${left} to rate`}

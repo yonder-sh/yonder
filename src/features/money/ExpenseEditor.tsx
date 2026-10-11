@@ -1733,7 +1733,10 @@ export function ExpenseEditor({
 				</div>
 			</div>
 			{!readOnly ? (
-				<div className="grid gap-2 px-5 pt-2 pb-[max(1rem,env(safe-area-inset-bottom))]">
+				<div
+					data-bottom-bar=""
+					className="grid gap-2 px-5 pt-2 pb-[max(1rem,env(safe-area-inset-bottom))]"
+				>
 					{problems.length && (draft.amount || editing) ? (
 						<p
 							data-testid={MONEY_TESTID.problems}

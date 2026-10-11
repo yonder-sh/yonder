@@ -264,6 +264,8 @@ export function CenterTabContent({
 						: "overflow-y-auto",
 					// Scrolled into view (Follow, a jump) clear of the Plan's ideas dock.
 					active === "plan" && "scroll-pb-[var(--plan-dock-h,0px)]",
+					// The phone's last rows scroll clear of the (+) and the Rate pill.
+					phone && active !== "places" && active !== "plan" && "pb-24",
 				)}
 				data-cursor-anchor={`pane:${active}`}
 				data-cursor-scroll=""

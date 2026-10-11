@@ -816,6 +816,7 @@ function PlaceCard({
 						/>
 						<button
 							type="button"
+							data-bottom-bar=""
 							data-testid={PLACES_TAB_TESTID.feedBar}
 							onClick={() =>
 								info.current?.scrollIntoView({
@@ -845,6 +846,7 @@ function PlaceCard({
 					</div>
 					<div
 						ref={info}
+						data-bottom-bar=""
 						data-testid={PLACES_TAB_TESTID.feedInfo}
 						className="flex snap-end snap-always flex-col gap-4 border-t bg-background px-4 pt-5 pb-[max(18px,env(safe-area-inset-bottom))]"
 					>
