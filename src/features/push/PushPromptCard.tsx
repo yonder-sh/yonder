@@ -88,6 +88,7 @@ export function PushPromptCard() {
 
 	return (
 		<section
+			data-bottom-bar=""
 			data-testid={PUSH_TESTID.card}
 			data-kind={show}
 			aria-label="Notifications"

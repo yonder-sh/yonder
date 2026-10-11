@@ -361,7 +361,7 @@ function IdeasBinInner({
 	// FB-21d: the bin's fold and sort travel with my view (not saved as a follower's).
 	useFollowValue("outline.ideas", open, setOpenState, bool);
 	useFollowValue("outline.isort", sort, setSortState, isIdeasSort);
-	// The Plan's dock: the phone's + and Rate pill float above it (--plan-dock-h).
+	// The Plan's dock: scrolled-to rows stay clear of it (--plan-dock-h).
 	const dock = useRef<HTMLElement>(null);
 	useEffect(() => {
 		const el = dock.current;
@@ -498,6 +498,7 @@ function IdeasBinInner({
 				dock.current = el;
 				if (plan) setDropRef(el);
 			}}
+			data-bottom-bar={plan ? "" : undefined}
 			data-testid={plan ? PLAN_TESTID.ideas : TESTID.ideasBin}
 			data-over={(plan && isOver) || undefined}
 			aria-label={plan ? `Ideas in ${where ?? graph.trip.name}` : "Ideas"}
@@ -505,7 +506,7 @@ function IdeasBinInner({
 				"flex shrink-0 flex-col",
 				// The Plan's dock sits on the column's foot while its days scroll.
 				plan
-					? "sticky bottom-0 z-20 mt-6 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/85"
+					? "sticky bottom-0 z-20 mt-6 border-t bg-background/95 max-md:mt-24 backdrop-blur supports-[backdrop-filter]:bg-background/85"
 					: "border-t",
 				plan && isOver && "bg-primary/5 ring-2 ring-primary/40 ring-inset",
 				!plan && !embedded && "max-h-[40%]",

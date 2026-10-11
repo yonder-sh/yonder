@@ -2271,7 +2271,10 @@ function PreviewBody({
 					<CategoryChips value={category} onChange={setCategory} />
 				) : null}
 			</div>
-			<div className="sticky bottom-0 flex flex-wrap items-center justify-end gap-2 border-t bg-popover/95 px-4 py-3 backdrop-blur">
+			<div
+				data-bottom-bar=""
+				className="sticky bottom-0 flex flex-wrap items-center justify-end gap-2 border-t bg-popover/95 px-4 py-3 backdrop-blur"
+			>
 				{asking ? (
 					<>
 						<Button
