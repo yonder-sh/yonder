@@ -44,6 +44,7 @@ import {
 	commonParent,
 	edgeTip,
 	fitBoundsFor,
+	fitPointsFor,
 	inJapan,
 	legUsesN02,
 	type MapDataOptions,
@@ -126,6 +127,20 @@ describe("pins", () => {
 		expect(tokyo?.size).toBeLessThanOrEqual(22 * 1.35 + 0.1);
 		const countries = setup(demoGraph, null, "country").pins;
 		expect(countries.find((p) => p.repId === N.japan)?.shape).toBe("country");
+	});
+
+	it("frames the whole trip's stops, not its countries' centres", () => {
+		const { ix, pins } = setup(demoGraph, null, "country");
+		const japan = pins.find((p) => p.repId === N.japan);
+		const tokyo = ix.coordOf(N.tokyo);
+		const pts = fitPointsFor(pins, { all: true, ix });
+		expect(pts).not.toContainEqual([japan?.lng, japan?.lat]);
+		expect(pts).toContainEqual(tokyo);
+		// Without the index, the pins themselves.
+		expect(fitPointsFor(pins, { all: true })).toContainEqual([
+			japan?.lng,
+			japan?.lat,
+		]);
 	});
 
 	it("hides ideas when 'Show ideas' is off and while a day range is active", () => {

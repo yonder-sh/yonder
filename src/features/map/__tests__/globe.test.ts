@@ -16,7 +16,13 @@ import {
 	perspectiveRadius,
 	sphericalCap,
 } from "../geo-utils";
-import { fitPointsFor, type PinView, wantsGlobe } from "../map-data";
+import {
+	compactSplitBadges,
+	fitPointsFor,
+	isFitPoint,
+	type PinView,
+	wantsGlobe,
+} from "../map-data";
 
 // Country pins roughly where the QA fixture and the real trip put them.
 const USA: Position = [-98.6, 39.8];
@@ -249,6 +255,31 @@ describe("wantsGlobe / fitPointsFor (FB-10)", () => {
 				pin("au", [149.1, -35.3]),
 			]),
 		).toBe(false);
+	});
+
+	it("stays flat for countries close together (Japan and Korea fit a map)", () => {
+		expect(wantsGlobe([pin("jp", JAPAN), pin("kr", KOREA)])).toBe(false);
+		expect(wantsGlobe([pin("jp", JAPAN), pin("vn", VIETNAM)])).toBe(true);
+	});
+
+	it("never frames a point without coordinates or at 0,0", () => {
+		expect(isFitPoint([0, 0])).toBe(false);
+		expect(isFitPoint([Number.NaN, 35])).toBe(false);
+		expect(isFitPoint([179.9, -16.5])).toBe(true);
+		const pins = [pin("jp", JAPAN), pin("xx", [0, 0])];
+		expect(fitPointsFor(pins)).toEqual([JAPAN]);
+	});
+
+	it("shrinks overlapping Cities & nights badges to their numbers, in route order", () => {
+		const tokyo = { key: "tokyo", x: 400, y: 300, days: [4] };
+		const kyoto = { key: "kyoto", x: 360, y: 310, days: [3] };
+		const osaka = { key: "osaka", x: 355, y: 314, days: [2] };
+		const seoul = { key: "seoul", x: 100, y: 200, days: [3] };
+		expect([...compactSplitBadges([tokyo, kyoto, osaka, seoul])]).toEqual([
+			"kyoto",
+			"osaka",
+		]);
+		expect(compactSplitBadges([tokyo, seoul]).size).toBe(0);
 	});
 
 	it("frames every country on the whole trip, only visited pins elsewhere", () => {

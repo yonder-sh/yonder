@@ -993,40 +993,129 @@ export function selectedFids(
 	return out;
 }
 
+/** A point the camera can frame: finite, on the Earth, not an unset 0,0. */
+export function isFitPoint(p: readonly number[]): boolean {
+	const [lng, lat] = p;
+	return (
+		Number.isFinite(lng) &&
+		Number.isFinite(lat) &&
+		Math.abs(lat as number) <= 90 &&
+		!(lng === 0 && lat === 0)
+	);
+}
+
+/** The scheduled cities, areas and places (stays included) with their own coordinates, by country. */
+function stopsByCountry(ix: GraphIndex): Map<string, LngLat[]> {
+	const out = new Map<string, LngLat[]>();
+	for (const id of ix.scheduledNodeIds) {
+		const n = ix.node(id);
+		if (!n || n.type === "country" || n.type === "region") continue;
+		if (n.lng == null || n.lat == null || !isFitPoint([n.lng, n.lat])) continue;
+		const country = ix.path(id).find((x) => x.type === "country")?.id;
+		if (!country) continue;
+		out.set(country, [...(out.get(country) ?? []), [n.lng, n.lat]]);
+	}
+	return out;
+}
+
 /**
  * What the camera frames: the visited pins (or the ideas when nothing is
  * visited yet). With `all`, every pin on show, ideas included: the whole
  * trip's first view frames all its countries (FB-10), not only the one with
- * days so far.
+ * days so far. With `ix`, a visited country pin stands for its stops (the
+ * route, not the country's centre).
  */
 export function fitPointsFor(
 	pins: readonly PinView[],
-	{ all = false }: { all?: boolean } = {},
+	{ all = false, ix }: { all?: boolean; ix?: GraphIndex } = {},
 ): LngLat[] {
 	const visible = pins.filter((p) => !p.filteredOut || !p.hollow);
 	const visited = visible.filter((p) => !p.hollow);
 	const use = all || !visited.length ? visible : visited;
-	return use.map((p) => [p.lng, p.lat]);
+	const stops =
+		ix && use.some((p) => p.type === "country" && !p.hollow)
+			? stopsByCountry(ix)
+			: null;
+	return use
+		.flatMap((p): LngLat[] => {
+			const inside =
+				!p.hollow && p.type === "country" ? stops?.get(p.repId) : undefined;
+			return inside?.length ? inside : [[p.lng, p.lat]];
+		})
+		.filter(isFitPoint);
 }
 
 export function fitBoundsFor(
 	pins: readonly PinView[],
-	opts?: { all?: boolean },
+	opts?: { all?: boolean; ix?: GraphIndex },
 ): Bounds | null {
 	return boundsOf(fitPointsFor(pins, opts));
 }
 
 /**
- * FB-10 / QA MAP-01: the whole trip (country lens, no scope) is a globe when
- * it spans more than one country and they all fit on the visible side of the
- * Earth (`GLOBE_MAX_CAP`). One country, or a trip round the world, stays flat.
+ * Below this cap (degrees) a multi-country trip stays flat and fits its
+ * stops: Japan and Korea are a map, not a planet (walkthrough 2026-10-07).
  */
-export function wantsGlobe(pins: readonly PinView[]): boolean {
+export const GLOBE_MIN_CAP = 15;
+
+/**
+ * FB-10 / QA MAP-01: the whole trip (country lens, no scope) is a globe when
+ * it spans more than one country, too far apart for a flat map
+ * (`GLOBE_MIN_CAP`), and they all fit on the visible side of the Earth
+ * (`GLOBE_MAX_CAP`). One country, a compact trip, or one round the world
+ * stays flat. `pts` (default: the pins) is what the camera frames.
+ */
+export function wantsGlobe(
+	pins: readonly PinView[],
+	pts?: readonly LngLat[],
+): boolean {
 	const shown = pins.filter((p) => !p.filteredOut || !p.hollow);
 	const countries = new Set(shown.map((p) => p.countryCode ?? p.repId));
 	if (countries.size < 2) return false;
-	const cap = sphericalCap(shown.map((p) => [p.lng, p.lat]));
-	return !!cap && cap.radius <= GLOBE_MAX_CAP;
+	const cap = sphericalCap(
+		pts ?? shown.map((p): LngLat => [p.lng, p.lat]).filter(isFitPoint),
+	);
+	return !!cap && cap.radius >= GLOBE_MIN_CAP && cap.radius <= GLOBE_MAX_CAP;
+}
+
+/** A Cities & nights badge on screen: its anchor (px) and how many nights each stop there has. */
+export type SplitBadge = { key: string; x: number; y: number; days: number[] };
+
+const nightsText = (d: number) => `${d} ${d === 1 ? "night" : "nights"}`;
+
+/**
+ * Badges that would cover an earlier one keep only their numbers ("2"), not
+ * "2 3 nights": greedy in route order, ~6.6px per 11px mono character.
+ */
+export function compactSplitBadges(badges: readonly SplitBadge[]): Set<string> {
+	const rect = (
+		b: SplitBadge,
+		full: boolean,
+	): [number, number, number, number] => {
+		const w =
+			b.days.reduce(
+				(sum, d) => sum + 24 + (full ? 6.6 * nightsText(d).length + 4 : 0),
+				0,
+			) +
+			3 * (b.days.length - 1);
+		// Anchored at the bottom centre, 18px above the city.
+		return [b.x - w / 2, b.y - 38, b.x + w / 2, b.y - 18];
+	};
+	const hit = (a: number[], b: number[]) =>
+		(a[0] as number) < (b[2] as number) &&
+		(a[2] as number) > (b[0] as number) &&
+		(a[1] as number) < (b[3] as number) &&
+		(a[3] as number) > (b[1] as number);
+	const placed: number[][] = [];
+	const out = new Set<string>();
+	for (const b of badges) {
+		const full = rect(b, true);
+		if (placed.some((r) => hit(full, r))) {
+			out.add(b.key);
+			placed.push(rect(b, false));
+		} else placed.push(full);
+	}
+	return out;
 }
 
 // ---------------------------------------------------------------------------

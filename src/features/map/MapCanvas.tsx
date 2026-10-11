@@ -115,10 +115,12 @@ import {
 	buildEdges,
 	buildGhosts,
 	buildPins,
+	compactSplitBadges,
 	type EdgeProps,
 	edgeTip,
 	fitBoundsFor,
 	fitPointsFor,
+	isFitPoint,
 	legUsesN02,
 	type MapDataOptions,
 	oneRepHint,
@@ -774,14 +776,19 @@ export default function MapCanvas({
 
 	// The whole trip at the country lens frames every country, ideas included
 	// (FB-10), on a globe when they span more than one country (`wantsGlobe`).
+	// The Plan's Cities & nights route is framed too, while it's on the map.
 	const wholeTrip = lens === "country" && !scopeId;
-	const fitPts = useMemo(
-		() => fitPointsFor(pins, { all: wholeTrip }),
-		[pins, wholeTrip],
-	);
+	const fitPts = useMemo(() => {
+		// The TI-6 stress pins never move the camera.
+		const real = stress.length ? pins.slice(0, -stress.length) : pins;
+		const pts = fitPointsFor(real, { all: wholeTrip, ix });
+		for (const s of route ?? [])
+			if (isFitPoint([s.lng, s.lat])) pts.push([s.lng, s.lat]);
+		return pts;
+	}, [pins, stress, wholeTrip, ix, route]);
 	const ownGlobe = useMemo(
-		() => wholeTrip && wantsGlobe(pins),
-		[wholeTrip, pins],
+		() => wholeTrip && wantsGlobe(pins, fitPts),
+		[wholeTrip, pins, fitPts],
 	);
 	// FB-22: mirroring someone's camera, the map takes their projection too.
 	const leaderGlobe = useCamFollow((s) =>
@@ -789,12 +796,23 @@ export default function MapCanvas({
 	);
 	const globe = leaderGlobe ?? ownGlobe;
 	const styleSpec = useProjectedStyle(basemap, globe);
+	// With nothing to frame (a city with no places yet), the scope itself.
+	const scopeAt = useMemo(() => {
+		const c = scopeId ? ix.coordOf(scopeId) : null;
+		const type = scopeId ? ix.node(scopeId)?.type : undefined;
+		return c && type && isFitPoint(c)
+			? { center: c, zoom: LENS_ZOOM[type as Lens] ?? LENS_ZOOM.city }
+			: null;
+	}, [ix, scopeId]);
+	// One point in a scope (its own pin, or its only place) keeps the scope's
+	// surroundings in view: a city at ~12, not street level.
 	const maxFitZoom = Math.min(
 		16,
 		LENS_ZOOM[lens] + (fitPts.length <= 1 ? 0 : 2),
+		fitPts.length <= 1 && scopeAt ? scopeAt.zoom + 1 : 16,
 	);
-	const latest = useRef({ fitPts, fitPadding, maxFitZoom, globe });
-	latest.current = { fitPts, fitPadding, maxFitZoom, globe };
+	const latest = useRef({ fitPts, fitPadding, maxFitZoom, globe, scopeAt });
+	latest.current = { fitPts, fitPadding, maxFitZoom, globe, scopeAt };
 
 	/**
 	 * Moves the camera so `pts` sit inside `pad`. Mercator: `fitBounds`, with
@@ -863,12 +881,23 @@ export default function MapCanvas({
 				fitPts: pts,
 				fitPadding: pad,
 				maxFitZoom: maxZoom,
+				scopeAt: at,
 			} = latest.current;
-			if (!map || pts.length === 0) return;
+			if (!map || (pts.length === 0 && !at)) return;
 			// FB-22: the camera is the leader's while I follow their map.
 			if (isCameraFollowing()) return;
 			userMoved.current = false;
 			const { W, H } = mapSize(map.getMap());
+			if (pts.length === 0 && at) {
+				const m = map.getMap();
+				if (!sameInsets(m.getPadding(), NO_INSETS)) m.setPadding(NO_INSETS);
+				m.easeTo({
+					center: at.center,
+					zoom: at.zoom,
+					duration: reducedMotion() ? 0 : duration,
+				});
+				return;
+			}
 			fitInside(pts, padIn(pad, W, H, 0.7), maxZoom, duration);
 		},
 		[fitInside],
@@ -876,13 +905,17 @@ export default function MapCanvas({
 
 	// A trip that becomes a globe (or flat) refits with its new projection.
 	const fitKey = `${scopeId}|${lens}|${ws.search.days ?? ""}|${dayMode}|${globe}`;
-	const fitted = useRef<string | null>(null);
-	useEffect(() => {
-		if (!loaded || fitted.current === fitKey) return;
-		const first = fitted.current === null;
-		fitted.current = fitKey;
-		fitCamera(first ? 0 : 600);
-	}, [loaded, fitKey, fitCamera]);
+	// What's framed (~100 m, any order): a trip that grows refits too, unless
+	// the person has moved the map or a selected pin would drop out of view.
+	const ptsKey = useMemo(
+		() =>
+			fitPts
+				.map((p) => `${p[0].toFixed(3)},${p[1].toFixed(3)}`)
+				.sort()
+				.join(";"),
+		[fitPts],
+	);
+	const fitted = useRef<{ view: string; pts: string } | null>(null);
 
 	// Keep a selected pin clear of the inspector / sheet (DESIGN §9, SPEC §12.5).
 	const visitRep = useMemo(
@@ -902,6 +935,20 @@ export default function MapCanvas({
 		}
 		return null;
 	}, [sel, pins, ix, lens, scopeId, fullModel.visitOfItem, visitRep]);
+
+	useEffect(() => {
+		if (!loaded) return;
+		const prev = fitted.current;
+		if (prev?.view === fitKey && prev.pts === ptsKey) return;
+		fitted.current = { view: fitKey, pts: ptsKey };
+		if (prev?.view === fitKey) {
+			if (userMoved.current) return;
+			const p = selectedRep ? pins.find((x) => x.repId === selectedRep) : null;
+			const key = p ? `${p.lng.toFixed(3)},${p.lat.toFixed(3)}` : null;
+			if (key && !ptsKey.split(";").includes(key)) return;
+		}
+		fitCamera(prev === null ? 0 : 600);
+	}, [loaded, fitKey, ptsKey, fitCamera, selectedRep, pins]);
 
 	/**
 	 * Brings points into the part of the map that isn't covered (inspector,
@@ -1661,6 +1708,41 @@ export default function MapCanvas({
 			by.set(s.cityId, [...(by.get(s.cityId) ?? []), s]);
 		return [...by.values()];
 	}, [route]);
+	// Badges that would overlap shrink to their numbers (re-checked on move end).
+	const [compactStops, setCompactStops] = useState<ReadonlySet<string>>(
+		() => new Set(),
+	);
+	useEffect(() => {
+		const map = mapRef.current?.getMap();
+		if (!map || !loaded || routeStops.length === 0) {
+			setCompactStops((prev) => (prev.size ? new Set() : prev));
+			return;
+		}
+		const place = () => {
+			const next = compactSplitBadges(
+				routeStops.flatMap((stops) => {
+					const s = stops[0];
+					if (!s) return [];
+					const q = map.project([s.lng, s.lat]);
+					return [
+						{ key: s.cityId, x: q.x, y: q.y, days: stops.map((x) => x.days) },
+					];
+				}),
+			);
+			setCompactStops((prev) =>
+				prev.size === next.size && [...next].every((k) => prev.has(k))
+					? prev
+					: next,
+			);
+		};
+		place();
+		map.on("moveend", place);
+		map.on("resize", place);
+		return () => {
+			map.off("moveend", place);
+			map.off("resize", place);
+		};
+	}, [loaded, routeStops]);
 
 	const isMobile = variant === "mobile";
 	const controlStyle: CSSProperties = isMobile
@@ -1671,7 +1753,7 @@ export default function MapCanvas({
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: only the first render matters; afterwards fit() drives the camera
 	const initialViewState = useMemo(() => {
-		const b = fitBoundsFor(pins, { all: wholeTrip });
+		const b = fitBoundsFor(pins, { all: wholeTrip, ix });
 		if (b)
 			return {
 				bounds: b,
@@ -1807,7 +1889,11 @@ export default function MapCanvas({
 					})}
 					{clusterMarkers}
 					{routeStops.map((stops) => (
-						<SplitStopMarker key={stops[0]?.cityId} stops={stops} />
+						<SplitStopMarker
+							key={stops[0]?.cityId}
+							stops={stops}
+							compact={compactStops.has(stops[0]?.cityId ?? "")}
+						/>
 					))}
 				</MapGL>
 			</div>
