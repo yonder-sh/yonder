@@ -5,6 +5,7 @@ import type { Holiday } from "@/lib/schemas/trips";
 import { type ScenarioSpec, scenario } from "./__fixtures__/demo";
 import { indexGraph } from "./graph-index";
 import {
+	checkVisit,
 	type EffectiveHours,
 	effectiveHours,
 	hoursFixes,
@@ -555,5 +556,50 @@ describe("hoursFixes", () => {
 		expect(
 			hoursFixes(ix, schedule, s.I.itoya ?? "", { ...issue, severity: "info" }),
 		).toEqual([]);
+	});
+});
+
+describe("always-open places (A354)", () => {
+	const visit = (h: OpeningHours, date: string, startMin: number) =>
+		checkVisit({
+			eh: { hours: h, source: "manual", confidence: "high" },
+			date,
+			startMin,
+			endMin: startMin + 60,
+			holidayOf: () => null,
+		}).map((i) => i.kind);
+
+	it("honours closures and special dates", () => {
+		// 2027-10-12 is a Tuesday.
+		expect(visit(manual({ alwaysOpen: true }), "2027-10-12", 600)).toEqual([]);
+		expect(
+			visit(manual({ alwaysOpen: true, closedDays: [2] }), "2027-10-12", 600),
+		).toEqual(["closed"]);
+		expect(
+			visit(
+				manual({
+					alwaysOpen: true,
+					exceptions: [{ date: "2027-10-12", closed: true }],
+				}),
+				"2027-10-12",
+				600,
+			),
+		).toEqual(["closed"]);
+		expect(
+			visit(
+				manual({
+					alwaysOpen: true,
+					exceptions: [
+						{
+							date: "2027-10-12",
+							closed: false,
+							periods: [{ open: "12:00", close: "15:00" }],
+						},
+					],
+				}),
+				"2027-10-12",
+				600,
+			),
+		).toEqual(["before_open"]);
 	});
 });
