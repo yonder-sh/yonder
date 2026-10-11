@@ -317,6 +317,51 @@ test("moving a stop unlinks its route: toast with Undo, the amber row, Undo rest
 		.toBe(c.ids.days.d1);
 });
 
+test("every day has its header under its visit's label; a card and an idea dropped on an empty day's line land there", async ({
+	page,
+}, info) => {
+	test.skip(info.project.name !== "chromium", "mouse drag");
+	const c = await cloneFixtureTrip(page.request);
+	await page.setViewportSize({ width: 1440, height: 900 });
+	await page.goto(`/t/${c.slug}?tab=plan`);
+	await expectLive(page);
+	const before = await graphOf(page);
+	// Two empty days after Day 1.
+	for (let i = 0; i < 2; i++) {
+		await page.getByTestId(PLAN_TESTID.dayHeader).first().getByTestId(PLAN_TESTID.dayMenu).click();
+		await page.getByRole("menuitem", { name: "Insert day after" }).click();
+		await expect.poll(async () => (await graphOf(page)).days.length).toBe(before.days.length + i + 1);
+	}
+	const empty = (await graphOf(page)).days.filter((d) => !before.days.some((b) => b.id === d.id)).map((d) => d.id);
+	const line = (dayId: string) => page.locator(`[data-testid="${PLAN_TESTID.dayEmpty}"][data-day-id="${dayId}"]`);
+	await expect(line(empty[0] as string)).toContainText("Nothing planned");
+	await expect(page.getByTestId(PLAN_TESTID.band).first()).toBeVisible();
+	const planned = new Set(before.items.flatMap((i) => (i.dayId ? [i.dayId] : [])));
+	const headers = await page.getByTestId(PLAN_TESTID.dayHeader).evaluateAll((els) => els.map((e) => e.getAttribute("data-day-id")));
+	for (const d of before.days) if (planned.has(d.id)) expect(headers).toContain(d.id);
+	await page.waitForTimeout(400);
+	await page.screenshot({ path: shotPath("plan/days-1440.png"), animations: "disabled" });
+
+	// A card dragged onto the first empty line lands on that day.
+	await page.setViewportSize({ width: 1440, height: 1600 });
+	const moved = c.ids.items.itoya as string;
+	const target = async (dayId: string) => {
+		const box = await line(dayId).boundingBox();
+		if (!box) throw new Error("no line");
+		return { x: box.x + box.width / 3, y: box.y + box.height / 2 };
+	};
+	const centre = (l: Locator) => l.evaluate((e) => e.scrollIntoView({ block: "center" }));
+	await centre(line(empty[0] as string));
+	await drag(page, card(page, moved), await target(empty[0] as string));
+	await expect.poll(async () => (await graphOf(page)).items.find((i) => i.id === moved)?.dayId).toBe(empty[0]);
+
+	// An idea dropped on the other one becomes its stop.
+	const row = idea(page);
+	await centre(line(empty[1] as string));
+	await drag(page, row, await target(empty[1] as string));
+	await expect.poll(async () => (await graphOf(page)).items.filter((i) => i.dayId === empty[1]).length).toBe(1);
+});
+
 test("unschedule and reschedule; insert and delete a day never lose items", async ({ page }, info) => {
 	test.skip(info.project.name !== "chromium", "desktop layout");
 	const c = await cloneFixtureTrip(page.request);
@@ -345,7 +390,12 @@ test("unschedule and reschedule; insert and delete a day never lose items", asyn
 	await firstHeader.getByTestId(PLAN_TESTID.dayMenu).click();
 	await page.getByRole("menuitem", { name: "Insert day after" }).click();
 	await expect.poll(async () => (await graphOf(page)).days.length).toBe(before.days.length + 1);
-	const newHeader = page.getByTestId(PLAN_TESTID.dayHeader).nth(1);
+	const added = (await graphOf(page)).days.find((d) => !before.days.some((b) => b.id === d.id))?.id;
+	// Empty, it is one line; its date shows its header.
+	const line = page.locator(`[data-testid="${PLAN_TESTID.dayEmpty}"][data-day-id="${added}"]`);
+	await expect(line).toContainText("Nothing planned");
+	await line.getByRole("button", { name: /, Day 2$/ }).click();
+	const newHeader = page.locator(`[data-testid="${PLAN_TESTID.dayHeader}"][data-day-id="${added}"]`);
 	await expect(newHeader).toContainText("Day 2");
 	await newHeader.getByTestId(PLAN_TESTID.dayMenu).click();
 	await page.getByRole("menuitem", { name: "Delete day…" }).click();
@@ -468,6 +518,13 @@ test("mobile: the plan at 390×844", async ({ page }, info) => {
 	await expect(page.getByTestId(TESTID.mobileSheet).getByTestId(TESTID.timelineItem).first()).toBeVisible();
 	await page.waitForTimeout(400);
 	await page.screenshot({ path: shotPath("plan/mobile-plan-390.png"), animations: "disabled" });
+	await expectNoHorizontalOverflow(page);
+	// The trip's days: each with its header, under its visit's label.
+	await page.goto(`/t/${c.slug}?tab=plan`);
+	await expectLive(page);
+	await expect(page.getByTestId(PLAN_TESTID.band).first()).toBeVisible();
+	await page.waitForTimeout(400);
+	await page.screenshot({ path: shotPath("plan/days-390.png"), animations: "disabled" });
 	await expectNoHorizontalOverflow(page);
 	expect(logs.messages).toEqual([]);
 });

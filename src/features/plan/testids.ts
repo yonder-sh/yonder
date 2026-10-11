@@ -9,8 +9,8 @@ export const PLAN_TESTID = {
 	ideas: "plan-ideas",
 	daySection: "plan-day",
 	dayHeader: "plan-day-header",
-	/** One Yonder D02: a day in the trip-level list. */
-	dayRow: "plan-day-row",
+	/** A day with nothing on it, in a list of days: one line. */
+	dayEmpty: "plan-day-empty",
 	/** One Yonder D04: Fill a day (the day's ideas in the map's place). */
 	fillDay: "plan-fill-day",
 	fillIdea: "plan-fill-idea",

@@ -88,7 +88,9 @@ export function estimateDayHeight(
 	compact: boolean,
 ): number {
 	const n = ix.itemsByDay.get(dayId)?.length ?? 0;
-	return 100 + n * (compact ? 76 : 100) + (n ? 40 : 64);
+	// An empty day is one line (`EmptyDayLine`).
+	if (n === 0) return 44;
+	return 100 + n * (compact ? 76 : 100) + 40;
 }
 
 /**

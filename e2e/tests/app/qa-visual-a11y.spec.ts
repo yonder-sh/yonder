@@ -305,7 +305,7 @@ test.describe("desktop", () => {
 		await page.keyboard.press("Escape");
 		// Skipped: the Plan keeps the start, and the Overview offers it too.
 		await expect(page.getByTestId("split-route-start")).toContainText("What do you want to see?");
-		await expect(page.getByTestId("center-panel")).toContainText("A free day.");
+		await expect(page.getByTestId("center-panel")).toContainText("Nothing planned");
 		const base = page.url().split("?")[0];
 		await page.goto(`${base}?tab=overview`);
 		await expect(page.getByTestId("overview-empty")).toContainText("What do you want to see?");

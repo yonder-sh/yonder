@@ -30,6 +30,7 @@ import { useProposalMarks } from "@/lib/workspace/use-proposals";
 import { useWorkspace } from "@/lib/workspace/use-workspace";
 import { AddMenu } from "./AddMenu";
 import { DayHeader, DayHeaderLite } from "./DayHeader";
+import { EmptyDayLine } from "./EmptyDayLine";
 import {
 	FlightContinued,
 	FlightRows,
@@ -301,6 +302,8 @@ export function DaySection(props: DaySectionProps) {
 			label: day ? `Day ${ix.dayNumber(dayId)}` : "day",
 		},
 	});
+	const dayMarks = useProposalMarks(`day:${dayId}`);
+	const originMarks = useProposalMarks(`from:day:${dayId}`);
 	useEffect(() => {
 		const el = ref.current;
 		if (!win || !el) return;
@@ -322,27 +325,43 @@ export function DaySection(props: DaySectionProps) {
 		[setNodeRef],
 	);
 	if (!day) return null;
-	const live = near || dragDay === dayId || selectedDayId(ws) === dayId;
-	const spacer = live
-		? undefined
-		: (win?.heights.get(key) ?? estimateDayHeight(ix, dayId, ui.compact));
+	const selected = selectedDayId(ws) === dayId;
+	// In a list of days, a day with nothing on it is one line (its header shows once selected).
+	const oneLine =
+		!selected &&
+		!(ws.days && ws.days.from === ws.days.to) &&
+		(ix.itemsByDay.get(dayId)?.length ?? 0) === 0 &&
+		dayMarks.length === 0 &&
+		originMarks.length === 0;
+	const live = near || dragDay === dayId || selected;
+	const spacer =
+		live || oneLine
+			? undefined
+			: (win?.heights.get(key) ?? estimateDayHeight(ix, dayId, ui.compact));
 	return (
 		<section
 			ref={setRefs}
 			data-testid={PLAN_TESTID.daySection}
 			data-day-id={dayId}
 			data-cursor-anchor={copyAnchorId(`day:${dayId}`, copy)}
-			data-windowed={live ? undefined : ""}
+			data-windowed={live || oneLine ? undefined : ""}
 			aria-label={`Day ${ix.dayNumber(dayId)}`}
 			style={spacer ? { minHeight: spacer } : undefined}
 			className={cn(
 				// A little air after each day, so a day reads as one unit.
-				"relative pb-4 transition-colors",
-				isOver && "bg-primary/[0.03]",
+				"relative transition-colors",
+				oneLine ? "py-0.5" : "pb-4",
+				isOver && !oneLine && "bg-primary/[0.03]",
 				muted && "opacity-75",
 			)}
 		>
-			{live ? <DayBody {...props} /> : <DayHeaderLite day={day} copy={copy} />}
+			{oneLine ? (
+				<EmptyDayLine day={day} over={isOver} copy={copy} />
+			) : live ? (
+				<DayBody {...props} />
+			) : (
+				<DayHeaderLite day={day} copy={copy} />
+			)}
 		</section>
 	);
 }
