@@ -306,6 +306,21 @@ describe("the cursor sanitizer (FB-17)", () => {
 		expect(same.spotlight).toEqual({ id: "aaaaaa2" });
 	});
 
+	it("a link guest never starts a spotlight; a viewer member may", async () => {
+		const g = guard();
+		const guest = {
+			...ctx,
+			role: "viewer" as const,
+			memberId: null,
+			guest: true,
+		};
+		const out = await run(g, { spotlight: { id: "abc123def" } }, { c: guest });
+		expect("spotlight" in out).toBe(false);
+		const viewer = { ...ctx, role: "viewer" as const };
+		const ok = await run(g, { spotlight: { id: "abc123def" } }, { c: viewer });
+		expect(ok.spotlight).toEqual({ id: "abc123def" });
+	});
+
 	it("never keeps channel cursor fields on note documents", async () => {
 		const g = guard();
 		const out = await run(

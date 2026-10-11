@@ -281,7 +281,7 @@ export class CursorGuard {
 	async sanitize(
 		state: State,
 		prev: State | undefined,
-		ctx: Pick<CollabContext, "tripId">,
+		ctx: Pick<CollabContext, "tripId" | "guest">,
 		key: object,
 		clean: State,
 	): Promise<void> {
@@ -298,7 +298,8 @@ export class CursorGuard {
 			const f = AwarenessFollowing.safeParse(state.following);
 			if (f.success) clean.following = f.data;
 		}
-		if ("spotlight" in state) {
+		// Only members (any role) start a spotlight; a link guest never does (A243).
+		if ("spotlight" in state && !ctx.guest) {
 			const s = AwarenessSpotlight.safeParse(state.spotlight);
 			// A new spotlight makes everyone follow: rate-limited, else the old one stays.
 			const before = prev?.spotlight as { id?: string } | null | undefined;

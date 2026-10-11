@@ -59,14 +59,15 @@ export function followersOf(
 /** The peer whose spotlight I should follow (the first one, by name), if any. */
 export function spotlightPresenter(
 	peers: readonly Peer[],
-	dismissed: ReadonlySet<string>,
+	dismissed: ReadonlyMap<string, number>,
+	now = Date.now(),
 ): Peer | null {
 	return (
 		peers.find(
 			(p) =>
 				p.spotlight &&
 				typeof p.spotlight.id === "string" &&
-				!dismissed.has(p.spotlight.id),
+				!((dismissed.get(p.user.id) ?? 0) > now),
 		) ?? null
 	);
 }

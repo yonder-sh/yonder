@@ -5,10 +5,13 @@ vi.mock("./auth-client", () => ({ authClient: { signOut: authSignOut } }));
 
 const { clearGrants, forgetGrant, hasGrant, readGrants, saveGrant } =
 	await import("./grants");
-const { onSignOut, signOut } = await import("./sign-out");
+const { onSignOut, pendingSignOut, settlePendingSignOut, signOut } =
+	await import("./sign-out");
 
 beforeEach(() => {
 	localStorage.clear();
+	// biome-ignore lint/suspicious/noDocumentCookie: resets the flag's cookie
+	document.cookie = "yonder-pending-sign-out=; Path=/; Max-Age=0";
 	sessionStorage.clear();
 	authSignOut.mockReset().mockResolvedValue({ data: { success: true } });
 });
@@ -75,5 +78,48 @@ describe("signOut (SPEC §11.2 flow 8, SECURITY §11)", () => {
 		onSignOut(cleanup)();
 		await signOut({ reload: false, navigate: vi.fn() });
 		expect(cleanup).not.toHaveBeenCalled();
+	});
+});
+
+describe("a sign-out the server never confirmed (A147)", () => {
+	const flag = () => localStorage.getItem("yonder:pending-sign-out");
+
+	it("a confirmed sign-out leaves nothing pending", async () => {
+		await signOut({ reload: false, navigate: vi.fn() });
+		expect(flag()).toBeNull();
+		expect(pendingSignOut()).toBe(false);
+	});
+
+	it.each([
+		[
+			"a thrown network error",
+			() => authSignOut.mockRejectedValue(new TypeError("offline")),
+		],
+		[
+			"an error answer",
+			() =>
+				authSignOut.mockResolvedValue({ data: null, error: { status: 500 } }),
+		],
+	])("%s: wipes and leaves as today, and marks it pending", async (_, fail) => {
+		fail();
+		const navigate = vi.fn();
+		await signOut({ reload: false, navigate });
+		expect(navigate).toHaveBeenCalledWith("/login");
+		expect(flag()).toBe("1");
+		expect(document.cookie).toContain("yonder-pending-sign-out=1");
+	});
+
+	it("the next start retries; the flag clears only when the server confirms", async () => {
+		authSignOut.mockRejectedValue(new TypeError("offline"));
+		await signOut({ reload: false, navigate: vi.fn() });
+		expect(await settlePendingSignOut()).toBe(true);
+		expect(pendingSignOut()).toBe(true);
+		authSignOut.mockResolvedValue({ data: { success: true } });
+		expect(await settlePendingSignOut()).toBe(false);
+		expect(flag()).toBeNull();
+		expect(document.cookie).not.toContain("yonder-pending-sign-out=1");
+		authSignOut.mockClear();
+		expect(await settlePendingSignOut()).toBe(false);
+		expect(authSignOut).not.toHaveBeenCalled();
 	});
 });

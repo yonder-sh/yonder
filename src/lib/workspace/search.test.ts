@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
 	extendRange,
 	parseDays,
@@ -55,6 +55,25 @@ describe("WorkspaceSearch (SPEC §12.1)", () => {
 			"2027-10-05T9:40",
 		])
 			expect(asOf(bad)).toBeUndefined();
+	});
+
+	it("asOf is ignored outside e2e builds and tests (A417)", async () => {
+		vi.stubEnv("MODE", "production");
+		vi.stubEnv("VITE_E2E", "");
+		vi.resetModules();
+		try {
+			const m = await import("./search");
+			expect(m.WorkspaceSearch.parse({ asOf: "2027-10-05" })).toEqual({});
+			vi.stubEnv("VITE_E2E", "1");
+			vi.resetModules();
+			const e2e = await import("./search");
+			expect(e2e.WorkspaceSearch.parse({ asOf: "2027-10-05" }).asOf).toBe(
+				"2027-10-05",
+			);
+		} finally {
+			vi.unstubAllEnvs();
+			vi.resetModules();
+		}
 	});
 });
 

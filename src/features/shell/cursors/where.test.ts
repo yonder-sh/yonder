@@ -73,11 +73,16 @@ describe("followers and spotlight", () => {
 		expect(followersOf(peers, null)).toEqual([]);
 	});
 
-	it("the presenter, unless I broke away from that spotlight", () => {
+	it("the presenter, unless I broke away from them a moment ago", () => {
 		const peers = [peer("a"), peer("b", { spotlight: { id: "s1abcd" } })];
-		expect(spotlightPresenter(peers, new Set())?.user.id).toBe("b");
-		expect(spotlightPresenter(peers, new Set(["s1abcd"]))).toBeNull();
-		expect(spotlightPresenter([peer("a")], new Set())).toBeNull();
+		expect(spotlightPresenter(peers, new Map(), 0)?.user.id).toBe("b");
+		// A new spotlight id from the same presenter stays dismissed until then.
+		const fresh = [peer("b", { spotlight: { id: "s2abcd" } })];
+		expect(spotlightPresenter(fresh, new Map([["b", 100]]), 50)).toBeNull();
+		expect(spotlightPresenter(fresh, new Map([["b", 100]]), 100)?.user.id).toBe(
+			"b",
+		);
+		expect(spotlightPresenter([peer("a")], new Map(), 0)).toBeNull();
 	});
 
 	it("a peer's selection rings its card or day, not nodes", () => {

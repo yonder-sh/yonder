@@ -5,12 +5,17 @@
  */
 import { act, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+} from "@/components/ui/dropdown-menu";
 import type { Counts, TripCounts, TripGraph } from "@/lib/engine/types";
 import { demo, demoGraph, N } from "@/lib/fixtures/demo";
 import { TESTID } from "@/lib/testids";
 import { useUi } from "@/lib/workspace/ui-store";
 import { renderWithWorkspace } from "@/test/render-workspace";
 import { CenterTabBar, SuggestRule } from "./CenterPanel";
+import { SpotlightMenuItem } from "./cursors/presence-ui";
 import { InspectorBody } from "./InspectorBody";
 import { SHELL_TESTID } from "./testids";
 import { inOpenLayer } from "./use-workspace-hotkeys";
@@ -141,5 +146,29 @@ describe("hotkeys stay out of open layers", () => {
 		expect(inOpenLayer(document.getElementById("in"))).toBe(true);
 		expect(inOpenLayer(document.getElementById("out"))).toBe(false);
 		expect(inOpenLayer(null)).toBe(false);
+	});
+});
+
+describe("spotlight menu item (A243)", () => {
+	const menu = (
+		<DropdownMenu open>
+			<DropdownMenuContent>
+				<SpotlightMenuItem />
+			</DropdownMenuContent>
+		</DropdownMenu>
+	);
+
+	it("members (a viewer too) may ask everyone to follow", () => {
+		const viewer: TripGraph = {
+			...demoGraph,
+			me: { ...demoGraph.me, role: "viewer" },
+		};
+		renderWithWorkspace(menu, { graph: viewer, mode: "live" });
+		expect(screen.getByTestId(SHELL_TESTID.spotlightMenuItem)).toBeVisible();
+	});
+
+	it("link guests never see it", () => {
+		renderWithWorkspace(menu, { graph: guestGraph, mode: "live" });
+		expect(screen.queryByTestId(SHELL_TESTID.spotlightMenuItem)).toBeNull();
 	});
 });

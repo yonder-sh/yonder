@@ -13,6 +13,7 @@ const m = vi.hoisted(() => ({
 	open: vi.fn(),
 	peek: vi.fn(),
 	signInAnon: vi.fn(),
+	signOut: vi.fn(),
 	deleteAnon: vi.fn(),
 	removePersisted: vi.fn(async () => {}),
 	resetCollab: vi.fn(),
@@ -27,6 +28,7 @@ vi.mock("./share.functions", () => ({
 vi.mock("./auth-client", () => ({
 	authClient: {
 		signIn: { anonymous: m.signInAnon },
+		signOut: m.signOut,
 		deleteAnonymousUser: m.deleteAnon,
 	},
 }));
@@ -54,6 +56,7 @@ import type { Viewer } from "./viewer";
 beforeEach(() => {
 	vi.clearAllMocks();
 	window.localStorage.clear();
+	m.signOut.mockResolvedValue({ data: { success: true } });
 	m.signInAnon.mockResolvedValue({ error: null });
 	m.deleteAnon.mockResolvedValue({});
 });
@@ -231,5 +234,39 @@ describe("identity change (QA COLLAB-R2-06)", () => {
 		expect(qc.getQueryData(graphKey)).toEqual({ me: { userId: eve.id } });
 		expect(m.removePersisted).not.toHaveBeenCalled();
 		expect(m.resetCollab).not.toHaveBeenCalled();
+	});
+});
+
+describe("a sign-out the server never confirmed (A147)", () => {
+	const named = {
+		id: "u-dee",
+		email: "dee@example.com",
+		name: "Dee Dee",
+		firstName: "Dee",
+		lastName: "Dee",
+		image: null,
+		isAnonymous: false,
+		named: true,
+	};
+
+	it("signs out before any signed-in page, and clears the flag on success", async () => {
+		window.localStorage.setItem("yonder:pending-sign-out", "1");
+		m.session.mockResolvedValue(null);
+		expect(await outcomeOf(requireAccountViewer("/dashboard"))).toMatch(
+			/^\/login\?next=/,
+		);
+		expect(m.signOut).toHaveBeenCalledOnce();
+		expect(window.localStorage.getItem("yonder:pending-sign-out")).toBeNull();
+	});
+
+	it("still failing: the viewer counts as signed out and the flag stays", async () => {
+		window.localStorage.setItem("yonder:pending-sign-out", "1");
+		m.signOut.mockRejectedValue(new TypeError("offline"));
+		m.session.mockResolvedValue(named);
+		expect(await outcomeOf(requireAccountViewer("/dashboard"))).toMatch(
+			/^\/login\?next=/,
+		);
+		expect(m.session).not.toHaveBeenCalled();
+		expect(window.localStorage.getItem("yonder:pending-sign-out")).toBe("1");
 	});
 });
