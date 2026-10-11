@@ -51,6 +51,10 @@ export const MUTATION_POLICY = {
 	startSavedUpload: "account",
 	signSavedUploadParts: "account",
 	completeSavedUpload: "account",
+	setSavedPlace: "account",
+	searchSavedPlaces: "account",
+	/** A trip's photo or link into the caller's own Saved: any member who can see it (it checks). */
+	saveTripMedia: "account",
 	/** Saved photos onto a trip's place: the attachments re-reference them. */
 	attachSavedFiles: "edit-only",
 
