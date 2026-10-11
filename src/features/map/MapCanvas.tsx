@@ -779,11 +779,13 @@ export default function MapCanvas({
 	// The Plan's Cities & nights route is framed too, while it's on the map.
 	const wholeTrip = lens === "country" && !scopeId;
 	const fitPts = useMemo(() => {
-		const pts = fitPointsFor(pins, { all: wholeTrip, ix });
+		// The TI-6 stress pins never move the camera.
+		const real = stress.length ? pins.slice(0, -stress.length) : pins;
+		const pts = fitPointsFor(real, { all: wholeTrip, ix });
 		for (const s of route ?? [])
 			if (isFitPoint([s.lng, s.lat])) pts.push([s.lng, s.lat]);
 		return pts;
-	}, [pins, wholeTrip, ix, route]);
+	}, [pins, stress, wholeTrip, ix, route]);
 	const ownGlobe = useMemo(
 		() => wholeTrip && wantsGlobe(pins, fitPts),
 		[wholeTrip, pins, fitPts],
@@ -794,10 +796,6 @@ export default function MapCanvas({
 	);
 	const globe = leaderGlobe ?? ownGlobe;
 	const styleSpec = useProjectedStyle(basemap, globe);
-	const maxFitZoom = Math.min(
-		16,
-		LENS_ZOOM[lens] + (fitPts.length <= 1 ? 0 : 2),
-	);
 	// With nothing to frame (a city with no places yet), the scope itself.
 	const scopeAt = useMemo(() => {
 		const c = scopeId ? ix.coordOf(scopeId) : null;
@@ -806,6 +804,13 @@ export default function MapCanvas({
 			? { center: c, zoom: LENS_ZOOM[type as Lens] ?? LENS_ZOOM.city }
 			: null;
 	}, [ix, scopeId]);
+	// One point in a scope (its own pin, or its only place) keeps the scope's
+	// surroundings in view: a city at ~12, not street level.
+	const maxFitZoom = Math.min(
+		16,
+		LENS_ZOOM[lens] + (fitPts.length <= 1 ? 0 : 2),
+		fitPts.length <= 1 && scopeAt ? scopeAt.zoom + 1 : 16,
+	);
 	const latest = useRef({ fitPts, fitPadding, maxFitZoom, globe, scopeAt });
 	latest.current = { fitPts, fitPadding, maxFitZoom, globe, scopeAt };
 
