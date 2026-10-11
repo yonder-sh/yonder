@@ -2,7 +2,7 @@
  * Many saved items into a trip (Select's "Add to trip", a group's menu):
  * pick a trip you can edit, and each goes in as an idea under its city
  * (Undo in the toast); or "Plan a new trip": a name (from the cities) and
- * dates, then the trip's Cities & nights with those cities on the route.
+ * dates, then the trip's Plan with those cities on its route.
  * Ones already in that trip stay as they are.
  */
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -25,11 +25,11 @@ import { Spinner } from "@/components/ui/spinner";
 import { DateRangeField } from "@/features/home/date-fields";
 import { myTripsQuery } from "@/features/home/queries";
 import type { MyTrip } from "@/features/home/types";
+import { startRoute } from "@/features/plan/day-split/split-draft";
 import { createTrip } from "@/functions/trips.functions";
 import { humanError } from "@/lib/errors";
 import { meKeys, tripKeys } from "@/lib/query/keys";
 import { useOnline } from "@/lib/realtime/connection";
-import { useUi } from "@/lib/workspace/ui-store";
 import {
 	type AddedToTrip,
 	addSavedToTrip,
@@ -181,10 +181,8 @@ export function AddToTripDialog({
 				},
 			});
 			const r = await add(trip.tripId, ids, true);
-			// The trip opens on Cities & nights with these cities on the route.
-			const ui = useUi.getState();
-			for (const c of r.cities) ui.addToRoute(c);
-			if (r.cities.length) ui.askSplit(true);
+			// The trip opens on its route: these cities, in this order.
+			if (r.cities.length) startRoute(trip.tripId, r.cities);
 			onOpenChange(false);
 			onDone?.();
 			toast.success(`Added ${items(r.added.length)} to ${name.trim()}`, {
