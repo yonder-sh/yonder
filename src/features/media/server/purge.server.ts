@@ -2,8 +2,9 @@
  * The purge (SPEC §15.5, SECURITY §5 "a lifecycle rule for orphans"), run by
  * `pnpm purge` (scripts/purge.ts). S3 objects always go first, then the rows:
  *
- * - attachments soft-deleted more than 30 days ago, and uploads still
- *   `pending` after 24 h (cancelled or abandoned);
+ * - Trash (`features/trash`) older than 30 days: attachments soft-deleted,
+ *   or on a stop or expense soft-deleted, more than 30 days ago; and uploads
+ *   still `pending` after 24 h (cancelled or abandoned);
  * - nodes soft-deleted more than 30 days ago (their subtree, the items on
  *   them and every attachment hanging there), unless something live still
  *   points into the subtree;
@@ -25,6 +26,7 @@
  */
 import { sql } from "drizzle-orm";
 import type { Db } from "@/db/db.server";
+import type { SqlExec } from "@/server/graph.server";
 import { mediaPrefix } from "@/server/s3.server";
 import { hardDeleteTrip } from "@/server/trip-delete.server";
 import {
@@ -59,7 +61,7 @@ export type PurgeOptions = {
 
 type Row = { id: string; trip_id: string };
 
-type KeyRow = Row & {
+export type KeyRow = Row & {
 	storage_key: string | null;
 	image_key: string | null;
 	favicon_key: string | null;
@@ -83,7 +85,80 @@ function pointsInto(prefix: string) {
 	            or starts_with(a.favicon_key, ${prefix}))`;
 }
 
-const KEY_COLS = sql`a.id::text as id, a.trip_id::text as trip_id, a.storage_key, a.image_key, a.favicon_key`;
+export const KEY_COLS = sql`a.id::text as id, a.trip_id::text as trip_id, a.storage_key, a.image_key, a.favicon_key`;
+
+type Drop = (prefix: string) => Promise<number>;
+
+/**
+ * Deletes each prefix of `gone` that no other attachment row (live, deleted
+ * or in another trip) and no saved file points into. Returns objects deleted.
+ */
+export async function dropUnsharedPrefixes(
+	db: SqlExec,
+	gone: readonly KeyRow[],
+	drop: Drop = deletePrefix,
+	log: (line: string) => void = () => {},
+): Promise<number> {
+	let objects = 0;
+	const ids = sql.param(gone.map((g) => g.id));
+	for (const p of new Set(gone.flatMap(prefixesOf))) {
+		const used = await db.execute(sql`
+			select 1 from attachments a
+			 where ${pointsInto(p)} and a.id <> all(${ids}::uuid[]) limit 1`);
+		const saved = await db.execute(sql`
+			select 1 from saved_files where storage_key = ${p} limit 1`);
+		if (used.rows.length || saved.rows.length) {
+			log(`kept ${p} (still referenced)`);
+			continue;
+		}
+		objects += await drop(p);
+	}
+	return objects;
+}
+
+/** Deletes saved files: their objects unless an attachment or another saved file uses them, then the rows. */
+export async function dropSavedFiles(
+	db: SqlExec,
+	files: readonly { id: string; key: string }[],
+	drop: Drop = deletePrefix,
+	log: (line: string) => void = () => {},
+): Promise<number> {
+	let objects = 0;
+	for (const f of files) {
+		const used = await db.execute(sql`
+			select 1 from attachments a
+			 where coalesce(a.storage_key, 'trips/' || a.trip_id || '/' || a.id || '/') = ${f.key}
+			union all
+			select 1 from saved_files o where o.storage_key = ${f.key} and o.id <> ${f.id}
+			 limit 1`);
+		if (used.rows.length) log(`kept ${f.key} (still referenced)`);
+		else if (isSavedFilePrefix(f.key) || isAttachmentPrefix(f.key))
+			objects += await drop(f.key);
+		await db.execute(sql`delete from saved_files where id = ${f.id}`);
+	}
+	return objects;
+}
+
+/** Deletes saved links for good: their files (`dropSavedFiles`), re-hosted preview and favicon, then the rows. */
+export async function dropSavedLinks(
+	db: SqlExec,
+	links: readonly { id: string; userId: string }[],
+	drop: Drop = deletePrefix,
+	log: (line: string) => void = () => {},
+): Promise<number> {
+	if (!links.length) return 0;
+	const files = (
+		await db.execute(sql`
+			select id::text as id, storage_key as key from saved_files
+			 where saved_id = any(${sql.param(links.map((l) => l.id))}::uuid[])`)
+	).rows as { id: string; key: string }[];
+	let objects = await dropSavedFiles(db, files, drop, log);
+	for (const g of links) {
+		objects += await drop(`saved/${g.userId}/${g.id}/`);
+		await db.execute(sql`delete from saved_links where id = ${g.id}`);
+	}
+	return objects;
+}
 
 export async function purge(
 	db: Db,
@@ -106,33 +181,19 @@ export async function purge(
 
 	const keyRows = async (q: ReturnType<typeof sql>) =>
 		(await db.execute(q)).rows as KeyRow[];
-	/** Deletes each prefix of `gone` that no row outside `goneIds` points into. */
-	const dropUnshared = async (gone: readonly KeyRow[]) => {
-		const ids = sql.param(gone.map((g) => g.id));
-		const prefixes = new Set(gone.flatMap(prefixesOf));
-		for (const p of prefixes) {
-			const used = await db.execute(sql`
-				select 1 from attachments a
-				 where ${pointsInto(p)} and a.id <> all(${ids}::uuid[]) limit 1`);
-			const saved = await db.execute(sql`
-				select 1 from saved_files where storage_key = ${p} limit 1`);
-			if (used.rows.length || saved.rows.length) {
-				log(`kept ${p} (still referenced)`);
-				continue;
-			}
-			report.objects += await drop(p);
-		}
-	};
-
-	// 1. Attachments: old soft deletes and abandoned uploads.
+	// 1. Attachments: old Trash (deleted, or on a stop or expense deleted
+	// long ago; deleted places and trips are steps 2 and 3) and abandoned uploads.
+	const cutoff = sql`now() - make_interval(days => ${days})`;
 	const atts = await keyRows(sql`
 		select ${KEY_COLS} from attachments a
-		 where (a.deleted_at is not null and a.deleted_at < now() - make_interval(days => ${days}))
+		 where (a.deleted_at is not null and a.deleted_at < ${cutoff})
 		    or (a.status = 'pending' and a.created_at < now() - make_interval(hours => ${hours}))
+		    or exists (select 1 from items i where i.id = a.item_id and i.deleted_at < ${cutoff})
+		    or exists (select 1 from expenses e where e.id = a.expense_id and e.deleted_at < ${cutoff})
 		 limit 5000`);
 	for (const a of atts) {
 		if (!o.dryRun) {
-			await dropUnshared([a]);
+			report.objects += await dropUnsharedPrefixes(db, [a], drop, log);
 			await db.execute(sql`delete from attachments where id = ${a.id}`);
 		}
 		report.attachments += 1;
@@ -148,29 +209,13 @@ export async function purge(
 	).rows as { id: string; userId: string }[];
 	const filesGone = (
 		await db.execute(sql`
-			select f.id::text as id, f.storage_key as key, f.saved_id::text as "savedId" from saved_files f
-			 where f.saved_id = any(${sql.param(savedGone.map((g) => g.id))}::uuid[])
-			    or (f.status = 'pending' and f.created_at < now() - make_interval(hours => ${hours}))
+			select f.id::text as id, f.storage_key as key from saved_files f
+			 where f.status = 'pending' and f.created_at < now() - make_interval(hours => ${hours})
 			 limit 20000`)
-	).rows as { id: string; key: string; savedId: string }[];
+	).rows as { id: string; key: string }[];
 	if (!o.dryRun) {
-		for (const f of filesGone) {
-			const used = await db.execute(sql`
-				select 1 from attachments a
-				 where coalesce(a.storage_key, 'trips/' || a.trip_id || '/' || a.id || '/') = ${f.key}
-				union all
-				select 1 from saved_files o where o.storage_key = ${f.key} and o.id <> ${f.id}
-				 limit 1`);
-			if (used.rows.length) log(`kept ${f.key} (still referenced)`);
-			else if (isSavedFilePrefix(f.key) || isAttachmentPrefix(f.key))
-				report.objects += await drop(f.key);
-			await db.execute(sql`delete from saved_files where id = ${f.id}`);
-		}
-		for (const g of savedGone) {
-			// The link's re-hosted preview and favicon.
-			report.objects += await drop(`saved/${g.userId}/${g.id}/`);
-			await db.execute(sql`delete from saved_links where id = ${g.id}`);
-		}
+		report.objects += await dropSavedFiles(db, filesGone, drop, log);
+		report.objects += await dropSavedLinks(db, savedGone, drop, log);
 	}
 	report.saved = savedGone.length;
 	log(`saved: ${report.saved}`);
@@ -209,7 +254,8 @@ export async function purge(
 			                     where l.from_item_id in (select id from its)
 			                        or l.to_item_id in (select id from its))`);
 		if (!o.dryRun) {
-			if (hanging.length) await dropUnshared(hanging);
+			if (hanging.length)
+				report.objects += await dropUnsharedPrefixes(db, hanging, drop, log);
 			// Cascades: child nodes, items on them, their legs, bundles.
 			await db.execute(sql`delete from nodes where id = ${n.id}`);
 		}
