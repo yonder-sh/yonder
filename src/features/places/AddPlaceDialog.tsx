@@ -13,6 +13,8 @@
  * Save to Ideas / Schedule (a split button). Modes: `search`, `schedule`
  * (Schedule is the default action), `locate` ("Use this location" for a node
  * without coordinates) and `first` ("Where to first?": countries and cities).
+ * In `search` and `schedule` a save keeps the palette open for the next one
+ * ("Added Senso-ji", Show, Done).
  */
 
 import {
@@ -25,6 +27,7 @@ import { useNavigate } from "@tanstack/react-router";
 import {
 	ArrowLeft,
 	CalendarDays,
+	Check,
 	ChevronDown,
 	CornerDownLeft,
 	Link2,
@@ -36,6 +39,7 @@ import {
 	X,
 } from "lucide-react";
 import {
+	type CSSProperties,
 	type ReactNode,
 	useCallback,
 	useEffect,
@@ -74,6 +78,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { cleanShareName } from "@/features/home/share-classify";
 import { peekLink } from "@/features/media/media.functions";
 import { addLinkAndCache } from "@/features/media/use-media-actions";
+import { useVisibleBox } from "@/hooks/use-visible-box";
 import { can } from "@/lib/auth/roles";
 import {
 	NODE_TYPES,
@@ -267,6 +272,9 @@ type Selection =
 	| { kind: "result"; provider: PlaceProvider; result: PlaceSearchResult }
 	| { kind: "pin"; lat: number; lng: number }
 	| { kind: "link"; url: string };
+
+/** A save in a row: "Added Senso-ji", and what Show opens. */
+type Added = { name: string; nodeId: string; itemId?: string };
 
 /** D10 New place…: the pasted link, waiting for the place the search finds or makes. */
 type PendingLink = { url: string; parentId: string | null };
@@ -713,6 +721,40 @@ function Palette({
 		if (!steered.current) highlightFirstOption(commandRef.current);
 	}, [optionsKey]);
 
+	// ---- adding a few in a row --------------------------------------------
+	// A save keeps the palette open, cleared, and says what it added.
+	const keepOpen = (mode === "search" || mode === "schedule") && !pending;
+	const [added, setAdded] = useState<Added | null>(null);
+	const reopen = useUi((s) => s.openAddPlace);
+	const onAdded = (a: Added) => {
+		setAdded(a);
+		setQ("");
+		setSelected(null);
+		setPinning(false);
+		steered.current = false;
+		// The next one goes after it on its day.
+		if (a.itemId) {
+			const { beforeItemId: _, ...rest } = request;
+			reopen({ ...rest, afterItemId: a.itemId });
+		}
+	};
+	useEffect(() => {
+		if (added) inputRef.current?.focus();
+	}, [added]);
+	const showAdded = (a: Added) => {
+		onClose("inspector");
+		nav.select(
+			a.itemId
+				? { kind: "item", id: a.itemId }
+				: { kind: "node", id: a.nodeId },
+		);
+	};
+	// Places › Review opens the last one added, in its details.
+	const done = () =>
+		added && !added.itemId && opensAdded(ws) ? showAdded(added) : onClose();
+	// Phones: the dialog fits what the keyboard leaves, so results stay in view.
+	const box = useVisibleBox(true);
+
 	// ---- actions --------------------------------------------------------
 	const createNamed = useCreateNodePath(tripId);
 	const createItem = useCreateItem(tripId);
@@ -740,8 +782,13 @@ function Palette({
 			toast.error(humanError(e));
 			return false;
 		});
-	/** "Shibuya Sky · End of Day 1", with Show unless it's a suggestion. */
-	const putOnDay = (nodeId: string, pick: SchedulePick, say: string) => {
+	/** "Shibuya Sky · End of Day 1", with Show unless it's a suggestion; `name` keeps the palette open. */
+	const putOnDay = (
+		nodeId: string,
+		pick: SchedulePick,
+		say: string,
+		name?: string,
+	) => {
 		const id = newId();
 		createItem.mutate(
 			{
@@ -752,6 +799,8 @@ function Palette({
 			},
 			{
 				onSuccess: (r) => {
+					if (name && keepOpen && !isProposed(r))
+						return onAdded({ name, nodeId, itemId: id });
 					onClose();
 					// Its "Suggested — …" toast has said so; there's nothing to show yet.
 					if (isProposed(r)) return;
@@ -790,6 +839,7 @@ function Palette({
 					if (day) return putOnDay(id, day, `${name} · ${day.label}`);
 					// Its "Suggested — …" toast has said so; there's nothing to show yet.
 					if (isProposed(r)) return onClose();
+					if (keepOpen) return onAdded({ name, nodeId: id });
 					if (open) {
 						onClose("inspector");
 						nav.select({ kind: "node", id });
@@ -822,7 +872,7 @@ function Palette({
 
 	const scheduleExisting = (n: GraphNode) => {
 		if (!schedulePick || !access.canEdit) return jumpTo(n);
-		putOnDay(n.id, schedulePick, `${n.name} · ${schedulePick.label}`);
+		putOnDay(n.id, schedulePick, `${n.name} · ${schedulePick.label}`, n.name);
 	};
 
 	// ---- a pasted link (D10) ------------------------------------------------
@@ -889,9 +939,15 @@ function Palette({
 			}}
 			className={cn(
 				"gap-0 overflow-hidden p-0 shadow-float transition-[max-width] duration-200",
-				"max-sm:top-0 max-sm:left-0 max-sm:h-svh max-sm:max-h-none max-sm:max-w-none max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-none max-sm:border-0",
+				"max-sm:top-(--vv-top) max-sm:left-0 max-sm:h-(--vv-h) max-sm:max-h-none max-sm:max-w-none max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-none max-sm:border-0",
 				showPreview || showMap ? "sm:max-w-[920px]" : "sm:max-w-[640px]",
 			)}
+			style={
+				{
+					"--vv-top": `${box?.top ?? 0}px`,
+					"--vv-h": box ? `${box.height}px` : "100svh",
+				} as CSSProperties
+			}
 		>
 			<DialogTitle className="sr-only">{title}</DialogTitle>
 			<DialogDescription className="sr-only">
@@ -958,10 +1014,10 @@ function Palette({
 					<button
 						type="button"
 						data-testid={pending ? PLACES_TESTID.linkPendingBack : undefined}
-						onClick={() => (pending ? backToLink() : onClose())}
+						onClick={() => (pending ? backToLink() : done())}
 						className="mr-2 rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-accent sm:hidden"
 					>
-						{pending ? "Back" : "Cancel"}
+						{pending ? "Back" : added ? "Done" : "Cancel"}
 					</button>
 				</div>
 				{pending ? (
@@ -982,6 +1038,36 @@ function Palette({
 						>
 							<X />
 							Don't add
+						</Button>
+					</div>
+				) : null}
+				{added ? (
+					<div
+						data-testid={PLACES_TESTID.paletteAdded}
+						className={cn(
+							"flex items-center gap-2 border-b py-1 pr-2 pl-4 text-meta text-muted-foreground",
+							showPreview && "max-sm:hidden",
+						)}
+					>
+						<Check className="size-3.5 shrink-0" strokeWidth={2} />
+						<span role="status" className="min-w-0 flex-1 truncate">
+							Added <span className="text-foreground">{added.name}</span>
+						</span>
+						<Button
+							size="xs"
+							variant="ghost"
+							data-testid={PLACES_TESTID.paletteAddedShow}
+							onClick={() => showAdded(added)}
+						>
+							Show
+						</Button>
+						<Button
+							size="xs"
+							variant="outline"
+							data-testid={PLACES_TESTID.paletteDone}
+							onClick={done}
+						>
+							Done
 						</Button>
 					</div>
 				) : null}
@@ -1378,6 +1464,7 @@ function Palette({
 									request={request}
 									sessionToken={sessionToken}
 									onDone={onClose}
+									onAdded={keepOpen ? onAdded : undefined}
 									onPlace={
 										pending
 											? (id) => void attachLink(pending.url, id)
@@ -1737,6 +1824,7 @@ function PreviewPane({
 	request,
 	sessionToken,
 	onDone,
+	onAdded,
 	onPlace,
 	onLinkTo,
 }: {
@@ -1744,6 +1832,8 @@ function PreviewPane({
 	request: AddPlaceRequest;
 	sessionToken: string;
 	onDone: (then?: AfterClose) => void;
+	/** A save in a row: the palette stays open. */
+	onAdded?: (a: Added) => void;
 	/** The place saved or scheduled here (a waiting link goes on it). */
 	onPlace?: (nodeId: string) => void;
 	/** A waiting link onto the place already in the trip (and the day). */
@@ -1829,6 +1919,7 @@ function PreviewPane({
 			preview={q.data.preview}
 			request={request}
 			onDone={onDone}
+			onAdded={onAdded}
 			pin={
 				selection.kind === "pin"
 					? { lat: selection.lat, lng: selection.lng }
@@ -1847,6 +1938,7 @@ function PreviewBody({
 	preview,
 	request,
 	onDone,
+	onAdded,
 	pin,
 	knownExisting,
 	openAdded,
@@ -1857,6 +1949,7 @@ function PreviewBody({
 	preview: PlacePreview;
 	request: AddPlaceRequest;
 	onDone: (then?: AfterClose) => void;
+	onAdded?: (a: Added) => void;
 	/** A dropped pin or pasted coordinates: the exact spot (the preview is only what's nearest). */
 	pin: { lat: number; lng: number } | null;
 	knownExisting?: string;
@@ -2018,6 +2111,9 @@ function PreviewBody({
 					if (target === "ideas" && isProposed(r)) return onDone();
 					if (target === "ideas" && mode === "first" && routable)
 						return toRoute(leafId, level);
+					const title = name.trim() || preview.name;
+					if (target === "ideas" && onAdded)
+						return onAdded({ name: title, nodeId: leafId });
 					const where =
 						filing.create.at(-1)?.name ??
 						ix.node(filing.existing.at(-1))?.name ??
@@ -2025,24 +2121,7 @@ function PreviewBody({
 					if (target === "ideas" && openAdded && level === "place") {
 						onDone("inspector");
 						nav.select({ kind: "node", id: leafId });
-						// Collecting a few: back to the search in one tap.
-						toast(
-							`Saved to ${where} ideas`,
-							mode === "search" && !onPlace
-								? {
-										action: {
-											label: "Add another",
-											onClick: () =>
-												openAddPlace({
-													mode: "search",
-													...(request.parentId
-														? { parentId: request.parentId }
-														: {}),
-												}),
-										},
-									}
-								: undefined,
-						);
+						toast(`Saved to ${where} ideas`);
 						return;
 					}
 					if (target === "ideas") {
@@ -2069,9 +2148,10 @@ function PreviewBody({
 						{
 							onError: (e) => toast.error(humanError(e)),
 							onSuccess: (s) => {
+								if (onAdded && !isProposed(s))
+									return onAdded({ name: title, nodeId: leafId, itemId });
 								onDone();
 								if (isProposed(s)) return;
-								const title = name.trim() || preview.name;
 								// Filed under a city that isn't this day's: say so.
 								const off = offDayText(
 									ix,
@@ -2107,6 +2187,8 @@ function PreviewBody({
 				onError: (e) => toast.error(humanError(e)),
 				onSuccess: (r) => {
 					onPlace?.(n.id);
+					if (onAdded && !isProposed(r))
+						return onAdded({ name: n.name, nodeId: n.id, itemId });
 					onDone();
 					if (isProposed(r)) return;
 					const off = offDayText(ix, target.dayId, n.id);

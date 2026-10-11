@@ -182,7 +182,10 @@ describe("New place… from a pasted link (D10)", () => {
 		expect(screen.queryByTestId(PLACES_TESTID.linkPending)).toBeNull();
 		type("Moffu");
 		fireEvent.click(await addOption(/Add “Moffu” as a new place in Shibuya/));
-		await waitFor(() => expect(calls.toasts).toEqual(["Added Moffu"]));
+		// No link: a plain add, the palette open for the next one.
+		expect(
+			await screen.findByTestId(PLACES_TESTID.paletteAdded),
+		).toHaveTextContent("Added Moffu");
 		expect(calls.links).toEqual([]);
 	});
 

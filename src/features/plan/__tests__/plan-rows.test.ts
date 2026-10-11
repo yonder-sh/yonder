@@ -485,9 +485,43 @@ describe("I2 regressions", () => {
 			sc.D.d4,
 		]);
 		expect(japan.days[1]?.only).toBeNull();
-		expect(korea.days.map((d) => d.dayId)).toEqual([sc.D.d4, sc.D.d5, sc.D.d6]);
-		// The last free day follows the last band.
-		expect(entries.at(-1)).toMatchObject({ kind: "day", dayId: sc.D.d7 });
+		// The last free day is where Day 6 ended (no route yet): Korea.
+		expect(korea.days.map((d) => d.dayId)).toEqual([
+			sc.D.d4,
+			sc.D.d5,
+			sc.D.d6,
+			sc.D.d7,
+		]);
+		expect(entries.at(-1)).toMatchObject({ kind: "band" });
+	});
+
+	it("an empty day sits under the city of its night, before the first stop too; a day with no city stands alone", () => {
+		const sc = scenario({
+			days: [
+				{ night: "tokyo", items: [] },
+				{ night: "tokyo", items: [] },
+				{ night: "tokyo", items: [{ k: "hands", node: "hands" }] },
+				{ night: "kyoto", items: [] },
+				{ night: "kyoto", items: [{ k: "kiyomizu", node: "kiyomizu" }] },
+				{ items: [] },
+				{ night: "osaka", items: [{ k: "kix", node: "kix" }] },
+			],
+		});
+		const ctx = ctxOf(sc.graph, { lens: "city" });
+		const entries = buildPlanEntries(ctx);
+		const shape = entries.flatMap((e) =>
+			e.kind === "band"
+				? [`${e.visit.repId}:${e.days.map((d) => d.dayId).join(",")}`]
+				: e.kind === "day"
+					? [`day:${e.dayId}`]
+					: [],
+		);
+		expect(shape).toEqual([
+			`${N.tokyo}:${sc.D.d1},${sc.D.d2},${sc.D.d3}`,
+			`${N.kyoto}:${sc.D.d4},${sc.D.d5}`,
+			`day:${sc.D.d6}`,
+			`${N.osaka}:${sc.D.d7}`,
+		]);
 	});
 
 	it("FB-17: a day in two bands names each drawing by its first card; other days stay plain", () => {

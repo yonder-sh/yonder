@@ -17,12 +17,15 @@
  * - At the **area** lens, consecutive items of one visit on one day are
  *   grouped under a block header ("Shibuya · 5 stops · 10:00–15:30").
  */
+import { dayWhere } from "@/lib/engine/day-place";
 import { type GraphIndex, pairKey } from "@/lib/engine/graph-index";
+import { repAt } from "@/lib/engine/lens";
 import type { ProposalMark } from "@/lib/engine/proposals";
 import { localDateOf, safeTimeZone } from "@/lib/engine/time";
 import type {
 	DayRange,
 	Ghost,
+	GraphDay,
 	GraphItem,
 	Lens,
 	ScheduleResult,
@@ -605,7 +608,7 @@ export function buildPlanEntries(ctx: PlanContext): PlanEntry[] {
 	if (isCoarse(ctx.lens) && model.visits.length) {
 		const covered = new Set<string>();
 		const dayDate = (id: string) => ix.day(id)?.date ?? "";
-		// Free days (no items at all) keep their place between the bands, at the root only.
+		// Free days (no items at all), at the root only: under the band of their stay, else between the bands.
 		const freeDays =
 			scopeId === null
 				? ix.days.filter(
@@ -614,10 +617,12 @@ export function buildPlanEntries(ctx: PlanContext): PlanEntry[] {
 							(ix.itemsByDay.get(d.id)?.length ?? 0) === 0,
 					)
 				: [];
+		const ownDays = model.visits.map((v) => bandDays(ix, v));
+		const { inBand, loose } = placeFreeDays(ctx, ownDays, freeDays);
 		let free = 0;
 		const flushFree = (untilDate: string | null) => {
-			while (free < freeDays.length) {
-				const d = freeDays[free];
+			while (free < loose.length) {
+				const d = loose[free];
 				if (!d || (untilDate !== null && d.date >= untilDate)) break;
 				entries.push({
 					kind: "day",
@@ -628,7 +633,6 @@ export function buildPlanEntries(ctx: PlanContext): PlanEntry[] {
 				free++;
 			}
 		};
-		const ownDays = model.visits.map((v) => bandDays(ix, v));
 		// A day in several bands (it crosses two countries) is drawn once per band.
 		const drawings = new Map<string, number>();
 		for (const own of ownDays)
@@ -643,9 +647,13 @@ export function buildPlanEntries(ctx: PlanContext): PlanEntry[] {
 			return first ? { ...d, copy: first.id } : d;
 		};
 		model.visits.forEach((v, i) => {
-			const own = ownDays[i] ?? [];
-			const firstDay = own[0]?.dayId;
-			// Free days before the band go between the bands…
+			// Its own days and free days (the stay's, and the ones inside its span), in date order…
+			const bandDaysInOrder: BandDay[] = [
+				...(ownDays[i] ?? []).map(drawing),
+				...(inBand[i] ?? []).map((dayId) => ({ dayId, only: null })),
+			].sort((a, b) => dayDate(a.dayId).localeCompare(dayDate(b.dayId)));
+			const firstDay = bandDaysInOrder[0]?.dayId;
+			// …after the free days of no band before it.
 			flushFree(firstDay ? dayDate(firstDay) : null);
 			if (i > 0) {
 				const t = model.transitions.find((x) => x.toVisit === v.key);
@@ -655,19 +663,6 @@ export function buildPlanEntries(ctx: PlanContext): PlanEntry[] {
 						key: `link:${v.key}`,
 						transition: t,
 					});
-			}
-			// …and the ones inside its span (Japan: Fri 8, the free 9–13, then the
-			// KIX stop on Thu 14) inside it, so the days never run out of order.
-			const bandDaysInOrder: BandDay[] = [];
-			for (const d of own) {
-				const date = dayDate(d.dayId);
-				while (free < freeDays.length) {
-					const f = freeDays[free];
-					if (!f || f.date >= date) break;
-					bandDaysInOrder.push({ dayId: f.id, only: null });
-					free++;
-				}
-				bandDaysInOrder.push(drawing(d));
 			}
 			entries.push({
 				kind: "band",
@@ -723,6 +718,62 @@ export function buildPlanEntries(ctx: PlanContext): PlanEntry[] {
 			reason: "after",
 		});
 	return entries;
+}
+
+/**
+ * Where each free day goes at the coarse lenses: inside a band's span, that
+ * band (days run in date order, QA TL-01); else the band of the place it's in
+ * (`dayWhere`) when that band is next to it; else on its own. In date order
+ * per band; `loose` in date order.
+ */
+export function placeFreeDays(
+	ctx: Pick<PlanContext, "ix" | "model" | "lens" | "scopeId">,
+	ownDays: readonly { dayId: string }[][],
+	freeDays: readonly GraphDay[],
+): { inBand: string[][]; loose: GraphDay[] } {
+	const { ix, model, lens, scopeId } = ctx;
+	const dateOf = (id: string | undefined) => (id ? ix.day(id)?.date : null);
+	const spans = ownDays.map((o) => ({
+		from: dateOf(o[0]?.dayId),
+		to: dateOf(o.at(-1)?.dayId),
+	}));
+	const repOf = (dayId: string) => {
+		const at = dayWhere(ix, dayId).placeId;
+		return at ? repAt(ix, at, lens, scopeId).id : null;
+	};
+	const inBand: string[][] = model.visits.map(() => []);
+	const loose: GraphDay[] = [];
+	// Within one gap between bands: the band before, then on its own, then the band after.
+	let gap = Number.NaN;
+	let step = 0;
+	for (const f of freeDays) {
+		let prev = -1;
+		spans.forEach((s, i) => {
+			if (s.from && s.from < f.date) prev = i;
+		});
+		const span = spans[prev];
+		if (span?.to && span.to > f.date) {
+			inBand[prev]?.push(f.id);
+			continue;
+		}
+		if (prev !== gap) {
+			gap = prev;
+			step = 0;
+		}
+		const next = spans[prev + 1]?.from ? prev + 1 : -1;
+		const at = repOf(f.id);
+		const want =
+			at && model.visits[prev]?.repId === at
+				? 0
+				: at && next >= 0 && model.visits[next]?.repId === at
+					? 2
+					: 1;
+		step = Math.max(step, want);
+		if (step === 0) inBand[prev]?.push(f.id);
+		else if (step === 2) inBand[next]?.push(f.id);
+		else loose.push(f);
+	}
+	return { inBand, loose };
 }
 
 /** Day ids of a band's visit (in date order) with the item ids the band shows on each. */

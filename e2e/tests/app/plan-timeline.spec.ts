@@ -336,6 +336,10 @@ test("every day has its header under its visit's label; a card and an idea dropp
 	const line = (dayId: string) => page.locator(`[data-testid="${PLAN_TESTID.dayEmpty}"][data-day-id="${dayId}"]`);
 	await expect(line(empty[0] as string)).toContainText("Nothing planned");
 	await expect(page.getByTestId(PLAN_TESTID.band).first()).toBeVisible();
+	// Inside Japan's stay: under its label, not beside it.
+	const japan = page.getByTestId(PLAN_TESTID.band).first().locator("xpath=..");
+	for (const id of empty)
+		await expect(japan.locator(`[data-testid="${PLAN_TESTID.dayEmpty}"][data-day-id="${id}"]`)).toHaveCount(1);
 	const planned = new Set(before.items.flatMap((i) => (i.dayId ? [i.dayId] : [])));
 	const headers = await page.getByTestId(PLAN_TESTID.dayHeader).evaluateAll((els) => els.map((e) => e.getAttribute("data-day-id")));
 	for (const d of before.days) if (planned.has(d.id)) expect(headers).toContain(d.id);
