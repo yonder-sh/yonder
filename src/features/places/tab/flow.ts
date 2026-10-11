@@ -57,6 +57,8 @@ export function viewOfStep(
 }
 
 export type FlowTally = {
+	/** Every place, Not going included: what All places lists. */
+	all: number;
 	/** Every place collected (not dropped). */
 	ideas: number;
 	/** Places you haven't rated (not dropped, not decided); null when you can't rate. */
@@ -84,6 +86,7 @@ export function flowTally(
 	opts: { me: string | null; canRate: boolean },
 ): FlowTally {
 	const out: FlowTally = {
+		all: rows.length,
 		ideas: 0,
 		toRate: opts.canRate && opts.me ? 0 : null,
 		shortlisted: 0,
@@ -132,7 +135,7 @@ const plural = (n: number, one: string, many = `${one}s`) =>
 /** Each view's count in the segmented header (D06): "125", "47 left", "2 to talk"; null says nothing. */
 export function stepBadges(t: FlowTally): Record<FlowStep, string | null> {
 	return {
-		review: t.ideas ? String(t.ideas) : null,
+		review: t.all ? String(t.all) : null,
 		rate: t.toRate ? `${t.toRate} left` : null,
 		decide: t.talk ? `${t.talk} to talk` : null,
 	};
@@ -140,7 +143,7 @@ export function stepBadges(t: FlowTally): Record<FlowStep, string | null> {
 
 /** Each step's count line ("12 to rate", "48 places", "2 places to talk through"). */
 export function stepCounts(t: FlowTally): Record<FlowStep, string> {
-	const review = t.ideas ? plural(t.ideas, "place") : "No places yet";
+	const review = t.all ? plural(t.all, "place") : "No places yet";
 	const rate =
 		t.toRate === null
 			? "View only"

@@ -339,6 +339,23 @@ describe("grouping (nearest ancestor, falling back a level up)", () => {
 		).toEqual(["Shortlist", "Ideas", "On a day"]);
 		expect(groupPlaces(rows, { by: "none", sort: "name", ix })).toHaveLength(1);
 	});
+	it("Not going sinks to the bottom of its group, whatever the sort", () => {
+		const rows = (["dropped", "idea", "shortlist"] as const).map(
+			(status, i) => ({
+				id: `p${i}`,
+				name: `P${i}`,
+				score: 3 - i,
+				top: null,
+				status,
+				must: false,
+				tripOrder: null,
+			}),
+		);
+		for (const sort of ["name", "priority"] as const)
+			expect(
+				groupPlaces(rows, { by: "none", sort, ix })[0]?.rows.map((r) => r.id),
+			).toEqual(["p1", "p2", "p0"]);
+	});
 	it(`a city of ${SPLIT_AT}+ places offers "Split by area"; split, it groups by area`, () => {
 		const extra = Array.from({ length: SPLIT_AT }, (_, i) => ({
 			id: `00000000-0000-7000-8000-00000000f${String(i).padStart(3, "0")}`,
@@ -436,11 +453,11 @@ describe("rows (status, when, time needed, filters)", () => {
 		expect(counts.toDecide).toBe(2);
 		const ctx = filterContextOf(ix, D);
 		const f = { talk: false, filter: EMPTY_FILTER, ctx };
+		// All is every place: the all-Nah one too (its chip says Not going).
 		const all = filterRows(rows, { ...f, status: null });
-		expect(all.some((r) => r.id === nishiki)).toBe(false);
-		// Decide keeps them for its Not going column.
-		const decide = filterRows(rows, { ...f, status: null, keepDropped: true });
-		expect(decide.some((r) => r.id === nishiki)).toBe(true);
+		expect(all.some((r) => r.id === nishiki)).toBe(true);
+		expect(all).toHaveLength(rows.length);
+		expect(counts.all).toBe(rows.length);
 		const talk = filterRows(rows, { ...f, status: null, talk: true });
 		expect(talk.map((r) => r.id)).toEqual([nijo]);
 		const dropped = filterRows(rows, { ...f, status: "dropped" });

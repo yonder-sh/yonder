@@ -146,7 +146,11 @@ export function groupPlaces<R extends Groupable>(
 		splitAt?: number;
 	},
 ): PlaceGroup<R>[] {
-	const cmp = comparatorFor<R>(opts.sort, (id) => opts.ix.outlineIndex(id));
+	const order = comparatorFor<R>(opts.sort, (id) => opts.ix.outlineIndex(id));
+	// Not going sinks to the bottom of its group (All lists it too).
+	const cmp = (a: R, b: R) =>
+		Number(a.status === "dropped") - Number(b.status === "dropped") ||
+		order(a, b);
 	const splitAt = opts.splitAt ?? SPLIT_AT;
 	const summary = (xs: R[]) => ({
 		count: xs.length,
