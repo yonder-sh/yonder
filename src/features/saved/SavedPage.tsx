@@ -292,7 +292,8 @@ export function SavedGrid({
 			{selecting ? (
 				<div
 					data-bottom-bar=""
-					className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/95 px-4 pt-3 pb-[max(12px,env(safe-area-inset-bottom))] backdrop-blur">
+					className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/95 px-4 pt-3 pb-[max(12px,env(safe-area-inset-bottom))] backdrop-blur"
+				>
 					<div className="mx-auto flex max-w-[720px] items-center justify-end gap-2">
 						<Button
 							variant="outline"
