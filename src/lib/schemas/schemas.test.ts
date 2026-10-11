@@ -13,6 +13,7 @@ import {
 	TripSettings,
 	Tz,
 } from "./index";
+import { LineInput, SplitInput } from "./money";
 import { NodeDetailsPatch } from "./nodes";
 import { TripSettingsPatch } from "./trips";
 
@@ -137,5 +138,21 @@ describe("enums", () => {
 			"meh",
 			"nah",
 		]);
+	});
+});
+
+describe("money", () => {
+	it("a split takes everyone on a large trip", () => {
+		const id = (i: number) =>
+			`01900000-0000-7000-8000-${String(i).padStart(12, "0")}`;
+		const shares = Array.from({ length: 25 }, (_, i) => ({ memberId: id(i) }));
+		expect(SplitInput.safeParse({ mode: "equal", shares }).success).toBe(true);
+		expect(
+			LineInput.safeParse({
+				label: "Dinner",
+				amountMinor: 1000,
+				memberIds: shares.map((s) => s.memberId),
+			}).success,
+		).toBe(true);
 	});
 });
