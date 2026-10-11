@@ -162,6 +162,8 @@ export const MarkInboxReadInput = z.union([
 	z
 		.object({
 			keys: z.array(z.string().min(1).max(200)).min(1).max(200),
+			/** The items' trip: checks them against that trip's feed, not the newest 100 of all. */
+			tripId: z.uuid().optional(),
 		})
 		.strict(),
 	z.object({ all: z.literal(true), tripId: z.uuid().optional() }).strict(),

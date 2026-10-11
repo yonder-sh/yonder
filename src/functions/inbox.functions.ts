@@ -43,9 +43,7 @@ export const markInboxRead = createServerFn({ method: "POST" })
 	.validator(MarkInboxReadInput)
 	.handler(async ({ data, context }): Promise<{ updated: number }> => {
 		const userId = context.user.id;
-		const feed = await loadInbox(userId, {
-			tripId: "all" in data ? data.tripId : undefined,
-		});
+		const feed = await loadInbox(userId, { tripId: data.tripId });
 		const wanted = "all" in data ? null : new Set<string>(data.keys);
 		const hits = feed.items.filter(
 			(i) => !i.read && (wanted === null || wanted.has(i.key)),
