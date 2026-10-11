@@ -5,7 +5,7 @@
  */
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { formatLocalDay } from "../link-dates";
+import { formatLocalDay, linkExpired } from "../link-dates";
 
 describe("formatLocalDay (FB-13a)", () => {
 	it("Los Angeles, Wed 23 Sep 17:15 PDT: created today, not Thu 24 Sep", () => {
@@ -53,5 +53,14 @@ describe("formatLocalDay (FB-13a)", () => {
 		expect(src).not.toMatch(/(createdAt|expiresAt)\??\.slice\(0,\s*10\)/);
 		expect(src).toContain("formatLocalDay(link.createdAt)");
 		expect(src).toContain("formatLocalDay(link.expiresAt)");
+	});
+});
+
+describe("linkExpired", () => {
+	it("a link past its expiry reads as expired, not on", () => {
+		const now = Date.parse("2026-10-11T12:00:00.000Z");
+		expect(linkExpired("2026-10-11T11:59:59.000Z", now)).toBe(true);
+		expect(linkExpired("2026-10-12T00:00:00.000Z", now)).toBe(false);
+		expect(linkExpired(null, now)).toBe(false);
 	});
 });

@@ -22,3 +22,12 @@ export function formatLocalDay(iso: string, tz?: string): string {
 	if (Number.isNaN(ms)) return iso;
 	return formatDayDate(localDateOf(ms, safeTimeZone(tz, viewerZone())));
 }
+
+/** The link's expiry has passed: new people are turned away until it's extended. */
+export function linkExpired(
+	expiresAt: string | null | undefined,
+	now = Date.now(),
+): boolean {
+	const ms = expiresAt ? Date.parse(expiresAt) : Number.NaN;
+	return !Number.isNaN(ms) && ms <= now;
+}
