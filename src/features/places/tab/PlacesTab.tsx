@@ -174,8 +174,8 @@ function Body({
 				) : view === "board" ? (
 					<PlacesBoard data={data} />
 				) : (
-					// Phones too: the whole table, scrolled both ways, so everyone
-					// sees (and follows) the same rows and columns.
+					// Phones open on the Board; a table chosen there is the whole table,
+					// scrolled both ways, so everyone follows the same rows and columns.
 					<PlacesTable data={data} narrow={phone} />
 				)}
 			</div>
