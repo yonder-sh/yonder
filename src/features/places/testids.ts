@@ -32,6 +32,10 @@ export const PLACES_TESTID = {
 	linkPending: "places-link-pending",
 	linkPendingDrop: "places-link-pending-drop",
 	linkPendingBack: "places-link-pending-back",
+	/** A save in a row: "Added Senso-ji", its Show, and Done. */
+	paletteAdded: "places-palette-added",
+	paletteAddedShow: "places-palette-added-show",
+	paletteDone: "places-palette-done",
 	dropPinUse: "places-drop-pin-use",
 	providerFooter: "places-provider-footer",
 	paletteEmpty: "places-palette-empty",

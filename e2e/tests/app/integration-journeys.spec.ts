@@ -196,6 +196,8 @@ test("J1 sign up, new trip, Where to first? → Japan › Tokyo › Shibuya Sky,
 	await preview.getByTestId(P.schedule).click();
 	// "Schedule…" asks which day.
 	await page.getByRole("option", { name: /Day 1/ }).click();
+	await expect(page.getByTestId(P.paletteAdded)).toContainText(/Added Shibuya Sky/i);
+	await page.getByTestId(P.paletteDone).click();
 	await expect(page.getByTestId(TESTID.addPlaceDialog)).toBeHidden();
 	const nodes = (await yon(page))?.graph.nodes ?? [];
 	// No second Tokyo: the palette files under the one "Where to first?" made.
@@ -259,6 +261,7 @@ test("J1b places first: what you want to see, ratings, then the nights", async (
 	const preview = page.getByTestId(P.previewCard);
 	await expect(preview.getByTestId(P.filingChip)).toContainText(/Japan.*›.*Tokyo/, { timeout: 25_000 });
 	await preview.getByTestId(P.saveToIdeas).click();
+	await page.getByTestId(P.paletteDone).click();
 	await expect(dialog).toBeHidden();
 
 	// The Plan: ratings before the nights.

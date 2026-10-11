@@ -78,6 +78,11 @@ test("Itoya Ginza through Photon: filed under Japan › Tokyo › Ginza, saved a
 	await expect(preview).toContainText("Already in");
 	await page.screenshot({ path: shotPath("places/palette-preview-1440.png"), animations: "disabled" });
 	await preview.getByTestId(P.saveToIdeas).click();
+	// Open for the next one: cleared, focused, saying what it added.
+	await expect(page.getByTestId(P.paletteAdded)).toContainText("Added Itoya");
+	await expect(page.getByTestId(P.paletteInput)).toHaveValue("");
+	await expect(page.getByTestId(P.paletteInput)).toBeFocused();
+	await page.getByTestId(P.paletteDone).click();
 	await expect(page.getByTestId(TESTID.addPlaceDialog)).toBeHidden();
 
 	let created: { id: string; parentId: string | null } | undefined;
@@ -129,6 +134,8 @@ test("Schedule inserts the new place right after the selected item", async ({ pa
 	const schedule = page.getByTestId(P.previewCard).getByTestId(P.schedule);
 	await expect(schedule).toContainText("After Hands Shibuya", { timeout: 20_000 });
 	await schedule.click();
+	await expect(page.getByTestId(P.paletteAdded)).toContainText(/Added Tokyo Tower/);
+	await page.getByTestId(P.paletteDone).click();
 	await expect(page.getByTestId(TESTID.addPlaceDialog)).toBeHidden();
 	await expect
 		.poll(async () => {

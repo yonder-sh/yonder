@@ -7,7 +7,7 @@
  * keyboard only once search is tapped.
  */
 import { Check, ChevronsUpDown, FolderTree, MapPin } from "lucide-react";
-import { type ReactNode, useEffect, useMemo, useState } from "react";
+import { type ReactNode, useMemo, useState } from "react";
 import { TypeGlyph } from "@/components/common/glyphs";
 import {
 	Command,
@@ -24,6 +24,7 @@ import {
 	PopoverTrigger,
 } from "@/components/ui/popover";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useVisibleBox } from "@/hooks/use-visible-box";
 import { canNest } from "@/lib/engine/tree";
 import type { GraphNode } from "@/lib/engine/types";
 import { cn } from "@/lib/utils";
@@ -32,24 +33,6 @@ import { HOME_TESTID } from "./testids";
 
 /** How far a place may be from the shared spot to be suggested. */
 const NEAR_M = 2_000;
-
-/** The part of the screen the keyboard leaves (the visual viewport). */
-function useVisibleBox(active: boolean) {
-	const [box, setBox] = useState<{ top: number; height: number } | null>(null);
-	useEffect(() => {
-		const vv = typeof window === "undefined" ? null : window.visualViewport;
-		if (!active || !vv) return;
-		const on = () => setBox({ top: vv.offsetTop, height: vv.height });
-		on();
-		vv.addEventListener("resize", on);
-		vv.addEventListener("scroll", on);
-		return () => {
-			vv.removeEventListener("resize", on);
-			vv.removeEventListener("scroll", on);
-		};
-	}, [active]);
-	return box;
-}
 
 /** A field-like button that opens a searchable list: popover wide, sheet on a phone. */
 function PickerField({
