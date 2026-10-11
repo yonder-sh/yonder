@@ -4,7 +4,8 @@
 //   1. e2e/stubs/fixtures/photon.json `search` / `reverse`: real answers,
 //      recorded once by scripts/e2e-record-photon.ts, keyed by the normalised
 //      query and its layers ("itoya ginza|", "tokyo|city,county") or by the
-//      point to 4 decimals ("35.6941,139.7045");
+//      point to 4 decimals and its layers ("35.6941,139.7045",
+//      "35.7147,139.7967|district,locality");
 //   2. its `empty` patterns: queries that find nothing on purpose (a spec's
 //      random name);
 //   3. a gazetteer of the seed's countries, cities, areas and places
@@ -26,7 +27,8 @@ const fold = (s) =>
 		.trim();
 
 export const searchKey = (q, layers = []) => `${norm(q)}|${[...layers].sort().join(",")}`;
-export const reverseKey = (lat, lon) => `${Number(lat).toFixed(4)},${Number(lon).toFixed(4)}`;
+export const reverseKey = (lat, lon, layers = []) =>
+	`${Number(lat).toFixed(4)},${Number(lon).toFixed(4)}${layers.length ? `|${[...layers].sort().join(",")}` : ""}`;
 
 const metres = (a, b) => {
 	const rad = Math.PI / 180;
@@ -126,14 +128,27 @@ export function createPhoton({ fixture, hints }) {
 			const found = fromGazetteer(q, layers, bias);
 			return { hit: found.length > 0, key, body: fc(found.slice(0, limit)) };
 		},
-		/** GET /reverse?lat&lon */
+		/** GET /reverse?lat&lon&limit&layer… */
 		reverse(params) {
 			const lat = Number(params.get("lat"));
 			const lon = Number(params.get("lon"));
-			const key = reverseKey(lat, lon);
+			const layers = params.getAll("layer");
+			const limit = Math.max(1, Math.min(50, Number(params.get("limit") ?? 1) || 1));
+			const key = reverseKey(lat, lon, layers);
 			if (!Number.isFinite(lat) || !Number.isFinite(lon)) return { hit: false, key, body: fc([]) };
 			const rec = fixture.reverse?.[key];
-			if (rec) return { hit: true, key, body: fc(rec.features.slice(0, 1)) };
+			if (rec) return { hit: true, key, body: fc(rec.features.slice(0, limit)) };
+			if (layers.length) {
+				// The seed's areas within 2 km, nearest first.
+				const types = layers.flatMap((l) => LAYER_TYPES[l] ?? []);
+				const near = places
+					.filter((f) => types.includes(f.properties.type))
+					.map((f) => [f, metres(f.geometry.coordinates, [lon, lat])])
+					.filter(([, m]) => m <= 2000)
+					.sort((a, b) => a[1] - b[1])
+					.map(([f]) => f);
+				return { hit: near.length > 0, key, body: fc(near.slice(0, limit)) };
+			}
 			let best = null;
 			let bestM = 150;
 			for (const f of places) {
