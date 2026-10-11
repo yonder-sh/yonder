@@ -57,6 +57,7 @@ import {
 import { WelcomeMenuItem } from "@/features/welcome/WelcomeDialog";
 import { mustRedact } from "@/lib/auth/roles";
 import { signOut } from "@/lib/auth/sign-out";
+import { floatBottom, useTyping } from "@/lib/bottom-bars";
 import { sessionQuery } from "@/lib/query/trip-queries";
 import { useFollowedStore } from "@/lib/realtime/view-ui";
 import { TESTID } from "@/lib/testids";
@@ -296,6 +297,7 @@ function BottomTabs() {
 	>[];
 	return (
 		<div
+			data-bottom-bar=""
 			role="tablist"
 			aria-label="Views"
 			data-testid={TESTID.centerTabs}
@@ -388,13 +390,19 @@ function Fab() {
 	const guard = useEditGuard();
 	const guest = mustRedact(ws.graph.me);
 	const dayId = ws.sel?.kind === "day" ? ws.sel.id : undefined;
+	// The keyboard is up: it steps aside (the field's own buttons are above it).
+	const typing = useTyping();
+	if (typing) return null;
 	return (
 		<DropdownMenu>
 			<DropdownMenuTrigger
+				data-bottom-bar="float"
 				data-testid={TESTID.fab}
 				aria-label="Add"
+				// Above the bars on the foot (tab bar, the Plan's dock, a selection bar).
+				style={{ bottom: floatBottom(16) }}
 				className={cn(
-					"fixed right-4 bottom-[calc(72px+var(--plan-dock-h,0px)+env(safe-area-inset-bottom))] z-40 flex size-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-float transition-transform active:scale-95 data-[state=open]:rotate-45",
+					"fixed right-4 z-40 flex size-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-float transition-[bottom,transform] duration-300 active:scale-95 data-[state=open]:rotate-45 motion-reduce:transition-none",
 				)}
 			>
 				<Plus className="size-6" />
