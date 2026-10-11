@@ -569,6 +569,7 @@ function ActivityFooter({ target }: { target: ActivityTarget | null }) {
 	return (
 		<button
 			type="button"
+			data-bottom-bar=""
 			data-testid={SHELL_TESTID.activityFooter}
 			onClick={() => setActivityOpen(true)}
 			className="flex h-9 shrink-0 items-center gap-1.5 border-t px-4 text-left text-xs text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground"
