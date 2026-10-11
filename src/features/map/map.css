@@ -368,6 +368,9 @@
 	line-height: 1;
 	white-space: nowrap;
 }
+.yonder-split-stop[data-compact] > span {
+	padding: 0 2px;
+}
 .yonder-split-stop b {
 	display: grid;
 	place-items: center;

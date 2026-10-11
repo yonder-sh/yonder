@@ -1078,6 +1078,46 @@ export function wantsGlobe(
 	return !!cap && cap.radius >= GLOBE_MIN_CAP && cap.radius <= GLOBE_MAX_CAP;
 }
 
+/** A Cities & nights badge on screen: its anchor (px) and how many nights each stop there has. */
+export type SplitBadge = { key: string; x: number; y: number; days: number[] };
+
+const nightsText = (d: number) => `${d} ${d === 1 ? "night" : "nights"}`;
+
+/**
+ * Badges that would cover an earlier one keep only their numbers ("2"), not
+ * "2 3 nights": greedy in route order, ~6.6px per 11px mono character.
+ */
+export function compactSplitBadges(badges: readonly SplitBadge[]): Set<string> {
+	const rect = (
+		b: SplitBadge,
+		full: boolean,
+	): [number, number, number, number] => {
+		const w =
+			b.days.reduce(
+				(sum, d) => sum + 24 + (full ? 6.6 * nightsText(d).length + 4 : 0),
+				0,
+			) +
+			3 * (b.days.length - 1);
+		// Anchored at the bottom centre, 18px above the city.
+		return [b.x - w / 2, b.y - 38, b.x + w / 2, b.y - 18];
+	};
+	const hit = (a: number[], b: number[]) =>
+		(a[0] as number) < (b[2] as number) &&
+		(a[2] as number) > (b[0] as number) &&
+		(a[1] as number) < (b[3] as number) &&
+		(a[3] as number) > (b[1] as number);
+	const placed: number[][] = [];
+	const out = new Set<string>();
+	for (const b of badges) {
+		const full = rect(b, true);
+		if (placed.some((r) => hit(full, r))) {
+			out.add(b.key);
+			placed.push(rect(b, false));
+		} else placed.push(full);
+	}
+	return out;
+}
+
 // ---------------------------------------------------------------------------
 // Hover tooltip and the one-pin hint
 // ---------------------------------------------------------------------------

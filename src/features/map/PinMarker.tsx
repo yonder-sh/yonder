@@ -352,7 +352,14 @@ export function EdgeChipMarker({
 }
 
 /** A city's stop(s) on the route while the nights per city change: "1 · 4 nights" over it. */
-export function SplitStopMarker({ stops }: { stops: readonly SplitStop[] }) {
+export function SplitStopMarker({
+	stops,
+	compact = false,
+}: {
+	stops: readonly SplitStop[];
+	/** Only the numbers: the full badge would cover another one. */
+	compact?: boolean;
+}) {
 	const s = stops[0];
 	if (!s) return null;
 	return (
@@ -374,12 +381,13 @@ export function SplitStopMarker({ stops }: { stops: readonly SplitStop[] }) {
 							`${x.stop}. ${x.name}, ${x.days} ${x.days === 1 ? "night" : "nights"}`,
 					)
 					.join("; ")}
+				data-compact={compact ? "" : undefined}
 				className="yonder-split-stop"
 			>
 				{stops.map((x) => (
 					<span key={x.stop}>
 						<b>{x.stop}</b>
-						{x.days} {x.days === 1 ? "night" : "nights"}
+						{compact ? null : `${x.days} ${x.days === 1 ? "night" : "nights"}`}
 					</span>
 				))}
 			</div>

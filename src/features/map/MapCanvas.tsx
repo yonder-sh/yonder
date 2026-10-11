@@ -115,6 +115,7 @@ import {
 	buildEdges,
 	buildGhosts,
 	buildPins,
+	compactSplitBadges,
 	type EdgeProps,
 	edgeTip,
 	fitBoundsFor,
@@ -1702,6 +1703,41 @@ export default function MapCanvas({
 			by.set(s.cityId, [...(by.get(s.cityId) ?? []), s]);
 		return [...by.values()];
 	}, [route]);
+	// Badges that would overlap shrink to their numbers (re-checked on move end).
+	const [compactStops, setCompactStops] = useState<ReadonlySet<string>>(
+		() => new Set(),
+	);
+	useEffect(() => {
+		const map = mapRef.current?.getMap();
+		if (!map || !loaded || routeStops.length === 0) {
+			setCompactStops((prev) => (prev.size ? new Set() : prev));
+			return;
+		}
+		const place = () => {
+			const next = compactSplitBadges(
+				routeStops.flatMap((stops) => {
+					const s = stops[0];
+					if (!s) return [];
+					const q = map.project([s.lng, s.lat]);
+					return [
+						{ key: s.cityId, x: q.x, y: q.y, days: stops.map((x) => x.days) },
+					];
+				}),
+			);
+			setCompactStops((prev) =>
+				prev.size === next.size && [...next].every((k) => prev.has(k))
+					? prev
+					: next,
+			);
+		};
+		place();
+		map.on("moveend", place);
+		map.on("resize", place);
+		return () => {
+			map.off("moveend", place);
+			map.off("resize", place);
+		};
+	}, [loaded, routeStops]);
 
 	const isMobile = variant === "mobile";
 	const controlStyle: CSSProperties = isMobile
@@ -1848,7 +1884,11 @@ export default function MapCanvas({
 					})}
 					{clusterMarkers}
 					{routeStops.map((stops) => (
-						<SplitStopMarker key={stops[0]?.cityId} stops={stops} />
+						<SplitStopMarker
+							key={stops[0]?.cityId}
+							stops={stops}
+							compact={compactStops.has(stops[0]?.cityId ?? "")}
+						/>
 					))}
 				</MapGL>
 			</div>
