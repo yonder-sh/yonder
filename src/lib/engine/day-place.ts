@@ -230,9 +230,9 @@ const GETTING_THERE = new Set(["airport", "station", "port"]);
 
 /**
  * A place put on a day spent somewhere else (Kinkaku-ji on a Tokyo day): its
- * place and the day's. Only days with a night (or the night before) say where
- * they are; airports and stations go anywhere; a place inside the day's city
- * (or around it) is never off.
+ * place and the day's. Only days with a night (or the last day, the night before)
+ * say where they are; airports and stations go anywhere; a place inside the
+ * day's city (or around it) is never off.
  */
 export function offDayPlace(
 	ix: GraphIndex,
@@ -245,7 +245,11 @@ export function offDayPlace(
 	if (i < 0) return null;
 	const night = nightPlace(ix, dayId ?? undefined);
 	const before = i > 0 ? nightPlace(ix, ix.days[i - 1]?.id) : null;
-	const here = [night, before].filter((p): p is string => !!p);
+	// No night: only the last day (spent where the last night was) says where it is.
+	const last = i === ix.days.length - 1;
+	const here = (night ? [night, before] : last ? [before] : []).filter(
+		(p): p is string => !!p,
+	);
 	const at = placeOf(ix, node.id);
 	if (!here[0] || !at) return null;
 	const near = (a: string, b: string) =>

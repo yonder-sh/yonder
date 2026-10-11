@@ -101,8 +101,16 @@ describe("offDayText", () => {
 	it("is quiet in the day's city, on a travel day's morning, for airports and the country", () => {
 		expect(offDayText(ix, d1, N.sensoji)).toBeNull();
 		expect(offDayText(ix, d2, N.sensoji)).toBeNull();
-		expect(offDayText(ix, d3, N.kiyomizu)).toBeNull();
 		expect(offDayText(ix, d1, N.kix)).toBeNull();
 		expect(offDayText(ix, d1, N.japan)).toBeNull();
+	});
+	it("a day without a night says nothing, except the last day (where the last night was)", () => {
+		expect(offDayText(ix, d3, N.sensoji)).toBeNull();
+		const two = indexGraph(
+			scenario({ days: [{ night: "tokyo", items: [] }, { items: [] }] }).graph,
+		);
+		expect(offDayText(two, two.days[1]?.id, N.kiyomizu)).toBe(
+			"Kiyomizu-dera is in Kyoto — this day is in Tokyo",
+		);
 	});
 });
