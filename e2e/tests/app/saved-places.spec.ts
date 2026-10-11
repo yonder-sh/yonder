@@ -84,7 +84,7 @@ test("a share asks where it is; one tap files it; the grid groups by place; ones
 	// The grid: Korea (newest), Japan › Kyoto · 2, then Unsorted.
 	const labels = () => page.getByTestId(S.section).evaluateAll((els) => els.map((e) => e.getAttribute("aria-label")));
 	await expect.poll(labels).toEqual(["South Korea", "Japan", "Unsorted"]);
-	await expect(section(page, "Japan").getByTestId(S.sectionCity)).toHaveText("Kyoto · 2");
+	await expect(section(page, "Japan").getByTestId(S.sectionCity).locator("h3")).toHaveText("Kyoto · 2");
 	await expect(section(page, "South Korea").getByTestId(S.tile)).toHaveCount(1);
 	await expect(section(page, "Unsorted").getByTestId(S.tile)).toHaveCount(1);
 	await expectNoHorizontalOverflow(page);
@@ -165,7 +165,7 @@ test("a trip's gallery saves into my Saved under the trip's city, marked in the 
 	await page.keyboard.press("Escape");
 	await page.goto("/saved");
 	const tokyo = page.locator(`[data-testid="${S.sectionCity}"][data-city="JP|tokyo"]`);
-	await expect(tokyo).toContainText("Tokyo");
+	await expect(tokyo.locator("h3")).toContainText("Tokyo");
 	const mine = tokyo.getByTestId(S.tile).first();
 	await expect(mine.getByTestId(S.tileTrips)).toContainText(/^In /);
 	await expect
@@ -185,7 +185,7 @@ test("a trip's gallery saves into my Saved under the trip's city, marked in the 
 	await expect(maya.locator("[data-sonner-toast]").filter({ hasText: /^Saved/ })).toBeVisible();
 	await maya.goto("/saved");
 	const hers = maya.locator(`[data-testid="${S.section}"][aria-label="Japan"]`);
-	await expect(hers.getByTestId(S.sectionCity).first()).toContainText(/Tokyo/);
+	await expect(hers.getByTestId(S.sectionCity).locator("h3")).toContainText([/Tokyo/]);
 	await expect(hers.getByTestId(S.tileTrips)).toContainText(/^In /);
 	await ctx.close();
 });
