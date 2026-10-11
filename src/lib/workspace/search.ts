@@ -100,6 +100,10 @@ export const SEL_RE = new RegExp(
 	`^(root|n\\.${ID}|i\\.${ID}|l\\.${ID}\\.${ID}|e\\.${ID}\\.${ID}|d\\.${ID}|s\\.${ID}\\.(start|end)|p\\.${ID})$`,
 );
 
+// `?asOf` only in e2e builds (VITE_E2E) and vitest; `?.`: collab runs under plain Node.
+const AS_OF_ALLOWED =
+	import.meta.env?.VITE_E2E === "1" || import.meta.env?.MODE === "test";
+
 export const WorkspaceSearch = z.object({
 	lens: z.enum(LENS_VALUES).optional().catch(undefined),
 	/** Absent = `defaultTab()`: the Overview (Today during the trip, but for a follower) at a bare trip root, else the Plan. */
@@ -107,11 +111,12 @@ export const WorkspaceSearch = z.object({
 	/**
 	 * docs/OVERVIEW.md: "today" for the Overview and Today, so demos and e2e
 	 * can see it before, during and after the trip: `YYYY-MM-DD` (noon) or a
-	 * local time on it, `YYYY-MM-DDTHH:mm` (`nowFor`).
+	 * local time on it, `YYYY-MM-DDTHH:mm` (`nowFor`). Ignored in production.
 	 */
 	asOf: z
 		.string()
 		.regex(/^\d{4}-\d{2}-\d{2}(T([01]\d|2[0-3]):[0-5]\d)?$/)
+		.refine(() => AS_OF_ALLOWED)
 		.optional()
 		.catch(undefined),
 	/** One day or an inclusive range. */
