@@ -57,6 +57,9 @@ export const MUTATION_POLICY = {
 	saveTripMedia: "account",
 	/** Saved photos onto a trip's place: the attachments re-reference them. */
 	attachSavedFiles: "edit-only",
+	/** Many saved items into a trip as ideas, and its Undo. */
+	addSavedToTrip: "edit-only",
+	undoSavedToTrip: "edit-only",
 
 	// ---- trips (F) ----
 	updateTrip: { direct: "tripSettings" },

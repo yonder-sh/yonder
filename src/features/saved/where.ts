@@ -201,3 +201,30 @@ export function inTripsLabel(trips: readonly SavedTrip[]): string | null {
 		? `In ${trips[0]?.name}`
 		: `In ${trips.length} trips`;
 }
+
+/**
+ * A new trip's name from what's in it: "Kyoto", "Kyoto & Osaka", "Japan",
+ * "Japan & South Korea", else "New trip".
+ */
+export function tripNameFor(
+	links: readonly Pick<SavedLink, "where">[],
+): string {
+	const cities: string[] = [];
+	const countries: string[] = [];
+	for (const l of links) {
+		const w = l.where;
+		if (!w) continue;
+		if (!countries.includes(w.countryCode)) countries.push(w.countryCode);
+		if (
+			w.city &&
+			!cities.some((c) => c.toLowerCase() === w.city?.toLowerCase())
+		)
+			cities.push(w.city);
+	}
+	const two = (xs: string[]) => (xs.length === 1 ? xs[0] : xs.join(" & "));
+	if (cities.length && cities.length <= 2 && countries.length === 1)
+		return two(cities) as string;
+	if (countries.length && countries.length <= 2)
+		return two(countries.map(countryName)) as string;
+	return "New trip";
+}

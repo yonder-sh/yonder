@@ -1,6 +1,6 @@
 /** Saved's tiles: the badge, the one line, the feed's order. */
 import { describe, expect, it } from "vitest";
-import { feedPile, savedKind, sourceLabel, tileLine } from "../lib";
+import { feedPile, ideaName, savedKind, sourceLabel, tileLine } from "../lib";
 
 const base = {
 	url: null,
@@ -86,5 +86,39 @@ describe("the feed's order", () => {
 		expect(feedPile(["a", "b", "c", "d"], "c")).toEqual(["c", "d", "a", "b"]);
 		expect(feedPile(["a", "b"], "gone")).toEqual(["a", "b"]);
 		expect(feedPile(["a", "b"], null)).toEqual(["a", "b"]);
+	});
+});
+
+describe("an idea added in bulk", () => {
+	it("is named by its place or page, never its caption", () => {
+		expect(
+			ideaName({
+				...base,
+				url: "https://maps.app.goo.gl/abc",
+				place: { name: "Kissa Ito", lat: 35, lng: 135 },
+			}),
+		).toBe("Kissa Ito");
+		expect(
+			ideaName({
+				...base,
+				url: "https://www.instagram.com/reel/X/",
+				provider: "instagram",
+				previewTitle: "Best ramen ever!!",
+			}),
+		).toBe("Instagram idea");
+		expect(
+			ideaName({
+				...base,
+				url: "https://www.japan-guide.com/e/e2172.html",
+				previewTitle: "Fushimi Inari Shrine",
+			}),
+		).toBe("Fushimi Inari Shrine");
+		expect(ideaName({ ...base, url: "https://maps.app.goo.gl/x" })).toBe(
+			"Maps idea",
+		);
+		expect(ideaName({ ...base, text: "Onsen?" })).toBe("Note");
+		expect(ideaName({ ...base, files: [{ kind: "video" }] })).toBe(
+			"Video idea",
+		);
 	});
 });

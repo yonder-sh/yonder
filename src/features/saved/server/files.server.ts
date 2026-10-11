@@ -15,6 +15,7 @@
  */
 import { sql } from "drizzle-orm";
 import { v7 as uuidv7 } from "uuid";
+import type { Tx } from "@/db/db.server";
 import { db } from "@/db/db.server";
 import { attachments } from "@/db/schema";
 import {
@@ -54,6 +55,7 @@ import { posterFrame } from "@/features/media/server/video.server";
 import type { AuthUser } from "@/server/auth.server";
 import { fail } from "@/server/authz/session.server";
 import { enqueue } from "@/server/live/jobs.server";
+import type { TxOutbox } from "@/server/live/outbox.server";
 import { positionFor } from "@/server/position.server";
 import { requireEditOnly } from "@/server/proposals/proposable.server";
 import { assertQuota, lockQuota } from "@/server/quota.server";
@@ -360,69 +362,77 @@ export async function attachSaved(
 	p: { savedId: string; tripId: string; nodeId: string },
 ): Promise<{ count: number }> {
 	const access = await requireEditOnly("attachSavedFiles", p.tripId, user);
+	let count = 0;
+	await withTripTx(
+		p.tripId,
+		async (tx, out) => {
+			count = await attachSavedIn(tx, out, user, p);
+			if (!count) fail("NOT_FOUND");
+		},
+		mutationMeta(access, user),
+	);
+	return { count };
+}
+
+/** `attachSaved`'s writes inside the caller's trip transaction (edit access checked). Answers how many went on (0: none of mine). */
+export async function attachSavedIn(
+	tx: Tx,
+	out: TxOutbox,
+	user: Pick<AuthUser, "id" | "name">,
+	p: { savedId: string; tripId: string; nodeId: string },
+): Promise<number> {
 	const files = (
-		await db.execute(sql`
+		await tx.execute(sql`
 			select ${FILE_COLS} from saved_files f
 			 where f.saved_id = ${p.savedId} and f.user_id = ${user.id} and f.deleted_at is null
 			   and f.status in ('processing', 'ready')
 			   and exists (select 1 from saved_links s where s.id = f.saved_id and s.deleted_at is null)
 			 order by position`)
 	).rows as FileRow[];
-	if (!files.length) return fail("NOT_FOUND");
+	if (!files.length) return 0;
 	const target = { kind: "node" as const, nodeId: p.nodeId };
-	await withTripTx(
-		p.tripId,
-		async (tx, out) => {
-			await assertAttachmentTarget(tx, p.tripId, target, user.id);
-			for (const f of files) {
-				const id = uuidv7();
-				const visibility = await defaultVisibility(
-					tx,
-					p.tripId,
-					target,
-					f.kind,
-				);
-				await tx.insert(attachments).values({
-					id,
-					tripId: p.tripId,
-					nodeId: p.nodeId,
-					kind: f.kind,
-					status: f.status === "ready" ? "ready" : "processing",
-					visibility,
-					storageKey: f.storageKey,
-					mime: f.mime,
-					sizeBytes: f.size,
-					width: f.width,
-					height: f.height,
-					durationSec: f.durationSec,
-					thumbhash: f.thumbhash,
-					meta: f.meta.thumb ? { thumb: true } : {},
-					position: await positionFor(tx, {
-						table: "attachments",
-						tripId: p.tripId,
-						target,
-					}),
-					createdBy: user.id,
-				});
-				await logMediaAdd(tx, out, {
-					tripId: p.tripId,
-					actor: { userId: user.id, name: user.name },
-					target,
-					kind: f.kind,
-					visibility,
-				});
-				// Still making its thumbnails: the trip's own job makes them (same objects).
-				if (f.status !== "ready")
-					out.job(
-						"media",
-						f.kind === "video" ? "media.poster" : "media.variants",
-						{ tripId: p.tripId, attachmentId: id },
-						{ dedupeId: `media:${id}` },
-					);
-			}
-			out.emit({ keys: ["media", "counts"] });
-		},
-		mutationMeta(access, user),
-	);
-	return { count: files.length };
+	await assertAttachmentTarget(tx, p.tripId, target, user.id);
+	for (const f of files) {
+		const id = uuidv7();
+		const visibility = await defaultVisibility(tx, p.tripId, target, f.kind);
+		await tx.insert(attachments).values({
+			id,
+			tripId: p.tripId,
+			nodeId: p.nodeId,
+			kind: f.kind,
+			status: f.status === "ready" ? "ready" : "processing",
+			visibility,
+			storageKey: f.storageKey,
+			mime: f.mime,
+			sizeBytes: f.size,
+			width: f.width,
+			height: f.height,
+			durationSec: f.durationSec,
+			thumbhash: f.thumbhash,
+			meta: f.meta.thumb ? { thumb: true } : {},
+			position: await positionFor(tx, {
+				table: "attachments",
+				tripId: p.tripId,
+				target,
+			}),
+			createdBy: user.id,
+		});
+		await logMediaAdd(tx, out, {
+			tripId: p.tripId,
+			actor: { userId: user.id, name: user.name },
+			target,
+			kind: f.kind,
+			visibility,
+		});
+		// Still making its thumbnails: the trip's own job makes them (same objects).
+		if (f.status !== "ready")
+			out.job(
+				"media",
+				f.kind === "video" ? "media.poster" : "media.variants",
+				{ tripId: p.tripId, attachmentId: id },
+				{ dedupeId: `media:${id}` },
+			);
+	}
+	out.emit({ keys: ["media", "counts"] });
+	return files.length;
 }

@@ -13,6 +13,8 @@
  * - `startSavedUpload`, `signSavedUploadParts`, `completeSavedUpload`: shared
  *   photos and videos into Saved (`./server/files.server.ts`).
  * - `attachSavedFiles`: a saved share's photos onto a place (edit access).
+ * - `addSavedToTrip` / `undoSavedToTrip`: many into a trip as ideas, and
+ *   Undo (edit access; `./server/to-trip.server.ts`).
  */
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
@@ -42,9 +44,15 @@ import {
 	saveLink,
 	setSavedWhere,
 } from "./server/saved.server";
+import {
+	type AddedToTrip,
+	addSavedToTrip as addToTrip,
+	BULK_MAX,
+	undoSavedToTrip as undoToTrip,
+} from "./server/to-trip.server";
 import type { SavedLink } from "./types";
 
-export type { SavedLink };
+export type { AddedToTrip, SavedLink };
 
 export const listSavedLinks = createServerFn({ method: "GET" })
 	.middleware([withAccount])
@@ -295,4 +303,38 @@ export const attachSavedFiles = createServerFn({ method: "POST" })
 	.handler(
 		async ({ data, context }): Promise<{ count: number }> =>
 			attachSaved(context.user, data),
+	);
+
+export const addSavedToTrip = createServerFn({ method: "POST" })
+	.middleware([withNamedUser])
+	.validator(
+		z
+			.object({
+				tripId: z.uuid(),
+				ids: z.array(z.uuid()).min(1).max(BULK_MAX),
+				places: z.boolean().optional(),
+			})
+			.strict(),
+	)
+	.handler(
+		async ({ data, context }): Promise<AddedToTrip> =>
+			addToTrip(context.user, data),
+	);
+
+export const undoSavedToTrip = createServerFn({ method: "POST" })
+	.middleware([withNamedUser])
+	.validator(
+		z
+			.object({
+				tripId: z.uuid(),
+				added: z
+					.array(z.object({ savedId: z.uuid(), nodeId: z.uuid() }).strict())
+					.max(SAVED.list),
+				made: z.array(z.uuid()).max(SAVED.list),
+			})
+			.strict(),
+	)
+	.handler(
+		async ({ data, context }): Promise<{ ok: true }> =>
+			undoToTrip(context.user, data),
 	);

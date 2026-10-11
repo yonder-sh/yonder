@@ -5,7 +5,8 @@
  * files it and leaves, Skip, Add to a trip now), Save moves on to the next
  * link after a beat and says where it went, Delete moves on too (Undo puts
  * it back), Later leaves, the end card goes back to the grid, a share's
- * photos are slides.
+ * photos are slides. Add to trip: Select's and a city's, only trips I can
+ * edit, Undo.
  */
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
@@ -29,6 +30,8 @@ const calls = vi.hoisted(() => ({
 	deleted: [] as unknown[],
 	restored: [] as unknown[],
 	placed: [] as unknown[],
+	bulk: [] as unknown[],
+	undone: [] as unknown[],
 	toasts: [] as string[],
 	undo: null as null | (() => void),
 }));
@@ -49,6 +52,19 @@ vi.mock("../saved.functions", () => ({
 	attachSavedFiles: async () => ({ count: 0 }),
 	listSavedLinks: async () => [],
 	searchSavedPlaces: async () => [],
+	addSavedToTrip: async (o: { data: { ids: string[] } }) => {
+		calls.bulk.push(o.data);
+		return {
+			added: o.data.ids.map((id) => ({ savedId: id, nodeId: `n-${id}` })),
+			already: 0,
+			made: [],
+			cities: [],
+		};
+	},
+	undoSavedToTrip: async (o: { data: unknown }) => {
+		calls.undone.push(o.data);
+		return { ok: true };
+	},
 	setSavedPlace: async (o: { data: { ids: string[] } }) => {
 		calls.placed.push(o.data);
 		return o.data;
@@ -59,8 +75,26 @@ vi.mock("@/features/home/queries", () => ({
 		queryKey: ["me", "trips"],
 		queryFn: async () => [
 			{
+				id: "trip-jp",
+				name: "Japan 2027",
+				role: "owner",
+				viaLink: false,
 				countryCodes: ["JP"],
 				cities: [{ name: "Kyoto", countryCode: "JP", lat: 35, lng: 135.7 }],
+			},
+			{
+				id: "trip-view",
+				name: "Maya's trip",
+				role: "viewer",
+				viaLink: false,
+				countryCodes: [],
+			},
+			{
+				id: "trip-suggest",
+				name: "Audrey's trip",
+				role: "suggester",
+				viaLink: false,
+				countryCodes: [],
 			},
 		],
 	}),
@@ -72,7 +106,10 @@ vi.mock("sonner", () => ({
 			calls.undo = o?.action?.onClick ?? null;
 		},
 		{
-			success: (t: string) => calls.toasts.push(t),
+			success: (t: string, o?: { action?: { onClick: () => void } }) => {
+				calls.toasts.push(t);
+				if (o?.action) calls.undo = o.action.onClick;
+			},
 			error: (t: string) => calls.toasts.push(t),
 		},
 	),
@@ -110,6 +147,8 @@ afterEach(() => {
 	calls.deleted.length = 0;
 	calls.restored.length = 0;
 	calls.placed.length = 0;
+	calls.bulk.length = 0;
+	calls.undone.length = 0;
 	calls.toasts.length = 0;
 	calls.undo = null;
 });
@@ -277,6 +316,54 @@ describe("Select in the grid", () => {
 		// Not selecting: a tap opens.
 		fireEvent.click(screen.getAllByTestId(T.tile)[1] as HTMLElement);
 		expect(open).toHaveBeenCalledWith("b");
+	});
+});
+
+describe("Add to trip", () => {
+	it("Select adds the ticked ones to a trip I can edit, with Undo", async () => {
+		render(
+			<QueryClientProvider client={new QueryClient()}>
+				<SavedGrid
+					links={[link("a"), link("b"), link("c")]}
+					pending={false}
+					onOpen={() => {}}
+					empty={null}
+				/>
+			</QueryClientProvider>,
+		);
+		fireEvent.click(screen.getByTestId(T.select));
+		const tiles = screen.getAllByTestId(T.tile);
+		fireEvent.click(tiles[0] as HTMLElement);
+		fireEvent.click(tiles[2] as HTMLElement);
+		fireEvent.click(screen.getByTestId(T.addSelected));
+		const dialog = await screen.findByTestId(T.addDialog);
+		expect(dialog).toHaveTextContent("Add 2 items to a trip");
+		// Viewers and suggesters can't add many.
+		const trips = await within(dialog).findAllByTestId(T.addTrip);
+		expect(trips.map((t) => t.textContent)).toEqual(["Japan 2027"]);
+		fireEvent.click(trips[0] as HTMLElement);
+		await waitFor(() =>
+			expect(calls.bulk).toEqual([
+				{ tripId: "trip-jp", ids: ["a", "c"], places: false },
+			]),
+		);
+		await waitFor(() =>
+			expect(calls.toasts).toContain("Added 2 items to Japan 2027"),
+		);
+		await waitFor(() => expect(screen.queryByTestId(T.selectCount)).toBeNull());
+		calls.undo?.();
+		await waitFor(() =>
+			expect(calls.undone).toEqual([
+				{
+					tripId: "trip-jp",
+					added: [
+						{ savedId: "a", nodeId: "n-a" },
+						{ savedId: "c", nodeId: "n-c" },
+					],
+					made: [],
+				},
+			]),
+		);
 	});
 });
 

@@ -9,6 +9,7 @@ import {
 	inTripsLabel,
 	matchCountries,
 	suggestedWhere,
+	tripNameFor,
 	whereChips,
 	whereLabel,
 } from "../where";
@@ -197,5 +198,25 @@ describe("the Saver's area for a filed item", () => {
 			whereParent(nodes, { countryCode: "TW", city: "Taipei" }),
 		).toBeNull();
 		expect(whereParent(nodes, null)).toBeNull();
+	});
+});
+
+describe("a new trip's name", () => {
+	it("from its cities, else its countries", () => {
+		expect(tripNameFor([item("a", at("JP", "Kyoto", 1))])).toBe("Kyoto");
+		expect(
+			tripNameFor([
+				item("a", at("JP", "Kyoto", 1)),
+				item("b", at("JP", "Osaka", 1)),
+				item("c", at("JP", "kyoto", 1)),
+			]),
+		).toBe("Kyoto & Osaka");
+		expect(
+			tripNameFor([
+				item("a", at("JP", "Kyoto", 1)),
+				item("b", at("KR", "Seoul", 1)),
+			]),
+		).toBe("Japan & South Korea");
+		expect(tripNameFor([item("a", null)])).toBe("New trip");
 	});
 });

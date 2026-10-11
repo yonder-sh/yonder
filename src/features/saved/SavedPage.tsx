@@ -10,14 +10,29 @@
  */
 import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, CloudOff, MapPin, Trash2 } from "lucide-react";
+import {
+	ArrowLeft,
+	CloudOff,
+	MapPin,
+	MoreHorizontal,
+	Plus,
+	Route,
+	Trash2,
+} from "lucide-react";
 import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { FlagEmoji } from "@/components/common/glyphs";
 import { YonderMark } from "@/components/common/yonder-mark";
 import { Button } from "@/components/ui/button";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Switch } from "@/components/ui/switch";
 import { SaveFromAppsDialog } from "@/features/home/SaveFromAppsDialog";
+import { AddToTripDialog } from "./AddToTripDialog";
 import { savedPolling, savedQuery } from "./queries";
 import { SavedFeed } from "./SavedFeed";
 import { SavedTile } from "./SavedTile";
@@ -114,10 +129,56 @@ function Tiles({
 	);
 }
 
+/** ⋯ on a country or city: all of it into a trip, or a new trip from it. */
+function GroupMenu({
+	label,
+	onAdd,
+	onPlan,
+}: {
+	label: string;
+	onAdd: () => void;
+	onPlan: () => void;
+}) {
+	return (
+		<DropdownMenu>
+			<DropdownMenuTrigger asChild>
+				<Button
+					variant="ghost"
+					size="icon-sm"
+					data-testid={SAVED_TESTID.groupMenu}
+					aria-label={`More for ${label}`}
+					className="ml-auto text-muted-foreground"
+				>
+					<MoreHorizontal />
+				</Button>
+			</DropdownMenuTrigger>
+			<DropdownMenuContent align="end" className="w-52">
+				<DropdownMenuItem data-testid={SAVED_TESTID.groupAdd} onSelect={onAdd}>
+					<Plus /> Add all to a trip
+				</DropdownMenuItem>
+				<DropdownMenuItem
+					data-testid={SAVED_TESTID.groupPlan}
+					onSelect={onPlan}
+				>
+					<Route /> Plan a trip from these
+				</DropdownMenuItem>
+			</DropdownMenuContent>
+		</DropdownMenu>
+	);
+}
+
+type Adding = {
+	links: SavedLink[];
+	label: string;
+	plan: boolean;
+	open: boolean;
+};
+
 /**
  * The grid: by country, then city, then Unsorted; three to a row, newest
- * first in each. Select ticks tiles: Move files them under a place, Delete N
- * deletes them in one call (Undo in the toast).
+ * first in each. Select ticks tiles: Add to trip, Move files them under a
+ * place, Delete N deletes them in one call (Undo in the toast). A country's
+ * or city's ⋯ adds all of it to a trip, or plans a new one from it.
  */
 export function SavedGrid({
 	links,
@@ -138,6 +199,7 @@ export function SavedGrid({
 	const [selecting, setSelecting] = useState(false);
 	const [picked, setPicked] = useState<ReadonlySet<string>>(new Set());
 	const [moving, setMoving] = useState(false);
+	const [adding, setAdding] = useState<Adding | null>(null);
 	const { groups } = useMemo(
 		() => gridLinks(links, hideInTrips),
 		[links, hideInTrips],
@@ -168,6 +230,28 @@ export function SavedGrid({
 				),
 		);
 	};
+	const addChosen = () => {
+		const byId = new Map(links.map((l) => [l.id, l]));
+		const n = chosen.length;
+		setAdding({
+			links: chosen.flatMap((id) => byId.get(id) ?? []),
+			label: n === 1 ? "1 item" : `${n} items`,
+			plan: false,
+			open: true,
+		});
+	};
+	const menu = (label: string, items: readonly SavedLink[]) =>
+		selecting ? null : (
+			<GroupMenu
+				label={label}
+				onAdd={() =>
+					setAdding({ links: [...items], label, plan: false, open: true })
+				}
+				onPlan={() =>
+					setAdding({ links: [...items], label, plan: true, open: true })
+				}
+			/>
+		);
 	const tap = (id: string) =>
 		selecting
 			? setPicked((p) => {
@@ -250,6 +334,10 @@ export function SavedGrid({
 								<span className="text-sm font-normal text-muted-foreground tnum">
 									{g.count}
 								</span>
+								{menu(
+									g.label,
+									g.cities.flatMap((c) => c.items),
+								)}
 							</h2>
 							{g.cities.map((c) =>
 								g.key ? (
@@ -259,8 +347,12 @@ export function SavedGrid({
 										data-city={c.key}
 										className="grid gap-1.5"
 									>
-										<h3 className="px-4 text-sm font-medium text-muted-foreground sm:px-0">
-											{c.label} · <span className="tnum">{c.items.length}</span>
+										<h3 className="flex min-h-8 items-center gap-1 px-4 text-sm font-medium text-muted-foreground sm:px-0">
+											<span>
+												{c.label} ·{" "}
+												<span className="tnum">{c.items.length}</span>
+											</span>
+											{g.cities.length > 1 ? menu(c.label, c.items) : null}
 										</h3>
 										<Tiles
 											items={c.items}
@@ -296,6 +388,15 @@ export function SavedGrid({
 				>
 					<div className="mx-auto flex max-w-[720px] items-center justify-end gap-2">
 						<Button
+							className="mr-auto"
+							data-testid={SAVED_TESTID.addSelected}
+							disabled={!chosen.length}
+							onClick={addChosen}
+						>
+							<Plus />
+							Add to trip
+						</Button>
+						<Button
 							variant="outline"
 							data-testid={SAVED_TESTID.moveSelected}
 							disabled={!chosen.length}
@@ -316,6 +417,14 @@ export function SavedGrid({
 					</div>
 				</div>
 			) : null}
+			<AddToTripDialog
+				open={!!adding?.open}
+				onOpenChange={(v) => setAdding((a) => (a ? { ...a, open: v } : a))}
+				links={adding?.links ?? []}
+				label={adding?.label ?? ""}
+				plan={adding?.plan}
+				onDone={stopSelecting}
+			/>
 			<WhereDialog
 				open={moving}
 				onOpenChange={setMoving}
