@@ -1,8 +1,9 @@
 import { createServerFn } from "@tanstack/react-start";
-import { getRequestHeaders, getRequestIP } from "@tanstack/react-start/server";
+import { getRequest, getRequestHeaders } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { db } from "@/db/db.server";
 import { announceTripChange } from "@/server/announce.server";
+import { authEnv, clientIp } from "@/server/auth/env.server";
 import { authLimits } from "@/server/auth/limits.server";
 import { auth } from "@/server/auth.server";
 import {
@@ -40,10 +41,17 @@ const SlugInput = z.object({ slug: z.string().min(1).max(100) }).strict();
  * someone would guess them, so both calls below spend it.
  */
 async function withinTripOpenLimit(): Promise<boolean> {
-	const wait = await authLimits().tripOpenRetryAfter(
-		getRequestIP({ xForwardedFor: true }) ?? "",
-	);
+	const wait = await authLimits().tripOpenRetryAfter(requestIp());
 	return wait <= 0;
+}
+
+/** From the trusted headers, not a client-sent first X-Forwarded-For entry. */
+function requestIp(): string {
+	try {
+		return clientIp(getRequest(), authEnv().ipAddressHeaders);
+	} catch {
+		return ""; // no request (tests, scripts)
+	}
 }
 
 export interface OpenTripResult {

@@ -1,11 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { db } from "@/db/db.server";
-import { authEnv } from "@/server/auth/env.server";
+import { authEnv, clientIp } from "@/server/auth/env.server";
 import { errorCode } from "@/server/errors";
 import {
 	checkKey,
-	clientIp,
 	SHORTCUT,
 	saveShare,
 	shareInput,

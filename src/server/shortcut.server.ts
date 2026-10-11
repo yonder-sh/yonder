@@ -235,15 +235,6 @@ export async function removeDevice(
 	return res.rows.length > 0;
 }
 
-/** The caller's IP, from the headers the deployment trusts (like Better Auth's limiter). */
-export function clientIp(request: Request, headers: string[]): string {
-	for (const h of headers) {
-		const v = request.headers.get(h)?.split(",")[0]?.trim();
-		if (v) return v;
-	}
-	return "unknown";
-}
-
 /** Reads a small JSON body (at most 16 KB), or null. */
 export async function smallJson(request: Request): Promise<unknown> {
 	const len = Number(request.headers.get("content-length") ?? 0);
