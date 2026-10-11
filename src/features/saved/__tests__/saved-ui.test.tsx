@@ -1,11 +1,15 @@
 /**
- * Saved's grid tiles (badge, line, placeholder, a photo share) and Select
- * (Delete N, Undo); its feed: Save moves on to the next link after a beat
- * and says where it went, Delete moves on too (Undo puts it back), Later
- * leaves, the end card goes back to the grid, a share's photos are slides.
+ * Saved's grid tiles (badge, line, placeholder, a photo share, "In Japan
+ * 2027"), the grid by country and city, "Hide ones in trips", and Select
+ * (Delete N, Undo); its feed: a share asks "Where is this?" first (a chip
+ * files it and leaves, Skip, Add to a trip now), Save moves on to the next
+ * link after a beat and says where it went, Delete moves on too (Undo puts
+ * it back), Later leaves, the end card goes back to the grid, a share's
+ * photos are slides.
  */
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
+	cleanup,
 	fireEvent,
 	render,
 	screen,
@@ -24,6 +28,7 @@ const calls = vi.hoisted(() => ({
 	added: [] as unknown[],
 	deleted: [] as unknown[],
 	restored: [] as unknown[],
+	placed: [] as unknown[],
 	toasts: [] as string[],
 	undo: null as null | (() => void),
 }));
@@ -42,6 +47,23 @@ vi.mock("../saved.functions", () => ({
 		return o.data;
 	},
 	attachSavedFiles: async () => ({ count: 0 }),
+	listSavedLinks: async () => [],
+	searchSavedPlaces: async () => [],
+	setSavedPlace: async (o: { data: { ids: string[] } }) => {
+		calls.placed.push(o.data);
+		return o.data;
+	},
+}));
+vi.mock("@/features/home/queries", () => ({
+	myTripsQuery: () => ({
+		queryKey: ["me", "trips"],
+		queryFn: async () => [
+			{
+				countryCodes: ["JP"],
+				cities: [{ name: "Kyoto", countryCode: "JP", lat: 35, lng: 135.7 }],
+			},
+		],
+	}),
 }));
 vi.mock("sonner", () => ({
 	toast: Object.assign(
@@ -87,6 +109,7 @@ afterEach(() => {
 	calls.added.length = 0;
 	calls.deleted.length = 0;
 	calls.restored.length = 0;
+	calls.placed.length = 0;
 	calls.toasts.length = 0;
 	calls.undo = null;
 });
@@ -287,8 +310,8 @@ describe("the Saved feed", () => {
 		const cards = screen.getAllByTestId(T.card);
 		expect(cards.map((c) => c.getAttribute("data-saved"))).toEqual([
 			"b",
-			"a",
 			"c",
+			"a",
 		]);
 	});
 
@@ -364,5 +387,146 @@ describe("the Saved feed", () => {
 		);
 		fireEvent.click(screen.getByTestId(T.endBack));
 		expect(onClose).toHaveBeenCalled();
+	});
+});
+
+describe("the grid by place", () => {
+	const where = (countryCode: string, city: string | null) => ({
+		countryCode,
+		city,
+		cityKey: city?.toLowerCase() ?? null,
+		lat: null,
+		lng: null,
+		at: 1,
+	});
+	it("groups by country and city; ones in trips say so, and can be hidden", () => {
+		const hide = vi.fn();
+		const links = [
+			link("k", { where: where("JP", "Kyoto") }),
+			link("t", {
+				where: where("JP", "Kyoto"),
+				trips: [{ id: "1", name: "Japan 2027", slug: "j" }],
+			}),
+			link("u"),
+		];
+		const { rerender } = render(
+			<QueryClientProvider client={new QueryClient()}>
+				<SavedGrid
+					links={links}
+					pending={false}
+					onOpen={() => {}}
+					empty={null}
+					onHideInTrips={hide}
+				/>
+			</QueryClientProvider>,
+		);
+		const sections = screen.getAllByTestId(T.section);
+		expect(sections.map((x) => x.getAttribute("aria-label"))).toEqual([
+			"Japan",
+			"Unsorted",
+		]);
+		expect(
+			within(sections[0] as HTMLElement).getByTestId(T.sectionCity),
+		).toHaveTextContent("Kyoto · 2");
+		expect(screen.getAllByTestId(T.tileTrips)).toHaveLength(1);
+		expect(screen.getByTestId(T.tileTrips)).toHaveTextContent("In Japan 2027");
+		fireEvent.click(screen.getByTestId(T.hideInTrips));
+		expect(hide).toHaveBeenCalledWith(true);
+		rerender(
+			<QueryClientProvider client={new QueryClient()}>
+				<SavedGrid
+					links={links}
+					pending={false}
+					onOpen={() => {}}
+					empty={null}
+					hideInTrips
+					onHideInTrips={hide}
+				/>
+			</QueryClientProvider>,
+		);
+		expect(
+			screen.getAllByTestId(T.tile).map((x) => x.getAttribute("data-saved")),
+		).toEqual(["k", "u"]);
+	});
+});
+
+describe("a share asks where it is first", () => {
+	it("a chip files it there and goes back", async () => {
+		const { onClose } = feed([link("a")], { open: "a", fromShare: true });
+		const ask = screen.getByTestId(T.whereAsk);
+		expect(ask).toHaveTextContent("Where is this?");
+		const chip = await within(ask).findByRole("button", {
+			name: "Kyoto, Japan",
+		});
+		fireEvent.click(chip);
+		expect(onClose).toHaveBeenCalled();
+		expect(calls.toasts).toContain("Saved in Kyoto, Japan");
+		await waitFor(() =>
+			expect(calls.placed).toEqual([
+				{
+					ids: ["a"],
+					where: {
+						countryCode: "JP",
+						city: { name: "Kyoto", lat: 35, lng: 135.7 },
+					},
+				},
+			]),
+		);
+	});
+
+	it("a Maps link's real place is preselected", () => {
+		feed(
+			[
+				link("m", {
+					url: "https://maps.app.goo.gl/x",
+					place: {
+						name: "Kissa Mado",
+						lat: 35,
+						lng: 135.77,
+						countryCode: "JP",
+						city: "Kyoto",
+						exact: true,
+					},
+				}),
+			],
+			{ open: "m", fromShare: true },
+		);
+		expect(
+			within(screen.getByTestId(T.whereAsk)).getByRole("button", {
+				name: "Kyoto, Japan",
+				pressed: true,
+			}),
+		).toBeTruthy();
+	});
+
+	it("Skip leaves it Unsorted; Add to a trip now shows the save controls", () => {
+		const first = feed([link("a")], { open: "a", fromShare: true });
+		fireEvent.click(screen.getByTestId(T.whereSkip));
+		expect(first.onClose).toHaveBeenCalled();
+		expect(calls.placed).toEqual([]);
+		cleanup();
+		feed([link("b")], { open: "b", fromShare: true });
+		fireEvent.click(screen.getByTestId(T.whereAddNow));
+		expect(screen.queryByTestId(T.whereAsk)).toBeNull();
+		expect(screen.getByRole("button", { name: "Save b" })).toBeTruthy();
+	});
+
+	it("opened from the grid: no question; its place shows with Change", () => {
+		feed([
+			link("a", {
+				where: {
+					countryCode: "JP",
+					city: "Kyoto",
+					cityKey: "kyoto",
+					lat: null,
+					lng: null,
+					at: 1,
+				},
+			}),
+		]);
+		expect(screen.queryByTestId(T.whereAsk)).toBeNull();
+		expect(screen.getAllByTestId(T.whereRow)[0]).toHaveTextContent(
+			"Kyoto, Japan",
+		);
 	});
 });

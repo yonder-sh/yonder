@@ -2,7 +2,8 @@
  * The save controls of Save to Yonder (EXTENSIONS §10), shared by the share
  * page (`ShareInbox`) and Saved's feed: saves with ONE tap on the defaults —
  * the trip that has the place (else the last one used), a cleaned name, "New
- * idea" filed where the place belongs. Maps links go through WP-Places'
+ * idea" filed where the place belongs (a Saved item's city or country, when
+ * the Maps resolver didn't say). Maps links go through WP-Places'
  * `resolveSharedLink` (short links, place ids, the filing suggestion and
  * `existing`), else `parseMapsUrl` (name and coordinates → the nearest
  * city). "Add to existing" puts the link (or the photos) on a place already
@@ -55,6 +56,7 @@ import {
 	parentLabel,
 	parseMapsUrl,
 	readResolution,
+	whereParent,
 } from "./share-classify";
 import { HOME_TESTID } from "./testids";
 import type { MyTrip } from "./types";
@@ -108,6 +110,7 @@ export type SaveResult = {
 export function Saver({
 	entry,
 	place = null,
+	savedWhere = null,
 	nearTrips = NONE,
 	media,
 	actions,
@@ -116,6 +119,8 @@ export function Saver({
 	entry: SharedEntry;
 	/** Where it is, when Saved knows (a Maps place, a located photo): the trip and area default. */
 	place?: { name?: string | null; lat: number; lng: number } | null;
+	/** The place a Saved item is filed under: the area default (and the trip's, by country). */
+	savedWhere?: { countryCode: string; city: string | null } | null;
 	/** The trips that have that place (Saved's picks), for the default. */
 	nearTrips?: readonly string[];
 	/** Photos and videos (Saved's): how many, and how they go onto the place (edit access). */
@@ -151,10 +156,16 @@ export function Saver({
 		} catch {
 			last = null;
 		}
-		setTripId(
-			defaultTrip(options, { near: nearTrips, at: spot, last })?.id ?? null,
-		);
-	}, [options, tripId, nearTrips, spot]);
+		// Filed under a country: the trips that go there.
+		const near = nearTrips.length
+			? nearTrips
+			: savedWhere
+				? options
+						.filter((t) => t.countryCodes.includes(savedWhere.countryCode))
+						.map((t) => t.id)
+				: NONE;
+		setTripId(defaultTrip(options, { near, at: spot, last })?.id ?? null);
+	}, [options, tripId, nearTrips, spot, savedWhere]);
 	const trip = options.find((t) => t.id === tripId) ?? null;
 	const graph = useQuery({
 		...tripGraphQuery(tripId ?? ""),
@@ -225,7 +236,12 @@ export function Saver({
 	// A new trip resets a hand-picked parent (its nodes are another trip's).
 	// biome-ignore lint/correctness/useExhaustiveDependencies: reset on trip change only
 	useEffect(() => setPicked(null), [tripId]);
-	const suggestedPlan = autoParent(nodes, at, preview?.filing ?? null);
+	// The resolver's filing first, then the Saved place, then the nearest city.
+	const suggestedPlan =
+		(preview?.filing.existing.length || preview?.filing.create.length
+			? null
+			: whereParent(nodes, savedWhere)) ??
+		autoParent(nodes, at, preview?.filing ?? null);
 	const plan: ParentPlan = picked ?? suggestedPlan;
 	const planLabel = parentLabel(nodes, plan, trip?.name ?? "the trip");
 	const unresolved =

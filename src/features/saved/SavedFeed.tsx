@@ -5,17 +5,29 @@
  * swipe up its details with the save controls at the bottom, in the thumb
  * zone. Wide: the media beside the details, ↑/↓ to move.
  *
- * - Save files it into a trip (the share page's controls, `Saver`) and moves
- *   on to the next after a beat, with "Saved to Kyoto ideas · Japan 2027";
- *   Delete removes it from Saved (with Undo); scrolling past keeps it.
+ * - Opened by a share, it first asks "Where is this?" (`WhereAsk`): one tap
+ *   on a chip files it under that place and goes back; Skip leaves it
+ *   Unsorted; "Add to a trip now" shows the save controls.
+ * - Save files it into a trip (the share page's controls, `Saver`; it stays
+ *   in Saved, "In Japan 2027") and moves on to the next after a beat, with
+ *   "Saved to Kyoto ideas · Japan 2027"; Delete removes it from Saved (with
+ *   Undo); scrolling past keeps it. Its place shows in the details (Change).
  * - Shared photos and videos are one item: their slides swipe sideways (as
  *   a place's photos do in Rate); a video plays when it's on screen.
- * - Saved and deleted ones stay in this session's feed (scroll back up to see
- *   them); the grid drops them.
+ * - Deleted ones stay in this session's feed (scroll back up to see them);
+ *   the grid drops them.
  * - The end: "That's everything you saved", back to the grid.
  */
 import { useQueryClient } from "@tanstack/react-query";
-import { Check, ChevronUp, ExternalLink, Trash2, X } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import {
+	Check,
+	ChevronUp,
+	ExternalLink,
+	MapPin,
+	Trash2,
+	X,
+} from "lucide-react";
 import { useReducedMotion } from "motion/react";
 import {
 	useCallback,
@@ -49,6 +61,14 @@ import { attachSavedFiles, markSavedAdded } from "./saved.functions";
 import { SAVED_TESTID } from "./testids";
 import type { SavedFile, SavedLink } from "./types";
 import { useDeleteSaved } from "./use-delete-saved";
+import { useSetWhere } from "./use-set-where";
+import { WhereAsk, WhereDialog } from "./WherePicker";
+import {
+	choiceOf,
+	suggestedWhere,
+	type WhereChoice,
+	whereLabel,
+} from "./where";
 
 /** How long a saved card stays before the feed moves on. */
 const ADVANCE_MS = 1100;
@@ -297,6 +317,73 @@ function SavedSlides({
 	);
 }
 
+/** Where it's kept (Change) and the trips it went into. */
+function Whereabouts({ link }: { link: SavedLink }) {
+	const [open, setOpen] = useState(false);
+	const setWhere = useSetWhere();
+	const current = link.where ? choiceOf(link.where) : null;
+	const pick = (c: WhereChoice | null) => {
+		setOpen(false);
+		void setWhere([link.id], c).then(
+			(ok) =>
+				ok &&
+				toast.success(c ? `Moved to ${whereLabel(c)}` : "Moved to Unsorted", {
+					position: "top-center",
+				}),
+		);
+	};
+	return (
+		<div className="grid gap-1.5">
+			<div
+				data-testid={SAVED_TESTID.whereRow}
+				className="flex min-w-0 items-center gap-2 text-sm"
+			>
+				<MapPin className="size-4 shrink-0 text-muted-foreground" />
+				<span className="min-w-0 truncate">
+					{current ? whereLabel(current) : "Unsorted"}
+				</span>
+				<Button
+					type="button"
+					variant="link"
+					size="sm"
+					data-testid={SAVED_TESTID.whereChange}
+					className="h-auto px-0"
+					onClick={() => setOpen(true)}
+				>
+					{current ? "Change" : "Add a place"}
+				</Button>
+			</div>
+			{link.trips.length ? (
+				<div
+					data-testid={SAVED_TESTID.inTrips}
+					className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1 text-sm"
+				>
+					<Check className="size-4 shrink-0 text-good" />
+					<span className="text-muted-foreground">In</span>
+					{link.trips.map((t, i) => (
+						<span key={t.id}>
+							<Link
+								to="/t/$trip"
+								params={{ trip: t.slug }}
+								className="font-medium hover:underline"
+							>
+								{t.name}
+							</Link>
+							{i < link.trips.length - 1 ? "," : ""}
+						</span>
+					))}
+				</div>
+			) : null}
+			<WhereDialog
+				open={open}
+				onOpenChange={setOpen}
+				current={current}
+				onPick={pick}
+			/>
+		</div>
+	);
+}
+
 /** Where it's from and what it says: the source, the line, the caption or address. */
 function Details({ link, wide }: { link: SavedLink; wide: boolean }) {
 	const kind = savedKind(link);
@@ -331,6 +418,7 @@ function Details({ link, wide }: { link: SavedLink; wide: boolean }) {
 			{more ? (
 				<p className="line-clamp-4 text-sm text-muted-foreground">{more}</p>
 			) : null}
+			<Whereabouts link={link} />
 			{open ? (
 				<a
 					href={open}
@@ -355,9 +443,13 @@ function SavedCard({
 	done,
 	wide,
 	fromShare,
+	asking,
 	onSaved,
 	onDelete,
 	onLater,
+	onWhere,
+	onSkip,
+	onAddNow,
 }: {
 	link: SavedLink;
 	active: boolean;
@@ -368,13 +460,43 @@ function SavedCard({
 	done: Done | undefined;
 	wide: boolean;
 	fromShare: boolean;
+	/** Just shared: "Where is this?" first. */
+	asking: boolean;
 	onSaved: (r: SaveResult) => void;
 	onDelete: () => void;
 	onLater: () => void;
+	onWhere: (c: WhereChoice) => void;
+	onSkip: () => void;
+	onAddNow: () => void;
 }) {
 	const info = useRef<HTMLDivElement>(null);
 	const reduce = useReducedMotion();
 	const line = tileLine(link);
+	const [searching, setSearching] = useState(false);
+	const toInfo = () =>
+		info.current?.scrollIntoView({
+			behavior: reduce ? "auto" : "smooth",
+			block: "end",
+		});
+	const ask = asking ? (
+		<WhereAsk
+			suggested={suggestedWhere(link)}
+			onPick={onWhere}
+			onSkip={onSkip}
+			onAddNow={() => {
+				onAddNow();
+				if (!wide) window.setTimeout(toInfo, 50);
+			}}
+			onSearching={setSearching}
+			className={cn(
+				!wide &&
+					"absolute inset-x-0 bottom-0 z-[4] max-h-[88%] rounded-t-2xl border-t bg-background px-4 pt-5 pb-[max(16px,env(safe-area-inset-bottom))] text-foreground shadow-[0_-12px_40px_rgb(0_0_0/.35)]",
+				!wide &&
+					searching &&
+					"top-[calc(max(12px,env(safe-area-inset-top))+40px)] max-h-none",
+			)}
+		/>
+	) : null;
 	const actions = (
 		<>
 			<Button
@@ -407,6 +529,7 @@ function SavedCard({
 			<Saver
 				entry={toEntry(link)}
 				place={link.place ?? link.photoSpot}
+				savedWhere={link.where}
 				nearTrips={link.nearTrips}
 				media={
 					link.files.length
@@ -450,7 +573,7 @@ function SavedCard({
 					<div className="flex min-h-0 flex-col gap-5 overflow-y-auto p-1">
 						<Details link={link} wide />
 						<div data-testid={SAVED_TESTID.info} className="mt-auto">
-							{saver}
+							{ask ?? saver}
 						</div>
 					</div>
 				</div>
@@ -459,9 +582,10 @@ function SavedCard({
 				// swipe up, the details with the save controls last, in the thumb zone.
 				<>
 					<div
-						className="flex h-[100cqh] snap-start snap-always flex-col bg-black pt-[calc(max(12px,env(safe-area-inset-top))+32px)]"
+						className="relative flex h-[100cqh] snap-start snap-always flex-col bg-black pt-[calc(max(12px,env(safe-area-inset-top))+32px)]"
 						data-testid={SAVED_TESTID.stage}
 					>
+						{ask}
 						<SavedMedia
 							link={link}
 							active={active}
@@ -472,12 +596,7 @@ function SavedCard({
 						<button
 							type="button"
 							data-testid={SAVED_TESTID.bar}
-							onClick={() =>
-								info.current?.scrollIntoView({
-									behavior: reduce ? "auto" : "smooth",
-									block: "end",
-								})
-							}
+							onClick={toInfo}
 							className="flex shrink-0 cursor-pointer items-center gap-3 px-4 pt-2.5 pb-[max(12px,env(safe-area-inset-bottom))] text-left"
 						>
 							<span className="min-w-0 flex-1">
@@ -531,7 +650,7 @@ function EndCard({ saved, onBack }: { saved: number; onBack: () => void }) {
 						That's everything you saved
 					</h2>
 					<p className="text-body text-muted-foreground">
-						{saved ? `${saved} went into your trips. ` : ""}
+						{saved ? `${saved} went into your trips, and stay here too. ` : ""}
 						New links show up here when you share them to Yonder.
 					</p>
 				</div>
@@ -672,6 +791,26 @@ export function SavedFeed({
 			.finally(() => qc.invalidateQueries({ queryKey: meKeys.saved }));
 		moveOn(id);
 	};
+	// A share asks where it is first (once: answered or put off, it's the feed).
+	const [asking, setAsking] = useState<string | null>(fromShare ? open : null);
+	const setWhere = useSetWhere();
+	const onWhere = (id: string, c: WhereChoice) => {
+		setAsking(null);
+		void setWhere([id], c);
+		toast.success(`Saved in ${whereLabel(c)}`, {
+			duration: 2500,
+			position: "top-center",
+		});
+		onClose();
+	};
+	const onSkip = () => {
+		setAsking(null);
+		toast.success("Saved in Unsorted", {
+			duration: 2500,
+			position: "top-center",
+		});
+		onClose();
+	};
 	const deleteSaved = useDeleteSaved();
 	const onDelete = async (id: string) => {
 		const ok = await deleteSaved([id], {
@@ -756,9 +895,13 @@ export function SavedFeed({
 							done={done[key]}
 							wide={wide}
 							fromShare={fromShare}
+							asking={asking === key}
 							onSaved={(r) => onSaved(key, r)}
 							onDelete={() => void onDelete(key)}
 							onLater={onClose}
+							onWhere={(c) => onWhere(key, c)}
+							onSkip={onSkip}
+							onAddNow={() => setAsking(null)}
 						/>
 					);
 				})}

@@ -265,6 +265,7 @@ type TreeNode = {
 	name: string;
 	lat: number | null;
 	lng: number | null;
+	countryCode?: string | null;
 };
 
 /** Where a new idea goes: an existing parent (null = top level) plus ancestors to create. */
@@ -313,6 +314,44 @@ export function autoParent(
 		if (city) return { parentId: city.id, create: [] };
 	}
 	return { parentId: null, create: [] };
+}
+
+/**
+ * Where a Saved item's place puts a new idea: the trip's city of that name
+ * in that country, else the country (creating the city under it), else null.
+ */
+export function whereParent(
+	nodes: readonly TreeNode[],
+	where: { countryCode: string; city: string | null } | null | undefined,
+): ParentPlan | null {
+	if (!where) return null;
+	const byId = new Map(nodes.map((n) => [n.id, n]));
+	const countryOf = (n: TreeNode): string | null => {
+		let cur: TreeNode | undefined = n;
+		for (let guard = 0; cur && guard < 16; guard++) {
+			if (cur.countryCode) return cur.countryCode;
+			cur = cur.parentId ? byId.get(cur.parentId) : undefined;
+		}
+		return null;
+	};
+	const key = where.city ? normName(where.city) : "";
+	if (key) {
+		const city = nodes.find(
+			(n) =>
+				n.type === "city" &&
+				normName(n.name) === key &&
+				(countryOf(n) ?? where.countryCode) === where.countryCode,
+		);
+		if (city) return { parentId: city.id, create: [] };
+	}
+	const country = nodes.find(
+		(n) => n.type === "country" && n.countryCode === where.countryCode,
+	);
+	if (!country) return null;
+	return {
+		parentId: country.id,
+		create: where.city ? [{ type: "city", name: where.city }] : [],
+	};
 }
 
 /** "Japan › Kyoto" (+ " › Arashiyama (new)") for the parent chip. */

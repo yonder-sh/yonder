@@ -390,6 +390,7 @@ export async function setSavedWhere(
 	userId: string,
 	ids: readonly string[],
 	where: WhereInput,
+	opts: { onlyUnsorted?: boolean } = {},
 ): Promise<string[]> {
 	if (!ids.length) return [];
 	const cc = where?.countryCode.toUpperCase() ?? null;
@@ -404,6 +405,7 @@ export async function setSavedWhere(
 		       city_lng = ${name ? (where?.city?.lng ?? null) : null},
 		       placed_at = ${cc ? sql`now()` : sql`null`}, updated_at = now()
 		 where id = any(${sql.param([...ids])}::uuid[]) and user_id = ${userId} and deleted_at is null
+		   and (${!opts.onlyUnsorted} or country_code is null)
 		returning id::text as id`);
 	return (res.rows as { id: string }[]).map((r) => r.id);
 }

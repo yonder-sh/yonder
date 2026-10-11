@@ -244,6 +244,9 @@ describe("the list", () => {
 			[trip.tripId],
 		]);
 		expect(now[1]?.trips[0]?.name).toBeTruthy();
+		// Not filed yet: now under the trip's city and country for that place.
+		expect(now[1]?.where).toMatchObject({ countryCode: "JP", city: "Tokyo" });
+		expect(now[0]?.where).toBeNull();
 		// Added again, to the same trip (the latest place) and to another.
 		const other = await cloneDemoTrip(getDb(), u.id);
 		await call(markSavedAdded, u, {
@@ -522,9 +525,10 @@ describe("one live row per link", () => {
 		const u = await newUser("Uma");
 		const a = await save(u, { url: "https://undo.example/a" });
 		const b = await save(u, { url: "https://undo.example/b" });
-		expect(await call(deleteSavedLinks, u, { ids: [a.id, b.id] })).toEqual({
+		const gone = await call<{ ids: string[] }>(deleteSavedLinks, u, {
 			ids: [a.id, b.id],
 		});
+		expect(gone.ids.sort()).toEqual([a.id, b.id].sort());
 		expect(await list(u)).toEqual([]);
 		expect(
 			await call(restoreSavedLinks, U.other, { ids: [a.id, b.id] }),

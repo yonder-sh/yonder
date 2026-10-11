@@ -32,7 +32,7 @@ import {
 	signSavedFileParts,
 	startSavedFile,
 } from "./server/files.server";
-import { saveFromTrip } from "./server/from-trip.server";
+import { filingOf, saveFromTrip } from "./server/from-trip.server";
 import {
 	deleteSaved,
 	listSaved,
@@ -106,6 +106,12 @@ export const markSavedAdded = createServerFn({ method: "POST" })
 			}))
 		)
 			return fail("NOT_FOUND");
+		// Not filed yet: under the trip's city and country for that place.
+		const where = await filingOf(data.tripId, data.nodeId);
+		if (where)
+			await setSavedWhere(db, context.user.id, [data.id], where, {
+				onlyUnsorted: true,
+			});
 		return { ok: true };
 	});
 
