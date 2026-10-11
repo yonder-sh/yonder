@@ -959,6 +959,34 @@ describe("storage quota (ADDENDUM §12: the uploader pays)", () => {
 		expect(await headObject(objectKey(a.tripId, id, "original"))).toBeNull();
 		expect(await usedBytes(getDb(), owner.id)).toBe(0);
 	});
+
+	it("Undo of a delete counts the file again: over the quota, it stays deleted", async () => {
+		const owner = await newUser({ first: "Uma", last: "Undo" });
+		sessions.byId.set(owner.id, owner);
+		const a = await cloneDemoTrip(getDb(), owner.id);
+		trips.push(a.tripId);
+		const photo = await jpeg();
+		const p = await upload(
+			owner,
+			a.tripId,
+			{ kind: "trip" },
+			photo,
+			"image/jpeg",
+			"undo.jpg",
+		);
+		await call(deleteAttachment, owner, { id: p.id });
+		expect(await usedBytes(getDb(), owner.id)).toBe(0);
+		await setQuota(owner, 100);
+		expect(await codeOf(call(restoreAttachment, owner, { id: p.id }))).toBe(
+			"STORAGE_QUOTA",
+		);
+		expect(await usedBytes(getDb(), owner.id)).toBe(0);
+		await setQuota(owner, null);
+		expect(await codeOf(call(restoreAttachment, owner, { id: p.id }))).toBe(
+			"ok",
+		);
+		expect(await usedBytes(getDb(), owner.id)).toBe(photo.length);
+	});
 });
 
 describe("PDFs and 'Hide from guests' (ADDENDUM §9)", () => {

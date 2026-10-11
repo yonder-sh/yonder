@@ -26,7 +26,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { and, asc, eq, isNotNull, isNull, ne, sql } from "drizzle-orm";
 import { v7 as uuidv7 } from "uuid";
 import { z } from "zod";
-import { db } from "@/db/db.server";
+import { db, type Tx } from "@/db/db.server";
 import { attachments } from "@/db/schema";
 import { mustRedact } from "@/lib/auth/roles";
 import { HttpUrl } from "@/lib/schemas/common";
@@ -50,7 +50,13 @@ import {
 	requireDirect,
 	requireEditOnly,
 } from "@/server/proposals/proposable.server";
-import { assertQuota, lockQuota } from "@/server/quota.server";
+import {
+	assertQuota,
+	lockQuota,
+	quotaBytes,
+	quotaMessage,
+	usedBytes,
+} from "@/server/quota.server";
 import { mediaPrefix } from "@/server/s3.server";
 import { mutationMeta, withTripTx } from "@/server/tx.server";
 import {
@@ -838,6 +844,27 @@ export const deleteAttachment = createServerFn({ method: "POST" })
 	.handler(proposable.run("attachment.delete"));
 
 /** Undo of a delete (edit-only). Receipts need manageExpenses. */
+/** After an Undo: refuses (rolling it back) when the file no longer fits. */
+async function assertRestoreFits(
+	tx: Tx,
+	billedUserId: string,
+	tripId: string,
+	size: number | null,
+): Promise<void> {
+	const used = await usedBytes(tx, billedUserId);
+	const quota = await quotaBytes(tx, billedUserId);
+	if (used > quota)
+		fail(
+			"STORAGE_QUOTA",
+			quotaMessage({ needed: size ?? 0, used: used - (size ?? 0), quota }),
+		);
+	const trip = await tx.execute(sql`
+		select coalesce(sum(size_bytes), 0)::bigint as n from attachments
+		 where trip_id = ${tripId} and deleted_at is null`);
+	if (Number((trip.rows[0] as { n: string | number }).n) > TRIP_QUOTA_BYTES)
+		fail("VALIDATION", "This trip is out of storage space.");
+}
+
 export const restoreAttachment = createServerFn({ method: "POST" })
 	.middleware([withNamedUser])
 	.validator(z.object({ id: z.uuid() }).strict())
@@ -870,12 +897,16 @@ export const restoreAttachment = createServerFn({ method: "POST" })
 				// A cancelled upload or a failed check never comes back.
 				if (row.status === "pending" || row.status === "failed")
 					return fail("NOT_FOUND");
+				// Deleting freed the space: the file counts again (its uploader's quota).
+				const billed = row.sizeBytes ? row.createdBy : null;
+				if (billed) await lockQuota(tx, billed);
 				await tx
 					.update(attachments)
 					.set({ deletedAt: null, updatedAt: new Date() })
 					.where(
 						and(eq(attachments.tripId, tripId), eq(attachments.id, row.id)),
 					);
+				if (billed) await assertRestoreFits(tx, billed, tripId, row.sizeBytes);
 				out.emit({ keys: ["media", "counts"] });
 				return { ok: true as const };
 			},
