@@ -55,12 +55,10 @@ test("sign in, onboarding, dashboard, new trip, workspace", async ({ page }, inf
 	await expect(page).toHaveURL(/\/t\/lisbon-/);
 	await expect(page.getByTestId(TESTID.workspace)).toBeVisible();
 	await expectLive(page);
-	// A new trip opens the "What do you want to see?" palette (places first); close it.
-	const palette = page.getByTestId(TESTID.addPlaceDialog);
-	await expect(palette).toBeVisible();
-	await expect(palette).toContainText("What do you want to see?");
-	await page.keyboard.press("Escape");
-	await expect(palette).toBeHidden();
+	// A new trip opens on its Plan asking "What do you want to see?" (places
+	// first), with no palette over that card.
+	await expect(page.getByTestId(TESTID.planTab).first()).toContainText("What do you want to see?");
+	await expect(page.getByTestId(TESTID.addPlaceDialog)).toBeHidden();
 	await page.screenshot({ path: shotPath(`foundation/03-workspace-${info.project.name}.png`), animations: "disabled" });
 
 	// The same person's copy of the demo trip: a populated workspace.

@@ -60,6 +60,7 @@ describe("the step in the URL", () => {
 });
 
 const tally = (t: Partial<FlowTally>): FlowTally => ({
+	all: 10,
 	ideas: 10,
 	toRate: 0,
 	talk: 0,
@@ -73,7 +74,7 @@ describe("the Places dot", () => {
 	it("the dot: places to rate (putting them on days is the Plan's)", () => {
 		expect(nextStep(tally({ toRate: 3, notOnDay: 2 }))).toBe("rate");
 		expect(nextStep(tally({ notOnDay: 2 }))).toBeNull();
-		expect(nextStep(tally({ ideas: 0 }))).toBeNull();
+		expect(nextStep(tally({ all: 0, ideas: 0 }))).toBeNull();
 		expect(nextStep(tally({}))).toBeNull();
 	});
 });
@@ -81,7 +82,14 @@ describe("the Places dot", () => {
 describe("the steps' counts", () => {
 	it('"12 to rate", "48 places", "2 places to talk through"', () => {
 		const c = stepCounts(
-			tally({ ideas: 48, toRate: 12, shortlisted: 9, notOnDay: 4, talk: 2 }),
+			tally({
+				all: 48,
+				ideas: 45,
+				toRate: 12,
+				shortlisted: 9,
+				notOnDay: 4,
+				talk: 2,
+			}),
 		);
 		expect(c).toEqual({
 			rate: "12 to rate",
@@ -90,8 +98,8 @@ describe("the steps' counts", () => {
 		});
 	});
 	it("edge cases read as words", () => {
-		expect(stepCounts(tally({ ideas: 1 })).review).toBe("1 place");
-		expect(stepCounts(tally({ ideas: 0 }))).toEqual({
+		expect(stepCounts(tally({ all: 1, ideas: 1 })).review).toBe("1 place");
+		expect(stepCounts(tally({ all: 0, ideas: 0 }))).toEqual({
 			rate: "Nothing to rate",
 			review: "No places yet",
 			decide: "0 shortlisted",
@@ -317,6 +325,7 @@ describe("places marked decided (owner, 2026-09-28)", () => {
 		];
 		const t = flowTally(rows, { me: D, canRate: true });
 		expect(t).toMatchObject({
+			all: 5,
 			ideas: 4,
 			toRate: 1,
 			talk: 1,
@@ -324,8 +333,9 @@ describe("places marked decided (owner, 2026-09-28)", () => {
 			shortlisted: 1,
 		});
 		const badges = stepBadges(t);
+		// All places counts the dropped one too: All lists it (marked Not going).
 		expect(badges).toEqual({
-			review: "4",
+			review: "5",
 			rate: "1 left",
 			decide: "1 to talk",
 		});

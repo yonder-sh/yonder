@@ -70,6 +70,38 @@ export function errorCode(e: unknown): ErrorCode | null {
 	return (m?.[1] as ErrorCode | undefined) ?? null;
 }
 
+type Issue = { message: string; path?: PropertyKey[] };
+
+const isIssue = (v: unknown): v is Issue =>
+	typeof v === "object" &&
+	v !== null &&
+	typeof (v as Issue).message === "string" &&
+	(!("path" in v) || Array.isArray((v as Issue).path));
+
+/**
+ * A server function's input validator failing (TanStack Start throws a plain
+ * Error whose message is the Standard Schema issues as JSON) as a VALIDATION
+ * AppError, else null.
+ */
+export function validatorError(e: unknown): AppError | null {
+	if (!(e instanceof Error) || e instanceof AppError) return null;
+	if (!e.message.startsWith("[")) return null;
+	let issues: unknown;
+	try {
+		issues = JSON.parse(e.message);
+	} catch {
+		return null;
+	}
+	if (!Array.isArray(issues) || issues.length === 0 || !issues.every(isIssue))
+		return null;
+	const detail = issues
+		.map((i) =>
+			i.path?.length ? `${i.path.join(".")}: ${i.message}` : i.message,
+		)
+		.join("; ");
+	return new AppError("VALIDATION", detail);
+}
+
 /** The detail after "CODE: ", if any. */
 export function errorDetail(e: unknown): string | null {
 	const message =

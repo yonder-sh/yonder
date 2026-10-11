@@ -1,6 +1,6 @@
 /**
  * New trip (DESIGN §10.4): name and dates (a Calendar range, two months at
- * ≥ 768) → `createTrip` → the new trip's Plan, with the palette open on
+ * ≥ 768) → `createTrip` → the new trip's Plan, whose empty card asks
  * "What do you want to see?" (places first; the nights follow). Dates
  * are optional; both or neither (QA TRIP-01: an empty name or an end before
  * the start is refused inline, nothing is created).
@@ -27,7 +27,6 @@ import { humanError } from "@/lib/errors";
 import { meKeys } from "@/lib/query/keys";
 import { useOnline } from "@/lib/realtime/connection";
 import { TESTID } from "@/lib/testids";
-import { useUi } from "@/lib/workspace/ui-store";
 import { DateRangeField } from "./date-fields";
 import { HOME_TESTID } from "./testids";
 
@@ -39,7 +38,6 @@ export function NewTripDialog({ trigger }: { trigger?: React.ReactNode }) {
 	const ids = { name: useId(), dates: useId() };
 	const navigate = useNavigate();
 	const qc = useQueryClient();
-	const openAddPlace = useUi((s) => s.openAddPlace);
 	const online = useOnline();
 	const create = useMutation({
 		mutationFn: () =>
@@ -54,13 +52,13 @@ export function NewTripDialog({ trigger }: { trigger?: React.ReactNode }) {
 		onSuccess: async ({ slug }) => {
 			await qc.invalidateQueries({ queryKey: meKeys.trips });
 			setOpen(false);
-			// Places come first (owner, 2026-10-07): the Plan, asking what you want to see.
+			// Places first (owner, 2026-10-07): the Plan's own "What do you want
+			// to see?" card asks, so no palette opens over it (QA EMPTY-01/02).
 			await navigate({
 				to: "/t/$trip",
 				params: { trip: slug },
 				search: { tab: "plan" },
 			});
-			openAddPlace({ mode: "search", want: true });
 		},
 	});
 	const submit = (e: FormEvent) => {

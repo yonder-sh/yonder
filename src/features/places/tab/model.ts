@@ -58,6 +58,7 @@ export type PlaceRow = Groupable & {
 };
 
 export type PlacesCounts = Record<PlaceStatus, number> & {
+	/** Every place, Not going included (QA: All hid the all-Nah ones). */
 	all: number;
 	talk: number;
 	toDecide: number;
@@ -239,7 +240,7 @@ export function countRows(rows: readonly PlaceRow[]): PlacesCounts {
 	};
 	for (const r of rows) {
 		out[r.status] += 1;
-		if (r.status !== "dropped") out.all += 1;
+		out.all += 1;
 		if (toTalk(r)) out.talk += 1;
 		if (r.status === "idea" || r.status === "shortlist") out.toDecide += 1;
 	}
@@ -271,9 +272,8 @@ export function matchesText(
 export function filterRows(
 	rows: readonly PlaceRow[],
 	f: {
-		/** Null: every place but the dropped ones, unless `keepDropped` (Decide's Not going). */
+		/** Null: every place, Not going included (marked by its status chip). */
 		status: PlaceStatus | null;
-		keepDropped?: boolean;
 		talk: boolean;
 		filter: WorkspaceFilter;
 		ctx: FilterContext;
@@ -283,9 +283,7 @@ export function filterRows(
 ): PlaceRow[] {
 	return rows.filter(
 		(r) =>
-			(f.status
-				? r.status === f.status
-				: f.keepDropped || r.status !== "dropped") &&
+			(!f.status || r.status === f.status) &&
 			(!f.talk || toTalk(r)) &&
 			matchesFilter(r.node, f.filter, f.ctx) &&
 			matchesText(r, f.q ?? "", f.extra),

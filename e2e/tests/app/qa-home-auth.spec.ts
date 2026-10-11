@@ -34,7 +34,15 @@ async function typeCode(page: Page, code: string) {
 
 /** Calls a server function from the page (same cookies), returning status + value/error. */
 async function callFn(page: Page, mod: string, fn: string, data: unknown) {
-	const resP = page.waitForResponse((r) => r.url().includes("/_serverFn/"), { timeout: 15_000 }).catch(() => null);
+	// This function's own response: the page's other server calls answer meanwhile.
+	const url = await page.evaluate(
+		async ({ mod, fn }) => String((await import(/* @vite-ignore */ mod))[fn].url),
+		{ mod, fn },
+	);
+	const path = new URL(url, APP_URL).pathname;
+	const resP = page
+		.waitForResponse((r) => new URL(r.url()).pathname === path, { timeout: 15_000 })
+		.catch(() => null);
 	const out = await page.evaluate(
 		async ({ mod, fn, data }) => {
 			try {
@@ -116,6 +124,16 @@ test("AUTH-02: the name step can't be skipped, and the server refuses nameless c
 	});
 	const sess = await (await page.request.get("/api/auth/get-session")).json();
 	expect.soft(sess?.user?.name, `update-user {name} → ${updName.status()}`).not.toBe("Sneaky Name");
+});
+
+test("AUTH-02b: a trip without a name is refused with a 400", async ({ page }) => {
+	await loginViaApi(page.request, `qa-home-a02b-${uniq()}@asia2027.test`, { first: "Nia", last: "Blank" });
+	await page.goto("/dashboard");
+	await hydrated(page.getByTestId("new-trip-button").first());
+	const create = await callFn(page, "/src/functions/trips.functions.ts", "createTrip", { name: "   " });
+	expect(create.ok, JSON.stringify(create)).toBe(false);
+	expect(create.error).toMatch(/^VALIDATION/);
+	expect(create.status, JSON.stringify(create)).toBe(400);
 });
 
 test("AUTH-03: international and hostile names render literally", async ({ page }) => {
