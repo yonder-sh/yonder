@@ -73,11 +73,16 @@ const SEARCHES: Search[] = [
 ];
 
 /** Every reverse geocode (dropped pins, pasted coordinates, Maps links without a match). */
-const REVERSES: { at: Bias; why: string }[] = [
+const REVERSES: { at: Bias; why: string; layers?: string[] }[] = [
 	{ at: [35.6941, 139.7045], why: "pasted coordinates at Golden Gai" },
 	{ at: [35.0037, 135.7788], why: "home-share-target's Kissa link: in Kyoto" },
 	{ at: [35.6739, 139.7676], why: "the Itoya links, if their search misses" },
 	{ at: [35.6729, 139.7678], why: "the Itoya links, if their search misses" },
+	{
+		at: [35.7147282, 139.7967468],
+		why: "Senso-ji Main Hall's neighbourhood (its locality is Nakamise Shopping Street)",
+		layers: ["locality", "district"],
+	},
 ];
 
 export type PhotonFixture = {
@@ -102,8 +107,8 @@ export type PhotonFixture = {
 
 export const searchKey = (q: string, layers: readonly string[] = []) =>
 	`${q.trim().toLowerCase().replace(/\s+/g, " ")}|${[...layers].sort().join(",")}`;
-export const reverseKey = (lat: number, lon: number) =>
-	`${lat.toFixed(4)},${lon.toFixed(4)}`;
+export const reverseKey = (lat: number, lon: number, layers: string[] = []) =>
+	`${lat.toFixed(4)},${lon.toFixed(4)}${layers.length ? `|${[...layers].sort().join(",")}` : ""}`;
 
 function load(): PhotonFixture {
 	try {
@@ -170,13 +175,14 @@ async function main() {
 		});
 	}
 	for (const r of REVERSES) {
-		const key = reverseKey(r.at[0], r.at[1]);
+		const key = reverseKey(r.at[0], r.at[1], r.layers);
 		if (fx.reverse[key] && !force) continue;
 		const url = new URL("/reverse", PHOTON);
 		url.searchParams.set("lat", String(r.at[0]));
 		url.searchParams.set("lon", String(r.at[1]));
 		url.searchParams.set("lang", "en");
-		url.searchParams.set("limit", "1");
+		url.searchParams.set("limit", r.layers ? "5" : "1");
+		for (const l of r.layers ?? []) url.searchParams.append("layer", l);
 		todo.push({
 			key,
 			url,

@@ -220,8 +220,10 @@ describe("Google mapping", () => {
 			country: "Japan",
 			countryCode: "JP",
 			region: "Tokyo",
-			city: "Chuo City",
-			district: "Ginza",
+			// Tokyo's wards come as `locality`: the city is Tokyo.
+			city: "Tokyo",
+			district: "Chuo City",
+			locality: "Ginza",
 		});
 	});
 	it("validates photo names strictly", () => {

@@ -3790,6 +3790,164 @@
 					}
 				}
 			]
+		},
+		"35.7147,139.7967|district,locality": {
+			"lat": 35.7147282,
+			"lon": 139.7967468,
+			"recordedAt": "2026-10-11T12:00:00.000Z",
+			"features": [
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "R",
+						"osm_id": 16400429,
+						"osm_key": "place",
+						"osm_value": "neighbourhood",
+						"type": "locality",
+						"name": "Asakusa 2",
+						"district": "Taito",
+						"city": "Tokyo",
+						"country": "Japan",
+						"postcode": "111-0032",
+						"countrycode": "JP",
+						"extra": {
+							"admin_level": "10"
+						},
+						"extent": [
+							139.7924286,
+							35.7172944,
+							139.7986447,
+							35.7126769
+						]
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							139.7957367,
+							35.714955
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "W",
+						"osm_id": 1043662948,
+						"osm_key": "place",
+						"osm_value": "locality",
+						"type": "locality",
+						"name": "Bentenyama",
+						"district": "Taito",
+						"city": "Tokyo",
+						"country": "Japan",
+						"postcode": "111-0032",
+						"countrycode": "JP",
+						"extent": [
+							139.7972502,
+							35.7135666,
+							139.7976661,
+							35.7132721
+						]
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							139.7974541,
+							35.7134035
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "R",
+						"osm_id": 16400401,
+						"osm_key": "place",
+						"osm_value": "quarter",
+						"type": "locality",
+						"name": "Hanakawado",
+						"district": "Taito",
+						"city": "Tokyo",
+						"country": "Japan",
+						"postcode": "111-0033",
+						"countrycode": "JP",
+						"extra": {
+							"admin_level": "9"
+						},
+						"extent": [
+							139.7977236,
+							35.7158074,
+							139.8034142,
+							35.7100828
+						]
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							139.7993636,
+							35.7137898
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "W",
+						"osm_id": 1387115357,
+						"osm_key": "place",
+						"osm_value": "locality",
+						"type": "locality",
+						"name": "Chingodō",
+						"district": "Taito",
+						"city": "Tokyo",
+						"country": "Japan",
+						"postcode": "111-0032",
+						"countrycode": "JP",
+						"extent": [
+							139.7945893,
+							35.7130655,
+							139.7949882,
+							35.7128928
+						]
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							139.7947938,
+							35.7129805
+						]
+					}
+				},
+				{
+					"type": "Feature",
+					"properties": {
+						"osm_type": "W",
+						"osm_id": 859751371,
+						"osm_key": "landuse",
+						"osm_value": "retail",
+						"type": "locality",
+						"name": "Nakamise Shopping Street",
+						"district": "Taito",
+						"city": "Tokyo",
+						"country": "Japan",
+						"postcode": "111-0032",
+						"countrycode": "JP",
+						"extent": [
+							139.7962797,
+							35.7135831,
+							139.7967243,
+							35.7111929
+						]
+					},
+					"geometry": {
+						"type": "Point",
+						"coordinates": [
+							139.7964856,
+							35.7122821
+						]
+					}
+				}
+			]
 		}
 	},
 	"empty": [

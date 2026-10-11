@@ -6,7 +6,7 @@
  */
 import type { NodeType, PlaceCategory } from "@/lib/schemas/enums";
 import { type ResultKind, resultKind } from "./categorize";
-import type { AddressParts } from "./filing";
+import { type AddressParts, isAreaName, normName } from "./filing";
 
 // ---------------------------------------------------------------------------
 // Shapes shared with the client (the server-function return types).
@@ -165,17 +165,56 @@ function escapeRe(s: string): string {
 
 export function photonParts(p: PhotonProperties): AddressParts {
 	const kind = resultKind(photonTypes(p));
-	// A city result names itself; an area result names its city.
+	const area = kind.level === "area";
+	// A city result names itself; an area result names its city. Photon's
+	// `locality` carries no type: any named polygon around the place lands
+	// there ("Nakamise Shopping Street", a landuse=retail), so it's checked
+	// by name.
 	return {
 		country: p.country,
 		countryCode: p.countrycode?.toUpperCase(),
 		region: p.state,
 		city: kind.level === "city" ? p.name : (p.city ?? p.county),
-		district:
-			kind.level === "area" && p.type === "district" ? p.name : p.district,
+		district: area && p.type === "district" ? p.name : p.district,
 		locality:
-			kind.level === "area" && p.type !== "district" ? p.name : p.locality,
+			area && p.type !== "district"
+				? p.name
+				: isAreaName(p.locality, p.name)
+					? p.locality
+					: undefined,
 	};
+}
+
+/**
+ * Whether a Photon place's own `locality` was no neighbourhood (a shopping
+ * street, a mall): the server then asks for the neighbourhood around it.
+ */
+export function photonNeedsNeighbourhood(p: PhotonProperties): boolean {
+	return (
+		resultKind(photonTypes(p)).level === "place" &&
+		!!p.locality?.trim() &&
+		!isAreaName(p.locality, p.name)
+	);
+}
+
+/** OSM place=* values that make a neighbourhood (not a square, a hill or a block). */
+const NEIGHBOURHOOD_VALUES = new Set([
+	"neighbourhood",
+	"quarter",
+	"suburb",
+	"borough",
+]);
+
+/** The nearest neighbourhood in a layered (`locality`, `district`) reverse answer. */
+export function photonNeighbourhood(
+	features: readonly PhotonFeature[],
+): string | undefined {
+	return features.find(
+		(f) =>
+			f.properties?.osm_key === "place" &&
+			NEIGHBOURHOOD_VALUES.has(f.properties.osm_value ?? "") &&
+			isAreaName(f.properties.name),
+	)?.properties.name;
 }
 
 export function photonResult(f: PhotonFeature): PlaceSearchResult | null {
@@ -337,16 +376,55 @@ function component(
 	return (short ? c?.shortText : c?.longText) ?? undefined;
 }
 
+/** Tokyo's 23 special wards: Google gives them as `locality`, but they're parts of Tokyo. */
+const TOKYO_WARDS = new Set(
+	"chiyoda chuo minato shinjuku bunkyo taito sumida koto shinagawa meguro ota setagaya shibuya nakano suginami toshima kita arakawa itabashi nerima adachi katsushika edogawa".split(
+		" ",
+	),
+);
+
+const WARD_RE = /(\sWard|-ku|区)$/i;
+
+/**
+ * Google's address parts by type: `route`, `premise` and `establishment`
+ * never name an area. Japan's sublocalities nest ward › neighbourhood ›
+ * chōme › block (Kyoto: "Higashiyama Ward" › "Gionmachi Minamigawa"; Tokyo,
+ * whose wards are `locality`: "Asakusa" › "2-chōme"), so the neighbourhood is
+ * the first that's neither a ward nor a number.
+ */
 export function googleParts(g: GooglePlace): AddressParts {
 	const cs = g.addressComponents;
+	const own = g.displayName?.text;
+	const levels = [1, 2, 3, 4, 5]
+		.map((n) => component(cs, `sublocality_level_${n}`))
+		.filter((s): s is string => !!s);
+	const subs = levels.length
+		? levels
+		: [component(cs, "sublocality")].filter((s): s is string => !!s);
+	const ward = subs.find((s) => WARD_RE.test(s));
+	const hood = [
+		component(cs, "neighborhood"),
+		...subs.filter((s) => s !== ward),
+	].find((s) => isAreaName(s, own));
+	const region = component(cs, "administrative_area_level_1");
+	let city = component(cs, "locality") ?? component(cs, "postal_town");
+	let district = ward ?? subs[0];
+	const countryCode = component(cs, "country", true)?.toUpperCase();
+	if (
+		countryCode === "JP" &&
+		normName(region) === "tokyo" &&
+		TOKYO_WARDS.has(normName(city))
+	) {
+		district = city;
+		city = region;
+	}
 	return {
 		country: component(cs, "country"),
-		countryCode: component(cs, "country", true)?.toUpperCase(),
-		region: component(cs, "administrative_area_level_1"),
-		city: component(cs, "locality") ?? component(cs, "postal_town"),
-		district:
-			component(cs, "sublocality_level_1") ?? component(cs, "sublocality"),
-		locality: component(cs, "neighborhood"),
+		countryCode,
+		region,
+		city,
+		district: isAreaName(district, own) ? district : undefined,
+		locality: hood,
 	};
 }
 
