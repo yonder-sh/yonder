@@ -9,7 +9,8 @@
  * - FB-10 / MAP-01: the whole trip opens on a globe framing every country,
  *   every pin on the visible side of the Earth and clear of the inspector.
  * - PLAN-R3-04: selecting cities with the inspector open on the globe never
- *   throws (MapLibre's globe `cameraForBounds` is never called).
+ *   throws (MapLibre's globe `cameraForBounds` is never called) and flies in
+ *   to the city.
  * - FB-04: the basemap follows the app theme, and the map's Satellite button
  *   switches to imagery (saved to the account's view prefs) that carries its
  *   attribution.
@@ -171,7 +172,7 @@ test("FB-10: the real trip (days in Japan, three idea countries) opens on a whol
 	expect((await readGlobe(page)).projection).toBe("mercator");
 });
 
-test("PLAN-R3-04: selecting cities with the inspector open on the globe never throws, even while the map resizes", async ({
+test("PLAN-R3-04: selecting cities with the inspector open on the globe never throws and flies in to the city, even while the map resizes", async ({
 	page,
 }, info) => {
 	// It picks cities in Organize places (the Outline's tree), a desktop run.
@@ -196,10 +197,12 @@ test("PLAN-R3-04: selecting cities with the inspector open on the globe never th
 	});
 	const outline = (await openOrganize(page)).getByTestId(TESTID.outline).first();
 	const widths = [1440, 1180, 1440, 1320];
+	let last: string | null = null;
 	for (const [i, name] of ["Seoul", "Busan", "Hanoi", "Kyoto"].entries()) {
 		const row = outline.getByTestId(TESTID.outlineRow).filter({ hasText: new RegExp(`^\\s*${name}\\b`) }).first();
 		if (!(await row.isVisible().catch(() => false))) continue;
 		await row.click();
+		last = name;
 		// Resize while the camera is moving (the QA runs were timing-dependent).
 		await page.setViewportSize({ width: widths[i] ?? 1440, height: 900 });
 		await page.waitForTimeout(250);
@@ -212,9 +215,25 @@ test("PLAN-R3-04: selecting cities with the inspector open on the globe never th
 	await expect(page.getByTestId("workspace")).toBeVisible();
 	expect(await page.evaluate(() => (window as unknown as { __globeCameraForBounds: number }).__globeCameraForBounds)).toBe(0);
 	expect(errors.filter((e) => /reading 'center'|cameraFor|error boundary|CatchBoundary/i.test(e))).toEqual([]);
-	// With the inspector open, every pin is still in front and clear of it.
-	expectAllOnGlobe(await readGlobe(page), QA_COUNTRIES);
+	// The last city picked is zoomed in to (owner call, 2026-10-11), clear of the inspector.
+	expect(last).not.toBeNull();
+	const g = await readGlobe(page);
+	expect(g.zoom).toBeGreaterThan(9);
+	const at = await page.evaluate((name) => {
+		const w = window as unknown as MapWin & { __yonder?: { graph: { nodes: { name: string; type: string; lng: number | null; lat: number | null }[] } } };
+		const n = w.__yonder?.graph.nodes.find((x) => x.type === "city" && x.name === name);
+		return n?.lng != null && n.lat != null ? w.__tripMap?.project([n.lng, n.lat]) : null;
+	}, last);
+	expect(at).not.toBeNull();
+	expect(at?.x).toBeGreaterThan(0);
+	expect(at?.x).toBeLessThan(g.free);
+	expect(at?.y).toBeGreaterThan(0);
+	expect(at?.y).toBeLessThan(g.height);
 	await page.screenshot({ path: `${SHOTS}/plan-r3-04-globe-inspector.png` });
+	// Zoom to fit brings the whole globe back, every pin in front and clear of the inspector.
+	await page.getByTestId(MAP_TESTID.fit).first().click();
+	await mapReady(page, "country");
+	expectAllOnGlobe(await readGlobe(page), QA_COUNTRIES);
 });
 
 // ---- FB-04: map style --------------------------------------------------------
