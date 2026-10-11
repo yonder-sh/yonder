@@ -271,3 +271,129 @@ export const LOCAL_HANOI_PHOTON: PhotonFeature = {
 	},
 	geometry: { type: "Point", coordinates: [105.8542902, 21.0286211] },
 };
+
+/** Area filing (photon.komoot.io, 2026-10-11): Photon's `locality` is any named polygon around the place. */
+export const SENSOJI_HALL_PHOTON: PhotonFeature = {
+	type: "Feature",
+	properties: {
+		osm_type: "W",
+		osm_id: 91008673,
+		osm_key: "building",
+		osm_value: "shrine",
+		type: "house",
+		name: "Senso-ji Main Hall",
+		street: "Nakamise Street",
+		locality: "Nakamise Shopping Street",
+		district: "Taito",
+		city: "Tokyo",
+		country: "Japan",
+		postcode: "111-0032",
+		countrycode: "JP",
+	},
+	geometry: { type: "Point", coordinates: [139.7967468, 35.7147282] },
+};
+
+/** `/reverse?layer=locality&layer=district` at the Main Hall, nearest first. */
+export const SENSOJI_HALL_AREAS: PhotonFeature[] = [
+	["R", 16400429, "place", "neighbourhood", "Asakusa 2"],
+	["W", 1043662948, "place", "locality", "Bentenyama"],
+	["R", 16400401, "place", "quarter", "Hanakawado"],
+	["W", 1387115357, "place", "locality", "Chingodō"],
+	["W", 859751371, "landuse", "retail", "Nakamise Shopping Street"],
+].map(([t, id, key, value, name]) => ({
+	type: "Feature",
+	properties: {
+		osm_type: t as string,
+		osm_id: id as number,
+		osm_key: key as string,
+		osm_value: value as string,
+		type: "locality",
+		name: name as string,
+		district: "Taito",
+		city: "Tokyo",
+		country: "Japan",
+		countrycode: "JP",
+	},
+	geometry: { type: "Point", coordinates: [139.7967, 35.7147] },
+}));
+
+export const SHIBUYA_SKY_PHOTON: PhotonFeature = {
+	type: "Feature",
+	properties: {
+		osm_type: "N",
+		osm_id: 6952876785,
+		osm_key: "tourism",
+		osm_value: "viewpoint",
+		type: "house",
+		housenumber: "12",
+		name: "Shibuya Sky",
+		street: "24",
+		locality: "Shibuya 2",
+		district: "Shibuya",
+		city: "Tokyo",
+		state: "東京都",
+		country: "Japan",
+		postcode: "150-0002",
+		countrycode: "JP",
+	},
+	geometry: { type: "Point", coordinates: [139.7022617, 35.6582857] },
+};
+
+export const YASAKA_PHOTON: PhotonFeature = {
+	type: "Feature",
+	properties: {
+		osm_type: "W",
+		osm_id: 328903218,
+		osm_key: "amenity",
+		osm_value: "place_of_worship",
+		type: "house",
+		name: "Yasaka Shrine",
+		street: "Higashioji Street",
+		locality: "Giommachi-Kitagawa",
+		district: "Higashiyama Ward",
+		city: "Kyoto",
+		state: "Kyoto Prefecture",
+		country: "Japan",
+		postcode: "605-0062",
+		countrycode: "JP",
+	},
+	geometry: { type: "Point", coordinates: [135.7782611, 35.0036027] },
+};
+
+/** A park with no locality: only the ward. */
+export const SHINJUKU_GYOEN_PHOTON: PhotonFeature = {
+	type: "Feature",
+	properties: {
+		osm_type: "W",
+		osm_id: 15772074,
+		osm_key: "leisure",
+		osm_value: "park",
+		type: "other",
+		name: "Shinjuku Gyoen National Garden",
+		district: "Shinjuku",
+		city: "Tokyo",
+		state: "東京都",
+		country: "Japan",
+		countrycode: "JP",
+	},
+	geometry: { type: "Point", coordinates: [139.7101, 35.6852] },
+};
+
+export const DOTONBORI_STREET_PHOTON: PhotonFeature = {
+	type: "Feature",
+	properties: {
+		osm_type: "W",
+		osm_id: 410957181,
+		osm_key: "highway",
+		osm_value: "unclassified",
+		type: "street",
+		name: "Dotonbori",
+		locality: "Dotonbori 2-chome",
+		district: "Chūō Ward",
+		city: "Osaka",
+		state: "Osaka Prefecture",
+		country: "Japan",
+		countrycode: "JP",
+	},
+	geometry: { type: "Point", coordinates: [135.5013, 34.6687] },
+};

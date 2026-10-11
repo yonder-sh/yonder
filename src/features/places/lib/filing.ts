@@ -11,8 +11,9 @@
  *   treated as an area of that city); a REGION with the city's name stands in
  *   for it (Tokyo saved as the metropolis).
  * - area: matched by the neighbourhood or ward name anywhere under the city;
- *   when nothing matches, the neighbourhood becomes a new area ("Ginza 2"
- *   → "Ginza (new)").
+ *   when nothing matches, the neighbourhood (else the ward) becomes a new
+ *   area ("Ginza 2" → "Ginza (new)"), never a street, building or station
+ *   (`isAreaName`).
  *
  * Names match case-, accent-, suffix- ("City", "-ku") and chōme-insensitively.
  */
@@ -61,13 +62,18 @@ const RANK: Record<NodeType, number> = {
 	place: 4,
 };
 
+/** Kyoto's "Gionmachi Kitagawa" (north side of Gion-machi) is Gion; Hepburn spells it "Giommachi". */
+const KYOTO_SIDE = /(m)?machi[-\s](?:kita|minami|higashi|nishi)gawa$/i;
+const CHOME_JA = /[\d０-９一二三四五六七八九十]+丁目$/;
+
 /** Folds a place name for matching: accents, case, admin suffixes, chōme numbers, punctuation. */
 export function normName(raw: string | null | undefined): string {
 	if (!raw) return "";
 	let s = raw.normalize("NFKD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
 	s = s.replace(/\s*\([^)]*\)\s*$/, ""); // "Ginza (Chuo)"
 	s = s.replace(/\s*\d+\s*(-?\s*chome)?$/, ""); // "Ginza 2", "Ginza 2-chome"
-	s = s.replace(/\d+丁目$/, "");
+	s = s.replace(CHOME_JA, "");
+	s = s.replace(KYOTO_SIDE, (_, m) => (m ? "n" : "")); // "Giommachi-Kitagawa"
 	s = s.replace(
 		/\s+(city|ward|district|prefecture|province|metropolis|special city|municipality)$/,
 		"",
@@ -81,10 +87,41 @@ export function normName(raw: string | null | undefined): string {
 export function cleanNewName(raw: string): string {
 	return raw
 		.trim()
-		.replace(/\s*\d+\s*(-?\s*chome)?$/i, "")
-		.replace(/\d+丁目$/, "")
+		.replace(/\s*\d+\s*(-?\s*ch[oō]me)?$/i, "")
+		.replace(CHOME_JA, "")
+		.replace(KYOTO_SIDE, (_, m) => (m ? "n" : ""))
 		.replace(/\s+(City|Ward)$/, "")
 		.trim();
+}
+
+/** Words that end a street's, a building's or a station's name, never a neighbourhood's. */
+const NOT_AREA_WORD =
+	/\b(street|st|road|rd|avenue|ave|boulevard|blvd|lane|alley|dori|dōri|doori|highway|expressway|bridge|crossing|arcade|shotengai|market|mall|plaza|building|bldg|tower|complex|station|terminal|airport|park|hotel)\.?$/i;
+const NOT_AREA_PHRASE = /\b(shopping (street|arcade|center|centre|mall))\b/i;
+const NOT_AREA_JA =
+	/(通り|通|商店街|市場|駅|ビル|タワー|モール|センター|ホテル)$/;
+
+/**
+ * Whether a provider's address part can name an area: not a street, shopping
+ * street, building, mall, station or park (by its name, for providers
+ * without types), not a bare number, and not the place's own name (a
+ * numbered chōme of it is fine).
+ */
+export function isAreaName(
+	raw: string | null | undefined,
+	own?: string | null,
+): boolean {
+	const name = raw?.trim();
+	if (!name) return false;
+	const n = normName(name);
+	if (!n || /^\d+$/.test(n) || /^[\d-]+$/.test(name)) return false;
+	// "Dotonbori 2-chome" around the street "Dotonbori" is a neighbourhood.
+	if (own && n === normName(own) && !/\d|丁目/.test(name)) return false;
+	return (
+		!NOT_AREA_WORD.test(name) &&
+		!NOT_AREA_PHRASE.test(name) &&
+		!NOT_AREA_JA.test(name)
+	);
 }
 
 function same(node: FilingNode, name: string | undefined): boolean {
@@ -218,7 +255,8 @@ export function suggestFiling(
 		);
 		if (hit) return { existing: ix.path(hit.id), create: [] };
 	}
-	const newArea = areaCandidates[0] ? cleanNewName(areaCandidates[0]) : "";
+	const fresh = areaCandidates.find((s) => isAreaName(s));
+	const newArea = fresh ? cleanNewName(fresh) : "";
 	const cityName = city?.name ?? create.find((c) => c.type === "city")?.name;
 	if (newArea && normName(newArea) !== normName(cityName))
 		create.push({ type: "area", name: newArea });
