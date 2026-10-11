@@ -355,10 +355,21 @@ test("every day has its header under its visit's label; a card and an idea dropp
 	await drag(page, card(page, moved), await target(empty[0] as string));
 	await expect.poll(async () => (await graphOf(page)).items.find((i) => i.id === moved)?.dayId).toBe(empty[0]);
 
-	// An idea dropped on the other one becomes its stop.
+	// An idea dropped on the other one becomes its stop. The dock sits at the
+	// scroller's foot, so the drag first leaves the auto-scroll edge, then aims.
 	const row = idea(page);
 	await centre(line(empty[1] as string));
-	await drag(page, row, await target(empty[1] as string));
+	const from = await row.boundingBox();
+	if (!from) throw new Error("no idea");
+	await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2);
+	await page.mouse.down();
+	await page.mouse.move(from.x + from.width / 2, from.y - 10, { steps: 4 });
+	await page.mouse.move(from.x + from.width / 2, 800, { steps: 6 });
+	await page.waitForTimeout(500);
+	const to = await target(empty[1] as string);
+	await page.mouse.move(to.x, to.y, { steps: 15 });
+	await page.mouse.move(to.x, to.y + 1, { steps: 2 });
+	await page.mouse.up();
 	await expect.poll(async () => (await graphOf(page)).items.filter((i) => i.dayId === empty[1]).length).toBe(1);
 });
 
@@ -523,6 +534,17 @@ test("mobile: the plan at 390×844", async ({ page }, info) => {
 	await page.goto(`/t/${c.slug}?tab=plan`);
 	await expectLive(page);
 	await expect(page.getByTestId(PLAN_TESTID.band).first()).toBeVisible();
+	// Two empty days after Day 1: one line each.
+	for (let i = 0; i < 2; i++) {
+		const insert = page.getByRole("menuitem", { name: "Insert day after" });
+		await expect(async () => {
+			await page.getByTestId(PLAN_TESTID.dayHeader).first().getByTestId(PLAN_TESTID.dayMenu).click();
+			await expect(insert).toBeVisible({ timeout: 1_000 });
+		}).toPass({ timeout: 10_000 });
+		await insert.click();
+		await expect(page.getByTestId(PLAN_TESTID.dayEmpty)).toHaveCount(i + 1);
+	}
+	await page.getByTestId(PLAN_TESTID.dayEmpty).first().evaluate((e) => e.scrollIntoView({ block: "center" }));
 	await page.waitForTimeout(400);
 	await page.screenshot({ path: shotPath("plan/days-390.png"), animations: "disabled" });
 	await expectNoHorizontalOverflow(page);
