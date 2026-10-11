@@ -725,6 +725,14 @@ describe("computeToday: following your pace after a Done", () => {
 		expect(v.pace).toEqual({ kind: "ahead", minutes: 55 });
 	});
 
+	it("Dones out of plan order re-time from the latest one (A407)", () => {
+		const s = tokyoDay({ cha: done("11:00"), broadway: done("10:00") });
+		const { v } = view(s, at("11:05"));
+		expect(names(v.done)).toEqual(["Cha no Ikedaya", "Nakano Broadway"]);
+		const after = v.current ?? v.next;
+		expect(after?.start).toBeGreaterThanOrEqual(at("11:00"));
+	});
+
 	it("within 5 min of the plan is on time", () => {
 		const { v } = view(tokyoDay({ cha: done("09:59") }), at("10:00"));
 		expect(t(v.next?.start as number)).toBe("10:19");
@@ -1268,7 +1276,11 @@ describe("computeToday: timed departures", () => {
 	});
 
 	/** Itoya, then KIX for NH 9 at 23:30, landing at Incheon 01:50 the next day. */
-	const redEye = (itoyaDone?: LocalAt) =>
+	const redEye = (
+		itoyaDone?: LocalAt,
+		dep = `${DAY}T23:30`,
+		arr = "2027-10-06T01:50",
+	) =>
 		scenario({
 			firstDate: DAY,
 			days: [
@@ -1287,8 +1299,8 @@ describe("computeToday: timed departures", () => {
 					from: "kix",
 					to: "icn",
 					mode: "flight",
-					dep: [`${DAY}T23:30`, TOKYO],
-					arr: ["2027-10-06T01:50", "Asia/Seoul"],
+					dep: [dep, TOKYO],
+					arr: [arr, "Asia/Seoul"],
 					details: flightDetails({
 						number: "NH9",
 						from: {
@@ -1303,8 +1315,8 @@ describe("computeToday: timed departures", () => {
 							country: "KR",
 							at: [37.4602, 126.4407],
 						},
-						dep: `${DAY}T23:30`,
-						arr: "2027-10-06T01:50",
+						dep,
+						arr,
 					}),
 				},
 			],
@@ -1329,6 +1341,17 @@ describe("computeToday: timed departures", () => {
 		});
 		// Shorten the airport stop to 30: back to 10 min short; not enough to clear it, so no fix; the airport is where you board.
 		expect(r?.fixes).toEqual([]);
+	});
+
+	it("a red-eye leaving after midnight is tonight's departure too (A405)", () => {
+		const s = redEye(done("23:10"), "2027-10-06T00:30", "2027-10-06T02:50");
+		const { v } = view(s, at("23:10"), {}, "d1");
+		expect(v.risks[0]).toMatchObject({
+			itemId: s.I.icn,
+			name: "NH 9",
+			late: true,
+			spareMin: -40,
+		});
 	});
 
 	it("the morning after, the landing holds its time with nothing to leave for", () => {
@@ -1444,6 +1467,29 @@ describe("todayDayId", () => {
 		expect(todayDayId(ix, schedule, at("12:00"))).toBe(s.D.d1);
 		expect(todayDayId(ix, schedule, at("00:30", "2027-10-06"))).toBe(s.D.d2);
 		expect(todayDayId(ix, schedule, at("12:00", "2027-09-01"))).toBeNull();
+		expect(todayDayId(ix, schedule, at("12:00", "2027-12-01"))).toBeNull();
+	});
+
+	it("after a westbound day, the evening is still that day (A406)", () => {
+		// Day 1 starts in Tokyo and ends in Taipei, an hour behind.
+		const s = scenario({
+			firstDate: DAY,
+			days: [
+				{
+					items: [
+						{ k: "kix", node: "kix", min: 30 },
+						{ k: "tpe", node: "tpe", min: 30 },
+					],
+				},
+				{ items: [{ k: "tpe2", node: "tpe", min: 30 }] },
+			],
+		});
+		const ix = indexGraph(s.graph);
+		const schedule = computeSchedule(ix);
+		const evening = zonedEpoch(DAY, "23:30", "Asia/Taipei");
+		expect(todayDayId(ix, schedule, evening)).toBe(s.D.d1);
+		const morning = zonedEpoch("2027-10-06", "09:00", "Asia/Taipei");
+		expect(todayDayId(ix, schedule, morning)).toBe(s.D.d2);
 	});
 
 	it("stays on yesterday while its plan runs past midnight", () => {

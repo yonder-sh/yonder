@@ -357,10 +357,14 @@ export function todayDayId(
 	schedule: ScheduleResult,
 	now: number,
 ): string | null {
-	const day = ix.days.find(
-		(d) => localDateOf(now, schedule.days[d.id]?.tz ?? ix.defaultTz) === d.date,
-	);
+	const dateIn = (d: { id: string }) =>
+		localDateOf(now, schedule.days[d.id]?.tz ?? ix.defaultTz);
+	// The latest day that has started; between two days (westbound, the next
+	// one's midnight not reached yet) it is still the earlier one (A406).
+	const at = ix.days.findLastIndex((d) => d.date <= dateIn(d));
+	const day = ix.days[at];
 	if (!day) return null;
+	if (dateIn(day) !== day.date && at === ix.days.length - 1) return null;
 	const prev = ix.prevDay(day.id);
 	const prevEnd = prev ? schedule.days[prev.id]?.end.getTime() : undefined;
 	return prev && prevEnd !== undefined && now < prevEnd ? prev.id : day.id;
@@ -626,7 +630,8 @@ export function computeToday(
 				doneAt: at,
 				doneBy: it.doneBy ?? null,
 			});
-			cursor = at;
+			// Dones out of plan order never move the clock back (A407).
+			cursor = Math.max(cursor ?? at, at);
 			continue;
 		}
 		if (i < lastDone) {
@@ -761,12 +766,20 @@ export function computeToday(
 		const s = schedule.legs[key];
 		const row = ix.legByPair.get(key);
 		const lastPlanned = list.at(-1);
+		// Tonight: on the day's date, or after midnight within the day (A405).
+		const depDate = localDateOf(s?.start ?? 0, tz);
+		const tonight =
+			!!day &&
+			!!s &&
+			(depDate === day.date ||
+				(depDate === addDays(day.date, 1) &&
+					s.start.getTime() <= (schedule.days[dayId]?.end.getTime() ?? 0)));
 		// Ahead, or passed while stops are still to do (you're late for it).
 		if (
 			s?.timed &&
 			row?.depAt &&
 			lastPlanned &&
-			localDateOf(s.start, tz) === day?.date &&
+			tonight &&
 			(s.start.getTime() > now || rows.length > 0)
 		) {
 			const departure: TodayDeparture = {
