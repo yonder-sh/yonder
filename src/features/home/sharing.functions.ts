@@ -385,6 +385,8 @@ export const linkPlaceholder = createServerFn({ method: "POST" })
 					email: z.email(),
 					/** false: no email (Undo of "Cancel invite": they had it already). */
 					notify: z.boolean().optional(),
+					/** Undo of "Cancel invite": the note it had. */
+					note: InviteNote.optional(),
 				})
 				.strict(),
 			z.object({ memberId: z.uuid(), toMemberId: z.uuid() }).strict(),
@@ -426,6 +428,7 @@ export const linkPlaceholder = createServerFn({ method: "POST" })
 						email: data.email,
 						linkerRole: access.role,
 						linkerId: context.user.id,
+						note: data.note,
 					}),
 				);
 				await logActivity(tx, out, {

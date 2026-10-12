@@ -82,6 +82,7 @@ describe("a pending invite's menu (A082)", () => {
 			kind: "reverted",
 			name: "Audrey",
 			email: "audrey@typo.test",
+			note: "Bring snacks",
 		});
 		await openMenu();
 		fireEvent.click(screen.getByRole("menuitem", { name: "Cancel invite" }));
@@ -95,7 +96,12 @@ describe("a pending invite's menu (A082)", () => {
 		};
 		await act(async () => opts.action.onClick());
 		expect(fns.linkPlaceholder).toHaveBeenCalledWith({
-			data: { memberId: sam.id, email: "audrey@typo.test", notify: false },
+			data: {
+				memberId: sam.id,
+				email: "audrey@typo.test",
+				notify: false,
+				note: "Bring snacks",
+			},
 		});
 	});
 

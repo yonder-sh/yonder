@@ -755,6 +755,8 @@ describe("pending invites: cancel and change email (A082)", () => {
 			email: "audrey@typo.test",
 		});
 		expect((await row(audrey))?.status).toBe("invited");
+		await getDb().execute(sql`
+			update trip_members set invite_note = 'Bring snacks' where id = ${audrey}`);
 		// Editors can't cancel (the same permission as removing someone).
 		expect(await codeOf(call(cancelInvite, U.maya, { memberId: audrey }))).toBe(
 			"FORBIDDEN",
@@ -764,6 +766,7 @@ describe("pending invites: cancel and change email (A082)", () => {
 			kind: "reverted",
 			name: "Audrey",
 			email: "audrey@typo.test",
+			note: "Bring snacks",
 		});
 		expect(await row(audrey)).toEqual({
 			status: "placeholder",
@@ -778,9 +781,17 @@ describe("pending invites: cancel and change email (A082)", () => {
 			memberId: audrey,
 			email: "audrey@typo.test",
 			notify: false,
+			note: "Bring snacks",
 		});
 		expect((await row(audrey))?.status).toBe("invited");
 		expect(sent).toEqual([]);
+		// …with its note back.
+		expect(
+			(
+				await q<{ note: string | null }>(sql`
+				select invite_note as note from trip_members where id = ${audrey}`)
+			)[0]?.note,
+		).toBe("Bring snacks");
 		// Only pending invites.
 		expect(
 			await codeOf(

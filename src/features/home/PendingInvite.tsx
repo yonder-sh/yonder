@@ -87,7 +87,12 @@ export function useCancelInvite(
 					`Invite cancelled. ${r.name} stays on the trip without an account.`,
 					async () => {
 						await linkPlaceholder({
-							data: { memberId: member.id, email: r.email, notify: false },
+							data: {
+								memberId: member.id,
+								email: r.email,
+								notify: false,
+								note: r.note,
+							},
 						});
 						await refresh();
 					},

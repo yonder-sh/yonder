@@ -223,6 +223,8 @@ export async function linkPlaceholderToEmail(
 		linkerRole: TripRole;
 		/** Who linked it (the welcome's "Maya invited you"). */
 		linkerId?: string;
+		/** The invite's note, put back by Undo of "Cancel invite". */
+		note?: string | null;
 	},
 ): Promise<LinkResult> {
 	const { tripId, placeholder } = args;
@@ -251,7 +253,8 @@ export async function linkPlaceholderToEmail(
 	await tx.execute(sql`
 		update trip_members
 		   set status = 'invited', email = ${email}, role = ${role},
-		       invited_by = coalesce(${args.linkerId ?? null}, invited_by), updated_at = now()
+		       invited_by = coalesce(${args.linkerId ?? null}, invited_by),
+		       invite_note = coalesce(${args.note ?? null}, invite_note), updated_at = now()
 		 where id = ${placeholder.id} and trip_id = ${tripId}`);
 	out.emit({ entity: "member", keys: ["graph", "sharing"] });
 	return { kind: "invited", email };
@@ -409,7 +412,7 @@ async function revertToPlaceholder(
 }
 
 export type CancelInviteResult =
-	| { kind: "reverted"; name: string; email: string }
+	| { kind: "reverted"; name: string; email: string; note: string | null }
 	| { kind: "cancelled"; name: string }
 	| { kind: "confirm"; name: string; refs: MemberRefs };
 
@@ -426,10 +429,10 @@ export async function cancelInviteCore(
 	const { tripId, member: m } = args;
 	if (m.status !== "invited")
 		return fail("CONFLICT", "Only a pending invite can be cancelled.");
-	const { displayName } = await inviteExtras(tx, m.id);
+	const { displayName, note } = await inviteExtras(tx, m.id);
 	if (displayName) {
 		await revertToPlaceholder(tx, out, tripId, m.id);
-		return { kind: "reverted", name: displayName, email: m.email ?? "" };
+		return { kind: "reverted", name: displayName, email: m.email ?? "", note };
 	}
 	if (!args.confirmed) {
 		const refs = await memberRefs(tx, tripId, m.id);
