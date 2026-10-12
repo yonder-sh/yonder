@@ -12,7 +12,11 @@ import { newId } from "@/lib/ids";
 import { leastUsedColor } from "@/server/authz/resolve";
 import { fail } from "@/server/authz/session.server";
 import type { TxOutbox } from "@/server/live/outbox.server";
-import { claimPlaceholderRow, mergeMember } from "@/server/members.server";
+import {
+	claimPlaceholderRow,
+	mergeMember,
+	retireMember,
+} from "@/server/members.server";
 import { matchingPlaceholder } from "../claim-match";
 
 export type MemberRow = {
@@ -324,4 +328,202 @@ export async function promoteGuestCore(
 	out.access([g.id]);
 	out.emit({ entity: "member", keys: ["graph", "sharing"] });
 	return { memberId, name: g.name || "Someone" };
+}
+
+// ---------------------------------------------------------------------------
+// Pending invites: cancel, change email (A082)
+// ---------------------------------------------------------------------------
+
+/** What already points at a person: shown before a plain invite is cancelled. */
+export type MemberRefs = {
+	splits: number;
+	payments: number;
+	ratings: number;
+	tags: number;
+};
+
+/** Live splits, payments (and settle-ups), ratings and tags of one member. */
+export async function memberRefs(
+	tx: Tx,
+	tripId: string,
+	memberId: string,
+): Promise<MemberRefs> {
+	const res = await tx.execute(sql`
+		select
+		  (select count(*) from expenses e
+		    where e.trip_id = ${tripId} and e.deleted_at is null
+		      and (exists (select 1 from expense_shares s where s.expense_id = e.id and s.member_id = ${memberId})
+		        or exists (select 1 from expense_lines l join expense_line_members lm on lm.line_id = l.id
+		                    where l.expense_id = e.id and lm.member_id = ${memberId})))::int as splits,
+		  ((select count(distinct p.id) from expense_payments p
+		     join expense_payment_payers pp on pp.payment_id = p.id
+		     join expenses e on e.id = p.expense_id
+		    where p.trip_id = ${tripId} and e.deleted_at is null and pp.member_id = ${memberId})
+		   + (select count(*) from settlements st
+		       where st.trip_id = ${tripId} and st.deleted_at is null
+		         and (st.from_member_id = ${memberId} or st.to_member_id = ${memberId})))::int as payments,
+		  (select count(*) from node_priorities np join nodes n on n.id = np.node_id
+		    where np.trip_id = ${tripId} and np.member_id = ${memberId} and n.deleted_at is null)::int as ratings,
+		  ((select count(*) from item_assignees a join items i on i.id = a.item_id
+		     where a.trip_id = ${tripId} and a.member_id = ${memberId} and i.deleted_at is null)
+		   + (select count(*) from leg_assignees a where a.trip_id = ${tripId} and a.member_id = ${memberId})
+		   + (select count(*) from list_item_assignees a join list_items li on li.id = a.list_item_id
+		       where a.trip_id = ${tripId} and a.member_id = ${memberId} and li.deleted_at is null))::int as tags`);
+	const r = res.rows[0] as Record<keyof MemberRefs, number | string>;
+	return {
+		splits: Number(r.splits),
+		payments: Number(r.payments),
+		ratings: Number(r.ratings),
+		tags: Number(r.tags),
+	};
+}
+
+/** The invite's own fields: its name when it was a placeholder, and its note. */
+async function inviteExtras(
+	tx: Tx,
+	memberId: string,
+): Promise<{ displayName: string | null; note: string | null }> {
+	const res = await tx.execute(sql`
+		select display_name as "displayName", invite_note as note
+		  from trip_members where id = ${memberId}`);
+	return res.rows[0] as { displayName: string | null; note: string | null };
+}
+
+/**
+ * An invite that was a placeholder ("Audrey", linked to an email) goes back
+ * to being one: same row, so every split, payment, rating and tag stays.
+ */
+async function revertToPlaceholder(
+	tx: Tx,
+	out: TxOutbox,
+	tripId: string,
+	memberId: string,
+): Promise<void> {
+	await tx.execute(sql`
+		update trip_members
+		   set status = 'placeholder', email = null, invite_note = null,
+		       invited_by = null, updated_at = now()
+		 where id = ${memberId} and trip_id = ${tripId}
+		   and status = 'invited' and display_name is not null`);
+	out.emit({ entity: "member", keys: ["graph", "sharing"] });
+}
+
+export type CancelInviteResult =
+	| { kind: "reverted"; name: string; email: string }
+	| { kind: "cancelled"; name: string }
+	| { kind: "confirm"; name: string; refs: MemberRefs };
+
+/**
+ * "Cancel invite": a former placeholder becomes the placeholder again; a
+ * plain email invite is retired (`retireMember`), but only once `confirmed`
+ * when anything already points at it (it stays with a former member).
+ */
+export async function cancelInviteCore(
+	tx: Tx,
+	out: TxOutbox,
+	args: { tripId: string; member: MemberRow; confirmed: boolean },
+): Promise<CancelInviteResult> {
+	const { tripId, member: m } = args;
+	if (m.status !== "invited")
+		return fail("CONFLICT", "Only a pending invite can be cancelled.");
+	const { displayName } = await inviteExtras(tx, m.id);
+	if (displayName) {
+		await revertToPlaceholder(tx, out, tripId, m.id);
+		return { kind: "reverted", name: displayName, email: m.email ?? "" };
+	}
+	if (!args.confirmed) {
+		const refs = await memberRefs(tx, tripId, m.id);
+		if (Object.values(refs).some((n) => n > 0))
+			return { kind: "confirm", name: m.name, refs };
+	}
+	await retireMember(tx, out, tripId, m.id);
+	return { kind: "cancelled", name: m.name };
+}
+
+export type ChangeEmailResult = {
+	status: "active" | "invited";
+	/** The address to email, lower-cased. */
+	email: string;
+	/** The account's name when it joined at once. */
+	accountName: string | null;
+	/** The placeholder's name, when it was one. */
+	displayName: string | null;
+	note: string | null;
+};
+
+/**
+ * "Change email…" on a pending invite: the same row gets the new address, as
+ * inviting does (an existing account joins at once, its role the invite's;
+ * a former placeholder goes through `linkPlaceholderToEmail`). CONFLICT for
+ * the caller's own address or someone already on the trip.
+ */
+export async function changeInviteEmailCore(
+	tx: Tx,
+	out: TxOutbox,
+	args: {
+		tripId: string;
+		member: MemberRow;
+		email: string;
+		inviter: { id: string; email: string; role: TripRole };
+	},
+): Promise<ChangeEmailResult> {
+	const { tripId, member: m } = args;
+	if (m.status !== "invited")
+		return fail("CONFLICT", "Only a pending invite can change its email.");
+	const email = args.email.trim().toLowerCase();
+	if (email === args.inviter.email.trim().toLowerCase())
+		return fail("CONFLICT", "That's you. You're already on this trip.");
+	const { displayName, note } = await inviteExtras(tx, m.id);
+	const base = { email, displayName, note };
+	// The same address: send it again.
+	if (email === m.email)
+		return { ...base, status: "invited", accountName: null };
+	const account = await accountByEmail(tx, email);
+	const existing = await liveRowFor(tx, tripId, { userId: account?.id, email });
+	if (existing && existing.id !== m.id)
+		return fail(
+			"CONFLICT",
+			existing.status === "invited"
+				? "They're already invited."
+				: "They're already on this trip.",
+		);
+	if (displayName) {
+		await revertToPlaceholder(tx, out, tripId, m.id);
+		const r = await linkPlaceholderToEmail(tx, out, {
+			tripId,
+			placeholder: { ...m, status: "placeholder" },
+			email,
+			linkerRole: args.inviter.role,
+			linkerId: args.inviter.id,
+		});
+		return {
+			...base,
+			status: r.kind === "invited" ? "invited" : "active",
+			accountName: account?.name || null,
+		};
+	}
+	if (account) {
+		await tx.execute(sql`
+			update trip_members
+			   set status = 'active', user_id = ${account.id}, email = null,
+			       joined_at = now(), updated_at = now()
+			 where id = ${m.id} and trip_id = ${tripId}`);
+		await dropLinkGrants(tx, out, tripId, account.id);
+		out.access([account.id]);
+		out.notify({
+			kind: "membership",
+			change: "added",
+			userId: account.id,
+			role: m.role,
+		});
+	} else
+		await tx.execute(sql`
+			update trip_members set email = ${email}, updated_at = now()
+			 where id = ${m.id} and trip_id = ${tripId}`);
+	out.emit({ entity: "member", keys: ["graph", "sharing"] });
+	return {
+		...base,
+		status: account ? "active" : "invited",
+		accountName: account?.name || null,
+	};
 }

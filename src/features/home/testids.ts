@@ -48,6 +48,12 @@ export const HOME_TESTID = {
 	addPersonName: "home-add-person-name",
 	placeholderLinkEmail: "home-placeholder-link-email",
 	placeholderClaim: "home-placeholder-claim",
+	/** A082: a pending invite's "Change email…" and "Cancel invite". */
+	inviteChangeEmailItem: "home-invite-change-email-item",
+	inviteChangeEmail: "home-invite-change-email",
+	inviteCancel: "home-invite-cancel",
+	cancelInviteConfirm: "home-cancel-invite-confirm",
+	cancelInviteYes: "home-cancel-invite-yes",
 	guestRow: "home-guest-row",
 	guestPromote: "home-guest-promote",
 	guestPromoteTwin: "home-guest-promote-twin",

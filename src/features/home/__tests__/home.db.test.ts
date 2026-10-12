@@ -46,7 +46,15 @@ vi.mock("@/server/auth/limits.server", async (importOriginal) => {
 	};
 });
 
-import { closeDb, getDb } from "@/db/db.server";
+/** The invite email never leaves: recorded instead (A082 asserts who gets it). */
+const sent = vi.hoisted(() => [] as { to: string }[]);
+vi.mock("../server/invite-email.server", () => ({
+	sendInvite: async (p: { to: string }) => {
+		sent.push(p);
+	},
+}));
+
+import { closeDb, getDb, type Tx } from "@/db/db.server";
 import {
 	dropDatabase,
 	ensureDatabase,
@@ -78,8 +86,11 @@ import {
 	remapMentions,
 	replaceIdsInState,
 } from "../server/duplicate.server";
+import { memberRefs } from "../server/people.server";
 import {
 	addPlaceholder,
+	cancelInvite,
+	changeInviteEmail,
 	claimPlaceholder,
 	getSharing,
 	inviteMember,
@@ -708,6 +719,192 @@ describe("placeholders ↔ accounts (ADDENDUM §10)", () => {
 				}),
 			),
 		).toBe("FORBIDDEN");
+	});
+});
+
+describe("pending invites: cancel and change email (A082)", () => {
+	const row = async (id: string) =>
+		(
+			await q<{
+				status: string;
+				email: string | null;
+				name: string | null;
+				userId: string | null;
+			}>(sql`
+			select status::text as status, email, display_name as name, user_id as "userId"
+			  from trip_members where id = ${id}`)
+		)[0];
+	const refsOf = (tripId: string, id: string) =>
+		memberRefs(getDb() as unknown as Tx, tripId, id);
+	const firstItem = async (tripId: string) =>
+		(
+			await q<{ id: string }>(sql`
+			select id::text as id from items where trip_id = ${tripId} and deleted_at is null limit 1`)
+		)[0]?.id ?? "";
+
+	it("cancelling a placeholder's invite makes her a placeholder again, keeping everything", async () => {
+		const c = await freshTrip();
+		const audrey = c.members.audrey;
+		await getDb().execute(sql`
+			insert into item_assignees (trip_id, item_id, member_id)
+			values (${c.tripId}, ${await firstItem(c.tripId)}, ${audrey}) on conflict do nothing`);
+		const before = await refsOf(c.tripId, audrey);
+		expect(before.tags).toBeGreaterThan(0);
+		await call(linkPlaceholder, U.owner, {
+			memberId: audrey,
+			email: "audrey@typo.test",
+		});
+		expect((await row(audrey))?.status).toBe("invited");
+		// Editors can't cancel (the same permission as removing someone).
+		expect(await codeOf(call(cancelInvite, U.maya, { memberId: audrey }))).toBe(
+			"FORBIDDEN",
+		);
+		const r = await call(cancelInvite, U.owner, { memberId: audrey });
+		expect(r).toEqual({
+			kind: "reverted",
+			name: "Audrey",
+			email: "audrey@typo.test",
+		});
+		expect(await row(audrey)).toEqual({
+			status: "placeholder",
+			email: null,
+			name: "Audrey",
+			userId: null,
+		});
+		expect(await refsOf(c.tripId, audrey)).toEqual(before);
+		// Undo: linked again without a second email.
+		sent.length = 0;
+		await call(linkPlaceholder, U.owner, {
+			memberId: audrey,
+			email: "audrey@typo.test",
+			notify: false,
+		});
+		expect((await row(audrey))?.status).toBe("invited");
+		expect(sent).toEqual([]);
+		// Only pending invites.
+		expect(
+			await codeOf(
+				call(cancelInvite, U.owner, {
+					memberId: (await memberOf(c.tripId, U.maya.id))?.id,
+				}),
+			),
+		).toBe("CONFLICT");
+	});
+
+	it("changes a pending invite's email and sends the invite there", async () => {
+		const c = await freshTrip();
+		const inv = await call<{ memberId: string }>(inviteMember, U.owner, {
+			tripId: c.tripId,
+			email: "sam@typo.test",
+			role: "suggester",
+			note: "See you in Kyoto",
+		});
+		sent.length = 0;
+		await call(changeInviteEmail, U.owner, {
+			memberId: inv.memberId,
+			email: "Sam@Example.test",
+		});
+		expect(await row(inv.memberId)).toMatchObject({
+			status: "invited",
+			email: "sam@example.test",
+		});
+		expect(sent).toMatchObject([
+			{ to: "sam@example.test", note: "See you in Kyoto" },
+		]);
+		// Someone already on the trip, the caller, an editor, a bad address.
+		for (const email of [U.maya.email, U.owner.email])
+			expect(
+				await codeOf(
+					call(changeInviteEmail, U.owner, { memberId: inv.memberId, email }),
+				),
+			).toBe("CONFLICT");
+		expect(
+			await codeOf(
+				call(changeInviteEmail, U.maya, {
+					memberId: inv.memberId,
+					email: "x@example.test",
+				}),
+			),
+		).toBe("FORBIDDEN");
+		await expect(
+			call(changeInviteEmail, U.owner, {
+				memberId: inv.memberId,
+				email: "not-an-email",
+			}),
+		).rejects.toThrow(/email/i);
+		// An address with an account: they join at once, on the same row and role.
+		const kai = await newUser({ first: "Kai", last: "Moved" });
+		await call(changeInviteEmail, U.owner, {
+			memberId: inv.memberId,
+			email: kai.email,
+		});
+		expect(await memberOf(c.tripId, kai.id)).toEqual({
+			id: inv.memberId,
+			role: "suggester",
+			status: "active",
+		});
+		// A former placeholder keeps her name and everything tagged.
+		const audrey = c.members.audrey;
+		const before = await refsOf(c.tripId, audrey);
+		await call(linkPlaceholder, U.owner, {
+			memberId: audrey,
+			email: "audrey@typo.test",
+		});
+		sent.length = 0;
+		await call(changeInviteEmail, U.owner, {
+			memberId: audrey,
+			email: "audrey@example.test",
+		});
+		expect(await row(audrey)).toEqual({
+			status: "invited",
+			email: "audrey@example.test",
+			name: "Audrey",
+			userId: null,
+		});
+		expect(await refsOf(c.tripId, audrey)).toEqual(before);
+		expect(sent.map((m) => m.to)).toEqual(["audrey@example.test"]);
+	});
+
+	it("cancels a plain invite, asking first when anything points at them", async () => {
+		const c = await freshTrip();
+		const a = await call<{ memberId: string }>(inviteMember, U.owner, {
+			tripId: c.tripId,
+			email: "nobody@example.test",
+			role: "viewer",
+		});
+		expect(await call(cancelInvite, U.owner, { memberId: a.memberId })).toEqual(
+			{ kind: "cancelled", name: "nobody" },
+		);
+		expect((await row(a.memberId))?.status).toBe("removed");
+		const b = await call<{ memberId: string }>(inviteMember, U.owner, {
+			tripId: c.tripId,
+			email: "sam@example.test",
+			role: "viewer",
+		});
+		await getDb().execute(sql`
+			insert into item_assignees (trip_id, item_id, member_id)
+			values (${c.tripId}, ${await firstItem(c.tripId)}, ${b.memberId})`);
+		const ask = await call(cancelInvite, U.owner, { memberId: b.memberId });
+		expect(ask).toEqual({
+			kind: "confirm",
+			name: "sam",
+			refs: { splits: 0, payments: 0, ratings: 0, tags: 1 },
+		});
+		expect((await row(b.memberId))?.status).toBe("invited");
+		await call(cancelInvite, U.owner, {
+			memberId: b.memberId,
+			confirmed: true,
+		});
+		expect((await row(b.memberId))?.status).toBe("removed");
+		// The tag stays, with a former member.
+		expect((await refsOf(c.tripId, b.memberId)).tags).toBe(1);
+		const log = await q<{ summary: string }>(sql`
+			select summary from activity_log
+			 where trip_id = ${c.tripId} and verb = 'person.remove' order by created_at`);
+		expect(log.map((r) => r.summary)).toEqual([
+			"cancelled an invite",
+			"cancelled an invite",
+		]);
 	});
 });
 
