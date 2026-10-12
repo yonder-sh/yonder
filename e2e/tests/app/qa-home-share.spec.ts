@@ -450,3 +450,49 @@ test("Placeholders: link to an email (auto-claim at sign-up) and 'Same person as
 	await o.ctx.close();
 	await m.ctx.close();
 });
+
+test("A082: pending invites: change email, cancel back to a placeholder, confirm a plain cancel", async ({ browser }) => {
+	const o = await userPage(browser, `qa-home-a82-${uniq()}@asia2027.test`, "Dennis", "Owner");
+	const c = await cloneFixtureTrip(o.page.request);
+	await openWorkspace(o.page, c.slug);
+	const rin = (await callFn(o.page, SHARING, "addPlaceholder", { tripId: c.tripId, displayName: "Rin" })).value.memberId as string;
+	const sam = `qa-home-a82s-${uniq()}@asia2027.test`;
+	const inv = await callFn(o.page, SHARING, "inviteMember", { tripId: c.tripId, email: sam, role: "viewer" });
+	expect(inv.ok, JSON.stringify(inv)).toBe(true);
+	const g = await graphOf(o.page);
+	const item = g.items.find((i) => i.dayId)!;
+	await callFn(o.page, "/src/functions/items.functions.ts", "setItemAssignees", { itemId: item.id, memberIds: [rin, inv.value.memberId] });
+	await callFn(o.page, SHARING, "linkPlaceholder", { memberId: rin, email: `qa-home-a82-typo-${uniq()}@asia2027.test` });
+	await openShare(o.page);
+	const dlg = o.page.getByTestId("share-dialog");
+	const row = dlg.getByTestId("home-member-row").filter({ hasText: "Rin" });
+	await expect(row).toContainText(/Pending/);
+	// Change email…
+	const fixed = `qa-home-a82-rin-${uniq()}@asia2027.test`;
+	await row.getByTestId("home-member-menu").click();
+	await o.page.getByTestId("home-invite-change-email-item").click();
+	await row.getByRole("textbox").fill(fixed);
+	await row.getByRole("button", { name: "Send" }).click();
+	await expect(row).toContainText(fixed, { timeout: 8000 });
+	// Cancel invite: Rin is a placeholder again, still tagged.
+	await row.getByTestId("home-member-menu").click();
+	await o.page.getByTestId("home-invite-cancel").click();
+	await expect(row).toContainText(/No account yet/, { timeout: 8000 });
+	await expect(o.page.getByRole("alertdialog")).toHaveCount(0);
+	// A plain invite with a tag asks first.
+	const samRow = dlg.getByTestId("home-member-row").filter({ hasText: sam });
+	await samRow.getByTestId("home-member-menu").click();
+	await o.page.getByTestId("home-invite-cancel").click();
+	const confirm = o.page.getByTestId("home-cancel-invite-confirm");
+	await expect(confirm).toContainText(/has 1 tag; they'll stay with a former member/);
+	await shot(o.page, "a082-cancel-confirm");
+	await o.page.getByTestId("home-cancel-invite-yes").click();
+	await expect(samRow).toHaveCount(0, { timeout: 8000 });
+	await o.page.reload();
+	await expect(o.page.getByTestId("workspace")).toBeVisible({ timeout: 30_000 });
+	const g2 = await graphOf(o.page);
+	const it2 = g2.items.find((i) => i.id === item.id)!;
+	expect(it2.assigneeIds).toEqual(expect.arrayContaining([rin, inv.value.memberId]));
+	expect(g2.members.find((m) => m.id === rin)?.status).toBe("placeholder");
+	await o.ctx.close();
+});

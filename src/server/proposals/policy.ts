@@ -175,6 +175,9 @@ export const MUTATION_POLICY = {
 	addPlaceholder: { direct: "addPeople" },
 	updateMemberRole: { direct: "manageMembers" },
 	removeMember: { direct: "manageMembers" },
+	/** A082: pending invites, the same permission as removing someone. */
+	cancelInvite: { direct: "manageMembers" },
+	changeInviteEmail: { direct: "manageMembers" },
 	promoteGuest: { direct: "manageMembers" },
 	/** FB-13: the trip's one link (on/off and its role). */
 	setShareLink: { direct: "manageShareLinks" },

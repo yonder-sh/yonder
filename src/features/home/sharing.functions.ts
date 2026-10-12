@@ -70,7 +70,10 @@ import { mutationMeta, withTripTx } from "@/server/tx.server";
 import { nameMatchesPerson } from "./claim-match";
 import { sendInvite } from "./server/invite-email.server";
 import {
+	type CancelInviteResult,
+	cancelInviteCore,
 	capRole,
+	changeInviteEmailCore,
 	dropLinkGrants,
 	inviteCore,
 	linkPlaceholderToEmail,
@@ -376,7 +379,14 @@ export const linkPlaceholder = createServerFn({ method: "POST" })
 	.middleware([withAccount])
 	.validator(
 		z.union([
-			z.object({ memberId: z.uuid(), email: z.email() }).strict(),
+			z
+				.object({
+					memberId: z.uuid(),
+					email: z.email(),
+					/** false: no email (Undo of "Cancel invite": they had it already). */
+					notify: z.boolean().optional(),
+				})
+				.strict(),
 			z.object({ memberId: z.uuid(), toMemberId: z.uuid() }).strict(),
 		]),
 	)
@@ -449,7 +459,7 @@ export const linkPlaceholder = createServerFn({ method: "POST" })
 			},
 			mutationMeta(access, context.user),
 		);
-		if (r.invite)
+		if (r.invite && !("notify" in data && data.notify === false))
 			await sendInvite({
 				to: r.invite.to,
 				inviter: context.user.name,
@@ -573,6 +583,134 @@ export const removeMember = createServerFn({ method: "POST" })
 			mutationMeta(access, context.user),
 		);
 	});
+
+/**
+ * "Cancel invite" (A082; same permission as removing someone). An invite that
+ * was a placeholder becomes that placeholder again, keeping everything tagged
+ * with them. A plain email invite is retired like `removeMember`; when
+ * anything already points at it (invitees are in pickers), the first call
+ * returns `confirm` with the counts and changes nothing until `confirmed`.
+ */
+export const cancelInvite = createServerFn({ method: "POST" })
+	.middleware([withAccount])
+	.validator(
+		z
+			.object({ memberId: z.uuid(), confirmed: z.boolean().optional() })
+			.strict(),
+	)
+	.handler(async ({ data, context }): Promise<CancelInviteResult> => {
+		const tripId = await tripOfMember(data.memberId);
+		const access = await requireDirect("cancelInvite", tripId, context.user);
+		return withTripTx(
+			tripId,
+			async (tx, out) => {
+				const m = await lockMember(tx, tripId, data.memberId);
+				const r = await mapped(
+					cancelInviteCore(tx, out, {
+						tripId,
+						member: m,
+						confirmed: data.confirmed ?? false,
+					}),
+				);
+				if (r.kind === "confirm") return r;
+				// Never the address: a plain invite's name is its local part.
+				await logActivity(tx, out, {
+					tripId,
+					actor: actorOf(context.user),
+					verb: "person.remove",
+					summary:
+						r.kind === "reverted"
+							? `cancelled ${r.name}'s invite`
+							: "cancelled an invite",
+					meta: {
+						memberId: m.id,
+						...(r.kind === "reverted" ? { name: r.name } : {}),
+					},
+				});
+				return r;
+			},
+			mutationMeta(access, context.user),
+		);
+	});
+
+/**
+ * "Change email…" on a pending invite (A082): the new address gets the invite
+ * email, as inviting does (an existing account joins at once). The old
+ * address no longer matches anything at sign-in.
+ */
+export const changeInviteEmail = createServerFn({ method: "POST" })
+	.middleware([withAccount])
+	.validator(
+		z.object({ memberId: z.uuid(), email: z.email().max(254) }).strict(),
+	)
+	.handler(
+		async ({ data, context }): Promise<{ status: "active" | "invited" }> => {
+			const tripId = await tripOfMember(data.memberId);
+			const access = await requireDirect(
+				"changeInviteEmail",
+				tripId,
+				context.user,
+			);
+			await rateLimitPer(
+				`people:${context.user.id}`,
+				PEOPLE_WRITES_PER_HOUR,
+				3600,
+			);
+			const r = await withTripTx(
+				tripId,
+				async (tx, out) => {
+					const m = await lockMember(tx, tripId, data.memberId);
+					const res = await mapped(
+						changeInviteEmailCore(tx, out, {
+							tripId,
+							member: m,
+							email: data.email,
+							inviter: {
+								id: context.user.id,
+								email: context.user.email,
+								role: access.role,
+							},
+						}),
+					);
+					const who = res.accountName ?? res.displayName;
+					await logActivity(tx, out, {
+						tripId,
+						actor: actorOf(context.user),
+						verb: "person.invite",
+						summary:
+							res.status === "active"
+								? `added ${who ?? "someone"} to the trip`
+								: who
+									? `changed ${who}'s invite email`
+									: "changed an invite's email",
+						meta: { memberId: m.id, ...(who ? { name: who } : {}) },
+					});
+					const trip = await tx.execute(
+						sql`select t.name, t.slug, (select role::text from trip_members where id = ${m.id}) as role
+						      from trips t where t.id = ${tripId}`,
+					);
+					return {
+						...res,
+						trip: trip.rows[0] as {
+							name: string;
+							slug: string;
+							role: TripRole;
+						},
+					};
+				},
+				mutationMeta(access, context.user),
+			);
+			await sendInvite({
+				to: r.email,
+				inviter: context.user.name,
+				tripName: r.trip.name,
+				slug: r.trip.slug,
+				roleLabel: roleLabel(r.trip.role),
+				note: r.note,
+			});
+			return { status: r.status };
+		},
+	);
 
 /**
  * The trip link's switch and role (FB-13, like Google Drive). `enabled: true`

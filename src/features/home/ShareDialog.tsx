@@ -91,6 +91,7 @@ import { ClaimConfirmDialog } from "./ClaimConfirm";
 import { matchingPlaceholder, nameMatchesPerson } from "./claim-match";
 import { useDialogFocus } from "./dialog-focus";
 import { formatLocalDay, linkExpired } from "./link-dates";
+import { ChangeInviteEmail, EMAIL_RE, useCancelInvite } from "./PendingInvite";
 import {
 	addPlaceholder,
 	createInviteLink,
@@ -242,7 +243,7 @@ function InviteRow({ tripId }: { tripId: string }) {
 		},
 		onError: (e) => setError(humanError(e)),
 	});
-	const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+	const valid = EMAIL_RE.test(email.trim());
 	const submit = (e: FormEvent) => {
 		e.preventDefault();
 		if (!valid) {
@@ -459,7 +460,7 @@ function PlaceholderPanel({
 	);
 }
 
-function MemberRow({
+export function MemberRow({
 	m,
 	me,
 	owner,
@@ -476,8 +477,9 @@ function MemberRow({
 	members: Member[];
 	tripId: string;
 }) {
-	const [panel, setPanel] = useState<Panel | null>(null);
+	const [panel, setPanel] = useState<Panel | "change-email" | null>(null);
 	const [claiming, setClaiming] = useState(false);
+	const cancelInvite = useCancelInvite(tripId, m);
 	const act = useShareAction(tripId);
 	const { disabled, reason } = useEditGuard();
 	const isMe = m.id === me;
@@ -581,21 +583,38 @@ function MemberRow({
 					{owner && m.role !== "owner" ? (
 						<>
 							{placeholder || countable ? <DropdownMenuSeparator /> : null}
-							<DropdownMenuItem
-								variant="destructive"
-								onSelect={() =>
-									act.mutate(() => removeMember({ data: { memberId: m.id } }), {
-										onSuccess: () =>
-											toast.success(
-												pending
-													? "Invite cancelled"
-													: `${m.name} was removed from the trip`,
-											),
-									})
-								}
-							>
-								{pending ? "Cancel invite" : "Remove from trip"}
-							</DropdownMenuItem>
+							{pending ? (
+								<>
+									<DropdownMenuItem
+										data-testid={HOME_TESTID.inviteChangeEmailItem}
+										onSelect={() => setPanel("change-email")}
+									>
+										<Mail /> Change email…
+									</DropdownMenuItem>
+									<DropdownMenuItem
+										variant="destructive"
+										data-testid={HOME_TESTID.inviteCancel}
+										onSelect={cancelInvite.start}
+									>
+										Cancel invite
+									</DropdownMenuItem>
+								</>
+							) : (
+								<DropdownMenuItem
+									variant="destructive"
+									onSelect={() =>
+										act.mutate(
+											() => removeMember({ data: { memberId: m.id } }),
+											{
+												onSuccess: () =>
+													toast.success(`${m.name} was removed from the trip`),
+											},
+										)
+									}
+								>
+									Remove from trip
+								</DropdownMenuItem>
+							)}
 						</>
 					) : null}
 				</DropdownMenuContent>
@@ -663,7 +682,15 @@ function MemberRow({
 					menu
 				)}
 			</div>
-			{panel && placeholder ? (
+			{panel === "change-email" && pending ? (
+				<ChangeInviteEmail
+					tripId={tripId}
+					member={m}
+					onClose={() => setPanel(null)}
+				/>
+			) : null}
+			{pending && owner ? cancelInvite.dialog : null}
+			{panel && panel !== "change-email" && placeholder ? (
 				<PlaceholderPanel
 					member={m}
 					panel={panel}
