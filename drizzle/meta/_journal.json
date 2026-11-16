@@ -218,6 +218,13 @@
       "when": 1791742658823,
       "tag": "0030_trash",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1794809870529,
+      "tag": "0031_expense_booking",
+      "breakpoints": true
     }
   ]
 }

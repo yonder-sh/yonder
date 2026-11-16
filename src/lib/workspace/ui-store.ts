@@ -64,6 +64,8 @@ export type AddExpenseRequest = {
 	currency?: string;
 	/** "Add as expense" from a shopping item / a leg's cost. */
 	listItemId?: string;
+	/** "Add as expense" on a flight: the booking whose price this is. */
+	bookingId?: string;
 	/**
 	 * ADDENDUM §10 gift privacy: start the expense private (an expense from a
 	 * PRIVATE list item; the server forces it private for such an item anyway).

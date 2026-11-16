@@ -190,6 +190,8 @@ type Draft = {
 	payments: PaymentDraft[];
 	refundOfId: string | null;
 	listItemId: string | null;
+	/** The flight booking whose price this is ("Add as expense" on a flight). */
+	bookingId: string | null;
 };
 
 let keySeq = 0;
@@ -443,6 +445,7 @@ export function ExpenseEditor({
 			payments: [],
 			refundOfId: null,
 			listItemId: null,
+			bookingId: null,
 		};
 		if (mode.kind === "new") {
 			const r = mode.request;
@@ -475,6 +478,7 @@ export function ExpenseEditor({
 							: defaultPeople(target)
 					: defaultPeople(target),
 				listItemId: r.listItemId ?? null,
+				bookingId: r.bookingId ?? null,
 				// Gift privacy (ADDENDUM §10): the server forces it for a private item too.
 				isPrivate: !!r.isPrivate || !!shoppingItem?.isPrivate,
 			};
@@ -539,6 +543,7 @@ export function ExpenseEditor({
 			payments: e.payments.map((p) => paymentDraft(p, e)),
 			refundOfId: e.refundOfId,
 			listItemId: e.listItemId,
+			bookingId: e.bookingId,
 		};
 		if (mode.kind === "refund") {
 			const firstPayer = e.payments[0]?.payers[0]?.memberId ?? meId;
@@ -555,6 +560,7 @@ export function ExpenseEditor({
 				points: false,
 				refundOfId: e.id,
 				listItemId: null,
+				bookingId: null,
 				note: "",
 				rate: "",
 			};
@@ -923,12 +929,18 @@ export function ExpenseEditor({
 				: {}),
 			...(draft.refundOfId ? { refundOfId: draft.refundOfId } : {}),
 			...(draft.listItemId ? { listItemId: draft.listItemId } : {}),
+			...(draft.bookingId ? { bookingId: draft.bookingId } : {}),
 		};
 		return f;
 	};
 
 	const saveEdit = async (e: ExpenseDto) => {
-		const { refundOfId: _r, listItemId: _l, ...patch } = fieldsOut();
+		const {
+			refundOfId: _r,
+			listItemId: _l,
+			bookingId: _b,
+			...patch
+		} = fieldsOut();
 		// Split/lines of a refund follow the original (server); private rows have none.
 		if (isRefund) {
 			delete (patch as Record<string, unknown>).split;

@@ -30,6 +30,7 @@ import {
 	text,
 	timestamp,
 	unique,
+	uniqueIndex,
 	uuid,
 } from "drizzle-orm/pg-core";
 import { createdAt, deletedAt, pk, sortKey, updatedAt } from "./_columns";
@@ -70,6 +71,11 @@ export const expenses = pgTable(
 		dayId: uuid(),
 		/** The shopping item it was bought for (FK: 0003, SET NULL). */
 		listItemId: uuid(),
+		/**
+		 * The flight booking whose price this is: `legs.details.flight.bookingId`
+		 * (no FK: a booking is the flights that carry its id, not a row).
+		 */
+		bookingId: uuid(),
 		/** A refund of that expense (negative amount; same split proportions). */
 		refundOfId: uuid(),
 		/** Server default: the target's name, else the category label. */
@@ -107,6 +113,12 @@ export const expenses = pgTable(
 		index("expenses_item_idx").on(t.itemId),
 		index("expenses_day_idx").on(t.dayId),
 		index("expenses_list_item_idx").on(t.listItemId),
+		// A booking's price is recorded once among the expenses the group shares.
+		uniqueIndex("expenses_booking_uq")
+			.on(t.tripId, t.bookingId)
+			.where(
+				sql`${t.bookingId} is not null and ${t.deletedAt} is null and not ${t.isPrivate}`,
+			),
 		index("expenses_refund_of_idx").on(t.refundOfId),
 		check(
 			"expenses_target_ck",

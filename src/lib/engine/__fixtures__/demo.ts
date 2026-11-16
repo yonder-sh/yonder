@@ -562,6 +562,7 @@ const expense = (
 	taxFreePending: false,
 	refundOfId: null,
 	listItemId: null,
+	bookingId: null,
 	note: null,
 	createdBy: "user-dennis",
 	createdAt: T0,

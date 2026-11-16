@@ -222,9 +222,10 @@ export const FlightDetails = z.object({
 		.object({ prevLegId: Id.optional(), nextLegId: Id.optional() })
 		.optional(),
 	/**
-	 * Set by the server on flights bought together (a connection, a round
-	 * trip). They share `bookingRef`, `cost`, `points` and `fees`, which are
-	 * then the whole booking's, not this flight's alone.
+	 * The booking this flight was bought in, set by the server: its own, or
+	 * one it shares with the flights bought with it (a connection, a round
+	 * trip). Those share `bookingRef`, `cost`, `points` and `fees`, which are
+	 * then the whole booking's, and `expenses.booking_id` is its price.
 	 */
 	bookingId: Id.optional(),
 });

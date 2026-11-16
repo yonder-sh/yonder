@@ -145,6 +145,11 @@ export const ExpenseInput = z
 		refundOfId: Id.optional(),
 		/** The shopping item it was bought for. */
 		listItemId: Id.optional(),
+		/**
+		 * The flight booking whose price this is (set once, on create; the
+		 * target is one of that booking's flights).
+		 */
+		bookingId: Id.optional(),
 		/** "Tax-free / refund pending". */
 		taxFreePending: z.boolean().optional(),
 		/** Manual rate override for the planned amount. */

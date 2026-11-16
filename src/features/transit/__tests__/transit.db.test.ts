@@ -7,6 +7,7 @@
  * layover (`createFlightWithAirports`), reset, choose and lock.
  */
 import { randomUUID } from "node:crypto";
+import { readFileSync } from "node:fs";
 import { sql } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
@@ -1050,8 +1051,13 @@ describe("flights", () => {
 				}),
 			),
 		).toBe("VALIDATION"); // not a day of this trip
-		// Without `booking` (an older client) the flights aren't tied together.
-		expect((f1 as { bookingId?: string }).bookingId).toBeUndefined();
+		// Without `booking` (an older client) each flight is a booking of its own.
+		const [b1, b2] = [f1, f2].map(
+			(f) => (f as { bookingId?: string }).bookingId,
+		);
+		expect(b1).toBeTruthy();
+		expect(b2).toBeTruthy();
+		expect(b1).not.toBe(b2);
 	});
 
 	it("a round trip with a connection is one booking: one ref and price on every flight", async () => {
@@ -1191,7 +1197,38 @@ describe("flights", () => {
 		expect(seen?.bookingRef).not.toBe("NEW999");
 	});
 
-	it("one flight added alone is no booking, and a booking can't be claimed on save", async () => {
+	it("migration 0031 gives each flight from before bookings its own, once, and skips default flights", async () => {
+		const c = await freshTrip();
+		const I = c.ids.items;
+		const stmt = readFileSync("drizzle/0031_expense_booking.sql", "utf8")
+			.split("--> statement-breakpoint")
+			.at(-1) as string;
+		expect(stmt.trim()).toMatch(/^UPDATE "legs"/);
+		const backfill = () => getDb().execute(sql.raw(stmt));
+		const leg = (await legOf(c, I.kix as string, I.icn as string)) as GraphLeg;
+		const bookingId = async () =>
+			(
+				((await legOf(c, I.kix as string, I.icn as string)) as GraphLeg)
+					.details as { flight: { bookingId?: string } }
+			).flight.bookingId;
+		expect(await bookingId()).toBeUndefined();
+		// A default flight nobody chose (FB-19) isn't a booking.
+		await getDb().execute(
+			sql`update legs set source = 'estimate', is_edited = false where id = ${leg.id}`,
+		);
+		await backfill();
+		expect(await bookingId()).toBeUndefined();
+		await getDb().execute(
+			sql`update legs set source = 'manual', is_edited = true where id = ${leg.id}`,
+		);
+		await backfill();
+		const first = await bookingId();
+		expect(first).toMatch(/^[0-9a-f-]{36}$/);
+		await backfill();
+		expect(await bookingId()).toBe(first);
+	});
+
+	it("one flight is a booking of its own, and a booking can't be changed on save", async () => {
 		const c = await freshTrip();
 		const res = await call<{ legIds: string[]; itemIds: string[] }>(
 			createFlightWithAirports,
@@ -1209,26 +1246,36 @@ describe("flights", () => {
 				booking: { ref: "solo1", cost: { amount: 90, currency: "USD" } },
 			},
 		);
-		const read = async () => {
-			const g = await call<{ legs: GraphLeg[] }>(getTripGraph, U.owner, {
-				tripId: c.tripId,
-			});
-			return (
-				(g.legs.find((l) => l.id === res.legIds[0]) as GraphLeg).details as {
+		const flightOf = async (from: string, to: string) =>
+			(
+				((await legOf(c, from, to)) as GraphLeg).details as {
 					flight: Record<string, unknown>;
 				}
 			).flight;
-		};
-		let f = await read();
-		expect(f.bookingId).toBeUndefined();
+		const [from, to] = res.itemIds as [string, string];
+		let f = await flightOf(from, to);
+		const bookingId = f.bookingId;
+		expect(bookingId).toMatch(/^[0-9a-f-]{36}$/);
 		expect(f.bookingRef).toBe("SOLO1");
 		expect(f.cost).toEqual({ amount: 90, currency: "USD" });
 		await call(saveFlight, U.owner, {
-			target: pair(res.itemIds[0] as string, res.itemIds[1] as string),
+			target: pair(from, to),
 			flight: { ...f, bookingId: randomUUID() },
 		});
-		f = await read();
-		expect(f.bookingId).toBeUndefined();
+		f = await flightOf(from, to);
+		expect(f.bookingId).toBe(bookingId);
+
+		// A flight from before bookings gets its own the first time it's saved.
+		const I = c.ids.items;
+		const old = await flightOf(I.kix as string, I.icn as string);
+		expect(old.bookingId).toBeUndefined();
+		await call(saveFlight, U.owner, {
+			target: pair(I.kix as string, I.icn as string),
+			flight: old,
+		});
+		const saved = await flightOf(I.kix as string, I.icn as string);
+		expect(saved.bookingId).toMatch(/^[0-9a-f-]{36}$/);
+		expect(saved.bookingId).not.toBe(bookingId);
 	});
 });
 

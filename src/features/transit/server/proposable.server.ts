@@ -461,12 +461,12 @@ export const defs = {
 			const was = prev.kind === "flight" ? prev.flight : undefined;
 			const flight = normalizeFlight({
 				...data.flight,
-				// Connections and bookings are the server's (§7.9).
+				// Connections and bookings are the server's (§7.9); a flight
+				// saved for the first time is a booking of its own.
 				connection: was?.connection,
-				bookingId: was?.bookingId,
+				bookingId: was?.bookingId ?? uuidv7(),
 			});
 			if (!flight.connection) delete flight.connection;
-			if (!flight.bookingId) delete flight.bookingId;
 			const { row } = await writeLeg(
 				tx,
 				out,
@@ -573,13 +573,14 @@ export const defs = {
 				const ix0 = await indexTx(tx, tripId);
 				if (!ix0.day(data.dayId)) return fail("NOT_FOUND", "day");
 			}
-			// One booking for everything added here: one ref and price, and an id
-			// that ties its flights together once there is more than one.
-			const count = data.segments.length + (data.returnSegments?.length ?? 0);
-			const bookingId = data.booking && count > 1 ? uuidv7() : undefined;
+			// Everything added here is one booking: one id, one ref and price.
+			// An older client sends no `booking`: its flights are each their own.
+			const bookingId = uuidv7();
 			const booked = (segments: FlightDetails[]) =>
 				segments.map(({ bookingId: _b, ...f }) =>
-					data.booking ? withBooking(f, data.booking, bookingId) : f,
+					data.booking
+						? withBooking(f, data.booking, bookingId)
+						: { ...f, bookingId: uuidv7() },
 				);
 			const bookingRef = data.booking ? undefined : data.bookingRef;
 			/** One block: its stops, its flight legs, and the legs around it. */

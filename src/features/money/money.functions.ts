@@ -165,6 +165,8 @@ export type ExpenseDto = {
 	taxFreePending: boolean;
 	refundOfId: string | null;
 	listItemId: string | null;
+	/** The flight booking whose price this is (`FlightDetails.bookingId`). */
+	bookingId: string | null;
 	note: string | null;
 	createdBy: string | null;
 	createdAt: string;

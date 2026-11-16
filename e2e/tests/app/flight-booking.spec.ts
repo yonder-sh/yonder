@@ -2,8 +2,8 @@
  * One booking, one price: a round trip with a connection is added in one go
  * (Add flight → Round trip), with its ref and price asked once. Every flight
  * of the booking shows the same price as the whole booking's, a change on one
- * reaches the others, and "Add as expense" makes a single expense that the
- * other flights then open.
+ * reaches the others, and "Add as expense" makes a single expense, tied to the
+ * booking, that every one of its flights then opens, whatever the price becomes.
  */
 import { expect, type Page, test } from "@playwright/test";
 import { MONEY_TESTID as M } from "../../../src/features/money/testids";
@@ -147,5 +147,17 @@ test("a round trip with a connection is one booking with one price", async ({ pa
 	await page.getByTestId(T.legViewExpense).click();
 	await expect(exp).toBeVisible();
 	await expect(exp.getByTestId(M.title)).toHaveValue("Flights HND ↔ ICN");
+	await page.keyboard.press("Escape");
+	await expect(exp).toBeHidden();
+
+	// The expense is tied to the booking, not to its amount: a new price on the
+	// booking still finds it, and offers no second one.
+	await lo.getByRole("button", { name: "Edit flight" }).click();
+	await form.getByTestId(T.flightCostAmount).fill("620");
+	await form.getByTestId(T.flightSave).click();
+	await expect(summary).toContainText("620", { timeout: 15_000 });
+	await lo.getByTestId(T.legMenu).click();
+	await expect(page.getByTestId(T.legViewExpense)).toBeVisible({ timeout: 15_000 });
+	await expect(page.getByRole("menuitem", { name: "Add as expense" })).toHaveCount(0);
 	expect(logs.messages).toEqual([]);
 });

@@ -343,9 +343,9 @@ function OvernightPanel({
 
 /**
  * Leg ⋯: "Add expense", and "Add as expense" when a cost or booking is set
- * (EXTENSIONS §1.4). Flights bought together have one price, so one expense:
- * it goes on the booking's first flight, and once it's there every flight of
- * the booking offers "View expense" instead.
+ * (EXTENSIONS §1.4). A flight's price is its booking's, so it is one expense
+ * (`expenses.booking_id`), on the booking's first flight: once it's there,
+ * every flight of the booking offers "View expense" instead.
  */
 function LegMenu({ ed }: { ed: LegEditor }) {
 	const { ws, details, leg, redacted } = ed;
@@ -356,38 +356,24 @@ function LegMenu({ ed }: { ed: LegEditor }) {
 		!ws.access.isGuest &&
 		can({ role: ws.access.role, isGuest: ws.access.isGuest }, "manageExpenses");
 	if (!mayMoney) return null;
-	const price =
-		details?.kind === "flight" && !redacted ? details.flight.cost : undefined;
+	const flight = details?.kind === "flight" ? details.flight : null;
+	const price = flight && !redacted ? flight.cost : undefined;
 	const booked =
-		(details?.kind === "transit" && !!details.booking) ||
-		(details?.kind === "flight" && !!details.flight.bookingRef);
+		(details?.kind === "transit" && !!details.booking) || !!flight?.bookingRef;
+	// The flights bought with this one, and the expense their price already is.
 	const flights = bookingFlights(ws.ix, leg?.id);
-	const booking = flights.length > 1 ? flights : null;
-	const priceMinor = price
-		? Math.round(price.amount * 10 ** currencyDecimals(price.currency))
-		: null;
-	// The booking's expense: one on any of its flights for its whole price.
-	const paid =
-		booking && price
-			? money.data?.expenses.find(
-					(e) =>
-						e.target.kind === "leg" &&
-						e.amountMinor === priceMinor &&
-						e.currency === price.currency &&
-						booking.some(
-							(b) => e.target.kind === "leg" && b.leg.id === e.target.legId,
-						),
-				)
-			: undefined;
+	const bookingId = flight?.bookingId;
+	const paid = bookingId
+		? money.data?.expenses.find((e) => e.bookingId === bookingId)
+		: undefined;
 	const titleOf = (asExpense: boolean) => {
-		if (details?.kind === "flight") {
-			const f = details.flight;
-			if (asExpense && booking) {
-				const airline = booking[0]?.flight.airline?.name;
-				const one = booking.every((b) => b.flight.airline?.name === airline);
-				return `${(one && airline) || "Flights"} ${bookingRoute(booking)}`;
+		if (flight) {
+			if (asExpense && flights.length > 1) {
+				const airline = flights[0]?.flight.airline?.name;
+				const one = flights.every((b) => b.flight.airline?.name === airline);
+				return `${(one && airline) || "Flights"} ${bookingRoute(flights)}`;
 			}
-			return `${f.airline?.name ?? "Flight"} ${f.flightNumber ?? ""} ${f.from.iata}→${f.to.iata}`
+			return `${flight.airline?.name ?? "Flight"} ${flight.flightNumber ?? ""} ${flight.from.iata}→${flight.to.iata}`
 				.replace(/\s+/g, " ")
 				.trim();
 		}
@@ -397,14 +383,20 @@ function LegMenu({ ed }: { ed: LegEditor }) {
 	};
 	const open = async (asExpense: boolean) => {
 		const legId =
-			(asExpense ? booking?.[0]?.leg.id : undefined) ?? (await ed.ensure());
+			(asExpense ? flights[0]?.leg.id : undefined) ?? (await ed.ensure());
 		openAddExpense({
 			target: { kind: "leg", legId },
 			title: titleOf(asExpense).slice(0, 120),
 			category: "transport",
-			...(asExpense && price && priceMinor !== null
-				? { amountMinor: priceMinor, currency: price.currency }
+			...(asExpense && price
+				? {
+						amountMinor: Math.round(
+							price.amount * 10 ** currencyDecimals(price.currency),
+						),
+						currency: price.currency,
+					}
 				: {}),
+			...(asExpense && bookingId ? { bookingId } : {}),
 		});
 	};
 	return (

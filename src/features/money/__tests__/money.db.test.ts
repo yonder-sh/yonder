@@ -45,10 +45,12 @@ import {
 	migrateDatabase,
 } from "@/db/migrate.server";
 import { tripMembers, user } from "@/db/schema";
+import { createFlightWithAirports } from "@/features/transit/transit.functions";
 import { getDigest } from "@/functions/activity.functions";
-import { listActivity } from "@/functions/graph.functions";
+import { getTripGraph, listActivity } from "@/functions/graph.functions";
 import { updateTrip } from "@/functions/trips.functions";
 import { balances } from "@/lib/engine/money";
+import type { GraphLeg } from "@/lib/engine/types";
 import type { AuthUser } from "@/server/auth.server";
 import { errorCode } from "@/server/authz/errors";
 import {
@@ -1762,5 +1764,127 @@ describe("QA round 3 fixes (WP-Money fix round)", () => {
 			payments: [pay(500, M, NOW, "USD")],
 		});
 		expect((await cause())?.title).not.toBe("Maya's own");
+	});
+});
+
+describe("a flight booking's expense", () => {
+	it("a booking's price is one expense, linked to the booking whatever its amount", async () => {
+		const c = await freshTrip();
+		const seg = (from: string, to: string, date: string) => ({
+			from: { iata: from, name: from, tz: "UTC", lat: 0, lng: 0 },
+			to: { iata: to, name: to, tz: "UTC", lat: 0, lng: 0 },
+			depDate: date,
+			seats: [],
+		});
+		const res = await call<{ legIds: string[] }>(
+			createFlightWithAirports,
+			U.owner,
+			{
+				tripId: c.tripId,
+				segments: [seg("HND", "KIX", "2027-10-04")],
+				returnSegments: [seg("KIX", "HND", "2027-10-06")],
+				booking: { cost: { amount: 500, currency: "USD" } },
+			},
+		);
+		const [out, back] = res.legIds as [string, string];
+		const g = await call<{ legs: GraphLeg[] }>(getTripGraph, U.owner, {
+			tripId: c.tripId,
+		});
+		const bookingId = (
+			(g.legs.find((l) => l.id === out) as GraphLeg).details as {
+				flight: { bookingId: string };
+			}
+		).flight.bookingId;
+		const fare = (legId: string, more: Record<string, unknown> = {}) => ({
+			tripId: c.tripId,
+			target: { kind: "leg", legId },
+			title: "Flights HND ↔ KIX",
+			category: "transport",
+			amountMinor: 50_000,
+			currency: "USD",
+			bookingId,
+			...more,
+		});
+		type Row = {
+			id: string;
+			bookingId: string | null;
+			amountMinor: number | null;
+			target: { kind: string };
+		};
+		const linked = async (u: AuthUser) =>
+			(
+				await call<{ expenses: Row[] }>(listMoney, u, { tripId: c.tripId })
+			).expenses.filter((e) => e.bookingId === bookingId);
+
+		// It goes on one of that booking's flights.
+		expect(
+			await codeOf(
+				call(createExpense, U.owner, fare(out, { target: { kind: "trip" } })),
+			),
+		).toBe("VALIDATION");
+		expect(
+			await codeOf(
+				call(createExpense, U.owner, fare(out, { bookingId: randomUUID() })),
+			),
+		).toBe("VALIDATION");
+		const { id } = await call<{ id: string }>(
+			createExpense,
+			U.owner,
+			fare(back),
+		);
+		expect((await linked(U.owner)).map((e) => e.id)).toEqual([id]);
+		// Once: not again from the booking's other flight, whoever asks.
+		expect(await codeOf(call(createExpense, U.maya, fare(out)))).toBe(
+			"CONFLICT",
+		);
+
+		// The link doesn't hang on the amount or on where the expense sits,
+		// and it can't be patched.
+		await call(updateExpense, U.owner, {
+			id,
+			patch: { amountMinor: 61_234, target: { kind: "trip" } },
+		});
+		const [moved] = await linked(U.owner);
+		expect(moved?.amountMinor).toBe(61_234);
+		expect(moved?.target.kind).toBe("trip");
+		expect(
+			await codeOf(
+				call(updateExpense, U.owner, {
+					id,
+					patch: { bookingId: randomUUID() },
+				}),
+			),
+		).toBe("VALIDATION");
+
+		// Deleted, the booking is free again; the old one can't come back
+		// beside a new one.
+		await call(deleteExpense, U.owner, { id });
+		expect(await linked(U.owner)).toEqual([]);
+		const again = await call<{ id: string }>(createExpense, U.maya, fare(out));
+		expect(await codeOf(call(restoreExpense, U.owner, { id }))).toBe(
+			"CONFLICT",
+		);
+
+		// A private one is its creator's own: it isn't in the group's way, and
+		// can't be shared beside the group's.
+		await call(deleteExpense, U.maya, { id: again.id });
+		const mine = await call<{ id: string }>(
+			createExpense,
+			U.owner,
+			fare(out, { isPrivate: true }),
+		);
+		expect(await linked(U.maya)).toEqual([]);
+		const shared = await call<{ id: string }>(createExpense, U.maya, fare(out));
+		expect((await linked(U.owner)).map((e) => e.id).sort()).toEqual(
+			[mine.id, shared.id].sort(),
+		);
+		expect(
+			await codeOf(
+				call(updateExpense, U.owner, {
+					id: mine.id,
+					patch: { isPrivate: false },
+				}),
+			),
+		).toBe("CONFLICT");
 	});
 });

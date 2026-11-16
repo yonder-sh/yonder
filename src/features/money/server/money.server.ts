@@ -272,6 +272,7 @@ export async function loadExpenses(
 			taxFreePending: e.taxFreePending,
 			refundOfId: e.refundOfId,
 			listItemId: e.listItemId,
+			bookingId: e.bookingId,
 			note: e.note,
 			createdBy: e.createdBy,
 			createdAt: iso(e.createdAt),
@@ -609,6 +610,7 @@ export type NormExpense = {
 	isPrivate: boolean;
 	refundOfId: string | null;
 	listItemId: string | null;
+	bookingId: string | null;
 	taxFreePending: boolean;
 	fxRate?: number;
 	note: string | null;
@@ -736,6 +738,9 @@ export function normalizeExpense(
 		listItemId: has("listItemId")
 			? (f.listItemId ?? null)
 			: (base?.listItemId ?? null),
+		bookingId: has("bookingId")
+			? (f.bookingId ?? null)
+			: (base?.bookingId ?? null),
 		taxFreePending: has("taxFreePending")
 			? !!f.taxFreePending
 			: (base?.taxFreePending ?? false),
@@ -978,6 +983,32 @@ export type Ctx = {
 };
 
 /**
+ * One expense per flight booking: refuses when the caller can already see a
+ * live one for it (`shared`: when the group can, whoever it is private to).
+ */
+export async function assertBookingFree(
+	tx: Tx,
+	ctx: Ctx,
+	bookingId: string,
+	opts: { exceptId?: string; shared?: boolean } = {},
+): Promise<void> {
+	const [taken] = (
+		await tx.execute(sql`
+		select 1 from expenses
+		 where trip_id = ${ctx.tripId} and booking_id = ${bookingId}
+		   and deleted_at is null
+		   and ${opts.exceptId ? sql`id <> ${opts.exceptId}` : sql`true`}
+		   and ${
+					opts.shared
+						? sql`not is_private`
+						: sql`(not is_private or created_by = ${ctx.me.userId})`
+				}
+		 limit 1`)
+	).rows;
+	if (taken) fail("CONFLICT", "This booking already has an expense.");
+}
+
+/**
  * Checks everything that needs the database (members, target, list item,
  * refund original), fills the defaults (title, category, split) and returns
  * the final shape. Runs inside the transaction.
@@ -1006,6 +1037,21 @@ export async function resolveExpense(
 			fail("NOT_FOUND", "list item");
 		// Gift privacy (ADDENDUM §10): from a private list item → private.
 		if (li.is_private && !opts.expenseId) out.isPrivate = true;
+	}
+	// A booking's price goes on one of its flights, once (the link is set on
+	// create and stays, wherever the expense is moved later).
+	if (out.bookingId && !opts.expenseId) {
+		const legId = out.target.kind === "leg" ? out.target.legId : null;
+		const [leg] = legId
+			? (
+					await tx.execute(sql`
+					select 1 from legs
+					 where id = ${legId} and trip_id = ${ctx.tripId}
+					   and details->'flight'->>'bookingId' = ${out.bookingId}`)
+				).rows
+			: [];
+		if (!leg) fail("VALIDATION", "That flight isn't part of this booking.");
+		await assertBookingFree(tx, ctx, out.bookingId);
 	}
 	let original: RefundOriginal | null = null;
 	if (out.refundOfId) {
@@ -1239,6 +1285,7 @@ function expenseCols(
 	return {
 		...cols,
 		listItemId: e.listItemId,
+		bookingId: e.bookingId,
 		refundOfId: e.refundOfId,
 		title: e.title ?? "Expense",
 		category: e.category ?? "fees_other",
@@ -1602,6 +1649,7 @@ export async function updateExpenseRow(
 			updatedAt: expenses.updatedAt,
 			createdBy: expenses.createdBy,
 			isPrivate: expenses.isPrivate,
+			bookingId: expenses.bookingId,
 		})
 		.from(expenses)
 		.where(
@@ -1625,6 +1673,12 @@ export async function updateExpenseRow(
 		plannedHome: prepared.conv.planned?.homeMinor ?? null,
 	});
 	e = await refundShares(tx, ctx, e);
+	// Shared with the group again: it must be the booking's only shared one.
+	if (locked.isPrivate && !e.isPrivate && locked.bookingId)
+		await assertBookingFree(tx, ctx, locked.bookingId, {
+			exceptId: id,
+			shared: true,
+		});
 	const goingPrivate = e.isPrivate && !locked.isPrivate;
 	if (goingPrivate) {
 		// Its shared refunds are named after it and split in its proportions.
@@ -1789,7 +1843,10 @@ export async function restoreExpenseRow(
 		eq(expenses.createdBy, ctx.me.userId),
 	);
 	const [cur] = await tx
-		.select({ refundOfId: expenses.refundOfId })
+		.select({
+			refundOfId: expenses.refundOfId,
+			bookingId: expenses.bookingId,
+		})
 		.from(expenses)
 		.where(
 			and(
@@ -1801,6 +1858,9 @@ export async function restoreExpenseRow(
 		)
 		.for("update");
 	if (!cur) return fail("NOT_FOUND");
+	// Its booking may have another expense by now.
+	if (cur.bookingId)
+		await assertBookingFree(tx, ctx, cur.bookingId, { exceptId: id });
 	let original: RefundOriginal | null = null;
 	if (cur.refundOfId) {
 		const [orig] = await tx
