@@ -11,6 +11,8 @@ import { MemberAvatar, resolveMember } from "@/components/common/member";
 import { useDisplayPrefs } from "@/components/common/time";
 import { Button } from "@/components/ui/button";
 import {
+	bookedWith,
+	bookingFlights,
 	flightArrDate,
 	flightArrTime,
 	flightDepDate,
@@ -92,22 +94,50 @@ export function FlightSummary({
 			),
 		]);
 	if (flight.baggage) facts.push(["Baggage", flight.baggage]);
+	// One booking, one price: said once, on the first amount shown.
+	const booked = redacted ? 0 : bookingFlights(ed.ws.ix, ed.leg?.id).length;
+	let scope: React.ReactNode =
+		booked > 1 ? (
+			<span
+				data-testid={TRANSIT_TESTID.flightBookingScope}
+				className="text-muted-foreground"
+			>
+				{" "}
+				· whole booking, {booked} flights
+			</span>
+		) : null;
+	const amount = (key: string, text: string) => {
+		const note = scope;
+		scope = null;
+		return (
+			<span key={key}>
+				{text}
+				{note}
+			</span>
+		);
+	};
 	if (flight.cost || redacted)
 		facts.push([
 			"Price",
 			redacted ? (
 				<Masked key="masked" />
 			) : flight.cost ? (
-				formatMoney(flight.cost.amount, flight.cost.currency)
+				amount("price", formatMoney(flight.cost.amount, flight.cost.currency))
 			) : null,
 		]);
 	if (flight.points && !redacted)
 		facts.push([
 			"Points",
-			`${flight.points.amount.toLocaleString("en")} ${flight.points.program}`,
+			amount(
+				"points",
+				`${flight.points.amount.toLocaleString("en")} ${flight.points.program}`,
+			),
 		]);
 	if (flight.fees && !redacted)
-		facts.push(["Fees", formatMoney(flight.fees.amount, flight.fees.currency)]);
+		facts.push([
+			"Fees",
+			amount("fees", formatMoney(flight.fees.amount, flight.fees.currency)),
+		]);
 	return (
 		<div data-testid={TRANSIT_TESTID.flightSummary} className="grid gap-3">
 			<div className="relative grid grid-cols-[1fr_auto_1fr] items-stretch overflow-hidden rounded-lg border bg-card">
@@ -289,6 +319,8 @@ export function FlightSection({ ed }: { ed: LegEditor }) {
 	const defaults = useFlightDefaults(target.kind === "pair" ? target : null);
 	const fromIata = defaults?.fromIata;
 	const toIata = defaults?.toIata;
+	// The flights bought with this one share its ref and price.
+	const sharedWith = flight ? bookedWith(ws.ix, leg?.id) : [];
 	const save = (f: FlightDetails, overwrite = false) =>
 		ed.flight.mutate(
 			{
@@ -349,6 +381,7 @@ export function FlightSection({ ed }: { ed: LegEditor }) {
 						key={`${leg?.updatedAt ?? "new"}:${fromIata ?? ""}:${toIata ?? ""}`}
 						initial={flight ? [flight] : undefined}
 						defaults={defaults}
+						sharedWith={sharedWith}
 						members={ws.graph.members}
 						submitting={ed.flight.isPending}
 						onSubmit={([f]) => f && save(f)}

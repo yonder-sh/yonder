@@ -1,10 +1,18 @@
 /**
  * The flight form (QA FLT-02, MT-15, MOB-06/VIS-18): inline errors follow the
  * fields once a save was refused, and code fields ask phones for capitals.
+ * The Add flight dialog adds one booking: one ref and price for a connection
+ * or a round trip.
  */
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+	fireEvent,
+	render,
+	screen,
+	waitFor,
+	within,
+} from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import type { FlightDetails } from "@/lib/schemas/legs";
+import type { FlightBooking, FlightDetails } from "@/lib/schemas/legs";
 import { FlightForm } from "../components/FlightForm";
 import { TRANSIT_TESTID } from "../testids";
 
@@ -169,5 +177,164 @@ describe("FlightForm", () => {
 			expect(input.getAttribute("autocorrect"), id).toBe("off");
 			expect(input.getAttribute("spellcheck"), id).toBe("false");
 		}
+	});
+});
+
+type Extra = { booking: FlightBooking; returnSegments?: FlightDetails[] };
+
+describe("FlightForm as one booking (the Add flight dialog)", () => {
+	it("asks for the ref and the price once, and sends them beside the flights", async () => {
+		const onSubmit = vi.fn();
+		render(
+			<FlightForm
+				multi
+				defaults={{ depDate: "2026-12-24", fromIata: "PHL", toIata: "CLT" }}
+				members={[]}
+				onSubmit={onSubmit}
+			/>,
+		);
+		fireEvent.click(screen.getByTestId(TRANSIT_TESTID.flightAddConnection));
+		// The connection leaves from where the first flight lands.
+		const tos = screen.getAllByTestId(TRANSIT_TESTID.flightTo);
+		fireEvent.change(tos[1] as HTMLElement, { target: { value: "DFW" } });
+		expect(screen.getAllByTestId(TRANSIT_TESTID.flightCostAmount)).toHaveLength(
+			1,
+		);
+		expect(screen.getAllByTestId(TRANSIT_TESTID.flightRef)).toHaveLength(1);
+		expect(
+			screen.getByTestId(TRANSIT_TESTID.flightBooking).textContent,
+		).toContain("One ref and one price for all 2 flights.");
+
+		fireEvent.change(screen.getByTestId(TRANSIT_TESTID.flightCostAmount), {
+			target: { value: "412.50" },
+		});
+		fireEvent.change(screen.getByTestId(TRANSIT_TESTID.flightRef), {
+			target: { value: "abc123" },
+		});
+		fireEvent.click(screen.getByTestId(TRANSIT_TESTID.flightSave));
+		await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
+		const [segments, extra] = onSubmit.mock.calls[0] as [
+			FlightDetails[],
+			Extra,
+		];
+		expect(segments.map((f) => `${f.from.iata}-${f.to.iata}`)).toEqual([
+			"PHL-CLT",
+			"CLT-DFW",
+		]);
+		for (const f of segments) {
+			expect(f.cost).toBeUndefined();
+			expect(f.bookingRef).toBeUndefined();
+		}
+		expect(extra.booking).toEqual({
+			ref: "ABC123",
+			cost: { amount: 412.5, currency: "USD" },
+		});
+		expect(extra.returnSegments).toBeUndefined();
+	});
+
+	it("a round trip comes back to where it started, after the way out", async () => {
+		const onSubmit = vi.fn();
+		render(
+			<FlightForm
+				multi
+				defaults={{ depDate: "2026-12-24", fromIata: "PHL", toIata: "DFW" }}
+				members={[]}
+				onSubmit={onSubmit}
+			/>,
+		);
+		expect(screen.queryByTestId(TRANSIT_TESTID.flightReturn)).toBeNull();
+		fireEvent.click(
+			within(screen.getByTestId(TRANSIT_TESTID.flightTripKind)).getByText(
+				"Round trip",
+			),
+		);
+		const back = await screen.findByTestId(TRANSIT_TESTID.flightReturn);
+		const from = () =>
+			within(back).getByTestId(TRANSIT_TESTID.flightFrom) as HTMLInputElement;
+		const to = () =>
+			within(back).getByTestId(TRANSIT_TESTID.flightTo) as HTMLInputElement;
+		expect([from().value, to().value]).toEqual(["DFW", "PHL"]);
+
+		// The way back follows the way out until its own ends are typed in.
+		fireEvent.change(
+			screen.getAllByTestId(TRANSIT_TESTID.flightTo)[0] as HTMLElement,
+			{ target: { value: "IAH" } },
+		);
+		await waitFor(() => expect(from().value).toBe("IAH"));
+
+		// It needs its date, and that date can't be before the way out lands.
+		fireEvent.click(screen.getByTestId(TRANSIT_TESTID.flightSave));
+		await waitFor(() => expect(errorTexts()).toEqual(["Required"]));
+		expect(onSubmit).not.toHaveBeenCalled();
+		const date = within(back).getByTestId(TRANSIT_TESTID.flightDepDate);
+		fireEvent.change(date, { target: { value: "2026-12-20" } });
+		await waitFor(() =>
+			expect(errorTexts()).toEqual(["Before the outbound flight lands"]),
+		);
+		fireEvent.change(date, { target: { value: "2026-12-31" } });
+		await waitFor(() => expect(errorTexts()).toEqual([]));
+
+		fireEvent.click(screen.getByTestId(TRANSIT_TESTID.flightSave));
+		await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
+		const [segments, extra] = onSubmit.mock.calls[0] as [
+			FlightDetails[],
+			Extra,
+		];
+		expect(segments.map((f) => `${f.from.iata}-${f.to.iata}`)).toEqual([
+			"PHL-IAH",
+		]);
+		expect(
+			extra.returnSegments?.map(
+				(f) => `${f.from.iata}-${f.to.iata} ${f.depDate} ${f.arrDate}`,
+			),
+		).toEqual(["IAH-PHL 2026-12-31 2026-12-31"]);
+		expect(extra.booking).toEqual({});
+	});
+
+	it("one way again leaves the way back out", async () => {
+		const onSubmit = vi.fn();
+		render(
+			<FlightForm
+				multi
+				defaults={{ depDate: "2026-12-24", fromIata: "PHL", toIata: "DFW" }}
+				members={[]}
+				onSubmit={onSubmit}
+			/>,
+		);
+		const kind = within(screen.getByTestId(TRANSIT_TESTID.flightTripKind));
+		fireEvent.click(kind.getByText("Round trip"));
+		await screen.findByTestId(TRANSIT_TESTID.flightReturn);
+		fireEvent.click(kind.getByText("One way"));
+		await waitFor(() =>
+			expect(screen.queryByTestId(TRANSIT_TESTID.flightReturn)).toBeNull(),
+		);
+		fireEvent.click(screen.getByTestId(TRANSIT_TESTID.flightSave));
+		await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
+		const [segments, extra] = onSubmit.mock.calls[0] as [
+			FlightDetails[],
+			Extra,
+		];
+		expect(segments).toHaveLength(1);
+		expect(extra.returnSegments).toBeUndefined();
+	});
+
+	it("a flight of a booking says its ref and price are the whole booking's", () => {
+		render(
+			<FlightForm
+				initial={[{ ...nh9, from: { ...nh9.from, iata: "JFK" } }]}
+				sharedWith={["HND → KIX", "KIX → JFK"]}
+				members={[]}
+				onSubmit={() => {}}
+			/>,
+		);
+		expect(
+			screen.getByTestId(TRANSIT_TESTID.flightBookingNote).textContent,
+		).toBe(
+			"Booked with HND → KIX and KIX → JFK: the ref, price, points, and fees below are for all 3 flights.",
+		);
+		// Its own form still has the ref and the price: they are the booking's.
+		expect(screen.getAllByTestId(TRANSIT_TESTID.flightCostAmount)).toHaveLength(
+			1,
+		);
 	});
 });

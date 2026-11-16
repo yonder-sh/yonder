@@ -4,7 +4,8 @@
  * menu, the FAB, a leg's "Flight…". With a pair `target` it saves that leg's
  * flight (`saveFlight`); otherwise it creates the airports, the departure,
  * layover and arrival stops and the flight legs in one go
- * (`createFlightWithAirports`, "+ Connection" for up to four segments).
+ * (`createFlightWithAirports`, "+ Connection" for up to four segments): one
+ * booking with one ref and price, there and, for a round trip, back.
  */
 import { useTripMutation } from "@/components/common/use-trip-mutation";
 import {
@@ -14,9 +15,10 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
+import { bookedWith } from "@/lib/engine/flights";
 import { tripKeys } from "@/lib/query/keys";
 import { useFormPresence } from "@/lib/realtime/form-presence";
-import type { FlightDetails } from "@/lib/schemas/legs";
+import type { FlightBooking, FlightDetails } from "@/lib/schemas/legs";
 import { isProposed } from "@/lib/schemas/proposals";
 import { TESTID } from "@/lib/testids";
 import { useUi } from "@/lib/workspace/ui-store";
@@ -37,12 +39,17 @@ export function AddFlightDialog() {
 		tripKeys.counts(tripId),
 	];
 	const create = useTripMutation(
-		(v: { segments: FlightDetails[]; bookingRef?: string }) =>
+		(v: {
+			segments: FlightDetails[];
+			returnSegments?: FlightDetails[];
+			booking: FlightBooking;
+		}) =>
 			createFlightWithAirports({
 				data: {
 					tripId,
 					segments: v.segments,
-					...(v.bookingRef ? { bookingRef: v.bookingRef } : {}),
+					...(v.returnSegments ? { returnSegments: v.returnSegments } : {}),
+					booking: v.booking,
 					...(req?.afterItemId ? { afterItemId: req.afterItemId } : {}),
 					...(req?.dayId ? { dayId: req.dayId } : {}),
 				},
@@ -97,6 +104,9 @@ export function AddFlightDialog() {
 				{open ? (
 					<FlightForm
 						multi={!target}
+						sharedWith={
+							existing?.kind === "flight" ? bookedWith(ix, leg?.id) : []
+						}
 						initial={
 							existing?.kind === "flight" ? [existing.flight] : undefined
 						}
@@ -107,7 +117,7 @@ export function AddFlightDialog() {
 						submitting={create.isPending || save.isPending}
 						submitLabel={target ? "Save flight" : "Add flight"}
 						onCancel={() => close(null)}
-						onSubmit={(segments, bookingRef) => {
+						onSubmit={(segments, extra) => {
 							if (target) {
 								const [f] = segments;
 								if (f)
@@ -120,7 +130,11 @@ export function AddFlightDialog() {
 								return;
 							}
 							create.mutate(
-								{ segments, bookingRef },
+								{
+									segments,
+									returnSegments: extra?.returnSegments,
+									booking: extra?.booking ?? {},
+								},
 								{
 									onSuccess: (r) => {
 										close(null);

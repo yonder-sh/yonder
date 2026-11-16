@@ -3,12 +3,16 @@
  * the typed defs in F-ext0; WP-Transit replaces each `core` body (DB-only:
  * provider calls happen before the gate, or through `out.job`).
  */
+
+import { v7 as uuidv7 } from "uuid";
 import { z } from "zod";
 import type { Tx } from "@/db/db.server";
 import { mustRedact } from "@/lib/auth/roles";
+import type { GraphIndex } from "@/lib/engine/graph-index";
 import type { GraphLeg } from "@/lib/engine/types";
 import {
 	FixedTimes,
+	FlightBooking,
 	FlightDetails,
 	type LegDetails,
 	readLegDetails,
@@ -30,11 +34,14 @@ import { legTargetTrip } from "@/server/proposals/trip-of.server";
 import { type CoreCtx, defineProposable } from "@/server/proposals/types";
 import { displayFlightNumber } from "../lib/flight";
 import {
+	assertReturnAfter,
+	type CreatedBlock,
 	createFlightBlock,
 	defaultAssigneesFromSeats,
 	fitDayStartToFlight,
 	normalizeFlight,
 	rehomeFlightBlock,
+	withBooking,
 } from "./flights.server";
 import { toGraphLeg } from "./leg-dto.server";
 import {
@@ -79,7 +86,14 @@ export const CreateFlightWithAirportsInput = z
 		afterItemId: z.uuid().optional(),
 		dayId: z.uuid().optional(),
 		segments: z.array(FlightDetails).min(1).max(4),
+		/** A round trip's way back: its own stops, on its own days. */
+		returnSegments: z.array(FlightDetails).min(1).max(4).optional(),
 		bookingRef: z.string().max(40).optional(),
+		/**
+		 * Everything added here is one booking: its ref, price, points and fees
+		 * go on every flight, whatever the segments carry.
+		 */
+		booking: FlightBooking.optional(),
 		/**
 		 * EXTENSIONS §2.2: per segment [from airport, to airport, leg], in segment
 		 * order. Unused ids are ignored; an existing id is CONFLICT.
@@ -146,6 +160,55 @@ function manualRoute(route: TransitRoute): TransitRoute {
 	delete out.range;
 	delete out.dataBuild;
 	return out;
+}
+
+/** What one booking's flights share, as one comparable string. */
+const bookingKey = (f: FlightDetails) =>
+	JSON.stringify([
+		f.bookingRef ?? null,
+		f.cost ?? null,
+		f.points ?? null,
+		f.fees ?? null,
+	]);
+
+/**
+ * One booking, one ref and price: after `flight` is saved, the other flights
+ * bought with it take its ref, price, points and fees.
+ */
+async function syncBooking(
+	tx: Tx,
+	out: TxOutbox,
+	ctx: CoreCtx,
+	ix: GraphIndex,
+	legId: string,
+	flight: FlightDetails,
+): Promise<void> {
+	if (!flight.bookingId) return;
+	for (const leg of ix.graph.legs) {
+		if (leg.id === legId || !leg.fromItemId || !leg.toItemId) continue;
+		const d = ix.legDetails(leg);
+		if (d.kind !== "flight" || d.flight.bookingId !== flight.bookingId)
+			continue;
+		const next = withBooking(
+			d.flight,
+			{
+				ref: flight.bookingRef,
+				cost: flight.cost,
+				points: flight.points,
+				fees: flight.fees,
+			},
+			flight.bookingId,
+		);
+		if (bookingKey(next) === bookingKey(d.flight)) continue;
+		await writeLeg(
+			tx,
+			out,
+			ctx.access.tripId,
+			{ kind: "pair", fromItemId: leg.fromItemId, toItemId: leg.toItemId },
+			{ details: { kind: "flight", flight: next } },
+			writeMeta(ctx),
+		);
+	}
 }
 
 export const defs = {
@@ -395,12 +458,15 @@ export const defs = {
 			const before = await indexTx(tx, tripId);
 			const stored = await findLeg(tx, tripId, data.target);
 			const prev = readLegDetails(stored?.details);
+			const was = prev.kind === "flight" ? prev.flight : undefined;
 			const flight = normalizeFlight({
 				...data.flight,
-				// Connections are the server's (§7.9).
-				connection: prev.kind === "flight" ? prev.flight.connection : undefined,
+				// Connections and bookings are the server's (§7.9).
+				connection: was?.connection,
+				bookingId: was?.bookingId,
 			});
 			if (!flight.connection) delete flight.connection;
+			if (!flight.bookingId) delete flight.bookingId;
 			const { row } = await writeLeg(
 				tx,
 				out,
@@ -416,6 +482,7 @@ export const defs = {
 				writeMeta(ctx, data.expectedUpdatedAt),
 			);
 			const after = await indexTx(tx, tripId);
+			await syncBooking(tx, out, ctx, after, row.id, flight);
 			const moved = await rehomeFlightBlock(
 				tx,
 				tripId,
@@ -506,51 +573,75 @@ export const defs = {
 				const ix0 = await indexTx(tx, tripId);
 				if (!ix0.day(data.dayId)) return fail("NOT_FOUND", "day");
 			}
-			const before = await indexTx(tx, tripId);
-			const block = await createFlightBlock(
-				tx,
-				out,
-				tripId,
-				{
-					segments: data.segments,
-					bookingRef: data.bookingRef,
-					afterItemId: data.afterItemId,
-					dayId: data.dayId,
-					ids: data.ids,
-				},
-				ctx,
-			);
-			for (const [k, flight] of block.flights.entries()) {
-				const fromItemId = block.itemIds[k] as string;
-				const toItemId = block.itemIds[k + 1] as string;
-				const { row } = await writeLeg(
+			// One booking for everything added here: one ref and price, and an id
+			// that ties its flights together once there is more than one.
+			const count = data.segments.length + (data.returnSegments?.length ?? 0);
+			const bookingId = data.booking && count > 1 ? uuidv7() : undefined;
+			const booked = (segments: FlightDetails[]) =>
+				segments.map(({ bookingId: _b, ...f }) =>
+					data.booking ? withBooking(f, data.booking, bookingId) : f,
+				);
+			const bookingRef = data.booking ? undefined : data.bookingRef;
+			/** One block: its stops, its flight legs, and the legs around it. */
+			const add = async (
+				input: Parameters<typeof createFlightBlock>[3],
+			): Promise<{ block: CreatedBlock; detachedLegIds: string[] }> => {
+				const before = await indexTx(tx, tripId);
+				const block = await createFlightBlock(tx, out, tripId, input, ctx);
+				for (const [k, flight] of block.flights.entries()) {
+					const fromItemId = block.itemIds[k] as string;
+					const toItemId = block.itemIds[k + 1] as string;
+					const { row } = await writeLeg(
+						tx,
+						out,
+						tripId,
+						{ kind: "pair", fromItemId, toItemId },
+						{
+							mode: "flight",
+							source: "manual",
+							isEdited: true,
+							details: { kind: "flight", flight },
+						},
+						writeMeta(ctx),
+					);
+					await defaultAssigneesFromSeats(tx, tripId, row.id, flight.seats);
+				}
+				const { detachedLegIds } = await reconcileLegs(
 					tx,
 					out,
 					tripId,
-					{ kind: "pair", fromItemId, toItemId },
-					{
-						mode: "flight",
-						source: "manual",
-						isEdited: true,
-						details: { kind: "flight", flight },
-					},
-					writeMeta(ctx),
+					before,
+					{ changed: block.itemIds },
 				);
-				await defaultAssigneesFromSeats(tx, tripId, row.id, flight.seats);
-			}
-			const { detachedLegIds } = await reconcileLegs(tx, out, tripId, before, {
-				changed: block.itemIds,
+				// An early flight on a day that starts later moves the day start (QA MT-08).
+				await fitDayStartToFlight(tx, out, tripId, block, ctx);
+				return { block, detachedLegIds };
+			};
+			const there = await add({
+				segments: booked(data.segments),
+				bookingRef,
+				afterItemId: data.afterItemId,
+				dayId: data.dayId,
+				ids: data.ids,
 			});
-			// An early flight on a day that starts later moves the day start (QA MT-08).
-			await fitDayStartToFlight(tx, out, tripId, block, ctx);
-			const first = block.flights[0];
-			const last = block.flights.at(-1);
+			const back = data.returnSegments
+				? await add({ segments: booked(data.returnSegments), bookingRef })
+				: null;
+			if (back) assertReturnAfter(there.block.flights, back.block.flights);
+			const flights = [...there.block.flights, ...(back?.block.flights ?? [])];
+			const itemIds = [...there.block.itemIds, ...(back?.block.itemIds ?? [])];
+			const legIds = [...there.block.legIds, ...(back?.block.legIds ?? [])];
+			const first = there.block.flights[0];
+			const last = there.block.flights.at(-1);
+			const home = back?.block.flights.at(-1);
 			const label = [
-				block.flights
+				flights
 					.map((f) => displayFlightNumber(f.flightNumber))
 					.filter(Boolean)
 					.join(" + "),
-				first && last ? `${first.from.iata}→${last.to.iata}` : "",
+				first && last
+					? `${first.from.iata}→${last.to.iata}${home ? `→${home.to.iata}` : ""}`
+					: "",
 			]
 				.filter(Boolean)
 				.join(" ");
@@ -559,15 +650,18 @@ export const defs = {
 				actor: ctx.actor,
 				verb: "flight.create",
 				summary: `added flight ${label}`.trim(),
-				itemId: block.itemIds[0] ?? null,
-				legId: block.legIds[0] ?? null,
+				itemId: itemIds[0] ?? null,
+				legId: legIds[0] ?? null,
 			});
-			out.emit({ entity: "item", ids: block.itemIds });
-			out.emit({ entity: "leg", ids: block.legIds });
+			out.emit({ entity: "item", ids: itemIds });
+			out.emit({ entity: "leg", ids: legIds });
 			return {
-				itemIds: block.itemIds,
-				legIds: block.legIds,
-				detachedLegIds,
+				itemIds,
+				legIds,
+				detachedLegIds: [
+					...there.detachedLegIds,
+					...(back?.detachedLegIds ?? []),
+				],
 			};
 		},
 	}),

@@ -7,13 +7,24 @@
  * "Unknown airport", "Arrival is before departure". FB-18: only the airports
  * and the departure date are required; without times the helper shows the
  * great-circle estimate.
+ *
+ * The Add flight dialog adds one booking: a way out and, for a round trip, a
+ * way back, each with its connections. The ref, price, points and fees are
+ * asked once, for all of it.
  */
 
 import { Plus, X } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import {
+	type Dispatch,
+	type SetStateAction,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from "react";
 import { useEditGuard } from "@/components/common/edit-guard";
 import { assignableMembers, MemberAvatar } from "@/components/common/member";
-import { SectionHeader, TimeInput } from "@/components/kit";
+import { SectionHeader, Segmented, TimeInput } from "@/components/kit";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -43,7 +54,7 @@ import {
 } from "@/lib/engine/time";
 import type { GraphMember } from "@/lib/engine/types";
 import { formatDayDate, formatDuration } from "@/lib/format";
-import type { Cabin, FlightDetails } from "@/lib/schemas/legs";
+import type { Cabin, FlightBooking, FlightDetails } from "@/lib/schemas/legs";
 import { cn } from "@/lib/utils";
 import {
 	type AirlineRow,
@@ -67,6 +78,11 @@ import {
 import { TRANSIT_TESTID } from "../testids";
 import { AddPersonRow } from "./bits";
 import { CAPS_INPUT, SuggestInput } from "./SuggestInput";
+
+const TRIP_KINDS = [
+	{ value: "oneway", label: "One way" },
+	{ value: "round", label: "Round trip" },
+] as const;
 
 const CABINS: { value: Cabin; label: string }[] = [
 	{ value: "economy", label: "Economy" },
@@ -108,6 +124,26 @@ type Seg = {
 	feesCurrency: string;
 };
 
+/** What a flight cost, or a whole booking when its flights share one price. */
+type Price = Pick<
+	Seg,
+	| "costAmount"
+	| "costCurrency"
+	| "pointsProgram"
+	| "pointsAmount"
+	| "feesAmount"
+	| "feesCurrency"
+>;
+
+const priceOf = (f: FlightDetails | null | undefined): Price => ({
+	costAmount: f?.cost ? String(f.cost.amount) : "",
+	costCurrency: f?.cost?.currency ?? "USD",
+	pointsProgram: f?.points?.program ?? "",
+	pointsAmount: f?.points ? String(f.points.amount) : "",
+	feesAmount: f?.fees ? String(f.fees.amount) : "",
+	feesCurrency: f?.fees?.currency ?? f?.cost?.currency ?? "USD",
+});
+
 let n = 0;
 const key = () => `f${++n}`;
 
@@ -144,12 +180,7 @@ function segOf(f: FlightDetails | null, d: Partial<Seg> = {}): Seg {
 		ref: f?.bookingRef ?? "",
 		baggage: f?.baggage ?? "",
 		aircraft: f?.aircraft ?? "",
-		costAmount: f?.cost ? String(f.cost.amount) : "",
-		costCurrency: f?.cost?.currency ?? "USD",
-		pointsProgram: f?.points?.program ?? "",
-		pointsAmount: f?.points ? String(f.points.amount) : "",
-		feesAmount: f?.fees ? String(f.fees.amount) : "",
-		feesCurrency: f?.fees?.currency ?? f?.cost?.currency ?? "USD",
+		...priceOf(f),
 		...d,
 	};
 }
@@ -183,10 +214,74 @@ function validateSegments(
 	return errs;
 }
 
+const NO_SEGS: Seg[] = [];
+
+/**
+ * Every flight's own errors, and a round trip's order: the way back can't
+ * leave before the day the way out lands.
+ */
+function validateTrip(
+	out: readonly Seg[],
+	back: readonly Seg[],
+	lookup: (iata: string) => { tz: string } | null,
+): Record<string, FlightFieldError[]> {
+	const errs = validateSegments([...out, ...back], lookup);
+	const last = out.at(-1);
+	const first = back[0];
+	const landed = last ? last.arrDate || last.depDate : "";
+	if (first && landed && first.depDate && first.depDate < landed)
+		errs[first.key] = [
+			...(errs[first.key] ?? []),
+			{ field: "depLocal", message: "Before the outbound flight lands" },
+		];
+	return errs;
+}
+
 const toNum = (s: string): number | null => {
 	const v = Number.parseFloat(s.replace(/,/g, ""));
 	return Number.isFinite(v) && v >= 0 ? v : null;
 };
+
+/** A price as stored: only what was filled in. */
+function priceDetails(
+	p: Price,
+): Pick<FlightDetails, "cost" | "points" | "fees"> {
+	const cost = toNum(p.costAmount);
+	const points = toNum(p.pointsAmount);
+	const fees = toNum(p.feesAmount);
+	return {
+		...(cost !== null
+			? {
+					cost: {
+						amount: cost,
+						currency: p.costCurrency.toUpperCase().slice(0, 3),
+					},
+				}
+			: {}),
+		...(points !== null && p.pointsProgram.trim()
+			? {
+					points: {
+						amount: points,
+						program: p.pointsProgram.trim().slice(0, 80),
+					},
+				}
+			: {}),
+		...(fees !== null
+			? {
+					fees: {
+						amount: fees,
+						currency: p.feesCurrency.toUpperCase().slice(0, 3),
+					},
+				}
+			: {}),
+	};
+}
+
+/** "CLT → DFW", "CLT → DFW and DFW → PHL", "A, B and 2 more". */
+function listShort(names: readonly string[]): string {
+	if (names.length <= 2) return names.join(" and ");
+	return `${names.slice(0, 2).join(", ")} and ${names.length - 2} more`;
+}
 
 export type FlightFormProps = {
 	/** Existing segments (leg: one). */
@@ -198,8 +293,13 @@ export type FlightFormProps = {
 		fromIata?: string;
 		toIata?: string;
 	};
-	/** "+ Connection" (the Add flight dialog). */
+	/**
+	 * The Add flight dialog: one booking of one or more flights ("+
+	 * Connection", "Round trip") with one ref and one price.
+	 */
 	multi?: boolean;
+	/** The other flights of this one's booking ("CLT → DFW"): they share its ref and price. */
+	sharedWith?: readonly string[];
 	submitting?: boolean;
 	submitLabel?: string;
 	/** A stale save (someone else saved first). */
@@ -208,7 +308,11 @@ export type FlightFormProps = {
 		onReview: () => void;
 		onOverwrite: () => void;
 	} | null;
-	onSubmit: (segments: FlightDetails[], bookingRef?: string) => void;
+	/** `extra` in the Add flight dialog: the booking, and a round trip's way back. */
+	onSubmit: (
+		segments: FlightDetails[],
+		extra?: { booking: FlightBooking; returnSegments?: FlightDetails[] },
+	) => void;
 	onCancel?: () => void;
 	members: readonly GraphMember[];
 	/** In a padded (p-6) scrolling dialog: keep Cancel/Save in view. */
@@ -219,6 +323,7 @@ export function FlightForm({
 	initial,
 	defaults,
 	multi,
+	sharedWith,
 	submitting,
 	submitLabel = "Save flight",
 	conflict,
@@ -252,6 +357,14 @@ export function FlightForm({
 	/** A save was refused: from then on, errors follow the fields (QA MT-15). */
 	const [checked, setChecked] = useState(false);
 	const [sharedRef, setSharedRef] = useState(initial?.[0]?.bookingRef ?? "");
+	/** The whole booking's price (the Add flight dialog). */
+	const [price, setPrice] = useState<Price>(() => priceOf(initial?.[0]));
+	/** A round trip: `back` is its way back (kept while "One way" is picked). */
+	const [round, setRound] = useState(false);
+	const [back, setBack] = useState<Seg[]>([]);
+	/** The way back's ends someone typed in: those no longer follow the way out. */
+	const typed = useRef({ from: false, to: false });
+	const ret = round ? back : NO_SEGS;
 	useEffect(() => {
 		let live = true;
 		void loadAirports().then((a) => live && setAirports(a.byIata));
@@ -261,8 +374,59 @@ export function FlightForm({
 	}, []);
 	const known = (iata: string) => airports?.get(normalizeIata(iata)) ?? null;
 	const disabled = guard.disabled || !!submitting;
-	const up = (k: string, p: Partial<Seg>) =>
-		setSegs((xs) => xs.map((s) => (s.key === k ? { ...s, ...p } : s)));
+	const up = (k: string, p: Partial<Seg>) => {
+		const patch = (xs: Seg[]) =>
+			xs.some((s) => s.key === k)
+				? xs.map((s) => (s.key === k ? { ...s, ...p } : s))
+				: xs;
+		setSegs(patch);
+		setBack(patch);
+	};
+
+	// A round trip comes back to where it started: the way back's ends follow
+	// the way out's until someone types them in.
+	const origin = segs[0];
+	const turn = segs.at(-1);
+	const originText = origin ? origin.fromIata || origin.fromText : "";
+	const originIata = origin?.fromIata ?? "";
+	const turnText = turn ? turn.toIata || turn.toText : "";
+	const turnIata = turn?.toIata ?? "";
+	useEffect(() => {
+		if (!round) return;
+		setBack((xs) => {
+			const first = xs[0];
+			const last = xs.at(-1);
+			const followFrom =
+				!!first && !typed.current.from && first.fromText !== turnText;
+			const followTo =
+				!!last && !typed.current.to && last.toText !== originText;
+			if (!followFrom && !followTo) return xs;
+			return xs.map((s, i) => ({
+				...s,
+				...(followFrom && i === 0
+					? { fromText: turnText, fromIata: turnIata }
+					: {}),
+				...(followTo && i === xs.length - 1
+					? { toText: originText, toIata: originIata }
+					: {}),
+			}));
+		});
+	}, [round, originText, originIata, turnText, turnIata]);
+	const pickRound = (on: boolean) => {
+		setRound(on);
+		if (on && !back.length)
+			setBack([
+				segOf(null, {
+					fromText: turnText,
+					fromIata: turnIata,
+					toText: originText,
+					toIata: originIata,
+					cabin: turn?.cabin ?? "",
+					airlineIata: turn?.airlineIata ?? "",
+					airlineText: turn?.airlineText ?? "",
+				}),
+			]);
+	};
 
 	const toDetails = (
 		s: Seg,
@@ -282,9 +446,6 @@ export function FlightForm({
 			...(terminal.trim() ? { terminal: terminal.trim().slice(0, 20) } : {}),
 			...(gate.trim() ? { gate: gate.trim().slice(0, 20) } : {}),
 		});
-		const cost = toNum(s.costAmount);
-		const points = toNum(s.pointsAmount);
-		const fees = toNum(s.feesAmount);
 		const airlineName = s.airlineText.replace(/^[A-Z0-9]{2} · /, "").trim();
 		const depLocal = localOf(s.depDate, s.depTime);
 		const arrLocal = localOf(s.arrDate, s.arrTime);
@@ -319,23 +480,13 @@ export function FlightForm({
 		if (depFold) f.depFold = depFold;
 		if (arrFold) f.arrFold = arrFold;
 		if (s.cabin) f.cabin = s.cabin;
-		const ref = (multi ? sharedRef : s.ref).trim().toUpperCase();
-		if (ref) f.bookingRef = ref.slice(0, 40);
-		if (cost !== null)
-			f.cost = {
-				amount: cost,
-				currency: s.costCurrency.toUpperCase().slice(0, 3),
-			};
-		if (points !== null && s.pointsProgram.trim())
-			f.points = {
-				amount: points,
-				program: s.pointsProgram.trim().slice(0, 80),
-			};
-		if (fees !== null)
-			f.fees = {
-				amount: fees,
-				currency: s.feesCurrency.toUpperCase().slice(0, 3),
-			};
+		// The Add flight dialog sends the booking's ref and price once, beside
+		// its flights.
+		if (!multi) {
+			const ref = s.ref.trim().toUpperCase();
+			if (ref) f.bookingRef = ref.slice(0, 40);
+			Object.assign(f, priceDetails(s));
+		}
 		if (s.baggage.trim()) f.baggage = s.baggage.trim().slice(0, 200);
 		if (s.aircraft.trim()) f.aircraft = s.aircraft.trim().slice(0, 100);
 		return f;
@@ -346,12 +497,13 @@ export function FlightForm({
 	const liveErrors = useMemo(
 		() =>
 			checked && airports
-				? validateSegments(
+				? validateTrip(
 						segs,
+						ret,
 						(iata) => airports.get(normalizeIata(iata)) ?? null,
 					)
 				: null,
-		[checked, airports, segs],
+		[checked, airports, segs, ret],
 	);
 	const errors = liveErrors ?? submitErrors;
 
@@ -359,444 +511,455 @@ export function FlightForm({
 		// The airport table is a lazy chunk: validate against it once it's there.
 		const { byIata } = await loadAirports();
 		const lookup = (iata: string) => byIata.get(normalizeIata(iata)) ?? null;
-		const errs = validateSegments(segs, lookup);
+		const errs = validateTrip(segs, ret, lookup);
 		setSubmitErrors(errs);
 		if (Object.keys(errs).length) {
 			setChecked(true);
 			return;
 		}
-		const out = segs
-			.map((s) => toDetails(s, lookup))
-			.filter((f): f is FlightDetails => !!f);
-		if (out.length !== segs.length) return;
-		onSubmit(
-			out,
-			multi && sharedRef.trim() ? sharedRef.trim().toUpperCase() : undefined,
-		);
+		const details = (xs: readonly Seg[]) =>
+			xs
+				.map((s) => toDetails(s, lookup))
+				.filter((f): f is FlightDetails => !!f);
+		const out = details(segs);
+		const home = details(ret);
+		if (out.length !== segs.length || home.length !== ret.length) return;
+		if (!multi) {
+			onSubmit(out);
+			return;
+		}
+		const ref = sharedRef.trim().toUpperCase().slice(0, 40);
+		onSubmit(out, {
+			booking: { ...(ref ? { ref } : {}), ...priceDetails(price) },
+			...(home.length ? { returnSegments: home } : {}),
+		});
 	};
 
 	const errorOf = (s: Seg, field: FlightFieldError["field"]) =>
 		errors[s.key]?.find((e) => e.field === field)?.message;
+
+	/** One flight's fields, on the way out (`segs`) or the way back (`back`). */
+	const flightFields = (
+		s: Seg,
+		i: number,
+		list: readonly Seg[],
+		setList: Dispatch<SetStateAction<Seg[]>>,
+	) => {
+		// Typing an end of the way back stops it following the way out.
+		const typedEnd = (end: "from" | "to") => {
+			if (list !== back) return;
+			if (end === "from" ? i === 0 : i === list.length - 1)
+				typed.current[end] = true;
+		};
+		const from = known(s.fromIata || s.fromText);
+		const to = known(s.toIata || s.toText);
+		const mins =
+			from && to && s.depDate && s.depTime && s.arrDate && s.arrTime
+				? flightMinutes(
+						{
+							local: `${s.depDate}T${s.depTime}`,
+							tz: from.tz,
+							fold: s.depFold,
+						},
+						{
+							local: `${s.arrDate}T${s.arrTime}`,
+							tz: to.tz,
+							fold: s.arrFold,
+						},
+					)
+				: null;
+		const prev = i > 0 ? list[i - 1] : undefined;
+		const prevDetails = prev ? toDetails(prev) : null;
+		const cur = toDetails(s);
+		const layover =
+			prevDetails && cur ? tightConnection(prevDetails, cur) : null;
+		return (
+			<div key={s.key} className="grid gap-3">
+				{layover ? (
+					<div className="flex h-9 items-center justify-center gap-2 rounded-md bg-hatch text-2xs text-muted-foreground">
+						Layover {formatDuration(layover.minutes)} · {prevDetails?.to.iata}
+						{layover.tight ? (
+							<span className="rounded-full bg-warning-wash px-1.5 text-warning">
+								Tight connection
+							</span>
+						) : null}
+					</div>
+				) : null}
+				<fieldset
+					data-testid={TRANSIT_TESTID.flightSegment}
+					className="grid gap-3 rounded-lg border bg-background/60 p-3"
+				>
+					<legend className="sr-only">Flight {i + 1}</legend>
+					{list.length > 1 ? (
+						<SectionHeader
+							action={
+								<Button
+									variant="ghost"
+									size="icon"
+									className="size-6"
+									aria-label={`Remove flight ${i + 1}`}
+									data-testid={TRANSIT_TESTID.flightRemoveSegment}
+									disabled={disabled}
+									onClick={() =>
+										setList((xs) => xs.filter((x) => x.key !== s.key))
+									}
+								>
+									<X className="size-3.5" />
+								</Button>
+							}
+						>
+							Flight {i + 1}
+						</SectionHeader>
+					) : null}
+					<div className="grid grid-cols-[1fr_6.5rem] gap-3">
+						<Row label="Airline">
+							<SuggestInput<AirlineRow>
+								value={s.airlineText}
+								aria-label="Airline"
+								testId={TRANSIT_TESTID.flightAirline}
+								itemTestId={TRANSIT_TESTID.airlineOption}
+								caps
+								placeholder="Search airlines"
+								disabled={disabled}
+								onChange={(t) => up(s.key, { airlineText: t, airlineIata: "" })}
+								load={(q) => searchAirlines(q)}
+								itemKey={(a) => a.iata}
+								renderItem={(a) => (
+									<span className="flex items-center gap-2">
+										<span className="w-7 font-mono text-xs font-semibold">
+											{a.iata}
+										</span>
+										<span className="truncate">{a.name}</span>
+									</span>
+								)}
+								onPick={(a) => {
+									const num = s.flightNumber.replace(/^[A-Z0-9]{2}\s?/i, "");
+									up(s.key, {
+										airlineIata: a.iata,
+										airlineText: `${a.iata} · ${a.name}`,
+										flightNumber: s.flightNumber
+											? s.flightNumber
+											: `${a.iata} ${num}`.trim(),
+									});
+								}}
+							/>
+						</Row>
+						<Row label="Flight no." error={errorOf(s, "flightNumber")}>
+							<Input
+								data-testid={TRANSIT_TESTID.flightNumber}
+								aria-label="Flight number"
+								{...CAPS_INPUT}
+								aria-invalid={!!errorOf(s, "flightNumber") || undefined}
+								value={s.flightNumber}
+								maxLength={12}
+								placeholder="e.g. NH 9"
+								disabled={disabled}
+								onChange={(e) =>
+									up(s.key, { flightNumber: e.target.value.toUpperCase() })
+								}
+								onBlur={() => {
+									const nn = normalizeFlightNumber(s.flightNumber);
+									if (nn)
+										up(s.key, {
+											flightNumber: nn.replace(/^([A-Z0-9]{2})(\d)/, "$1 $2"),
+										});
+								}}
+								className="font-mono uppercase tnum placeholder:font-sans placeholder:normal-case"
+							/>
+						</Row>
+					</div>
+					<div className="grid gap-3 @lg:grid-cols-2">
+						<AirportRowFields
+							side="From"
+							seg={s}
+							text={s.fromText}
+							airport={from}
+							error={errorOf(s, "from")}
+							disabled={disabled}
+							date={s.depDate}
+							time={s.depTime}
+							fold={s.depFold}
+							onFold={(depFold) => up(s.key, { depFold })}
+							dateError={errorOf(s, "depLocal")}
+							terminal={s.fromTerminal}
+							gate={s.fromGate}
+							testIds={{
+								airport: TRANSIT_TESTID.flightFrom,
+								date: TRANSIT_TESTID.flightDepDate,
+								time: TRANSIT_TESTID.flightDepTime,
+								terminal: TRANSIT_TESTID.flightFromTerminal,
+								gate: TRANSIT_TESTID.flightFromGate,
+							}}
+							onText={(t) => {
+								typedEnd("from");
+								up(s.key, { fromText: t.toUpperCase(), fromIata: "" });
+							}}
+							onPick={(a) => {
+								typedEnd("from");
+								up(s.key, { fromText: a.iata, fromIata: a.iata });
+							}}
+							onDate={(v) =>
+								up(s.key, {
+									depDate: v,
+									// The arrival date follows until it's set to another day.
+									...(!s.arrDate || s.arrDate === s.depDate
+										? { arrDate: v }
+										: {}),
+								})
+							}
+							onTime={(v) => up(s.key, { depTime: v })}
+							onTerminal={(v) => up(s.key, { fromTerminal: v })}
+							onGate={(v) => up(s.key, { fromGate: v })}
+						/>
+						<AirportRowFields
+							side="To"
+							seg={s}
+							text={s.toText}
+							airport={to}
+							error={errorOf(s, "to")}
+							disabled={disabled}
+							date={s.arrDate}
+							time={s.arrTime}
+							fold={s.arrFold}
+							onFold={(arrFold) => up(s.key, { arrFold })}
+							dateError={errorOf(s, "arrLocal")}
+							terminal={s.toTerminal}
+							gate={s.toGate}
+							testIds={{
+								airport: TRANSIT_TESTID.flightTo,
+								date: TRANSIT_TESTID.flightArrDate,
+								time: TRANSIT_TESTID.flightArrTime,
+								terminal: TRANSIT_TESTID.flightToTerminal,
+								gate: TRANSIT_TESTID.flightToGate,
+							}}
+							onText={(t) => {
+								typedEnd("to");
+								up(s.key, { toText: t.toUpperCase(), toIata: "" });
+							}}
+							onPick={(a) => {
+								typedEnd("to");
+								up(s.key, { toText: a.iata, toIata: a.iata });
+							}}
+							onDate={(v) => up(s.key, { arrDate: v })}
+							onTime={(v) => up(s.key, { arrTime: v })}
+							onTerminal={(v) => up(s.key, { toTerminal: v })}
+							onGate={(v) => up(s.key, { toGate: v })}
+						/>
+					</div>
+					<p
+						data-testid={TRANSIT_TESTID.flightDuration}
+						className={cn(
+							"-mt-1 font-mono text-xs tnum",
+							mins !== null && mins <= 0
+								? "text-destructive"
+								: "text-muted-foreground",
+						)}
+					>
+						{mins !== null
+							? mins > 0
+								? `${formatDuration(mins)} flight`
+								: "Arrival is before departure"
+							: from && to
+								? estimateText(s, from, to)
+								: " "}
+					</p>
+					<div className="grid grid-cols-2 gap-3">
+						<Row label="Cabin">
+							<Select
+								value={s.cabin}
+								disabled={disabled}
+								onValueChange={(v) => up(s.key, { cabin: v as Cabin })}
+							>
+								<SelectTrigger
+									data-testid={TRANSIT_TESTID.flightCabin}
+									className="w-full"
+									aria-label="Cabin"
+								>
+									<SelectValue placeholder="Cabin" />
+								</SelectTrigger>
+								<SelectContent>
+									{CABINS.map((c) => (
+										<SelectItem key={c.value} value={c.value}>
+											{c.label}
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
+						</Row>
+						<Row label="Aircraft">
+							<Input
+								data-testid={TRANSIT_TESTID.flightAircraft}
+								aria-label="Aircraft"
+								value={s.aircraft}
+								maxLength={100}
+								placeholder="Optional"
+								disabled={disabled}
+								onChange={(e) => up(s.key, { aircraft: e.target.value })}
+							/>
+						</Row>
+					</div>
+					{members.length ? (
+						<Row label="Seats">
+							<div className="grid gap-1.5">
+								{members.map((m) => (
+									<div key={m.id} className="flex items-center gap-2">
+										<MemberAvatar user={m} size={20} />
+										<span className="min-w-0 flex-1 truncate text-sm">
+											{m.name}
+										</span>
+										<Input
+											data-testid={TRANSIT_TESTID.flightSeat}
+											data-member={m.id}
+											aria-label={`Seat for ${m.name}`}
+											{...CAPS_INPUT}
+											value={s.seats[m.id] ?? ""}
+											maxLength={20}
+											placeholder="Seat"
+											disabled={disabled}
+											onChange={(e) =>
+												up(s.key, {
+													seats: {
+														...s.seats,
+														[m.id]: e.target.value.toUpperCase(),
+													},
+												})
+											}
+											className="w-20 font-mono uppercase tnum placeholder:font-sans placeholder:normal-case"
+										/>
+									</div>
+								))}
+								<AddPersonRow disabled={disabled} />
+							</div>
+						</Row>
+					) : null}
+					{!multi && sharedWith?.length ? (
+						<p
+							data-testid={TRANSIT_TESTID.flightBookingNote}
+							className="text-xs text-muted-foreground"
+						>
+							Booked with {listShort(sharedWith)}: the ref, price, points, and
+							fees below are for all {sharedWith.length + 1} flights.
+						</p>
+					) : null}
+					<div className="grid grid-cols-2 gap-3">
+						{multi ? null : (
+							<Row label="Booking ref">
+								<Input
+									data-testid={TRANSIT_TESTID.flightRef}
+									aria-label="Booking ref"
+									{...CAPS_INPUT}
+									value={s.ref}
+									maxLength={40}
+									placeholder="Optional"
+									disabled={disabled}
+									onChange={(e) =>
+										up(s.key, { ref: e.target.value.toUpperCase() })
+									}
+									className="font-mono uppercase tnum placeholder:font-sans placeholder:normal-case"
+								/>
+							</Row>
+						)}
+						<Row label="Baggage">
+							<Input
+								data-testid={TRANSIT_TESTID.flightBaggage}
+								aria-label="Baggage"
+								value={s.baggage}
+								maxLength={200}
+								placeholder="Optional"
+								disabled={disabled}
+								onChange={(e) => up(s.key, { baggage: e.target.value })}
+							/>
+						</Row>
+					</div>
+					{multi ? null : (
+						<PriceRows
+							value={s}
+							disabled={disabled}
+							onChange={(p) => up(s.key, p)}
+						/>
+					)}
+				</fieldset>
+			</div>
+		);
+	};
+	/** "+ Connection" on the way out or the way back (four flights each at most). */
+	const addConnection = (
+		list: readonly Seg[],
+		setList: Dispatch<SetStateAction<Seg[]>>,
+		testId: string,
+	) => (
+		<Button
+			variant="ghost"
+			size="sm"
+			className="h-8 w-fit gap-1.5 px-2"
+			data-testid={testId}
+			disabled={disabled || list.length >= 4}
+			onClick={() => {
+				const last = list.at(-1);
+				setList((xs) => [
+					...xs,
+					segOf(null, {
+						fromText: last?.toIata || last?.toText || "",
+						fromIata: last?.toIata ?? "",
+						depDate: last?.arrDate ?? "",
+						arrDate: last?.arrDate ?? "",
+						cabin: last?.cabin ?? "",
+						airlineIata: last?.airlineIata ?? "",
+						airlineText: last?.airlineText ?? "",
+					}),
+				]);
+			}}
+		>
+			<Plus className="size-4" /> Connection
+		</Button>
+	);
+	const count = segs.length + ret.length;
 
 	return (
 		<div
 			data-testid={TRANSIT_TESTID.flightForm}
 			className="@container grid gap-4"
 		>
-			{segs.map((s, i) => {
-				const from = known(s.fromIata || s.fromText);
-				const to = known(s.toIata || s.toText);
-				const mins =
-					from && to && s.depDate && s.depTime && s.arrDate && s.arrTime
-						? flightMinutes(
-								{
-									local: `${s.depDate}T${s.depTime}`,
-									tz: from.tz,
-									fold: s.depFold,
-								},
-								{
-									local: `${s.arrDate}T${s.arrTime}`,
-									tz: to.tz,
-									fold: s.arrFold,
-								},
-							)
-						: null;
-				const prev = i > 0 ? segs[i - 1] : undefined;
-				const prevDetails = prev ? toDetails(prev) : null;
-				const cur = toDetails(s);
-				const layover =
-					prevDetails && cur ? tightConnection(prevDetails, cur) : null;
-				return (
-					<div key={s.key} className="grid gap-3">
-						{layover ? (
-							<div className="flex h-9 items-center justify-center gap-2 rounded-md bg-hatch text-2xs text-muted-foreground">
-								Layover {formatDuration(layover.minutes)} ·{" "}
-								{prevDetails?.to.iata}
-								{layover.tight ? (
-									<span className="rounded-full bg-warning-wash px-1.5 text-warning">
-										Tight connection
-									</span>
-								) : null}
-							</div>
-						) : null}
-						<fieldset
-							data-testid={TRANSIT_TESTID.flightSegment}
-							className="grid gap-3 rounded-lg border bg-background/60 p-3"
-						>
-							<legend className="sr-only">Flight {i + 1}</legend>
-							{segs.length > 1 ? (
-								<SectionHeader
-									action={
-										<Button
-											variant="ghost"
-											size="icon"
-											className="size-6"
-											aria-label={`Remove flight ${i + 1}`}
-											data-testid={TRANSIT_TESTID.flightRemoveSegment}
-											disabled={disabled}
-											onClick={() =>
-												setSegs((xs) => xs.filter((x) => x.key !== s.key))
-											}
-										>
-											<X className="size-3.5" />
-										</Button>
-									}
-								>
-									Flight {i + 1}
-								</SectionHeader>
-							) : null}
-							<div className="grid grid-cols-[1fr_6.5rem] gap-3">
-								<Row label="Airline">
-									<SuggestInput<AirlineRow>
-										value={s.airlineText}
-										aria-label="Airline"
-										testId={TRANSIT_TESTID.flightAirline}
-										itemTestId={TRANSIT_TESTID.airlineOption}
-										caps
-										placeholder="Search airlines"
-										disabled={disabled}
-										onChange={(t) =>
-											up(s.key, { airlineText: t, airlineIata: "" })
-										}
-										load={(q) => searchAirlines(q)}
-										itemKey={(a) => a.iata}
-										renderItem={(a) => (
-											<span className="flex items-center gap-2">
-												<span className="w-7 font-mono text-xs font-semibold">
-													{a.iata}
-												</span>
-												<span className="truncate">{a.name}</span>
-											</span>
-										)}
-										onPick={(a) => {
-											const num = s.flightNumber.replace(
-												/^[A-Z0-9]{2}\s?/i,
-												"",
-											);
-											up(s.key, {
-												airlineIata: a.iata,
-												airlineText: `${a.iata} · ${a.name}`,
-												flightNumber: s.flightNumber
-													? s.flightNumber
-													: `${a.iata} ${num}`.trim(),
-											});
-										}}
-									/>
-								</Row>
-								<Row label="Flight no." error={errorOf(s, "flightNumber")}>
-									<Input
-										data-testid={TRANSIT_TESTID.flightNumber}
-										aria-label="Flight number"
-										{...CAPS_INPUT}
-										aria-invalid={!!errorOf(s, "flightNumber") || undefined}
-										value={s.flightNumber}
-										maxLength={12}
-										placeholder="e.g. NH 9"
-										disabled={disabled}
-										onChange={(e) =>
-											up(s.key, { flightNumber: e.target.value.toUpperCase() })
-										}
-										onBlur={() => {
-											const nn = normalizeFlightNumber(s.flightNumber);
-											if (nn)
-												up(s.key, {
-													flightNumber: nn.replace(
-														/^([A-Z0-9]{2})(\d)/,
-														"$1 $2",
-													),
-												});
-										}}
-										className="font-mono uppercase tnum placeholder:font-sans placeholder:normal-case"
-									/>
-								</Row>
-							</div>
-							<div className="grid gap-3 @lg:grid-cols-2">
-								<AirportRowFields
-									side="From"
-									seg={s}
-									text={s.fromText}
-									airport={from}
-									error={errorOf(s, "from")}
-									disabled={disabled}
-									date={s.depDate}
-									time={s.depTime}
-									fold={s.depFold}
-									onFold={(depFold) => up(s.key, { depFold })}
-									dateError={errorOf(s, "depLocal")}
-									terminal={s.fromTerminal}
-									gate={s.fromGate}
-									testIds={{
-										airport: TRANSIT_TESTID.flightFrom,
-										date: TRANSIT_TESTID.flightDepDate,
-										time: TRANSIT_TESTID.flightDepTime,
-										terminal: TRANSIT_TESTID.flightFromTerminal,
-										gate: TRANSIT_TESTID.flightFromGate,
-									}}
-									onText={(t) =>
-										up(s.key, { fromText: t.toUpperCase(), fromIata: "" })
-									}
-									onPick={(a) =>
-										up(s.key, { fromText: a.iata, fromIata: a.iata })
-									}
-									onDate={(v) =>
-										up(s.key, {
-											depDate: v,
-											...(s.arrDate ? {} : { arrDate: v }),
-										})
-									}
-									onTime={(v) => up(s.key, { depTime: v })}
-									onTerminal={(v) => up(s.key, { fromTerminal: v })}
-									onGate={(v) => up(s.key, { fromGate: v })}
-								/>
-								<AirportRowFields
-									side="To"
-									seg={s}
-									text={s.toText}
-									airport={to}
-									error={errorOf(s, "to")}
-									disabled={disabled}
-									date={s.arrDate}
-									time={s.arrTime}
-									fold={s.arrFold}
-									onFold={(arrFold) => up(s.key, { arrFold })}
-									dateError={errorOf(s, "arrLocal")}
-									terminal={s.toTerminal}
-									gate={s.toGate}
-									testIds={{
-										airport: TRANSIT_TESTID.flightTo,
-										date: TRANSIT_TESTID.flightArrDate,
-										time: TRANSIT_TESTID.flightArrTime,
-										terminal: TRANSIT_TESTID.flightToTerminal,
-										gate: TRANSIT_TESTID.flightToGate,
-									}}
-									onText={(t) =>
-										up(s.key, { toText: t.toUpperCase(), toIata: "" })
-									}
-									onPick={(a) => up(s.key, { toText: a.iata, toIata: a.iata })}
-									onDate={(v) => up(s.key, { arrDate: v })}
-									onTime={(v) => up(s.key, { arrTime: v })}
-									onTerminal={(v) => up(s.key, { toTerminal: v })}
-									onGate={(v) => up(s.key, { toGate: v })}
-								/>
-							</div>
-							<p
-								data-testid={TRANSIT_TESTID.flightDuration}
-								className={cn(
-									"-mt-1 font-mono text-xs tnum",
-									mins !== null && mins <= 0
-										? "text-destructive"
-										: "text-muted-foreground",
-								)}
-							>
-								{mins !== null
-									? mins > 0
-										? `${formatDuration(mins)} flight`
-										: "Arrival is before departure"
-									: from && to
-										? estimateText(s, from, to)
-										: " "}
-							</p>
-							<div className="grid grid-cols-2 gap-3">
-								<Row label="Cabin">
-									<Select
-										value={s.cabin}
-										disabled={disabled}
-										onValueChange={(v) => up(s.key, { cabin: v as Cabin })}
-									>
-										<SelectTrigger
-											data-testid={TRANSIT_TESTID.flightCabin}
-											className="w-full"
-											aria-label="Cabin"
-										>
-											<SelectValue placeholder="Cabin" />
-										</SelectTrigger>
-										<SelectContent>
-											{CABINS.map((c) => (
-												<SelectItem key={c.value} value={c.value}>
-													{c.label}
-												</SelectItem>
-											))}
-										</SelectContent>
-									</Select>
-								</Row>
-								<Row label="Aircraft">
-									<Input
-										data-testid={TRANSIT_TESTID.flightAircraft}
-										aria-label="Aircraft"
-										value={s.aircraft}
-										maxLength={100}
-										placeholder="Optional"
-										disabled={disabled}
-										onChange={(e) => up(s.key, { aircraft: e.target.value })}
-									/>
-								</Row>
-							</div>
-							{members.length ? (
-								<Row label="Seats">
-									<div className="grid gap-1.5">
-										{members.map((m) => (
-											<div key={m.id} className="flex items-center gap-2">
-												<MemberAvatar user={m} size={20} />
-												<span className="min-w-0 flex-1 truncate text-sm">
-													{m.name}
-												</span>
-												<Input
-													data-testid={TRANSIT_TESTID.flightSeat}
-													data-member={m.id}
-													aria-label={`Seat for ${m.name}`}
-													{...CAPS_INPUT}
-													value={s.seats[m.id] ?? ""}
-													maxLength={20}
-													placeholder="Seat"
-													disabled={disabled}
-													onChange={(e) =>
-														up(s.key, {
-															seats: {
-																...s.seats,
-																[m.id]: e.target.value.toUpperCase(),
-															},
-														})
-													}
-													className="w-20 font-mono uppercase tnum placeholder:font-sans placeholder:normal-case"
-												/>
-											</div>
-										))}
-										<AddPersonRow disabled={disabled} />
-									</div>
-								</Row>
-							) : null}
-							<div className="grid grid-cols-2 gap-3">
-								{multi ? null : (
-									<Row label="Booking ref">
-										<Input
-											data-testid={TRANSIT_TESTID.flightRef}
-											aria-label="Booking ref"
-											{...CAPS_INPUT}
-											value={s.ref}
-											maxLength={40}
-											placeholder="Optional"
-											disabled={disabled}
-											onChange={(e) =>
-												up(s.key, { ref: e.target.value.toUpperCase() })
-											}
-											className="font-mono uppercase tnum placeholder:font-sans placeholder:normal-case"
-										/>
-									</Row>
-								)}
-								<Row label="Baggage">
-									<Input
-										data-testid={TRANSIT_TESTID.flightBaggage}
-										aria-label="Baggage"
-										value={s.baggage}
-										maxLength={200}
-										placeholder="Optional"
-										disabled={disabled}
-										onChange={(e) => up(s.key, { baggage: e.target.value })}
-									/>
-								</Row>
-							</div>
-							<div className="grid gap-3 @lg:grid-cols-3">
-								<Row label="Price">
-									<div className="flex gap-1">
-										<Input
-											data-testid={TRANSIT_TESTID.flightCostCurrency}
-											aria-label="Price currency"
-											{...CAPS_INPUT}
-											value={s.costCurrency}
-											maxLength={3}
-											disabled={disabled}
-											onChange={(e) =>
-												up(s.key, {
-													costCurrency: e.target.value.toUpperCase(),
-												})
-											}
-											className="w-16 shrink-0 font-mono uppercase"
-										/>
-										<Input
-											data-testid={TRANSIT_TESTID.flightCostAmount}
-											aria-label="Price amount"
-											placeholder="Amount"
-											inputMode="decimal"
-											value={s.costAmount}
-											disabled={disabled}
-											onChange={(e) =>
-												up(s.key, { costAmount: e.target.value })
-											}
-											className="min-w-0 font-mono tnum placeholder:font-sans"
-										/>
-									</div>
-								</Row>
-								<Row label="Points">
-									<div className="flex gap-1">
-										<Input
-											data-testid={TRANSIT_TESTID.flightPointsProgram}
-											aria-label="Points program"
-											placeholder="Program"
-											value={s.pointsProgram}
-											maxLength={80}
-											disabled={disabled}
-											onChange={(e) =>
-												up(s.key, { pointsProgram: e.target.value })
-											}
-											className="min-w-0 flex-1"
-										/>
-										<Input
-											data-testid={TRANSIT_TESTID.flightPointsAmount}
-											aria-label="Points"
-											placeholder="Points"
-											inputMode="numeric"
-											value={s.pointsAmount}
-											disabled={disabled}
-											onChange={(e) =>
-												up(s.key, { pointsAmount: e.target.value })
-											}
-											className="w-20 shrink-0 font-mono tnum placeholder:font-sans"
-										/>
-									</div>
-								</Row>
-								<Row label="Fees">
-									<Input
-										data-testid={TRANSIT_TESTID.flightFeesAmount}
-										aria-label={`Fees (${s.feesCurrency})`}
-										inputMode="decimal"
-										value={s.feesAmount}
-										placeholder={`Taxes and fees (${s.feesCurrency || "USD"})`}
-										disabled={disabled}
-										onChange={(e) => up(s.key, { feesAmount: e.target.value })}
-										className="font-mono tnum placeholder:font-sans"
-									/>
-								</Row>
-							</div>
-						</fieldset>
-					</div>
-				);
-			})}
 			{multi ? (
-				<div className="grid gap-3">
-					<Button
-						variant="ghost"
-						size="sm"
-						className="h-8 w-fit gap-1.5 px-2"
-						data-testid={TRANSIT_TESTID.flightAddConnection}
-						disabled={disabled || segs.length >= 4}
-						onClick={() => {
-							const last = segs.at(-1);
-							setSegs((xs) => [
-								...xs,
-								segOf(null, {
-									fromText: last?.toIata || last?.toText || "",
-									fromIata: last?.toIata ?? "",
-									depDate: last?.arrDate ?? "",
-									arrDate: last?.arrDate ?? "",
-									cabin: last?.cabin ?? "",
-									airlineIata: last?.airlineIata ?? "",
-									airlineText: last?.airlineText ?? "",
-								}),
-							]);
-						}}
-					>
-						<Plus className="size-4" /> Connection
-					</Button>
+				<Segmented
+					value={round ? "round" : "oneway"}
+					onValueChange={(v) => pickRound(v === "round")}
+					options={TRIP_KINDS}
+					label="One way or round trip"
+					size="sm"
+					disabled={disabled}
+					testId={TRANSIT_TESTID.flightTripKind}
+					className="w-fit"
+				/>
+			) : null}
+			{round ? <SectionHeader>Outbound</SectionHeader> : null}
+			{segs.map((s, i) => flightFields(s, i, segs, setSegs))}
+			{multi
+				? addConnection(segs, setSegs, TRANSIT_TESTID.flightAddConnection)
+				: null}
+			{round ? (
+				<div data-testid={TRANSIT_TESTID.flightReturn} className="grid gap-4">
+					<SectionHeader>Return</SectionHeader>
+					{back.map((s, i) => flightFields(s, i, back, setBack))}
+					{addConnection(
+						back,
+						setBack,
+						TRANSIT_TESTID.flightAddReturnConnection,
+					)}
+				</div>
+			) : null}
+			{multi ? (
+				<fieldset
+					data-testid={TRANSIT_TESTID.flightBooking}
+					className="grid gap-3 rounded-lg border bg-background/60 p-3"
+				>
+					<legend className="sr-only">Booking</legend>
+					<SectionHeader>Booking</SectionHeader>
+					{count > 1 ? (
+						<p className="-mt-2 text-xs text-muted-foreground">
+							One ref and one price for all {count} flights.
+						</p>
+					) : null}
 					<Row label="Booking ref">
 						<Input
 							data-testid={TRANSIT_TESTID.flightRef}
@@ -810,7 +973,12 @@ export function FlightForm({
 							className="w-40 font-mono uppercase tnum placeholder:font-sans placeholder:normal-case"
 						/>
 					</Row>
-				</div>
+					<PriceRows
+						value={price}
+						disabled={disabled}
+						onChange={(p) => setPrice((x) => ({ ...x, ...p }))}
+					/>
+				</fieldset>
 			) : null}
 			{conflict ? (
 				<div
@@ -907,6 +1075,84 @@ function Row({
 					{error}
 				</span>
 			) : null}
+		</div>
+	);
+}
+
+/** Price, points and fees: one flight's, or a whole booking's. */
+function PriceRows({
+	value,
+	disabled,
+	onChange,
+}: {
+	value: Price;
+	disabled?: boolean;
+	onChange: (p: Partial<Price>) => void;
+}) {
+	return (
+		<div className="grid gap-3 @lg:grid-cols-3">
+			<Row label="Price">
+				<div className="flex gap-1">
+					<Input
+						data-testid={TRANSIT_TESTID.flightCostCurrency}
+						aria-label="Price currency"
+						{...CAPS_INPUT}
+						value={value.costCurrency}
+						maxLength={3}
+						disabled={disabled}
+						onChange={(e) =>
+							onChange({ costCurrency: e.target.value.toUpperCase() })
+						}
+						className="w-16 shrink-0 font-mono uppercase"
+					/>
+					<Input
+						data-testid={TRANSIT_TESTID.flightCostAmount}
+						aria-label="Price amount"
+						placeholder="Amount"
+						inputMode="decimal"
+						value={value.costAmount}
+						disabled={disabled}
+						onChange={(e) => onChange({ costAmount: e.target.value })}
+						className="min-w-0 font-mono tnum placeholder:font-sans"
+					/>
+				</div>
+			</Row>
+			<Row label="Points">
+				<div className="flex gap-1">
+					<Input
+						data-testid={TRANSIT_TESTID.flightPointsProgram}
+						aria-label="Points program"
+						placeholder="Program"
+						value={value.pointsProgram}
+						maxLength={80}
+						disabled={disabled}
+						onChange={(e) => onChange({ pointsProgram: e.target.value })}
+						className="min-w-0 flex-1"
+					/>
+					<Input
+						data-testid={TRANSIT_TESTID.flightPointsAmount}
+						aria-label="Points"
+						placeholder="Points"
+						inputMode="numeric"
+						value={value.pointsAmount}
+						disabled={disabled}
+						onChange={(e) => onChange({ pointsAmount: e.target.value })}
+						className="w-20 shrink-0 font-mono tnum placeholder:font-sans"
+					/>
+				</div>
+			</Row>
+			<Row label="Fees">
+				<Input
+					data-testid={TRANSIT_TESTID.flightFeesAmount}
+					aria-label={`Fees (${value.feesCurrency})`}
+					inputMode="decimal"
+					value={value.feesAmount}
+					placeholder={`Taxes and fees (${value.feesCurrency || "USD"})`}
+					disabled={disabled}
+					onChange={(e) => onChange({ feesAmount: e.target.value })}
+					className="font-mono tnum placeholder:font-sans"
+				/>
+			</Row>
 		</div>
 	);
 }

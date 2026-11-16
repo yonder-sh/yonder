@@ -5,9 +5,13 @@
  */
 import "./__fixtures__/host-tz";
 import { describe, expect, it } from "vitest";
+import type { FlightDetails, LegDetails } from "@/lib/schemas/legs";
 import {
 	AUTO_FLIGHT_MIN_KM,
 	airportNameScore,
+	bookedWith,
+	bookingFlights,
+	bookingRoute,
 	flightArrDate,
 	flightDepDate,
 	flightEstimateBetween,
@@ -27,6 +31,7 @@ import {
 	tzOffsetMin,
 	wallToEpoch,
 } from "./time";
+import type { GraphLeg } from "./types";
 
 const JFK = {
 	iata: "JFK",
@@ -282,5 +287,85 @@ describe("zone labels at the moment shown (FB-20)", () => {
 		// A December SYD flight is in summer time (UTC+11).
 		const dec = localDateTimeToEpoch("2026-12-12T10:00", SYD.tz) as number;
 		expect(tzOffsetMin(SYD.tz, dec)).toBe(660);
+	});
+});
+
+describe("bookings: flights bought together", () => {
+	const ap = (iata: string, tz: string) => ({
+		iata,
+		name: iata,
+		tz,
+		lat: 0,
+		lng: 0,
+	});
+	const PHL = ap("PHL", "America/New_York");
+	const CLT = ap("CLT", "America/New_York");
+	const DFW = ap("DFW", "America/Chicago");
+	const EWR = ap("EWR", "America/New_York");
+	type Row = { id: string; flight: FlightDetails };
+	const fly = (
+		id: string,
+		from: typeof PHL,
+		to: typeof PHL,
+		dep: string,
+		more: Partial<FlightDetails> = {},
+	): Row => ({
+		id,
+		flight: { from, to, depDate: dep, seats: [], bookingId: "b1", ...more },
+	});
+	/** The little of a graph index that bookings read. */
+	const reader = (rows: Row[]) => {
+		const legs = rows.map((r) => ({ id: r.id }) as GraphLeg);
+		const flightOf = (id: string) =>
+			rows.find((r) => r.id === id)?.flight as FlightDetails;
+		return {
+			graph: { legs },
+			leg: (id: string | null | undefined) => legs.find((l) => l.id === id),
+			legDetails: (leg: GraphLeg): LegDetails => ({
+				kind: "flight",
+				flight: flightOf(leg.id),
+			}),
+		};
+	};
+
+	it("finds a booking's flights from any one of them, in flying order", () => {
+		const ix = reader([
+			fly("back", DFW, PHL, "2026-12-31"),
+			fly("out2", CLT, DFW, "2026-12-24", { depLocal: "2026-12-24T12:10" }),
+			fly("out1", PHL, CLT, "2026-12-24", { depLocal: "2026-12-24T08:00" }),
+			fly("other", PHL, EWR, "2026-12-25", { bookingId: "b2" }),
+			fly("alone", PHL, EWR, "2026-12-26", { bookingId: undefined }),
+		]);
+		expect(bookingFlights(ix, "back").map((b) => b.leg.id)).toEqual([
+			"out1",
+			"out2",
+			"back",
+		]);
+		expect(bookedWith(ix, "out2")).toEqual(["PHL → CLT", "DFW → PHL"]);
+		expect(bookedWith(ix, "alone")).toEqual([]);
+		expect(bookingFlights(ix, "other")).toHaveLength(1);
+		expect(bookingFlights(ix, "alone")).toEqual([]);
+		expect(bookingFlights(ix, null)).toEqual([]);
+	});
+
+	it("names where a booking goes: one way, there and back, or on to somewhere else", () => {
+		const out1 = fly("out1", PHL, CLT, "2026-12-24", {
+			depLocal: "2026-12-24T08:00",
+			connection: { nextLegId: "out2" },
+		});
+		const out2 = fly("out2", CLT, DFW, "2026-12-24", {
+			depLocal: "2026-12-24T12:10",
+			connection: { prevLegId: "out1" },
+		});
+		const route = (rows: Row[]) =>
+			bookingRoute(bookingFlights(reader(rows), rows[0]?.id));
+		expect(route([out1, out2])).toBe("PHL → DFW");
+		expect(route([out1, out2, fly("back", DFW, PHL, "2026-12-31")])).toBe(
+			"PHL ↔ DFW",
+		);
+		expect(route([out1, out2, fly("on", DFW, EWR, "2026-12-31")])).toBe(
+			"PHL → DFW → EWR",
+		);
+		expect(bookingRoute([])).toBe("");
 	});
 });

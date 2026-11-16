@@ -54,7 +54,13 @@ export function flightMinutes(
 export type FlightFieldError =
 	| { field: "flightNumber"; message: "Not a flight number" }
 	| { field: "from" | "to"; message: "Unknown airport" | "Required" }
-	| { field: "depLocal"; message: "Required" | "Add the departure time too" }
+	| {
+			field: "depLocal";
+			message:
+				| "Required"
+				| "Add the departure time too"
+				| "Before the outbound flight lands";
+	  }
 	| { field: "arrLocal"; message: "Arrival is before departure" };
 
 /**

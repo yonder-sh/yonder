@@ -1050,6 +1050,185 @@ describe("flights", () => {
 				}),
 			),
 		).toBe("VALIDATION"); // not a day of this trip
+		// Without `booking` (an older client) the flights aren't tied together.
+		expect((f1 as { bookingId?: string }).bookingId).toBeUndefined();
+	});
+
+	it("a round trip with a connection is one booking: one ref and price on every flight", async () => {
+		const c = await freshTrip();
+		const seg = (from: string, to: string, date: string, time?: string) => ({
+			from: { iata: from, name: from, tz: "UTC", lat: 0, lng: 0 },
+			to: { iata: to, name: to, tz: "UTC", lat: 0, lng: 0 },
+			...(time
+				? {
+						depLocal: `${date}T${time}`,
+						arrLocal: `${date}T${time.replace(/^\d\d/, (h) => String(Number(h) + 1).padStart(2, "0"))}`,
+					}
+				: { depDate: date }),
+			seats: [],
+			// A price of its own is not the booking's: the server drops it.
+			cost: { amount: 1, currency: "JPY" },
+			bookingId: randomUUID(),
+		});
+		const booking = {
+			ref: "abc123",
+			cost: { amount: 412.5, currency: "USD" },
+			fees: { amount: 11.2, currency: "USD" },
+		};
+		type Created = { itemIds: string[]; legIds: string[] };
+		const legCount = async () =>
+			(
+				await getDb()
+					.select({ id: legs.id })
+					.from(legs)
+					.where(sql`${legs.tripId} = ${c.tripId}`)
+			).length;
+		const before = await legCount();
+
+		// The way back can't leave before the way out lands; nothing is kept.
+		expect(
+			await codeOf(
+				call(createFlightWithAirports, U.owner, {
+					tripId: c.tripId,
+					segments: [seg("HND", "KIX", "2027-10-06", "07:00")],
+					returnSegments: [seg("KIX", "HND", "2027-10-04")],
+					booking,
+				}),
+			),
+		).toBe("VALIDATION");
+		expect(await legCount()).toBe(before);
+
+		const res = await call<Created>(createFlightWithAirports, U.owner, {
+			tripId: c.tripId,
+			segments: [
+				seg("HND", "KIX", "2027-10-04", "20:00"),
+				seg("KIX", "ICN", "2027-10-04", "22:00"),
+			],
+			returnSegments: [seg("ICN", "HND", "2027-10-06")],
+			booking,
+		});
+		// Out: three stops and two flights. Back: two stops and one flight.
+		expect(res.itemIds).toHaveLength(5);
+		expect(res.legIds).toHaveLength(3);
+		type Stored = {
+			bookingId?: string;
+			bookingRef?: string;
+			cost?: { amount: number; currency: string };
+			fees?: { amount: number; currency: string };
+			points?: unknown;
+			connection?: { prevLegId?: string; nextLegId?: string };
+			from: { iata: string };
+		};
+		const flights = async (u: AuthUser = U.owner): Promise<Stored[]> => {
+			const g = await call<{ legs: GraphLeg[] }>(getTripGraph, u, {
+				tripId: c.tripId,
+			});
+			return res.legIds.map(
+				(id) =>
+					(
+						(g.legs.find((l) => l.id === id) as GraphLeg).details as {
+							flight: Stored;
+						}
+					).flight,
+			);
+		};
+		let [out1, out2, back] = (await flights()) as [Stored, Stored, Stored];
+		expect(out1.bookingId).toMatch(/^[0-9a-f-]{36}$/);
+		for (const f of [out1, out2, back]) {
+			expect(f.bookingId).toBe(out1.bookingId);
+			expect(f.bookingRef).toBe("ABC123");
+			expect(f.cost).toEqual({ amount: 412.5, currency: "USD" });
+			expect(f.fees).toEqual({ amount: 11.2, currency: "USD" });
+			expect(f.points).toBeUndefined();
+		}
+		// The way out is one block with a layover; the way back is its own.
+		expect(out1.connection?.nextLegId).toBe(res.legIds[1]);
+		expect(out2.connection?.nextLegId).toBeUndefined();
+		expect(back.connection).toBeUndefined();
+		expect(back.from.iata).toBe("ICN");
+		const [summary] = (
+			await getDb()
+				.select({ summary: activityLog.summary })
+				.from(activityLog)
+				.where(
+					sql`${activityLog.tripId} = ${c.tripId} and ${activityLog.verb} = 'flight.create'`,
+				)
+		).map((r) => r.summary);
+		expect(summary).toBe("added flight HND→ICN→HND");
+
+		// Saving one flight with another price moves the whole booking; the
+		// booking itself can't be changed from outside.
+		const g = await call<{ legs: GraphLeg[] }>(getTripGraph, U.owner, {
+			tripId: c.tripId,
+		});
+		const last = g.legs.find((l) => l.id === res.legIds[2]) as GraphLeg;
+		const {
+			cost: _c,
+			fees: _f,
+			bookingRef: _r,
+			...rest
+		} = (last.details as { flight: Record<string, unknown> }).flight;
+		await call(saveFlight, U.owner, {
+			target: pair(last.fromItemId as string, last.toItemId as string),
+			flight: {
+				...rest,
+				bookingId: randomUUID(),
+				bookingRef: "new999",
+				points: { amount: 60000, program: "Aeroplan" },
+			},
+		});
+		[out1, out2, back] = (await flights()) as [Stored, Stored, Stored];
+		for (const f of [out1, out2, back]) {
+			expect(f.bookingId).toBe(out1.bookingId);
+			expect(f.bookingRef).toBe("NEW999");
+			expect(f.points).toEqual({ amount: 60000, program: "Aeroplan" });
+			expect(f.cost).toBeUndefined();
+			expect(f.fees).toBeUndefined();
+		}
+		// A guest still learns nothing of the money.
+		const [seen] = await flights(U.guestEditor);
+		expect(seen?.points).toBeUndefined();
+		expect(seen?.bookingRef).not.toBe("NEW999");
+	});
+
+	it("one flight added alone is no booking, and a booking can't be claimed on save", async () => {
+		const c = await freshTrip();
+		const res = await call<{ legIds: string[]; itemIds: string[] }>(
+			createFlightWithAirports,
+			U.owner,
+			{
+				tripId: c.tripId,
+				segments: [
+					{
+						from: { iata: "HND", name: "HND", tz: "UTC", lat: 0, lng: 0 },
+						to: { iata: "KIX", name: "KIX", tz: "UTC", lat: 0, lng: 0 },
+						depDate: "2027-10-05",
+						seats: [],
+					},
+				],
+				booking: { ref: "solo1", cost: { amount: 90, currency: "USD" } },
+			},
+		);
+		const read = async () => {
+			const g = await call<{ legs: GraphLeg[] }>(getTripGraph, U.owner, {
+				tripId: c.tripId,
+			});
+			return (
+				(g.legs.find((l) => l.id === res.legIds[0]) as GraphLeg).details as {
+					flight: Record<string, unknown>;
+				}
+			).flight;
+		};
+		let f = await read();
+		expect(f.bookingId).toBeUndefined();
+		expect(f.bookingRef).toBe("SOLO1");
+		expect(f.cost).toEqual({ amount: 90, currency: "USD" });
+		await call(saveFlight, U.owner, {
+			target: pair(res.itemIds[0] as string, res.itemIds[1] as string),
+			flight: { ...f, bookingId: randomUUID() },
+		});
+		f = await read();
+		expect(f.bookingId).toBeUndefined();
 	});
 });
 

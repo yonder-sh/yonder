@@ -37,8 +37,10 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import { useMoneyData } from "@/features/money/use-money";
 import { setDayStay } from "@/functions/days.functions";
 import { can } from "@/lib/auth/roles";
+import { bookingFlights, bookingRoute } from "@/lib/engine/flights";
 import { railEstimateMin } from "@/lib/engine/suggest";
 import { tripKeys } from "@/lib/query/keys";
 import {
@@ -339,23 +341,52 @@ function OvernightPanel({
 	);
 }
 
-/** Leg ⋯: "Add expense", and "Add as expense" when a cost or booking is set (EXTENSIONS §1.4). */
+/**
+ * Leg ⋯: "Add expense", and "Add as expense" when a cost or booking is set
+ * (EXTENSIONS §1.4). Flights bought together have one price, so one expense:
+ * it goes on the booking's first flight, and once it's there every flight of
+ * the booking offers "View expense" instead.
+ */
 function LegMenu({ ed }: { ed: LegEditor }) {
 	const { ws, details, leg, redacted } = ed;
 	const openAddExpense = useUi((s) => s.openAddExpense);
+	const money = useMoneyData();
 	const mayMoney =
 		ws.mode === "live" &&
 		!ws.access.isGuest &&
 		can({ role: ws.access.role, isGuest: ws.access.isGuest }, "manageExpenses");
 	if (!mayMoney) return null;
-	const cost =
+	const price =
 		details?.kind === "flight" && !redacted ? details.flight.cost : undefined;
 	const booked =
 		(details?.kind === "transit" && !!details.booking) ||
 		(details?.kind === "flight" && !!details.flight.bookingRef);
-	const title = (() => {
+	const flights = bookingFlights(ws.ix, leg?.id);
+	const booking = flights.length > 1 ? flights : null;
+	const priceMinor = price
+		? Math.round(price.amount * 10 ** currencyDecimals(price.currency))
+		: null;
+	// The booking's expense: one on any of its flights for its whole price.
+	const paid =
+		booking && price
+			? money.data?.expenses.find(
+					(e) =>
+						e.target.kind === "leg" &&
+						e.amountMinor === priceMinor &&
+						e.currency === price.currency &&
+						booking.some(
+							(b) => e.target.kind === "leg" && b.leg.id === e.target.legId,
+						),
+				)
+			: undefined;
+	const titleOf = (asExpense: boolean) => {
 		if (details?.kind === "flight") {
 			const f = details.flight;
+			if (asExpense && booking) {
+				const airline = booking[0]?.flight.airline?.name;
+				const one = booking.every((b) => b.flight.airline?.name === airline);
+				return `${(one && airline) || "Flights"} ${bookingRoute(booking)}`;
+			}
 			return `${f.airline?.name ?? "Flight"} ${f.flightNumber ?? ""} ${f.from.iata}→${f.to.iata}`
 				.replace(/\s+/g, " ")
 				.trim();
@@ -363,20 +394,16 @@ function LegMenu({ ed }: { ed: LegEditor }) {
 		if (details?.kind === "transit")
 			return details.booking?.trainNumber ?? details.route?.label ?? "Transit";
 		return leg?.mode === "other" ? "Taxi" : "Transport";
-	})();
+	};
 	const open = async (asExpense: boolean) => {
-		const legId = await ed.ensure();
+		const legId =
+			(asExpense ? booking?.[0]?.leg.id : undefined) ?? (await ed.ensure());
 		openAddExpense({
 			target: { kind: "leg", legId },
-			title: title.slice(0, 120),
+			title: titleOf(asExpense).slice(0, 120),
 			category: "transport",
-			...(asExpense && cost
-				? {
-						amountMinor: Math.round(
-							cost.amount * 10 ** currencyDecimals(cost.currency),
-						),
-						currency: cost.currency,
-					}
+			...(asExpense && price && priceMinor !== null
+				? { amountMinor: priceMinor, currency: price.currency }
 				: {}),
 		});
 	};
@@ -397,7 +424,14 @@ function LegMenu({ ed }: { ed: LegEditor }) {
 				<DropdownMenuItem onSelect={() => void open(false)}>
 					<Receipt className="size-4" /> Add expense
 				</DropdownMenuItem>
-				{cost || booked ? (
+				{paid ? (
+					<DropdownMenuItem
+						data-testid={TRANSIT_TESTID.legViewExpense}
+						onSelect={() => openAddExpense({ expenseId: paid.id })}
+					>
+						<Receipt className="size-4" /> View expense
+					</DropdownMenuItem>
+				) : price || booked ? (
 					<DropdownMenuItem onSelect={() => void open(true)}>
 						<Receipt className="size-4" /> Add as expense
 					</DropdownMenuItem>

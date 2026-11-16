@@ -1,8 +1,9 @@
 /**
  * Flights (SPEC §7.9, §13.2): airport lookups that replace a client's zones
  * and coordinates, airport nodes under Country › City, flight blocks
- * (departure, layovers, arrival) created on the right local days, and
- * re-homing a block's items when a flight's times change.
+ * (departure, layovers, arrival) created on the right local days,
+ * re-homing a block's items when a flight's times change, and bookings (the
+ * flights bought together share one ref and price).
  */
 import { sql } from "drizzle-orm";
 import { v7 as uuidv7 } from "uuid";
@@ -20,7 +21,7 @@ import type { GraphIndex } from "@/lib/engine/graph-index";
 import { pairKey } from "@/lib/engine/graph-index";
 import { computeSchedule } from "@/lib/engine/schedule";
 import { hhmm, localDateOf, localDateTimeToEpoch } from "@/lib/engine/time";
-import type { Airport, FlightDetails } from "@/lib/schemas/legs";
+import type { Airport, FlightBooking, FlightDetails } from "@/lib/schemas/legs";
 import { fail } from "@/server/authz/session.server";
 import { updateDayCore } from "@/server/cores/days.server";
 import { createNodePathCore } from "@/server/cores/nodes.server";
@@ -139,6 +140,45 @@ const arrMs = (f: FlightDetails) => {
 };
 const noonOf = (date: string | null, tz: string) =>
 	date ? (localDateTimeToEpoch(`${date}T12:00`, tz) ?? 0) : 0;
+
+/**
+ * A flight carrying its booking's ref, price, points and fees in place of
+ * its own (one booking, one price).
+ */
+export function withBooking(
+	f: FlightDetails,
+	booking: FlightBooking,
+	bookingId?: string,
+): FlightDetails {
+	const {
+		bookingRef: _r,
+		cost: _c,
+		points: _p,
+		fees: _f,
+		bookingId: _b,
+		...rest
+	} = f;
+	const ref = booking.ref?.trim().toUpperCase().slice(0, 40);
+	return {
+		...rest,
+		...(ref ? { bookingRef: ref } : {}),
+		...(booking.cost ? { cost: booking.cost } : {}),
+		...(booking.points ? { points: booking.points } : {}),
+		...(booking.fees ? { fees: booking.fees } : {}),
+		...(bookingId ? { bookingId } : {}),
+	};
+}
+
+/** A round trip's way back leaves after the way out has landed. */
+export function assertReturnAfter(
+	outbound: readonly FlightDetails[],
+	back: readonly FlightDetails[],
+): void {
+	const last = outbound.at(-1);
+	const first = back[0];
+	if (last && first && depMs(first) < arrMs(last))
+		fail("VALIDATION", "The return leaves before the outbound flight lands");
+}
 
 const countryName = (cc: string): string => {
 	try {

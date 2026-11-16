@@ -15,8 +15,10 @@
  *   items is a real leg row that nobody chose: `mode: 'flight'`,
  *   `source: 'estimate'`, `isEdited: false`. It follows the items until a
  *   person edits or switches it.
+ * - Bookings: flights bought together (a connection, a round trip) carry one
+ *   `bookingId` and the same ref, price, points and fees: the booking's.
  */
-import type { FlightDetails } from "@/lib/schemas/legs";
+import type { FlightDetails, LegDetails } from "@/lib/schemas/legs";
 import { haversineKm, type LngLat } from "./geo";
 import { addDays, localDateTimeToEpoch, MS_PER_MINUTE } from "./time";
 import type { GraphLeg, GraphNode } from "./types";
@@ -271,4 +273,78 @@ export function nodeIsAirport(
 	if (haversineKm(coord, [airport.lng, airport.lat]) > AIRPORT_MATCH_KM)
 		return false;
 	return airportNameScore(node, airport) > 0;
+}
+
+/** A flight with the leg it is on. */
+export type BookedFlight = { leg: GraphLeg; flight: FlightDetails };
+
+/** What `bookingFlights` reads of a graph index. */
+type LegReader = {
+	readonly graph: { readonly legs: readonly GraphLeg[] };
+	leg(id: string | null | undefined): GraphLeg | undefined;
+	legDetails(leg: GraphLeg): LegDetails;
+};
+
+/** When a flight leaves: its time, else noon on its date. */
+function leavesAt(f: FlightDetails): number {
+	const dep = flightTimes(f).depMs;
+	if (dep !== null) return dep;
+	const date = flightDepDate(f);
+	return date ? (localDateTimeToEpoch(`${date}T12:00`, f.from.tz) ?? 0) : 0;
+}
+
+/**
+ * The flights bought with this one (a connection, a round trip), itself
+ * included, in flying order. Empty for a flight that has no booking.
+ */
+export function bookingFlights(
+	ix: LegReader,
+	legId: string | null | undefined,
+): BookedFlight[] {
+	const own = ix.leg(legId);
+	const d = own ? ix.legDetails(own) : null;
+	const id = d?.kind === "flight" ? d.flight.bookingId : undefined;
+	if (!id) return [];
+	const out: BookedFlight[] = [];
+	for (const leg of ix.graph.legs) {
+		const x = ix.legDetails(leg);
+		if (x.kind === "flight" && x.flight.bookingId === id)
+			out.push({ leg, flight: x.flight });
+	}
+	return out.sort((a, b) => leavesAt(a.flight) - leavesAt(b.flight));
+}
+
+/**
+ * The other flights of this flight's booking, as "CLT → DFW": they share its
+ * ref and price.
+ */
+export function bookedWith(
+	ix: LegReader,
+	legId: string | null | undefined,
+): string[] {
+	return bookingFlights(ix, legId)
+		.filter((b) => b.leg.id !== legId)
+		.map((b) => `${b.flight.from.iata} → ${b.flight.to.iata}`);
+}
+
+/**
+ * Where a booking goes, connections folded: "PHL → DFW" one way, "PHL ↔ DFW"
+ * there and back, "PHL → DFW → EWR" when it ends somewhere else.
+ */
+export function bookingRoute(flights: readonly BookedFlight[]): string {
+	const first = flights[0];
+	const last = flights.at(-1);
+	if (!first || !last) return "";
+	// The way out ends where the connections do.
+	let k = 0;
+	while (
+		k < flights.length - 1 &&
+		flights[k]?.flight.connection?.nextLegId === flights[k + 1]?.leg.id
+	)
+		k++;
+	const from = first.flight.from.iata;
+	const turn = (flights[k] as BookedFlight).flight.to.iata;
+	const end = last.flight.to.iata;
+	if (k === flights.length - 1) return `${from} → ${end}`;
+	return end === from ? `${from} ↔ ${turn}` : `${from} → ${turn} → ${end}`;
 }

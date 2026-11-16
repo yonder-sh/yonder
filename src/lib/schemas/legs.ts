@@ -163,6 +163,23 @@ export const Cabin = z.enum([
 ]);
 export type Cabin = z.infer<typeof Cabin>;
 
+const Points = z.object({
+	amount: z.number().min(0).max(1e9),
+	program: Str(80),
+});
+
+/**
+ * What the flights of one booking share (a connection, a round trip): the
+ * ref and what the whole booking cost.
+ */
+export const FlightBooking = z.object({
+	ref: z.string().max(40).optional(),
+	cost: Money.optional(),
+	points: Points.optional(),
+	fees: Money.optional(),
+});
+export type FlightBooking = z.infer<typeof FlightBooking>;
+
 /**
  * A flight (SPEC §6.5; FEEDBACK-3 FB-18): only the two airports and the
  * departure date are needed. Airline, number and both times are optional;
@@ -198,14 +215,18 @@ export const FlightDetails = z.object({
 	baggage: Str(200).optional(),
 	aircraft: Str(100).optional(),
 	cost: Money.optional(),
-	points: z
-		.object({ amount: z.number().min(0).max(1e9), program: Str(80) })
-		.optional(),
+	points: Points.optional(),
 	fees: Money.optional(),
 	/** Set by the server for connecting segments (§7.9). */
 	connection: z
 		.object({ prevLegId: Id.optional(), nextLegId: Id.optional() })
 		.optional(),
+	/**
+	 * Set by the server on flights bought together (a connection, a round
+	 * trip). They share `bookingRef`, `cost`, `points` and `fees`, which are
+	 * then the whole booking's, not this flight's alone.
+	 */
+	bookingId: Id.optional(),
 });
 export type FlightDetails = z.infer<typeof FlightDetails>;
 

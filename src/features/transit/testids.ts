@@ -86,6 +86,19 @@ export const TRANSIT_TESTID = {
 	flightPointsAmount: "flight-points-amount",
 	flightFeesAmount: "flight-fees-amount",
 	flightAddConnection: "flight-add-connection",
+	/** One way | Round trip ([data-value]). */
+	flightTripKind: "flight-trip-kind",
+	/** A round trip's way back: its own flight segments. */
+	flightReturn: "flight-return",
+	flightAddReturnConnection: "flight-add-return-connection",
+	/** The ref and price the booking's flights share (the Add flight dialog). */
+	flightBooking: "flight-booking",
+	/** A flight's edit form: "Booked with CLT → DFW…". */
+	flightBookingNote: "flight-booking-note",
+	/** The summary's "whole booking, 3 flights". */
+	flightBookingScope: "flight-booking-scope",
+	/** Leg ⋯: the booking's expense is already there. */
+	legViewExpense: "leg-view-expense",
 	flightRemoveSegment: "flight-remove-segment",
 	flightSave: "flight-save",
 	flightError: "flight-error", // [data-field]
